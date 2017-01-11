@@ -10,7 +10,12 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sort"
 )
+
+func csEncode(s string) string {
+	return strings.Replace(url.QueryEscape(s), "+", "%20", -1)
+}
 
 func rawValue(b json.RawMessage) (json.RawMessage, error) {
 	var m map[string]json.RawMessage
@@ -75,17 +80,26 @@ func (exo *Client) ParseResponse(resp *http.Response) (json.RawMessage, error) {
 func (exo *Client) Request(command string, params url.Values) (json.RawMessage, error) {
 
 	mac := hmac.New(sha1.New, []byte(exo.apiSecret))
+	keys := make([]string, 0)
+	unencoded := make([]string, 0)
 
 	params.Set("apikey", exo.apiKey)
 	params.Set("command", command)
 	params.Set("response", "json")
 
-	s := strings.Replace(strings.ToLower(params.Encode()), "+", "%20", -1)
-	mac.Write([]byte(s))
-	signature := url.QueryEscape(base64.StdEncoding.EncodeToString(mac.Sum(nil)))
-
-	s = params.Encode()
-	url := exo.endpoint + "?" + s + "&signature=" + signature
+	for k, _ := range(params) {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range(keys) {
+		arg := strings.ToLower(k) + "=" + csEncode(params[k][0])
+		unencoded = append(unencoded, arg)
+	}
+	sign_string := strings.Join(unencoded, "&")
+	mac.Write([]byte(sign_string))
+	signature := csEncode(base64.StdEncoding.EncodeToString(mac.Sum(nil)))
+	query := params.Encode()
+	url := exo.endpoint + "?" + csEncode(query) + "&signature=" + signature
 
 	resp, err := exo.client.Get(url)
 	if err != nil {

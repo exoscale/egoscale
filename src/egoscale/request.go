@@ -13,8 +13,12 @@ import (
 	"sort"
 )
 
+func csQuotePlus(s string) string {
+	return strings.Replace(s, "+", "%20", -1)
+}
+
 func csEncode(s string) string {
-	return strings.Replace(url.QueryEscape(s), "+", "%20", -1)
+	return csQuotePlus(url.QueryEscape(s))
 }
 
 func rawValue(b json.RawMessage) (json.RawMessage, error) {
@@ -92,14 +96,15 @@ func (exo *Client) Request(command string, params url.Values) (json.RawMessage, 
 	}
 	sort.Strings(keys)
 	for _, k := range(keys) {
-		arg := strings.ToLower(k) + "=" + csEncode(params[k][0])
+		arg := k + "=" + csEncode(params[k][0])
 		unencoded = append(unencoded, arg)
 	}
-	sign_string := strings.Join(unencoded, "&")
+	sign_string := strings.ToLower(strings.Join(unencoded, "&"))
+
 	mac.Write([]byte(sign_string))
 	signature := csEncode(base64.StdEncoding.EncodeToString(mac.Sum(nil)))
 	query := params.Encode()
-	url := exo.endpoint + "?" + csEncode(query) + "&signature=" + signature
+	url := exo.endpoint + "?" + csQuotePlus(query) + "&signature=" + signature
 
 	resp, err := exo.client.Get(url)
 	if err != nil {

@@ -13,12 +13,11 @@ func (exo *Client) CreateEgressRule(rule SecurityGroupRule) (*AuthorizeSecurityG
 	
         if rule.Cidr != "" {
             params.Set("cidrlist", rule.Cidr)
-        } else if len(rule.UserSecurityGroupList) > 0 {
-            usg,err := json.Marshal(rule.UserSecurityGroupList)
-	    if err != nil {
-	        	return nil, err
-	    }
-	    params.Set("usersecuritygrouplist", string(usg))
+        } else if len(rule.UserSecurityGroupList) >0 {
+            for i := 0; i < len(rule.UserSecurityGroupList); i++ {
+                    params.Set(fmt.Sprintf("usersecuritygrouplist[%d].account", i), rule.UserSecurityGroupList[i].Account)
+                    params.Set(fmt.Sprintf("usersecuritygrouplist[%d].group", i), rule.UserSecurityGroupList[i].Group)
+                }
         } else {
             return nil, fmt.Errorf("No Egress rule CIDR or Security Group List provided")
         }
@@ -59,7 +58,6 @@ func (exo *Client) CreateIngressRule(rule SecurityGroupRule) (*AuthorizeSecurity
             for i := 0; i < len(rule.UserSecurityGroupList); i++ {
                     params.Set(fmt.Sprintf("usersecuritygrouplist[%d].account", i), rule.UserSecurityGroupList[i].Account)
                     params.Set(fmt.Sprintf("usersecuritygrouplist[%d].group", i), rule.UserSecurityGroupList[i].Group)
-                    
                 }
         } else {
             return nil, fmt.Errorf("No Ingress rule CIDR or Security Group List provided")

@@ -5,8 +5,7 @@ PROGRAM=exo
 GO=env GOPATH=$(GOPATH) go
 RM?=rm -f
 LN=ln -s
-#MAIN=exo.go
-MAIN=g.go
+MAIN=exo.go
 SRCS=		src/egoscale/types.go		 \
 			src/egoscale/error.go		 \
 			src/egoscale/topology.go \
@@ -22,8 +21,7 @@ all: $(PROGRAM)
 
 $(PROGRAM): $(MAIN) $(SRCS)
 				$(GO) build egoscale
-				#$(GO) build -o exo $(MAIN)
-				$(GO) build -o g $(MAIN)
+				$(GO) build -o exo $(MAIN)
 
 clean:
 				$(RM) $(PROGRAM)

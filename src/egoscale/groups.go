@@ -75,8 +75,6 @@ func (exo *Client) CreateIngressRule(rule SecurityGroupRule) (*AuthorizeSecurity
 		return nil, fmt.Errorf("Invalid Egress rule Protocol: %s", rule.Protocol)
 	}
 
-        fmt.Printf("## params: %+v\n", params)
-
 	resp, err := exo.Request("authorizeSecurityGroupIngress", params)
 
 	if err != nil {

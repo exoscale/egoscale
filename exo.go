@@ -1,10 +1,11 @@
 package main
 
 import (
-	"egoscale"
-	"fmt"
 	"flag"
+	"fmt"
 	"os"
+
+	"github.com/pyr/egoscale/src/egoscale"
 )
 
 var apikey = flag.String("xk", "", "Exoscale API Key")
@@ -16,24 +17,22 @@ func main() {
 	flag.Parse()
 	client := egoscale.NewClient(*endpoint, *apikey, *apisecret)
 
-
 	vms, err := client.ListVirtualMachines()
 	if err != nil {
 		fmt.Printf("got error: %s\n", err)
 		os.Exit(1)
 	}
 
-	for _, vm := range(vms) {
+	for _, vm := range vms {
 
 		fmt.Println("vm:", vm.Displayname)
-		for _, nic := range(vm.Nic) {
+		for _, nic := range vm.Nic {
 			fmt.Println("ip:", nic.Ipaddress)
 		}
-		for _, sg := range(vm.SecurityGroups) {
+		for _, sg := range vm.SecurityGroups {
 			fmt.Println("securitygroup:", sg.Name)
 		}
 	}
 	os.Exit(0)
-
 
 }

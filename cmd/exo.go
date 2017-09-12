@@ -1,7 +1,7 @@
-package main
+package cmd
 
 import (
-	"egoscale"
+	"github.com/exoscale/egoscale"
 	"fmt"
 	"flag"
 	"os"

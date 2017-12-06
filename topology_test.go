@@ -33,6 +33,7 @@ func TestGetImages(t *testing.T) {
 
 	uuid := "4c0732a0-3df0-4f66-8d16-009f91cf05d6"
 
+	// by short name
 	if _, ok := images["redhat-7.4"]; !ok {
 		t.Error("expected redhat-7.4 into the map")
 	}
@@ -43,6 +44,19 @@ func TestGetImages(t *testing.T) {
 
 	if images["redhat-7.4"][10] != uuid {
 		t.Error("bad uuid for the redhat-7.4 image")
+	}
+
+	// by full name
+	if _, ok := images["Linux RedHat 7.4 64-bit"]; !ok {
+		t.Error("expected Linux RedHat 7.4 64-bit into the map")
+	}
+
+	if _, ok := images["Linux RedHat 7.4 64-bit"][10]; !ok {
+		t.Error("expected Linux RedHat 7.4 64-bit, 10G into the map")
+	}
+
+	if images["Linux RedHat 7.4 64-bit"][10] != uuid {
+		t.Error("bad uuid for the Linux RedHat 7.4 64-bit image")
 	}
 }
 

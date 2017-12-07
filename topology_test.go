@@ -18,6 +18,11 @@ func TestGetImages(t *testing.T) {
 				"name": "Linux RedHat 7.4 64-bit",
 				"displayText": "Linux RedHat 7.4 64-bit 10G Disk (2017-11-31-dummy)",
 				"size": 10737418240
+			},{
+				"id": "1959ccb7-cd79-404d-a156-322e4a0c3beb",
+				"name": "Linux Ubuntu 12.04 LTS 64-bit",
+				"displayText": "Linux Ubuntu 12.04 64-bit 50G Disk (2017-11-31-dummy)",
+				"size": 53687091200
 			}
 		]
 	}
@@ -31,32 +36,36 @@ func TestGetImages(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	uuid := "4c0732a0-3df0-4f66-8d16-009f91cf05d6"
-
-	// by short name
-	if _, ok := images["redhat-7.4"]; !ok {
-		t.Error("expected redhat-7.4 into the map")
+	var tests = []struct {
+		uuid  string
+		names []string
+		size  int
+	}{
+		{
+			"4c0732a0-3df0-4f66-8d16-009f91cf05d6",
+			[]string{"redhat-7.4", "Linux RedHat 7.4 64-bit"},
+			10,
+		}, {
+			"1959ccb7-cd79-404d-a156-322e4a0c3beb",
+			[]string{"ubuntu-12.04", "Linux Ubuntu 12.04 LTS 64-bit"},
+			50,
+		},
 	}
 
-	if _, ok := images["redhat-7.4"][10]; !ok {
-		t.Error("expected redhat-7.4, 10G into the map")
-	}
+	for _, test := range tests {
+		for _, name := range test.names {
+			if _, ok := images[name]; !ok {
+				t.Errorf("expected %s into the map", name)
+			}
 
-	if images["redhat-7.4"][10] != uuid {
-		t.Error("bad uuid for the redhat-7.4 image")
-	}
+			if _, ok := images[name][test.size]; !ok {
+				t.Errorf("expected %s, %dG into the map", name, test.size)
+			}
 
-	// by full name
-	if _, ok := images["Linux RedHat 7.4 64-bit"]; !ok {
-		t.Error("expected Linux RedHat 7.4 64-bit into the map")
-	}
-
-	if _, ok := images["Linux RedHat 7.4 64-bit"][10]; !ok {
-		t.Error("expected Linux RedHat 7.4 64-bit, 10G into the map")
-	}
-
-	if images["Linux RedHat 7.4 64-bit"][10] != uuid {
-		t.Error("bad uuid for the Linux RedHat 7.4 64-bit image")
+			if uuid := images[name][test.size]; uuid != test.uuid {
+				t.Errorf("bad uuid for the %s image. got %v expected %v", name, uuid, test.uuid)
+			}
+		}
 	}
 }
 

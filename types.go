@@ -518,3 +518,22 @@ type DNSRecordResponse struct {
 type DNSError struct {
 	Name []string `json:"name"`
 }
+
+// IpAddress represents an IP Address
+type IpAddress struct {
+	AssociatedAt          string   `json:"associated,omitempty"`
+	AssociatedNetworkId   string   `json:"associatednetworkid,omitempty"`
+	AssociatedNetworkName string   `json:"associatednetworkname,omitempty"`
+	Id                    string   `json:"id"`
+	DomainId              string   `json:"domainid,omitempty"`
+	DomainName            string   `json:"domainname,omitempty"`
+	IpAddress             string   `json:"ipaddress"`
+	IsElastic             bool     `json:"iselastic,omitempty"`
+	IsPortable            bool     `json:"isportable,omitempty"`
+	IsSourceNat           bool     `json:"issourcenat,omitempty"`
+	IsSystem              bool     `json:"issystem,omitempty"`
+	State                 string   `json:"state,omitempty"`
+	ZoneId                string   `json:"zoneid,omitempty"`
+	ZoneName              string   `json:"zonename,omitempty"`
+	Tags                  []string `json:"tags,omitempty"`
+}

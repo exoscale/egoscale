@@ -49,7 +49,7 @@ func TestAssociateIpAddress(t *testing.T) {
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	zoneId := "fakeId"
-	ipAddress, err := cs.AssociateIpAddress(zoneId)
+	ipAddress, err := cs.AssociateIpAddress(zoneId, 0, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestAssociateIpAddressBadZone(t *testing.T) {
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	zoneId := "fakeId"
-	_, err := cs.AssociateIpAddress(zoneId)
+	_, err := cs.AssociateIpAddress(zoneId, 0, 0)
 	if err == nil {
 		t.Errorf("Expected an error to be returned, got an IpAddress")
 	}

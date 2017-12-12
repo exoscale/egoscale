@@ -1,7 +1,6 @@
 package egoscale
 
 import (
-	"encoding/json"
 	"net/http"
 )
 
@@ -324,20 +323,6 @@ type DeployVirtualMachineResponse struct {
 	Templatename        string `json:"templatename,omitempty"`
 	Zoneid              string `json:"zoneid,omitempty"`
 	Zonename            string `json:"zonename,omitempty"`
-}
-
-type QueryAsyncJobResultResponse struct {
-	Accountid       string          `json:"accountid,omitempty"`
-	Cmd             string          `json:"cmd,omitempty"`
-	Created         string          `json:"created,omitempty"`
-	Jobinstanceid   string          `json:"jobinstanceid,omitempty"`
-	Jobinstancetype string          `json:"jobinstancetype,omitempty"`
-	Jobprocstatus   int             `json:"jobprocstatus,omitempty"`
-	Jobresult       json.RawMessage `json:"jobresult,omitempty"`
-	Jobresultcode   int             `json:"jobresultcode,omitempty"`
-	Jobresulttype   string          `json:"jobresulttype,omitempty"`
-	Jobstatus       int             `json:"jobstatus,omitempty"`
-	Userid          string          `json:"userid,omitempty"`
 }
 
 type ListVirtualMachinesResponse struct {

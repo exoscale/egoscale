@@ -24,13 +24,3 @@ func (exo *Client) PollAsyncJob(jobid string) (*QueryAsyncJobResultResponse, err
 
 	return &r, nil
 }
-
-func (exo *Client) AsyncToVirtualMachine(resp QueryAsyncJobResultResponse) (*DeployVirtualMachineResponse, error) {
-	var r DeployVirtualMachineWrappedResponse
-
-	if err := json.Unmarshal(resp.Jobresult, &r); err != nil {
-		return nil, err
-	}
-
-	return &r.Wrapped, nil
-}

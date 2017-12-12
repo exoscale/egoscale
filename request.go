@@ -59,7 +59,7 @@ func (exo *Client) ParseResponse(resp *http.Response) (json.RawMessage, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		var e Error
+		var e ErrorResponse
 		if err := json.Unmarshal(b, &e); err != nil {
 			return nil, err
 		}

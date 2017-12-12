@@ -12,10 +12,11 @@ type Client struct {
 	apiSecret string
 }
 
-type Error struct {
-	ErrorCode   int    `json:"errorcode"`
-	CSErrorCode int    `json:"cserrorcode"`
-	ErrorText   string `json:"errortext"`
+type ErrorResponse struct {
+	ErrorCode   int      `json:"errorcode"`
+	CSErrorCode int      `json:"cserrorcode"`
+	ErrorText   string   `json:"errortext"`
+	UuidList    []string `json:"uuidlist,omitempty"`
 }
 
 type StandardResponse struct {

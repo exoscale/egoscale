@@ -10,14 +10,12 @@ func (exo *Client) PollAsyncJob(jobid string) (*QueryAsyncJobResultResponse, err
 
 	params.Set("jobid", jobid)
 
-	resp, err := exo.Request("queryAsyncJobResult", params)
-
+	resp, err := exo.request("queryAsyncJobResult", params)
 	if err != nil {
 		return nil, err
 	}
 
 	var r QueryAsyncJobResultResponse
-
 	if err := json.Unmarshal(resp, &r); err != nil {
 		return nil, err
 	}

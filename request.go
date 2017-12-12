@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"sort"
@@ -81,7 +82,57 @@ func (exo *Client) ParseResponse(resp *http.Response) (json.RawMessage, error) {
 }
 
 // AsyncRequest performs an asynchronous request and polls it for retries * day [s]
-func (exo *Client) AsyncRequest(command string, params url.Values, retries, delay int) (json.RawMessage, error) {
+func (exo *Client) AsyncRequest(command string, params url.Values, async AsyncInfo) (json.RawMessage, error) {
+	body, err := exo.request(command, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// This is not a Job
+	var job JobResultResponse
+	if err := json.Unmarshal(body, &job); err != nil {
+		return nil, err
+	}
+
+	if job.JobId != "" {
+		if job.JobStatus == SUCCESS {
+			return *job.JobResult, nil
+		} else if job.JobStatus == FAILURE {
+			return nil, fmt.Errorf("Job %s failed. %s", job.JobId, job.JobResultType)
+		}
+
+		// we've go a pending job
+		for async.Retries > 0 {
+			time.Sleep(time.Duration(async.Delay) * time.Second)
+
+			async.Retries--
+
+			resp, err := exo.PollAsyncJob(job.JobId)
+			if err != nil {
+				return nil, err
+			}
+
+			if resp.JobStatus == SUCCESS {
+				return *resp.JobResult, nil
+			} else if resp.JobStatus == FAILURE {
+				return nil, fmt.Errorf("Job %s failed. %s", job.JobId, resp.JobResultType)
+			}
+		}
+
+		return nil, fmt.Errorf("Maximum number of retries reached")
+	} else {
+		// the job is done
+		return body, nil
+	}
+}
+
+// Request performs a sync request (one try only)
+func (exo *Client) Request(command string, params url.Values) (json.RawMessage, error) {
+	return exo.AsyncRequest(command, params, AsyncInfo{})
+}
+
+// request makes a Request while being close to the metal
+func (exo *Client) request(command string, params url.Values) (json.RawMessage, error) {
 	mac := hmac.New(sha1.New, []byte(exo.apiSecret))
 
 	params.Set("apikey", exo.apiKey)
@@ -107,6 +158,7 @@ func (exo *Client) AsyncRequest(command string, params url.Values, retries, dela
 	query := params.Encode()
 	url := fmt.Sprintf("%s?%s&signature=%s", exo.endpoint, csQuotePlus(query), signature)
 
+	log.Printf("[DEBUG] GET %s", csQuotePlus(query))
 	resp, err := exo.client.Get(url)
 	if err != nil {
 		return nil, err
@@ -118,38 +170,7 @@ func (exo *Client) AsyncRequest(command string, params url.Values, retries, dela
 		return nil, err
 	}
 
-	// This is not a Job
-	var job JobResultResponse
-	if err := json.Unmarshal(body, &job); err != nil {
-		return nil, err
-	}
-
-	if job.JobId != "" {
-		// we've go a job!
-		for job.JobStatus == PENDING && retries > 0 {
-			retries -= 1
-
-			resp, err := exo.PollAsyncJob(job.JobId)
-			if err != nil {
-				return nil, err
-			}
-
-			if resp.JobStatus == SUCCESS {
-				return *resp.JobResult, nil
-			}
-
-			time.Sleep(time.Duration(delay) * time.Second)
-		}
-		return *job.JobResult, nil
-	} else {
-		// the job is done
-		return body, nil
-	}
-}
-
-// Request performs a sync request (one try only)
-func (exo *Client) Request(command string, params url.Values) (json.RawMessage, error) {
-	return exo.AsyncRequest(command, params, 0, 0)
+	return body, nil
 }
 
 func (exo *Client) DetailedRequest(uri string, params string, method string, header http.Header) (json.RawMessage, error) {

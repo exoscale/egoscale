@@ -5,11 +5,16 @@ import (
 	"net/url"
 )
 
-// AssociateIpAddress acquires and associates a public IP to a given zone.
-func (exo *Client) AssociateIpAddress(zoneId string, retries, delay int) (*IpAddress, error) {
+// CreateIpAddress is an alias for AssociateIpAddress
+func (exo *Client) CreateIpAddress(profile IpAddressProfile, async AsyncInfo) (*IpAddress, error) {
+	return exo.AssociateIpAddress(profile, async)
+}
+
+// AssociateIpAddress acquires and associates a public IP to a given zone
+func (exo *Client) AssociateIpAddress(profile IpAddressProfile, async AsyncInfo) (*IpAddress, error) {
 	params := url.Values{}
-	params.Set("zoneid", zoneId)
-	resp, err := exo.AsyncRequest("associateIpAddress", params, retries, delay)
+	params.Set("zoneid", profile.Zone)
+	resp, err := exo.AsyncRequest("associateIpAddress", params, async)
 	if err != nil {
 		return nil, err
 	}
@@ -19,19 +24,24 @@ func (exo *Client) AssociateIpAddress(zoneId string, retries, delay int) (*IpAdd
 		return nil, err
 	}
 
-	return &r.IpAddress, nil
+	return r.IpAddress, nil
+}
+
+// DestroyIpAddress is an alias for DisassociateIpAddress
+func (exo *Client) DestroyIpAddress(ipAddressId string, async AsyncInfo) (bool, error) {
+	return exo.DisassociateIpAddress(ipAddressId, async)
 }
 
 // DisassociateIpAddress disassociates a public IP from the account
-func (exo *Client) DisassociateIpAddress(ipAddressId string) (bool, error) {
+func (exo *Client) DisassociateIpAddress(ipAddressId string, async AsyncInfo) (bool, error) {
 	params := url.Values{}
 	params.Set("id", ipAddressId)
-	resp, err := exo.Request("ipAddressId", params)
+	resp, err := exo.AsyncRequest("disassociateIpAddress", params, async)
 	if err != nil {
 		return false, err
 	}
 
-	var r DisassociateIpAddressResponse
+	var r BooleanResponse
 	if err := json.Unmarshal(resp, &r); err != nil {
 		return false, err
 	}

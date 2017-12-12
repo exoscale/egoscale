@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+var async = AsyncInfo{0, 0}
+
 func TestAssociateIpAddress(t *testing.T) {
 	ts := newServer(200, `
 {
@@ -48,8 +50,8 @@ func TestAssociateIpAddress(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	zoneId := "fakeId"
-	ipAddress, err := cs.AssociateIpAddress(zoneId, 0, 0)
+	profile := IpAddressProfile{Zone: "fakeId"}
+	ipAddress, err := cs.CreateIpAddress(profile, async)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,8 +75,8 @@ func TestAssociateIpAddressBadZone(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	zoneId := "fakeId"
-	_, err := cs.AssociateIpAddress(zoneId, 0, 0)
+	profile := IpAddressProfile{Zone: "fakeId"}
+	_, err := cs.CreateIpAddress(profile, async)
 	if err == nil {
 		t.Errorf("Expected an error to be returned, got an IpAddress")
 	}
@@ -106,7 +108,7 @@ func TestDisassociateIpAddress(t *testing.T) {
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	ipAddressId := "fakeId"
-	ok, err := cs.DisassociateIpAddress(ipAddressId)
+	ok, err := cs.DestroyIpAddress(ipAddressId, async)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -131,7 +133,7 @@ func TestDisassociateIpAddressBadId(t *testing.T) {
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	ipAddressId := "fakeId"
-	ok, err := cs.DisassociateIpAddress(ipAddressId)
+	ok, err := cs.DestroyIpAddress(ipAddressId, async)
 	if err == nil {
 		t.Errorf("Expected an error, got nothing")
 	}

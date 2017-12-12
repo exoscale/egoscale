@@ -44,13 +44,28 @@ type JobResultResponse struct {
 	UserId        string           `json:"userid,omitempty"`
 }
 
-// AssociateIpAddressResponse represents the response to the creation of an IpAddress
-type AssociateIpAddressResponse struct {
-	IpAddress IpAddress `json:"ipaddress"`
+// CreateAffinityGroupResponse represents the response of the creation of an affinity group
+type CreateAffinityGroupResponse struct {
+	AffinityGroup AffinityGroup `json:"affinitygroup"`
 }
 
-// DisassociateIpAddressResponse represents the response to the deletion of an IpAddress
-type DisassociateIpAddressResponse struct {
+// AssociateIpAddressResponse represents the response to the creation of an IpAddress
+type AssociateIpAddressResponse struct {
+	IpAddress *IpAddress `json:"ipaddress"`
+}
+
+// BooleanResponse represents a boolean response (usually after a deletion)
+type BooleanResponse struct {
 	Success     bool   `json:"success"`
 	DisplayText string `json:"diplaytext,omitempty"`
+}
+
+// VirtualMachineResponse represents a deployed VM instance
+type VirtualMachineResponse struct {
+	VirtualMachine *VirtualMachine `json:"virtualmachine"`
+}
+
+// SecurityGroupRuleResponse struct {
+type SecurityGroupRuleResponse struct {
+	SecurityGroupRule *SecurityGroupRule `json:"securitygrouprule,omitempty"`
 }

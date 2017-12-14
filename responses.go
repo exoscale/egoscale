@@ -65,7 +65,36 @@ type VirtualMachineResponse struct {
 	VirtualMachine *VirtualMachine `json:"virtualmachine"`
 }
 
-// SecurityGroupRuleResponse struct {
+// SecurityGroupRuleResponse represents a deployed security group
 type SecurityGroupRuleResponse struct {
 	SecurityGroupRule *SecurityGroupRule `json:"securitygrouprule,omitempty"`
+}
+
+// AddIpToNicResponse represents the addition of an IP to a NIC
+type AddIpToNicResponse struct {
+	NicSecondaryIp *NicSecondaryIp `json:"nicsecondaryip"`
+}
+
+// ListZonesResponse represents a list of zones
+type ListZonesResponse struct {
+	Count int     `json:"count"`
+	Zone  []*Zone `json:"zone"`
+}
+
+// ListPublicIpAddressesResponse represents a list of public IP addresses
+type ListPublicIpAddressesResponse struct {
+	Count           int          `json:"count"`
+	PublicIpAddress []*IpAddress `json:"publicipaddress"`
+}
+
+// ListTemplatesResponse represents a list of templates
+type ListTemplatesResponse struct {
+	Count    int         `json:"count"`
+	Template []*Template `json:"template"`
+}
+
+// ListNicsResponse represents a list of templates
+type ListNicsResponse struct {
+	Count int    `json:"count"`
+	Nic   []*Nic `json:"nic"`
 }

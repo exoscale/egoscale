@@ -2,6 +2,7 @@ package egoscale
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
 )
 
@@ -28,57 +29,49 @@ func (exo *Client) AssociateIpAddress(profile IpAddressProfile, async AsyncInfo)
 }
 
 // DestroyIpAddress is an alias for DisassociateIpAddress
-func (exo *Client) DestroyIpAddress(ipAddressId string, async AsyncInfo) (bool, error) {
+func (exo *Client) DestroyIpAddress(ipAddressId string, async AsyncInfo) error {
 	return exo.DisassociateIpAddress(ipAddressId, async)
 }
 
 // DisassociateIpAddress disassociates a public IP from the account
-func (exo *Client) DisassociateIpAddress(ipAddressId string, async AsyncInfo) (bool, error) {
+func (exo *Client) DisassociateIpAddress(ipAddressId string, async AsyncInfo) error {
 	params := url.Values{}
 	params.Set("id", ipAddressId)
 	resp, err := exo.AsyncRequest("disassociateIpAddress", params, async)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	var r BooleanResponse
 	if err := json.Unmarshal(resp, &r); err != nil {
-		return false, err
+		return err
 	}
 
-	return r.Success, nil
+	if !r.Success {
+		return fmt.Errorf("Cannot disassociateIpAddress. %s", r.DisplayText)
+	}
+
+	return nil
 }
 
-func (exo *Client) AddIpToNic(nic_id string, ip_address string) (string, error) {
+// GetAllIpAddresses returns all the public IP addresses
+func (exo *Client) GetAllIpAddresses() ([]*IpAddress, error) {
 	params := url.Values{}
-	params.Set("nicid", nic_id)
-	params.Set("ipaddress", ip_address)
 
-	resp, err := exo.Request("addIpToNic", params)
-	if err != nil {
-		return "", err
-	}
-
-	var r AddIpToNicResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
-		return "", err
-	}
-
-	return r.Id, nil
+	return exo.ListPublicIpAddresses(params)
 }
 
-func (exo *Client) RemoveIpFromNic(nic_id string) (string, error) {
-	params := url.Values{}
-	params.Set("id", nic_id)
-
-	resp, err := exo.Request("removeIpFromNic", params)
+// ListPublicIpAddresses lists the public ip addresses
+func (exo *Client) ListPublicIpAddresses(params url.Values) ([]*IpAddress, error) {
+	resp, err := exo.Request("listPublicIpAddresses", params)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var r RemoveIpFromNicResponse
+	var r ListPublicIpAddressesResponse
 	if err := json.Unmarshal(resp, &r); err != nil {
-		return "", err
+		return nil, err
 	}
-	return r.JobID, nil
+
+	return r.PublicIpAddress, nil
 }

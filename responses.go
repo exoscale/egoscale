@@ -1,3 +1,4 @@
+// responses contains the structs representing the CloudStack API responses
 package egoscale
 
 import (
@@ -103,4 +104,9 @@ type ListNicsResponse struct {
 type ListVolumesResponse struct {
 	Count  int       `json:"count"`
 	Volume []*Volume `json:"volume"`
+}
+
+// CreateSecurityGroupResponse represents a new security group
+type CreateSecurityGroupResponse struct {
+	SecurityGroup *SecurityGroup `json:"securitygroup"`
 }

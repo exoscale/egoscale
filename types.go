@@ -32,24 +32,6 @@ type Topology struct {
 	AffinityGroups map[string]string
 }
 
-// VirtualMachineProfile represents the machine creation request
-type VirtualMachineProfile struct {
-	Name            string
-	DiskSize        uint64
-	SecurityGroups  []string
-	Keypair         string
-	UserData        string
-	ServiceOffering string
-	Template        string
-	Zone            string
-	AffinityGroups  []string
-}
-
-// IpProfile represents the IP creation request
-type IpAddressProfile struct {
-	Zone string
-}
-
 // AsyncInfo represents the details for any async call
 type AsyncInfo struct {
 	Retries int
@@ -168,17 +150,21 @@ type ListSecurityGroupsResponse struct {
 
 // SecurityGroup represent a firewalling set of rules
 type SecurityGroup struct {
-	Account      string               `json:"account,omitempty"`
-	Description  string               `json:"description,omitempty"`
-	Domain       string               `json:"domain,omitempty"`
-	Domainid     string               `json:"domainid,omitempty"`
-	Id           string               `json:"id,omitempty"`
-	Name         string               `json:"name,omitempty"`
-	Project      string               `json:"project,omitempty"`
-	Projectid    string               `json:"projectid,omitempty"`
-	IngressRules []*SecurityGroupRule `json:"ingressrule,omitempty"`
-	EgressRules  []*SecurityGroupRule `json:"egressrule,omitempty"`
-	Tags         []string             `json:"tags,omitempty"`
+	Account             string               `json:"account,omitempty"`
+	Description         string               `json:"description,omitempty"`
+	Domain              string               `json:"domain,omitempty"`
+	Domainid            string               `json:"domainid,omitempty"`
+	Id                  string               `json:"id,omitempty"`
+	Name                string               `json:"name,omitempty"`
+	Project             string               `json:"project,omitempty"`
+	Projectid           string               `json:"projectid,omitempty"`
+	VirtualMachineCount int                  `json:"virtualmachinecount,omitempty"`
+	VirtualMachineIds   []string             `json:"virtualmachineids,omitempty"`
+	IngressRules        []*SecurityGroupRule `json:"ingressrule,omitempty"`
+	EgressRules         []*SecurityGroupRule `json:"egressrule,omitempty"`
+	Tags                []string             `json:"tags,omitempty"`
+	JobId               string               `json:"jobid,omitempty"`
+	JobStatus           JobStatusType        `json:"jobstatus,omitempty"`
 }
 
 // SecurityGroupRule represents the ingress/egress rule
@@ -202,21 +188,6 @@ type SecurityGroupRule struct {
 type UserSecurityGroup struct {
 	Group   string `json:"group,omitempty"`
 	Account string `json:"account,omitempty"`
-}
-
-type CreateSecurityGroupResponseWrapper struct {
-	Wrapped CreateSecurityGroupResponse `json:"securitygroup"`
-}
-
-type CreateSecurityGroupResponse struct {
-	Account     string `json:"account,omitempty"`
-	Description string `json:"description,omitempty"`
-	Domain      string `json:"domain,omitempty"`
-	Domainid    string `json:"domainid,omitempty"`
-	Id          string `json:"id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Project     string `json:"project,omitempty"`
-	Projectid   string `json:"projectid,omitempty"`
 }
 
 type AuthorizeSecurityGroupIngressResponse struct {

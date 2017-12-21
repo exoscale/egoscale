@@ -7,9 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
+	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -157,6 +160,8 @@ func (exo *Client) request(command string, params url.Values) (json.RawMessage, 
 	query := params.Encode()
 	reader := strings.NewReader(fmt.Sprintf("%s&signature=%s", csQuotePlus(query), signature))
 
+	log.Printf("[DEBUG] %s %s", command, csQuotePlus(query))
+
 	// Use PostForm?
 	resp, err := exo.client.Post(exo.endpoint, "application/x-www-form-urlencoded", reader)
 	if err != nil {
@@ -189,4 +194,70 @@ func (exo *Client) DetailedRequest(uri string, params string, method string, hea
 
 	defer response.Body.Close()
 	return exo.ParseResponse(response)
+}
+
+// prepareValues uses a profile to build a POST request
+func prepareValues(profile interface{}) (*url.Values, error) {
+	params := url.Values{}
+	value := reflect.ValueOf(profile)
+	typeof := reflect.TypeOf(profile)
+	for typeof.Kind() == reflect.Ptr {
+		typeof = typeof.Elem()
+		value = value.Elem()
+	}
+
+	for i := 0; i < typeof.NumField(); i++ {
+		field := typeof.Field(i)
+		val := value.Field(i)
+		tag := field.Tag
+		if json, ok := tag.Lookup("json"); ok {
+			name, required := extractJsonTag(field.Name, json)
+
+			switch val.Kind() {
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				if required && val.Int() == 0 {
+					return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+				}
+
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				if required && val.Uint() == 0 {
+					return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+				}
+				params.Set(name, strconv.FormatUint(val.Uint(), 10))
+			case reflect.Float32, reflect.Float64:
+				if required && val.Float() == 0 {
+					return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+				}
+				params.Set(name, strconv.FormatFloat(val.Float(), 'f', -1, 64))
+			case reflect.String:
+				if required && val.String() == "" {
+					return nil, fmt.Errorf("%s.%s (%v) is required, got \"\".", typeof.Name(), field.Name, val.Kind())
+				}
+				params.Set(name, val.String())
+			default:
+				return nil, fmt.Errorf("Unsupported type %s.%s (%v)", typeof.Name(), field.Name, val.Kind())
+			}
+		} else {
+			log.Printf("[SKIP] %s.%s not json label found", typeof.Name(), field.Name)
+		}
+	}
+
+	return &params, nil
+}
+
+// extractJsonTag returns the variable name or defaultName as well as if the field is required (!omitempty)
+func extractJsonTag(defaultName, jsonTag string) (string, bool) {
+	tags := strings.Split(jsonTag, ",")
+	name := tags[0]
+	required := true
+	for _, tag := range tags {
+		if tag == "omitempty" {
+			required = false
+		}
+	}
+
+	if name == "" || name == "omitempty" {
+		name = defaultName
+	}
+	return name, required
 }

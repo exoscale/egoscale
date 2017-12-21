@@ -67,8 +67,24 @@ func (exo *Client) doSecurityGroupRule(action string, kind string, rule Security
 	return r.SecurityGroupRule, nil
 }
 
-// CreateGroupSecurityWithRules creats a SG with the given set of rules
-func (exo *Client) CreateSecurityGroupWithRules(name string, ingress, egress []SecurityGroupRule, async AsyncInfo) (*CreateSecurityGroupResponse, error) {
+// CreateSecurityGroup creates a SG using the given profile
+func (exo *Client) CreateSecurityGroup(profile SecurityGroupProfile) (*SecurityGroup, error) {
+	params, err := prepareValues(profile)
+	resp, err := exo.Request("createSecurityGroup", *params)
+	if err != nil {
+		return nil, err
+	}
+
+	var r CreateSecurityGroupResponse
+	if err := json.Unmarshal(resp, &r); err != nil {
+		return nil, err
+	}
+
+	return r.SecurityGroup, err
+}
+
+// CreateSecurityGroupWithRules creates a SG with the given set of rules
+func (exo *Client) CreateSecurityGroupWithRules(name string, ingress, egress []SecurityGroupRule, async AsyncInfo) (*SecurityGroup, error) {
 
 	params := url.Values{}
 	params.Set("name", name)
@@ -78,12 +94,12 @@ func (exo *Client) CreateSecurityGroupWithRules(name string, ingress, egress []S
 		return nil, err
 	}
 
-	var r CreateSecurityGroupResponseWrapper
+	var r CreateSecurityGroupResponse
 	if err := json.Unmarshal(resp, &r); err != nil {
 		return nil, err
 	}
 
-	sgid := r.Wrapped.Id
+	sgid := r.SecurityGroup.Id
 
 	for _, erule := range egress {
 		erule.SecurityGroupId = sgid
@@ -101,7 +117,7 @@ func (exo *Client) CreateSecurityGroupWithRules(name string, ingress, egress []S
 		}
 	}
 
-	return &r.Wrapped, nil
+	return r.SecurityGroup, nil
 }
 
 // DeleteSecurityGroup deletes a Security Group by name.
@@ -116,4 +132,19 @@ func (exo *Client) DeleteSecurityGroup(name string) error {
 
 	fmt.Printf("## response: %+v\n", resp)
 	return nil
+}
+
+// GetSecurityGroupById returns a security from its id
+func (exo *Client) GetSecurityGroupById(securityGroupId string) (*SecurityGroup, error) {
+	params := url.Values{}
+	params.Set("id", securityGroupId)
+	groups, err := exo.GetSecurityGroups(params)
+	if err != nil {
+		return nil, err
+	}
+	if len(groups) != 1 {
+		return nil, fmt.Errorf("Expected exactly one security group for %v, got %d", securityGroupId, len(groups))
+	}
+
+	return groups[0], nil
 }

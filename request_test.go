@@ -14,7 +14,6 @@ func TestPrepareValues(t *testing.T) {
 		Num      float64 `json:"num"`
 	}{
 		IgnoreMe: "bar",
-		Zone:     "hello",
 		Name:     "world",
 		Id:       1,
 		Uid:      uint(2),
@@ -26,15 +25,15 @@ func TestPrepareValues(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if params.Get("myzone") != "hello" {
-		t.Errorf("myzone params wasn't properly set, got %v", params.Get("myzone"))
+	if _, ok := (*params)["myzone"]; ok {
+		t.Errorf("myzone params shouldn't be set, got %v", params.Get("myzone"))
 	}
 
 	if params.Get("name") != "world" {
 		t.Errorf("name params wasn't properly set, got %v", params.Get("name"))
 	}
 
-	if params.Get("IgnoreMe") != "" || params.Get("ignoreme") != "" {
+	if _, ok := (*params)["ignoreme"]; ok {
 		t.Errorf("IgnoreMe key was set")
 	}
 }

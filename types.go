@@ -143,18 +143,13 @@ type AffinityGroup struct {
 	VirtualMachineIds []string `json:"virtualmachineIds,omitempty"` // *I*ds is not a typo
 }
 
-type ListSecurityGroupsResponse struct {
-	Count          int              `json:"count"`
-	SecurityGroups []*SecurityGroup `json:"securitygroup"`
-}
-
 // SecurityGroup represent a firewalling set of rules
 type SecurityGroup struct {
+	Id                  string               `json:"id,omitempty"`
 	Account             string               `json:"account,omitempty"`
 	Description         string               `json:"description,omitempty"`
 	Domain              string               `json:"domain,omitempty"`
 	Domainid            string               `json:"domainid,omitempty"`
-	Id                  string               `json:"id,omitempty"`
 	Name                string               `json:"name,omitempty"`
 	Project             string               `json:"project,omitempty"`
 	Projectid           string               `json:"projectid,omitempty"`
@@ -162,23 +157,24 @@ type SecurityGroup struct {
 	VirtualMachineIds   []string             `json:"virtualmachineids,omitempty"`
 	IngressRules        []*SecurityGroupRule `json:"ingressrule,omitempty"`
 	EgressRules         []*SecurityGroupRule `json:"egressrule,omitempty"`
-	Tags                []string             `json:"tags,omitempty"`
+	Tags                []*ResourceTag       `json:"tags,omitempty"`
 	JobId               string               `json:"jobid,omitempty"`
 	JobStatus           JobStatusType        `json:"jobstatus,omitempty"`
 }
 
 // SecurityGroupRule represents the ingress/egress rule
 type SecurityGroupRule struct {
-	Account               string   `json:"account,omitempty"`
-	RuleId                string   `json:"ruleid,omitempty"`
-	Cidr                  string   `json:"cidr,omitempty"`
-	IcmpType              int      `json:"icmptype,omitempty"`
-	IcmpCode              int      `json:"icmpcode,omitempty"`
-	StartPort             int      `json:"startport,omitempty"`
-	EndPort               int      `json:"endport,omitempty"`
-	Protocol              string   `json:"protocol,omitempty"`
-	Tags                  []string `json:"tags,omitempty"`
+	Id                    string         `json:"ruleid,omitempty"`
+	Account               string         `json:"account,omitempty"`
+	Cidr                  string         `json:"cidr,omitempty"`
+	IcmpType              int            `json:"icmptype,omitempty"`
+	IcmpCode              int            `json:"icmpcode,omitempty"`
+	StartPort             int            `json:"startport,omitempty"`
+	EndPort               int            `json:"endport,omitempty"`
+	Protocol              string         `json:"protocol,omitempty"`
+	Tags                  []*ResourceTag `json:"tags,omitempty"`
 	SecurityGroupId       string
+	SecurityGroupName     string               `json:"securitygroupname,omitempty"`
 	UserSecurityGroupList []*UserSecurityGroup `json:"usersecuritygrouplist,omitempty"`
 	JobId                 string               `json:"jobid,omitempty"`
 	JobStatus             JobStatusType        `json:"jobstatus,omitempty"`
@@ -190,22 +186,18 @@ type UserSecurityGroup struct {
 	Account string `json:"account,omitempty"`
 }
 
-type AuthorizeSecurityGroupIngressResponse struct {
-	JobID             string `json:"jobid,omitempty"`
-	Account           string `json:"account,omitempty"`
-	Cidr              string `json:"cidr,omitempty"`
-	Endport           int    `json:"endport,omitempty"`
-	Icmpcode          int    `json:"icmpcode,omitempty"`
-	Icmptype          int    `json:"icmptype,omitempty"`
-	Protocol          string `json:"protocol,omitempty"`
-	Ruleid            string `json:"ruleid,omitempty"`
-	Securitygroupname string `json:"securitygroupname,omitempty"`
-	Startport         int    `json:"startport,omitempty"`
-}
-
-type ListVirtualMachinesResponse struct {
-	Count           int               `json:"count"`
-	VirtualMachines []*VirtualMachine `json:"virtualmachine"`
+// ResourceTag is a tag associated with a rule
+type ResourceTag struct {
+	Account      string `json:"account,omitempty"`
+	Customer     string `json:"customer,omitempty"`
+	Domain       string `json:"domain,omitempty"`
+	DomainId     string `json:"domainid,omitempty"`
+	Key          string `json:"key,omitempty"`
+	Project      string `json:"project,omitempty"`
+	ProjectId    string `json:"projectid,omitempty"`
+	ResourceId   string `json:"resourceid,omitempty"`
+	ResourceType string `json:"resourcetype,omitempty"`
+	Value        string `json:"value,omitempty"`
 }
 
 // VirtualMachine reprents a virtual machine

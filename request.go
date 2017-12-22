@@ -97,19 +97,23 @@ func (exo *Client) AsyncRequest(command string, params url.Values, async AsyncIn
 	}
 
 	if job.JobId != "" {
+		var result json.RawMessage
 		if job.JobStatus == SUCCESS {
 			return *job.JobResult, nil
 		} else if job.JobStatus == FAILURE {
-			return nil, fmt.Errorf("Job %s failed. %s", job.JobId, job.JobResultType)
+			result = *job.JobResult
+			async.Retries = 0
 		}
 
 		// we've go a pending job
-		for async.Retries > 0 {
+		for async.Retries > 0 && result == nil {
 			time.Sleep(time.Duration(async.Delay) * time.Second)
 
 			async.Retries--
 
-			resp, err := exo.PollAsyncJob(job.JobId)
+			resp, err := exo.QueryAsyncJobResult(AsyncJobResultProfile{
+				JobId: job.JobId,
+			})
 			if err != nil {
 				return nil, err
 			}
@@ -117,11 +121,20 @@ func (exo *Client) AsyncRequest(command string, params url.Values, async AsyncIn
 			if resp.JobStatus == SUCCESS {
 				return *resp.JobResult, nil
 			} else if resp.JobStatus == FAILURE {
-				return nil, fmt.Errorf("Job %s failed. %s", job.JobId, resp.JobResultType)
+				result = *resp.JobResult
 			}
 		}
 
+		if result != nil {
+			var r ErrorResponse
+			if err := json.Unmarshal(result, &r); err != nil {
+				return nil, err
+			}
+			return nil, fmt.Errorf("%s: [%d] %s", command, r.ErrorCode, r.ErrorText)
+		}
+
 		return nil, fmt.Errorf("Maximum number of retries reached")
+
 	} else {
 		// the job is done
 		return body, nil
@@ -153,14 +166,12 @@ func (exo *Client) request(command string, params url.Values) (json.RawMessage, 
 		unencoded = append(unencoded, arg)
 	}
 
-	sign_string := strings.ToLower(strings.Join(unencoded, "&"))
+	signString := strings.ToLower(strings.Join(unencoded, "&"))
 
-	mac.Write([]byte(sign_string))
+	mac.Write([]byte(signString))
 	signature := csEncode(base64.StdEncoding.EncodeToString(mac.Sum(nil)))
 	query := params.Encode()
 	reader := strings.NewReader(fmt.Sprintf("%s&signature=%s", csQuotePlus(query), signature))
-
-	log.Printf("[DEBUG] %s %s", command, csQuotePlus(query))
 
 	// Use PostForm?
 	resp, err := exo.client.Post(exo.endpoint, "application/x-www-form-urlencoded", reader)
@@ -215,30 +226,46 @@ func prepareValues(profile interface{}) (*url.Values, error) {
 
 			switch val.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				if required && val.Int() == 0 {
-					return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+				v := val.Int()
+				if v == 0 {
+					if required {
+						return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+					}
+				} else {
+					params.Set(name, strconv.FormatInt(v, 10))
 				}
-
 			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				if required && val.Uint() == 0 {
-					return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+				v := val.Uint()
+				if v == 0 {
+					if required {
+						return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+					}
+				} else {
+					params.Set(name, strconv.FormatUint(v, 10))
 				}
-				params.Set(name, strconv.FormatUint(val.Uint(), 10))
 			case reflect.Float32, reflect.Float64:
-				if required && val.Float() == 0 {
-					return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+				v := val.Float()
+				if v == 0 {
+					if required {
+						return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+					}
+				} else {
+					params.Set(name, strconv.FormatFloat(v, 'f', -1, 64))
 				}
-				params.Set(name, strconv.FormatFloat(val.Float(), 'f', -1, 64))
 			case reflect.String:
-				if required && val.String() == "" {
-					return nil, fmt.Errorf("%s.%s (%v) is required, got \"\".", typeof.Name(), field.Name, val.Kind())
+				v := val.String()
+				if v == "" {
+					if required {
+						return nil, fmt.Errorf("%s.%s (%v) is required, got \"\".", typeof.Name(), field.Name, val.Kind())
+					}
+				} else {
+					params.Set(name, v)
 				}
-				params.Set(name, val.String())
 			default:
 				return nil, fmt.Errorf("Unsupported type %s.%s (%v)", typeof.Name(), field.Name, val.Kind())
 			}
 		} else {
-			log.Printf("[SKIP] %s.%s not json label found", typeof.Name(), field.Name)
+			log.Printf("[SKIP] %s.%s no json label found", typeof.Name(), field.Name)
 		}
 	}
 

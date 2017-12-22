@@ -19,17 +19,18 @@ type JobStatusType int
 
 // QueryASyncJobResultResponse represents the current status of an asynchronous job
 type QueryAsyncJobResultResponse struct {
-	Accountid       string           `json:"accountid,omitempty"`
-	Cmd             string           `json:"cmd,omitempty"`
-	Created         string           `json:"created,omitempty"`
-	JobInstanceId   string           `json:"jobinstanceid,omitempty"`
-	JobInstanceType string           `json:"jobinstancetype,omitempty"`
-	JobProcStatus   int              `json:"jobprocstatus,omitempty"`
-	JobResult       *json.RawMessage `json:"jobresult,omitempty"`
-	JobResultCode   int              `json:"jobresultcode,omitempty"`
-	JobResultType   string           `json:"jobresulttype,omitempty"`
-	JobStatus       JobStatusType    `json:"jobstatus,omitempty"`
-	Userid          string           `json:"userid,omitempty"`
+	AccountId       string           `json:"accountid"`
+	Cmd             string           `json:"cmd"`
+	Created         string           `json:"created"`
+	JobInstanceId   string           `json:"jobinstanceid"`
+	JobInstanceType string           `json:"jobinstancetype"`
+	JobProcStatus   int              `json:"jobprocstatus"`
+	JobResult       *json.RawMessage `json:"jobresult"`
+	JobResultCode   int              `json:"jobresultcode"`
+	JobResultType   string           `json:"jobresulttype"`
+	JobStatus       JobStatusType    `json:"jobstatus"`
+	UserId          string           `json:"userid"`
+	JobId           string           `json:"jobid"`
 }
 
 // JobResultResponse represents a generic response to a job task
@@ -66,9 +67,10 @@ type VirtualMachineResponse struct {
 	VirtualMachine *VirtualMachine `json:"virtualmachine"`
 }
 
-// SecurityGroupRuleResponse represents a deployed security group
+// SecurityGroupRuleResponse represents a deployed security group (rule)
+// /!\ the Cloud Stack API document is not fully accurate. /!\
 type SecurityGroupRuleResponse struct {
-	SecurityGroupRule *SecurityGroupRule `json:"securitygrouprule,omitempty"`
+	SecurityGroup *SecurityGroup `json:"securitygroup"`
 }
 
 // AddIpToNicResponse represents the addition of an IP to a NIC
@@ -106,7 +108,19 @@ type ListVolumesResponse struct {
 	Volume []*Volume `json:"volume"`
 }
 
+// ListVirtualMachinesResponse represents a list of virtual machines
+type ListVirtualMachinesResponse struct {
+	Count          int               `json:"count"`
+	VirtualMachine []*VirtualMachine `json:"virtualmachine"`
+}
+
 // CreateSecurityGroupResponse represents a new security group
 type CreateSecurityGroupResponse struct {
 	SecurityGroup *SecurityGroup `json:"securitygroup"`
+}
+
+// ListSecurityGroupsResponse represents a list of security groups
+type ListSecurityGroupsResponse struct {
+	Count         int              `json:"count"`
+	SecurityGroup []*SecurityGroup `json:"securitygroup"`
 }

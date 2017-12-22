@@ -7,54 +7,60 @@ import (
 )
 
 // CreateEgressRule is an alias of AuthorizeSecurityGroupEgress
-func (exo *Client) CreateEgressRule(rule SecurityGroupRule, async AsyncInfo) (*SecurityGroupRule, error) {
-	return exo.AuthorizeSecurityGroupEgress(rule, async)
+func (exo *Client) CreateEgressRule(profile SecurityGroupRuleProfile, async AsyncInfo) (*SecurityGroupRule, error) {
+	return exo.AuthorizeSecurityGroupEgress(profile, async)
 }
 
 // AuthorizeSecurityGroupEgress authorizes a particular egress rule for this security group
-func (exo *Client) AuthorizeSecurityGroupEgress(rule SecurityGroupRule, async AsyncInfo) (*SecurityGroupRule, error) {
-	return exo.doSecurityGroupRule("authorize", "Egress", rule, async)
+func (exo *Client) AuthorizeSecurityGroupEgress(profile SecurityGroupRuleProfile, async AsyncInfo) (*SecurityGroupRule, error) {
+	return exo.addSecurityGroupRule("authorize", "Egress", profile, async)
 }
 
 // CreateIngressRule is an alias of AuthorizeSecurityGroupIngress
-func (exo *Client) CreateIngressRule(rule SecurityGroupRule, async AsyncInfo) (*SecurityGroupRule, error) {
-	return exo.AuthorizeSecurityGroupIngress(rule, async)
+func (exo *Client) CreateIngressRule(profile SecurityGroupRuleProfile, async AsyncInfo) (*SecurityGroupRule, error) {
+	return exo.AuthorizeSecurityGroupIngress(profile, async)
 }
 
 // AuthorizeSecurityGroupIngress authorizes a particular ingress rule for this security group
-func (exo *Client) AuthorizeSecurityGroupIngress(rule SecurityGroupRule, async AsyncInfo) (*SecurityGroupRule, error) {
-	return exo.doSecurityGroupRule("authorize", "Ingress", rule, async)
+func (exo *Client) AuthorizeSecurityGroupIngress(profile SecurityGroupRuleProfile, async AsyncInfo) (*SecurityGroupRule, error) {
+	return exo.addSecurityGroupRule("authorize", "Ingress", profile, async)
 }
 
-func (exo *Client) doSecurityGroupRule(action string, kind string, rule SecurityGroupRule, async AsyncInfo) (*SecurityGroupRule, error) {
-	params := url.Values{}
-	params.Set("securitygroupid", rule.SecurityGroupId)
+// DeleteEgressRule is an alias of RevokeSecurityGroupEgress
+func (exo *Client) DeleteEgressRule(securityGroupRuleId string, async AsyncInfo) error {
+	return exo.RevokeSecurityGroupEgress(securityGroupRuleId, async)
+}
 
-	if rule.Cidr != "" {
-		params.Set("cidrlist", rule.Cidr)
-	} else if len(rule.UserSecurityGroupList) > 0 {
-		for i, usg := range rule.UserSecurityGroupList {
+// RevokeSecurityGroupEgress revokes a particular egress rule for this security group
+func (exo *Client) RevokeSecurityGroupEgress(securityGroupRuleId string, async AsyncInfo) error {
+	return exo.delSecurityGroupRule("revoke", "Egress", securityGroupRuleId, async)
+}
+
+// DeleteIngressRule is an alias of RevokeSecurityGroupIngress
+func (exo *Client) DeleteIngressRule(securityGroupRuleId string, async AsyncInfo) error {
+	return exo.RevokeSecurityGroupIngress(securityGroupRuleId, async)
+}
+
+// RevokeSecurityGroupIngress revokes a particular ingress rule for this security group
+func (exo *Client) RevokeSecurityGroupIngress(securityGroupRuleId string, async AsyncInfo) error {
+	return exo.delSecurityGroupRule("revoke", "Ingress", securityGroupRuleId, async)
+}
+
+func (exo *Client) addSecurityGroupRule(action, kind string, profile SecurityGroupRuleProfile, async AsyncInfo) (*SecurityGroupRule, error) {
+	params, err := prepareValues(profile)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(profile.UserSecurityGroupList) > 0 {
+		for i, usg := range profile.UserSecurityGroupList {
 			key := fmt.Sprintf("usersecuritygrouplist[%d]", i)
 			params.Set(key+".account", usg.Account)
 			params.Set(key+".group", usg.Group)
 		}
-	} else {
-		return nil, fmt.Errorf("No CIDR or Security Group List provided")
 	}
 
-	params.Set("protocol", rule.Protocol)
-
-	if rule.Protocol == "ICMP" {
-		params.Set("icmpcode", fmt.Sprintf("%d", rule.IcmpCode))
-		params.Set("icmptype", fmt.Sprintf("%d", rule.IcmpType))
-	} else if rule.Protocol == "TCP" || rule.Protocol == "UDP" {
-		params.Set("startport", fmt.Sprintf("%d", rule.StartPort))
-		params.Set("endport", fmt.Sprintf("%d", rule.EndPort))
-	} else {
-		return nil, fmt.Errorf("Invalid rule Protocol: %s", rule.Protocol)
-	}
-
-	resp, err := exo.AsyncRequest(action+"SecurityGroup"+kind, params, async)
+	resp, err := exo.AsyncRequest(action+"SecurityGroup"+kind, *params, async)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +70,31 @@ func (exo *Client) doSecurityGroupRule(action string, kind string, rule Security
 		return nil, err
 	}
 
-	return r.SecurityGroupRule, nil
+	if kind == "Egress" {
+		return r.SecurityGroup.EgressRules[0], nil
+	}
+	return r.SecurityGroup.IngressRules[0], nil
+}
+
+func (exo *Client) delSecurityGroupRule(action, kind, id string, async AsyncInfo) error {
+	params := url.Values{}
+	params.Set("id", id)
+
+	resp, err := exo.AsyncRequest(action+"SecurityGroup"+kind, params, async)
+	if err != nil {
+		return err
+	}
+
+	var r BooleanResponse
+	if err := json.Unmarshal(resp, &r); err != nil {
+		return err
+	}
+
+	if !r.Success {
+		return fmt.Errorf("Cannot %sSecurityGroup%s %s. %s", action, kind, id, r.DisplayText)
+	}
+
+	return nil
 }
 
 // CreateSecurityGroup creates a SG using the given profile
@@ -84,7 +114,7 @@ func (exo *Client) CreateSecurityGroup(profile SecurityGroupProfile) (*SecurityG
 }
 
 // CreateSecurityGroupWithRules creates a SG with the given set of rules
-func (exo *Client) CreateSecurityGroupWithRules(name string, ingress, egress []SecurityGroupRule, async AsyncInfo) (*SecurityGroup, error) {
+func (exo *Client) CreateSecurityGroupWithRules(name string, ingress, egress []SecurityGroupRuleProfile, async AsyncInfo) (*SecurityGroup, error) {
 
 	params := url.Values{}
 	params.Set("name", name)
@@ -138,7 +168,7 @@ func (exo *Client) DeleteSecurityGroup(name string) error {
 func (exo *Client) GetSecurityGroupById(securityGroupId string) (*SecurityGroup, error) {
 	params := url.Values{}
 	params.Set("id", securityGroupId)
-	groups, err := exo.GetSecurityGroups(params)
+	groups, err := exo.ListSecurityGroups(params)
 	if err != nil {
 		return nil, err
 	}
@@ -147,4 +177,40 @@ func (exo *Client) GetSecurityGroupById(securityGroupId string) (*SecurityGroup,
 	}
 
 	return groups[0], nil
+}
+
+// GetSecurityGroupByName returns a security from its name
+func (exo *Client) GetSecurityGroupByName(securityGroupName string) (*SecurityGroup, error) {
+	params := url.Values{}
+	params.Set("securitygroupname", securityGroupName)
+	groups, err := exo.ListSecurityGroups(params)
+	if err != nil {
+		return nil, err
+	}
+	if len(groups) != 1 {
+		return nil, fmt.Errorf("Expected exactly one security group for %v, got %d", securityGroupName, len(groups))
+	}
+
+	return groups[0], nil
+}
+
+// ListSecurityGroups lists the security groups.
+func (exo *Client) ListSecurityGroups(params url.Values) ([]*SecurityGroup, error) {
+	resp, err := exo.Request("listSecurityGroups", params)
+	if err != nil {
+		return nil, err
+	}
+
+	var r ListSecurityGroupsResponse
+	err = json.Unmarshal(resp, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.SecurityGroup, nil
+}
+
+// String formats the SecurityGroupRuleProfile to a human version
+func (p *SecurityGroupRuleProfile) String() string {
+	return fmt.Sprintf("%s: %s %s", p.SecurityGroupName, p.Protocol, p.Cidr)
 }

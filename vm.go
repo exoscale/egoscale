@@ -108,9 +108,8 @@ func (exo *Client) GetVirtualMachine(virtualMachineId string) (*VirtualMachine, 
 		return nil, err
 	}
 
-	if len(r.VirtualMachines) == 1 {
-		machine := r.VirtualMachines[0]
-		return machine, nil
+	if len(r.VirtualMachine) == 1 {
+		return r.VirtualMachine[0], nil
 	} else {
 		return nil, fmt.Errorf("cannot retrieve virtualmachine with id %s", virtualMachineId)
 	}
@@ -129,5 +128,5 @@ func (exo *Client) ListVirtualMachines() ([]*VirtualMachine, error) {
 		return nil, err
 	}
 
-	return r.VirtualMachines, nil
+	return r.VirtualMachine, nil
 }

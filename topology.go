@@ -8,19 +8,9 @@ import (
 	"strings"
 )
 
+// GetSecurityGroups is an alias for ListSecurityGroups
 func (exo *Client) GetSecurityGroups(params url.Values) ([]*SecurityGroup, error) {
-	resp, err := exo.Request("listSecurityGroups", params)
-	if err != nil {
-		return nil, err
-	}
-
-	var r ListSecurityGroupsResponse
-	err = json.Unmarshal(resp, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.SecurityGroups, nil
+	return exo.ListSecurityGroups(params)
 }
 
 func (exo *Client) GetAllSecurityGroups() (map[string]SecurityGroup, error) {

@@ -62,12 +62,6 @@ type VirtualMachineResponse struct {
 	VirtualMachine *VirtualMachine `json:"virtualmachine"`
 }
 
-// SecurityGroupRuleResponse represents a deployed security group (rule)
-// /!\ the Cloud Stack API document is not fully accurate. /!\
-type SecurityGroupRuleResponse struct {
-	SecurityGroup *SecurityGroup `json:"securitygroup"`
-}
-
 // AddIpToNicResponse represents the addition of an IP to a NIC
 type AddIpToNicResponse struct {
 	NicSecondaryIp *NicSecondaryIp `json:"nicsecondaryip"`
@@ -107,15 +101,4 @@ type ListVolumesResponse struct {
 type ListVirtualMachinesResponse struct {
 	Count          int               `json:"count"`
 	VirtualMachine []*VirtualMachine `json:"virtualmachine"`
-}
-
-// CreateSecurityGroupResponse represents a new security group
-type CreateSecurityGroupResponse struct {
-	SecurityGroup *SecurityGroup `json:"securitygroup"`
-}
-
-// ListSecurityGroupsResponse represents a list of security groups
-type ListSecurityGroupsResponse struct {
-	Count         int              `json:"count"`
-	SecurityGroup []*SecurityGroup `json:"securitygroup"`
 }

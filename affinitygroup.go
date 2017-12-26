@@ -1,8 +1,4 @@
-// Affinity Groups
-// ---------------
-//
-// http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/virtual_machines.html#affinity-groups
-
+// affinitygroups contains the methods related to (anti-)affinity groups
 package egoscale
 
 import (

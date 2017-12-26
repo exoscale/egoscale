@@ -127,49 +127,6 @@ type SSHKeyPair struct {
 	Name        string `json:"name,omitempty"`
 }
 
-// SecurityGroup represent a firewalling set of rules
-type SecurityGroup struct {
-	Id                  string               `json:"id,omitempty"`
-	Account             string               `json:"account,omitempty"`
-	Description         string               `json:"description,omitempty"`
-	Domain              string               `json:"domain,omitempty"`
-	Domainid            string               `json:"domainid,omitempty"`
-	Name                string               `json:"name,omitempty"`
-	Project             string               `json:"project,omitempty"`
-	Projectid           string               `json:"projectid,omitempty"`
-	VirtualMachineCount int                  `json:"virtualmachinecount,omitempty"`
-	VirtualMachineIds   []string             `json:"virtualmachineids,omitempty"`
-	IngressRules        []*SecurityGroupRule `json:"ingressrule,omitempty"`
-	EgressRules         []*SecurityGroupRule `json:"egressrule,omitempty"`
-	Tags                []*ResourceTag       `json:"tags,omitempty"`
-	JobId               string               `json:"jobid,omitempty"`
-	JobStatus           JobStatusType        `json:"jobstatus,omitempty"`
-}
-
-// SecurityGroupRule represents the ingress/egress rule
-type SecurityGroupRule struct {
-	Id                    string         `json:"ruleid,omitempty"`
-	Account               string         `json:"account,omitempty"`
-	Cidr                  string         `json:"cidr,omitempty"`
-	IcmpType              int            `json:"icmptype,omitempty"`
-	IcmpCode              int            `json:"icmpcode,omitempty"`
-	StartPort             int            `json:"startport,omitempty"`
-	EndPort               int            `json:"endport,omitempty"`
-	Protocol              string         `json:"protocol,omitempty"`
-	Tags                  []*ResourceTag `json:"tags,omitempty"`
-	SecurityGroupId       string
-	SecurityGroupName     string               `json:"securitygroupname,omitempty"`
-	UserSecurityGroupList []*UserSecurityGroup `json:"usersecuritygrouplist,omitempty"`
-	JobId                 string               `json:"jobid,omitempty"`
-	JobStatus             JobStatusType        `json:"jobstatus,omitempty"`
-}
-
-// UserSecurityGroup represents the traffic of another security group
-type UserSecurityGroup struct {
-	Group   string `json:"group,omitempty"`
-	Account string `json:"account,omitempty"`
-}
-
 // ResourceTag is a tag associated with a rule
 type ResourceTag struct {
 	Account      string `json:"account,omitempty"`

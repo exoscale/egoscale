@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 )
 
@@ -147,8 +146,7 @@ func TestGetSecurityGroups(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	params := url.Values{}
-	securityGroups, err := cs.GetSecurityGroups(params)
+	securityGroups, err := cs.ListSecurityGroups(ListSecurityGroupsRequest{})
 	if err != nil {
 		log.Fatal(err)
 	}

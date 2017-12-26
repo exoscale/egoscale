@@ -261,6 +261,15 @@ func prepareValues(profile interface{}) (*url.Values, error) {
 				} else {
 					params.Set(name, v)
 				}
+			case reflect.Bool:
+				v := val.Bool()
+				if v == false {
+					if required {
+						params.Set(name, "false")
+					}
+				} else {
+					params.Set(name, "true")
+				}
 			default:
 				return nil, fmt.Errorf("Unsupported type %s.%s (%v)", typeof.Name(), field.Name, val.Kind())
 			}

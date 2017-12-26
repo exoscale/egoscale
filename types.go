@@ -127,22 +127,6 @@ type SSHKeyPair struct {
 	Name        string `json:"name,omitempty"`
 }
 
-type ListAffinityGroupsResponse struct {
-	Count          int              `json:"count"`
-	AffinityGroups []*AffinityGroup `json:"affinitygroup"`
-}
-
-type AffinityGroup struct {
-	Id                string   `json:"id,omitempty"`
-	Account           string   `json:"account,omitempty"`
-	Description       string   `json:"description,omitempty"`
-	Domain            string   `json:"domain,omitempty"`
-	DomainId          string   `json:"domainid,omitempty"`
-	Name              string   `json:"name,omitempty"`
-	Type              string   `json:"type,omitempty"`
-	VirtualMachineIds []string `json:"virtualmachineIds,omitempty"` // *I*ds is not a typo
-}
-
 // SecurityGroup represent a firewalling set of rules
 type SecurityGroup struct {
 	Id                  string               `json:"id,omitempty"`
@@ -443,4 +427,9 @@ type VolumeTag struct {
 	Resource   string `json:"resource,omitempty"`
 	ResourceId string `json:"resourceid,omitempty"`
 	Value      string `json:"value,omitempty"`
+}
+
+// AffinityGroupType represent an affinity group type
+type AffinityGroupType struct {
+	Type string `json:"type"`
 }

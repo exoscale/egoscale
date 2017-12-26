@@ -122,25 +122,16 @@ func (exo *Client) GetKeypairs() ([]SSHKeyPair, error) {
 
 func (exo *Client) GetAffinityGroups() (map[string]string, error) {
 	var affinitygroups map[string]string
-	params := url.Values{}
-
-	resp, err := exo.Request("listAffinityGroups", params)
-
+	groups, err := exo.ListAffinityGroups(ListAffinityGroupsRequest{})
 	if err != nil {
-		return nil, err
-	}
-
-	var r ListAffinityGroupsResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
-		return nil, err
+		return affinitygroups, err
 	}
 
 	affinitygroups = make(map[string]string)
-	for _, affinitygroup := range r.AffinityGroups {
+	for _, affinitygroup := range groups {
 		affinitygroups[affinitygroup.Name] = affinitygroup.Id
 	}
 	return affinitygroups, nil
-
 }
 
 // GetImages list the available featured images and group them by name, then size.

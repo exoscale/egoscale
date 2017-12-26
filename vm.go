@@ -130,3 +130,5 @@ func (exo *Client) ListVirtualMachines() ([]*VirtualMachine, error) {
 
 	return r.VirtualMachine, nil
 }
+
+// XXX UpdateVmAffinityGroup

@@ -46,11 +46,6 @@ type JobResultResponse struct {
 	UserId        string           `json:"userid,omitempty"`
 }
 
-// CreateAffinityGroupResponse represents the response of the creation of an affinity group
-type CreateAffinityGroupResponse struct {
-	AffinityGroup AffinityGroup `json:"affinitygroup"`
-}
-
 // AssociateIpAddressResponse represents the response to the creation of an IpAddress
 type AssociateIpAddressResponse struct {
 	IpAddress *IpAddress `json:"ipaddress"`

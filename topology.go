@@ -10,7 +10,7 @@ import (
 
 func (exo *Client) GetAllSecurityGroups() (map[string]SecurityGroup, error) {
 	var sgs map[string]SecurityGroup
-	securityGroups, err := exo.GetSecurityGroups(ListSecurityGroupsRequest{})
+	securityGroups, err := exo.ListSecurityGroups(ListSecurityGroupsRequest{})
 
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func (exo *Client) GetAllSecurityGroups() (map[string]SecurityGroup, error) {
 }
 
 func (exo *Client) GetSecurityGroupId(name string) (string, error) {
-	securityGroups, err := exo.GetSecurityGroups(ListSecurityGroupsRequest{
+	securityGroups, err := exo.ListSecurityGroups(ListSecurityGroupsRequest{
 		SecurityGroupName: name,
 	})
 	if err != nil {

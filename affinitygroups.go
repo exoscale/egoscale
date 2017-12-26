@@ -1,4 +1,9 @@
-// affinitygroups contains the methods related to (anti-)affinity groups
+/*
+Affinity and Anti-Affinity groups
+
+Affinity and Anti-Affinity groups provide a way to influence where VMs should run. See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/virtual_machines.html#affinity-groups
+*/
+
 package egoscale
 
 import (

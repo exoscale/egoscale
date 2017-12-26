@@ -1,4 +1,20 @@
-// http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/networking_and_traffic.html#security-groups
+/*
+Security Groups
+
+Security Groups provide a way to isolate traffic to VMs.
+
+	securityGroup, err := client.CreateSecurityGroup(CreateSecurityGroupRequest{
+		Name: "Load balancer",
+		Description: "Opens HTTP/HTTPS ports from the outside world",
+	})
+	// ...
+	err := client.DeleteSecurityGroup(DeleteSecurityGroupRequest{
+		Id: securityGroup.Id,
+	})
+
+See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/networking_and_traffic.html#security-groups
+
+*/
 package egoscale
 
 import (
@@ -113,22 +129,36 @@ type ListSecurityGroupsResponse struct {
 	SecurityGroup []*SecurityGroup `json:"securitygroup"`
 }
 
+/*
+Methods
+
+All the methods requiring an AsyncInfo value are asynchronous and must be handled with care.
+*/
+
 // AuthorizeSecurityGroupEgress authorizes a particular egress rule for this security group
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/authorizeSecurityGroupEgress.html
 func (exo *Client) AuthorizeSecurityGroupEgress(profile AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
 	return exo.addSecurityGroupRule("authorize", "Egress", profile, async)
 }
 
 // AuthorizeSecurityGroupIngress authorizes a particular ingress rule for this security group
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/authorizeSecurityGroupIngress.html
 func (exo *Client) AuthorizeSecurityGroupIngress(profile AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
 	return exo.addSecurityGroupRule("authorize", "Ingress", profile, async)
 }
 
 // RevokeSecurityGroupEgress revokes a particular egress rule for this security group
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/revokeSecurityGroupEgress.html
 func (exo *Client) RevokeSecurityGroupEgress(req RevokeSecurityGroupRequest, async AsyncInfo) error {
 	return exo.delSecurityGroupRule("revoke", "Egress", req, async)
 }
 
 // RevokeSecurityGroupIngress revokes a particular ingress rule for this security group
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/revokeSecurityGroupIngress.html
 func (exo *Client) RevokeSecurityGroupIngress(req RevokeSecurityGroupRequest, async AsyncInfo) error {
 	return exo.delSecurityGroupRule("revoke", "Ingress", req, async)
 }
@@ -186,6 +216,8 @@ func (exo *Client) delSecurityGroupRule(action, kind string, req RevokeSecurityG
 }
 
 // CreateSecurityGroup creates a SG using the given profile
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/createSecurityGroup.html
 func (exo *Client) CreateSecurityGroup(req CreateSecurityGroupRequest) (*SecurityGroup, error) {
 	params, err := prepareValues(req)
 	resp, err := exo.Request("createSecurityGroup", *params)
@@ -201,7 +233,9 @@ func (exo *Client) CreateSecurityGroup(req CreateSecurityGroupRequest) (*Securit
 	return r.SecurityGroup, err
 }
 
-// DeleteSecurityGroup deletes a Security Group by name.
+// DeleteSecurityGroup deletes a Security Group by name
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSecurityGroup.html
 func (exo *Client) DeleteSecurityGroup(req DeleteSecurityGroupRequest) error {
 	params, err := prepareValues(req)
 	resp, err := exo.Request("deleteSecurityGroup", *params)
@@ -221,12 +255,9 @@ func (exo *Client) DeleteSecurityGroup(req DeleteSecurityGroupRequest) error {
 	return nil
 }
 
-// GetSecurityGroups is an alias for ListSecurityGroups
-func (exo *Client) GetSecurityGroups(req ListSecurityGroupsRequest) ([]*SecurityGroup, error) {
-	return exo.ListSecurityGroups(req)
-}
-
 // ListSecurityGroups lists the security groups.
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/listSecurityGroups.html
 func (exo *Client) ListSecurityGroups(req ListSecurityGroupsRequest) ([]*SecurityGroup, error) {
 	params, err := prepareValues(req)
 	if err != nil {

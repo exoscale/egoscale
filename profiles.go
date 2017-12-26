@@ -1,4 +1,3 @@
-// profiles contains the structs that can be created using Egoscale
 package egoscale
 
 // VirtualMachineProfile represents the machine creation

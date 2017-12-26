@@ -1,4 +1,3 @@
-// responses contains the structs representing the CloudStack API responses
 package egoscale
 
 import (

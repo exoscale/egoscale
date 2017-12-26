@@ -1,10 +1,4 @@
 /*
-Security Groups
-
-http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/networking_and_traffic.html#security-groups
-
-(Anti-)Affinity Groups
-
-http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/virtual_machines.html#affinity-groups
+egoscale is a package to work with the CloudStack API from Go.
 */
 package egoscale

@@ -7,11 +7,13 @@ import (
 )
 
 // ListNics lists the NIC of a VM
-func (exo *Client) ListNics(virtualMachineId string) ([]*Nic, error) {
-	params := url.Values{}
-	params.Set("virtualmachineid", virtualMachineId)
+func (exo *Client) ListNics(profile ListNicsProfile) ([]*Nic, error) {
+	params, err := prepareValues(profile)
+	if err != nil {
+		return nil, err
+	}
 
-	resp, err := exo.Request("listNics", params)
+	resp, err := exo.Request("listNics", *params)
 	if err != nil {
 		return nil, err
 	}

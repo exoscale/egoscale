@@ -43,3 +43,14 @@ type SecurityGroupRuleProfile struct {
 type AsyncJobResultProfile struct {
 	JobId string `json:"jobid"`
 }
+
+// ListNic represents the NIC search
+type ListNicsProfile struct {
+	VirtualMachineId string `json:"virtualmachineid"`
+	ForDisplay       bool   `json:"fordisplay,omitempty"`
+	Keyword          string `json:"keyword,omitempty"`
+	NetworkId        string `json:"networkid,omitempty"`
+	NicId            string `json:"nicid,omitempty"`
+	Page             string `json:"page,omitempty"`
+	PageSize         string `json:"pagesize,omitempty"`
+}

@@ -269,26 +269,23 @@ type VirtualMachine struct {
 
 // Nic represents a Network Interface Controller (NIC)
 type Nic struct {
-	Id           string `json:"id,omitempty"`
-	BroadcastUri string `json:"broadcasturi,omitempty"`
-	Gateway      string `json:"gateway,omitempty"`
-	Ip6Address   string `json:"ip6address,omitempty"`
-	Ip6Cidr      string `json:"ip6cidr,omitempty"`
-	Ip6Gateway   string `json:"ip6gateway,omitempty"`
-	IpAddress    string `json:"ipaddress,omitempty"`
-	IsDefault    bool   `json:"isdefault,omitempty"`
-	IsolationUri string `json:"isolationuri,omitempty"`
-	MacAddress   string `json:"macaddress,omitempty"`
-	Netmask      string `json:"netmask,omitempty"`
-	NetworkId    string `json:"networkid,omitempty"`
-	NetworkName  string `json:"networkname,omitempty"`
-	Secondaryip  []struct {
-		Id        string `json:"id,omitempty"`
-		IpAddress string `json:"ipaddress,omitempty"`
-	} `json:"secondaryip,omitempty"`
-	Traffictype      string `json:"traffictype,omitempty"`
-	Type             string `json:"type,omitempty"`
-	VirtualMachineId string `json:"virtualmachineid,omitempty"`
+	Id               string            `json:"id,omitempty"`
+	BroadcastUri     string            `json:"broadcasturi,omitempty"`
+	Gateway          string            `json:"gateway,omitempty"`
+	Ip6Address       string            `json:"ip6address,omitempty"`
+	Ip6Cidr          string            `json:"ip6cidr,omitempty"`
+	Ip6Gateway       string            `json:"ip6gateway,omitempty"`
+	IpAddress        string            `json:"ipaddress,omitempty"`
+	IsDefault        bool              `json:"isdefault,omitempty"`
+	IsolationUri     string            `json:"isolationuri,omitempty"`
+	MacAddress       string            `json:"macaddress,omitempty"`
+	Netmask          string            `json:"netmask,omitempty"`
+	NetworkId        string            `json:"networkid,omitempty"`
+	NetworkName      string            `json:"networkname,omitempty"`
+	SecondaryIp      []*NicSecondaryIp `json:"secondaryip,omitempty"`
+	Traffictype      string            `json:"traffictype,omitempty"`
+	Type             string            `json:"type,omitempty"`
+	VirtualMachineId string            `json:"virtualmachineid,omitempty"`
 }
 
 type StartVirtualMachineResponse struct {

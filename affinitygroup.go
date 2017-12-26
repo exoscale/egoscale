@@ -7,6 +7,7 @@ package egoscale
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // AffinityGroup represents an (anti-)affinity group
@@ -100,23 +101,27 @@ func (exo *Client) CreateAffinityGroup(req CreateAffinityGroupRequest, async Asy
 }
 
 // DeleteAffinityGroup deletes an affinity group by name
-func (exo *Client) DeleteAffinityGroup(req DeleteAffinityGroupRequest, async AsyncInfo) (bool, error) {
+func (exo *Client) DeleteAffinityGroup(req DeleteAffinityGroupRequest, async AsyncInfo) error {
 	params, err := prepareValues(req)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	resp, err := exo.AsyncRequest("deleteAffinityGroup", *params, async)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	var r BooleanResponse
 	if err := json.Unmarshal(resp, &r); err != nil {
-		return false, err
+		return err
 	}
 
-	return r.Success, nil
+	if !r.Success {
+		return fmt.Errorf("Cannot delete affinity group: %s", r.DisplayText)
+	}
+
+	return nil
 }
 
 // ListAffinityGroups lists the affinity groups

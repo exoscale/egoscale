@@ -1,6 +1,12 @@
 package egoscale
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
@@ -111,4 +117,75 @@ func TestPrepareValuesSliceString(t *testing.T) {
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
+}
+
+func TestBooleanRequest(t *testing.T) {
+	params := url.Values{}
+	params.Set("command", "destroyVirtualMachine")
+	params.Set("token", "TOKEN")
+	params.Set("id", "123")
+	ts := newPostServer(params, `
+{
+	"destroyvirtualmachine": {
+		"jobid": "1",
+		"jobresult": {
+			"success": true,
+			"displaytext": "good job!"
+		},
+		"jobstatus": 1
+	}
+}
+	`)
+	defer ts.Close()
+
+	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	req := &DestroyVirtualMachineRequest{
+		Id: "123",
+	}
+	err := cs.BooleanRequest(req)
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+}
+
+func newServer(code int, response string) *httptest.Server {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(code)
+		w.Write([]byte(response))
+	})
+	return httptest.NewServer(mux)
+}
+
+func newPostServer(params url.Values, response string) *httptest.Server {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		errors := make(map[string][]string)
+		for k, expected := range params {
+			if values, ok := (r.PostForm)[k]; ok {
+				for i, value := range values {
+					e := expected[i]
+					if e != value {
+						if _, ok := errors[k]; !ok {
+							errors[k] = make([]string, len(values))
+						}
+						errors[k][i] = fmt.Sprintf("%s expected %v, got %v", k, e, value)
+					}
+				}
+			}
+		}
+
+		log.Printf("len %d", len(errors))
+		if len(errors) == 0 {
+			w.WriteHeader(200)
+			w.Write([]byte(response))
+		} else {
+			w.WriteHeader(400)
+			body, _ := json.Marshal(errors)
+			w.Write(body)
+			log.Println(body)
+		}
+	})
+	return httptest.NewServer(mux)
 }

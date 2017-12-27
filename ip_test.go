@@ -105,7 +105,7 @@ func TestDisassociateIpAddress(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	err := cs.DisassociateIpAddress(DisassociateIpAddressRequest{
+	err := cs.DisassociateIpAddress(&DisassociateIpAddressRequest{
 		Id: "test",
 	}, async)
 	if err != nil {
@@ -127,7 +127,7 @@ func TestDisassociateIpAddressBadId(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	err := cs.DisassociateIpAddress(DisassociateIpAddressRequest{
+	err := cs.DisassociateIpAddress(&DisassociateIpAddressRequest{
 		Id: "42",
 	}, async)
 	if err == nil {

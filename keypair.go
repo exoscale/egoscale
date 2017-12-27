@@ -42,6 +42,11 @@ type DeleteSshKeyPairRequest struct {
 	ProjectId string `json:"projectid,omitempty"`
 }
 
+// Command returns the CloudStack API command
+func (req *DeleteSshKeyPairRequest) Command() string {
+	return "deleteSSHKeyPair"
+}
+
 // SshKeyPairRequest represents a new registration of a public key in a keypair
 type RegisterSshKeyPairRequest struct {
 	Name      string `json:"name"`
@@ -100,12 +105,8 @@ func (exo *Client) CreateSshKeyPair(req CreateSshKeyPairRequest) (*SshKeyPair, e
 // DeleteSshKeyPair deletes an SSH key pair
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSSHKeyPair.html
-func (exo *Client) DeleteSshKeyPair(req DeleteSshKeyPairRequest) error {
-	params, err := prepareValues(req)
-	if err != nil {
-		return err
-	}
-	return exo.BooleanRequest("deleteSSHKeyPair", *params)
+func (exo *Client) DeleteSshKeyPair(req *DeleteSshKeyPairRequest) error {
+	return exo.BooleanRequest(req)
 }
 
 // RegisterSshKeyPair registers a public key in a keypair

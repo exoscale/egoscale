@@ -146,6 +146,11 @@ type DestroyVirtualMachineRequest struct {
 	Expunge bool   `json:"expunge,omitempty"`
 }
 
+// Command returns the command name for the Cloud Stack API
+func (req *DestroyVirtualMachineRequest) Command() string {
+	return "destroyVirtualMachine"
+}
+
 // VirtualMachineResponse represents a deployed VM instance
 type VirtualMachineResponse struct {
 	VirtualMachine *VirtualMachine `json:"virtualmachine"`

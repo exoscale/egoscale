@@ -17,6 +17,11 @@ import (
 	"time"
 )
 
+// Request represents a CloudStack request
+type Request interface {
+	Command() string
+}
+
 const (
 	// PENDING represents a job in progress
 	PENDING JobStatusType = iota
@@ -202,8 +207,13 @@ func (exo *Client) AsyncRequest(command string, params url.Values, async AsyncIn
 }
 
 // BooleanRequest performs a sync request on a boolean call
-func (exo *Client) BooleanRequest(command string, params url.Values) error {
-	resp, err := exo.Request(command, params)
+func (exo *Client) BooleanRequest(command Request) error {
+	params, err := prepareValues(command)
+	if err != nil {
+		return err
+	}
+
+	resp, err := exo.Request(command.Command(), *params)
 	if err != nil {
 		return err
 	}
@@ -217,8 +227,13 @@ func (exo *Client) BooleanRequest(command string, params url.Values) error {
 }
 
 // BooleanAsyncRequest performs a sync request on a boolean call
-func (exo *Client) BooleanAsyncRequest(command string, params url.Values, async AsyncInfo) error {
-	resp, err := exo.AsyncRequest(command, params, async)
+func (exo *Client) BooleanAsyncRequest(command Request, async AsyncInfo) error {
+	params, err := prepareValues(command)
+	if err != nil {
+		return err
+	}
+
+	resp, err := exo.AsyncRequest(command.Command(), *params, async)
 	if err != nil {
 		return err
 	}
@@ -297,11 +312,13 @@ func (exo *Client) DetailedRequest(uri string, params string, method string, hea
 	return exo.ParseResponse(response)
 }
 
-// prepareValues uses a profile to build a POST request
-func prepareValues(profile interface{}) (*url.Values, error) {
+// prepareValues uses a command to build a POST request
+//
+// command is not a Command so it's easier to Test
+func prepareValues(command interface{}) (*url.Values, error) {
 	params := url.Values{}
-	value := reflect.ValueOf(profile)
-	typeof := reflect.TypeOf(profile)
+	value := reflect.ValueOf(command)
+	typeof := reflect.TypeOf(command)
 	for typeof.Kind() == reflect.Ptr {
 		typeof = typeof.Elem()
 		value = value.Elem()

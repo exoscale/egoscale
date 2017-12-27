@@ -46,6 +46,11 @@ type DeleteAffinityGroupRequest struct {
 	DomainId    string `json:"domainid,omitempty"`
 }
 
+// Command returns the CloudStack API command
+func (req *DeleteAffinityGroupRequest) Command() string {
+	return "deleteAffinityGroup"
+}
+
 // ListAffinityGroupsRequest represents an (anti-)affinity groups search
 type ListAffinityGroupsRequest struct {
 	Account          string `json:"account,omitempty"`
@@ -110,13 +115,8 @@ func (exo *Client) CreateAffinityGroup(req CreateAffinityGroupRequest, async Asy
 // DeleteAffinityGroup deletes an affinity group by name
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteAffinityGroup.html
-func (exo *Client) DeleteAffinityGroup(req DeleteAffinityGroupRequest, async AsyncInfo) error {
-	params, err := prepareValues(req)
-	if err != nil {
-		return err
-	}
-
-	return exo.BooleanAsyncRequest("deleteAffinityGroup", *params, async)
+func (exo *Client) DeleteAffinityGroup(req *DeleteAffinityGroupRequest, async AsyncInfo) error {
+	return exo.BooleanAsyncRequest(req, async)
 }
 
 // ListAffinityGroups lists the affinity groups

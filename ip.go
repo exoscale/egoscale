@@ -53,6 +53,11 @@ type AssociateIpAddressRequest struct {
 	ZoneId     string `json:"zoneid,omitempty"`
 }
 
+// Command returns the CloudStack API command
+func (*AssociateIpAddressRequest) Command() string {
+	return "associateIpAddressRequest"
+}
+
 // AssociateIpAddressResponse represents the response to the creation of an IpAddress
 type AssociateIpAddressResponse struct {
 	IpAddress *IpAddress `json:"ipaddress"`
@@ -61,6 +66,11 @@ type AssociateIpAddressResponse struct {
 // DisassociateIpAddressRequest represents the IP deletion
 type DisassociateIpAddressRequest struct {
 	Id string `json:"id"`
+}
+
+// Command returns the CloudStack API command
+func (*DisassociateIpAddressRequest) Command() string {
+	return "disassociateIpAddressRequest"
 }
 
 // ListPublicIpAddressesRequest represents a search for public IP addresses
@@ -120,12 +130,8 @@ func (exo *Client) AssociateIpAddress(req AssociateIpAddressRequest, async Async
 // DisassociateIpAddress disassociates a public IP from the account
 //
 // https://doc.internal.exoscale.ch/others/cs/user/disassociateIpAddress.html
-func (exo *Client) DisassociateIpAddress(req DisassociateIpAddressRequest, async AsyncInfo) error {
-	params, err := prepareValues(req)
-	if err != nil {
-		return err
-	}
-	return exo.BooleanAsyncRequest("disassociateIpAddress", *params, async)
+func (exo *Client) DisassociateIpAddress(req *DisassociateIpAddressRequest, async AsyncInfo) error {
+	return exo.BooleanAsyncRequest(req, async)
 }
 
 // ListPublicIpAddresses lists the public ip addresses

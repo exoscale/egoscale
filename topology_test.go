@@ -2,8 +2,6 @@ package egoscale
 
 import (
 	"log"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -155,13 +153,4 @@ func TestGetSecurityGroups(t *testing.T) {
 	if sg.IngressRules[2].UserSecurityGroupList[0].Group != "other" {
 		t.Errorf("UserSecurityGroupList %s not found", "other")
 	}
-}
-
-func newServer(code int, response string) *httptest.Server {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(code)
-		w.Write([]byte(response))
-	})
-	return httptest.NewServer(mux)
 }

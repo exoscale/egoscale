@@ -57,6 +57,16 @@ type AddIpToNicResponse struct {
 	NicSecondaryIp *NicSecondaryIp `json:"nicsecondaryip"`
 }
 
+// RemoveIpFromNicRequest
+type RemoveIpFromNicRequest struct {
+	Id string `json:"id"`
+}
+
+// Command returns the CloudStack API command
+func (req *RemoveIpFromNicRequest) Command() string {
+	return "removeIpFromNic"
+}
+
 // ListNics lists the NIC of a VM
 func (exo *Client) ListNics(req ListNicsRequest) ([]*Nic, error) {
 	params, err := prepareValues(req)
@@ -97,9 +107,6 @@ func (exo *Client) AddIpToNic(nicId string, ipAddress string, async AsyncInfo) (
 }
 
 // RemoveIpFromNic removes the IP address (by Id) from the NIC
-func (exo *Client) RemoveIpFromNic(ipAddressId string, async AsyncInfo) error {
-	params := url.Values{}
-	params.Set("id", ipAddressId)
-
-	return exo.BooleanAsyncRequest("removeIpFromNic", params, async)
+func (exo *Client) RemoveIpFromNic(req *RemoveIpFromNicRequest, async AsyncInfo) error {
+	return exo.BooleanAsyncRequest(req, async)
 }

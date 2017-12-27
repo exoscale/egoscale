@@ -80,6 +80,11 @@ type DeleteSecurityGroupRequest struct {
 	ProjectId string `json:"project,omitempty"`
 }
 
+// Command returns the CloudStack API command
+func (req *DeleteSecurityGroupRequest) Command() string {
+	return "deleteSecurityGroupRequest"
+}
+
 // AuthorizeSecurityGroupRequest represents the ingress/egress rule creation
 type AuthorizeSecurityGroupRequest struct {
 	Account               string               `json:"account,omitempty"`
@@ -94,9 +99,19 @@ type AuthorizeSecurityGroupRequest struct {
 	UserSecurityGroupList []*UserSecurityGroup // manually done... `json:"usersecuritygrouplist,omitempty"`
 }
 
+// Command returns the CloudStack API command
+func (req *AuthorizeSecurityGroupRequest) Command() string {
+	return "authorizeSecurityGroupRequest"
+}
+
 // RevokeSecurityGroup represents the ingress/egress rule deletion
 type RevokeSecurityGroupRequest struct {
 	Id string `json:"id"`
+}
+
+// Command returns the CloudStack API command
+func (req *RevokeSecurityGroupRequest) Command() string {
+	return "revokeSecurityGroupRequest"
 }
 
 // AuthorizeSecurityGroupResponse represents a new security group
@@ -152,15 +167,15 @@ func (exo *Client) AuthorizeSecurityGroupIngress(req AuthorizeSecurityGroupReque
 // RevokeSecurityGroupEgress revokes a particular egress rule for this security group
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/revokeSecurityGroupEgress.html
-func (exo *Client) RevokeSecurityGroupEgress(req RevokeSecurityGroupRequest, async AsyncInfo) error {
-	return exo.delSecurityGroupRule("revoke", "Egress", req, async)
+func (exo *Client) RevokeSecurityGroupEgress(req *RevokeSecurityGroupRequest, async AsyncInfo) error {
+	return exo.BooleanAsyncRequest(req, async)
 }
 
 // RevokeSecurityGroupIngress revokes a particular ingress rule for this security group
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/revokeSecurityGroupIngress.html
-func (exo *Client) RevokeSecurityGroupIngress(req RevokeSecurityGroupRequest, async AsyncInfo) error {
-	return exo.delSecurityGroupRule("revoke", "Ingress", req, async)
+func (exo *Client) RevokeSecurityGroupIngress(req *RevokeSecurityGroupRequest, async AsyncInfo) error {
+	return exo.BooleanAsyncRequest(req, async)
 }
 
 func (exo *Client) addSecurityGroupRule(action, kind string, req AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
@@ -193,14 +208,6 @@ func (exo *Client) addSecurityGroupRule(action, kind string, req AuthorizeSecuri
 	return r.SecurityGroup.IngressRules[0], nil
 }
 
-func (exo *Client) delSecurityGroupRule(action, kind string, req RevokeSecurityGroupRequest, async AsyncInfo) error {
-	params, err := prepareValues(req)
-	if err != nil {
-		return err
-	}
-	return exo.BooleanAsyncRequest(action+"SecurityGroup"+kind, *params, async)
-}
-
 // CreateSecurityGroup creates a SG
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/createSecurityGroup.html
@@ -222,13 +229,8 @@ func (exo *Client) CreateSecurityGroup(req CreateSecurityGroupRequest) (*Securit
 // DeleteSecurityGroup deletes a Security Group by name
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSecurityGroup.html
-func (exo *Client) DeleteSecurityGroup(req DeleteSecurityGroupRequest) error {
-	params, err := prepareValues(req)
-	if err != nil {
-		return err
-	}
-
-	return exo.BooleanRequest("deleteSecurityGroup", *params)
+func (exo *Client) DeleteSecurityGroup(req *DeleteSecurityGroupRequest) error {
+	return exo.BooleanRequest(req)
 }
 
 // ListSecurityGroups lists the security groups.

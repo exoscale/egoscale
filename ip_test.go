@@ -50,8 +50,7 @@ func TestAssociateIpAddress(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	profile := IpAddressProfile{Zone: "fakeId"}
-	ipAddress, err := cs.CreateIpAddress(profile, async)
+	ipAddress, err := cs.AssociateIpAddress(AssociateIpAddressRequest{}, async)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -75,12 +74,11 @@ func TestAssociateIpAddressBadZone(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	profile := IpAddressProfile{Zone: "fakeId"}
-	_, err := cs.CreateIpAddress(profile, async)
+	_, err := cs.AssociateIpAddress(AssociateIpAddressRequest{}, async)
 	if err == nil {
 		t.Errorf("Expected an error to be returned, got an IpAddress")
 	}
-	if err.Error() != "exoscale API error 431 (internal code: 4350): bummer!" {
+	if err.Error() != "API error 431 (internal code: 4350): bummer!" {
 		t.Errorf("Expected the CloudStack API Error to be returned. Got: %s", err.Error())
 	}
 }
@@ -107,8 +105,9 @@ func TestDisassociateIpAddress(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	ipAddressId := "fakeId"
-	err := cs.DestroyIpAddress(ipAddressId, async)
+	err := cs.DisassociateIpAddress(DisassociateIpAddressRequest{
+		Id: "test",
+	}, async)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -128,8 +127,9 @@ func TestDisassociateIpAddressBadId(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	ipAddressId := "fakeId"
-	err := cs.DestroyIpAddress(ipAddressId, async)
+	err := cs.DisassociateIpAddress(DisassociateIpAddressRequest{
+		Id: "42",
+	}, async)
 	if err == nil {
 		t.Errorf("Expected an error, got nothing")
 	}

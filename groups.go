@@ -43,16 +43,16 @@ type SecurityGroup struct {
 
 // SecurityGroupRule represents the ingress/egress rule
 type SecurityGroupRule struct {
-	Id                    string         `json:"ruleid,omitempty"`
-	Account               string         `json:"account,omitempty"`
-	Cidr                  string         `json:"cidr,omitempty"`
-	IcmpType              int            `json:"icmptype,omitempty"`
-	IcmpCode              int            `json:"icmpcode,omitempty"`
-	StartPort             int            `json:"startport,omitempty"`
-	EndPort               int            `json:"endport,omitempty"`
-	Protocol              string         `json:"protocol,omitempty"`
-	Tags                  []*ResourceTag `json:"tags,omitempty"`
-	SecurityGroupId       string
+	Id                    string               `json:"ruleid,omitempty"`
+	Account               string               `json:"account,omitempty"`
+	Cidr                  string               `json:"cidr,omitempty"`
+	IcmpType              int                  `json:"icmptype,omitempty"`
+	IcmpCode              int                  `json:"icmpcode,omitempty"`
+	StartPort             int                  `json:"startport,omitempty"`
+	EndPort               int                  `json:"endport,omitempty"`
+	Protocol              string               `json:"protocol,omitempty"`
+	Tags                  []*ResourceTag       `json:"tags,omitempty"`
+	SecurityGroupId       string               `json:"securitygroupid,omitempty"`
 	SecurityGroupName     string               `json:"securitygroupname,omitempty"`
 	UserSecurityGroupList []*UserSecurityGroup `json:"usersecuritygrouplist,omitempty"`
 	JobId                 string               `json:"jobid,omitempty"`
@@ -114,12 +114,12 @@ type ListSecurityGroupsRequest struct {
 	IsRecursive       bool           `json:"isrecursive,omitempty"`
 	Keyword           string         `json:"keyword,omitempty"`
 	ListAll           bool           `json:"listall,omitempty"`
-	Page              string         `json:"page,omitempty"`
-	PageSize          string         `json:"pagesize,omitempty"`
+	Page              int            `json:"page,omitempty"`
+	PageSize          int            `json:"pagesize,omitempty"`
 	ProjectId         string         `json:"projectid,omitempty"`
 	Type              string         `json:"type,omitempty"`
 	SecurityGroupName string         `json:"securitygroupname,omitempty"`
-	Tags              []*ResourceTag // XXX `json:"tags,omitempty"`
+	Tags              []*ResourceTag `json:"tags,omitempty"`
 	VirtualMachineId  string         `json:"virtualmachineid,omitempty"`
 }
 
@@ -138,15 +138,15 @@ All the methods requiring an AsyncInfo value are asynchronous and must be handle
 // AuthorizeSecurityGroupEgress authorizes a particular egress rule for this security group
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/authorizeSecurityGroupEgress.html
-func (exo *Client) AuthorizeSecurityGroupEgress(profile AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
-	return exo.addSecurityGroupRule("authorize", "Egress", profile, async)
+func (exo *Client) AuthorizeSecurityGroupEgress(req AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
+	return exo.addSecurityGroupRule("authorize", "Egress", req, async)
 }
 
 // AuthorizeSecurityGroupIngress authorizes a particular ingress rule for this security group
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/authorizeSecurityGroupIngress.html
-func (exo *Client) AuthorizeSecurityGroupIngress(profile AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
-	return exo.addSecurityGroupRule("authorize", "Ingress", profile, async)
+func (exo *Client) AuthorizeSecurityGroupIngress(req AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
+	return exo.addSecurityGroupRule("authorize", "Ingress", req, async)
 }
 
 // RevokeSecurityGroupEgress revokes a particular egress rule for this security group
@@ -163,14 +163,14 @@ func (exo *Client) RevokeSecurityGroupIngress(req RevokeSecurityGroupRequest, as
 	return exo.delSecurityGroupRule("revoke", "Ingress", req, async)
 }
 
-func (exo *Client) addSecurityGroupRule(action, kind string, profile AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
-	params, err := prepareValues(profile)
+func (exo *Client) addSecurityGroupRule(action, kind string, req AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
+	params, err := prepareValues(req)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(profile.UserSecurityGroupList) > 0 {
-		for i, usg := range profile.UserSecurityGroupList {
+	if len(req.UserSecurityGroupList) > 0 {
+		for i, usg := range req.UserSecurityGroupList {
 			key := fmt.Sprintf("usersecuritygrouplist[%d]", i)
 			params.Set(key+".account", usg.Account)
 			params.Set(key+".group", usg.Group)
@@ -198,24 +198,10 @@ func (exo *Client) delSecurityGroupRule(action, kind string, req RevokeSecurityG
 	if err != nil {
 		return err
 	}
-	resp, err := exo.AsyncRequest(action+"SecurityGroup"+kind, *params, async)
-	if err != nil {
-		return err
-	}
-
-	var r BooleanResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
-		return err
-	}
-
-	if !r.Success {
-		return fmt.Errorf("Cannot %sSecurityGroup%s %#v. %s", action, kind, req, r.DisplayText)
-	}
-
-	return nil
+	return exo.BooleanAsyncRequest(action+"SecurityGroup"+kind, *params, async)
 }
 
-// CreateSecurityGroup creates a SG using the given profile
+// CreateSecurityGroup creates a SG
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/createSecurityGroup.html
 func (exo *Client) CreateSecurityGroup(req CreateSecurityGroupRequest) (*SecurityGroup, error) {
@@ -238,21 +224,11 @@ func (exo *Client) CreateSecurityGroup(req CreateSecurityGroupRequest) (*Securit
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSecurityGroup.html
 func (exo *Client) DeleteSecurityGroup(req DeleteSecurityGroupRequest) error {
 	params, err := prepareValues(req)
-	resp, err := exo.Request("deleteSecurityGroup", *params)
 	if err != nil {
 		return err
 	}
 
-	var r BooleanResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
-		return err
-	}
-
-	if !r.Success {
-		return fmt.Errorf("Cannot delete security group: %s", r.DisplayText)
-	}
-
-	return nil
+	return exo.BooleanRequest("deleteSecurityGroup", *params)
 }
 
 // ListSecurityGroups lists the security groups.

@@ -17,6 +17,66 @@ import (
 	"time"
 )
 
+const (
+	// PENDING represents a job in progress
+	PENDING JobStatusType = iota
+	// SUCCESS represents a successfully completed job
+	SUCCESS
+	// FAILURE represents a job that has failed to complete
+	FAILURE
+)
+
+// JobStatusType represents the status of a Job
+type JobStatusType int
+
+// JobResultResponse represents a generic response to a job task
+type JobResultResponse struct {
+	AccountId     string           `json:"accountid,omitempty"`
+	Cmd           string           `json:"cmd,omitempty"`
+	CreatedAt     string           `json:"created,omitempty"`
+	JobId         string           `json:"jobid,omitempty"`
+	JobProcStatus int              `json:"jobprocstatus,omitempty"`
+	JobResult     *json.RawMessage `json:"jobresult,omitempty"`
+	JobStatus     JobStatusType    `json:"jobstatus,omitempty"`
+	JobResultType string           `json:"jobresulttype,omitempty"`
+	UserId        string           `json:"userid,omitempty"`
+}
+
+// ErrorResponse represents the standard error response from CloudStack
+type ErrorResponse struct {
+	ErrorCode   int      `json:"errorcode"`
+	CsErrorCode int      `json:"cserrorcode"`
+	ErrorText   string   `json:"errortext"`
+	UuidList    []string `json:"uuidlist,omitempty"`
+}
+
+// Error formats a CloudStack error into a standard error
+func (e *ErrorResponse) Error() error {
+	return fmt.Errorf("API error %d (internal code: %d): %s", e.ErrorCode, e.CsErrorCode, e.ErrorText)
+}
+
+// BooleanResponse represents a boolean response (usually after a deletion)
+type BooleanResponse struct {
+	Success     bool   `json:"success"`
+	DisplayText string `json:"diplaytext,omitempty"`
+}
+
+// Error formats a CloudStack job response into a standard error
+func (e *BooleanResponse) Error() error {
+	if e.Success {
+		return nil
+	}
+	return fmt.Errorf("API error: %s", e.DisplayText)
+}
+
+// AsyncInfo represents the details for any async call
+//
+// It retries at most Retries time and waits for Delay between each retry
+type AsyncInfo struct {
+	Retries int
+	Delay   int
+}
+
 func csQuotePlus(s string) string {
 	return strings.Replace(s, "+", "%20", -1)
 }
@@ -68,7 +128,7 @@ func (exo *Client) ParseResponse(resp *http.Response) (json.RawMessage, error) {
 			return nil, err
 		}
 
-		/* Need to account for differet error types */
+		/* Need to account for different error types */
 		if e.ErrorCode != 0 {
 			return nil, e.Error()
 		} else {
@@ -111,7 +171,7 @@ func (exo *Client) AsyncRequest(command string, params url.Values, async AsyncIn
 
 			async.Retries--
 
-			resp, err := exo.QueryAsyncJobResult(AsyncJobResultProfile{
+			resp, err := exo.QueryAsyncJobResult(QueryAsyncJobResultRequest{
 				JobId: job.JobId,
 			})
 			if err != nil {
@@ -139,6 +199,36 @@ func (exo *Client) AsyncRequest(command string, params url.Values, async AsyncIn
 		// the job is done
 		return body, nil
 	}
+}
+
+// BooleanRequest performs a sync request on a boolean call
+func (exo *Client) BooleanRequest(command string, params url.Values) error {
+	resp, err := exo.Request(command, params)
+	if err != nil {
+		return err
+	}
+
+	var r BooleanResponse
+	if err := json.Unmarshal(resp, &r); err != nil {
+		return err
+	}
+
+	return r.Error()
+}
+
+// BooleanAsyncRequest performs a sync request on a boolean call
+func (exo *Client) BooleanAsyncRequest(command string, params url.Values, async AsyncInfo) error {
+	resp, err := exo.AsyncRequest(command, params, async)
+	if err != nil {
+		return err
+	}
+
+	var r BooleanResponse
+	if err := json.Unmarshal(resp, &r); err != nil {
+		return err
+	}
+
+	return r.Error()
 }
 
 // Request performs a sync request (one try only)
@@ -270,8 +360,26 @@ func prepareValues(profile interface{}) (*url.Values, error) {
 				} else {
 					params.Set(name, "true")
 				}
+			case reflect.Slice:
+				switch field.Type.Elem().Kind() {
+				case reflect.Uint8:
+					v := val.Bytes()
+					if val.Len() == 0 {
+						if required {
+							return nil, fmt.Errorf("%s.%s (%v) is required, got empty slice", typeof.Name(), field.Name, val.Kind())
+						}
+					} else {
+						params.Set(name, base64.StdEncoding.EncodeToString(v))
+					}
+				default:
+					if required {
+						return nil, fmt.Errorf("Unsupported type %s.%s ([]%s)", typeof.Name(), field.Name, field.Type.Elem().Kind())
+					}
+				}
 			default:
-				return nil, fmt.Errorf("Unsupported type %s.%s (%v)", typeof.Name(), field.Name, val.Kind())
+				if required {
+					return nil, fmt.Errorf("Unsupported type %s.%s (%v)", typeof.Name(), field.Name, val.Kind())
+				}
 			}
 		} else {
 			log.Printf("[SKIP] %s.%s no json label found", typeof.Name(), field.Name)

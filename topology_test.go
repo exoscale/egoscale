@@ -54,7 +54,7 @@ func TestGetImages(t *testing.T) {
 	var tests = []struct {
 		uuid  string
 		names []string
-		size  int
+		size  int64
 	}{
 		{
 			"4c0732a0-3df0-4f66-8d16-009f91cf05d6",

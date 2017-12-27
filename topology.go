@@ -93,22 +93,15 @@ func (exo *Client) GetProfiles() (map[string]string, error) {
 	return profiles, nil
 }
 
-func (exo *Client) GetKeypairs() ([]SSHKeyPair, error) {
-	params := url.Values{}
+func (exo *Client) GetKeypairs() ([]SshKeyPair, error) {
+	var keypairs []SshKeyPair
 
-	resp, err := exo.Request("listSSHKeyPairs", params)
-
+	keys, err := exo.ListSshKeyPairs(ListSshKeyPairsRequest{})
 	if err != nil {
-		return nil, err
+		return keypairs, err
 	}
-
-	var r ListSSHKeyPairsResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
-		return nil, err
-	}
-
-	var keypairs = make([]SSHKeyPair, r.Count, r.Count)
-	for i, keypair := range r.SSHKeyPairs {
+	keypairs = make([]SshKeyPair, len(keys))
+	for i, keypair := range keys {
 		keypairs[i] = *keypair
 	}
 	return keypairs, nil
@@ -129,9 +122,9 @@ func (exo *Client) GetAffinityGroups() (map[string]string, error) {
 }
 
 // GetImages list the available featured images and group them by name, then size.
-func (exo *Client) GetImages() (map[string]map[int]string, error) {
-	var images map[string]map[int]string
-	images = make(map[string]map[int]string)
+func (exo *Client) GetImages() (map[string]map[int64]string, error) {
+	var images map[string]map[int64]string
+	images = make(map[string]map[int64]string)
 
 	params := url.Values{}
 	params.Set("templatefilter", "featured")
@@ -149,12 +142,12 @@ func (exo *Client) GetImages() (map[string]map[int]string, error) {
 
 	re := regexp.MustCompile(`^Linux (?P<name>.+?) (?P<version>[0-9.]+)\b`)
 	for _, template := range r.Template {
-		size := int(template.Size / (1024 * 1024 * 1024))
+		size := int64(template.Size >> 30) // B to GiB
 
 		fullname := strings.ToLower(template.Name)
 
 		if _, present := images[fullname]; !present {
-			images[fullname] = make(map[int]string)
+			images[fullname] = make(map[int64]string)
 		}
 		images[fullname][size] = template.Id
 
@@ -165,7 +158,7 @@ func (exo *Client) GetImages() (map[string]map[int]string, error) {
 			image := fmt.Sprintf("%s-%s", name, version)
 
 			if _, present := images[image]; !present {
-				images[image] = make(map[int]string)
+				images[image] = make(map[int64]string)
 			}
 			images[image][size] = template.Id
 		}

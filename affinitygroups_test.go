@@ -35,7 +35,7 @@ func TestListAffinityGroups(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	affinityGroups, err := cs.ListAffinityGroups(ListAffinityGroupsRequest{})
+	affinityGroups, err := cs.ListAffinityGroups(&ListAffinityGroupsRequest{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestListAffinityGroupTypes(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	affinityGroupTypes, err := cs.ListAffinityGroupTypes(ListAffinityGroupTypesRequest{})
+	affinityGroupTypes, err := cs.ListAffinityGroupTypes(&ListAffinityGroupTypesRequest{})
 	if err != nil {
 		log.Fatal(err)
 	}

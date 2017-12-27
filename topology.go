@@ -1,16 +1,8 @@
 package egoscale
 
-import (
-	"encoding/json"
-	"fmt"
-	"net/url"
-	"regexp"
-	"strings"
-)
-
 func (exo *Client) GetAllSecurityGroups() (map[string]SecurityGroup, error) {
 	var sgs map[string]SecurityGroup
-	securityGroups, err := exo.ListSecurityGroups(ListSecurityGroupsRequest{})
+	securityGroups, err := exo.ListSecurityGroups(&ListSecurityGroupsRequest{})
 
 	if err != nil {
 		return nil, err
@@ -24,7 +16,7 @@ func (exo *Client) GetAllSecurityGroups() (map[string]SecurityGroup, error) {
 }
 
 func (exo *Client) GetSecurityGroupId(name string) (string, error) {
-	securityGroups, err := exo.ListSecurityGroups(ListSecurityGroupsRequest{
+	securityGroups, err := exo.ListSecurityGroups(&ListSecurityGroupsRequest{
 		SecurityGroupName: name,
 	})
 	if err != nil {
@@ -40,63 +32,10 @@ func (exo *Client) GetSecurityGroupId(name string) (string, error) {
 	return "", nil
 }
 
-// GetZones return the zones given the params.
-func (exo *Client) GetZones(params url.Values) ([]*Zone, error) {
-	resp, err := exo.Request("listZones", params)
-	if err != nil {
-		return nil, err
-	}
-
-	var r ListZonesResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
-		return nil, err
-	}
-
-	return r.Zone, nil
-}
-
-func (exo *Client) GetAllZones() (map[string]*Zone, error) {
-	var zones map[string]*Zone
-	params := url.Values{}
-	response, err := exo.GetZones(params)
-	if err != nil {
-		return zones, err
-	}
-
-	zones = make(map[string]*Zone)
-	for _, zone := range response {
-		zones[strings.ToLower(zone.Name)] = zone
-	}
-	return zones, nil
-}
-
-func (exo *Client) GetProfiles() (map[string]string, error) {
-
-	var profiles map[string]string
-	params := url.Values{}
-	resp, err := exo.Request("listServiceOfferings", params)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var r ListServiceOfferingsResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
-		return nil, err
-	}
-
-	profiles = make(map[string]string)
-	for _, offering := range r.ServiceOfferings {
-		profiles[strings.ToLower(offering.Name)] = offering.Id
-	}
-
-	return profiles, nil
-}
-
 func (exo *Client) GetKeypairs() ([]SshKeyPair, error) {
 	var keypairs []SshKeyPair
 
-	keys, err := exo.ListSshKeyPairs(ListSshKeyPairsRequest{})
+	keys, err := exo.ListSshKeyPairs(&ListSshKeyPairsRequest{})
 	if err != nil {
 		return keypairs, err
 	}
@@ -109,7 +48,7 @@ func (exo *Client) GetKeypairs() ([]SshKeyPair, error) {
 
 func (exo *Client) GetAffinityGroups() (map[string]string, error) {
 	var affinitygroups map[string]string
-	groups, err := exo.ListAffinityGroups(ListAffinityGroupsRequest{})
+	groups, err := exo.ListAffinityGroups(&ListAffinityGroupsRequest{})
 	if err != nil {
 		return affinitygroups, err
 	}
@@ -121,53 +60,7 @@ func (exo *Client) GetAffinityGroups() (map[string]string, error) {
 	return affinitygroups, nil
 }
 
-// GetImages list the available featured images and group them by name, then size.
-func (exo *Client) GetImages() (map[string]map[int64]string, error) {
-	var images map[string]map[int64]string
-	images = make(map[string]map[int64]string)
-
-	params := url.Values{}
-	params.Set("templatefilter", "featured")
-
-	resp, err := exo.Request("listTemplates", params)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var r ListTemplatesResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
-		return nil, err
-	}
-
-	re := regexp.MustCompile(`^Linux (?P<name>.+?) (?P<version>[0-9.]+)\b`)
-	for _, template := range r.Template {
-		size := int64(template.Size >> 30) // B to GiB
-
-		fullname := strings.ToLower(template.Name)
-
-		if _, present := images[fullname]; !present {
-			images[fullname] = make(map[int64]string)
-		}
-		images[fullname][size] = template.Id
-
-		submatch := re.FindStringSubmatch(template.Name)
-		if len(submatch) > 0 {
-			name := strings.Replace(strings.ToLower(submatch[1]), " ", "-", -1)
-			version := submatch[2]
-			image := fmt.Sprintf("%s-%s", name, version)
-
-			if _, present := images[image]; !present {
-				images[image] = make(map[int64]string)
-			}
-			images[image][size] = template.Id
-		}
-	}
-	return images, nil
-}
-
 func (exo *Client) GetTopology() (*Topology, error) {
-
 	zones, err := exo.GetAllZones()
 	if err != nil {
 		return nil, err
@@ -208,9 +101,9 @@ func (exo *Client) GetTopology() (*Topology, error) {
 
 	topo := &Topology{
 		Zones:          zones,
-		Profiles:       profiles,
 		Images:         images,
 		Keypairs:       keynames,
+		Profiles:       profiles,
 		AffinityGroups: affinitygroups,
 		SecurityGroups: groups,
 	}

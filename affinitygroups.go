@@ -36,6 +36,11 @@ type CreateAffinityGroupRequest struct {
 	DomainId    string `json:"domainid,omitempty"`
 }
 
+// Command return the CloudStack API
+func (req *CreateAffinityGroupRequest) Command() string {
+	return "createAffinityGroupRequest"
+}
+
 // DeleteAffinityGroupRequest represents an (anti-)affinity group to be deleted
 type DeleteAffinityGroupRequest struct {
 	Id          string `json:"id,omitempty"`
@@ -66,6 +71,11 @@ type ListAffinityGroupsRequest struct {
 	VirtualMachineId string `json:"virtualmachineid,omitempty"`
 }
 
+// Command return the CloudStack API command
+func (req *ListAffinityGroupsRequest) Command() string {
+	return "listAffinityGroups"
+}
+
 // CreateAffinityGroupResponse represents the response of the creation of an (anti-)affinity group
 type CreateAffinityGroupResponse struct {
 	AffinityGroup AffinityGroup `json:"affinitygroup"`
@@ -76,6 +86,11 @@ type ListAffinityGroupTypesRequest struct {
 	Keyword  string `json:"keyword,omitempty"`
 	Page     string `json:"page,omitempty"`
 	PageSize string `json:"pagesize,omitempty"`
+}
+
+// Command return the CloudStack API command
+func (req *ListAffinityGroupTypesRequest) Command() string {
+	return "listAffinityGroupTypes"
 }
 
 // ListAffinityGroupsResponse represents a list of (anti-)affinity groups
@@ -122,19 +137,10 @@ func (exo *Client) DeleteAffinityGroup(req *DeleteAffinityGroupRequest, async As
 // ListAffinityGroups lists the affinity groups
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/listAffinityGroups.html
-func (exo *Client) ListAffinityGroups(req ListAffinityGroupsRequest) ([]*AffinityGroup, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := exo.Request("listAffinityGroups", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) ListAffinityGroups(req *ListAffinityGroupsRequest) ([]*AffinityGroup, error) {
 	var r ListAffinityGroupsResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 
@@ -144,19 +150,10 @@ func (exo *Client) ListAffinityGroups(req ListAffinityGroupsRequest) ([]*Affinit
 // ListAffinityGroupTypes lists the affinity group type
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/listAffinityGroupTypes.html
-func (exo *Client) ListAffinityGroupTypes(req ListAffinityGroupTypesRequest) ([]*AffinityGroupType, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := exo.Request("listAffinityGroupTypes", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) ListAffinityGroupTypes(req *ListAffinityGroupTypesRequest) ([]*AffinityGroupType, error) {
 	var r ListAffinityGroupTypesResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 

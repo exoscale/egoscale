@@ -208,18 +208,9 @@ func (exo *Client) AsyncRequest(command string, params url.Values, async AsyncIn
 
 // BooleanRequest performs a sync request on a boolean call
 func (exo *Client) BooleanRequest(command Request) error {
-	params, err := prepareValues(command)
-	if err != nil {
-		return err
-	}
-
-	resp, err := exo.Request(command.Command(), *params)
-	if err != nil {
-		return err
-	}
-
 	var r BooleanResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(command, &r)
+	if err != nil {
 		return err
 	}
 
@@ -228,6 +219,20 @@ func (exo *Client) BooleanRequest(command Request) error {
 
 // BooleanAsyncRequest performs a sync request on a boolean call
 func (exo *Client) BooleanAsyncRequest(command Request, async AsyncInfo) error {
+	var r BooleanResponse
+	err := exo.DoAsyncRequest(command, &r, async)
+	if err != nil {
+		return err
+	}
+
+	return r.Error()
+}
+
+func (exo *Client) Request(command Request, v interface{}) error {
+	return exo.DoAsyncRequest(command, v, AsyncInfo{})
+}
+
+func (exo *Client) DoAsyncRequest(command Request, v interface{}, async AsyncInfo) error {
 	params, err := prepareValues(command)
 	if err != nil {
 		return err
@@ -238,18 +243,13 @@ func (exo *Client) BooleanAsyncRequest(command Request, async AsyncInfo) error {
 		return err
 	}
 
-	var r BooleanResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
-		return err
-	}
-
-	return r.Error()
+	return json.Unmarshal(resp, v)
 }
 
 // Request performs a sync request (one try only)
-func (exo *Client) Request(command string, params url.Values) (json.RawMessage, error) {
-	return exo.AsyncRequest(command, params, AsyncInfo{})
-}
+//func (exo *Client) Request(command string, params url.Values) (json.RawMessage, error) {
+//	return exo.AsyncRequest(command, params, AsyncInfo{})
+//}
 
 // request makes a Request while being close to the metal
 func (exo *Client) request(command string, params url.Values) (json.RawMessage, error) {

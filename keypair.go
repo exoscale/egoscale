@@ -7,10 +7,6 @@ See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/sta
 */
 package egoscale
 
-import (
-	"encoding/json"
-)
-
 // SshKeyPair represents an SSH key pair
 type SshKeyPair struct {
 	Account     string `json:"account,omitempty"`
@@ -27,6 +23,11 @@ type CreateSshKeyPairRequest struct {
 	Account   string `json:"account,omitempty"`
 	DomainId  string `json:"domainid,omitempty"`
 	ProjectId string `json:"projectid,omitempty"`
+}
+
+// Command returns the CloudStack API command
+func (req *CreateSshKeyPairRequest) Command() string {
+	return "createSSHKeyPair"
 }
 
 // CreateSshKeyPairResponse represents the creation of an SSH Key Pair
@@ -56,6 +57,11 @@ type RegisterSshKeyPairRequest struct {
 	ProjectId string `json:"projectid,omitempty"`
 }
 
+// Command returns the CloudStack API command
+func (req *RegisterSshKeyPairRequest) Command() string {
+	return "registerSSHKeyPair"
+}
+
 // RegisterSshKeyPairResponse represents the creation of an SSH Key Pair
 type RegisterSshKeyPairResponse struct {
 	KeyPair SshKeyPair `json:"keypair"`
@@ -75,6 +81,11 @@ type ListSshKeyPairsRequest struct {
 	ProjectId   string `json:"projectid,omitempty"`
 }
 
+// Command returns the CloudStack API command
+func (req *ListSshKeyPairsRequest) Command() string {
+	return "listSSHKeyPairs"
+}
+
 // ListSshKeyPairsResponse
 type ListSshKeyPairsResponse struct {
 	Count      int           `json:"count"`
@@ -84,18 +95,10 @@ type ListSshKeyPairsResponse struct {
 // CreateSshKeyPair create a new SSH Key Pair
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/createSSHKeyPair.html
-func (exo *Client) CreateSshKeyPair(req CreateSshKeyPairRequest) (*SshKeyPair, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := exo.Request("createSSHKeyPair", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) CreateSshKeyPair(req *CreateSshKeyPairRequest) (*SshKeyPair, error) {
 	var r CreateSshKeyPairResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 
@@ -112,18 +115,10 @@ func (exo *Client) DeleteSshKeyPair(req *DeleteSshKeyPairRequest) error {
 // RegisterSshKeyPair registers a public key in a keypair
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/registerSSHKeyPair.html
-func (exo *Client) RegisterSshKeyPair(req RegisterSshKeyPairRequest) (*SshKeyPair, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, nil
-	}
-	resp, err := exo.Request("registerSSHKeyPair", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) RegisterSshKeyPair(req *RegisterSshKeyPairRequest) (*SshKeyPair, error) {
 	var r RegisterSshKeyPairResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 
@@ -133,19 +128,10 @@ func (exo *Client) RegisterSshKeyPair(req RegisterSshKeyPairRequest) (*SshKeyPai
 // ListSshKeyPairs lists the key pairs
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/listSSHKeyPairs.html
-func (exo *Client) ListSshKeyPairs(req ListSshKeyPairsRequest) ([]*SshKeyPair, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := exo.Request("listSSHKeyPairs", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) ListSshKeyPairs(req *ListSshKeyPairsRequest) ([]*SshKeyPair, error) {
 	var r ListSshKeyPairsResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 

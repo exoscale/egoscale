@@ -9,8 +9,6 @@ package egoscale
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/url"
 )
 
 // VirtualMachine reprents a virtual machine
@@ -122,11 +120,21 @@ type DeployVirtualMachineRequest struct {
 	UserData           []byte         `json:"userdata,omitempty"`
 }
 
+// Command returns the command name for the Cloud Stack API
+func (req *DeployVirtualMachineRequest) Command() string {
+	return "deployVirtualMachine"
+}
+
 // StartVirtualMachineRequest represents the creation of the virtual machine
 type StartVirtualMachineRequest struct {
 	Id               string `json:"id"`
 	DeploymentPlaner string `json:"deploymentplanner,omitempty"` // root only
 	HostId           string `json:"hostid,omitempty"`            // root only
+}
+
+// Command returns the command name for the Cloud Stack API
+func (req *StartVirtualMachineRequest) Command() string {
+	return "startVirtualMachine"
 }
 
 // StopVirtualMachineRequest represents the stopping of the virtual machine
@@ -135,9 +143,19 @@ type StopVirtualMachineRequest struct {
 	Forced bool   `json:"forced,omitempty"`
 }
 
+// Command returns the command name for the Cloud Stack API
+func (req *StopVirtualMachineRequest) Command() string {
+	return "stopVirtualMachine"
+}
+
 // RebootVirtualMachineRequest represents the rebooting of the virtual machine
 type RebootVirtualMachineRequest struct {
 	Id string `json:"id"`
+}
+
+// Command returns the command name for the Cloud Stack API
+func (req *RebootVirtualMachineRequest) Command() string {
+	return "rebootVirtualMachine"
 }
 
 // DestroyVirtualMachineRequest represents the destruction of the virtual machine
@@ -188,6 +206,11 @@ type ListVirtualMachinesRequest struct {
 	UserId            string         `json:"userid,omitempty"`
 	VpcId             string         `json:"vpcid,omitempty"`
 	ZoneId            string         `json:"zoneid,omitempty"`
+}
+
+// Command returns the command name for the Cloud Stack API
+func (req *ListVirtualMachinesRequest) Command() string {
+	return "listVirtualMachines"
 }
 
 // ListVirtualMachinesResponse represents a list of virtual machines
@@ -250,13 +273,13 @@ func (exo *Client) doVirtualMachine(action string, req interface{}, async AsyncI
 
 // GetVirtualMachine
 //
-//
+/*
 func (exo *Client) GetVirtualMachine(virtualMachineId string) (*VirtualMachine, error) {
 
 	params := url.Values{}
 	params.Set("id", virtualMachineId)
 
-	resp, err := exo.Request("listVirtualMachines", params)
+	resp, err := exo.Request()
 	if err != nil {
 		return nil, err
 	}
@@ -272,23 +295,15 @@ func (exo *Client) GetVirtualMachine(virtualMachineId string) (*VirtualMachine, 
 	} else {
 		return nil, fmt.Errorf("cannot retrieve virtualmachine with id %s", virtualMachineId)
 	}
-}
+}*/
 
 // ListVirtualMachines lists all the VM
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/listVirtualMachines.html
-func (exo *Client) ListVirtualMachines(req ListVirtualMachinesRequest) ([]*VirtualMachine, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := exo.Request("listVirtualMachines", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) ListVirtualMachines(req *ListVirtualMachinesRequest) ([]*VirtualMachine, error) {
 	var r ListVirtualMachinesResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 

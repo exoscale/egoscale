@@ -144,7 +144,7 @@ func TestGetSecurityGroups(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	securityGroups, err := cs.ListSecurityGroups(ListSecurityGroupsRequest{})
+	securityGroups, err := cs.ListSecurityGroups(&ListSecurityGroupsRequest{})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -71,6 +71,11 @@ type CreateSecurityGroupRequest struct {
 	Description string `json:"description,omitempty"`
 }
 
+// Command returns the CloudStack API command
+func (req *CreateSecurityGroupRequest) Command() string {
+	return "createSecurityGroupRequest"
+}
+
 // DeleteSecurityGroupRequest represents a security group deletion
 type DeleteSecurityGroupRequest struct {
 	Account   string `json:"account,omitempty"`
@@ -136,6 +141,11 @@ type ListSecurityGroupsRequest struct {
 	SecurityGroupName string         `json:"securitygroupname,omitempty"`
 	Tags              []*ResourceTag `json:"tags,omitempty"`
 	VirtualMachineId  string         `json:"virtualmachineid,omitempty"`
+}
+
+// Command returns the CloudStack API command
+func (req *ListSecurityGroupsRequest) Command() string {
+	return "listSecurityGroups"
 }
 
 // ListSecurityGroupsResponse represents a list of security groups
@@ -211,15 +221,10 @@ func (exo *Client) addSecurityGroupRule(action, kind string, req AuthorizeSecuri
 // CreateSecurityGroup creates a SG
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/createSecurityGroup.html
-func (exo *Client) CreateSecurityGroup(req CreateSecurityGroupRequest) (*SecurityGroup, error) {
-	params, err := prepareValues(req)
-	resp, err := exo.Request("createSecurityGroup", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) CreateSecurityGroup(req *CreateSecurityGroupRequest) (*SecurityGroup, error) {
 	var r AuthorizeSecurityGroupResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 
@@ -236,19 +241,9 @@ func (exo *Client) DeleteSecurityGroup(req *DeleteSecurityGroupRequest) error {
 // ListSecurityGroups lists the security groups.
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/listSecurityGroups.html
-func (exo *Client) ListSecurityGroups(req ListSecurityGroupsRequest) ([]*SecurityGroup, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := exo.Request("listSecurityGroups", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) ListSecurityGroups(req *ListSecurityGroupsRequest) ([]*SecurityGroup, error) {
 	var r ListSecurityGroupsResponse
-	err = json.Unmarshal(resp, &r)
+	err := exo.Request(req, &r)
 	if err != nil {
 		return nil, err
 	}

@@ -1,9 +1,7 @@
 package egoscale
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/url"
 )
 
 // Volume represents a volume linked to a VM
@@ -49,6 +47,34 @@ type VolumeTag struct {
 	Value      string `json:"value,omitempty"`
 }
 
+// ListVolumeRequest represents a query listing volumes
+type ListVolumesRequest struct {
+	Account          string         `json:"account,omitempty"`
+	DiskOfferingId   string         `json:"diskoffering,omitempty"`
+	DisplayVolume    string         `json:"displayvolume,omitempty"` // root only
+	DomainId         string         `json:"domainid,omitempty"`
+	HostId           string         `json:"hostid,omitempty"`
+	Id               string         `json:"id,omitempty"`
+	IsRecursive      bool           `json:"isrecursive,omitempty"`
+	Keyword          string         `json:"keyword,omitempty"`
+	ListAll          bool           `json:"listall,omitempty"`
+	Name             string         `json:"name,omitempty"`
+	Page             int            `json:"page,omitempty"`
+	PageSize         int            `json:"pagesize,omitempty"`
+	PodId            string         `json:"podid,omitempty"`
+	ProjectId        string         `json:"projectid,omitempty"`
+	StorageId        string         `json:"storageid,omitempty"`
+	Tags             []*ResourceTag `json:"tags,omitempty"`
+	Type             string         `json:"type,omitempty"`
+	VirtualMachineId string         `json:"virtualmachineid,omitempty"`
+	ZoneId           string         `json:"zoneid,omitempty"`
+}
+
+// Command returns the CloudStack API command
+func (req *ListVolumesRequest) Command() string {
+	return "listVolumes"
+}
+
 // ListVolumesResponse represents a list of volumes
 type ListVolumesResponse struct {
 	Count  int       `json:"count"`
@@ -56,14 +82,10 @@ type ListVolumesResponse struct {
 }
 
 // ListVolumes
-func (exo *Client) ListVolumes(params url.Values) ([]*Volume, error) {
-	resp, err := exo.Request("listVolumes", params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) ListVolumes(req *ListVolumesRequest) ([]*Volume, error) {
 	var r ListVolumesResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 
@@ -72,11 +94,10 @@ func (exo *Client) ListVolumes(params url.Values) ([]*Volume, error) {
 
 // GetRootVolumeForVirtualMachine(d.Id())
 func (exo *Client) GetRootVolumeForVirtualMachine(virtualMachineId string) (*Volume, error) {
-	params := url.Values{}
-	params.Set("virtualmachineid", virtualMachineId)
-	params.Set("type", "ROOT")
-
-	volumes, err := exo.ListVolumes(params)
+	volumes, err := exo.ListVolumes(&ListVolumesRequest{
+		VirtualMachineId: virtualMachineId,
+		Type:             "ROOT",
+	})
 	if err != nil {
 		return nil, err
 	}

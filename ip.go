@@ -100,6 +100,11 @@ type ListPublicIpAddressesRequest struct {
 	ZoneId             string         `json:"zoneid,omitempty"`
 }
 
+// Command returns the CloudStack API command
+func (*ListPublicIpAddressesRequest) Command() string {
+	return "listPublicIpAddresses"
+}
+
 // ListPublicIpAddressesResponse represents a list of public IP addresses
 type ListPublicIpAddressesResponse struct {
 	Count           int          `json:"count"`
@@ -135,18 +140,10 @@ func (exo *Client) DisassociateIpAddress(req *DisassociateIpAddressRequest, asyn
 }
 
 // ListPublicIpAddresses lists the public ip addresses
-func (exo *Client) ListPublicIpAddresses(req ListPublicIpAddressesRequest) ([]*IpAddress, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := exo.Request("listPublicIpAddresses", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) ListPublicIpAddresses(req *ListPublicIpAddressesRequest) ([]*IpAddress, error) {
 	var r ListPublicIpAddressesResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 

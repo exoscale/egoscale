@@ -46,6 +46,11 @@ type ListNicsRequest struct {
 	PageSize         string `json:"pagesize,omitempty"`
 }
 
+// Command() returns the CloudStack API command
+func (req *ListNicsRequest) Command() string {
+	return "listNics"
+}
+
 // ListNicsResponse represents a list of templates
 type ListNicsResponse struct {
 	Count int    `json:"count"`
@@ -68,19 +73,10 @@ func (req *RemoveIpFromNicRequest) Command() string {
 }
 
 // ListNics lists the NIC of a VM
-func (exo *Client) ListNics(req ListNicsRequest) ([]*Nic, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := exo.Request("listNics", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) ListNics(req *ListNicsRequest) ([]*Nic, error) {
 	var r ListNicsResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 

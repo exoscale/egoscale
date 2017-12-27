@@ -18,7 +18,6 @@ See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/sta
 package egoscale
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -163,15 +162,15 @@ All the methods requiring an AsyncInfo value are asynchronous and must be handle
 // AuthorizeSecurityGroupEgress authorizes a particular egress rule for this security group
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/authorizeSecurityGroupEgress.html
-func (exo *Client) AuthorizeSecurityGroupEgress(req AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
-	return exo.addSecurityGroupRule("authorize", "Egress", req, async)
+func (exo *Client) AuthorizeSecurityGroupEgress(req *AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
+	return exo.addSecurityGroupRule(req, async)
 }
 
 // AuthorizeSecurityGroupIngress authorizes a particular ingress rule for this security group
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/authorizeSecurityGroupIngress.html
-func (exo *Client) AuthorizeSecurityGroupIngress(req AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
-	return exo.addSecurityGroupRule("authorize", "Ingress", req, async)
+func (exo *Client) AuthorizeSecurityGroupIngress(req *AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
+	return exo.addSecurityGroupRule(req, async)
 }
 
 // RevokeSecurityGroupEgress revokes a particular egress rule for this security group
@@ -188,30 +187,26 @@ func (exo *Client) RevokeSecurityGroupIngress(req *RevokeSecurityGroupRequest, a
 	return exo.BooleanAsyncRequest(req, async)
 }
 
-func (exo *Client) addSecurityGroupRule(action, kind string, req AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(req.UserSecurityGroupList) > 0 {
-		for i, usg := range req.UserSecurityGroupList {
-			key := fmt.Sprintf("usersecuritygrouplist[%d]", i)
-			params.Set(key+".account", usg.Account)
-			params.Set(key+".group", usg.Group)
+func (exo *Client) addSecurityGroupRule(req *AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
+	// XXX has to be fixed
+	/*
+		if len(req.UserSecurityGroupList) > 0 {
+			for i, usg := range req.UserSecurityGroupList {
+				key := fmt.Sprintf("usersecuritygrouplist[%d]", i)
+				params.Set(key+".account", usg.Account)
+				params.Set(key+".group", usg.Group)
+			}
 		}
-	}
-
-	resp, err := exo.AsyncRequest(action+"SecurityGroup"+kind, *params, async)
-	if err != nil {
-		return nil, err
-	}
+	*/
 
 	var r AuthorizeSecurityGroupResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.AsyncRequest(req, &r, async)
+	if err != nil {
 		return nil, err
 	}
 
+	// XXX THIS TOO
+	kind := "Egress"
 	if kind == "Egress" {
 		return r.SecurityGroup.EgressRules[0], nil
 	}

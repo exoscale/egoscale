@@ -9,6 +9,11 @@ type QueryAsyncJobResultRequest struct {
 	JobId string `json:"jobid"`
 }
 
+// Command returns the CloudStack API command
+func (req *QueryAsyncJobResultRequest) Command() string {
+	return "queryAsyncJobResult"
+}
+
 // QueryASyncJobResultResponse represents the current status of an asynchronous job
 type QueryAsyncJobResultResponse struct {
 	AccountId       string           `json:"accountid"`
@@ -25,25 +30,11 @@ type QueryAsyncJobResultResponse struct {
 	JobId           string           `json:"jobid"`
 }
 
-// PollAsyncJob is an alias to QueryAsyncJobResult
-func (exo *Client) PollAsyncJob(profile QueryAsyncJobResultRequest) (*QueryAsyncJobResultResponse, error) {
-	return exo.QueryAsyncJobResult(profile)
-}
-
 // QueryAsyncJobResult queries the status of an async job
-func (exo *Client) QueryAsyncJobResult(profile QueryAsyncJobResultRequest) (*QueryAsyncJobResultResponse, error) {
-	params, err := prepareValues(profile)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := exo.request("queryAsyncJobResult", *params)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) QueryAsyncJobResult(req *QueryAsyncJobResultRequest) (*QueryAsyncJobResultResponse, error) {
 	var r QueryAsyncJobResultResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.Request(req, &r)
+	if err != nil {
 		return nil, err
 	}
 

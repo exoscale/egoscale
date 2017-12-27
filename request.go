@@ -149,61 +149,52 @@ func (exo *Client) ParseResponse(resp *http.Response) (json.RawMessage, error) {
 }
 
 // AsyncRequest performs an asynchronous request and polls it for retries * day [s]
-func (exo *Client) AsyncRequest(command string, params url.Values, async AsyncInfo) (json.RawMessage, error) {
-	body, err := exo.request(command, params)
+func (exo *Client) AsyncRequest(command Request, v interface{}, async AsyncInfo) error {
+	body, err := exo.request(command)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// This is not a Job
+	// Is it a Job?
 	var job JobResultResponse
 	if err := json.Unmarshal(body, &job); err != nil {
-		return nil, err
+		return err
 	}
 
-	if job.JobId != "" {
-		var result json.RawMessage
-		if job.JobStatus == SUCCESS {
-			return *job.JobResult, nil
-		} else if job.JobStatus == FAILURE {
-			result = *job.JobResult
-			async.Retries = 0
-		}
-
-		// we've go a pending job
-		for async.Retries > 0 && result == nil {
-			time.Sleep(time.Duration(async.Delay) * time.Second)
-
-			async.Retries--
-
-			resp, err := exo.QueryAsyncJobResult(QueryAsyncJobResultRequest{
-				JobId: job.JobId,
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			if resp.JobStatus == SUCCESS {
-				return *resp.JobResult, nil
-			} else if resp.JobStatus == FAILURE {
-				result = *resp.JobResult
-			}
-		}
-
-		if result != nil {
-			var r ErrorResponse
-			if err := json.Unmarshal(result, &r); err != nil {
-				return nil, err
-			}
-			return nil, fmt.Errorf("%s: [%d] %s", command, r.ErrorCode, r.ErrorText)
-		}
-
-		return nil, fmt.Errorf("Maximum number of retries reached")
-
-	} else {
-		// the job is done
-		return body, nil
+	if job.JobId == "" || job.JobStatus != PENDING {
+		return json.Unmarshal(*job.JobResult, v)
 	}
+
+	// we've go a pending job
+	result := &QueryAsyncJobResultResponse{
+		JobStatus: job.JobStatus,
+	}
+	for async.Retries > 0 && result.JobStatus == PENDING {
+		time.Sleep(time.Duration(async.Delay) * time.Second)
+
+		async.Retries--
+
+		result, err = exo.QueryAsyncJobResult(&QueryAsyncJobResultRequest{
+			JobId: job.JobId,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	if result.JobStatus == FAILURE {
+		var r ErrorResponse
+		if err := json.Unmarshal(*result.JobResult, &r); err != nil {
+			return err
+		}
+		return r.Error()
+	}
+
+	if result.JobStatus == PENDING {
+		return fmt.Errorf("Maximum number of retries reached")
+	}
+
+	return json.Unmarshal(*job.JobResult, v)
 }
 
 // BooleanRequest performs a sync request on a boolean call
@@ -220,7 +211,7 @@ func (exo *Client) BooleanRequest(command Request) error {
 // BooleanAsyncRequest performs a sync request on a boolean call
 func (exo *Client) BooleanAsyncRequest(command Request, async AsyncInfo) error {
 	var r BooleanResponse
-	err := exo.DoAsyncRequest(command, &r, async)
+	err := exo.AsyncRequest(command, &r, async)
 	if err != nil {
 		return err
 	}
@@ -228,46 +219,46 @@ func (exo *Client) BooleanAsyncRequest(command Request, async AsyncInfo) error {
 	return r.Error()
 }
 
+// Request performs a simple request
 func (exo *Client) Request(command Request, v interface{}) error {
-	return exo.DoAsyncRequest(command, v, AsyncInfo{})
-}
-
-func (exo *Client) DoAsyncRequest(command Request, v interface{}, async AsyncInfo) error {
-	params, err := prepareValues(command)
+	resp, err := exo.request(command)
 	if err != nil {
 		return err
 	}
 
-	resp, err := exo.AsyncRequest(command.Command(), *params, async)
-	if err != nil {
+	if err := json.Unmarshal(resp, v); err != nil {
+		var r ErrorResponse
+		if e := json.Unmarshal(resp, &r); e == nil {
+			return r.Error()
+		}
 		return err
 	}
 
-	return json.Unmarshal(resp, v)
+	return nil
 }
-
-// Request performs a sync request (one try only)
-//func (exo *Client) Request(command string, params url.Values) (json.RawMessage, error) {
-//	return exo.AsyncRequest(command, params, AsyncInfo{})
-//}
 
 // request makes a Request while being close to the metal
-func (exo *Client) request(command string, params url.Values) (json.RawMessage, error) {
+func (exo *Client) request(command Request) (json.RawMessage, error) {
 	mac := hmac.New(sha1.New, []byte(exo.apiSecret))
 
+	params, err := prepareValues(command)
+	if err != nil {
+		return nil, err
+	}
+
 	params.Set("apikey", exo.apiKey)
-	params.Set("command", command)
+	params.Set("command", command.Command())
 	params.Set("response", "json")
 
 	keys := make([]string, 0)
 	unencoded := make([]string, 0)
-	for k := range params {
+	for k := range *params {
 		keys = append(keys, k)
 	}
 
 	sort.Strings(keys)
 	for _, k := range keys {
-		arg := fmt.Sprintf("%s=%s", k, csEncode(params[k][0]))
+		arg := fmt.Sprintf("%s=%s", k, csEncode((*params)[k][0]))
 		unencoded = append(unencoded, arg)
 	}
 

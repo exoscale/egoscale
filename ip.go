@@ -1,9 +1,5 @@
 package egoscale
 
-import (
-	"encoding/json"
-)
-
 // IpAddress represents an IP Address
 type IpAddress struct {
 	Id                        string         `json:"id"`
@@ -114,18 +110,10 @@ type ListPublicIpAddressesResponse struct {
 // AssociateIpAddress acquires and associates a public IP to a given zone
 //
 // https://doc.internal.exoscale.ch/others/cs/user/associateIpAddress.html
-func (exo *Client) AssociateIpAddress(req AssociateIpAddressRequest, async AsyncInfo) (*IpAddress, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := exo.AsyncRequest("associateIpAddress", *params, async)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) AssociateIpAddress(req *AssociateIpAddressRequest, async AsyncInfo) (*IpAddress, error) {
 	var r AssociateIpAddressResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.AsyncRequest(req, &r, async)
+	if err != nil {
 		return nil, err
 	}
 

@@ -124,6 +124,7 @@ func TestBooleanRequest(t *testing.T) {
 	params.Set("command", "destroyVirtualMachine")
 	params.Set("token", "TOKEN")
 	params.Set("id", "123")
+	params.Set("response", "json")
 	ts := newPostServer(params, `
 {
 	"destroyvirtualmachine": {
@@ -142,7 +143,7 @@ func TestBooleanRequest(t *testing.T) {
 	req := &DestroyVirtualMachineRequest{
 		Id: "123",
 	}
-	err := cs.BooleanRequest(req)
+	err := cs.BooleanAsyncRequest(req, AsyncInfo{})
 
 	if err != nil {
 		t.Errorf(err.Error())

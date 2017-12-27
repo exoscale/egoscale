@@ -6,10 +6,6 @@ Affinity and Anti-Affinity groups provide a way to influence where VMs should ru
 
 package egoscale
 
-import (
-	"encoding/json"
-)
-
 // AffinityGroup represents an (anti-)affinity group
 type AffinityGroup struct {
 	Id                string   `json:"id,omitempty"`
@@ -108,19 +104,10 @@ type ListAffinityGroupTypesResponse struct {
 // CreateAffinityGroup creates an (anti-)affinity group
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/createAffinityGroup.html
-func (exo *Client) CreateAffinityGroup(req CreateAffinityGroupRequest, async AsyncInfo) (*AffinityGroup, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := exo.AsyncRequest("createAffinityGroup", *params, async)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) CreateAffinityGroup(req *CreateAffinityGroupRequest, async AsyncInfo) (*AffinityGroup, error) {
 	var r CreateAffinityGroupResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.AsyncRequest(req, &r, async)
+	if err != nil {
 		return nil, err
 	}
 

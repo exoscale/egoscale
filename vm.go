@@ -7,10 +7,6 @@ See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/sta
 */
 package egoscale
 
-import (
-	"encoding/json"
-)
-
 // VirtualMachine reprents a virtual machine
 type VirtualMachine struct {
 	Id                    string            `json:"id,omitempty"`
@@ -227,44 +223,35 @@ type IpToNetwork struct {
 }
 
 // DeployVirtualMachine creates a new VM
-func (exo *Client) DeployVirtualMachine(req DeployVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
-	return exo.doVirtualMachine("deploy", req, async)
+func (exo *Client) DeployVirtualMachine(req *DeployVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
+	return exo.doVirtualMachine(req, async)
 }
 
 // StartVirtualMachine starts the VM and returns its new state
-func (exo *Client) StartVirtualMachine(req StartVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
-	return exo.doVirtualMachine("start", req, async)
+func (exo *Client) StartVirtualMachine(req *StartVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
+	return exo.doVirtualMachine(req, async)
 }
 
 // StopVirtualMachine stops the VM and returns its new state
-func (exo *Client) StopVirtualMachine(req StopVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
-	return exo.doVirtualMachine("stop", req, async)
+func (exo *Client) StopVirtualMachine(req *StopVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
+	return exo.doVirtualMachine(req, async)
 }
 
 // RebootVirtualMachine reboots the VM and returns its new state
-func (exo *Client) RebootVirtualMachine(req RebootVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
-	return exo.doVirtualMachine("reboot", req, async)
+func (exo *Client) RebootVirtualMachine(req *RebootVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
+	return exo.doVirtualMachine(req, async)
 }
 
 // DestroyVirtualMachine destroy the VM
-func (exo *Client) DestroyVirtualMachine(req DestroyVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
-	return exo.doVirtualMachine("destroy", req, async)
+func (exo *Client) DestroyVirtualMachine(req *DestroyVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
+	return exo.doVirtualMachine(req, async)
 }
 
 // doVirtualMachine is a utility function to perform the API call
-func (exo *Client) doVirtualMachine(action string, req interface{}, async AsyncInfo) (*VirtualMachine, error) {
-	params, err := prepareValues(req)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := exo.AsyncRequest(action+"VirtualMachine", *params, async)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) doVirtualMachine(command Request, async AsyncInfo) (*VirtualMachine, error) {
 	var r VirtualMachineResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.AsyncRequest(command, &r, async)
+	if err != nil {
 		return nil, err
 	}
 

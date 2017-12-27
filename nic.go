@@ -1,10 +1,5 @@
 package egoscale
 
-import (
-	"encoding/json"
-	"net/url"
-)
-
 // Nic represents a Network Interface Controller (NIC)
 type Nic struct {
 	Id               string            `json:"id,omitempty"`
@@ -57,6 +52,17 @@ type ListNicsResponse struct {
 	Nic   []*Nic `json:"nic"`
 }
 
+// AddIpToNicRequest represents the assignation of a secondary IP
+type AddIpToNicRequest struct {
+	NidId     string `json:"nicid"`
+	IpAddress string `json:"ipaddress"`
+}
+
+// Command returns the CloudStack API command
+func (req *AddIpToNicRequest) Command() string {
+	return "addIpToNic"
+}
+
 // AddIpToNicResponse represents the addition of an IP to a NIC
 type AddIpToNicResponse struct {
 	NicSecondaryIp *NicSecondaryIp `json:"nicsecondaryip"`
@@ -84,18 +90,10 @@ func (exo *Client) ListNics(req *ListNicsRequest) ([]*Nic, error) {
 }
 
 // AddIpToNic adds the IP address to the given NIC
-func (exo *Client) AddIpToNic(nicId string, ipAddress string, async AsyncInfo) (*NicSecondaryIp, error) {
-	params := url.Values{}
-	params.Set("nicid", nicId)
-	params.Set("ipaddress", ipAddress)
-
-	resp, err := exo.AsyncRequest("addIpToNic", params, async)
-	if err != nil {
-		return nil, err
-	}
-
+func (exo *Client) AddIpToNic(req *AddIpToNicRequest, async AsyncInfo) (*NicSecondaryIp, error) {
 	var r AddIpToNicResponse
-	if err := json.Unmarshal(resp, &r); err != nil {
+	err := exo.AsyncRequest(req, &r, async)
+	if err != nil {
 		return nil, err
 	}
 

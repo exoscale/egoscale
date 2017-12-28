@@ -122,6 +122,11 @@ func (req *DeployVirtualMachineRequest) Command() string {
 	return "deployVirtualMachine"
 }
 
+// DeployVirtualMachineResponse represents a deployed VM instance
+type DeployVirtualMachineResponse struct {
+	VirtualMachine *VirtualMachine `json:"virtualmachine"`
+}
+
 // StartVirtualMachineRequest represents the creation of the virtual machine
 type StartVirtualMachineRequest struct {
 	ID               string `json:"id"`
@@ -134,6 +139,9 @@ func (req *StartVirtualMachineRequest) Command() string {
 	return "startVirtualMachine"
 }
 
+// StartVirtualMachineResponse represents a started VM instance
+type StartVirtualMachineResponse DeployVirtualMachineResponse
+
 // StopVirtualMachineRequest represents the stopping of the virtual machine
 type StopVirtualMachineRequest struct {
 	ID     string `json:"id"`
@@ -145,6 +153,9 @@ func (req *StopVirtualMachineRequest) Command() string {
 	return "stopVirtualMachine"
 }
 
+// StopVirtualMachineResponse represents a stopped VM instance
+type StopVirtualMachineResponse DeployVirtualMachineResponse
+
 // RebootVirtualMachineRequest represents the rebooting of the virtual machine
 type RebootVirtualMachineRequest struct {
 	ID string `json:"id"`
@@ -154,6 +165,9 @@ type RebootVirtualMachineRequest struct {
 func (req *RebootVirtualMachineRequest) Command() string {
 	return "rebootVirtualMachine"
 }
+
+// RebootVirtualMachineResponse represents a rebooted VM instance
+type RebootVirtualMachineResponse DeployVirtualMachineResponse
 
 // DestroyVirtualMachineRequest represents the destruction of the virtual machine
 type DestroyVirtualMachineRequest struct {
@@ -166,10 +180,8 @@ func (req *DestroyVirtualMachineRequest) Command() string {
 	return "destroyVirtualMachine"
 }
 
-// VirtualMachineResponse represents a deployed VM instance
-type VirtualMachineResponse struct {
-	VirtualMachine *VirtualMachine `json:"virtualmachine"`
-}
+// DestroyVirtualMachineResponse represents a destroyed VM instance
+type DestroyVirtualMachineResponse DeployVirtualMachineResponse
 
 // ListVirtualMachinesRequest represents a search for a VM
 type ListVirtualMachinesRequest struct {
@@ -222,82 +234,3 @@ type IPToNetwork struct {
 	IPV6      string `json:"ipv6,omitempty"`
 	NetworkID string `json:"networkid,omitempty"`
 }
-
-// DeployVirtualMachine creates a new VM
-func (exo *Client) DeployVirtualMachine(req *DeployVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
-	return exo.doVirtualMachine(req, async)
-}
-
-// StartVirtualMachine starts the VM and returns its new state
-func (exo *Client) StartVirtualMachine(req *StartVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
-	return exo.doVirtualMachine(req, async)
-}
-
-// StopVirtualMachine stops the VM and returns its new state
-func (exo *Client) StopVirtualMachine(req *StopVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
-	return exo.doVirtualMachine(req, async)
-}
-
-// RebootVirtualMachine reboots the VM and returns its new state
-func (exo *Client) RebootVirtualMachine(req *RebootVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
-	return exo.doVirtualMachine(req, async)
-}
-
-// DestroyVirtualMachine destroy the VM
-func (exo *Client) DestroyVirtualMachine(req *DestroyVirtualMachineRequest, async AsyncInfo) (*VirtualMachine, error) {
-	return exo.doVirtualMachine(req, async)
-}
-
-// doVirtualMachine is a utility function to perform the API call
-func (exo *Client) doVirtualMachine(command Request, async AsyncInfo) (*VirtualMachine, error) {
-	var r VirtualMachineResponse
-	err := exo.AsyncRequest(command, &r, async)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.VirtualMachine, nil
-}
-
-// GetVirtualMachine
-//
-/*
-func (exo *Client) GetVirtualMachine(virtualMachineID string) (*VirtualMachine, error) {
-
-	params := url.Values{}
-	params.Set("id", virtualMachineID)
-
-	resp, err := exo.Request()
-	if err != nil {
-		return nil, err
-	}
-
-	var r ListVirtualMachinesResponse
-
-	if err := json.Unmarshal(resp, &r); err != nil {
-		return nil, err
-	}
-
-	if len(r.VirtualMachine) == 1 {
-		return r.VirtualMachine[0], nil
-	} else {
-		return nil, fmt.Errorf("cannot retrieve virtualmachine with id %s", virtualMachineID)
-	}
-}*/
-
-// ListVirtualMachines lists all the VM
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/listVirtualMachines.html
-func (exo *Client) ListVirtualMachines(req *ListVirtualMachinesRequest) ([]*VirtualMachine, error) {
-	var r ListVirtualMachinesResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.VirtualMachine, nil
-}
-
-// XXX many calls are missing
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/

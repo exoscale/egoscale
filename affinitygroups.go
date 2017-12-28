@@ -8,14 +8,14 @@ package egoscale
 
 // AffinityGroup represents an (anti-)affinity group
 type AffinityGroup struct {
-	Id                string   `json:"id,omitempty"`
+	ID                string   `json:"id,omitempty"`
 	Account           string   `json:"account,omitempty"`
 	Description       string   `json:"description,omitempty"`
 	Domain            string   `json:"domain,omitempty"`
-	DomainId          string   `json:"domainid,omitempty"`
+	DomainID          string   `json:"domainid,omitempty"`
 	Name              string   `json:"name,omitempty"`
 	Type              string   `json:"type,omitempty"`
-	VirtualMachineIds []string `json:"virtualmachineIds,omitempty"` // *I*ds is not a typo
+	VirtualMachineIDs []string `json:"virtualmachineIDs,omitempty"` // *I*ds is not a typo
 }
 
 // AffinityGroupType represent an affinity group type
@@ -29,7 +29,7 @@ type CreateAffinityGroupRequest struct {
 	Type        string `json:"type"`
 	Account     string `json:"account,omitempty"`
 	Description string `json:"description,omitempty"`
-	DomainId    string `json:"domainid,omitempty"`
+	DomainID    string `json:"domainid,omitempty"`
 }
 
 // Command return the CloudStack API
@@ -39,12 +39,12 @@ func (req *CreateAffinityGroupRequest) Command() string {
 
 // DeleteAffinityGroupRequest represents an (anti-)affinity group to be deleted
 type DeleteAffinityGroupRequest struct {
-	Id          string `json:"id,omitempty"`
+	ID          string `json:"id,omitempty"`
 	Name        string `json:"name,omitempty"`
 	Type        string `json:"type,omitempty"`
 	Account     string `json:"account,omitempty"`
 	Description string `json:"description,omitempty"`
-	DomainId    string `json:"domainid,omitempty"`
+	DomainID    string `json:"domainid,omitempty"`
 }
 
 // Command returns the CloudStack API command
@@ -55,8 +55,8 @@ func (req *DeleteAffinityGroupRequest) Command() string {
 // ListAffinityGroupsRequest represents an (anti-)affinity groups search
 type ListAffinityGroupsRequest struct {
 	Account          string `json:"account,omitempty"`
-	DomainId         string `json:"domainid,omitempty"`
-	Id               string `json:"id,omitempty"`
+	DomainID         string `json:"domainid,omitempty"`
+	ID               string `json:"id,omitempty"`
 	IsRecursive      bool   `json:"isrecursive,omitempty"`
 	Keyword          string `json:"keyword,omitempty"`
 	ListAll          bool   `json:"listall,omitempty"`
@@ -64,7 +64,7 @@ type ListAffinityGroupsRequest struct {
 	Page             string `json:"page,omitempty"`
 	PageSize         string `json:"pagesize,omitempty"`
 	Type             string `json:"type,omitempty"`
-	VirtualMachineId string `json:"virtualmachineid,omitempty"`
+	VirtualMachineID string `json:"virtualmachineid,omitempty"`
 }
 
 // Command return the CloudStack API command
@@ -107,7 +107,9 @@ type ListAffinityGroupTypesResponse struct {
 
 // Legacy methods
 
-// Deprecated: CreateAffinityGroup creates a group
+// CreateAffinityGroup creates a group
+//
+// Deprecated: Use the API directly
 func (exo *Client) CreateAffinityGroup(name string, async AsyncInfo) (*AffinityGroup, error) {
 	req := &CreateAffinityGroupRequest{
 		Name: name,
@@ -121,7 +123,9 @@ func (exo *Client) CreateAffinityGroup(name string, async AsyncInfo) (*AffinityG
 	return resp.AffinityGroup, nil
 }
 
-// Deprecated: DeleteAffinityGroup deletes a group
+// DeleteAffinityGroup deletes a group
+//
+// Deprecated: Use the API directly
 func (exo *Client) DeleteAffinityGroup(name string, async AsyncInfo) error {
 	req := &DeleteAffinityGroupRequest{
 		Name: name,

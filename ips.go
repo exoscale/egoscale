@@ -6,86 +6,86 @@ See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/lat
 
 package egoscale
 
-// IpAddress represents an IP Address
-type IpAddress struct {
-	Id                        string         `json:"id"`
+// IPAddress represents an IP Address
+type IPAddress struct {
+	ID                        string         `json:"id"`
 	Account                   string         `json:"account,omitempty"`
 	AllocatedAt               string         `json:"allocated,omitempty"`
-	AssociatedNetworkId       string         `json:"associatednetworkid,omitempty"`
+	AssociatedNetworkID       string         `json:"associatednetworkid,omitempty"`
 	AssociatedNetworkName     string         `json:"associatednetworkname,omitempty"`
-	DomainId                  string         `json:"domainid,omitempty"`
+	DomainID                  string         `json:"domainid,omitempty"`
 	DomainName                string         `json:"domainname,omitempty"`
 	ForDisplay                bool           `json:"fordisplay,omitempty"`
 	ForVirtualNetwork         bool           `json:"forvirtualnetwork,omitempty"`
-	IpAddress                 string         `json:"ipaddress"`
+	IPAddress                 string         `json:"ipaddress"`
 	IsElastic                 bool           `json:"iselastic,omitempty"`
 	IsPortable                bool           `json:"isportable,omitempty"`
 	IsSourceNat               bool           `json:"issourcenat,omitempty"`
 	IsSystem                  bool           `json:"issystem,omitempty"`
-	NetworkId                 string         `json:"networkid,omitempty"`
-	PhysicalNetworkId         string         `json:"physicalnetworkid,omitempty"`
+	NetworkID                 string         `json:"networkid,omitempty"`
+	PhysicalNetworkID         string         `json:"physicalnetworkid,omitempty"`
 	Project                   string         `json:"project,omitempty"`
-	ProjectId                 string         `json:"projectid,omitempty"`
+	ProjectID                 string         `json:"projectid,omitempty"`
 	Purpose                   string         `json:"purpose,omitempty"`
 	State                     string         `json:"state,omitempty"`
 	VirtualMachineDisplayName string         `json:"virtualmachinedisplayname,omitempty"`
-	VirtualMachineId          string         `json:"virtualmachineid,omitempty"`
+	VirtualMachineID          string         `json:"virtualmachineid,omitempty"`
 	VirtualMachineName        string         `json:"virtualmachineName,omitempty"`
-	VlanId                    string         `json:"vlanid,omitempty"`
+	VlanID                    string         `json:"vlanid,omitempty"`
 	VlanName                  string         `json:"vlanname,omitempty"`
-	VmIpAddress               string         `json:"vmipaddress,omitempty"`
-	VpcId                     string         `json:"vpcid,omitempty"`
-	ZoneId                    string         `json:"zoneid,omitempty"`
+	VMIPAddress               string         `json:"vmipaddress,omitempty"`
+	VpcID                     string         `json:"vpcid,omitempty"`
+	ZoneID                    string         `json:"zoneid,omitempty"`
 	ZoneName                  string         `json:"zonename,omitempty"`
 	Tags                      []*ResourceTag `json:"tags,omitempty"`
-	JobId                     string         `json:"jobid,omitempty"`
+	JobID                     string         `json:"jobid,omitempty"`
 	JobStatus                 JobStatusType  `json:"jobstatus,omitempty"`
 }
 
-// AssociateIpProfileRequest represents the IP creation
-type AssociateIpAddressRequest struct {
+// AssociateIPAddressRequest represents the IP creation
+type AssociateIPAddressRequest struct {
 	Account    string `json:"account,omitempty"`
-	DomainId   string `json:"domainid,omitempty"`
+	DomainID   string `json:"domainid,omitempty"`
 	ForDisplay bool   `json:"fordisplay,omitempty"`
 	IsPortable bool   `json:"isportable,omitempty"`
-	NetworkdId string `json:"networkid,omitempty"`
-	ProjectId  string `json:"projectid,omitempty"`
-	RegionId   string `json:"regionid,omitempty"`
-	VpcId      string `json:"vpcid,omitempty"`
-	ZoneId     string `json:"zoneid,omitempty"`
+	NetworkdID string `json:"networkid,omitempty"`
+	ProjectID  string `json:"projectid,omitempty"`
+	RegionID   string `json:"regionid,omitempty"`
+	VpcID      string `json:"vpcid,omitempty"`
+	ZoneID     string `json:"zoneid,omitempty"`
 }
 
 // Command returns the CloudStack API command
-func (*AssociateIpAddressRequest) Command() string {
-	return "associateIpAddressRequest"
+func (*AssociateIPAddressRequest) Command() string {
+	return "associateIPAddressRequest"
 }
 
-// AssociateIpAddressResponse represents the response to the creation of an IpAddress
-type AssociateIpAddressResponse struct {
-	IpAddress *IpAddress `json:"ipaddress"`
+// AssociateIPAddressResponse represents the response to the creation of an IPAddress
+type AssociateIPAddressResponse struct {
+	IPAddress *IPAddress `json:"ipaddress"`
 }
 
-// DisassociateIpAddressRequest represents the IP deletion
-type DisassociateIpAddressRequest struct {
-	Id string `json:"id"`
+// DisassociateIPAddressRequest represents the IP deletion
+type DisassociateIPAddressRequest struct {
+	ID string `json:"id"`
 }
 
 // Command returns the CloudStack API command
-func (*DisassociateIpAddressRequest) Command() string {
-	return "disassociateIpAddressRequest"
+func (*DisassociateIPAddressRequest) Command() string {
+	return "disassociateIPAddressRequest"
 }
 
-// ListPublicIpAddressesRequest represents a search for public IP addresses
-type ListPublicIpAddressesRequest struct {
+// ListPublicIPAddressesRequest represents a search for public IP addresses
+type ListPublicIPAddressesRequest struct {
 	Account            string         `json:"account,omitempty"`
 	AllocatedOnly      bool           `json:"allocatedonly,omitempty"`
-	AllocatedNetworkId string         `json:"allocatednetworkid,omitempty"`
-	DomainId           string         `json:"domainid,omitempty"`
+	AllocatedNetworkID string         `json:"allocatednetworkid,omitempty"`
+	DomainID           string         `json:"domainid,omitempty"`
 	ForDisplay         bool           `json:"fordisplay,omitempty"`
 	ForLoadBalancing   bool           `json:"forloadbalancing,omitempty"`
 	ForVirtualNetwork  string         `json:"forvirtualnetwork,omitempty"`
-	Id                 string         `json:"id,omitempty"`
-	IpAddress          string         `json:"ipaddress,omitempty"`
+	ID                 string         `json:"id,omitempty"`
+	IPAddress          string         `json:"ipaddress,omitempty"`
 	IsElastic          bool           `json:"iselastic,omitempty"`
 	IsRecursive        bool           `json:"isrecursive,omitempty"`
 	IsSourceNat        bool           `json:"issourcenat,omitempty"`
@@ -94,21 +94,21 @@ type ListPublicIpAddressesRequest struct {
 	ListAll            bool           `json:"listall,omiempty"`
 	Page               int            `json:"page,omitempty"`
 	PageSize           int            `json:"pagesize,omitempty"`
-	PhysicalNetworkId  string         `json:"physicalnetworkid,omitempty"`
-	ProjectId          string         `json:"projectid,omitempty"`
+	PhysicalNetworkID  string         `json:"physicalnetworkid,omitempty"`
+	ProjectID          string         `json:"projectid,omitempty"`
 	Tags               []*ResourceTag `json:"tags,omitempty"`
-	VlanId             string         `json:"vlanid,omitempty"`
-	VpcId              string         `json:"vpcid,omitempty"`
-	ZoneId             string         `json:"zoneid,omitempty"`
+	VlanID             string         `json:"vlanid,omitempty"`
+	VpcID              string         `json:"vpcid,omitempty"`
+	ZoneID             string         `json:"zoneid,omitempty"`
 }
 
 // Command returns the CloudStack API command
-func (*ListPublicIpAddressesRequest) Command() string {
-	return "listPublicIpAddresses"
+func (*ListPublicIPAddressesRequest) Command() string {
+	return "listPublicIPAddresses"
 }
 
-// ListPublicIpAddressesResponse represents a list of public IP addresses
-type ListPublicIpAddressesResponse struct {
+// ListPublicIPAddressesResponse represents a list of public IP addresses
+type ListPublicIPAddressesResponse struct {
 	Count           int          `json:"count"`
-	PublicIpAddress []*IpAddress `json:"publicipaddress"`
+	PublicIPAddress []*IPAddress `json:"publicipaddress"`
 }

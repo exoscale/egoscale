@@ -1,3 +1,5 @@
+package egoscale
+
 /*
 
 APIs
@@ -6,13 +8,13 @@ All the available APIs on the server and provided by the API Discovery plugin
 
 	cs := egoscale.NewClient("https://api.exoscale.ch/compute", "EXO...", "...")
 
-	resp := new(egoscale.ListApisResponse)
-	err := cs.Request(&egoscale.ListApisRequest{}, resp)
+	resp := new(egoscale.ListAPIsResponse)
+	err := cs.Request(&egoscale.ListAPIsRequest{}, resp)
 	if err != nil {
 		panic(err)
 	}
 
-	for _, api := range resp.Api {
+	for _, api := range resp.API {
 		fmt.Println("%s %s", api.Name, api.Description)
 	}
 	// Output:
@@ -21,22 +23,20 @@ All the available APIs on the server and provided by the API Discovery plugin
 
 */
 
-package egoscale
-
-// Api represents an API service
-type Api struct {
+// API represents an API service
+type API struct {
 	Description string         `json:"description"`
 	IsAsync     bool           `json:"isasync"`
 	Name        string         `json:"name"`
 	Related     string         `json:"related"` // comma separated
 	Since       string         `json:"since"`
 	Type        string         `json:"type"`
-	Params      []*ApiParam    `json:"params"`
-	Response    []*ApiResponse `json:"responses"`
+	Params      []*APIParam    `json:"params"`
+	Response    []*APIResponse `json:"responses"`
 }
 
-// ApiParam represents an API parameter field
-type ApiParam struct {
+// APIParam represents an API parameter field
+type APIParam struct {
 	Description string `json:"description"`
 	Length      int64  `json:"length"`
 	Name        string `json:"name"`
@@ -45,26 +45,26 @@ type ApiParam struct {
 	Type        string `json:"type"`
 }
 
-// ApiResponse represents an API response field
-type ApiResponse struct {
+// APIResponse represents an API response field
+type APIResponse struct {
 	Description string         `json:"description"`
 	Name        string         `json:"name"`
-	Response    []*ApiResponse `json:"response"`
+	Response    []*APIResponse `json:"response"`
 	Type        string         `json:"type"`
 }
 
-// ListApisRequest represents a query to list the api
-type ListApisRequest struct {
+// ListAPIsRequest represents a query to list the api
+type ListAPIsRequest struct {
 	Name string `json:"name,omitempty"`
 }
 
 // Command returns the CloudStack API command
-func (req *ListApisRequest) Command() string {
-	return "listApis"
+func (req *ListAPIsRequest) Command() string {
+	return "listAPIs"
 }
 
-// ListApisResponse represents a list of API
-type ListApisResponse struct {
+// ListAPIsResponse represents a list of API
+type ListAPIsResponse struct {
 	Count int    `json:"count"`
-	Api   []*Api `json:"api"`
+	API   []*API `json:"api"`
 }

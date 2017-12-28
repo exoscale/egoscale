@@ -1,3 +1,5 @@
+package egoscale
+
 /*
 SSH Key Pairs
 
@@ -5,80 +7,79 @@ In addition to username and password (disabled on Exoscale), SSH keys are used t
 
 See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/virtual_machines.html#creating-the-ssh-keypair
 */
-package egoscale
 
-// SshKeyPair represents an SSH key pair
-type SshKeyPair struct {
+// SSHKeyPair represents an SSH key pair
+type SSHKeyPair struct {
 	Account     string `json:"account,omitempty"`
-	DomainId    string `json:"domainid,omitempty"`
-	ProjectId   string `json:"projectid,omitempty"`
+	DomainID    string `json:"domainid,omitempty"`
+	ProjectID   string `json:"projectid,omitempty"`
 	Fingerprint string `json:"fingerprint,omitempty"`
 	Name        string `json:"name,omitempty"`
 	PrivateKey  string `json:"privatekey,omitempty"`
 }
 
-// CreateSshKeyPairRequest represents a new keypair to be created
+// CreateSSHKeyPairRequest represents a new keypair to be created
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/createSSHKeyPair.html
-type CreateSshKeyPairRequest struct {
+type CreateSSHKeyPairRequest struct {
 	Name      string `json:"name"`
 	Account   string `json:"account,omitempty"`
-	DomainId  string `json:"domainid,omitempty"`
-	ProjectId string `json:"projectid,omitempty"`
+	DomainID  string `json:"domainid,omitempty"`
+	ProjectID string `json:"projectid,omitempty"`
 }
 
 // Command returns the CloudStack API command
-func (req *CreateSshKeyPairRequest) Command() string {
+func (req *CreateSSHKeyPairRequest) Command() string {
 	return "createSSHKeyPair"
 }
 
-// CreateSshKeyPairResponse represents the creation of an SSH Key Pair
-type CreateSshKeyPairResponse struct {
-	KeyPair *SshKeyPair `json:"keypair"`
+// CreateSSHKeyPairResponse represents the creation of an SSH Key Pair
+type CreateSSHKeyPairResponse struct {
+	KeyPair *SSHKeyPair `json:"keypair"`
 }
 
-// DeleteSshKeyPairRequest represents a new keypair to be created
+// DeleteSSHKeyPairRequest represents a new keypair to be created
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSSHKeyPair.html
-type DeleteSshKeyPairRequest struct {
+type DeleteSSHKeyPairRequest struct {
 	Name      string `json:"name"`
 	Account   string `json:"account,omitempty"`
-	DomainId  string `json:"domainid,omitempty"`
-	ProjectId string `json:"projectid,omitempty"`
+	DomainID  string `json:"domainid,omitempty"`
+	ProjectID string `json:"projectid,omitempty"`
 }
 
 // Command returns the CloudStack API command
-func (req *DeleteSshKeyPairRequest) Command() string {
+func (req *DeleteSSHKeyPairRequest) Command() string {
 	return "deleteSSHKeyPair"
 }
 
-// SshKeyPairRequest represents a new registration of a public key in a keypair
+// RegisterSSHKeyPairRequest represents a new registration of a public key in a keypair
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/registerSSHKeyPair.html
-type RegisterSshKeyPairRequest struct {
+type RegisterSSHKeyPairRequest struct {
 	Name      string `json:"name"`
 	PublicKey string `json:"publickey"`
 	Account   string `json:"account,omitempty"`
-	DomainId  string `json:"domainid,omitempty"`
-	ProjectId string `json:"projectid,omitempty"`
+	DomainID  string `json:"domainid,omitempty"`
+	ProjectID string `json:"projectid,omitempty"`
 }
 
 // Command returns the CloudStack API command
-func (req *RegisterSshKeyPairRequest) Command() string {
+func (req *RegisterSSHKeyPairRequest) Command() string {
 	return "registerSSHKeyPair"
 }
 
-// RegisterSshKeyPairResponse represents the creation of an SSH Key Pair
-type RegisterSshKeyPairResponse struct {
-	KeyPair *SshKeyPair `json:"keypair"`
+// RegisterSSHKeyPairResponse represents the creation of an SSH Key Pair
+type RegisterSSHKeyPairResponse struct {
+	KeyPair *SSHKeyPair `json:"keypair"`
 }
 
-// ListSshKeyPairsRequest represents a query for a list of SSH KeyPairs
+// ListSSHKeyPairsRequest represents a query for a list of SSH KeyPairs
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/listSSHKeyPairs.html
-type ListSshKeyPairsRequest struct {
+type ListSSHKeyPairsRequest struct {
 	Account     string `json:"account,omitempty"`
-	DomainId    string `json:"domainid,omitempty"`
+	DomainID    string `json:"domainid,omitempty"`
 	Fingerprint string `json:"fingerprint,omitempty"`
 	IsRecursive bool   `json:"isrecursive,omitempty"`
 	Keyword     string `json:"keyword,omitempty"`
@@ -86,30 +87,32 @@ type ListSshKeyPairsRequest struct {
 	Name        string `json:"name,omitempty"`
 	Page        string `json:"page,omitempty"`
 	PageSize    string `json:"pagesize,omitempty"`
-	ProjectId   string `json:"projectid,omitempty"`
+	ProjectID   string `json:"projectid,omitempty"`
 }
 
 // Command returns the CloudStack API command
-func (req *ListSshKeyPairsRequest) Command() string {
+func (req *ListSSHKeyPairsRequest) Command() string {
 	return "listSSHKeyPairs"
 }
 
-// ListSshKeyPairsResponse
-type ListSshKeyPairsResponse struct {
+// ListSSHKeyPairsResponse represents a list of SSH key pairs
+type ListSSHKeyPairsResponse struct {
 	Count      int           `json:"count"`
-	SshKeyPair []*SshKeyPair `json:"sshkeypair"`
+	SSHKeyPair []*SSHKeyPair `json:"sshkeypair"`
 }
 
-// XXX ResetSshKeyForVirtualMachine
+// XXX ResetSSHKeyForVirtualMachine
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/resetSSHKeyForVirtualMachine.html
 
-// Deprecated: CreateKeypair create a new SSH Key Pair
-func (exo *Client) CreateKeypair(name string) (*SshKeyPair, error) {
-	req := &CreateSshKeyPairRequest{
+// CreateKeypair create a new SSH Key Pair
+//
+// Deprecated: will go away, use the API directly
+func (exo *Client) CreateKeypair(name string) (*SSHKeyPair, error) {
+	req := &CreateSSHKeyPairRequest{
 		Name: name,
 	}
-	r := new(CreateSshKeyPairResponse)
+	r := new(CreateSSHKeyPairResponse)
 	err := exo.Request(req, r)
 	if err != nil {
 		return nil, err
@@ -118,21 +121,25 @@ func (exo *Client) CreateKeypair(name string) (*SshKeyPair, error) {
 	return r.KeyPair, nil
 }
 
-// Deprecated: DeleteKeypair deletes an SSH key pair
+// DeleteKeypair deletes an SSH key pair
+//
+// Deprecated: will go away, use the API directly
 func (exo *Client) DeleteKeypair(name string) error {
-	req := &DeleteSshKeyPairRequest{
+	req := &DeleteSSHKeyPairRequest{
 		Name: name,
 	}
 	return exo.BooleanRequest(req)
 }
 
 // RegisterKeypair registers a public key in a keypair
-func (exo *Client) RegisterKeypair(name string, publicKey string) (*SshKeyPair, error) {
-	req := &RegisterSshKeyPairRequest{
+//
+// Deprecated: will go away, use the API directly
+func (exo *Client) RegisterKeypair(name string, publicKey string) (*SSHKeyPair, error) {
+	req := &RegisterSSHKeyPairRequest{
 		Name:      name,
 		PublicKey: publicKey,
 	}
-	r := new(RegisterSshKeyPairResponse)
+	r := new(RegisterSSHKeyPairResponse)
 	err := exo.Request(req, r)
 	if err != nil {
 		return nil, err

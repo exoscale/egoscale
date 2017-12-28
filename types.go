@@ -4,6 +4,7 @@ import (
 	"net/http"
 )
 
+// Client represents the CloudStack API client
 type Client struct {
 	client    *http.Client
 	endpoint  string
@@ -11,6 +12,7 @@ type Client struct {
 	apiSecret string
 }
 
+// Topology represents a view of the servers
 type Topology struct {
 	Zones          map[string]string
 	Images         map[string]map[int64]string
@@ -20,10 +22,11 @@ type Topology struct {
 	AffinityGroups map[string]string
 }
 
+// DNSDomain represents a domain
 type DNSDomain struct {
-	Id             int64  `json:"id"`
-	UserId         int64  `json:"user_id"`
-	RegistrantId   int64  `json:"registrant_id,omitempty"`
+	ID             int64  `json:"id"`
+	UserID         int64  `json:"user_id"`
+	RegistrantID   int64  `json:"registrant_id,omitempty"`
 	Name           string `json:"name"`
 	UnicodeName    string `json:"unicode_name"`
 	Token          string `json:"token"`
@@ -39,17 +42,19 @@ type DNSDomain struct {
 	UpdatedAt      string `json:"updated_at"`
 }
 
+// DNSDomainCreateRequest represents the creation of a DNS entry
 type DNSDomainCreateRequest struct {
 	Domain struct {
 		Name string `json:"name"`
 	} `json:"domain"`
 }
 
+// DNSRecord represents a DNS record
 type DNSRecord struct {
-	Id         int64  `json:"id,omitempty"`
-	DomainId   int64  `json:"domain_id,omitempty"`
+	ID         int64  `json:"id,omitempty"`
+	DomainID   int64  `json:"domain_id,omitempty"`
 	Name       string `json:"name"`
-	Ttl        int    `json:"ttl,omitempty"`
+	TTL        int    `json:"ttl,omitempty"`
 	CreatedAt  string `json:"created_at,omitempty"`
 	UpdatedAt  string `json:"updated_at,omitempty"`
 	Content    string `json:"content"`
@@ -57,10 +62,12 @@ type DNSRecord struct {
 	Prio       int    `json:"prio,omitempty"`
 }
 
+// DNSRecordResponse represents the creation of a DNS record
 type DNSRecordResponse struct {
 	Record DNSRecord `json:"record"`
 }
 
+// DNSError represents a DNS request error
 type DNSError struct {
 	Name []string `json:"name"`
 }

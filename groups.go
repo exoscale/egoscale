@@ -1,3 +1,5 @@
+package egoscale
+
 /*
 Security Groups
 
@@ -10,18 +12,17 @@ Security Groups provide a way to isolate traffic to VMs.
 	}, resp)
 	// ...
 	err := client.BooleanRequest(&DeleteSecurityGroupRequest{
-		Id: resp.SecurityGroup.Id,
+		ID: resp.SecurityGroup.ID,
 	})
 	// ...
 
 See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/networking_and_traffic.html#security-groups
 
 */
-package egoscale
 
 // SecurityGroup represent a firewalling set of rules
 type SecurityGroup struct {
-	Id                  string         `json:"id"`
+	ID                  string         `json:"id"`
 	Account             string         `json:"account,omitempty"`
 	Description         string         `json:"description,omitempty"`
 	Domain              string         `json:"domain,omitempty"`
@@ -30,17 +31,17 @@ type SecurityGroup struct {
 	Project             string         `json:"project,omitempty"`
 	Projectid           string         `json:"projectid,omitempty"`
 	VirtualMachineCount int            `json:"virtualmachinecount,omitempty"`
-	VirtualMachineIds   []string       `json:"virtualmachineids,omitempty"`
+	VirtualMachineIDs   []string       `json:"virtualmachineids,omitempty"`
 	IngressRules        []*IngressRule `json:"ingressrule"`
 	EgressRules         []*EgressRule  `json:"egressrule"`
 	Tags                []*ResourceTag `json:"tags,omitempty"`
-	JobId               string         `json:"jobid,omitempty"`
+	JobID               string         `json:"jobid,omitempty"`
 	JobStatus           JobStatusType  `json:"jobstatus,omitempty"`
 }
 
 // IngressRule represents the ingress rule
 type IngressRule struct {
-	RuleId                string               `json:"ruleid"`
+	RuleID                string               `json:"ruleid"`
 	Account               string               `json:"account,omitempty"`
 	Cidr                  string               `json:"cidr,omitempty"`
 	IcmpType              int                  `json:"icmptype,omitempty"`
@@ -49,10 +50,10 @@ type IngressRule struct {
 	EndPort               int                  `json:"endport,omitempty"`
 	Protocol              string               `json:"protocol,omitempty"`
 	Tags                  []*ResourceTag       `json:"tags,omitempty"`
-	SecurityGroupId       string               `json:"securitygroupid,omitempty"`
+	SecurityGroupID       string               `json:"securitygroupid,omitempty"`
 	SecurityGroupName     string               `json:"securitygroupname,omitempty"`
 	UserSecurityGroupList []*UserSecurityGroup `json:"usersecuritygrouplist,omitempty"`
-	JobId                 string               `json:"jobid,omitempty"`
+	JobID                 string               `json:"jobid,omitempty"`
 	JobStatus             JobStatusType        `json:"jobstatus,omitempty"`
 }
 
@@ -84,10 +85,10 @@ type CreateSecurityGroupResponse struct {
 // DeleteSecurityGroupRequest represents a security group deletion
 type DeleteSecurityGroupRequest struct {
 	Account   string `json:"account,omitempty"`
-	DomainId  string `json:"domainid,omitempty"`
-	Id        string `json:"id,omitempty"`   // Mutually exclusive with name
+	DomainID  string `json:"domainid,omitempty"`
+	ID        string `json:"id,omitempty"`   // Mutually exclusive with name
 	Name      string `json:"name,omitempty"` // Mutually exclusive with id
-	ProjectId string `json:"project,omitempty"`
+	ProjectID string `json:"project,omitempty"`
 }
 
 // Command returns the CloudStack API command
@@ -104,7 +105,7 @@ type AuthorizeSecurityGroupIngressRequest struct {
 	StartPort             int                  `json:"startport,omitempty"`
 	EndPort               int                  `json:"endport,omitempty"`
 	Protocol              string               `json:"protocol,omitempty"`
-	SecurityGroupId       string               `json:"securitygroupid,omitempty"`
+	SecurityGroupID       string               `json:"securitygroupid,omitempty"`
 	SecurityGroupName     string               `json:"securitygroupname,omitempty"`
 	UserSecurityGroupList []*UserSecurityGroup // manually done... `json:"usersecuritygrouplist,omitempty"`
 }
@@ -130,9 +131,9 @@ func (req *AuthorizeSecurityGroupEgressRequest) Command() string {
 // /!\ the Cloud Stack API document is not fully accurate. /!\
 type AuthorizeSecurityGroupEgressResponse CreateSecurityGroupResponse
 
-// RevokeSecurityGroup represents the ingress/egress rule deletion
+// RevokeSecurityGroupRequest represents the ingress/egress rule deletion
 type RevokeSecurityGroupRequest struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 // Command returns the CloudStack API command
@@ -143,18 +144,18 @@ func (req *RevokeSecurityGroupRequest) Command() string {
 // ListSecurityGroupsRequest represents a search for security groups
 type ListSecurityGroupsRequest struct {
 	Account           string         `json:"account,omitempty"`
-	DomainId          string         `json:"domainid,omitempty"`
-	Id                string         `json:"id,omitempty"`
+	DomainID          string         `json:"domainid,omitempty"`
+	ID                string         `json:"id,omitempty"`
 	IsRecursive       bool           `json:"isrecursive,omitempty"`
 	Keyword           string         `json:"keyword,omitempty"`
 	ListAll           bool           `json:"listall,omitempty"`
 	Page              int            `json:"page,omitempty"`
 	PageSize          int            `json:"pagesize,omitempty"`
-	ProjectId         string         `json:"projectid,omitempty"`
+	ProjectID         string         `json:"projectid,omitempty"`
 	Type              string         `json:"type,omitempty"`
 	SecurityGroupName string         `json:"securitygroupname,omitempty"`
 	Tags              []*ResourceTag `json:"tags,omitempty"`
-	VirtualMachineId  string         `json:"virtualmachineid,omitempty"`
+	VirtualMachineID  string         `json:"virtualmachineid,omitempty"`
 }
 
 // Command returns the CloudStack API command
@@ -168,7 +169,9 @@ type ListSecurityGroupsResponse struct {
 	SecurityGroup []*SecurityGroup `json:"securitygroup"`
 }
 
-// Deprecated: CreateIngressRule creates a set of ingress rules
+// CreateIngressRule creates a set of ingress rules
+//
+// Deprecated: use the API directly
 func (exo *Client) CreateIngressRule(req *AuthorizeSecurityGroupIngressRequest, async AsyncInfo) ([]*IngressRule, error) {
 	resp := new(AuthorizeSecurityGroupIngressResponse)
 	err := exo.AsyncRequest(req, resp, async)
@@ -178,7 +181,9 @@ func (exo *Client) CreateIngressRule(req *AuthorizeSecurityGroupIngressRequest, 
 	return resp.SecurityGroup.IngressRules, nil
 }
 
-// Deprecated: CreateEgressRule creates a set of egress rules
+// CreateEgressRule creates a set of egress rules
+//
+// Deprecated: use the API directly
 func (exo *Client) CreateEgressRule(req *AuthorizeSecurityGroupEgressRequest, async AsyncInfo) ([]*EgressRule, error) {
 	resp := new(AuthorizeSecurityGroupEgressResponse)
 	err := exo.AsyncRequest(req, resp, async)
@@ -188,8 +193,10 @@ func (exo *Client) CreateEgressRule(req *AuthorizeSecurityGroupEgressRequest, as
 	return resp.SecurityGroup.EgressRules, nil
 }
 
-// Depreacted: CreateSecurityGroupWithRules create a security group with its rules
+// CreateSecurityGroupWithRules create a security group with its rules
 // Warning: it doesn't rollback in case of a failure!
+//
+// Deprecated: use the API directly
 func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*AuthorizeSecurityGroupIngressRequest, egress []*AuthorizeSecurityGroupEgressRequest, async AsyncInfo) (*SecurityGroup, error) {
 	req := &CreateSecurityGroupRequest{
 		Name: name,
@@ -201,7 +208,7 @@ func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*Authoriz
 	}
 
 	for _, ereq := range egress {
-		ereq.SecurityGroupId = resp.SecurityGroup.Id
+		ereq.SecurityGroupID = resp.SecurityGroup.ID
 
 		resp := new(AuthorizeSecurityGroupEgressResponse)
 		err := exo.AsyncRequest(ereq, resp, async)
@@ -210,7 +217,7 @@ func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*Authoriz
 		}
 	}
 	for _, ireq := range ingress {
-		ireq.SecurityGroupId = resp.SecurityGroup.Id
+		ireq.SecurityGroupID = resp.SecurityGroup.ID
 
 		resp := new(AuthorizeSecurityGroupIngressResponse)
 		err := exo.AsyncRequest(ireq, resp, async)
@@ -220,7 +227,7 @@ func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*Authoriz
 	}
 
 	r := new(ListSecurityGroupsResponse)
-	err = exo.Request(&ListSecurityGroupsRequest{Id: resp.SecurityGroup.Id}, r)
+	err = exo.Request(&ListSecurityGroupsRequest{ID: resp.SecurityGroup.ID}, r)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +235,9 @@ func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*Authoriz
 	return r.SecurityGroup[0], nil
 }
 
-// Deprecated: DeleteSecurityGroup deletes a security group
+// DeleteSecurityGroup deletes a security group
+//
+// Deprecated: use the API directly
 func (exo *Client) DeleteSecurityGroup(name string) error {
 	req := &DeleteSecurityGroupRequest{
 		Name: name,

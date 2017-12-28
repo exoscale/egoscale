@@ -20,16 +20,16 @@ func TestPrepareValues(t *testing.T) {
 		IgnoreMe string
 		Zone     string  `json:"myzone,omitempty"`
 		Name     string  `json:"name"`
-		Id       int     `json:"id"`
-		Uid      uint    `json:"uid"`
+		ID       int     `json:"id"`
+		UserID   uint    `json:"user_id"`
 		Num      float64 `json:"num"`
 		Bytes    []byte  `json:"bytes"`
 		Tags     []*tag  `json:"tags,omitempty"`
 	}{
 		IgnoreMe: "bar",
 		Name:     "world",
-		Id:       1,
-		Uid:      uint(2),
+		ID:       1,
+		UserID:   uint(2),
 		Num:      3.14,
 		Bytes:    []byte("exo"),
 		Tags: []*tag{
@@ -163,7 +163,7 @@ func TestBooleanRequest(t *testing.T) {
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	req := &DestroyVirtualMachineRequest{
-		Id: "123",
+		ID: "123",
 	}
 	err := cs.BooleanAsyncRequest(req, AsyncInfo{})
 

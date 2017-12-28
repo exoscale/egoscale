@@ -5,11 +5,11 @@ type ResourceTag struct {
 	Account      string `json:"account,omitempty"`
 	Customer     string `json:"customer,omitempty"`
 	Domain       string `json:"domain,omitempty"`
-	DomainId     string `json:"domainid,omitempty"`
+	DomainID     string `json:"domainid,omitempty"`
 	Key          string `json:"key,omitempty"`
 	Project      string `json:"project,omitempty"`
-	ProjectId    string `json:"projectid,omitempty"`
-	ResourceId   string `json:"resourceid,omitempty"`
+	ProjectID    string `json:"projectid,omitempty"`
+	ResourceID   string `json:"resourceid,omitempty"`
 	ResourceType string `json:"resourcetype,omitempty"`
 	Value        string `json:"value,omitempty"`
 }

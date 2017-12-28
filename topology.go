@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-// Deprecated: GetSecurityGroups returns all security groups
+// GetSecurityGroups returns all security groups
+//
+// Deprecated: do it yourself
 func (exo *Client) GetSecurityGroups() (map[string]SecurityGroup, error) {
 	var sgs map[string]SecurityGroup
 	resp := new(ListSecurityGroupsResponse)
@@ -22,8 +24,10 @@ func (exo *Client) GetSecurityGroups() (map[string]SecurityGroup, error) {
 	return sgs, nil
 }
 
-// Deprecated: GetSecurityGroupId returns security group by name
-func (exo *Client) GetSecurityGroupId(name string) (string, error) {
+// GetSecurityGroupID returns security group by name
+//
+// Deprecated: do it yourself
+func (exo *Client) GetSecurityGroupID(name string) (string, error) {
 	resp := new(ListSecurityGroupsResponse)
 	err := exo.Request(&ListSecurityGroupsRequest{SecurityGroupName: name}, resp)
 	if err != nil {
@@ -32,14 +36,16 @@ func (exo *Client) GetSecurityGroupId(name string) (string, error) {
 
 	for _, sg := range resp.SecurityGroup {
 		if sg.Name == name {
-			return sg.Id, nil
+			return sg.ID, nil
 		}
 	}
 
 	return "", nil
 }
 
-// Deprecated: GetAllZones returns all the zone id by name
+// GetAllZones returns all the zone id by name
+//
+// Deprecated: do it yourself
 func (exo *Client) GetAllZones() (map[string]string, error) {
 	var zones map[string]string
 	r := new(ListZonesResponse)
@@ -50,12 +56,14 @@ func (exo *Client) GetAllZones() (map[string]string, error) {
 
 	zones = make(map[string]string)
 	for _, zone := range r.Zone {
-		zones[strings.ToLower(zone.Name)] = zone.Id
+		zones[strings.ToLower(zone.Name)] = zone.ID
 	}
 	return zones, nil
 }
 
-// Deprecated: GetProfiles returns a mapping of the service offerings by name
+// GetProfiles returns a mapping of the service offerings by name
+//
+// Deprecated: do it yourself
 func (exo *Client) GetProfiles() (map[string]string, error) {
 	profiles := make(map[string]string)
 	r := new(ListServiceOfferingsResponse)
@@ -65,28 +73,33 @@ func (exo *Client) GetProfiles() (map[string]string, error) {
 	}
 
 	for _, offering := range r.ServiceOffering {
-		profiles[strings.ToLower(offering.Name)] = offering.Id
+		profiles[strings.ToLower(offering.Name)] = offering.ID
 	}
 
 	return profiles, nil
 }
 
-// Deprecated: GetKeypairs returns the list of SSH keyPairs
-func (exo *Client) GetKeypairs() ([]SshKeyPair, error) {
-	var keypairs []SshKeyPair
+// GetKeypairs returns the list of SSH keyPairs
+//
+// Deprecated: do it yourself
+func (exo *Client) GetKeypairs() ([]SSHKeyPair, error) {
+	var keypairs []SSHKeyPair
 
-	resp := new(ListSshKeyPairsResponse)
-	err := exo.Request(&ListSshKeyPairsRequest{}, resp)
+	resp := new(ListSSHKeyPairsResponse)
+	err := exo.Request(&ListSSHKeyPairsRequest{}, resp)
 	if err != nil {
 		return keypairs, err
 	}
-	keypairs = make([]SshKeyPair, resp.Count)
-	for i, keypair := range resp.SshKeyPair {
+	keypairs = make([]SSHKeyPair, resp.Count)
+	for i, keypair := range resp.SSHKeyPair {
 		keypairs[i] = *keypair
 	}
 	return keypairs, nil
 }
 
+// GetAffinityGroups returns a mapping of the (anti-)affinity groups
+//
+// Deprecated: do it yourself
 func (exo *Client) GetAffinityGroups() (map[string]string, error) {
 	var affinitygroups map[string]string
 
@@ -98,12 +111,14 @@ func (exo *Client) GetAffinityGroups() (map[string]string, error) {
 
 	affinitygroups = make(map[string]string)
 	for _, affinitygroup := range resp.AffinityGroup {
-		affinitygroups[affinitygroup.Name] = affinitygroup.Id
+		affinitygroups[affinitygroup.Name] = affinitygroup.ID
 	}
 	return affinitygroups, nil
 }
 
-// Deprecated: GetImages list the available featured images and group them by name, then size.
+// GetImages list the available featured images and group them by name, then size.
+//
+// Deprecated: do it yourself
 func (exo *Client) GetImages() (map[string]map[int64]string, error) {
 	var images map[string]map[int64]string
 	images = make(map[string]map[int64]string)
@@ -112,7 +127,7 @@ func (exo *Client) GetImages() (map[string]map[int64]string, error) {
 	resp := new(ListTemplatesResponse)
 	err := exo.Request(&ListTemplatesRequest{
 		TemplateFilter: "featured",
-		ZoneId:         "1", // XXX: Hack to list only CH-GVA
+		ZoneID:         "1", // XXX: Hack to list only CH-GVA
 	}, resp)
 	if err != nil {
 		return images, err
@@ -126,7 +141,7 @@ func (exo *Client) GetImages() (map[string]map[int64]string, error) {
 		if _, present := images[fullname]; !present {
 			images[fullname] = make(map[int64]string)
 		}
-		images[fullname][size] = template.Id
+		images[fullname][size] = template.ID
 
 		submatch := re.FindStringSubmatch(template.Name)
 		if len(submatch) > 0 {
@@ -137,13 +152,15 @@ func (exo *Client) GetImages() (map[string]map[int64]string, error) {
 			if _, present := images[image]; !present {
 				images[image] = make(map[int64]string)
 			}
-			images[image][size] = template.Id
+			images[image][size] = template.ID
 		}
 	}
 	return images, nil
 }
 
-// Deprecated: GetTopology returns an big, yet incomplete view of the world
+// GetTopology returns an big, yet incomplete view of the world
+//
+// Deprecated: will go away in the future
 func (exo *Client) GetTopology() (*Topology, error) {
 	zones, err := exo.GetAllZones()
 	if err != nil {
@@ -159,7 +176,7 @@ func (exo *Client) GetTopology() (*Topology, error) {
 	}
 	groups := make(map[string]string)
 	for k, v := range securityGroups {
-		groups[k] = v.Id
+		groups[k] = v.ID
 	}
 
 	keypairs, err := exo.GetKeypairs()

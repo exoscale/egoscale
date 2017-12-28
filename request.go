@@ -36,15 +36,15 @@ type JobStatusType int
 
 // JobResultResponse represents a generic response to a job task
 type JobResultResponse struct {
-	AccountId     string           `json:"accountid,omitempty"`
+	AccountID     string           `json:"accountid,omitempty"`
 	Cmd           string           `json:"cmd,omitempty"`
 	CreatedAt     string           `json:"created,omitempty"`
-	JobId         string           `json:"jobid,omitempty"`
+	JobID         string           `json:"jobid,omitempty"`
 	JobProcStatus int              `json:"jobprocstatus,omitempty"`
 	JobResult     *json.RawMessage `json:"jobresult,omitempty"`
 	JobStatus     JobStatusType    `json:"jobstatus,omitempty"`
 	JobResultType string           `json:"jobresulttype,omitempty"`
-	UserId        string           `json:"userid,omitempty"`
+	UserID        string           `json:"userid,omitempty"`
 }
 
 // ErrorResponse represents the standard error response from CloudStack
@@ -52,7 +52,7 @@ type ErrorResponse struct {
 	ErrorCode   int      `json:"errorcode"`
 	CsErrorCode int      `json:"cserrorcode"`
 	ErrorText   string   `json:"errortext"`
-	UuidList    []string `json:"uuidList,omitempty"` // uuid*L*ist is not a typo
+	UUIDList    []string `json:"uuidList,omitempty"` // uuid*L*ist is not a typo
 }
 
 // Error formats a CloudStack error into a standard error
@@ -112,7 +112,7 @@ func rawValues(b json.RawMessage) (json.RawMessage, error) {
 	return i[0], nil
 }
 
-func (exo *Client) ParseResponse(resp *http.Response) (json.RawMessage, error) {
+func (exo *Client) parseResponse(resp *http.Response) (json.RawMessage, error) {
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -136,13 +136,12 @@ func (exo *Client) ParseResponse(resp *http.Response) (json.RawMessage, error) {
 		/* Need to account for different error types */
 		if e.ErrorCode != 0 {
 			return nil, e.Error()
-		} else {
-			var de DNSError
-			if err := json.Unmarshal(b, &de); err != nil {
-				return nil, err
-			}
-			return nil, fmt.Errorf("Exoscale error (%d): %s", resp.StatusCode, strings.Join(de.Name, "\n"))
 		}
+		var de DNSError
+		if err := json.Unmarshal(b, &de); err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("Exoscale error (%d): %s", resp.StatusCode, strings.Join(de.Name, "\n"))
 	}
 
 	return b, nil
@@ -161,7 +160,7 @@ func (exo *Client) AsyncRequest(command Request, v interface{}, async AsyncInfo)
 		return err
 	}
 
-	if job.JobId == "" || job.JobStatus != PENDING {
+	if job.JobID == "" || job.JobStatus != PENDING {
 		return json.Unmarshal(*job.JobResult, v)
 	}
 
@@ -173,7 +172,7 @@ func (exo *Client) AsyncRequest(command Request, v interface{}, async AsyncInfo)
 
 		async.Retries--
 
-		req := &QueryAsyncJobResultRequest{JobId: job.JobId}
+		req := &QueryAsyncJobResultRequest{JobID: job.JobID}
 		err = exo.Request(req, result)
 		if err != nil {
 			return err
@@ -275,7 +274,7 @@ func (exo *Client) request(command Request) (json.RawMessage, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := exo.ParseResponse(resp)
+	body, err := exo.parseResponse(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -283,6 +282,7 @@ func (exo *Client) request(command Request) (json.RawMessage, error) {
 	return body, nil
 }
 
+// DetailedRequest is a manual request used by DNS
 func (exo *Client) DetailedRequest(uri string, params string, method string, header http.Header) (json.RawMessage, error) {
 	url := exo.endpoint + uri
 
@@ -299,7 +299,7 @@ func (exo *Client) DetailedRequest(uri string, params string, method string, hea
 	}
 
 	defer response.Body.Close()
-	return exo.ParseResponse(response)
+	return exo.parseResponse(response)
 }
 
 // prepareValues uses a command to build a POST request
@@ -319,7 +319,7 @@ func prepareValues(prefix string, params *url.Values, command interface{}) error
 		val := value.Field(i)
 		tag := field.Tag
 		if json, ok := tag.Lookup("json"); ok {
-			n, required := extractJsonTag(field.Name, json)
+			n, required := extractJSONTag(field.Name, json)
 			name := prefix + n
 
 			switch val.Kind() {
@@ -327,7 +327,7 @@ func prepareValues(prefix string, params *url.Values, command interface{}) error
 				v := val.Int()
 				if v == 0 {
 					if required {
-						return fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+						return fmt.Errorf("%s.%s (%v) is required, got 0", typeof.Name(), field.Name, val.Kind())
 					}
 				} else {
 					(*params).Set(name, strconv.FormatInt(v, 10))
@@ -336,7 +336,7 @@ func prepareValues(prefix string, params *url.Values, command interface{}) error
 				v := val.Uint()
 				if v == 0 {
 					if required {
-						return fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+						return fmt.Errorf("%s.%s (%v) is required, got 0", typeof.Name(), field.Name, val.Kind())
 					}
 				} else {
 					(*params).Set(name, strconv.FormatUint(v, 10))
@@ -345,7 +345,7 @@ func prepareValues(prefix string, params *url.Values, command interface{}) error
 				v := val.Float()
 				if v == 0 {
 					if required {
-						return fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+						return fmt.Errorf("%s.%s (%v) is required, got 0", typeof.Name(), field.Name, val.Kind())
 					}
 				} else {
 					(*params).Set(name, strconv.FormatFloat(v, 'f', -1, 64))
@@ -354,7 +354,7 @@ func prepareValues(prefix string, params *url.Values, command interface{}) error
 				v := val.String()
 				if v == "" {
 					if required {
-						return fmt.Errorf("%s.%s (%v) is required, got \"\".", typeof.Name(), field.Name, val.Kind())
+						return fmt.Errorf("%s.%s (%v) is required, got \"\"", typeof.Name(), field.Name, val.Kind())
 					}
 				} else {
 					(*params).Set(name, v)
@@ -418,8 +418,8 @@ func prepareList(prefix string, params *url.Values, slice interface{}) error {
 	return nil
 }
 
-// extractJsonTag returns the variable name or defaultName as well as if the field is required (!omitempty)
-func extractJsonTag(defaultName, jsonTag string) (string, bool) {
+// extractJSONTag returns the variable name or defaultName as well as if the field is required (!omitempty)
+func extractJSONTag(defaultName, jsonTag string) (string, bool) {
 	tags := strings.Split(jsonTag, ",")
 	name := tags[0]
 	required := true

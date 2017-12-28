@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// CreateDomain creates a DNS domain
 func (exo *Client) CreateDomain(name string) (*DNSDomain, error) {
 	var hdr = make(http.Header)
 	var domain DNSDomainCreateRequest
@@ -30,6 +31,7 @@ func (exo *Client) CreateDomain(name string) (*DNSDomain, error) {
 	return d, nil
 }
 
+// GetDomain gets a DNS domain
 func (exo *Client) GetDomain(name string) (*DNSDomain, error) {
 	var hdr = make(http.Header)
 
@@ -49,6 +51,7 @@ func (exo *Client) GetDomain(name string) (*DNSDomain, error) {
 	return d, nil
 }
 
+// DeleteDomain delets a DNS domain
 func (exo *Client) DeleteDomain(name string) error {
 	var hdr = make(http.Header)
 	hdr.Add("X-DNS-TOKEN", exo.apiKey+":"+exo.apiSecret)
@@ -62,6 +65,7 @@ func (exo *Client) DeleteDomain(name string) error {
 	return nil
 }
 
+// GetRecords returns the DNS records
 func (exo *Client) GetRecords(name string) ([]*DNSRecordResponse, error) {
 	var hdr = make(http.Header)
 	hdr.Add("X-DNS-TOKEN", exo.apiKey+":"+exo.apiSecret)
@@ -80,6 +84,7 @@ func (exo *Client) GetRecords(name string) ([]*DNSRecordResponse, error) {
 	return r, nil
 }
 
+// CreateRecord creates a DNS record
 func (exo *Client) CreateRecord(name string, rec DNSRecord) (*DNSRecordResponse, error) {
 	var hdr = make(http.Header)
 	hdr.Add("X-DNS-TOKEN", exo.apiKey+":"+exo.apiSecret)
@@ -107,9 +112,10 @@ func (exo *Client) CreateRecord(name string, rec DNSRecord) (*DNSRecordResponse,
 	return r, nil
 }
 
+// UpdateRecord updates a DNS record
 func (exo *Client) UpdateRecord(name string, rec DNSRecord) (*DNSRecordResponse, error) {
 	var hdr = make(http.Header)
-	id := strconv.FormatInt(rec.Id, 10)
+	id := strconv.FormatInt(rec.ID, 10)
 	hdr.Add("X-DNS-TOKEN", exo.apiKey+":"+exo.apiSecret)
 	hdr.Add("Accept", "application/json")
 	hdr.Add("Content-Type", "application/json")
@@ -136,9 +142,10 @@ func (exo *Client) UpdateRecord(name string, rec DNSRecord) (*DNSRecordResponse,
 	return r, nil
 }
 
+// DeleteRecord deletes a record
 func (exo *Client) DeleteRecord(name string, rec DNSRecord) error {
 	var hdr = make(http.Header)
-	id := strconv.FormatInt(rec.Id, 10)
+	id := strconv.FormatInt(rec.ID, 10)
 	hdr.Add("X-DNS-TOKEN", exo.apiKey+":"+exo.apiSecret)
 	hdr.Add("Accept", "application/json")
 	hdr.Add("Content-Type", "application/json")

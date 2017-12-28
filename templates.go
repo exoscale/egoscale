@@ -62,9 +62,12 @@ type ListTemplatesRequest struct {
 	ZoneID         string         `json:"zoneid,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (req *ListTemplatesRequest) Command() string {
+func (req *ListTemplatesRequest) name() string {
 	return "listTemplates"
+}
+
+func (req *ListTemplatesRequest) response() interface{} {
+	return new(ListTemplatesResponse)
 }
 
 // ListTemplatesResponse represents a list of templates

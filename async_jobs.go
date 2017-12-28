@@ -9,9 +9,12 @@ type QueryAsyncJobResultRequest struct {
 	JobID string `json:"jobid"`
 }
 
-// Command returns the CloudStack API command
-func (req *QueryAsyncJobResultRequest) Command() string {
+func (req *QueryAsyncJobResultRequest) name() string {
 	return "queryAsyncJobResult"
+}
+
+func (req *QueryAsyncJobResultRequest) response() interface{} {
+	return new(QueryAsyncJobResultResponse)
 }
 
 // QueryAsyncJobResultResponse represents the current status of an asynchronous job

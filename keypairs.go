@@ -28,9 +28,12 @@ type CreateSSHKeyPairRequest struct {
 	ProjectID string `json:"projectid,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (req *CreateSSHKeyPairRequest) Command() string {
+func (req *CreateSSHKeyPairRequest) name() string {
 	return "createSSHKeyPair"
+}
+
+func (req *CreateSSHKeyPairRequest) response() interface{} {
+	return new(CreateSSHKeyPairResponse)
 }
 
 // CreateSSHKeyPairResponse represents the creation of an SSH Key Pair
@@ -48,9 +51,12 @@ type DeleteSSHKeyPairRequest struct {
 	ProjectID string `json:"projectid,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (req *DeleteSSHKeyPairRequest) Command() string {
+func (req *DeleteSSHKeyPairRequest) name() string {
 	return "deleteSSHKeyPair"
+}
+
+func (req *DeleteSSHKeyPairRequest) response() interface{} {
+	return new(BooleanResponse)
 }
 
 // RegisterSSHKeyPairRequest represents a new registration of a public key in a keypair
@@ -64,9 +70,12 @@ type RegisterSSHKeyPairRequest struct {
 	ProjectID string `json:"projectid,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (req *RegisterSSHKeyPairRequest) Command() string {
+func (req *RegisterSSHKeyPairRequest) name() string {
 	return "registerSSHKeyPair"
+}
+
+func (req *RegisterSSHKeyPairRequest) response() interface{} {
+	return new(RegisterSSHKeyPairResponse)
 }
 
 // RegisterSSHKeyPairResponse represents the creation of an SSH Key Pair
@@ -90,9 +99,12 @@ type ListSSHKeyPairsRequest struct {
 	ProjectID   string `json:"projectid,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (req *ListSSHKeyPairsRequest) Command() string {
+func (req *ListSSHKeyPairsRequest) name() string {
 	return "listSSHKeyPairs"
+}
+
+func (req *ListSSHKeyPairsRequest) response() interface{} {
+	return new(ListSSHKeyPairsResponse)
 }
 
 // ListSSHKeyPairsResponse represents a list of SSH key pairs
@@ -112,13 +124,12 @@ func (exo *Client) CreateKeypair(name string) (*SSHKeyPair, error) {
 	req := &CreateSSHKeyPairRequest{
 		Name: name,
 	}
-	r := new(CreateSSHKeyPairResponse)
-	err := exo.Request(req, r)
+	resp, err := exo.Request(req)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.KeyPair, nil
+	return resp.(*CreateSSHKeyPairResponse).KeyPair, nil
 }
 
 // DeleteKeypair deletes an SSH key pair
@@ -139,11 +150,10 @@ func (exo *Client) RegisterKeypair(name string, publicKey string) (*SSHKeyPair, 
 		Name:      name,
 		PublicKey: publicKey,
 	}
-	r := new(RegisterSSHKeyPairResponse)
-	err := exo.Request(req, r)
+	resp, err := exo.Request(req)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.KeyPair, nil
+	return resp.(*RegisterSSHKeyPairResponse).KeyPair, nil
 }

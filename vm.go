@@ -117,9 +117,12 @@ type DeployVirtualMachineRequest struct {
 	UserData           []byte         `json:"userdata,omitempty"`
 }
 
-// Command returns the command name for the Cloud Stack API
-func (req *DeployVirtualMachineRequest) Command() string {
+func (req *DeployVirtualMachineRequest) name() string {
 	return "deployVirtualMachine"
+}
+
+func (req *DeployVirtualMachineRequest) response() interface{} {
+	return new(DeployVirtualMachineResponse)
 }
 
 // DeployVirtualMachineResponse represents a deployed VM instance
@@ -134,9 +137,11 @@ type StartVirtualMachineRequest struct {
 	HostID           string `json:"hostid,omitempty"`            // root only
 }
 
-// Command returns the command name for the Cloud Stack API
-func (req *StartVirtualMachineRequest) Command() string {
+func (req *StartVirtualMachineRequest) name() string {
 	return "startVirtualMachine"
+}
+func (req *StartVirtualMachineRequest) response() interface{} {
+	return new(StartVirtualMachineResponse)
 }
 
 // StartVirtualMachineResponse represents a started VM instance
@@ -148,9 +153,12 @@ type StopVirtualMachineRequest struct {
 	Forced bool   `json:"forced,omitempty"`
 }
 
-// Command returns the command name for the Cloud Stack API
-func (req *StopVirtualMachineRequest) Command() string {
+func (req *StopVirtualMachineRequest) name() string {
 	return "stopVirtualMachine"
+}
+
+func (req *StopVirtualMachineRequest) response() interface{} {
+	return new(StopVirtualMachineResponse)
 }
 
 // StopVirtualMachineResponse represents a stopped VM instance
@@ -161,9 +169,12 @@ type RebootVirtualMachineRequest struct {
 	ID string `json:"id"`
 }
 
-// Command returns the command name for the Cloud Stack API
-func (req *RebootVirtualMachineRequest) Command() string {
+func (req *RebootVirtualMachineRequest) name() string {
 	return "rebootVirtualMachine"
+}
+
+func (req *RebootVirtualMachineRequest) command() interface{} {
+	return new(RebootVirtualMachineResponse)
 }
 
 // RebootVirtualMachineResponse represents a rebooted VM instance
@@ -175,9 +186,12 @@ type DestroyVirtualMachineRequest struct {
 	Expunge bool   `json:"expunge,omitempty"`
 }
 
-// Command returns the command name for the Cloud Stack API
-func (req *DestroyVirtualMachineRequest) Command() string {
+func (req *DestroyVirtualMachineRequest) name() string {
 	return "destroyVirtualMachine"
+}
+
+func (req *DestroyVirtualMachineRequest) response() interface{} {
+	return new(DestroyVirtualMachineResponse)
 }
 
 // DestroyVirtualMachineResponse represents a destroyed VM instance
@@ -217,9 +231,12 @@ type ListVirtualMachinesRequest struct {
 	ZoneID            string         `json:"zoneid,omitempty"`
 }
 
-// Command returns the command name for the Cloud Stack API
-func (req *ListVirtualMachinesRequest) Command() string {
+func (req *ListVirtualMachinesRequest) name() string {
 	return "listVirtualMachines"
+}
+
+func (req *ListVirtualMachinesRequest) response() interface{} {
+	return new(ListVirtualMachinesResponse)
 }
 
 // ListVirtualMachinesResponse represents a list of virtual machines

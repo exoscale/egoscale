@@ -55,9 +55,12 @@ type AssociateIPAddressRequest struct {
 	ZoneID     string `json:"zoneid,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (*AssociateIPAddressRequest) Command() string {
-	return "associateIPAddressRequest"
+func (*AssociateIPAddressRequest) name() string {
+	return "associateIPAddress"
+}
+
+func (*AssociateIPAddressRequest) response() interface{} {
+	return new(AssociateIPAddressResponse)
 }
 
 // AssociateIPAddressResponse represents the response to the creation of an IPAddress
@@ -70,9 +73,11 @@ type DisassociateIPAddressRequest struct {
 	ID string `json:"id"`
 }
 
-// Command returns the CloudStack API command
-func (*DisassociateIPAddressRequest) Command() string {
-	return "disassociateIPAddressRequest"
+func (*DisassociateIPAddressRequest) name() string {
+	return "disassociateIPAddress"
+}
+func (*DisassociateIPAddressRequest) response() interface{} {
+	return new(BooleanResponse)
 }
 
 // ListPublicIPAddressesRequest represents a search for public IP addresses
@@ -102,9 +107,12 @@ type ListPublicIPAddressesRequest struct {
 	ZoneID             string         `json:"zoneid,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (*ListPublicIPAddressesRequest) Command() string {
+func (*ListPublicIPAddressesRequest) name() string {
 	return "listPublicIPAddresses"
+}
+
+func (*ListPublicIPAddressesRequest) response() interface{} {
+	return new(ListPublicIPAddressesResponse)
 }
 
 // ListPublicIPAddressesResponse represents a list of public IP addresses

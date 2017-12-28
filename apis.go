@@ -58,9 +58,12 @@ type ListAPIsRequest struct {
 	Name string `json:"name,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (req *ListAPIsRequest) Command() string {
+func (req *ListAPIsRequest) name() string {
 	return "listAPIs"
+}
+
+func (req *ListAPIsRequest) response() interface{} {
+	return new(ListAPIsResponse)
 }
 
 // ListAPIsResponse represents a list of API

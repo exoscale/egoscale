@@ -39,9 +39,12 @@ type ListServiceOfferingsRequest struct {
 	VirtualMachineID string `json:"virtualmachineid"`
 }
 
-// Command returns the CloudStack API command
-func (req *ListServiceOfferingsRequest) Command() string {
+func (req *ListServiceOfferingsRequest) name() string {
 	return "listServiceOfferings"
+}
+
+func (req *ListServiceOfferingsRequest) response() interface{} {
+	return new(ListServiceOfferingsResponse)
 }
 
 // ListServiceOfferingsResponse represents a list of service offerings

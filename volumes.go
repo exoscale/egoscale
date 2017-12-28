@@ -70,9 +70,12 @@ type ListVolumesRequest struct {
 	ZoneID           string         `json:"zoneid,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (req *ListVolumesRequest) Command() string {
+func (req *ListVolumesRequest) name() string {
 	return "listVolumes"
+}
+
+func (req *ListVolumesRequest) response() interface{} {
+	return new(ListVolumesResponse)
 }
 
 // ListVolumesResponse represents a list of volumes
@@ -85,15 +88,15 @@ type ListVolumesResponse struct {
 //
 // Deprecated: helper function shouldn't be used
 func (exo *Client) GetRootVolumeForVirtualMachine(virtualMachineID string) (*Volume, error) {
-	r := new(ListVolumesResponse)
-	err := exo.Request(&ListVolumesRequest{
+	resp, err := exo.Request(&ListVolumesRequest{
 		VirtualMachineID: virtualMachineID,
 		Type:             "ROOT",
-	}, r)
+	})
 	if err != nil {
 		return nil, err
 	}
 
+	r := resp.(*ListVolumesResponse)
 	if r.Count != 1 {
 		return nil, fmt.Errorf("Expected exactly one volume for %v, got %d", virtualMachineID, r.Count)
 	}

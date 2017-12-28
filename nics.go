@@ -47,9 +47,12 @@ type ListNicsRequest struct {
 	PageSize         string `json:"pagesize,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (req *ListNicsRequest) Command() string {
+func (req *ListNicsRequest) name() string {
 	return "listNics"
+}
+
+func (req *ListNicsRequest) response() interface{} {
+	return new(ListNicsResponse)
 }
 
 // ListNicsResponse represents a list of templates
@@ -64,9 +67,11 @@ type AddIPToNicRequest struct {
 	IPAddress string `json:"ipaddress"`
 }
 
-// Command returns the CloudStack API command
-func (req *AddIPToNicRequest) Command() string {
+func (req *AddIPToNicRequest) name() string {
 	return "addIPToNic"
+}
+func (req *AddIPToNicRequest) response() interface{} {
+	return new(AddIPToNicResponse)
 }
 
 // AddIPToNicResponse represents the addition of an IP to a NIC
@@ -79,22 +84,24 @@ type RemoveIPFromNicRequest struct {
 	ID string `json:"id"`
 }
 
-// Command returns the CloudStack API command
-func (req *RemoveIPFromNicRequest) Command() string {
+func (req *RemoveIPFromNicRequest) name() string {
 	return "removeIPFromNic"
+}
+
+func (req *RemoveIPFromNicRequest) response() interface{} {
+	return new(BooleanResponse)
 }
 
 // ListNics lists the NIC of a VM
 //
 // Deprecated: use the API directly
 func (exo *Client) ListNics(req *ListNicsRequest) ([]*Nic, error) {
-	var r ListNicsResponse
-	err := exo.Request(req, &r)
+	resp, err := exo.Request(req)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Nic, nil
+	return resp.(*ListNicsResponse).Nic, nil
 }
 
 // AddIPToNic adds an IP to a NIC
@@ -105,13 +112,12 @@ func (exo *Client) AddIPToNic(nicID, string, ipAddress string, async AsyncInfo) 
 		NicID:     nicID,
 		IPAddress: ipAddress,
 	}
-	resp := new(AddIPToNicResponse)
-	err := exo.AsyncRequest(req, resp, async)
+	resp, err := exo.AsyncRequest(req, async)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.NicSecondaryIP, nil
+	return resp.(AddIPToNicResponse).NicSecondaryIP, nil
 }
 
 // RemoveIPFromNic removes an IP from a NIC

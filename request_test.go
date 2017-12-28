@@ -141,15 +141,54 @@ func TestPrepareValuesSliceString(t *testing.T) {
 	}
 }
 
+func TestRequest(t *testing.T) {
+	params := url.Values{}
+	params.Set("command", "listApis")
+	params.Set("token", "TOKEN")
+	params.Set("name", "dummy")
+	params.Set("response", "json")
+	ts := newPostServer(params, `
+{
+	"listapisresponse": {
+		"api": [{
+			"name": "dummy",
+			"description": "this is a test",
+			"isasync": false,
+			"since": "4.4",
+			"type": "list",
+			"name": "listDummies",
+			"params": [],
+			"related": "",
+			"response": []
+		}],
+		"count": 1
+	}
+}
+	`)
+	defer ts.Close()
+
+	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	req := &ListAPIsRequest{
+		Name: "dummy",
+	}
+	resp, err := cs.Request(req)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	apis := resp.(*ListAPIsResponse)
+	if apis.Count != 1 {
+		t.Errorf("Expected exactly one API, got %d", apis.Count)
+	}
+}
 func TestBooleanRequest(t *testing.T) {
 	params := url.Values{}
-	params.Set("command", "destroyVirtualMachine")
+	params.Set("command", "destroySecurityGroup")
 	params.Set("token", "TOKEN")
 	params.Set("id", "123")
 	params.Set("response", "json")
 	ts := newPostServer(params, `
 {
-	"destroyvirtualmachine": {
+	"destroysecuritygroup": {
 		"jobid": "1",
 		"jobresult": {
 			"success": true,
@@ -162,7 +201,7 @@ func TestBooleanRequest(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	req := &DestroyVirtualMachineRequest{
+	req := &DeleteSecurityGroupRequest{
 		ID: "123",
 	}
 	err := cs.BooleanAsyncRequest(req, AsyncInfo{})
@@ -199,7 +238,6 @@ func newPostServer(params url.Values, response string) *httptest.Server {
 			}
 		}
 
-		log.Printf("len %d", len(errors))
 		if len(errors) == 0 {
 			w.WriteHeader(200)
 			w.Write([]byte(response))

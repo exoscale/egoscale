@@ -47,9 +47,12 @@ type ListZonesRequest struct {
 	Tags           []*ResourceTag `json:"tags,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (req *ListZonesRequest) Command() string {
+func (req *ListZonesRequest) name() string {
 	return "listZones"
+}
+
+func (req *ListZonesRequest) response() interface{} {
+	return new(ListZonesResponse)
 }
 
 // ListZonesResponse represents a list of zones

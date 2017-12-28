@@ -32,9 +32,17 @@ type CreateAffinityGroupRequest struct {
 	DomainID    string `json:"domainid,omitempty"`
 }
 
-// Command return the CloudStack API
-func (req *CreateAffinityGroupRequest) Command() string {
-	return "createAffinityGroupRequest"
+func (req *CreateAffinityGroupRequest) name() string {
+	return "createAffinityGroup"
+}
+
+func (req *CreateAffinityGroupRequest) response() interface{} {
+	return new(CreateAffinityGroupResponse)
+}
+
+// CreateAffinityGroupResponse represents the response of the creation of an (anti-)affinity group
+type CreateAffinityGroupResponse struct {
+	AffinityGroup *AffinityGroup `json:"affinitygroup"`
 }
 
 // DeleteAffinityGroupRequest represents an (anti-)affinity group to be deleted
@@ -47,9 +55,12 @@ type DeleteAffinityGroupRequest struct {
 	DomainID    string `json:"domainid,omitempty"`
 }
 
-// Command returns the CloudStack API command
-func (req *DeleteAffinityGroupRequest) Command() string {
+func (req *DeleteAffinityGroupRequest) name() string {
 	return "deleteAffinityGroup"
+}
+
+func (req *DeleteAffinityGroupRequest) response() interface{} {
+	return new(BooleanResponse)
 }
 
 // ListAffinityGroupsRequest represents an (anti-)affinity groups search
@@ -67,14 +78,12 @@ type ListAffinityGroupsRequest struct {
 	VirtualMachineID string `json:"virtualmachineid,omitempty"`
 }
 
-// Command return the CloudStack API command
-func (req *ListAffinityGroupsRequest) Command() string {
+func (req *ListAffinityGroupsRequest) name() string {
 	return "listAffinityGroups"
 }
 
-// CreateAffinityGroupResponse represents the response of the creation of an (anti-)affinity group
-type CreateAffinityGroupResponse struct {
-	AffinityGroup *AffinityGroup `json:"affinitygroup"`
+func (req *ListAffinityGroupsRequest) response() interface{} {
+	return new(ListAffinityGroupsResponse)
 }
 
 // ListAffinityGroupTypesRequest represents an (anti-)affinity groups search
@@ -84,9 +93,12 @@ type ListAffinityGroupTypesRequest struct {
 	PageSize string `json:"pagesize,omitempty"`
 }
 
-// Command return the CloudStack API command
-func (req *ListAffinityGroupTypesRequest) Command() string {
+func (req *ListAffinityGroupTypesRequest) name() string {
 	return "listAffinityGroupTypes"
+}
+
+func (req *ListAffinityGroupTypesRequest) response() interface{} {
+	return new(ListAffinityGroupTypesResponse)
 }
 
 // ListAffinityGroupsResponse represents a list of (anti-)affinity groups
@@ -114,13 +126,12 @@ func (exo *Client) CreateAffinityGroup(name string, async AsyncInfo) (*AffinityG
 	req := &CreateAffinityGroupRequest{
 		Name: name,
 	}
-	resp := new(CreateAffinityGroupResponse)
-	err := exo.AsyncRequest(req, resp, async)
+	resp, err := exo.AsyncRequest(req, async)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.AffinityGroup, nil
+	return resp.(CreateAffinityGroupResponse).AffinityGroup, nil
 }
 
 // DeleteAffinityGroup deletes a group

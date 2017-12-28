@@ -11,14 +11,13 @@ import (
 // Deprecated: do it yourself
 func (exo *Client) GetSecurityGroups() (map[string]SecurityGroup, error) {
 	var sgs map[string]SecurityGroup
-	resp := new(ListSecurityGroupsResponse)
-	err := exo.Request(&ListSecurityGroupsRequest{}, resp)
+	resp, err := exo.Request(&ListSecurityGroupsRequest{})
 	if err != nil {
 		return nil, err
 	}
 
 	sgs = make(map[string]SecurityGroup)
-	for _, sg := range resp.SecurityGroup {
+	for _, sg := range resp.(*ListSecurityGroupsResponse).SecurityGroup {
 		sgs[sg.Name] = *sg
 	}
 	return sgs, nil
@@ -28,13 +27,12 @@ func (exo *Client) GetSecurityGroups() (map[string]SecurityGroup, error) {
 //
 // Deprecated: do it yourself
 func (exo *Client) GetSecurityGroupID(name string) (string, error) {
-	resp := new(ListSecurityGroupsResponse)
-	err := exo.Request(&ListSecurityGroupsRequest{SecurityGroupName: name}, resp)
+	resp, err := exo.Request(&ListSecurityGroupsRequest{SecurityGroupName: name})
 	if err != nil {
 		return "", err
 	}
 
-	for _, sg := range resp.SecurityGroup {
+	for _, sg := range resp.(*ListSecurityGroupsResponse).SecurityGroup {
 		if sg.Name == name {
 			return sg.ID, nil
 		}
@@ -48,14 +46,13 @@ func (exo *Client) GetSecurityGroupID(name string) (string, error) {
 // Deprecated: do it yourself
 func (exo *Client) GetAllZones() (map[string]string, error) {
 	var zones map[string]string
-	r := new(ListZonesResponse)
-	err := exo.Request(&ListZonesRequest{}, r)
+	resp, err := exo.Request(&ListZonesRequest{})
 	if err != nil {
 		return zones, err
 	}
 
 	zones = make(map[string]string)
-	for _, zone := range r.Zone {
+	for _, zone := range resp.(*ListZonesResponse).Zone {
 		zones[strings.ToLower(zone.Name)] = zone.ID
 	}
 	return zones, nil
@@ -66,13 +63,12 @@ func (exo *Client) GetAllZones() (map[string]string, error) {
 // Deprecated: do it yourself
 func (exo *Client) GetProfiles() (map[string]string, error) {
 	profiles := make(map[string]string)
-	r := new(ListServiceOfferingsResponse)
-	err := exo.Request(&ListServiceOfferingsRequest{}, r)
+	resp, err := exo.Request(&ListServiceOfferingsRequest{})
 	if err != nil {
 		return profiles, nil
 	}
 
-	for _, offering := range r.ServiceOffering {
+	for _, offering := range resp.(*ListServiceOfferingsResponse).ServiceOffering {
 		profiles[strings.ToLower(offering.Name)] = offering.ID
 	}
 
@@ -85,13 +81,14 @@ func (exo *Client) GetProfiles() (map[string]string, error) {
 func (exo *Client) GetKeypairs() ([]SSHKeyPair, error) {
 	var keypairs []SSHKeyPair
 
-	resp := new(ListSSHKeyPairsResponse)
-	err := exo.Request(&ListSSHKeyPairsRequest{}, resp)
+	resp, err := exo.Request(&ListSSHKeyPairsRequest{})
 	if err != nil {
 		return keypairs, err
 	}
-	keypairs = make([]SSHKeyPair, resp.Count)
-	for i, keypair := range resp.SSHKeyPair {
+
+	r := resp.(*ListSSHKeyPairsResponse)
+	keypairs = make([]SSHKeyPair, r.Count)
+	for i, keypair := range r.SSHKeyPair {
 		keypairs[i] = *keypair
 	}
 	return keypairs, nil
@@ -103,14 +100,13 @@ func (exo *Client) GetKeypairs() ([]SSHKeyPair, error) {
 func (exo *Client) GetAffinityGroups() (map[string]string, error) {
 	var affinitygroups map[string]string
 
-	resp := new(ListAffinityGroupsResponse)
-	err := exo.Request(&ListAffinityGroupsRequest{}, resp)
+	resp, err := exo.Request(&ListAffinityGroupsRequest{})
 	if err != nil {
 		return affinitygroups, err
 	}
 
 	affinitygroups = make(map[string]string)
-	for _, affinitygroup := range resp.AffinityGroup {
+	for _, affinitygroup := range resp.(*ListAffinityGroupsResponse).AffinityGroup {
 		affinitygroups[affinitygroup.Name] = affinitygroup.ID
 	}
 	return affinitygroups, nil
@@ -124,16 +120,15 @@ func (exo *Client) GetImages() (map[string]map[int64]string, error) {
 	images = make(map[string]map[int64]string)
 	re := regexp.MustCompile(`^Linux (?P<name>.+?) (?P<version>[0-9.]+)\b`)
 
-	resp := new(ListTemplatesResponse)
-	err := exo.Request(&ListTemplatesRequest{
+	resp, err := exo.Request(&ListTemplatesRequest{
 		TemplateFilter: "featured",
 		ZoneID:         "1", // XXX: Hack to list only CH-GVA
-	}, resp)
+	})
 	if err != nil {
 		return images, err
 	}
 
-	for _, template := range resp.Template {
+	for _, template := range resp.(*ListTemplatesResponse).Template {
 		size := int64(template.Size >> 30) // B to GiB
 
 		fullname := strings.ToLower(template.Name)

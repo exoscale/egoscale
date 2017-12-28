@@ -1,5 +1,5 @@
 /*
-SSH Key Pair
+SSH Key Pairs
 
 In addition to username and password (disabled on Exoscale), SSH keys are used to log into the infrastructure.
 

@@ -3,12 +3,12 @@ Security Groups
 
 Security Groups provide a way to isolate traffic to VMs.
 
-	securityGroup, err := client.CreateSecurityGroup(CreateSecurityGroupRequest{
+	securityGroup, err := client.CreateSecurityGroup(&CreateSecurityGroupRequest{
 		Name: "Load balancer",
 		Description: "Opens HTTP/HTTPS ports from the outside world",
 	})
 	// ...
-	err := client.DeleteSecurityGroup(DeleteSecurityGroupRequest{
+	err := client.DeleteSecurityGroup(&DeleteSecurityGroupRequest{
 		Id: securityGroup.Id,
 	})
 

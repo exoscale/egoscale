@@ -52,7 +52,7 @@ type ErrorResponse struct {
 	ErrorCode   int      `json:"errorcode"`
 	CsErrorCode int      `json:"cserrorcode"`
 	ErrorText   string   `json:"errortext"`
-	UuidList    []string `json:"uuidlist,omitempty"`
+	UuidList    []string `json:"uuidList,omitempty"` // uuid*L*ist is not a typo
 }
 
 // Error formats a CloudStack error into a standard error

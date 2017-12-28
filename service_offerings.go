@@ -1,9 +1,13 @@
+/*
+Service Offerings
+
+A service offering correspond to some hardware features (CPU, RAM).
+
+See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/service_offerings.html
+*/
 package egoscale
 
-import (
-	"strings"
-)
-
+// ServiceOffering corresponds to the Compute Offerings
 type ServiceOffering struct {
 	CpuNumber              int               `json:"cpunumber,omitempty"`
 	CpuSpeed               int               `json:"cpuspeed,omitempty"`
@@ -53,18 +57,4 @@ func (exo *Client) ListServiceOfferings(req *ListServiceOfferingsRequest) ([]*Se
 	}
 
 	return r.ServiceOffering, nil
-}
-
-func (exo *Client) GetProfiles() (map[string]string, error) {
-	profiles := make(map[string]string)
-	serviceOfferings, err := exo.ListServiceOfferings(&ListServiceOfferingsRequest{})
-	if err != nil {
-		return profiles, nil
-	}
-
-	for _, offering := range serviceOfferings {
-		profiles[strings.ToLower(offering.Name)] = offering.Id
-	}
-
-	return profiles, nil
 }

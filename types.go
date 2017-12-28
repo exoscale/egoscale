@@ -12,7 +12,7 @@ type Client struct {
 }
 
 type Topology struct {
-	Zones          map[string]*Zone
+	Zones          map[string]string
 	Images         map[string]map[int64]string
 	Profiles       map[string]string
 	Keypairs       []string

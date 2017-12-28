@@ -29,14 +29,3 @@ type QueryAsyncJobResultResponse struct {
 	UserId          string           `json:"userid"`
 	JobId           string           `json:"jobid"`
 }
-
-// QueryAsyncJobResult queries the status of an async job
-func (exo *Client) QueryAsyncJobResult(req *QueryAsyncJobResultRequest) (*QueryAsyncJobResultResponse, error) {
-	var r QueryAsyncJobResultResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return &r, nil
-}

@@ -1,28 +1,36 @@
+/*
+Zones
+
+A Zone corresponds to a Data Center.
+*/
 package egoscale
 
-import (
-	"strings"
-)
-
+// Zone represents a data center
 type Zone struct {
-	Allocationstate       string            `json:"allocationstate,omitempty"`
+	Id                    string            `json:"id"`
+	AllocationState       string            `json:"allocationstate,omitempty"`
+	Capacity              string            `json:"capacity,omitempty"`
 	Description           string            `json:"description,omitempty"`
-	Displaytext           string            `json:"displaytext,omitempty"`
+	DhcpProvider          string            `json:"dhcpprovider,omitempty"`
+	DisplayText           string            `json:"displaytext,omitempty"`
+	Dns1                  string            `json:"dns1,omitempty"`
+	Dns2                  string            `json:"dns2,omitempty"`
 	Domain                string            `json:"domain,omitempty"`
-	Domainid              string            `json:"domainid,omitempty"`
-	Domainname            string            `json:"domainname,omitempty"`
-	Id                    string            `json:"id,omitempty"`
-	Internaldns1          string            `json:"internaldns1,omitempty"`
-	Internaldns2          string            `json:"internaldns2,omitempty"`
-	Ip6dns1               string            `json:"ip6dns1,omitempty"`
-	Ip6dns2               string            `json:"ip6dns2,omitempty"`
-	Localstorageenabled   bool              `json:"localstorageenabled,omitempty"`
+	DomainId              string            `json:"domainid,omitempty"`
+	DomainName            string            `json:"domainname,omitempty"`
+	GuestCidrAddress      string            `json:"guestcidraddress,omitempty"`
+	InternalDns1          string            `json:"internaldns1,omitempty"`
+	InternalDns2          string            `json:"internaldns2,omitempty"`
+	Ip6Dns1               string            `json:"ip6dns1,omitempty"`
+	Ip6Dns2               string            `json:"ip6dns2,omitempty"`
+	LocalStorageEnabled   bool              `json:"localstorageenabled,omitempty"`
 	Name                  string            `json:"name,omitempty"`
-	Networktype           string            `json:"networktype,omitempty"`
-	Resourcedetails       map[string]string `json:"resourcedetails,omitempty"`
-	Securitygroupsenabled bool              `json:"securitygroupsenabled,omitempty"`
+	NetworkType           string            `json:"networktype,omitempty"`
+	ResourceDetails       map[string]string `json:"resourcedetails,omitempty"`
+	SecurityGroupsEnabled bool              `json:"securitygroupsenabled,omitempty"`
 	Vlan                  string            `json:"vlan,omitempty"`
-	Zonetoken             string            `json:"zonetoken,omitempty"`
+	ZoneToken             string            `json:"zonetoken,omitempty"`
+	Tags                  []*ResourceTag    `json:"tags,omitempty"`
 }
 
 // ListZonesRequest represents a query for zones
@@ -47,29 +55,4 @@ func (req *ListZonesRequest) Command() string {
 type ListZonesResponse struct {
 	Count int     `json:"count"`
 	Zone  []*Zone `json:"zone"`
-}
-
-// ListZones lists the zones
-func (exo *Client) ListZones(req *ListZonesRequest) ([]*Zone, error) {
-	var r ListZonesResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.Zone, nil
-}
-
-func (exo *Client) GetAllZones() (map[string]*Zone, error) {
-	var zones map[string]*Zone
-	response, err := exo.ListZones(&ListZonesRequest{})
-	if err != nil {
-		return zones, err
-	}
-
-	zones = make(map[string]*Zone)
-	for _, zone := range response {
-		zones[strings.ToLower(zone.Name)] = zone
-	}
-	return zones, nil
 }

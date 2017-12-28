@@ -1,3 +1,9 @@
+/*
+Elastic IPs
+
+See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/networking_and_traffic.html#about-elastic-ips
+*/
+
 package egoscale
 
 // IpAddress represents an IP Address
@@ -106,38 +112,3 @@ type ListPublicIpAddressesResponse struct {
 	Count           int          `json:"count"`
 	PublicIpAddress []*IpAddress `json:"publicipaddress"`
 }
-
-// AssociateIpAddress acquires and associates a public IP to a given zone
-//
-// https://doc.internal.exoscale.ch/others/cs/user/associateIpAddress.html
-func (exo *Client) AssociateIpAddress(req *AssociateIpAddressRequest, async AsyncInfo) (*IpAddress, error) {
-	var r AssociateIpAddressResponse
-	err := exo.AsyncRequest(req, &r, async)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.IpAddress, nil
-}
-
-// DisassociateIpAddress disassociates a public IP from the account
-//
-// https://doc.internal.exoscale.ch/others/cs/user/disassociateIpAddress.html
-func (exo *Client) DisassociateIpAddress(req *DisassociateIpAddressRequest, async AsyncInfo) error {
-	return exo.BooleanAsyncRequest(req, async)
-}
-
-// ListPublicIpAddresses lists the public ip addresses
-func (exo *Client) ListPublicIpAddresses(req *ListPublicIpAddressesRequest) ([]*IpAddress, error) {
-	var r ListPublicIpAddressesResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.PublicIpAddress, nil
-}
-
-// XXX UpdateIpAddress
-//
-// https://doc.internal.exoscale.ch/others/cs/user/updateIpAddress.html

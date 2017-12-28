@@ -1,3 +1,8 @@
+/*
+NICs
+
+See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/networking_and_traffic.html#configuring-multiple-ip-addresses-on-a-single-nic
+*/
 package egoscale
 
 // Nic represents a Network Interface Controller (NIC)
@@ -54,7 +59,7 @@ type ListNicsResponse struct {
 
 // AddIpToNicRequest represents the assignation of a secondary IP
 type AddIpToNicRequest struct {
-	NidId     string `json:"nicid"`
+	NicId     string `json:"nicid"`
 	IpAddress string `json:"ipaddress"`
 }
 
@@ -89,18 +94,25 @@ func (exo *Client) ListNics(req *ListNicsRequest) ([]*Nic, error) {
 	return r.Nic, nil
 }
 
-// AddIpToNic adds the IP address to the given NIC
-func (exo *Client) AddIpToNic(req *AddIpToNicRequest, async AsyncInfo) (*NicSecondaryIp, error) {
-	var r AddIpToNicResponse
-	err := exo.AsyncRequest(req, &r, async)
+// Deprecated: AppIpToNic adds an IP to a NIC
+func (exo *Client) AddIpToNic(nicId, string, ipAddress string, async AsyncInfo) (*NicSecondaryIp, error) {
+	req := &AddIpToNicRequest{
+		NicId:     nicId,
+		IpAddress: ipAddress,
+	}
+	resp := new(AddIpToNicResponse)
+	err := exo.AsyncRequest(req, resp, async)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.NicSecondaryIp, nil
+	return resp.NicSecondaryIp, nil
 }
 
-// RemoveIpFromNic removes the IP address (by Id) from the NIC
-func (exo *Client) RemoveIpFromNic(req *RemoveIpFromNicRequest, async AsyncInfo) error {
+// Deprecated RemoveIpFromNic removes an IP from a NIC
+func (exo *Client) RemoveIpFromNic(secondaryNicId string, async AsyncInfo) error {
+	req := &RemoveIpFromNicRequest{
+		Id: secondaryNicId,
+	}
 	return exo.BooleanAsyncRequest(req, async)
 }

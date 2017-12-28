@@ -166,17 +166,15 @@ func (exo *Client) AsyncRequest(command Request, v interface{}, async AsyncInfo)
 	}
 
 	// we've go a pending job
-	result := &QueryAsyncJobResultResponse{
-		JobStatus: job.JobStatus,
-	}
+	result := new(QueryAsyncJobResultResponse)
+	result.JobStatus = job.JobStatus
 	for async.Retries > 0 && result.JobStatus == PENDING {
 		time.Sleep(time.Duration(async.Delay) * time.Second)
 
 		async.Retries--
 
-		result, err = exo.QueryAsyncJobResult(&QueryAsyncJobResultRequest{
-			JobId: job.JobId,
-		})
+		req := &QueryAsyncJobResultRequest{JobId: job.JobId}
+		err = exo.Request(req, result)
 		if err != nil {
 			return err
 		}
@@ -241,7 +239,8 @@ func (exo *Client) Request(command Request, v interface{}) error {
 func (exo *Client) request(command Request) (json.RawMessage, error) {
 	mac := hmac.New(sha1.New, []byte(exo.apiSecret))
 
-	params, err := prepareValues(command)
+	params := url.Values{}
+	err := prepareValues("", &params, command)
 	if err != nil {
 		return nil, err
 	}
@@ -252,13 +251,13 @@ func (exo *Client) request(command Request) (json.RawMessage, error) {
 
 	keys := make([]string, 0)
 	unencoded := make([]string, 0)
-	for k := range *params {
+	for k := range params {
 		keys = append(keys, k)
 	}
 
 	sort.Strings(keys)
 	for _, k := range keys {
-		arg := fmt.Sprintf("%s=%s", k, csEncode((*params)[k][0]))
+		arg := fmt.Sprintf("%s=%s", k, csEncode(params[k][0]))
 		unencoded = append(unencoded, arg)
 	}
 
@@ -306,10 +305,10 @@ func (exo *Client) DetailedRequest(uri string, params string, method string, hea
 // prepareValues uses a command to build a POST request
 //
 // command is not a Command so it's easier to Test
-func prepareValues(command interface{}) (*url.Values, error) {
-	params := url.Values{}
+func prepareValues(prefix string, params *url.Values, command interface{}) error {
 	value := reflect.ValueOf(command)
 	typeof := reflect.TypeOf(command)
+	// Going up the pointer chain to find the underlying struct
 	for typeof.Kind() == reflect.Ptr {
 		typeof = typeof.Elem()
 		value = value.Elem()
@@ -320,44 +319,45 @@ func prepareValues(command interface{}) (*url.Values, error) {
 		val := value.Field(i)
 		tag := field.Tag
 		if json, ok := tag.Lookup("json"); ok {
-			name, required := extractJsonTag(field.Name, json)
+			n, required := extractJsonTag(field.Name, json)
+			name := prefix + n
 
 			switch val.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				v := val.Int()
 				if v == 0 {
 					if required {
-						return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+						return fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
 					}
 				} else {
-					params.Set(name, strconv.FormatInt(v, 10))
+					(*params).Set(name, strconv.FormatInt(v, 10))
 				}
 			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				v := val.Uint()
 				if v == 0 {
 					if required {
-						return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+						return fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
 					}
 				} else {
-					params.Set(name, strconv.FormatUint(v, 10))
+					(*params).Set(name, strconv.FormatUint(v, 10))
 				}
 			case reflect.Float32, reflect.Float64:
 				v := val.Float()
 				if v == 0 {
 					if required {
-						return nil, fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
+						return fmt.Errorf("%s.%s (%v) is required, got 0.", typeof.Name(), field.Name, val.Kind())
 					}
 				} else {
-					params.Set(name, strconv.FormatFloat(v, 'f', -1, 64))
+					(*params).Set(name, strconv.FormatFloat(v, 'f', -1, 64))
 				}
 			case reflect.String:
 				v := val.String()
 				if v == "" {
 					if required {
-						return nil, fmt.Errorf("%s.%s (%v) is required, got \"\".", typeof.Name(), field.Name, val.Kind())
+						return fmt.Errorf("%s.%s (%v) is required, got \"\".", typeof.Name(), field.Name, val.Kind())
 					}
 				} else {
-					params.Set(name, v)
+					(*params).Set(name, v)
 				}
 			case reflect.Bool:
 				v := val.Bool()
@@ -366,27 +366,38 @@ func prepareValues(command interface{}) (*url.Values, error) {
 						params.Set(name, "false")
 					}
 				} else {
-					params.Set(name, "true")
+					(*params).Set(name, "true")
 				}
 			case reflect.Slice:
 				switch field.Type.Elem().Kind() {
 				case reflect.Uint8:
-					v := val.Bytes()
 					if val.Len() == 0 {
 						if required {
-							return nil, fmt.Errorf("%s.%s (%v) is required, got empty slice", typeof.Name(), field.Name, val.Kind())
+							return fmt.Errorf("%s.%s (%v) is required, got empty slice", typeof.Name(), field.Name, val.Kind())
 						}
 					} else {
-						params.Set(name, base64.StdEncoding.EncodeToString(v))
+						v := val.Bytes()
+						(*params).Set(name, base64.StdEncoding.EncodeToString(v))
+					}
+				case reflect.Ptr:
+					if val.Len() == 0 {
+						if required {
+							return fmt.Errorf("%s.%s (%v) is required, got empty slice", typeof.Name(), field.Name, val.Kind())
+						}
+					} else {
+						err := prepareList(name, params, val.Interface())
+						if err != nil {
+							return err
+						}
 					}
 				default:
 					if required {
-						return nil, fmt.Errorf("Unsupported type %s.%s ([]%s)", typeof.Name(), field.Name, field.Type.Elem().Kind())
+						return fmt.Errorf("Unsupported type %s.%s ([]%s)", typeof.Name(), field.Name, field.Type.Elem().Kind())
 					}
 				}
 			default:
 				if required {
-					return nil, fmt.Errorf("Unsupported type %s.%s (%v)", typeof.Name(), field.Name, val.Kind())
+					return fmt.Errorf("Unsupported type %s.%s (%v)", typeof.Name(), field.Name, val.Kind())
 				}
 			}
 		} else {
@@ -394,7 +405,17 @@ func prepareValues(command interface{}) (*url.Values, error) {
 		}
 	}
 
-	return &params, nil
+	return nil
+}
+
+func prepareList(prefix string, params *url.Values, slice interface{}) error {
+	value := reflect.ValueOf(slice)
+
+	for i := 0; i < value.Len(); i++ {
+		prepareValues(fmt.Sprintf("%s[%d].", prefix, i), params, value.Index(i).Interface())
+	}
+
+	return nil
 }
 
 // extractJsonTag returns the variable name or defaultName as well as if the field is required (!omitempty)

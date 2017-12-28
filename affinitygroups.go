@@ -74,7 +74,7 @@ func (req *ListAffinityGroupsRequest) Command() string {
 
 // CreateAffinityGroupResponse represents the response of the creation of an (anti-)affinity group
 type CreateAffinityGroupResponse struct {
-	AffinityGroup AffinityGroup `json:"affinitygroup"`
+	AffinityGroup *AffinityGroup `json:"affinitygroup"`
 }
 
 // ListAffinityGroupTypesRequest represents an (anti-)affinity groups search
@@ -101,52 +101,30 @@ type ListAffinityGroupTypesResponse struct {
 	AffinityGroupType []*AffinityGroupType `json:"affinitygrouptype"`
 }
 
-// CreateAffinityGroup creates an (anti-)affinity group
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/createAffinityGroup.html
-func (exo *Client) CreateAffinityGroup(req *CreateAffinityGroupRequest, async AsyncInfo) (*AffinityGroup, error) {
-	var r CreateAffinityGroupResponse
-	err := exo.AsyncRequest(req, &r, async)
-	if err != nil {
-		return nil, err
-	}
-
-	return &r.AffinityGroup, nil
-}
-
-// DeleteAffinityGroup deletes an affinity group by name
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteAffinityGroup.html
-func (exo *Client) DeleteAffinityGroup(req *DeleteAffinityGroupRequest, async AsyncInfo) error {
-	return exo.BooleanAsyncRequest(req, async)
-}
-
-// ListAffinityGroups lists the affinity groups
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/listAffinityGroups.html
-func (exo *Client) ListAffinityGroups(req *ListAffinityGroupsRequest) ([]*AffinityGroup, error) {
-	var r ListAffinityGroupsResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.AffinityGroup, nil
-}
-
-// ListAffinityGroupTypes lists the affinity group type
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/listAffinityGroupTypes.html
-func (exo *Client) ListAffinityGroupTypes(req *ListAffinityGroupTypesRequest) ([]*AffinityGroupType, error) {
-	var r ListAffinityGroupTypesResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.AffinityGroupType, nil
-}
-
 // XXX UpdateVmAffinityGroup
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/updateVMAffinityGroup.html
+
+// Legacy methods
+
+// Deprecated: CreateAffinityGroup creates a group
+func (exo *Client) CreateAffinityGroup(name string, async AsyncInfo) (*AffinityGroup, error) {
+	req := &CreateAffinityGroupRequest{
+		Name: name,
+	}
+	resp := new(CreateAffinityGroupResponse)
+	err := exo.AsyncRequest(req, resp, async)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.AffinityGroup, nil
+}
+
+// Deprecated: DeleteAffinityGroup deletes a group
+func (exo *Client) DeleteAffinityGroup(name string, async AsyncInfo) error {
+	req := &DeleteAffinityGroupRequest{
+		Name: name,
+	}
+	return exo.BooleanAsyncRequest(req, async)
+}

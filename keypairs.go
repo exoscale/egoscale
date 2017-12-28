@@ -18,6 +18,8 @@ type SshKeyPair struct {
 }
 
 // CreateSshKeyPairRequest represents a new keypair to be created
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/createSSHKeyPair.html
 type CreateSshKeyPairRequest struct {
 	Name      string `json:"name"`
 	Account   string `json:"account,omitempty"`
@@ -32,10 +34,12 @@ func (req *CreateSshKeyPairRequest) Command() string {
 
 // CreateSshKeyPairResponse represents the creation of an SSH Key Pair
 type CreateSshKeyPairResponse struct {
-	KeyPair SshKeyPair `json:"keypair"`
+	KeyPair *SshKeyPair `json:"keypair"`
 }
 
 // DeleteSshKeyPairRequest represents a new keypair to be created
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSSHKeyPair.html
 type DeleteSshKeyPairRequest struct {
 	Name      string `json:"name"`
 	Account   string `json:"account,omitempty"`
@@ -49,6 +53,8 @@ func (req *DeleteSshKeyPairRequest) Command() string {
 }
 
 // SshKeyPairRequest represents a new registration of a public key in a keypair
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/registerSSHKeyPair.html
 type RegisterSshKeyPairRequest struct {
 	Name      string `json:"name"`
 	PublicKey string `json:"publickey"`
@@ -64,10 +70,12 @@ func (req *RegisterSshKeyPairRequest) Command() string {
 
 // RegisterSshKeyPairResponse represents the creation of an SSH Key Pair
 type RegisterSshKeyPairResponse struct {
-	KeyPair SshKeyPair `json:"keypair"`
+	KeyPair *SshKeyPair `json:"keypair"`
 }
 
 // ListSshKeyPairsRequest represents a query for a list of SSH KeyPairs
+//
+// http://cloudstack.apache.org/api/apidocs-4.10/apis/listSSHKeyPairs.html
 type ListSshKeyPairsRequest struct {
 	Account     string `json:"account,omitempty"`
 	DomainId    string `json:"domainid,omitempty"`
@@ -92,52 +100,43 @@ type ListSshKeyPairsResponse struct {
 	SshKeyPair []*SshKeyPair `json:"sshkeypair"`
 }
 
-// CreateSshKeyPair create a new SSH Key Pair
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/createSSHKeyPair.html
-func (exo *Client) CreateSshKeyPair(req *CreateSshKeyPairRequest) (*SshKeyPair, error) {
-	var r CreateSshKeyPairResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return &r.KeyPair, nil
-}
-
-// DeleteSshKeyPair deletes an SSH key pair
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSSHKeyPair.html
-func (exo *Client) DeleteSshKeyPair(req *DeleteSshKeyPairRequest) error {
-	return exo.BooleanRequest(req)
-}
-
-// RegisterSshKeyPair registers a public key in a keypair
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/registerSSHKeyPair.html
-func (exo *Client) RegisterSshKeyPair(req *RegisterSshKeyPairRequest) (*SshKeyPair, error) {
-	var r RegisterSshKeyPairResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return &r.KeyPair, nil
-}
-
-// ListSshKeyPairs lists the key pairs
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/listSSHKeyPairs.html
-func (exo *Client) ListSshKeyPairs(req *ListSshKeyPairsRequest) ([]*SshKeyPair, error) {
-	var r ListSshKeyPairsResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.SshKeyPair, nil
-}
-
 // XXX ResetSshKeyForVirtualMachine
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/resetSSHKeyForVirtualMachine.html
+
+// Deprecated: CreateKeypair create a new SSH Key Pair
+func (exo *Client) CreateKeypair(name string) (*SshKeyPair, error) {
+	req := &CreateSshKeyPairRequest{
+		Name: name,
+	}
+	r := new(CreateSshKeyPairResponse)
+	err := exo.Request(req, r)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.KeyPair, nil
+}
+
+// Deprecated: DeleteKeypair deletes an SSH key pair
+func (exo *Client) DeleteKeypair(name string) error {
+	req := &DeleteSshKeyPairRequest{
+		Name: name,
+	}
+	return exo.BooleanRequest(req)
+}
+
+// RegisterKeypair registers a public key in a keypair
+func (exo *Client) RegisterKeypair(name string, publicKey string) (*SshKeyPair, error) {
+	req := &RegisterSshKeyPairRequest{
+		Name:      name,
+		PublicKey: publicKey,
+	}
+	r := new(RegisterSshKeyPairResponse)
+	err := exo.Request(req, r)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.KeyPair, nil
+}

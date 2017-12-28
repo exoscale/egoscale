@@ -11,6 +11,11 @@ import (
 )
 
 func TestPrepareValues(t *testing.T) {
+	type tag struct {
+		Name      string `json:"name"`
+		IsVisible bool   `json:"isvisible,omitempty"`
+	}
+
 	profile := struct {
 		IgnoreMe string
 		Zone     string  `json:"myzone,omitempty"`
@@ -19,6 +24,7 @@ func TestPrepareValues(t *testing.T) {
 		Uid      uint    `json:"uid"`
 		Num      float64 `json:"num"`
 		Bytes    []byte  `json:"bytes"`
+		Tags     []*tag  `json:"tags,omitempty"`
 	}{
 		IgnoreMe: "bar",
 		Name:     "world",
@@ -26,14 +32,19 @@ func TestPrepareValues(t *testing.T) {
 		Uid:      uint(2),
 		Num:      3.14,
 		Bytes:    []byte("exo"),
+		Tags: []*tag{
+			{Name: "foo"},
+			{Name: "bar", IsVisible: false},
+		},
 	}
 
-	params, err := prepareValues(profile)
+	params := url.Values{}
+	err := prepareValues("", &params, profile)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if _, ok := (*params)["myzone"]; ok {
+	if _, ok := params["myzone"]; ok {
 		t.Errorf("myzone params shouldn't be set, got %v", params.Get("myzone"))
 	}
 
@@ -45,8 +56,13 @@ func TestPrepareValues(t *testing.T) {
 		t.Errorf("bytes params wasn't properly encoded in base 64, got %v", params.Get("bytes"))
 	}
 
-	if _, ok := (*params)["ignoreme"]; ok {
+	if _, ok := params["ignoreme"]; ok {
 		t.Errorf("IgnoreMe key was set")
+	}
+
+	v := params.Get("tags[0].name")
+	if v != "foo" {
+		t.Errorf("expected tags to be serialized as foo, got %#v", v)
 	}
 }
 
@@ -55,7 +71,8 @@ func TestPrepareValuesStringRequired(t *testing.T) {
 		RequiredField string `json:"requiredfield"`
 	}{}
 
-	_, err := prepareValues(&profile)
+	params := url.Values{}
+	err := prepareValues("", &params, &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -66,7 +83,8 @@ func TestPrepareValuesBoolRequired(t *testing.T) {
 		RequiredField bool `json:"requiredfield"`
 	}{}
 
-	params, err := prepareValues(&profile)
+	params := url.Values{}
+	err := prepareValues("", &params, &profile)
 	if err != nil {
 		t.Fatal(nil)
 	}
@@ -80,7 +98,8 @@ func TestPrepareValuesIntRequired(t *testing.T) {
 		RequiredField int64 `json:"requiredfield"`
 	}{}
 
-	_, err := prepareValues(&profile)
+	params := url.Values{}
+	err := prepareValues("", &params, &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -91,7 +110,8 @@ func TestPrepareValuesUintRequired(t *testing.T) {
 		RequiredField uint64 `json:"requiredfield"`
 	}{}
 
-	_, err := prepareValues(&profile)
+	params := url.Values{}
+	err := prepareValues("", &params, &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -102,7 +122,8 @@ func TestPrepareValuesBytesRequired(t *testing.T) {
 		RequiredField []byte `json:"requiredfield"`
 	}{}
 
-	_, err := prepareValues(&profile)
+	params := url.Values{}
+	err := prepareValues("", &params, &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -113,7 +134,8 @@ func TestPrepareValuesSliceString(t *testing.T) {
 		RequiredField []string `json:"requiredfield"`
 	}{}
 
-	_, err := prepareValues(&profile)
+	params := url.Values{}
+	err := prepareValues("", &params, &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}

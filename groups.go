@@ -3,13 +3,14 @@ Security Groups
 
 Security Groups provide a way to isolate traffic to VMs.
 
-	securityGroup, err := client.CreateSecurityGroup(&CreateSecurityGroupRequest{
+	resp = new(CreateSecurityGroupResponse)
+	err := client.Request(&CreateSecurityGroupRequest{
 		Name: "Load balancer",
 		Description: "Opens HTTP/HTTPS ports from the outside world",
-	})
+	}, resp)
 	// ...
 	err := client.DeleteSecurityGroup(&DeleteSecurityGroupRequest{
-		Id: securityGroup.Id,
+		Id: resp.SecurityGroup.Id,
 	})
 
 See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/networking_and_traffic.html#security-groups
@@ -17,32 +18,28 @@ See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/sta
 */
 package egoscale
 
-import (
-	"fmt"
-)
-
 // SecurityGroup represent a firewalling set of rules
 type SecurityGroup struct {
-	Id                  string               `json:"id,omitempty"`
-	Account             string               `json:"account,omitempty"`
-	Description         string               `json:"description,omitempty"`
-	Domain              string               `json:"domain,omitempty"`
-	Domainid            string               `json:"domainid,omitempty"`
-	Name                string               `json:"name,omitempty"`
-	Project             string               `json:"project,omitempty"`
-	Projectid           string               `json:"projectid,omitempty"`
-	VirtualMachineCount int                  `json:"virtualmachinecount,omitempty"`
-	VirtualMachineIds   []string             `json:"virtualmachineids,omitempty"`
-	IngressRules        []*SecurityGroupRule `json:"ingressrule,omitempty"`
-	EgressRules         []*SecurityGroupRule `json:"egressrule,omitempty"`
-	Tags                []*ResourceTag       `json:"tags,omitempty"`
-	JobId               string               `json:"jobid,omitempty"`
-	JobStatus           JobStatusType        `json:"jobstatus,omitempty"`
+	Id                  string         `json:"id"`
+	Account             string         `json:"account,omitempty"`
+	Description         string         `json:"description,omitempty"`
+	Domain              string         `json:"domain,omitempty"`
+	Domainid            string         `json:"domainid,omitempty"`
+	Name                string         `json:"name"`
+	Project             string         `json:"project,omitempty"`
+	Projectid           string         `json:"projectid,omitempty"`
+	VirtualMachineCount int            `json:"virtualmachinecount,omitempty"`
+	VirtualMachineIds   []string       `json:"virtualmachineids,omitempty"`
+	IngressRules        []*IngressRule `json:"ingressrule"`
+	EgressRules         []*EgressRule  `json:"egressrule"`
+	Tags                []*ResourceTag `json:"tags,omitempty"`
+	JobId               string         `json:"jobid,omitempty"`
+	JobStatus           JobStatusType  `json:"jobstatus,omitempty"`
 }
 
-// SecurityGroupRule represents the ingress/egress rule
-type SecurityGroupRule struct {
-	Id                    string               `json:"ruleid,omitempty"`
+// IngressRule represents the ingress rule
+type IngressRule struct {
+	RuleId                string               `json:"ruleid"`
 	Account               string               `json:"account,omitempty"`
 	Cidr                  string               `json:"cidr,omitempty"`
 	IcmpType              int                  `json:"icmptype,omitempty"`
@@ -57,6 +54,9 @@ type SecurityGroupRule struct {
 	JobId                 string               `json:"jobid,omitempty"`
 	JobStatus             JobStatusType        `json:"jobstatus,omitempty"`
 }
+
+// EgressRule represents the ingress rule
+type EgressRule IngressRule
 
 // UserSecurityGroup represents the traffic of another security group
 type UserSecurityGroup struct {
@@ -75,6 +75,11 @@ func (req *CreateSecurityGroupRequest) Command() string {
 	return "createSecurityGroupRequest"
 }
 
+// CreateSecurityGroupResponse represents a new security group
+type CreateSecurityGroupResponse struct {
+	SecurityGroup *SecurityGroup `json:"securitygroup"`
+}
+
 // DeleteSecurityGroupRequest represents a security group deletion
 type DeleteSecurityGroupRequest struct {
 	Account   string `json:"account,omitempty"`
@@ -89,8 +94,8 @@ func (req *DeleteSecurityGroupRequest) Command() string {
 	return "deleteSecurityGroupRequest"
 }
 
-// AuthorizeSecurityGroupRequest represents the ingress/egress rule creation
-type AuthorizeSecurityGroupRequest struct {
+// AuthorizeSecurityGroupIngressRequest represents the ingress rule creation
+type AuthorizeSecurityGroupIngressRequest struct {
 	Account               string               `json:"account,omitempty"`
 	Cidr                  string               `json:"cidrlist,omitempty"`
 	IcmpType              int                  `json:"icmptype,omitempty"`
@@ -104,9 +109,25 @@ type AuthorizeSecurityGroupRequest struct {
 }
 
 // Command returns the CloudStack API command
-func (req *AuthorizeSecurityGroupRequest) Command() string {
-	return "authorizeSecurityGroupRequest"
+func (req *AuthorizeSecurityGroupIngressRequest) Command() string {
+	return "authorizeSecurityGroupIngress"
 }
+
+// AuthorizeSecurityGroupIngressResponse represents the new egress rule
+// /!\ the Cloud Stack API document is not fully accurate. /!\
+type AuthorizeSecurityGroupIngressResponse CreateSecurityGroupResponse
+
+// AuthorizeSecurityGroupEgressRequest represents the egress rule creation
+type AuthorizeSecurityGroupEgressRequest AuthorizeSecurityGroupIngressRequest
+
+// Command returns the CloudStack API command
+func (req *AuthorizeSecurityGroupEgressRequest) Command() string {
+	return "authorizeSecurityGroupEgress"
+}
+
+// AuthorizeSecurityGroupEgressResponse represents the new egress rule
+// /!\ the Cloud Stack API document is not fully accurate. /!\
+type AuthorizeSecurityGroupEgressResponse CreateSecurityGroupResponse
 
 // RevokeSecurityGroup represents the ingress/egress rule deletion
 type RevokeSecurityGroupRequest struct {
@@ -116,13 +137,6 @@ type RevokeSecurityGroupRequest struct {
 // Command returns the CloudStack API command
 func (req *RevokeSecurityGroupRequest) Command() string {
 	return "revokeSecurityGroupRequest"
-}
-
-// AuthorizeSecurityGroupResponse represents a new security group
-// as well as a deployed security group (rule)
-// /!\ the Cloud Stack API document is not fully accurate. /!\
-type AuthorizeSecurityGroupResponse struct {
-	SecurityGroup *SecurityGroup `json:"securitygroup"`
 }
 
 // ListSecurityGroupsRequest represents a search for security groups
@@ -153,100 +167,70 @@ type ListSecurityGroupsResponse struct {
 	SecurityGroup []*SecurityGroup `json:"securitygroup"`
 }
 
-/*
-Methods
-
-All the methods requiring an AsyncInfo value are asynchronous and must be handled with care.
-*/
-
-// AuthorizeSecurityGroupEgress authorizes a particular egress rule for this security group
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/authorizeSecurityGroupEgress.html
-func (exo *Client) AuthorizeSecurityGroupEgress(req *AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
-	return exo.addSecurityGroupRule(req, async)
+// Deprecated: CreateIngressRule creates a set of ingress rules
+func (exo *Client) CreateIngressRule(req *AuthorizeSecurityGroupIngressRequest, async AsyncInfo) ([]*IngressRule, error) {
+	resp := new(AuthorizeSecurityGroupIngressResponse)
+	err := exo.AsyncRequest(req, resp, async)
+	if err != nil {
+		return nil, err
+	}
+	return resp.SecurityGroup.IngressRules, nil
 }
 
-// AuthorizeSecurityGroupIngress authorizes a particular ingress rule for this security group
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/authorizeSecurityGroupIngress.html
-func (exo *Client) AuthorizeSecurityGroupIngress(req *AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
-	return exo.addSecurityGroupRule(req, async)
+// Deprecated: CreateEgressRule creates a set of egress rules
+func (exo *Client) CreateEgressRule(req *AuthorizeSecurityGroupEgressRequest, async AsyncInfo) ([]*EgressRule, error) {
+	resp := new(AuthorizeSecurityGroupEgressResponse)
+	err := exo.AsyncRequest(req, resp, async)
+	if err != nil {
+		return nil, err
+	}
+	return resp.SecurityGroup.EgressRules, nil
 }
 
-// RevokeSecurityGroupEgress revokes a particular egress rule for this security group
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/revokeSecurityGroupEgress.html
-func (exo *Client) RevokeSecurityGroupEgress(req *RevokeSecurityGroupRequest, async AsyncInfo) error {
-	return exo.BooleanAsyncRequest(req, async)
-}
+// Depreacted: CreateSecurityGroupWithRules create a security group with its rules
+// Warning: it doesn't rollback in case of a failure!
+func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*AuthorizeSecurityGroupIngressRequest, egress []*AuthorizeSecurityGroupEgressRequest, async AsyncInfo) (*SecurityGroup, error) {
+	req := &CreateSecurityGroupRequest{
+		Name: name,
+	}
+	resp := new(CreateSecurityGroupResponse)
+	err := exo.Request(req, resp)
+	if err != nil {
+		return nil, err
+	}
 
-// RevokeSecurityGroupIngress revokes a particular ingress rule for this security group
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/revokeSecurityGroupIngress.html
-func (exo *Client) RevokeSecurityGroupIngress(req *RevokeSecurityGroupRequest, async AsyncInfo) error {
-	return exo.BooleanAsyncRequest(req, async)
-}
+	for _, ereq := range egress {
+		ereq.SecurityGroupId = resp.SecurityGroup.Id
 
-func (exo *Client) addSecurityGroupRule(req *AuthorizeSecurityGroupRequest, async AsyncInfo) (*SecurityGroupRule, error) {
-	// XXX has to be fixed
-	/*
-		if len(req.UserSecurityGroupList) > 0 {
-			for i, usg := range req.UserSecurityGroupList {
-				key := fmt.Sprintf("usersecuritygrouplist[%d]", i)
-				params.Set(key+".account", usg.Account)
-				params.Set(key+".group", usg.Group)
-			}
+		resp := new(AuthorizeSecurityGroupEgressResponse)
+		err := exo.AsyncRequest(ereq, resp, async)
+		if err != nil {
+			return nil, err
 		}
-	*/
+	}
+	for _, ireq := range ingress {
+		ireq.SecurityGroupId = resp.SecurityGroup.Id
 
-	var r AuthorizeSecurityGroupResponse
-	err := exo.AsyncRequest(req, &r, async)
+		resp := new(AuthorizeSecurityGroupIngressResponse)
+		err := exo.AsyncRequest(ireq, resp, async)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r := new(ListSecurityGroupsResponse)
+	err = exo.Request(&ListSecurityGroupsRequest{Id: resp.SecurityGroup.Id}, r)
 	if err != nil {
 		return nil, err
 	}
 
-	// XXX THIS TOO
-	kind := "Egress"
-	if kind == "Egress" {
-		return r.SecurityGroup.EgressRules[0], nil
-	}
-	return r.SecurityGroup.IngressRules[0], nil
+	return r.SecurityGroup[0], nil
 }
 
-// CreateSecurityGroup creates a SG
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/createSecurityGroup.html
-func (exo *Client) CreateSecurityGroup(req *CreateSecurityGroupRequest) (*SecurityGroup, error) {
-	var r AuthorizeSecurityGroupResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
+// Deprecated: DeleteSecurityGroup deletes a security group
+func (exo *Client) DeleteSecurityGroup(name string) error {
+	req := &DeleteSecurityGroupRequest{
+		Name: name,
 	}
-
-	return r.SecurityGroup, err
-}
-
-// DeleteSecurityGroup deletes a Security Group by name
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSecurityGroup.html
-func (exo *Client) DeleteSecurityGroup(req *DeleteSecurityGroupRequest) error {
 	return exo.BooleanRequest(req)
-}
-
-// ListSecurityGroups lists the security groups.
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/listSecurityGroups.html
-func (exo *Client) ListSecurityGroups(req *ListSecurityGroupsRequest) ([]*SecurityGroup, error) {
-	var r ListSecurityGroupsResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.SecurityGroup, nil
-}
-
-// String formats the AuthorizeSecurityGroupRequest to a human version
-func (p *AuthorizeSecurityGroupRequest) String() string {
-	return fmt.Sprintf("%s: %s %s", p.SecurityGroupName, p.Protocol, p.Cidr)
 }

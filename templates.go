@@ -1,10 +1,10 @@
-package egoscale
+/*
+Templates
 
-import (
-	"fmt"
-	"regexp"
-	"strings"
-)
+See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/templates.html
+*/
+
+package egoscale
 
 // Template represents a machine to be deployed
 type Template struct {
@@ -71,53 +71,4 @@ func (req *ListTemplatesRequest) Command() string {
 type ListTemplatesResponse struct {
 	Count    int         `json:"count"`
 	Template []*Template `json:"template"`
-}
-
-// ListTemplates returns the templates
-func (exo *Client) ListTemplates(req *ListTemplatesRequest) ([]*Template, error) {
-	var r ListTemplatesResponse
-	err := exo.Request(req, &r)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.Template, nil
-}
-
-// GetImages list the available featured images and group them by name, then size.
-func (exo *Client) GetImages() (map[string]map[int64]string, error) {
-	var images map[string]map[int64]string
-	images = make(map[string]map[int64]string)
-	re := regexp.MustCompile(`^Linux (?P<name>.+?) (?P<version>[0-9.]+)\b`)
-
-	templates, err := exo.ListTemplates(&ListTemplatesRequest{
-		TemplateFilter: "featured",
-	})
-	if err != nil {
-		return images, err
-	}
-
-	for _, template := range templates {
-		size := int64(template.Size >> 30) // B to GiB
-
-		fullname := strings.ToLower(template.Name)
-
-		if _, present := images[fullname]; !present {
-			images[fullname] = make(map[int64]string)
-		}
-		images[fullname][size] = template.Id
-
-		submatch := re.FindStringSubmatch(template.Name)
-		if len(submatch) > 0 {
-			name := strings.Replace(strings.ToLower(submatch[1]), " ", "-", -1)
-			version := submatch[2]
-			image := fmt.Sprintf("%s-%s", name, version)
-
-			if _, present := images[image]; !present {
-				images[image] = make(map[int64]string)
-			}
-			images[image][size] = template.Id
-		}
-	}
-	return images, nil
 }

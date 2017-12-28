@@ -107,7 +107,7 @@ func (exo *Client) ListNics(req *ListNicsRequest) ([]*Nic, error) {
 // AddIPToNic adds an IP to a NIC
 //
 // Deprecated: use the API directly
-func (exo *Client) AddIPToNic(nicID, string, ipAddress string, async AsyncInfo) (*NicSecondaryIP, error) {
+func (exo *Client) AddIPToNic(nicID string, ipAddress string, async AsyncInfo) (*NicSecondaryIP, error) {
 	req := &AddIPToNicRequest{
 		NicID:     nicID,
 		IPAddress: ipAddress,

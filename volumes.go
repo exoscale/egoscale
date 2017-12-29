@@ -47,6 +47,27 @@ type VolumeTag struct {
 	Value      string `json:"value,omitempty"`
 }
 
+// ResizeVolumeRequest resizes a volume
+type ResizeVolumeRequest struct {
+	ID             string `json:"id"`
+	DiskOfferingID string `json:"diskofferingid,omitempty"`
+	ShrinkOk       bool   `json:"shrinkok,omitempty"`
+	Size           int64  `json:"size,omitempty"` // in GiB
+}
+
+func (req *ResizeVolumeRequest) name() string {
+	return "resizeVolume"
+}
+
+func (req *ResizeVolumeRequest) asyncResponse() interface{} {
+	return new(ResizeVolumeResponse)
+}
+
+// ResizeVolumeResponse represents the new Volume
+type ResizeVolumeResponse struct {
+	Volume *Volume `json:"volume"`
+}
+
 // ListVolumesRequest represents a query listing volumes
 type ListVolumesRequest struct {
 	Account          string         `json:"account,omitempty"`

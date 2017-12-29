@@ -120,7 +120,7 @@ func (req *AuthorizeSecurityGroupIngressRequest) name() string {
 	return "authorizeSecurityGroupIngress"
 }
 
-func (req *AuthorizeSecurityGroupIngressRequest) response() interface{} {
+func (req *AuthorizeSecurityGroupIngressRequest) asyncResponse() interface{} {
 	return new(AuthorizeSecurityGroupIngressResponse)
 }
 
@@ -135,7 +135,7 @@ func (req *AuthorizeSecurityGroupEgressRequest) name() string {
 	return "authorizeSecurityGroupEgress"
 }
 
-func (req *AuthorizeSecurityGroupEgressRequest) response() interface{} {
+func (req *AuthorizeSecurityGroupEgressRequest) asyncResponse() interface{} {
 	return new(AuthorizeSecurityGroupEgressResponse)
 }
 
@@ -152,7 +152,7 @@ func (req *RevokeSecurityGroupRequest) name() string {
 	return "revokeSecurityGroupRequest"
 }
 
-func (req *RevokeSecurityGroupRequest) response() interface{} {
+func (req *RevokeSecurityGroupRequest) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 

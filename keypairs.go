@@ -113,9 +113,27 @@ type ListSSHKeyPairsResponse struct {
 	SSHKeyPair []*SSHKeyPair `json:"sshkeypair"`
 }
 
-// XXX ResetSSHKeyForVirtualMachine
+// ResetSSHKeyForVirtualMachineRequest represents a change for the key pairs
 //
 // http://cloudstack.apache.org/api/apidocs-4.10/apis/resetSSHKeyForVirtualMachine.html
+type ResetSSHKeyForVirtualMachineRequest struct {
+	ID        string `json:"id"`
+	KeyPair   string `json:"keypair"`
+	Account   string `json:"account,omitempty"`
+	DomainID  string `json:"domainid,omitempty"`
+	ProjectID string `json:"projectid,omitempty"`
+}
+
+func (req *ResetSSHKeyForVirtualMachineRequest) name() string {
+	return "resetSSHKeyForVirtualMachine"
+}
+
+func (req *ResetSSHKeyForVirtualMachineRequest) asyncResponse() interface{} {
+	return new(ResetSSHKeyForVirtualMachineResponse)
+}
+
+// ResetSSHKeyForVirtualMachineResponse represents the modified VirtualMachine
+type ResetSSHKeyForVirtualMachineResponse DeployVirtualMachineResponse
 
 // CreateKeypair create a new SSH Key Pair
 //

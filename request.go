@@ -25,6 +25,14 @@ type Command interface {
 	response() interface{}
 }
 
+// AsyncCommand represents a async CloudStack request
+type AsyncCommand interface {
+	// CloudStack API command name
+	name() string
+	// Response interface to Unmarshal the JSON into
+	asyncResponse() interface{}
+}
+
 const (
 	// PENDING represents a job in progress
 	PENDING JobStatusType = iota
@@ -40,13 +48,13 @@ type JobStatusType int
 // JobResultResponse represents a generic response to a job task
 type JobResultResponse struct {
 	AccountID     string           `json:"accountid,omitempty"`
-	Cmd           string           `json:"cmd,omitempty"`
-	CreatedAt     string           `json:"created,omitempty"`
-	JobID         string           `json:"jobid,omitempty"`
-	JobProcStatus int              `json:"jobprocstatus,omitempty"`
-	JobResult     *json.RawMessage `json:"jobresult,omitempty"`
-	JobStatus     JobStatusType    `json:"jobstatus,omitempty"`
-	JobResultType string           `json:"jobresulttype,omitempty"`
+	Cmd           string           `json:"cmd"`
+	CreatedAt     string           `json:"created"`
+	JobID         string           `json:"jobid"`
+	JobProcStatus int              `json:"jobprocstatus"`
+	JobResult     *json.RawMessage `json:"jobresult"`
+	JobStatus     JobStatusType    `json:"jobstatus"`
+	JobResultType string           `json:"jobresulttype"`
 	UserID        string           `json:"userid,omitempty"`
 }
 
@@ -151,8 +159,8 @@ func (exo *Client) parseResponse(resp *http.Response) (json.RawMessage, error) {
 }
 
 // AsyncRequest performs an asynchronous request and polls it for retries * day [s]
-func (exo *Client) AsyncRequest(req Command, async AsyncInfo) (interface{}, error) {
-	body, err := exo.request(req)
+func (exo *Client) AsyncRequest(req AsyncCommand, async AsyncInfo) (interface{}, error) {
+	body, err := exo.request(req.name(), req)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +174,7 @@ func (exo *Client) AsyncRequest(req Command, async AsyncInfo) (interface{}, erro
 	// Error response
 	errorResponse := new(ErrorResponse)
 	// Successful response
-	resp := req.response()
+	resp := req.asyncResponse()
 	if job.JobID == "" || job.JobStatus != PENDING {
 		if err := json.Unmarshal(*job.JobResult, resp); err != nil {
 			return job, err
@@ -222,7 +230,7 @@ func (exo *Client) BooleanRequest(req Command) error {
 }
 
 // BooleanAsyncRequest performs a sync request on a boolean call
-func (exo *Client) BooleanAsyncRequest(req Command, async AsyncInfo) error {
+func (exo *Client) BooleanAsyncRequest(req AsyncCommand, async AsyncInfo) error {
 	resp, err := exo.AsyncRequest(req, async)
 	if err != nil {
 		return err
@@ -233,7 +241,7 @@ func (exo *Client) BooleanAsyncRequest(req Command, async AsyncInfo) error {
 
 // Request performs a sync request on a generic command
 func (exo *Client) Request(req Command) (interface{}, error) {
-	body, err := exo.request(req)
+	body, err := exo.request(req.name(), req)
 	if err != nil {
 		return nil, err
 	}
@@ -252,8 +260,8 @@ func (exo *Client) Request(req Command) (interface{}, error) {
 
 // Request performs a simple request
 /*
-func (exo *Client) Request(command Request, v interface{}) error {
-	resp, err := exo.request(command)
+func (exo *Client) Request(req Request, v interface{}) error {
+	resp, err := exo.request(req.Name(), req)
 	if err != nil {
 		return err
 	}
@@ -270,7 +278,7 @@ func (exo *Client) Request(command Request, v interface{}) error {
 }*/
 
 // request makes a Request while being close to the metal
-func (exo *Client) request(req Command) (json.RawMessage, error) {
+func (exo *Client) request(command string, req interface{}) (json.RawMessage, error) {
 	mac := hmac.New(sha1.New, []byte(exo.apiSecret))
 
 	params := url.Values{}
@@ -280,7 +288,7 @@ func (exo *Client) request(req Command) (json.RawMessage, error) {
 	}
 
 	params.Set("apikey", exo.apiKey)
-	params.Set("command", req.name())
+	params.Set("command", command)
 	params.Set("response", "json")
 
 	keys := make([]string, 0)

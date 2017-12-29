@@ -180,15 +180,16 @@ func TestRequest(t *testing.T) {
 		t.Errorf("Expected exactly one API, got %d", apis.Count)
 	}
 }
-func TestBooleanRequest(t *testing.T) {
+
+func TestBooleanAsyncRequest(t *testing.T) {
 	params := url.Values{}
-	params.Set("command", "destroySecurityGroup")
+	params.Set("command", "expungevirtualmachine")
 	params.Set("token", "TOKEN")
 	params.Set("id", "123")
 	params.Set("response", "json")
 	ts := newPostServer(params, `
 {
-	"destroysecuritygroup": {
+	"expungevirtualmarchine": {
 		"jobid": "1",
 		"jobresult": {
 			"success": true,
@@ -201,7 +202,7 @@ func TestBooleanRequest(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	req := &DeleteSecurityGroupRequest{
+	req := &ExpungeVirtualMachineRequest{
 		ID: "123",
 	}
 	err := cs.BooleanAsyncRequest(req, AsyncInfo{})

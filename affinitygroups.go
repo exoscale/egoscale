@@ -36,7 +36,7 @@ func (req *CreateAffinityGroupRequest) name() string {
 	return "createAffinityGroup"
 }
 
-func (req *CreateAffinityGroupRequest) response() interface{} {
+func (req *CreateAffinityGroupRequest) asyncResponse() interface{} {
 	return new(CreateAffinityGroupResponse)
 }
 
@@ -44,6 +44,24 @@ func (req *CreateAffinityGroupRequest) response() interface{} {
 type CreateAffinityGroupResponse struct {
 	AffinityGroup *AffinityGroup `json:"affinitygroup"`
 }
+
+// UpdateVMAffinityGroupRequest represents a modification of a (anti-)affinity group
+type UpdateVMAffinityGroupRequest struct {
+	ID                 string `json:"id"`
+	AffinityGroupIDs   string `json:"affinitygroupids,omitempty"`   // mutually exclusive with names
+	AffinityGroupNames string `json:"affinitygroupnames,omitempty"` // mutually exclusive with ids
+}
+
+func (req *UpdateVMAffinityGroupRequest) name() string {
+	return "updateVMAffinityGroup"
+}
+
+func (req *UpdateVMAffinityGroupRequest) asyncResponse() interface{} {
+	return new(UpdateVMAffinityGroupResponse)
+}
+
+// UpdateVMAffinityGroupResponse represents the new VM
+type UpdateVMAffinityGroupResponse DeployVirtualMachineResponse
 
 // DeleteAffinityGroupRequest represents an (anti-)affinity group to be deleted
 type DeleteAffinityGroupRequest struct {
@@ -59,7 +77,7 @@ func (req *DeleteAffinityGroupRequest) name() string {
 	return "deleteAffinityGroup"
 }
 
-func (req *DeleteAffinityGroupRequest) response() interface{} {
+func (req *DeleteAffinityGroupRequest) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 

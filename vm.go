@@ -51,7 +51,7 @@ type VirtualMachine struct {
 	NetworkKbsRead        int64             `json:"networkkbsread,omitempty"`
 	NetworkKbsWrite       int64             `json:"networkkbswrite,omitempty"`
 	OsCategoryID          string            `json:"oscategoryid,omitempty"`
-	OsTypeID              string            `json:"ostypeid,omitempty"`
+	OsTypeID              int64             `json:"ostypeid,omitempty"`
 	Password              string            `json:"password,omitempty"`
 	PasswordEnabled       bool              `json:"passwordenabled,omitempty"`
 	PciDevices            string            `json:"pcidevices,omitempty"` // not in the doc
@@ -121,7 +121,7 @@ func (req *DeployVirtualMachineRequest) name() string {
 	return "deployVirtualMachine"
 }
 
-func (req *DeployVirtualMachineRequest) response() interface{} {
+func (req *DeployVirtualMachineRequest) asyncResponse() interface{} {
 	return new(DeployVirtualMachineResponse)
 }
 
@@ -140,7 +140,7 @@ type StartVirtualMachineRequest struct {
 func (req *StartVirtualMachineRequest) name() string {
 	return "startVirtualMachine"
 }
-func (req *StartVirtualMachineRequest) response() interface{} {
+func (req *StartVirtualMachineRequest) asyncResponse() interface{} {
 	return new(StartVirtualMachineResponse)
 }
 
@@ -157,7 +157,7 @@ func (req *StopVirtualMachineRequest) name() string {
 	return "stopVirtualMachine"
 }
 
-func (req *StopVirtualMachineRequest) response() interface{} {
+func (req *StopVirtualMachineRequest) asyncResponse() interface{} {
 	return new(StopVirtualMachineResponse)
 }
 
@@ -190,12 +190,51 @@ func (req *DestroyVirtualMachineRequest) name() string {
 	return "destroyVirtualMachine"
 }
 
-func (req *DestroyVirtualMachineRequest) response() interface{} {
+func (req *DestroyVirtualMachineRequest) asyncResponse() interface{} {
 	return new(DestroyVirtualMachineResponse)
 }
 
 // DestroyVirtualMachineResponse represents a destroyed VM instance
 type DestroyVirtualMachineResponse DeployVirtualMachineResponse
+
+// UpdateVirtualMachineRequest represents the update of the virtual machine
+type UpdateVirtualMachineRequest struct {
+	ID                    string            `json:"id"`
+	CustomID              string            `json:"customid,omitempty"` // root only
+	Details               map[string]string `json:"details,omitempty"`
+	DisplayName           string            `json:"displayname,omitempty"`
+	DisplayVM             bool              `json:"displayvm,omitempty"`
+	Group                 string            `json:"group,omitempty"`
+	HAEnable              bool              `json:"haenable,omitempty"`
+	IsDynamicallyScalable bool              `json:"isdynamicallyscalable,omitempty"`
+	Name                  string            `json:"name,omitempty"` // must reboot
+	OsTypeID              int64             `json:"ostypeid,omitempty"`
+	SecurityGroupIDs      []*string         `json:"securitygroupids,omitempty"`
+}
+
+func (req *UpdateVirtualMachineRequest) name() string {
+	return "updateVirtualMachine"
+}
+
+func (req *UpdateVirtualMachineRequest) response() interface{} {
+	return new(UpdateVirtualMachineResponse)
+}
+
+// ExpungeVirtualMachineRequest represents the annihilation of a VM
+type ExpungeVirtualMachineRequest struct {
+	ID string `json:"id"`
+}
+
+func (req *ExpungeVirtualMachineRequest) name() string {
+	return "expungeVirtualMachine"
+}
+
+func (req *ExpungeVirtualMachineRequest) asyncResponse() interface{} {
+	return new(BooleanResponse)
+}
+
+// UpdateVirtualMachineResponse represents an updated VM instance
+type UpdateVirtualMachineResponse DeployVirtualMachineResponse
 
 // ListVirtualMachinesRequest represents a search for a VM
 type ListVirtualMachinesRequest struct {

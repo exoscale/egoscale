@@ -70,7 +70,7 @@ type AddIPToNicRequest struct {
 func (req *AddIPToNicRequest) name() string {
 	return "addIPToNic"
 }
-func (req *AddIPToNicRequest) response() interface{} {
+func (req *AddIPToNicRequest) asyncResponse() interface{} {
 	return new(AddIPToNicResponse)
 }
 
@@ -88,7 +88,7 @@ func (req *RemoveIPFromNicRequest) name() string {
 	return "removeIPFromNic"
 }
 
-func (req *RemoveIPFromNicRequest) response() interface{} {
+func (req *RemoveIPFromNicRequest) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 

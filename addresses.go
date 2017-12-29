@@ -59,7 +59,7 @@ func (*AssociateIPAddressRequest) name() string {
 	return "associateIPAddress"
 }
 
-func (*AssociateIPAddressRequest) response() interface{} {
+func (*AssociateIPAddressRequest) asyncResponse() interface{} {
 	return new(AssociateIPAddressResponse)
 }
 
@@ -76,9 +76,26 @@ type DisassociateIPAddressRequest struct {
 func (*DisassociateIPAddressRequest) name() string {
 	return "disassociateIPAddress"
 }
-func (*DisassociateIPAddressRequest) response() interface{} {
+func (*DisassociateIPAddressRequest) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
+
+// UpdateIPAddressRequest represents the IP modification
+type UpdateIPAddressRequest struct {
+	ID         string `json:"id"`
+	CustomID   string `json:"customid,omitempty"` // root only
+	ForDisplay bool   `json:"fordisplay,omitempty"`
+}
+
+func (*UpdateIPAddressRequest) name() string {
+	return "updateIPAddress"
+}
+func (*UpdateIPAddressRequest) asyncResponse() interface{} {
+	return new(UpdateIPAddressResponse)
+}
+
+// UpdateIPAddressResponse represents the modified IP Address
+type UpdateIPAddressResponse AssociateIPAddressResponse
 
 // ListPublicIPAddressesRequest represents a search for public IP addresses
 type ListPublicIPAddressesRequest struct {

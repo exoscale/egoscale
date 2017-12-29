@@ -35,8 +35,8 @@ type ListServiceOfferingsRequest struct {
 	Name             string `json:"name,omitempty"`
 	Page             int    `json:"page,omitempty"`
 	PageSize         int    `json:"pagesize,omitempty"`
-	SystemVMType     string `json:"systemvmtype"`
-	VirtualMachineID string `json:"virtualmachineid"`
+	SystemVMType     string `json:"systemvmtype,omitempty"`
+	VirtualMachineID string `json:"virtualmachineid,omitempty"`
 }
 
 func (req *ListServiceOfferingsRequest) name() string {

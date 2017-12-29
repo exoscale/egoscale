@@ -209,7 +209,7 @@ type UpdateVirtualMachineRequest struct {
 	IsDynamicallyScalable bool              `json:"isdynamicallyscalable,omitempty"`
 	Name                  string            `json:"name,omitempty"` // must reboot
 	OsTypeID              int64             `json:"ostypeid,omitempty"`
-	SecurityGroupIDs      []*string         `json:"securitygroupids,omitempty"`
+	SecurityGroupIDs      string            `json:"securitygroupids,omitempty"` // comma separated list
 }
 
 func (req *UpdateVirtualMachineRequest) name() string {
@@ -219,6 +219,9 @@ func (req *UpdateVirtualMachineRequest) name() string {
 func (req *UpdateVirtualMachineRequest) response() interface{} {
 	return new(UpdateVirtualMachineResponse)
 }
+
+// UpdateVirtualMachineResponse represents an updated VM instance
+type UpdateVirtualMachineResponse DeployVirtualMachineResponse
 
 // ExpungeVirtualMachineRequest represents the annihilation of a VM
 type ExpungeVirtualMachineRequest struct {
@@ -233,8 +236,20 @@ func (req *ExpungeVirtualMachineRequest) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// UpdateVirtualMachineResponse represents an updated VM instance
-type UpdateVirtualMachineResponse DeployVirtualMachineResponse
+// ScaleVirtualMachineRequest represents the scaling of a VM
+type ScaleVirtualMachineRequest struct {
+	ID                string            `json:"id"`
+	ServiceOfferingID string            `json:"serviceofferingid"`
+	Details           map[string]string `json:"details,omitempty"`
+}
+
+func (req *ScaleVirtualMachineRequest) name() string {
+	return "scaleVirtualMachine"
+}
+
+func (req *ScaleVirtualMachineRequest) asyncResponse() interface{} {
+	return new(BooleanResponse)
+}
 
 // ListVirtualMachinesRequest represents a search for a VM
 type ListVirtualMachinesRequest struct {

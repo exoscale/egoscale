@@ -173,12 +173,45 @@ func (req *RebootVirtualMachineRequest) name() string {
 	return "rebootVirtualMachine"
 }
 
-func (req *RebootVirtualMachineRequest) command() interface{} {
+func (req *RebootVirtualMachineRequest) asyncResponse() interface{} {
 	return new(RebootVirtualMachineResponse)
 }
 
 // RebootVirtualMachineResponse represents a rebooted VM instance
 type RebootVirtualMachineResponse DeployVirtualMachineResponse
+
+// RestoreVirtualMachineRequest represents the restoration of the virtual machine
+type RestoreVirtualMachineRequest struct {
+	VirtualMachineID string `json:"virtualmachineid"`
+	TemplateID       string `json:"templateid,omitempty"`
+}
+
+func (req *RestoreVirtualMachineRequest) name() string {
+	return "restoreVirtualMachine"
+}
+
+func (req *RestoreVirtualMachineRequest) asyncResponse() interface{} {
+	return new(RestoreVirtualMachineResponse)
+}
+
+// RestoreVirtualMachineResponse represents a restored VM instance
+type RestoreVirtualMachineResponse DeployVirtualMachineResponse
+
+// RecoverVirtualMachineRequest represents the restoration of the virtual machine
+type RecoverVirtualMachineRequest struct {
+	ID string `json:"virtualmachineid"`
+}
+
+func (req *RecoverVirtualMachineRequest) name() string {
+	return "recoverVirtualMachine"
+}
+
+func (req *RecoverVirtualMachineRequest) response() interface{} {
+	return new(RecoverVirtualMachineResponse)
+}
+
+// RecoverVirtualMachineResponse represents a recovered VM instance
+type RecoverVirtualMachineResponse DeployVirtualMachineResponse
 
 // DestroyVirtualMachineRequest represents the destruction of the virtual machine
 type DestroyVirtualMachineRequest struct {
@@ -250,6 +283,53 @@ func (req *ScaleVirtualMachineRequest) name() string {
 
 func (req *ScaleVirtualMachineRequest) asyncResponse() interface{} {
 	return new(BooleanResponse)
+}
+
+// ChangeServiceForVirtualMachineRequest represents the scaling of a VM
+type ChangeServiceForVirtualMachineRequest ScaleVirtualMachineRequest
+
+func (req *ChangeServiceForVirtualMachineRequest) name() string {
+	return "changeServiceForVirtualMachine"
+}
+
+func (req *ChangeServiceForVirtualMachineRequest) response() interface{} {
+	return new(ChangeServiceForVirtualMachineResponse)
+}
+
+// ChangeServiceForVirtualMachineResponse represents an changed VM instance
+type ChangeServiceForVirtualMachineResponse DeployVirtualMachineResponse
+
+// ResetPasswordForVirtualMachineRequest represents the scaling of a VM
+type ResetPasswordForVirtualMachineRequest ScaleVirtualMachineRequest
+
+func (req *ResetPasswordForVirtualMachineRequest) name() string {
+	return "resetPasswordForVirtualMachine"
+}
+
+func (req *ResetPasswordForVirtualMachineRequest) asyncResponse() interface{} {
+	return new(ResetPasswordForVirtualMachineResponse)
+}
+
+// ResetPasswordForVirtualMachineResponse represents the updated vm
+type ResetPasswordForVirtualMachineResponse DeployVirtualMachineResponse
+
+// GetVMPasswordRequest asks for an encrypted password
+type GetVMPasswordRequest struct {
+	ID string `json:"id"`
+}
+
+func (req *GetVMPasswordRequest) name() string {
+	return "getVMPassword"
+}
+
+func (req *GetVMPasswordRequest) response() interface{} {
+	return new(GetVMPasswordResponse)
+}
+
+// GetVMPasswordResponse represents the encrypted password
+type GetVMPasswordResponse struct {
+	// Base64 encrypted password for the VM
+	EncryptedPassword string `json:"encryptedpassword"`
 }
 
 // ListVirtualMachinesRequest represents a search for a VM

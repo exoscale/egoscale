@@ -56,7 +56,7 @@ type AssociateIPAddressRequest struct {
 }
 
 func (*AssociateIPAddressRequest) name() string {
-	return "associateIPAddress"
+	return "associateIpAddress"
 }
 
 func (*AssociateIPAddressRequest) asyncResponse() interface{} {
@@ -74,7 +74,7 @@ type DisassociateIPAddressRequest struct {
 }
 
 func (*DisassociateIPAddressRequest) name() string {
-	return "disassociateIPAddress"
+	return "disassociateIpAddress"
 }
 func (*DisassociateIPAddressRequest) asyncResponse() interface{} {
 	return new(BooleanResponse)
@@ -88,7 +88,7 @@ type UpdateIPAddressRequest struct {
 }
 
 func (*UpdateIPAddressRequest) name() string {
-	return "updateIPAddress"
+	return "updateIpAddress"
 }
 func (*UpdateIPAddressRequest) asyncResponse() interface{} {
 	return new(UpdateIPAddressResponse)
@@ -125,7 +125,7 @@ type ListPublicIPAddressesRequest struct {
 }
 
 func (*ListPublicIPAddressesRequest) name() string {
-	return "listPublicIPAddresses"
+	return "listPublicIpAddresses"
 }
 
 func (*ListPublicIPAddressesRequest) response() interface{} {

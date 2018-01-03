@@ -32,8 +32,8 @@ type SecurityGroup struct {
 	Projectid           string         `json:"projectid,omitempty"`
 	VirtualMachineCount int            `json:"virtualmachinecount,omitempty"`
 	VirtualMachineIDs   []string       `json:"virtualmachineids,omitempty"`
-	IngressRules        []*IngressRule `json:"ingressrule"`
-	EgressRules         []*EgressRule  `json:"egressrule"`
+	IngressRule         []*IngressRule `json:"ingressrule"`
+	EgressRule          []*EgressRule  `json:"egressrule"`
 	Tags                []*ResourceTag `json:"tags,omitempty"`
 	JobID               string         `json:"jobid,omitempty"`
 	JobStatus           JobStatusType  `json:"jobstatus,omitempty"`
@@ -44,6 +44,7 @@ type IngressRule struct {
 	RuleID                string               `json:"ruleid"`
 	Account               string               `json:"account,omitempty"`
 	Cidr                  string               `json:"cidr,omitempty"`
+	Description           string               `json:"description,omitempty"`
 	IcmpType              int                  `json:"icmptype,omitempty"`
 	IcmpCode              int                  `json:"icmpcode,omitempty"`
 	StartPort             int                  `json:"startport,omitempty"`
@@ -105,11 +106,14 @@ func (req *DeleteSecurityGroupRequest) response() interface{} {
 // AuthorizeSecurityGroupIngressRequest represents the ingress rule creation
 type AuthorizeSecurityGroupIngressRequest struct {
 	Account               string               `json:"account,omitempty"`
-	Cidr                  string               `json:"cidrlist,omitempty"`
+	CidrList              string               `json:"cidrlist,omitempty"`
+	Description           string               `json:"description,omitempty"`
+	DomainID              string               `json:"domainid,omitempty"`
 	IcmpType              int                  `json:"icmptype,omitempty"`
 	IcmpCode              int                  `json:"icmpcode,omitempty"`
 	StartPort             int                  `json:"startport,omitempty"`
 	EndPort               int                  `json:"endport,omitempty"`
+	ProjectID             string               `json:"projectid,omitempty"`
 	Protocol              string               `json:"protocol,omitempty"`
 	SecurityGroupID       string               `json:"securitygroupid,omitempty"`
 	SecurityGroupName     string               `json:"securitygroupname,omitempty"`
@@ -143,16 +147,29 @@ func (req *AuthorizeSecurityGroupEgressRequest) asyncResponse() interface{} {
 // /!\ the Cloud Stack API document is not fully accurate. /!\
 type AuthorizeSecurityGroupEgressResponse CreateSecurityGroupResponse
 
-// RevokeSecurityGroupRequest represents the ingress/egress rule deletion
-type RevokeSecurityGroupRequest struct {
+// RevokeSecurityGroupEgressRequest represents the ingress/egress rule deletion
+type RevokeSecurityGroupIngressRequest struct {
 	ID string `json:"id"`
 }
 
-func (req *RevokeSecurityGroupRequest) name() string {
-	return "revokeSecurityGroupRequest"
+func (req *RevokeSecurityGroupIngressRequest) name() string {
+	return "revokeSecurityGroupIngressRequest"
 }
 
-func (req *RevokeSecurityGroupRequest) asyncResponse() interface{} {
+func (req *RevokeSecurityGroupIngressRequest) asyncResponse() interface{} {
+	return new(BooleanResponse)
+}
+
+// RevokeSecurityGroupEgressRequest represents the ingress/egress rule deletion
+type RevokeSecurityGroupEgressRequest struct {
+	ID string `json:"id"`
+}
+
+func (req *RevokeSecurityGroupEgressRequest) name() string {
+	return "revokeSecurityGroupEgressRequest"
+}
+
+func (req *RevokeSecurityGroupEgressRequest) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
@@ -195,7 +212,7 @@ func (exo *Client) CreateIngressRule(req *AuthorizeSecurityGroupIngressRequest, 
 	if err != nil {
 		return nil, err
 	}
-	return resp.(*AuthorizeSecurityGroupIngressResponse).SecurityGroup.IngressRules, nil
+	return resp.(*AuthorizeSecurityGroupIngressResponse).SecurityGroup.IngressRule, nil
 }
 
 // CreateEgressRule creates a set of egress rules
@@ -206,7 +223,7 @@ func (exo *Client) CreateEgressRule(req *AuthorizeSecurityGroupEgressRequest, as
 	if err != nil {
 		return nil, err
 	}
-	return resp.(*AuthorizeSecurityGroupEgressResponse).SecurityGroup.EgressRules, nil
+	return resp.(*AuthorizeSecurityGroupEgressResponse).SecurityGroup.EgressRule, nil
 }
 
 // CreateSecurityGroupWithRules create a security group with its rules

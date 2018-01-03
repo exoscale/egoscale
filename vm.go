@@ -210,6 +210,7 @@ type UpdateVirtualMachineRequest struct {
 	Name                  string            `json:"name,omitempty"` // must reboot
 	OsTypeID              int64             `json:"ostypeid,omitempty"`
 	SecurityGroupIDs      string            `json:"securitygroupids,omitempty"` // comma separated list
+	UserData              []byte            `json:"userdata,omitempty"`
 }
 
 func (req *UpdateVirtualMachineRequest) name() string {

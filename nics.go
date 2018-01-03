@@ -43,8 +43,8 @@ type ListNicsRequest struct {
 	Keyword          string `json:"keyword,omitempty"`
 	NetworkID        string `json:"networkid,omitempty"`
 	NicID            string `json:"nicid,omitempty"`
-	Page             string `json:"page,omitempty"`
-	PageSize         string `json:"pagesize,omitempty"`
+	Page             int    `json:"page,omitempty"`
+	PageSize         int    `json:"pagesize,omitempty"`
 }
 
 func (req *ListNicsRequest) name() string {

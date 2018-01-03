@@ -94,8 +94,8 @@ type ListSSHKeyPairsRequest struct {
 	Keyword     string `json:"keyword,omitempty"`
 	ListAll     bool   `json:"listall,omitempty"`
 	Name        string `json:"name,omitempty"`
-	Page        string `json:"page,omitempty"`
-	PageSize    string `json:"pagesize,omitempty"`
+	Page        int    `json:"page,omitempty"`
+	PageSize    int    `json:"pagesize,omitempty"`
 	ProjectID   string `json:"projectid,omitempty"`
 }
 

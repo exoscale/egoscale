@@ -90,8 +90,8 @@ type ListAffinityGroupsRequest struct {
 	Keyword          string `json:"keyword,omitempty"`
 	ListAll          bool   `json:"listall,omitempty"`
 	Name             string `json:"name,omitempty"`
-	Page             string `json:"page,omitempty"`
-	PageSize         string `json:"pagesize,omitempty"`
+	Page             int    `json:"page,omitempty"`
+	PageSize         int    `json:"pagesize,omitempty"`
 	Type             string `json:"type,omitempty"`
 	VirtualMachineID string `json:"virtualmachineid,omitempty"`
 }
@@ -107,8 +107,8 @@ func (req *ListAffinityGroupsRequest) response() interface{} {
 // ListAffinityGroupTypesRequest represents an (anti-)affinity groups search
 type ListAffinityGroupTypesRequest struct {
 	Keyword  string `json:"keyword,omitempty"`
-	Page     string `json:"page,omitempty"`
-	PageSize string `json:"pagesize,omitempty"`
+	Page     int    `json:"page,omitempty"`
+	PageSize int    `json:"pagesize,omitempty"`
 }
 
 func (req *ListAffinityGroupTypesRequest) name() string {

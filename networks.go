@@ -88,8 +88,8 @@ type ListNetworksRequest struct {
 	IsSystem          bool           `json:"issystem,omitempty"`
 	Keyword           string         `json:"keyword,omitempty"`
 	ListAll           bool           `json:"listall,omitempty"`
-	Page              string         `json:"page,omitempty"`
-	PageSize          string         `json:"pagesize,omitempty"`
+	Page              int            `json:"page,omitempty"`
+	PageSize          int            `json:"pagesize,omitempty"`
 	PhysicalNetworkID string         `json:"physicalnetworkid,omitempty"`
 	ProjectID         string         `json:"projectid,omitempty"`
 	RestartRequired   bool           `json:"restartrequired,omitempty"`

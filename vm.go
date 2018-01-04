@@ -83,7 +83,16 @@ type VirtualMachine struct {
 	JobStatus             JobStatusType     `json:"jobstatus,omitempty"`
 }
 
-// DeployVirtualMachineRequest represents the machine creation
+// IPToNetwork represents a mapping between ip and networks
+type IPToNetwork struct {
+	IP        string `json:"ip,omitempty"`
+	IPV6      string `json:"ipv6,omitempty"`
+	NetworkID string `json:"networkid,omitempty"`
+}
+
+// DeployVirtualMachineRequest (Async) represents the machine creation
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/deployVirtualMachine.html
 type DeployVirtualMachineRequest struct {
 	ServiceOfferingID  string         `json:"serviceofferingid"`
 	TemplateID         string         `json:"templateid"`
@@ -130,7 +139,9 @@ type DeployVirtualMachineResponse struct {
 	VirtualMachine *VirtualMachine `json:"virtualmachine"`
 }
 
-// StartVirtualMachineRequest represents the creation of the virtual machine
+// StartVirtualMachineRequest (Async) represents the creation of the virtual machine
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/startVirtualMachine.html
 type StartVirtualMachineRequest struct {
 	ID               string `json:"id"`
 	DeploymentPlaner string `json:"deploymentplanner,omitempty"` // root only
@@ -147,7 +158,9 @@ func (req *StartVirtualMachineRequest) asyncResponse() interface{} {
 // StartVirtualMachineResponse represents a started VM instance
 type StartVirtualMachineResponse DeployVirtualMachineResponse
 
-// StopVirtualMachineRequest represents the stopping of the virtual machine
+// StopVirtualMachineRequest (Async) represents the stopping of the virtual machine
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/stopVirtualMachine.html
 type StopVirtualMachineRequest struct {
 	ID     string `json:"id"`
 	Forced bool   `json:"forced,omitempty"`
@@ -164,7 +177,9 @@ func (req *StopVirtualMachineRequest) asyncResponse() interface{} {
 // StopVirtualMachineResponse represents a stopped VM instance
 type StopVirtualMachineResponse DeployVirtualMachineResponse
 
-// RebootVirtualMachineRequest represents the rebooting of the virtual machine
+// RebootVirtualMachineRequest (Async) represents the rebooting of the virtual machine
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/rebootVirtualMachine.html
 type RebootVirtualMachineRequest struct {
 	ID string `json:"id"`
 }
@@ -180,7 +195,9 @@ func (req *RebootVirtualMachineRequest) asyncResponse() interface{} {
 // RebootVirtualMachineResponse represents a rebooted VM instance
 type RebootVirtualMachineResponse DeployVirtualMachineResponse
 
-// RestoreVirtualMachineRequest represents the restoration of the virtual machine
+// RestoreVirtualMachineRequest (Async) represents the restoration of the virtual machine
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/restoreVirtualMachine.html
 type RestoreVirtualMachineRequest struct {
 	VirtualMachineID string `json:"virtualmachineid"`
 	TemplateID       string `json:"templateid,omitempty"`
@@ -198,6 +215,8 @@ func (req *RestoreVirtualMachineRequest) asyncResponse() interface{} {
 type RestoreVirtualMachineResponse DeployVirtualMachineResponse
 
 // RecoverVirtualMachineRequest represents the restoration of the virtual machine
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/recoverVirtualMachine.html
 type RecoverVirtualMachineRequest struct {
 	ID string `json:"virtualmachineid"`
 }
@@ -213,7 +232,9 @@ func (req *RecoverVirtualMachineRequest) response() interface{} {
 // RecoverVirtualMachineResponse represents a recovered VM instance
 type RecoverVirtualMachineResponse DeployVirtualMachineResponse
 
-// DestroyVirtualMachineRequest represents the destruction of the virtual machine
+// DestroyVirtualMachineRequest (Async) represents the destruction of the virtual machine
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/destroyVirtualMachine.html
 type DestroyVirtualMachineRequest struct {
 	ID      string `json:"id"`
 	Expunge bool   `json:"expunge,omitempty"`
@@ -231,6 +252,8 @@ func (req *DestroyVirtualMachineRequest) asyncResponse() interface{} {
 type DestroyVirtualMachineResponse DeployVirtualMachineResponse
 
 // UpdateVirtualMachineRequest represents the update of the virtual machine
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/updateVirtualMachine.html
 type UpdateVirtualMachineRequest struct {
 	ID                    string            `json:"id"`
 	CustomID              string            `json:"customid,omitempty"` // root only
@@ -270,7 +293,9 @@ func (req *ExpungeVirtualMachineRequest) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// ScaleVirtualMachineRequest represents the scaling of a VM
+// ScaleVirtualMachineRequest (Async) represents the scaling of a VM
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/scaleVirtualMachine.html
 type ScaleVirtualMachineRequest struct {
 	ID                string            `json:"id"`
 	ServiceOfferingID string            `json:"serviceofferingid"`
@@ -286,6 +311,8 @@ func (req *ScaleVirtualMachineRequest) asyncResponse() interface{} {
 }
 
 // ChangeServiceForVirtualMachineRequest represents the scaling of a VM
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/changeServiceForVirtualMachine.html
 type ChangeServiceForVirtualMachineRequest ScaleVirtualMachineRequest
 
 func (req *ChangeServiceForVirtualMachineRequest) name() string {
@@ -299,7 +326,9 @@ func (req *ChangeServiceForVirtualMachineRequest) response() interface{} {
 // ChangeServiceForVirtualMachineResponse represents an changed VM instance
 type ChangeServiceForVirtualMachineResponse DeployVirtualMachineResponse
 
-// ResetPasswordForVirtualMachineRequest represents the scaling of a VM
+// ResetPasswordForVirtualMachineRequest (Async) represents the scaling of a VM
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/resetPasswordForVirtualMachine.html
 type ResetPasswordForVirtualMachineRequest ScaleVirtualMachineRequest
 
 func (req *ResetPasswordForVirtualMachineRequest) name() string {
@@ -314,6 +343,8 @@ func (req *ResetPasswordForVirtualMachineRequest) asyncResponse() interface{} {
 type ResetPasswordForVirtualMachineResponse DeployVirtualMachineResponse
 
 // GetVMPasswordRequest asks for an encrypted password
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/getVMPassword.html
 type GetVMPasswordRequest struct {
 	ID string `json:"id"`
 }
@@ -333,6 +364,8 @@ type GetVMPasswordResponse struct {
 }
 
 // ListVirtualMachinesRequest represents a search for a VM
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/listVirtualMachine.html
 type ListVirtualMachinesRequest struct {
 	Account           string         `json:"account,omitempty"`
 	AffinityGroupID   string         `json:"affinitygroupid,omitempty"`
@@ -378,11 +411,4 @@ func (req *ListVirtualMachinesRequest) response() interface{} {
 type ListVirtualMachinesResponse struct {
 	Count          int               `json:"count"`
 	VirtualMachine []*VirtualMachine `json:"virtualmachine"`
-}
-
-// IPToNetwork represents a mapping between ip and networks
-type IPToNetwork struct {
-	IP        string `json:"ip,omitempty"`
-	IPV6      string `json:"ipv6,omitempty"`
-	NetworkID string `json:"networkid,omitempty"`
 }

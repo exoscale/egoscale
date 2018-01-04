@@ -12,7 +12,7 @@ All the available APIs on the server and provided by the API Discovery plugin
 
 	cs := egoscale.NewClient("https://api.exoscale.ch/compute", "EXO...", "...")
 
-	resp, err := cs.(&egoscale.ListAPIs{})
+	resp, err := cs.Request(&egoscale.ListAPIs{})
 	if err != nil {
 		panic(err)
 	}
@@ -38,13 +38,13 @@ Security Groups
 
 Security Groups provide a way to isolate traffic to VMs.
 
-	resp, err := cs.(&CreateSecurityGroup{
+	resp, err := cs.Request(&CreateSecurityGroup{
 		Name: "Load balancer",
 		Description: "Opens HTTP/HTTPS ports from the outside world",
-	}, resp)
+	})
 	securityGroup := resp.(*CreateSecurityGroupResponse).SecurityGroup
 	// ...
-	err := client.Boolean(&DeleteSecurityGroup{
+	err = client.BooleanRequest(&DeleteSecurityGroup{
 		ID: securityGroup.ID,
 	})
 	// ...

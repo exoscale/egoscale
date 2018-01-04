@@ -55,7 +55,7 @@ func (req *ListAsyncJobs) name() string {
 	return "listAsyncJobs"
 }
 
-func (req *ListAsyncJobs) request() interface{} {
+func (req *ListAsyncJobs) response() interface{} {
 	return new(ListAsyncJobsResponse)
 }
 

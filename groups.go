@@ -106,7 +106,7 @@ type AuthorizeSecurityGroupIngress struct {
 	Protocol              string               `json:"protocol,omitempty"`
 	SecurityGroupID       string               `json:"securitygroupid,omitempty"`
 	SecurityGroupName     string               `json:"securitygroupname,omitempty"`
-	UserSecurityGroupList []*UserSecurityGroup // manually done... `json:"usersecuritygrouplist,omitempty"`
+	UserSecurityGroupList []*UserSecurityGroup `json:"usersecuritygrouplist,omitempty"`
 }
 
 func (req *AuthorizeSecurityGroupIngress) name() string {

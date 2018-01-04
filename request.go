@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -280,8 +279,6 @@ func (exo *Client) Request(req Request, v interface{}) error {
 
 // request makes a Request while being close to the metal
 func (exo *Client) request(command string, req interface{}) (json.RawMessage, error) {
-	mac := hmac.New(sha1.New, []byte(exo.apiSecret))
-
 	params := url.Values{}
 	err := prepareValues("", &params, req)
 	if err != nil {
@@ -292,26 +289,12 @@ func (exo *Client) request(command string, req interface{}) (json.RawMessage, er
 	params.Set("command", command)
 	params.Set("response", "json")
 
-	keys := make([]string, 0)
-	unencoded := make([]string, 0)
-	for k := range params {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
-	for _, k := range keys {
-		arg := fmt.Sprintf("%s=%s", k, csEncode(params[k][0]))
-		unencoded = append(unencoded, arg)
-	}
-
-	signString := strings.ToLower(strings.Join(unencoded, "&"))
-
-	mac.Write([]byte(signString))
+	mac := hmac.New(sha1.New, []byte(exo.apiSecret))
+	mac.Write([]byte(strings.ToLower(params.Encode())))
 	signature := csEncode(base64.StdEncoding.EncodeToString(mac.Sum(nil)))
+
 	query := params.Encode()
 	reader := strings.NewReader(fmt.Sprintf("%s&signature=%s", csQuotePlus(query), signature))
-
-	// Use PostForm?
 	resp, err := exo.client.Post(exo.endpoint, "application/x-www-form-urlencoded", reader)
 	if err != nil {
 		return nil, err

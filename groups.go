@@ -49,7 +49,7 @@ type UserSecurityGroup struct {
 
 // SecurityGroupResponse represents a generic security group response
 type SecurityGroupResponse struct {
-	SecurityGroup SecurityGroup `json:"securitygroup"`
+	SecurityGroup *SecurityGroup `json:"securitygroup"`
 }
 
 // CreateSecurityGroup represents a security group creation

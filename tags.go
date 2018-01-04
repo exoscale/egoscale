@@ -16,45 +16,45 @@ type ResourceTag struct {
 	Value        string `json:"value"`
 }
 
-// CreateTagsRequest (Async) creates resource tag(s)
+// CreateTags (Async) creates resource tag(s)
 //
 // CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/createTags.html
-type CreateTagsRequest struct {
+type CreateTags struct {
 	ResourceIds  []*string      `json:"resourceids"`
 	ResourceType string         `json:"resourcetype"`
 	Tags         []*ResourceTag `json:"tags"`
 	Customer     string         `json:"customer,omitempty"`
 }
 
-func (req *CreateTagsRequest) name() string {
+func (req *CreateTags) name() string {
 	return "createTags"
 }
 
-func (req *CreateTagsRequest) asyncResponse() interface{} {
+func (req *CreateTags) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// DeleteTagsRequest (Async) deletes the resource tag(s)
+// DeleteTags (Async) deletes the resource tag(s)
 //
 // CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteTags.html
-type DeleteTagsRequest struct {
+type DeleteTags struct {
 	ResourceIds  []*string      `json:"resourceids"`
 	ResourceType string         `json:"resourcetype"`
 	Tags         []*ResourceTag `json:"tags,omitempty"`
 }
 
-func (req *DeleteTagsRequest) name() string {
+func (req *DeleteTags) name() string {
 	return "deleteTags"
 }
 
-func (req *DeleteTagsRequest) asyncResponse() interface{} {
+func (req *DeleteTags) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// ListTagsRequest list resource tag(s)
+// ListTags list resource tag(s)
 //
 // CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/listTags.html
-type ListTagsRequest struct {
+type ListTags struct {
 	Account      string `json:"account,omitempty"`
 	Customer     string `json:"customer,omitempty"`
 	DomainID     string `json:"domainid,omitempty"`
@@ -70,11 +70,11 @@ type ListTagsRequest struct {
 	Value        string `json:"value,omitempty"`
 }
 
-func (req *ListTagsRequest) name() string {
+func (req *ListTags) name() string {
 	return "listTags"
 }
 
-func (req *ListTagsRequest) response() interface{} {
+func (req *ListTags) response() interface{} {
 	return new(ListTagsResponse)
 }
 

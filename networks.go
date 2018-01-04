@@ -75,8 +75,8 @@ type ServiceProvider struct {
 	ServiceList                  []string `json:"servicelist,omitempty"`
 }
 
-// ListNetworksRequest represents a query to a network
-type ListNetworksRequest struct {
+// ListNetworks represents a query to a network
+type ListNetworks struct {
 	Account           string         `json:"account,omitempty"`
 	ACLType           string         `json:"acltype,omitempty"` // Account or Domain
 	CanUseForDeploy   bool           `json:"canusefordeploy,omitempty"`
@@ -102,11 +102,11 @@ type ListNetworksRequest struct {
 	ZoneID            string         `json:"zoneid,omitempty"`
 }
 
-func (req *ListNetworksRequest) name() string {
+func (req *ListNetworks) name() string {
 	return "listNetworks"
 }
 
-func (req *ListNetworksRequest) response() interface{} {
+func (req *ListNetworks) response() interface{} {
 	return new(ListNetworksResponse)
 }
 

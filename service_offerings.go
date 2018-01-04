@@ -26,8 +26,8 @@ type ServiceOffering struct {
 	ServiceOfferingDetails map[string]string `json:"serviceofferingdetails,omitempty"`
 }
 
-// ListServiceOfferingsRequest represents a query for service offerings
-type ListServiceOfferingsRequest struct {
+// ListServiceOfferings represents a query for service offerings
+type ListServiceOfferings struct {
 	DomainID         string `json:"domainid,omitempty"`
 	ID               string `json:"id,omitempty"`
 	IsSystem         bool   `json:"issystem,omitempty"`
@@ -39,11 +39,11 @@ type ListServiceOfferingsRequest struct {
 	VirtualMachineID string `json:"virtualmachineid,omitempty"`
 }
 
-func (req *ListServiceOfferingsRequest) name() string {
+func (req *ListServiceOfferings) name() string {
 	return "listServiceOfferings"
 }
 
-func (req *ListServiceOfferingsRequest) response() interface{} {
+func (req *ListServiceOfferings) response() interface{} {
 	return new(ListServiceOfferingsResponse)
 }
 

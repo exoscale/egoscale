@@ -34,8 +34,8 @@ type Zone struct {
 	Tags                  []*ResourceTag    `json:"tags,omitempty"`
 }
 
-// ListZonesRequest represents a query for zones
-type ListZonesRequest struct {
+// ListZones represents a query for zones
+type ListZones struct {
 	Available      bool           `json:"available,omitempty"`
 	DomainID       string         `json:"domainid,omitempty"`
 	ID             string         `json:"id,omitempty"`
@@ -47,11 +47,11 @@ type ListZonesRequest struct {
 	Tags           []*ResourceTag `json:"tags,omitempty"`
 }
 
-func (req *ListZonesRequest) name() string {
+func (req *ListZones) name() string {
 	return "listZones"
 }
 
-func (req *ListZonesRequest) response() interface{} {
+func (req *ListZones) response() interface{} {
 	return new(ListZonesResponse)
 }
 

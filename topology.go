@@ -11,7 +11,7 @@ import (
 // Deprecated: do it yourself
 func (exo *Client) GetSecurityGroups() (map[string]SecurityGroup, error) {
 	var sgs map[string]SecurityGroup
-	resp, err := exo.Request(&ListSecurityGroupsRequest{})
+	resp, err := exo.Request(&ListSecurityGroups{})
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (exo *Client) GetSecurityGroups() (map[string]SecurityGroup, error) {
 //
 // Deprecated: do it yourself
 func (exo *Client) GetSecurityGroupID(name string) (string, error) {
-	resp, err := exo.Request(&ListSecurityGroupsRequest{SecurityGroupName: name})
+	resp, err := exo.Request(&ListSecurityGroups{SecurityGroupName: name})
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +46,7 @@ func (exo *Client) GetSecurityGroupID(name string) (string, error) {
 // Deprecated: do it yourself
 func (exo *Client) GetAllZones() (map[string]string, error) {
 	var zones map[string]string
-	resp, err := exo.Request(&ListZonesRequest{})
+	resp, err := exo.Request(&ListZones{})
 	if err != nil {
 		return zones, err
 	}
@@ -63,7 +63,7 @@ func (exo *Client) GetAllZones() (map[string]string, error) {
 // Deprecated: do it yourself
 func (exo *Client) GetProfiles() (map[string]string, error) {
 	profiles := make(map[string]string)
-	resp, err := exo.Request(&ListServiceOfferingsRequest{})
+	resp, err := exo.Request(&ListServiceOfferings{})
 	if err != nil {
 		return profiles, nil
 	}
@@ -81,7 +81,7 @@ func (exo *Client) GetProfiles() (map[string]string, error) {
 func (exo *Client) GetKeypairs() ([]SSHKeyPair, error) {
 	var keypairs []SSHKeyPair
 
-	resp, err := exo.Request(&ListSSHKeyPairsRequest{})
+	resp, err := exo.Request(&ListSSHKeyPairs{})
 	if err != nil {
 		return keypairs, err
 	}
@@ -100,7 +100,7 @@ func (exo *Client) GetKeypairs() ([]SSHKeyPair, error) {
 func (exo *Client) GetAffinityGroups() (map[string]string, error) {
 	var affinitygroups map[string]string
 
-	resp, err := exo.Request(&ListAffinityGroupsRequest{})
+	resp, err := exo.Request(&ListAffinityGroups{})
 	if err != nil {
 		return affinitygroups, err
 	}
@@ -120,7 +120,7 @@ func (exo *Client) GetImages() (map[string]map[int64]string, error) {
 	images = make(map[string]map[int64]string)
 	re := regexp.MustCompile(`^Linux (?P<name>.+?) (?P<version>[0-9.]+)\b`)
 
-	resp, err := exo.Request(&ListTemplatesRequest{
+	resp, err := exo.Request(&ListTemplates{
 		TemplateFilter: "featured",
 		ZoneID:         "1", // XXX: Hack to list only CH-GVA
 	})

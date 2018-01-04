@@ -43,8 +43,8 @@ type Template struct {
 	Zonename              string            `json:"zonename,omitempty"`
 }
 
-// ListTemplatesRequest represents a template query filter
-type ListTemplatesRequest struct {
+// ListTemplates represents a template query filter
+type ListTemplates struct {
 	TemplateFilter string         `json:"templatefilter"` // featured, etc.
 	Account        string         `json:"account,omitempty"`
 	DomainID       string         `json:"domainid,omitempty"`
@@ -62,11 +62,11 @@ type ListTemplatesRequest struct {
 	ZoneID         string         `json:"zoneid,omitempty"`
 }
 
-func (req *ListTemplatesRequest) name() string {
+func (req *ListTemplates) name() string {
 	return "listTemplates"
 }
 
-func (req *ListTemplatesRequest) response() interface{} {
+func (req *ListTemplates) response() interface{} {
 	return new(ListTemplatesResponse)
 }
 

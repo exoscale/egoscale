@@ -177,7 +177,7 @@ func TestRequest(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	req := &ListAPIsRequest{
+	req := &ListAPIs{
 		Name: "dummy",
 	}
 	resp, err := cs.Request(req)
@@ -211,7 +211,7 @@ func TestBooleanAsyncRequest(t *testing.T) {
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
-	req := &ExpungeVirtualMachineRequest{
+	req := &ExpungeVirtualMachine{
 		ID: "123",
 	}
 	err := cs.BooleanAsyncRequest(req, AsyncInfo{})

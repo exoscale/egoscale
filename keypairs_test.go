@@ -4,10 +4,10 @@ import (
 	"testing"
 )
 
-func TestSSHKeyPairRequests(t *testing.T) {
-	var _ AsyncCommand = (*ResetSSHKeyForVirtualMachineRequest)(nil)
-	var _ Command = (*RegisterSSHKeyPairRequest)(nil)
-	var _ Command = (*CreateSSHKeyPairRequest)(nil)
-	var _ Command = (*DeleteSSHKeyPairRequest)(nil)
-	var _ Command = (*ListSSHKeyPairsRequest)(nil)
+func TestSSHKeyPairs(t *testing.T) {
+	var _ AsyncCommand = (*ResetSSHKeyForVirtualMachine)(nil)
+	var _ Command = (*RegisterSSHKeyPair)(nil)
+	var _ Command = (*CreateSSHKeyPair)(nil)
+	var _ Command = (*DeleteSSHKeyPair)(nil)
+	var _ Command = (*ListSSHKeyPairs)(nil)
 }

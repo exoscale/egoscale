@@ -4,16 +4,16 @@ import (
 	"encoding/json"
 )
 
-// QueryAsyncJobResultRequest represents a query to fetch the status of async job
-type QueryAsyncJobResultRequest struct {
+// QueryAsyncJobResult represents a query to fetch the status of async job
+type QueryAsyncJobResult struct {
 	JobID string `json:"jobid"`
 }
 
-func (req *QueryAsyncJobResultRequest) name() string {
+func (req *QueryAsyncJobResult) name() string {
 	return "queryAsyncJobResult"
 }
 
-func (req *QueryAsyncJobResultRequest) response() interface{} {
+func (req *QueryAsyncJobResult) response() interface{} {
 	return new(QueryAsyncJobResultResponse)
 }
 

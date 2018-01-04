@@ -47,19 +47,19 @@ type VolumeTag struct {
 	Value      string `json:"value,omitempty"`
 }
 
-// ResizeVolumeRequest resizes a volume
-type ResizeVolumeRequest struct {
+// ResizeVolume resizes a volume
+type ResizeVolume struct {
 	ID             string `json:"id"`
 	DiskOfferingID string `json:"diskofferingid,omitempty"`
 	ShrinkOk       bool   `json:"shrinkok,omitempty"`
 	Size           int64  `json:"size,omitempty"` // in GiB
 }
 
-func (req *ResizeVolumeRequest) name() string {
+func (req *ResizeVolume) name() string {
 	return "resizeVolume"
 }
 
-func (req *ResizeVolumeRequest) asyncResponse() interface{} {
+func (req *ResizeVolume) asyncResponse() interface{} {
 	return new(ResizeVolumeResponse)
 }
 
@@ -68,8 +68,8 @@ type ResizeVolumeResponse struct {
 	Volume *Volume `json:"volume"`
 }
 
-// ListVolumesRequest represents a query listing volumes
-type ListVolumesRequest struct {
+// ListVolumes represents a query listing volumes
+type ListVolumes struct {
 	Account          string         `json:"account,omitempty"`
 	DiskOfferingID   string         `json:"diskoffering,omitempty"`
 	DisplayVolume    string         `json:"displayvolume,omitempty"` // root only
@@ -91,11 +91,11 @@ type ListVolumesRequest struct {
 	ZoneID           string         `json:"zoneid,omitempty"`
 }
 
-func (req *ListVolumesRequest) name() string {
+func (req *ListVolumes) name() string {
 	return "listVolumes"
 }
 
-func (req *ListVolumesRequest) response() interface{} {
+func (req *ListVolumes) response() interface{} {
 	return new(ListVolumesResponse)
 }
 
@@ -109,7 +109,7 @@ type ListVolumesResponse struct {
 //
 // Deprecated: helper function shouldn't be used
 func (exo *Client) GetRootVolumeForVirtualMachine(virtualMachineID string) (*Volume, error) {
-	resp, err := exo.Request(&ListVolumesRequest{
+	resp, err := exo.Request(&ListVolumes{
 		VirtualMachineID: virtualMachineID,
 		Type:             "ROOT",
 	})

@@ -90,10 +90,10 @@ type IPToNetwork struct {
 	NetworkID string `json:"networkid,omitempty"`
 }
 
-// DeployVirtualMachineRequest (Async) represents the machine creation
+// DeployVirtualMachine (Async) represents the machine creation
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/deployVirtualMachine.html
-type DeployVirtualMachineRequest struct {
+type DeployVirtualMachine struct {
 	ServiceOfferingID  string         `json:"serviceofferingid"`
 	TemplateID         string         `json:"templateid"`
 	ZoneID             string         `json:"zoneid"`
@@ -126,11 +126,11 @@ type DeployVirtualMachineRequest struct {
 	UserData           []byte         `json:"userdata,omitempty"`
 }
 
-func (req *DeployVirtualMachineRequest) name() string {
+func (req *DeployVirtualMachine) name() string {
 	return "deployVirtualMachine"
 }
 
-func (req *DeployVirtualMachineRequest) asyncResponse() interface{} {
+func (req *DeployVirtualMachine) asyncResponse() interface{} {
 	return new(DeployVirtualMachineResponse)
 }
 
@@ -139,122 +139,122 @@ type DeployVirtualMachineResponse struct {
 	VirtualMachine *VirtualMachine `json:"virtualmachine"`
 }
 
-// StartVirtualMachineRequest (Async) represents the creation of the virtual machine
+// StartVirtualMachine (Async) represents the creation of the virtual machine
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/startVirtualMachine.html
-type StartVirtualMachineRequest struct {
+type StartVirtualMachine struct {
 	ID               string `json:"id"`
 	DeploymentPlaner string `json:"deploymentplanner,omitempty"` // root only
 	HostID           string `json:"hostid,omitempty"`            // root only
 }
 
-func (req *StartVirtualMachineRequest) name() string {
+func (req *StartVirtualMachine) name() string {
 	return "startVirtualMachine"
 }
-func (req *StartVirtualMachineRequest) asyncResponse() interface{} {
+func (req *StartVirtualMachine) asyncResponse() interface{} {
 	return new(StartVirtualMachineResponse)
 }
 
 // StartVirtualMachineResponse represents a started VM instance
 type StartVirtualMachineResponse DeployVirtualMachineResponse
 
-// StopVirtualMachineRequest (Async) represents the stopping of the virtual machine
+// StopVirtualMachine (Async) represents the stopping of the virtual machine
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/stopVirtualMachine.html
-type StopVirtualMachineRequest struct {
+type StopVirtualMachine struct {
 	ID     string `json:"id"`
 	Forced bool   `json:"forced,omitempty"`
 }
 
-func (req *StopVirtualMachineRequest) name() string {
+func (req *StopVirtualMachine) name() string {
 	return "stopVirtualMachine"
 }
 
-func (req *StopVirtualMachineRequest) asyncResponse() interface{} {
+func (req *StopVirtualMachine) asyncResponse() interface{} {
 	return new(StopVirtualMachineResponse)
 }
 
 // StopVirtualMachineResponse represents a stopped VM instance
 type StopVirtualMachineResponse DeployVirtualMachineResponse
 
-// RebootVirtualMachineRequest (Async) represents the rebooting of the virtual machine
+// RebootVirtualMachine (Async) represents the rebooting of the virtual machine
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/rebootVirtualMachine.html
-type RebootVirtualMachineRequest struct {
+type RebootVirtualMachine struct {
 	ID string `json:"id"`
 }
 
-func (req *RebootVirtualMachineRequest) name() string {
+func (req *RebootVirtualMachine) name() string {
 	return "rebootVirtualMachine"
 }
 
-func (req *RebootVirtualMachineRequest) asyncResponse() interface{} {
+func (req *RebootVirtualMachine) asyncResponse() interface{} {
 	return new(RebootVirtualMachineResponse)
 }
 
 // RebootVirtualMachineResponse represents a rebooted VM instance
 type RebootVirtualMachineResponse DeployVirtualMachineResponse
 
-// RestoreVirtualMachineRequest (Async) represents the restoration of the virtual machine
+// RestoreVirtualMachine (Async) represents the restoration of the virtual machine
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/restoreVirtualMachine.html
-type RestoreVirtualMachineRequest struct {
+type RestoreVirtualMachine struct {
 	VirtualMachineID string `json:"virtualmachineid"`
 	TemplateID       string `json:"templateid,omitempty"`
 }
 
-func (req *RestoreVirtualMachineRequest) name() string {
+func (req *RestoreVirtualMachine) name() string {
 	return "restoreVirtualMachine"
 }
 
-func (req *RestoreVirtualMachineRequest) asyncResponse() interface{} {
+func (req *RestoreVirtualMachine) asyncResponse() interface{} {
 	return new(RestoreVirtualMachineResponse)
 }
 
 // RestoreVirtualMachineResponse represents a restored VM instance
 type RestoreVirtualMachineResponse DeployVirtualMachineResponse
 
-// RecoverVirtualMachineRequest represents the restoration of the virtual machine
+// RecoverVirtualMachine represents the restoration of the virtual machine
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/recoverVirtualMachine.html
-type RecoverVirtualMachineRequest struct {
+type RecoverVirtualMachine struct {
 	ID string `json:"virtualmachineid"`
 }
 
-func (req *RecoverVirtualMachineRequest) name() string {
+func (req *RecoverVirtualMachine) name() string {
 	return "recoverVirtualMachine"
 }
 
-func (req *RecoverVirtualMachineRequest) response() interface{} {
+func (req *RecoverVirtualMachine) response() interface{} {
 	return new(RecoverVirtualMachineResponse)
 }
 
 // RecoverVirtualMachineResponse represents a recovered VM instance
 type RecoverVirtualMachineResponse DeployVirtualMachineResponse
 
-// DestroyVirtualMachineRequest (Async) represents the destruction of the virtual machine
+// DestroyVirtualMachine (Async) represents the destruction of the virtual machine
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/destroyVirtualMachine.html
-type DestroyVirtualMachineRequest struct {
+type DestroyVirtualMachine struct {
 	ID      string `json:"id"`
 	Expunge bool   `json:"expunge,omitempty"`
 }
 
-func (req *DestroyVirtualMachineRequest) name() string {
+func (req *DestroyVirtualMachine) name() string {
 	return "destroyVirtualMachine"
 }
 
-func (req *DestroyVirtualMachineRequest) asyncResponse() interface{} {
+func (req *DestroyVirtualMachine) asyncResponse() interface{} {
 	return new(DestroyVirtualMachineResponse)
 }
 
 // DestroyVirtualMachineResponse represents a destroyed VM instance
 type DestroyVirtualMachineResponse DeployVirtualMachineResponse
 
-// UpdateVirtualMachineRequest represents the update of the virtual machine
+// UpdateVirtualMachine represents the update of the virtual machine
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/updateVirtualMachine.html
-type UpdateVirtualMachineRequest struct {
+type UpdateVirtualMachine struct {
 	ID                    string            `json:"id"`
 	CustomID              string            `json:"customid,omitempty"` // root only
 	Details               map[string]string `json:"details,omitempty"`
@@ -269,91 +269,91 @@ type UpdateVirtualMachineRequest struct {
 	UserData              []byte            `json:"userdata,omitempty"`
 }
 
-func (req *UpdateVirtualMachineRequest) name() string {
+func (req *UpdateVirtualMachine) name() string {
 	return "updateVirtualMachine"
 }
 
-func (req *UpdateVirtualMachineRequest) response() interface{} {
+func (req *UpdateVirtualMachine) response() interface{} {
 	return new(UpdateVirtualMachineResponse)
 }
 
 // UpdateVirtualMachineResponse represents an updated VM instance
 type UpdateVirtualMachineResponse DeployVirtualMachineResponse
 
-// ExpungeVirtualMachineRequest represents the annihilation of a VM
-type ExpungeVirtualMachineRequest struct {
+// ExpungeVirtualMachine represents the annihilation of a VM
+type ExpungeVirtualMachine struct {
 	ID string `json:"id"`
 }
 
-func (req *ExpungeVirtualMachineRequest) name() string {
+func (req *ExpungeVirtualMachine) name() string {
 	return "expungeVirtualMachine"
 }
 
-func (req *ExpungeVirtualMachineRequest) asyncResponse() interface{} {
+func (req *ExpungeVirtualMachine) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// ScaleVirtualMachineRequest (Async) represents the scaling of a VM
+// ScaleVirtualMachine (Async) represents the scaling of a VM
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/scaleVirtualMachine.html
-type ScaleVirtualMachineRequest struct {
+type ScaleVirtualMachine struct {
 	ID                string            `json:"id"`
 	ServiceOfferingID string            `json:"serviceofferingid"`
 	Details           map[string]string `json:"details,omitempty"`
 }
 
-func (req *ScaleVirtualMachineRequest) name() string {
+func (req *ScaleVirtualMachine) name() string {
 	return "scaleVirtualMachine"
 }
 
-func (req *ScaleVirtualMachineRequest) asyncResponse() interface{} {
+func (req *ScaleVirtualMachine) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// ChangeServiceForVirtualMachineRequest represents the scaling of a VM
+// ChangeServiceForVirtualMachine represents the scaling of a VM
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/changeServiceForVirtualMachine.html
-type ChangeServiceForVirtualMachineRequest ScaleVirtualMachineRequest
+type ChangeServiceForVirtualMachine ScaleVirtualMachine
 
-func (req *ChangeServiceForVirtualMachineRequest) name() string {
+func (req *ChangeServiceForVirtualMachine) name() string {
 	return "changeServiceForVirtualMachine"
 }
 
-func (req *ChangeServiceForVirtualMachineRequest) response() interface{} {
+func (req *ChangeServiceForVirtualMachine) response() interface{} {
 	return new(ChangeServiceForVirtualMachineResponse)
 }
 
 // ChangeServiceForVirtualMachineResponse represents an changed VM instance
 type ChangeServiceForVirtualMachineResponse DeployVirtualMachineResponse
 
-// ResetPasswordForVirtualMachineRequest (Async) represents the scaling of a VM
+// ResetPasswordForVirtualMachine (Async) represents the scaling of a VM
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/resetPasswordForVirtualMachine.html
-type ResetPasswordForVirtualMachineRequest ScaleVirtualMachineRequest
+type ResetPasswordForVirtualMachine ScaleVirtualMachine
 
-func (req *ResetPasswordForVirtualMachineRequest) name() string {
+func (req *ResetPasswordForVirtualMachine) name() string {
 	return "resetPasswordForVirtualMachine"
 }
 
-func (req *ResetPasswordForVirtualMachineRequest) asyncResponse() interface{} {
+func (req *ResetPasswordForVirtualMachine) asyncResponse() interface{} {
 	return new(ResetPasswordForVirtualMachineResponse)
 }
 
 // ResetPasswordForVirtualMachineResponse represents the updated vm
 type ResetPasswordForVirtualMachineResponse DeployVirtualMachineResponse
 
-// GetVMPasswordRequest asks for an encrypted password
+// GetVMPassword asks for an encrypted password
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/getVMPassword.html
-type GetVMPasswordRequest struct {
+type GetVMPassword struct {
 	ID string `json:"id"`
 }
 
-func (req *GetVMPasswordRequest) name() string {
+func (req *GetVMPassword) name() string {
 	return "getVMPassword"
 }
 
-func (req *GetVMPasswordRequest) response() interface{} {
+func (req *GetVMPassword) response() interface{} {
 	return new(GetVMPasswordResponse)
 }
 
@@ -363,10 +363,10 @@ type GetVMPasswordResponse struct {
 	EncryptedPassword string `json:"encryptedpassword"`
 }
 
-// ListVirtualMachinesRequest represents a search for a VM
+// ListVirtualMachines represents a search for a VM
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/listVirtualMachine.html
-type ListVirtualMachinesRequest struct {
+type ListVirtualMachines struct {
 	Account           string         `json:"account,omitempty"`
 	AffinityGroupID   string         `json:"affinitygroupid,omitempty"`
 	Details           string         `json:"details,omitempty"`   // comma separated list, all, group, nics, stats, ...
@@ -399,11 +399,11 @@ type ListVirtualMachinesRequest struct {
 	ZoneID            string         `json:"zoneid,omitempty"`
 }
 
-func (req *ListVirtualMachinesRequest) name() string {
+func (req *ListVirtualMachines) name() string {
 	return "listVirtualMachines"
 }
 
-func (req *ListVirtualMachinesRequest) response() interface{} {
+func (req *ListVirtualMachines) response() interface{} {
 	return new(ListVirtualMachinesResponse)
 }
 

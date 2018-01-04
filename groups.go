@@ -6,12 +6,12 @@ Security Groups
 Security Groups provide a way to isolate traffic to VMs.
 
 	resp = new(CreateSecurityGroupResponse)
-	err := client.Request(&CreateSecurityGroupRequest{
+	err := client.(&CreateSecurityGroup{
 		Name: "Load balancer",
 		Description: "Opens HTTP/HTTPS ports from the outside world",
 	}, resp)
 	// ...
-	err := client.BooleanRequest(&DeleteSecurityGroupRequest{
+	err := client.Boolean(&DeleteSecurityGroup{
 		ID: resp.SecurityGroup.ID,
 	})
 	// ...
@@ -67,17 +67,17 @@ type UserSecurityGroup struct {
 	Account string `json:"account,omitempty"`
 }
 
-// CreateSecurityGroupRequest represents a security group creation
-type CreateSecurityGroupRequest struct {
+// CreateSecurityGroup represents a security group creation
+type CreateSecurityGroup struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 }
 
-func (req *CreateSecurityGroupRequest) name() string {
-	return "createSecurityGroupRequest"
+func (req *CreateSecurityGroup) name() string {
+	return "createSecurityGroup"
 }
 
-func (req *CreateSecurityGroupRequest) response() interface{} {
+func (req *CreateSecurityGroup) response() interface{} {
 	return new(CreateSecurityGroupResponse)
 }
 
@@ -86,8 +86,8 @@ type CreateSecurityGroupResponse struct {
 	SecurityGroup *SecurityGroup `json:"securitygroup"`
 }
 
-// DeleteSecurityGroupRequest represents a security group deletion
-type DeleteSecurityGroupRequest struct {
+// DeleteSecurityGroup represents a security group deletion
+type DeleteSecurityGroup struct {
 	Account   string `json:"account,omitempty"`
 	DomainID  string `json:"domainid,omitempty"`
 	ID        string `json:"id,omitempty"`   // Mutually exclusive with name
@@ -95,16 +95,16 @@ type DeleteSecurityGroupRequest struct {
 	ProjectID string `json:"project,omitempty"`
 }
 
-func (req *DeleteSecurityGroupRequest) name() string {
-	return "deleteSecurityGroupRequest"
+func (req *DeleteSecurityGroup) name() string {
+	return "deleteSecurityGroup"
 }
 
-func (req *DeleteSecurityGroupRequest) response() interface{} {
+func (req *DeleteSecurityGroup) response() interface{} {
 	return new(BooleanResponse)
 }
 
-// AuthorizeSecurityGroupIngressRequest represents the ingress rule creation
-type AuthorizeSecurityGroupIngressRequest struct {
+// AuthorizeSecurityGroupIngress represents the ingress rule creation
+type AuthorizeSecurityGroupIngress struct {
 	Account               string               `json:"account,omitempty"`
 	CidrList              string               `json:"cidrlist,omitempty"`
 	Description           string               `json:"description,omitempty"`
@@ -120,11 +120,11 @@ type AuthorizeSecurityGroupIngressRequest struct {
 	UserSecurityGroupList []*UserSecurityGroup // manually done... `json:"usersecuritygrouplist,omitempty"`
 }
 
-func (req *AuthorizeSecurityGroupIngressRequest) name() string {
+func (req *AuthorizeSecurityGroupIngress) name() string {
 	return "authorizeSecurityGroupIngress"
 }
 
-func (req *AuthorizeSecurityGroupIngressRequest) asyncResponse() interface{} {
+func (req *AuthorizeSecurityGroupIngress) asyncResponse() interface{} {
 	return new(AuthorizeSecurityGroupIngressResponse)
 }
 
@@ -132,14 +132,14 @@ func (req *AuthorizeSecurityGroupIngressRequest) asyncResponse() interface{} {
 // /!\ the Cloud Stack API document is not fully accurate. /!\
 type AuthorizeSecurityGroupIngressResponse CreateSecurityGroupResponse
 
-// AuthorizeSecurityGroupEgressRequest represents the egress rule creation
-type AuthorizeSecurityGroupEgressRequest AuthorizeSecurityGroupIngressRequest
+// AuthorizeSecurityGroupEgress represents the egress rule creation
+type AuthorizeSecurityGroupEgress AuthorizeSecurityGroupIngress
 
-func (req *AuthorizeSecurityGroupEgressRequest) name() string {
+func (req *AuthorizeSecurityGroupEgress) name() string {
 	return "authorizeSecurityGroupEgress"
 }
 
-func (req *AuthorizeSecurityGroupEgressRequest) asyncResponse() interface{} {
+func (req *AuthorizeSecurityGroupEgress) asyncResponse() interface{} {
 	return new(AuthorizeSecurityGroupEgressResponse)
 }
 
@@ -147,34 +147,34 @@ func (req *AuthorizeSecurityGroupEgressRequest) asyncResponse() interface{} {
 // /!\ the Cloud Stack API document is not fully accurate. /!\
 type AuthorizeSecurityGroupEgressResponse CreateSecurityGroupResponse
 
-// RevokeSecurityGroupEgressRequest represents the ingress/egress rule deletion
-type RevokeSecurityGroupIngressRequest struct {
+// RevokeSecurityGroupIngress represents the ingress/egress rule deletion
+type RevokeSecurityGroupIngress struct {
 	ID string `json:"id"`
 }
 
-func (req *RevokeSecurityGroupIngressRequest) name() string {
-	return "revokeSecurityGroupIngressRequest"
+func (req *RevokeSecurityGroupIngress) name() string {
+	return "revokeSecurityGroupIngress"
 }
 
-func (req *RevokeSecurityGroupIngressRequest) asyncResponse() interface{} {
+func (req *RevokeSecurityGroupIngress) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// RevokeSecurityGroupEgressRequest represents the ingress/egress rule deletion
-type RevokeSecurityGroupEgressRequest struct {
+// RevokeSecurityGroupEgress represents the ingress/egress rule deletion
+type RevokeSecurityGroupEgress struct {
 	ID string `json:"id"`
 }
 
-func (req *RevokeSecurityGroupEgressRequest) name() string {
-	return "revokeSecurityGroupEgressRequest"
+func (req *RevokeSecurityGroupEgress) name() string {
+	return "revokeSecurityGroupEgress"
 }
 
-func (req *RevokeSecurityGroupEgressRequest) asyncResponse() interface{} {
+func (req *RevokeSecurityGroupEgress) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// ListSecurityGroupsRequest represents a search for security groups
-type ListSecurityGroupsRequest struct {
+// ListSecurityGroups represents a search for security groups
+type ListSecurityGroups struct {
 	Account           string         `json:"account,omitempty"`
 	DomainID          string         `json:"domainid,omitempty"`
 	ID                string         `json:"id,omitempty"`
@@ -190,11 +190,11 @@ type ListSecurityGroupsRequest struct {
 	VirtualMachineID  string         `json:"virtualmachineid,omitempty"`
 }
 
-func (req *ListSecurityGroupsRequest) name() string {
+func (req *ListSecurityGroups) name() string {
 	return "listSecurityGroups"
 }
 
-func (req *ListSecurityGroupsRequest) response() interface{} {
+func (req *ListSecurityGroups) response() interface{} {
 	return new(ListSecurityGroupsResponse)
 }
 
@@ -207,7 +207,7 @@ type ListSecurityGroupsResponse struct {
 // CreateIngressRule creates a set of ingress rules
 //
 // Deprecated: use the API directly
-func (exo *Client) CreateIngressRule(req *AuthorizeSecurityGroupIngressRequest, async AsyncInfo) ([]*IngressRule, error) {
+func (exo *Client) CreateIngressRule(req *AuthorizeSecurityGroupIngress, async AsyncInfo) ([]*IngressRule, error) {
 	resp, err := exo.AsyncRequest(req, async)
 	if err != nil {
 		return nil, err
@@ -218,7 +218,7 @@ func (exo *Client) CreateIngressRule(req *AuthorizeSecurityGroupIngressRequest, 
 // CreateEgressRule creates a set of egress rules
 //
 // Deprecated: use the API directly
-func (exo *Client) CreateEgressRule(req *AuthorizeSecurityGroupEgressRequest, async AsyncInfo) ([]*EgressRule, error) {
+func (exo *Client) CreateEgressRule(req *AuthorizeSecurityGroupEgress, async AsyncInfo) ([]*EgressRule, error) {
 	resp, err := exo.AsyncRequest(req, async)
 	if err != nil {
 		return nil, err
@@ -230,8 +230,8 @@ func (exo *Client) CreateEgressRule(req *AuthorizeSecurityGroupEgressRequest, as
 // Warning: it doesn't rollback in case of a failure!
 //
 // Deprecated: use the API directly
-func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*AuthorizeSecurityGroupIngressRequest, egress []*AuthorizeSecurityGroupEgressRequest, async AsyncInfo) (*SecurityGroup, error) {
-	req := &CreateSecurityGroupRequest{
+func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*AuthorizeSecurityGroupIngress, egress []*AuthorizeSecurityGroupEgress, async AsyncInfo) (*SecurityGroup, error) {
+	req := &CreateSecurityGroup{
 		Name: name,
 	}
 	resp, err := exo.Request(req)
@@ -258,7 +258,7 @@ func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*Authoriz
 		}
 	}
 
-	r, err := exo.Request(&ListSecurityGroupsRequest{
+	r, err := exo.Request(&ListSecurityGroups{
 		ID: sg.ID,
 	})
 	if err != nil {
@@ -272,7 +272,7 @@ func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*Authoriz
 //
 // Deprecated: use the API directly
 func (exo *Client) DeleteSecurityGroup(name string) error {
-	req := &DeleteSecurityGroupRequest{
+	req := &DeleteSecurityGroup{
 		Name: name,
 	}
 	return exo.BooleanRequest(req)

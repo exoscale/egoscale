@@ -5,5 +5,5 @@ import (
 )
 
 func TestListNetworksIsACommand(t *testing.T) {
-	var _ Command = (*ListNetworksRequest)(nil)
+	var _ Command = (*ListNetworks)(nil)
 }

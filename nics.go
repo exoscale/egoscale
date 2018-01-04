@@ -36,8 +36,8 @@ type NicSecondaryIP struct {
 	VirtualMachineID string `json:"virtualmachineid,omitempty"`
 }
 
-// ListNicsRequest represents the NIC search
-type ListNicsRequest struct {
+// ListNics represents the NIC search
+type ListNics struct {
 	VirtualMachineID string `json:"virtualmachineid"`
 	ForDisplay       bool   `json:"fordisplay,omitempty"`
 	Keyword          string `json:"keyword,omitempty"`
@@ -47,11 +47,11 @@ type ListNicsRequest struct {
 	PageSize         int    `json:"pagesize,omitempty"`
 }
 
-func (req *ListNicsRequest) name() string {
+func (req *ListNics) name() string {
 	return "listNics"
 }
 
-func (req *ListNicsRequest) response() interface{} {
+func (req *ListNics) response() interface{} {
 	return new(ListNicsResponse)
 }
 
@@ -61,16 +61,16 @@ type ListNicsResponse struct {
 	Nic   []*Nic `json:"nic"`
 }
 
-// AddIPToNicRequest represents the assignation of a secondary IP
-type AddIPToNicRequest struct {
+// AddIPToNic represents the assignation of a secondary IP
+type AddIPToNic struct {
 	NicID     string `json:"nicid"`
 	IPAddress string `json:"ipaddress"`
 }
 
-func (req *AddIPToNicRequest) name() string {
+func (req *AddIPToNic) name() string {
 	return "addIPToNic"
 }
-func (req *AddIPToNicRequest) asyncResponse() interface{} {
+func (req *AddIPToNic) asyncResponse() interface{} {
 	return new(AddIPToNicResponse)
 }
 
@@ -79,23 +79,23 @@ type AddIPToNicResponse struct {
 	NicSecondaryIP *NicSecondaryIP `json:"nicsecondaryip"`
 }
 
-// RemoveIPFromNicRequest represents a deletion request
-type RemoveIPFromNicRequest struct {
+// RemoveIPFromNic represents a deletion request
+type RemoveIPFromNic struct {
 	ID string `json:"id"`
 }
 
-func (req *RemoveIPFromNicRequest) name() string {
+func (req *RemoveIPFromNic) name() string {
 	return "removeIPFromNic"
 }
 
-func (req *RemoveIPFromNicRequest) asyncResponse() interface{} {
+func (req *RemoveIPFromNic) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
 // ListNics lists the NIC of a VM
 //
 // Deprecated: use the API directly
-func (exo *Client) ListNics(req *ListNicsRequest) ([]*Nic, error) {
+func (exo *Client) ListNics(req *ListNics) ([]*Nic, error) {
 	resp, err := exo.Request(req)
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (exo *Client) ListNics(req *ListNicsRequest) ([]*Nic, error) {
 //
 // Deprecated: use the API directly
 func (exo *Client) AddIPToNic(nicID string, ipAddress string, async AsyncInfo) (*NicSecondaryIP, error) {
-	req := &AddIPToNicRequest{
+	req := &AddIPToNic{
 		NicID:     nicID,
 		IPAddress: ipAddress,
 	}
@@ -124,7 +124,7 @@ func (exo *Client) AddIPToNic(nicID string, ipAddress string, async AsyncInfo) (
 //
 // Deprecated: use the API directly
 func (exo *Client) RemoveIPFromNic(secondaryNicID string, async AsyncInfo) error {
-	req := &RemoveIPFromNicRequest{
+	req := &RemoveIPFromNic{
 		ID: secondaryNicID,
 	}
 	return exo.BooleanAsyncRequest(req, async)

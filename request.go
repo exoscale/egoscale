@@ -190,7 +190,7 @@ func (exo *Client) AsyncRequest(req AsyncCommand, async AsyncInfo) (interface{},
 
 		async.Retries--
 
-		req := &QueryAsyncJobResultRequest{JobID: job.JobID}
+		req := &QueryAsyncJobResult{JobID: job.JobID}
 		resp, err := exo.Request(req)
 		if err != nil {
 			return nil, err

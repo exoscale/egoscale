@@ -4,9 +4,9 @@ import (
 	"testing"
 )
 
-func TestAddressesRequests(t *testing.T) {
-	var _ AsyncCommand = (*AssociateIPAddressRequest)(nil)
-	var _ AsyncCommand = (*DisassociateIPAddressRequest)(nil)
-	var _ Command = (*ListPublicIPAddressesRequest)(nil)
-	var _ AsyncCommand = (*UpdateIPAddressRequest)(nil)
+func TestAddressess(t *testing.T) {
+	var _ AsyncCommand = (*AssociateIPAddress)(nil)
+	var _ AsyncCommand = (*DisassociateIPAddress)(nil)
+	var _ Command = (*ListPublicIPAddresses)(nil)
+	var _ AsyncCommand = (*UpdateIPAddress)(nil)
 }

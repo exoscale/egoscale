@@ -9,7 +9,7 @@ All the available APIs on the server and provided by the API Discovery plugin
 	cs := egoscale.NewClient("https://api.exoscale.ch/compute", "EXO...", "...")
 
 	resp := new(egoscale.ListAPIsResponse)
-	err := cs.Request(&egoscale.ListAPIsRequest{}, resp)
+	err := cs.(&egoscale.ListAPIs{}, resp)
 	if err != nil {
 		panic(err)
 	}
@@ -53,16 +53,16 @@ type APIResponse struct {
 	Type        string         `json:"type"`
 }
 
-// ListAPIsRequest represents a query to list the api
-type ListAPIsRequest struct {
+// ListAPIs represents a query to list the api
+type ListAPIs struct {
 	Name string `json:"name,omitempty"`
 }
 
-func (req *ListAPIsRequest) name() string {
+func (req *ListAPIs) name() string {
 	return "listAPIs"
 }
 
-func (req *ListAPIsRequest) response() interface{} {
+func (req *ListAPIs) response() interface{} {
 	return new(ListAPIsResponse)
 }
 

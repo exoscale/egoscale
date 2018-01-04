@@ -42,8 +42,8 @@ type IPAddress struct {
 	JobStatus                 JobStatusType  `json:"jobstatus,omitempty"`
 }
 
-// AssociateIPAddressRequest represents the IP creation
-type AssociateIPAddressRequest struct {
+// AssociateIPAddress represents the IP creation
+type AssociateIPAddress struct {
 	Account    string `json:"account,omitempty"`
 	DomainID   string `json:"domainid,omitempty"`
 	ForDisplay bool   `json:"fordisplay,omitempty"`
@@ -55,11 +55,11 @@ type AssociateIPAddressRequest struct {
 	ZoneID     string `json:"zoneid,omitempty"`
 }
 
-func (*AssociateIPAddressRequest) name() string {
+func (*AssociateIPAddress) name() string {
 	return "associateIpAddress"
 }
 
-func (*AssociateIPAddressRequest) asyncResponse() interface{} {
+func (*AssociateIPAddress) asyncResponse() interface{} {
 	return new(AssociateIPAddressResponse)
 }
 
@@ -68,37 +68,37 @@ type AssociateIPAddressResponse struct {
 	IPAddress *IPAddress `json:"ipaddress"`
 }
 
-// DisassociateIPAddressRequest represents the IP deletion
-type DisassociateIPAddressRequest struct {
+// DisassociateIPAddress represents the IP deletion
+type DisassociateIPAddress struct {
 	ID string `json:"id"`
 }
 
-func (*DisassociateIPAddressRequest) name() string {
+func (*DisassociateIPAddress) name() string {
 	return "disassociateIpAddress"
 }
-func (*DisassociateIPAddressRequest) asyncResponse() interface{} {
+func (*DisassociateIPAddress) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// UpdateIPAddressRequest represents the IP modification
-type UpdateIPAddressRequest struct {
+// UpdateIPAddress represents the IP modification
+type UpdateIPAddress struct {
 	ID         string `json:"id"`
 	CustomID   string `json:"customid,omitempty"` // root only
 	ForDisplay bool   `json:"fordisplay,omitempty"`
 }
 
-func (*UpdateIPAddressRequest) name() string {
+func (*UpdateIPAddress) name() string {
 	return "updateIpAddress"
 }
-func (*UpdateIPAddressRequest) asyncResponse() interface{} {
+func (*UpdateIPAddress) asyncResponse() interface{} {
 	return new(UpdateIPAddressResponse)
 }
 
 // UpdateIPAddressResponse represents the modified IP Address
 type UpdateIPAddressResponse AssociateIPAddressResponse
 
-// ListPublicIPAddressesRequest represents a search for public IP addresses
-type ListPublicIPAddressesRequest struct {
+// ListPublicIPAddresses represents a search for public IP addresses
+type ListPublicIPAddresses struct {
 	Account            string         `json:"account,omitempty"`
 	AllocatedOnly      bool           `json:"allocatedonly,omitempty"`
 	AllocatedNetworkID string         `json:"allocatednetworkid,omitempty"`
@@ -124,11 +124,11 @@ type ListPublicIPAddressesRequest struct {
 	ZoneID             string         `json:"zoneid,omitempty"`
 }
 
-func (*ListPublicIPAddressesRequest) name() string {
+func (*ListPublicIPAddresses) name() string {
 	return "listPublicIpAddresses"
 }
 
-func (*ListPublicIPAddressesRequest) response() interface{} {
+func (*ListPublicIPAddresses) response() interface{} {
 	return new(ListPublicIPAddressesResponse)
 }
 

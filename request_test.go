@@ -38,7 +38,7 @@ func TestPrepareValues(t *testing.T) {
 			{Name: "bar", IsVisible: false},
 		},
 		Map: map[string]string{
-			"key": "value",
+			"foo": "bar",
 		},
 	}
 
@@ -69,13 +69,9 @@ func TestPrepareValues(t *testing.T) {
 		t.Errorf("expected tags to be serialized as foo, got %#v", v)
 	}
 
-	v = params.Get("map[0].key")
-	if v != "key" {
-		t.Errorf("expected map to be serialized as .key, got %#v", v)
-	}
-	v = params.Get("map[0].value")
-	if v != "value" {
-		t.Errorf("expected map to be serialized as .value, got %#v", v)
+	v = params.Get("map[0].foo")
+	if v != "bar" {
+		t.Errorf("expected map to be serialized as .foo = \"bar\", got %#v", v)
 	}
 }
 

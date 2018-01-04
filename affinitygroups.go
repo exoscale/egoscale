@@ -23,7 +23,9 @@ type AffinityGroupType struct {
 	Type string `json:"type"`
 }
 
-// CreateAffinityGroupRequest represents a new (anti-)affinity group
+// CreateAffinityGroupRequest (Async) represents a new (anti-)affinity group
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/createAffinityGroup.html
 type CreateAffinityGroupRequest struct {
 	Name        string `json:"name"`
 	Type        string `json:"type"`
@@ -45,7 +47,9 @@ type CreateAffinityGroupResponse struct {
 	AffinityGroup *AffinityGroup `json:"affinitygroup"`
 }
 
-// UpdateVMAffinityGroupRequest represents a modification of a (anti-)affinity group
+// UpdateVMAffinityGroupRequest (Async) represents a modification of a (anti-)affinity group
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/updateVMAffinityGroup.html
 type UpdateVMAffinityGroupRequest struct {
 	ID                 string `json:"id"`
 	AffinityGroupIDs   string `json:"affinitygroupids,omitempty"`   // mutually exclusive with names
@@ -63,7 +67,9 @@ func (req *UpdateVMAffinityGroupRequest) asyncResponse() interface{} {
 // UpdateVMAffinityGroupResponse represents the new VM
 type UpdateVMAffinityGroupResponse DeployVirtualMachineResponse
 
-// DeleteAffinityGroupRequest represents an (anti-)affinity group to be deleted
+// DeleteAffinityGroupRequest (Async) represents an (anti-)affinity group to be deleted
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteAffinityGroup.html
 type DeleteAffinityGroupRequest struct {
 	ID          string `json:"id,omitempty"`
 	Name        string `json:"name,omitempty"`
@@ -82,6 +88,8 @@ func (req *DeleteAffinityGroupRequest) asyncResponse() interface{} {
 }
 
 // ListAffinityGroupsRequest represents an (anti-)affinity groups search
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/listAffinityGroups.html
 type ListAffinityGroupsRequest struct {
 	Account          string `json:"account,omitempty"`
 	DomainID         string `json:"domainid,omitempty"`
@@ -105,6 +113,8 @@ func (req *ListAffinityGroupsRequest) response() interface{} {
 }
 
 // ListAffinityGroupTypesRequest represents an (anti-)affinity groups search
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/listAffinityGroupTypes.html
 type ListAffinityGroupTypesRequest struct {
 	Keyword  string `json:"keyword,omitempty"`
 	Page     int    `json:"page,omitempty"`
@@ -130,10 +140,6 @@ type ListAffinityGroupTypesResponse struct {
 	Count             int                  `json:"count"`
 	AffinityGroupType []*AffinityGroupType `json:"affinitygrouptype"`
 }
-
-// XXX UpdateVmAffinityGroup
-//
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/updateVMAffinityGroup.html
 
 // Legacy methods
 

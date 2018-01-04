@@ -1,13 +1,5 @@
 package egoscale
 
-/*
-SSH Key Pairs
-
-In addition to username and password (disabled on Exoscale), SSH keys are used to log into the infrastructure.
-
-See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/virtual_machines.html#creating-the-ssh-keypair
-*/
-
 // SSHKeyPair represents an SSH key pair
 type SSHKeyPair struct {
 	Account     string `json:"account,omitempty"`
@@ -20,7 +12,7 @@ type SSHKeyPair struct {
 
 // CreateSSHKeyPair represents a new keypair to be created
 //
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/createSSHKeyPair.html
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/createSSHKeyPair.html
 type CreateSSHKeyPair struct {
 	Name      string `json:"name"`
 	Account   string `json:"account,omitempty"`
@@ -43,7 +35,7 @@ type CreateSSHKeyPairResponse struct {
 
 // DeleteSSHKeyPair represents a new keypair to be created
 //
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSSHKeyPair.html
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSSHKeyPair.html
 type DeleteSSHKeyPair struct {
 	Name      string `json:"name"`
 	Account   string `json:"account,omitempty"`
@@ -61,7 +53,7 @@ func (req *DeleteSSHKeyPair) response() interface{} {
 
 // RegisterSSHKeyPair represents a new registration of a public key in a keypair
 //
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/registerSSHKeyPair.html
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/registerSSHKeyPair.html
 type RegisterSSHKeyPair struct {
 	Name      string `json:"name"`
 	PublicKey string `json:"publickey"`
@@ -85,7 +77,7 @@ type RegisterSSHKeyPairResponse struct {
 
 // ListSSHKeyPairs represents a query for a list of SSH KeyPairs
 //
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/listSSHKeyPairs.html
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/listSSHKeyPairs.html
 type ListSSHKeyPairs struct {
 	Account     string `json:"account,omitempty"`
 	DomainID    string `json:"domainid,omitempty"`
@@ -113,9 +105,9 @@ type ListSSHKeyPairsResponse struct {
 	SSHKeyPair []*SSHKeyPair `json:"sshkeypair"`
 }
 
-// ResetSSHKeyForVirtualMachine represents a change for the key pairs
+// ResetSSHKeyForVirtualMachine (Async) represents a change for the key pairs
 //
-// http://cloudstack.apache.org/api/apidocs-4.10/apis/resetSSHKeyForVirtualMachine.html
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/resetSSHKeyForVirtualMachine.html
 type ResetSSHKeyForVirtualMachine struct {
 	ID        string `json:"id"`
 	KeyPair   string `json:"keypair"`
@@ -133,7 +125,7 @@ func (req *ResetSSHKeyForVirtualMachine) asyncResponse() interface{} {
 }
 
 // ResetSSHKeyForVirtualMachineResponse represents the modified VirtualMachine
-type ResetSSHKeyForVirtualMachineResponse DeployVirtualMachineResponse
+type ResetSSHKeyForVirtualMachineResponse VirtualMachineResponse
 
 // CreateKeypair create a new SSH Key Pair
 //

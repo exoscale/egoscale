@@ -1,25 +1,5 @@
 package egoscale
 
-/*
-Security Groups
-
-Security Groups provide a way to isolate traffic to VMs.
-
-	resp = new(CreateSecurityGroupResponse)
-	err := client.(&CreateSecurityGroup{
-		Name: "Load balancer",
-		Description: "Opens HTTP/HTTPS ports from the outside world",
-	}, resp)
-	// ...
-	err := client.Boolean(&DeleteSecurityGroup{
-		ID: resp.SecurityGroup.ID,
-	})
-	// ...
-
-See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/networking_and_traffic.html#security-groups
-
-*/
-
 // SecurityGroup represent a firewalling set of rules
 type SecurityGroup struct {
 	ID                  string         `json:"id"`
@@ -67,7 +47,14 @@ type UserSecurityGroup struct {
 	Account string `json:"account,omitempty"`
 }
 
+// SecurityGroupResponse represents a generic security group response
+type SecurityGroupResponse struct {
+	SecurityGroup SecurityGroup `json:"securitygroup"`
+}
+
 // CreateSecurityGroup represents a security group creation
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/createSecurityGroup.html
 type CreateSecurityGroup struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
@@ -82,11 +69,11 @@ func (req *CreateSecurityGroup) response() interface{} {
 }
 
 // CreateSecurityGroupResponse represents a new security group
-type CreateSecurityGroupResponse struct {
-	SecurityGroup *SecurityGroup `json:"securitygroup"`
-}
+type CreateSecurityGroupResponse SecurityGroupResponse
 
 // DeleteSecurityGroup represents a security group deletion
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSecurityGroup.html
 type DeleteSecurityGroup struct {
 	Account   string `json:"account,omitempty"`
 	DomainID  string `json:"domainid,omitempty"`
@@ -103,7 +90,9 @@ func (req *DeleteSecurityGroup) response() interface{} {
 	return new(BooleanResponse)
 }
 
-// AuthorizeSecurityGroupIngress represents the ingress rule creation
+// AuthorizeSecurityGroupIngress (Async) represents the ingress rule creation
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/authorizeSecurityGroupIngress.html
 type AuthorizeSecurityGroupIngress struct {
 	Account               string               `json:"account,omitempty"`
 	CidrList              string               `json:"cidrlist,omitempty"`
@@ -130,9 +119,11 @@ func (req *AuthorizeSecurityGroupIngress) asyncResponse() interface{} {
 
 // AuthorizeSecurityGroupIngressResponse represents the new egress rule
 // /!\ the Cloud Stack API document is not fully accurate. /!\
-type AuthorizeSecurityGroupIngressResponse CreateSecurityGroupResponse
+type AuthorizeSecurityGroupIngressResponse SecurityGroupResponse
 
-// AuthorizeSecurityGroupEgress represents the egress rule creation
+// AuthorizeSecurityGroupEgress (Async) represents the egress rule creation
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/authorizeSecurityGroupEgress.html
 type AuthorizeSecurityGroupEgress AuthorizeSecurityGroupIngress
 
 func (req *AuthorizeSecurityGroupEgress) name() string {
@@ -147,7 +138,9 @@ func (req *AuthorizeSecurityGroupEgress) asyncResponse() interface{} {
 // /!\ the Cloud Stack API document is not fully accurate. /!\
 type AuthorizeSecurityGroupEgressResponse CreateSecurityGroupResponse
 
-// RevokeSecurityGroupIngress represents the ingress/egress rule deletion
+// RevokeSecurityGroupIngress (Async) represents the ingress/egress rule deletion
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/revokeSecurityGroupIngress.html
 type RevokeSecurityGroupIngress struct {
 	ID string `json:"id"`
 }
@@ -160,7 +153,9 @@ func (req *RevokeSecurityGroupIngress) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// RevokeSecurityGroupEgress represents the ingress/egress rule deletion
+// RevokeSecurityGroupEgress (Async) represents the ingress/egress rule deletion
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/revokeSecurityGroupEgress.html
 type RevokeSecurityGroupEgress struct {
 	ID string `json:"id"`
 }
@@ -174,6 +169,8 @@ func (req *RevokeSecurityGroupEgress) asyncResponse() interface{} {
 }
 
 // ListSecurityGroups represents a search for security groups
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/listSecurityGroups.html
 type ListSecurityGroups struct {
 	Account           string         `json:"account,omitempty"`
 	DomainID          string         `json:"domainid,omitempty"`
@@ -239,7 +236,7 @@ func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []*Authoriz
 		return nil, err
 	}
 
-	sg := resp.(*CreateSecurityGroupResponse).SecurityGroup
+	sg := resp.(*SecurityGroupResponse).SecurityGroup
 
 	for _, ereq := range egress {
 		ereq.SecurityGroupID = sg.ID

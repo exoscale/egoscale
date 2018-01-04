@@ -1,9 +1,3 @@
-/*
-Elastic IPs
-
-See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/networking_and_traffic.html#about-elastic-ips
-*/
-
 package egoscale
 
 // IPAddress represents an IP Address
@@ -42,7 +36,9 @@ type IPAddress struct {
 	JobStatus                 JobStatusType  `json:"jobstatus,omitempty"`
 }
 
-// AssociateIPAddress represents the IP creation
+// AssociateIPAddress (Async) represents the IP creation
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/associateIpAddress.html
 type AssociateIPAddress struct {
 	Account    string `json:"account,omitempty"`
 	DomainID   string `json:"domainid,omitempty"`
@@ -68,7 +64,9 @@ type AssociateIPAddressResponse struct {
 	IPAddress *IPAddress `json:"ipaddress"`
 }
 
-// DisassociateIPAddress represents the IP deletion
+// DisassociateIPAddress (Async) represents the IP deletion
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/disassociateIpAddress.html
 type DisassociateIPAddress struct {
 	ID string `json:"id"`
 }
@@ -80,7 +78,9 @@ func (*DisassociateIPAddress) asyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// UpdateIPAddress represents the IP modification
+// UpdateIPAddress (Async) represents the IP modification
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/updateIpAddress.html
 type UpdateIPAddress struct {
 	ID         string `json:"id"`
 	CustomID   string `json:"customid,omitempty"` // root only
@@ -98,6 +98,8 @@ func (*UpdateIPAddress) asyncResponse() interface{} {
 type UpdateIPAddressResponse AssociateIPAddressResponse
 
 // ListPublicIPAddresses represents a search for public IP addresses
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/listPublicIpAddresses.html
 type ListPublicIPAddresses struct {
 	Account            string         `json:"account,omitempty"`
 	AllocatedOnly      bool           `json:"allocatedonly,omitempty"`

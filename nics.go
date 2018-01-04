@@ -1,11 +1,5 @@
 package egoscale
 
-/*
-NICs
-
-See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/networking_and_traffic.html#configuring-multiple-ip-addresses-on-a-single-nic
-*/
-
 // Nic represents a Network Interface Controller (NIC)
 type Nic struct {
 	ID               string            `json:"id,omitempty"`

@@ -1,13 +1,5 @@
 package egoscale
 
-/*
-Virtual Machines
-
-... todo ...
-
-See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/virtual_machines.html
-*/
-
 // VirtualMachine reprents a virtual machine
 type VirtualMachine struct {
 	ID                    string            `json:"id,omitempty"`
@@ -90,6 +82,11 @@ type IPToNetwork struct {
 	NetworkID string `json:"networkid,omitempty"`
 }
 
+// VirtualMachineResponse represents a generic Virtual Machine response
+type VirtualMachineResponse struct {
+	VirtualMachine *VirtualMachine `json:"virtualmachine"`
+}
+
 // DeployVirtualMachine (Async) represents the machine creation
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/deployVirtualMachine.html
@@ -135,9 +132,7 @@ func (req *DeployVirtualMachine) asyncResponse() interface{} {
 }
 
 // DeployVirtualMachineResponse represents a deployed VM instance
-type DeployVirtualMachineResponse struct {
-	VirtualMachine *VirtualMachine `json:"virtualmachine"`
-}
+type DeployVirtualMachineResponse VirtualMachineResponse
 
 // StartVirtualMachine (Async) represents the creation of the virtual machine
 //
@@ -156,7 +151,7 @@ func (req *StartVirtualMachine) asyncResponse() interface{} {
 }
 
 // StartVirtualMachineResponse represents a started VM instance
-type StartVirtualMachineResponse DeployVirtualMachineResponse
+type StartVirtualMachineResponse VirtualMachineResponse
 
 // StopVirtualMachine (Async) represents the stopping of the virtual machine
 //
@@ -175,7 +170,7 @@ func (req *StopVirtualMachine) asyncResponse() interface{} {
 }
 
 // StopVirtualMachineResponse represents a stopped VM instance
-type StopVirtualMachineResponse DeployVirtualMachineResponse
+type StopVirtualMachineResponse VirtualMachineResponse
 
 // RebootVirtualMachine (Async) represents the rebooting of the virtual machine
 //
@@ -193,7 +188,7 @@ func (req *RebootVirtualMachine) asyncResponse() interface{} {
 }
 
 // RebootVirtualMachineResponse represents a rebooted VM instance
-type RebootVirtualMachineResponse DeployVirtualMachineResponse
+type RebootVirtualMachineResponse VirtualMachineResponse
 
 // RestoreVirtualMachine (Async) represents the restoration of the virtual machine
 //
@@ -212,7 +207,7 @@ func (req *RestoreVirtualMachine) asyncResponse() interface{} {
 }
 
 // RestoreVirtualMachineResponse represents a restored VM instance
-type RestoreVirtualMachineResponse DeployVirtualMachineResponse
+type RestoreVirtualMachineResponse VirtualMachineResponse
 
 // RecoverVirtualMachine represents the restoration of the virtual machine
 //
@@ -230,7 +225,7 @@ func (req *RecoverVirtualMachine) response() interface{} {
 }
 
 // RecoverVirtualMachineResponse represents a recovered VM instance
-type RecoverVirtualMachineResponse DeployVirtualMachineResponse
+type RecoverVirtualMachineResponse VirtualMachineResponse
 
 // DestroyVirtualMachine (Async) represents the destruction of the virtual machine
 //
@@ -249,7 +244,7 @@ func (req *DestroyVirtualMachine) asyncResponse() interface{} {
 }
 
 // DestroyVirtualMachineResponse represents a destroyed VM instance
-type DestroyVirtualMachineResponse DeployVirtualMachineResponse
+type DestroyVirtualMachineResponse VirtualMachineResponse
 
 // UpdateVirtualMachine represents the update of the virtual machine
 //
@@ -278,7 +273,7 @@ func (req *UpdateVirtualMachine) response() interface{} {
 }
 
 // UpdateVirtualMachineResponse represents an updated VM instance
-type UpdateVirtualMachineResponse DeployVirtualMachineResponse
+type UpdateVirtualMachineResponse VirtualMachineResponse
 
 // ExpungeVirtualMachine represents the annihilation of a VM
 type ExpungeVirtualMachine struct {
@@ -324,7 +319,7 @@ func (req *ChangeServiceForVirtualMachine) response() interface{} {
 }
 
 // ChangeServiceForVirtualMachineResponse represents an changed VM instance
-type ChangeServiceForVirtualMachineResponse DeployVirtualMachineResponse
+type ChangeServiceForVirtualMachineResponse VirtualMachineResponse
 
 // ResetPasswordForVirtualMachine (Async) represents the scaling of a VM
 //
@@ -340,7 +335,7 @@ func (req *ResetPasswordForVirtualMachine) asyncResponse() interface{} {
 }
 
 // ResetPasswordForVirtualMachineResponse represents the updated vm
-type ResetPasswordForVirtualMachineResponse DeployVirtualMachineResponse
+type ResetPasswordForVirtualMachineResponse VirtualMachineResponse
 
 // GetVMPassword asks for an encrypted password
 //

@@ -1,11 +1,5 @@
 package egoscale
 
-/*
-Zones
-
-A Zone corresponds to a Data Center.
-*/
-
 // Zone represents a data center
 type Zone struct {
 	ID                    string            `json:"id"`
@@ -35,6 +29,8 @@ type Zone struct {
 }
 
 // ListZones represents a query for zones
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/listZones.html
 type ListZones struct {
 	Available      bool           `json:"available,omitempty"`
 	DomainID       string         `json:"domainid,omitempty"`

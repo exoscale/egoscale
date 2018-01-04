@@ -1,28 +1,5 @@
 package egoscale
 
-/*
-
-APIs
-
-All the available APIs on the server and provided by the API Discovery plugin
-
-	cs := egoscale.NewClient("https://api.exoscale.ch/compute", "EXO...", "...")
-
-	resp := new(egoscale.ListAPIsResponse)
-	err := cs.(&egoscale.ListAPIs{}, resp)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, api := range resp.API {
-		fmt.Println("%s %s", api.Name, api.Description)
-	}
-	// Output:
-	// listNetworks Lists all available networks
-	// ...
-
-*/
-
 // API represents an API service
 type API struct {
 	Description string         `json:"description"`
@@ -54,6 +31,8 @@ type APIResponse struct {
 }
 
 // ListAPIs represents a query to list the api
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/listApis.html
 type ListAPIs struct {
 	Name string `json:"name,omitempty"`
 }

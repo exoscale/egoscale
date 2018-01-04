@@ -182,9 +182,10 @@ func (exo *Client) AsyncRequest(req AsyncCommand, async AsyncInfo) (interface{},
 		return resp, nil
 	}
 
-	// we've go a pending job
-	result := new(QueryAsyncJobResultResponse)
-	result.JobStatus = job.JobStatus
+	// we've got a pending job
+	result := &QueryAsyncJobResultResponse{
+		JobStatus: job.JobStatus,
+	}
 	for async.Retries > 0 && result.JobStatus == PENDING {
 		time.Sleep(time.Duration(async.Delay) * time.Second)
 

@@ -1,9 +1,3 @@
-/*
-Affinity and Anti-Affinity groups
-
-Affinity and Anti-Affinity groups provide a way to influence where VMs should run. See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/virtual_machines.html#affinity-groups
-*/
-
 package egoscale
 
 // AffinityGroup represents an (anti-)affinity group
@@ -65,7 +59,7 @@ func (req *UpdateVMAffinityGroup) asyncResponse() interface{} {
 }
 
 // UpdateVMAffinityGroupResponse represents the new VM
-type UpdateVMAffinityGroupResponse DeployVirtualMachineResponse
+type UpdateVMAffinityGroupResponse VirtualMachineResponse
 
 // DeleteAffinityGroup (Async) represents an (anti-)affinity group to be deleted
 //

@@ -47,7 +47,9 @@ type VolumeTag struct {
 	Value      string `json:"value,omitempty"`
 }
 
-// ResizeVolume resizes a volume
+// ResizeVolume (Async) resizes a volume
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/resizeVolume.html
 type ResizeVolume struct {
 	ID             string `json:"id"`
 	DiskOfferingID string `json:"diskofferingid,omitempty"`
@@ -69,6 +71,8 @@ type ResizeVolumeResponse struct {
 }
 
 // ListVolumes represents a query listing volumes
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/listVolumes.html
 type ListVolumes struct {
 	Account          string         `json:"account,omitempty"`
 	DiskOfferingID   string         `json:"diskoffering,omitempty"`

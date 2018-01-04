@@ -142,18 +142,8 @@ func (exo *Client) parseResponse(resp *http.Response) (json.RawMessage, error) {
 		if err := json.Unmarshal(b, &e); err != nil {
 			return nil, err
 		}
-
-		/* Need to account for different error types */
-		if e.ErrorCode != 0 {
-			return nil, e.Error()
-		}
-		var de DNSError
-		if err := json.Unmarshal(b, &de); err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("Exoscale error (%d): %s", resp.StatusCode, strings.Join(de.Name, "\n"))
+		return b, e.Error()
 	}
-
 	return b, nil
 }
 
@@ -307,26 +297,6 @@ func (exo *Client) request(command string, req interface{}) (json.RawMessage, er
 	}
 
 	return body, nil
-}
-
-// DetailedRequest is a manual request used by DNS
-func (exo *Client) DetailedRequest(uri string, params string, method string, header http.Header) (json.RawMessage, error) {
-	url := exo.endpoint + uri
-
-	req, err := http.NewRequest(method, url, strings.NewReader(params))
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header = header
-
-	response, err := exo.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer response.Body.Close()
-	return exo.parseResponse(response)
 }
 
 // prepareValues uses a command to build a POST request

@@ -18,13 +18,14 @@ func TestPrepareValues(t *testing.T) {
 
 	profile := struct {
 		IgnoreMe string
-		Zone     string  `json:"myzone,omitempty"`
-		Name     string  `json:"name"`
-		ID       int     `json:"id"`
-		UserID   uint    `json:"user_id"`
-		Num      float64 `json:"num"`
-		Bytes    []byte  `json:"bytes"`
-		Tags     []*tag  `json:"tags,omitempty"`
+		Zone     string            `json:"myzone,omitempty"`
+		Name     string            `json:"name"`
+		ID       int               `json:"id"`
+		UserID   uint              `json:"user_id"`
+		Num      float64           `json:"num"`
+		Bytes    []byte            `json:"bytes"`
+		Tags     []*tag            `json:"tags,omitempty"`
+		Map      map[string]string `json:"map"`
 	}{
 		IgnoreMe: "bar",
 		Name:     "world",
@@ -35,6 +36,9 @@ func TestPrepareValues(t *testing.T) {
 		Tags: []*tag{
 			{Name: "foo"},
 			{Name: "bar", IsVisible: false},
+		},
+		Map: map[string]string{
+			"key": "value",
 		},
 	}
 
@@ -63,6 +67,15 @@ func TestPrepareValues(t *testing.T) {
 	v := params.Get("tags[0].name")
 	if v != "foo" {
 		t.Errorf("expected tags to be serialized as foo, got %#v", v)
+	}
+
+	v = params.Get("map[0].key")
+	if v != "key" {
+		t.Errorf("expected map to be serialized as .key, got %#v", v)
+	}
+	v = params.Get("map[0].value")
+	if v != "value" {
+		t.Errorf("expected map to be serialized as .value, got %#v", v)
 	}
 }
 

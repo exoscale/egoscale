@@ -438,6 +438,17 @@ func prepareValues(prefix string, params *url.Values, command interface{}) error
 						return fmt.Errorf("Unsupported type %s.%s ([]%s)", typeof.Name(), field.Name, field.Type.Elem().Kind())
 					}
 				}
+			case reflect.Map:
+				if val.Len() == 0 {
+					if required {
+						return fmt.Errorf("%s.%s (%v) is required, got empty map", typeof.Name(), field.Name, val.Kind())
+					}
+				} else {
+					err := prepareMap(name, params, val.Interface())
+					if err != nil {
+						return err
+					}
+				}
 			default:
 				if required {
 					return fmt.Errorf("Unsupported type %s.%s (%v)", typeof.Name(), field.Name, val.Kind())
@@ -458,6 +469,33 @@ func prepareList(prefix string, params *url.Values, slice interface{}) error {
 		prepareValues(fmt.Sprintf("%s[%d].", prefix, i), params, value.Index(i).Interface())
 	}
 
+	return nil
+}
+
+func prepareMap(prefix string, params *url.Values, m interface{}) error {
+	value := reflect.ValueOf(m)
+
+	for i, key := range value.MapKeys() {
+		var keyName string
+		var keyValue string
+
+		switch key.Kind() {
+		case reflect.String:
+			keyName = key.String()
+		default:
+			return fmt.Errorf("Only map[string]string are supported (XXX)")
+		}
+
+		val := value.MapIndex(key)
+		switch val.Kind() {
+		case reflect.String:
+			keyValue = val.String()
+		default:
+			return fmt.Errorf("Only map[string]string are supported (XXX)")
+		}
+		params.Set(fmt.Sprintf("%s[%d].key", prefix, i), keyName)
+		params.Set(fmt.Sprintf("%s[%d].value", prefix, i), keyValue)
+	}
 	return nil
 }
 

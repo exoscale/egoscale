@@ -6,12 +6,12 @@ type SecurityGroup struct {
 	Account             string         `json:"account,omitempty"`
 	Description         string         `json:"description,omitempty"`
 	Domain              string         `json:"domain,omitempty"`
-	Domainid            string         `json:"domainid,omitempty"`
+	DomainID            string         `json:"domainid,omitempty"`
 	Name                string         `json:"name"`
 	Project             string         `json:"project,omitempty"`
-	Projectid           string         `json:"projectid,omitempty"`
-	VirtualMachineCount int            `json:"virtualmachinecount,omitempty"`
-	VirtualMachineIDs   []string       `json:"virtualmachineids,omitempty"`
+	ProjectID           string         `json:"projectid,omitempty"`
+	VirtualMachineCount int            `json:"virtualmachinecount,omitempty"` // CloudStack 4.6+
+	VirtualMachineIDs   []string       `json:"virtualmachineids,omitempty"`   // CloudStack 4.6+
 	IngressRule         []*IngressRule `json:"ingressrule"`
 	EgressRule          []*EgressRule  `json:"egressrule"`
 	Tags                []*ResourceTag `json:"tags,omitempty"`

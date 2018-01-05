@@ -46,7 +46,7 @@ type VirtualMachine struct {
 	OsTypeID              int64             `json:"ostypeid,omitempty"`
 	Password              string            `json:"password,omitempty"`
 	PasswordEnabled       bool              `json:"passwordenabled,omitempty"`
-	PciDevices            string            `json:"pcidevices,omitempty"` // not in the doc
+	PCIDevices            string            `json:"pcidevices,omitempty"` // not in the doc
 	PodID                 string            `json:"podid,omitempty"`
 	PodName               string            `json:"podname,omitempty"`
 	Project               string            `json:"project,omitempty"`
@@ -138,9 +138,9 @@ type DeployVirtualMachineResponse VirtualMachineResponse
 //
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/startVirtualMachine.html
 type StartVirtualMachine struct {
-	ID               string `json:"id"`
-	DeploymentPlaner string `json:"deploymentplanner,omitempty"` // root only
-	HostID           string `json:"hostid,omitempty"`            // root only
+	ID                string `json:"id"`
+	DeploymentPlanner string `json:"deploymentplanner,omitempty"` // root only
+	HostID            string `json:"hostid,omitempty"`            // root only
 }
 
 func (req *StartVirtualMachine) name() string {

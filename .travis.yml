@@ -10,7 +10,10 @@ go:
 cache: apt
 
 before_install:
-  - go get -u github.com/axw/gocov/gocov
+  - npm i -g codeclimate-test-reporter
 
 script:
-  - gocov test | gocov report
+  - go test -race -coverprofile=coverage.out -covermode=atomic .
+
+after_success:
+  - codeclimate-test-reporter < coverage.out

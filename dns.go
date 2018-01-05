@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -139,7 +138,7 @@ func (exo *Client) GetRecord(domain string, recordID int64) (*DNSRecord, error) 
 }
 
 // GetRecords returns the DNS records
-func (exo *Client) GetRecords(name string) ([]*DNSRecordResponse, error) {
+func (exo *Client) GetRecords(name string) ([]*DNSRecord, error) {
 	resp, err := exo.dnsRequest("/v1/domains/"+name+"/records", "", "GET")
 	if err != nil {
 		return nil, err
@@ -150,7 +149,12 @@ func (exo *Client) GetRecords(name string) ([]*DNSRecordResponse, error) {
 		return nil, err
 	}
 
-	return r, nil
+	records := make([]*DNSRecord, 0, len(r))
+	for _, rec := range r {
+		records = append(records, rec.Record)
+	}
+
+	return records, nil
 }
 
 // CreateRecord creates a DNS record
@@ -231,8 +235,6 @@ func (exo *Client) dnsRequest(uri string, params string, method string) (json.Ra
 	if err != nil {
 		return nil, err
 	}
-
-	log.Printf("[REsPONsE] %s", b)
 
 	if response.StatusCode >= 400 {
 		var e DNSErrorResponse

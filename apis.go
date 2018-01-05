@@ -38,7 +38,7 @@ type ListAPIs struct {
 }
 
 func (req *ListAPIs) name() string {
-	return "listAPIs"
+	return "listApis"
 }
 
 func (req *ListAPIs) response() interface{} {

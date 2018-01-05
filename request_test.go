@@ -20,8 +20,10 @@ func TestPrepareValues(t *testing.T) {
 		IgnoreMe string
 		Zone     string            `json:"myzone,omitempty"`
 		Name     string            `json:"name"`
+		NoName   string            `json:"omitempty"`
 		ID       int               `json:"id"`
 		UserID   uint              `json:"user_id"`
+		IsGreat  bool              `json:"is_great"`
 		Num      float64           `json:"num"`
 		Bytes    []byte            `json:"bytes"`
 		Tags     []*tag            `json:"tags,omitempty"`
@@ -29,6 +31,7 @@ func TestPrepareValues(t *testing.T) {
 	}{
 		IgnoreMe: "bar",
 		Name:     "world",
+		NoName:   "foo",
 		ID:       1,
 		UserID:   uint(2),
 		Num:      3.14,
@@ -52,6 +55,10 @@ func TestPrepareValues(t *testing.T) {
 		t.Errorf("myzone params shouldn't be set, got %v", params.Get("myzone"))
 	}
 
+	if params.Get("NoName") != "foo" {
+		t.Errorf("NoName params wasn't properly set, got %v", params.Get("NoName"))
+	}
+
 	if params.Get("name") != "world" {
 		t.Errorf("name params wasn't properly set, got %v", params.Get("name"))
 	}
@@ -72,6 +79,11 @@ func TestPrepareValues(t *testing.T) {
 	v = params.Get("map[0].foo")
 	if v != "bar" {
 		t.Errorf("expected map to be serialized as .foo = \"bar\", got %#v", v)
+	}
+
+	v = params.Get("is_great")
+	if v != "false" {
+		t.Errorf("expected bool to be serialized as \"false\", got %#v", v)
 	}
 }
 
@@ -141,6 +153,18 @@ func TestPrepareValuesBytesRequired(t *testing.T) {
 func TestPrepareValuesSliceString(t *testing.T) {
 	profile := struct {
 		RequiredField []string `json:"requiredfield"`
+	}{}
+
+	params := url.Values{}
+	err := prepareValues("", &params, &profile)
+	if err == nil {
+		t.Errorf("It should have failed")
+	}
+}
+
+func TestPrepareValuesMap(t *testing.T) {
+	profile := struct {
+		RequiredField map[string]string `json:"requiredfield"`
 	}{}
 
 	params := url.Values{}

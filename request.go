@@ -32,6 +32,14 @@ type AsyncCommand interface {
 	asyncResponse() interface{}
 }
 
+// Command represents an action to be done on the params before sending them
+//
+// This little took helps with issue of relying on JSON serialization logic only.
+// `omitempty` may make sense in some cases but not all the time.
+type onBeforeHook interface {
+	onBeforeSend(params *url.Values) error
+}
+
 const (
 	// PENDING represents a job in progress
 	PENDING JobStatusType = iota
@@ -273,6 +281,10 @@ func (exo *Client) request(command string, req interface{}) (json.RawMessage, er
 	err := prepareValues("", &params, req)
 	if err != nil {
 		return nil, err
+	}
+
+	if hookReq, ok := req.(onBeforeHook); ok {
+		hookReq.onBeforeSend(&params)
 	}
 
 	params.Set("apikey", exo.apiKey)

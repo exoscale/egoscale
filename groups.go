@@ -1,5 +1,10 @@
 package egoscale
 
+import (
+	"net/url"
+	"strconv"
+)
+
 // SecurityGroup represent a firewalling set of rules
 type SecurityGroup struct {
 	ID                  string         `json:"id"`
@@ -117,6 +122,15 @@ func (req *AuthorizeSecurityGroupIngress) asyncResponse() interface{} {
 	return new(AuthorizeSecurityGroupIngressResponse)
 }
 
+func (req *AuthorizeSecurityGroupIngress) onBeforeSend(params *url.Values) error {
+	// ICMP code and type may be zero but can also be omitted...
+	if req.Protocol == "ICMP" {
+		params.Set("icmpcode", strconv.FormatInt(int64(req.IcmpCode), 10))
+		params.Set("icmptype", strconv.FormatInt(int64(req.IcmpType), 10))
+	}
+	return nil
+}
+
 // AuthorizeSecurityGroupIngressResponse represents the new egress rule
 // /!\ the Cloud Stack API document is not fully accurate. /!\
 type AuthorizeSecurityGroupIngressResponse SecurityGroupResponse
@@ -132,6 +146,10 @@ func (req *AuthorizeSecurityGroupEgress) name() string {
 
 func (req *AuthorizeSecurityGroupEgress) asyncResponse() interface{} {
 	return new(AuthorizeSecurityGroupEgressResponse)
+}
+
+func (req *AuthorizeSecurityGroupEgress) onBeforeSend(params *url.Values) error {
+	return (*AuthorizeSecurityGroupIngress)(req).onBeforeSend(params)
 }
 
 // AuthorizeSecurityGroupEgressResponse represents the new egress rule

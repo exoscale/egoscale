@@ -6,7 +6,9 @@ import (
 
 func TestGroupsRequests(t *testing.T) {
 	var _ AsyncCommand = (*AuthorizeSecurityGroupEgress)(nil)
+	var _ onBeforeHook = (*AuthorizeSecurityGroupEgress)(nil)
 	var _ AsyncCommand = (*AuthorizeSecurityGroupIngress)(nil)
+	var _ onBeforeHook = (*AuthorizeSecurityGroupIngress)(nil)
 	var _ Command = (*CreateSecurityGroup)(nil)
 	var _ Command = (*DeleteSecurityGroup)(nil)
 	var _ Command = (*ListSecurityGroups)(nil)

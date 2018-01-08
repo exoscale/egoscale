@@ -19,8 +19,9 @@ func TestVirtualMachines(t *testing.T) {
 	var _ AsyncCommand = (*ScaleVirtualMachine)(nil)
 	var _ Command = (*RecoverVirtualMachine)(nil)
 	var _ AsyncCommand = (*ExpungeVirtualMachine)(nil)
+	var _ AsyncCommand = (*AddNicToVirtualMachine)(nil)
+	var _ AsyncCommand = (*RemoveNicFromVirtualMachine)(nil)
 	// TODO implement
-	//var _ AsyncCommand = (*RemoveNICFromVirtualMachine)(nil)
 	//var _ AsyncCommand = (*UpdateDefaultNICFromVirtualMachine)(nil)
 }
 
@@ -119,6 +120,7 @@ func TestScaleVirtualMachine(t *testing.T) {
 	}
 	_ = req.asyncResponse().(*BooleanResponse)
 }
+
 func TestRecoverVirtualMachine(t *testing.T) {
 	req := &RecoverVirtualMachine{}
 	if req.name() != "recoverVirtualMachine" {
@@ -133,4 +135,20 @@ func TestExpungeVirtualMachine(t *testing.T) {
 		t.Errorf("API call doesn't match")
 	}
 	_ = req.asyncResponse().(*BooleanResponse)
+}
+
+func TestAddNicToVirtualMachine(t *testing.T) {
+	req := &AddNicToVirtualMachine{}
+	if req.name() != "addNicToVirtualMachine" {
+		t.Errorf("API call doesn't match")
+	}
+	_ = req.asyncResponse().(*AddNicToVirtualMachineResponse)
+}
+
+func TestRemoveNicFromVirtualMachine(t *testing.T) {
+	req := &RemoveNicFromVirtualMachine{}
+	if req.name() != "removeNicFromVirtualMachine" {
+		t.Errorf("API call doesn't match")
+	}
+	_ = req.asyncResponse().(*RemoveNicFromVirtualMachineResponse)
 }

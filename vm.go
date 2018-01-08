@@ -410,3 +410,42 @@ type ListVirtualMachinesResponse struct {
 	Count          int               `json:"count"`
 	VirtualMachine []*VirtualMachine `json:"virtualmachine"`
 }
+
+// AddNicToVirtualMachine
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/addNicToVirtualMachine.html
+type AddNicToVirtualMachine struct {
+	NetworkID        string `json:"networkdid"`
+	VirtualMachineID string `json:"virtualmachineid"`
+	IPAddress        string `json:"ipaddress,omitempty"`
+}
+
+func (req *AddNicToVirtualMachine) name() string {
+	return "addNicToVirtualMachine"
+}
+
+func (req *AddNicToVirtualMachine) asyncResponse() interface{} {
+	return new(AddNicToVirtualMachineResponse)
+}
+
+// AddNicToVirtualMachineResponse represents the modified VM
+type AddNicToVirtualMachineResponse VirtualMachineResponse
+
+// RemoveNicFromVirtualMachine
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/removeNicFromVirtualMachine.html
+type RemoveNicFromVirtualMachine struct {
+	NicID            string `json:"nicid"`
+	VirtualMachineID string `json:"virtualmachineid"`
+}
+
+func (req *RemoveNicFromVirtualMachine) name() string {
+	return "removeNicFromVirtualMachine"
+}
+
+func (req *RemoveNicFromVirtualMachine) asyncResponse() interface{} {
+	return new(RemoveNicFromVirtualMachineResponse)
+}
+
+// RemoveNicFromVirtualMachineResponse represents the modified VM
+type RemoveNicFromVirtualMachineResponse VirtualMachineResponse

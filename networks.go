@@ -27,7 +27,7 @@ type Network struct {
 	NetworkDomain               string         `json:"networkdomain,omitempty"`
 	NetworkOfferingAvailability string         `json:"networkofferingavailability,omitempty"`
 	NetworkOfferingConserveMode bool           `json:"networkofferingconservemode,omitempty"`
-	NetworkOferringDisplayText  string         `json:"networkofferingdisplaytext,omitempty"`
+	NetworkOfferingDisplayText  string         `json:"networkofferingdisplaytext,omitempty"`
 	NetworkOfferingID           string         `json:"networkofferingid,omitempty"`
 	NetworkOfferingName         string         `json:"networkofferingname,omitempty"`
 	PhysicalNetworkID           string         `json:"physicalnetworkid,omitempty"`

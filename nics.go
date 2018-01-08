@@ -62,7 +62,7 @@ type AddIPToNic struct {
 }
 
 func (req *AddIPToNic) name() string {
-	return "addIPToNic"
+	return "addIpToNic"
 }
 func (req *AddIPToNic) asyncResponse() interface{} {
 	return new(AddIPToNicResponse)
@@ -79,7 +79,7 @@ type RemoveIPFromNic struct {
 }
 
 func (req *RemoveIPFromNic) name() string {
-	return "removeIPFromNic"
+	return "removeIpFromNic"
 }
 
 func (req *RemoveIPFromNic) asyncResponse() interface{} {

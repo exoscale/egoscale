@@ -290,6 +290,9 @@ func (req *ExpungeVirtualMachine) asyncResponse() interface{} {
 
 // ScaleVirtualMachine (Async) represents the scaling of a VM
 //
+// ChangeServiceForVirtualMachine does the same thing but returns the
+// new Virtual Machine which is more consistent with the rest of the API.
+//
 // CloudStack API: https://cloudstack.apache.org/api/apidocs-4.10/apis/scaleVirtualMachine.html
 type ScaleVirtualMachine struct {
 	ID                string            `json:"id"`

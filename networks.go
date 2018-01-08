@@ -75,7 +75,118 @@ type ServiceProvider struct {
 	ServiceList                  []string `json:"servicelist,omitempty"`
 }
 
+// NetworkResponse represents a network
+type NetworkResponse struct {
+	Network *Network `json:"network"`
+}
+
+// CreateNetwork
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/createNetwork.html
+type CreateNetwork struct {
+	DisplayText       string `json:"displaytext"`
+	Name              string `json:"name"`
+	NetworkOfferingID string `json:"networkofferingid"`
+	ZoneID            string `json:"zoneid"`
+	Account           string `json:"account,omitempty"`
+	ACLID             string `json:"aclid,omitempty"`
+	ACLType           string `json:"acltype,omitempty"`        // Account or Domain
+	DisplayNetwork    bool   `json:"displaynetwork,omitempty"` // root only
+	DomainID          string `json:"domainid,omitempty"`
+	EndIP             string `json:"endip,omitempty"`
+	EndIpv6           string `json:"endipv6,omitempty"`
+	Gateway           string `json:"gateway,omitempty"`
+	IP6Cidr           string `json:"ip6cidr,omitempty"`
+	IP6Gateway        string `json:"ip6gateway,omitempty"`
+	IsolatedPVlan     string `json:"isolatedpvlan,omitempty"`
+	Netmask           string `json:"netmask,omitempty"`
+	NetworkDomain     string `json:"networkdomain,omitempty"`
+	PhysicalNetworkID string `json:"physicalnetworkid,omitempty"`
+	ProjectID         string `json:"projectid,omitempty"`
+	StartIP           string `json:"startip,omitempty"`
+	StartIpv6         string `json:"startipv6,omitempty"`
+	SubdomainAccess   string `json:"subdomainaccess,omitempty"`
+	Vlan              string `json:"vlan,omitempty"`
+	VpcID             string `json:"vpcid,omitempty"`
+}
+
+func (req *CreateNetwork) name() string {
+	return "createNetwork"
+}
+
+func (req *CreateNetwork) asyncResponse() interface{} {
+	return new(CreateNetworkResponse)
+}
+
+// CreateNetworkResponse represents a freshly created network
+type CreateNetworkResponse NetworkResponse
+
+// UpdateNetwork updates a network
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/updateNetwork.html
+type UpdateNetwork struct {
+	ID                string `json:"id"`
+	ChangeCidr        bool   `json:"changecidr,omitempty"`
+	CustomID          string `json:"customid,omitempty"` // root only
+	DisplayNetwork    string `json:"displaynetwork"`
+	DisplayText       string `json:"displaytext"`
+	Forced            bool   `json:"forced,omitempty"`
+	GuestVMCidr       string `json:"guestvmcidr,omitempty"`
+	Name              string `json:"name"`
+	NetworkDomain     string `json:"networkdomain,omitempty"`
+	NetworkOfferingID string `json:"networkofferingid"`
+	UpdateInSequence  bool   `json:"updateinsequence,omitempty"`
+}
+
+func (req *UpdateNetwork) name() string {
+	return "updateNetwork"
+}
+
+func (req *UpdateNetwork) asyncResponse() interface{} {
+	return new(UpdateNetworkResponse)
+}
+
+// UpdateNetworkResponse represents a freshly created network
+type UpdateNetworkResponse NetworkResponse
+
+// RestartNetwork updates a network
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/restartNetwork.html
+type RestartNetwork struct {
+	ID      string `json:"id"`
+	Cleanup bool   `json:"cleanup,omitempty"`
+}
+
+func (req *RestartNetwork) name() string {
+	return "restartNetwork"
+}
+
+func (req *RestartNetwork) asyncResponse() interface{} {
+	return new(RestartNetworkResponse)
+}
+
+// RestartNetworkResponse represents a freshly created network
+type RestartNetworkResponse NetworkResponse
+
+// DeleteNetwork deletes a network
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteNetwork.html
+type DeleteNetwork struct {
+	ID     string `json:"id"`
+	Forced bool   `json:"forced,omitempty"`
+}
+
+func (req *DeleteNetwork) name() string {
+	return "deleteNetwork"
+}
+
+func (req *DeleteNetwork) asyncResponse() interface{} {
+	return new(BooleanResponse)
+}
+
 // ListNetworks represents a query to a network
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/listNetworks.html
 type ListNetworks struct {
 	Account           string         `json:"account,omitempty"`
 	ACLType           string         `json:"acltype,omitempty"` // Account or Domain

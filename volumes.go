@@ -6,45 +6,31 @@ import (
 
 // Volume represents a volume linked to a VM
 type Volume struct {
-	ID                         string        `json:"id"`
-	Account                    string        `json:"account,omitempty"`
-	Attached                   string        `json:"attached,omitempty"`
-	ChainInfo                  string        `json:"chaininfo,omitempty"`
-	Created                    string        `json:"created,omitempty"`
-	Destroyed                  bool          `json:"destroyed,omitempty"`
-	DisplayVolume              bool          `json:"displayvolume,omitempty"`
-	Domain                     string        `json:"domain,omitempty"`
-	DomainID                   string        `json:"domainid,omitempty"`
-	Name                       string        `json:"name,omitempty"`
-	QuiesceVM                  bool          `json:"quiescevm,omitempty"`
-	ServiceOfferingDisplayText string        `json:"serviceofferingdisplaytext,omitempty"`
-	ServiceOfferingID          string        `json:"serviceofferingid,omitempty"`
-	ServiceOfferingName        string        `json:"serviceofferingname,omitempty"`
-	Size                       uint64        `json:"size,omitempty"`
-	State                      string        `json:"state,omitempty"`
-	Type                       string        `json:"type,omitempty"`
-	VirtualMachineID           string        `json:"virtualmachineid,omitempty"`
-	VMName                     string        `json:"vmname,omitempty"`
-	VMState                    string        `json:"vmstate,omitempty"`
-	ZoneID                     string        `json:"zoneid,omitempty"`
-	ZoneName                   string        `json:"zonename,omitempty"`
-	Tags                       []*VolumeTag  `json:"tags,omitempty"`
-	JobID                      string        `json:"jobid,omitempty"`
-	JobStatus                  JobStatusType `json:"jobstatus,omitempty"`
-}
-
-// VolumeTag represents a tag associated with a Volume
-type VolumeTag struct {
-	Account    string `json:"account,omitempty"`
-	Customer   string `json:"customer,omitempty"`
-	Domain     string `json:"domain,omitempty"`
-	DomainID   string `json:"domainid,omitempty"`
-	Key        string `json:"key,omitempty"`
-	Project    string `json:"project,omitempty"`
-	ProjectID  string `json:"projectid,omitempty"`
-	Resource   string `json:"resource,omitempty"`
-	ResourceID string `json:"resourceid,omitempty"`
-	Value      string `json:"value,omitempty"`
+	ID                         string         `json:"id"`
+	Account                    string         `json:"account,omitempty"`
+	Attached                   string         `json:"attached,omitempty"`
+	ChainInfo                  string         `json:"chaininfo,omitempty"`
+	Created                    string         `json:"created,omitempty"`
+	Destroyed                  bool           `json:"destroyed,omitempty"`
+	DisplayVolume              bool           `json:"displayvolume,omitempty"`
+	Domain                     string         `json:"domain,omitempty"`
+	DomainID                   string         `json:"domainid,omitempty"`
+	Name                       string         `json:"name,omitempty"`
+	QuiesceVM                  bool           `json:"quiescevm,omitempty"`
+	ServiceOfferingDisplayText string         `json:"serviceofferingdisplaytext,omitempty"`
+	ServiceOfferingID          string         `json:"serviceofferingid,omitempty"`
+	ServiceOfferingName        string         `json:"serviceofferingname,omitempty"`
+	Size                       uint64         `json:"size,omitempty"`
+	State                      string         `json:"state,omitempty"`
+	Type                       string         `json:"type,omitempty"`
+	VirtualMachineID           string         `json:"virtualmachineid,omitempty"`
+	VMName                     string         `json:"vmname,omitempty"`
+	VMState                    string         `json:"vmstate,omitempty"`
+	ZoneID                     string         `json:"zoneid,omitempty"`
+	ZoneName                   string         `json:"zonename,omitempty"`
+	Tags                       []*ResourceTag `json:"tags,omitempty"`
+	JobID                      string         `json:"jobid,omitempty"`
+	JobStatus                  JobStatusType  `json:"jobstatus,omitempty"`
 }
 
 // ResizeVolume (Async) resizes a volume

@@ -23,12 +23,14 @@ type EventType struct {
 }
 
 // ListEvents list the events
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/listEvents.html
 type ListEvents struct {
 	Account     string `json:"account,omitempty"`
 	DomainID    string `json:"domainid,omitempty"`
-	Duration    int64  `json:"duration,omitempty"`
+	Duration    int    `json:"duration,omitempty"`
 	EndDate     string `json:"enddate,omitempty"`
-	EntryTime   int64  `json:"entrytime,omitempty"`
+	EntryTime   int    `json:"entrytime,omitempty"`
 	ID          string `json:"id,omitempty"`
 	IsRecursive bool   `json:"isrecursive,omitempty"`
 	Keyword     string `json:"keyword,omitempty"`
@@ -36,7 +38,7 @@ type ListEvents struct {
 	ListAll     bool   `json:"listall,omitempty"`
 	Page        int    `json:"page,omitempty"`
 	PageSize    int    `json:"pagesize,omitempty"`
-	ProjectID   int    `json:"projectid,omitempty"`
+	ProjectID   string `json:"projectid,omitempty"`
 	StartDate   string `json:"startdate,omitempty"`
 	Type        string `json:"type,omitempty"`
 }
@@ -56,6 +58,8 @@ type ListEventsResponse struct {
 }
 
 // ListEventTypes list the event types
+//
+// CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/listEventTypes.html
 type ListEventTypes struct{}
 
 func (req *ListEventTypes) name() string {

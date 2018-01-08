@@ -58,7 +58,7 @@ type JobStatusType int
 type JobResultResponse struct {
 	AccountID     string           `json:"accountid,omitempty"`
 	Cmd           string           `json:"cmd"`
-	CreatedAt     string           `json:"created"`
+	Created       string           `json:"created"`
 	JobID         string           `json:"jobid"`
 	JobProcStatus int              `json:"jobprocstatus"`
 	JobResult     *json.RawMessage `json:"jobresult"`

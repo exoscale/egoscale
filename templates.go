@@ -12,7 +12,7 @@ type Template struct {
 	AccountID             string            `json:"accountid,omitempty"`
 	Bootable              bool              `json:"bootable,omitempty"`
 	Checksum              string            `json:"checksum,omitempty"`
-	CreatedAt             string            `json:"created,omitempty"`
+	Created               string            `json:"created,omitempty"`
 	CrossZones            bool              `json:"crossZones,omitempty"`
 	Details               map[string]string `json:"details,omitempty"`
 	DisplayText           string            `json:"displaytext,omitempty"`
@@ -34,7 +34,7 @@ type Template struct {
 	PasswordEnabled       bool              `json:"passwordenabled,omitempty"`
 	Project               string            `json:"project,omitempty"`
 	ProjectID             string            `json:"projectid,omitempty"`
-	RemovedAt             string            `json:"removed,omitempty"`
+	Removed               string            `json:"removed,omitempty"`
 	Size                  int64             `json:"size,omitempty"`
 	SourceTemplateID      string            `json:"sourcetemplateid,omitempty"`
 	SSHKeyEnabled         bool              `json:"sshkeyenabled,omitempty"`

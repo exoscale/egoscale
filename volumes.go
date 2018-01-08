@@ -8,9 +8,9 @@ import (
 type Volume struct {
 	ID                         string        `json:"id"`
 	Account                    string        `json:"account,omitempty"`
-	AttachedAt                 string        `json:"attached,omitempty"`
+	Attached                   string        `json:"attached,omitempty"`
 	ChainInfo                  string        `json:"chaininfo,omitempty"`
-	CreatedAt                  string        `json:"created,omitempty"`
+	Created                    string        `json:"created,omitempty"`
 	Destroyed                  bool          `json:"destroyed,omitempty"`
 	DisplayVolume              bool          `json:"displayvolume,omitempty"`
 	Domain                     string        `json:"domain,omitempty"`

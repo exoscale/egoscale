@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -456,13 +457,25 @@ func prepareValues(prefix string, params *url.Values, command interface{}) error
 			case reflect.Slice:
 				switch field.Type.Elem().Kind() {
 				case reflect.Uint8:
-					if val.Len() == 0 {
-						if required {
-							return fmt.Errorf("%s.%s (%v) is required, got empty slice", typeof.Name(), field.Name, val.Kind())
+					switch field.Type {
+					case reflect.TypeOf(net.IPv4zero):
+						ip := (net.IP)(val.Bytes())
+						if ip == nil || ip.Equal(net.IPv4zero) {
+							if required {
+								return fmt.Errorf("%s.%s (%v) is required, got zero IPv4 address", typeof.Name(), field.Name, val.Kind())
+							}
+						} else {
+							(*params).Set(name, ip.String())
 						}
-					} else {
-						v := val.Bytes()
-						(*params).Set(name, base64.StdEncoding.EncodeToString(v))
+					default:
+						if val.Len() == 0 {
+							if required {
+								return fmt.Errorf("%s.%s (%v) is required, got empty slice", typeof.Name(), field.Name, val.Kind())
+							}
+						} else {
+							v := val.Bytes()
+							(*params).Set(name, base64.StdEncoding.EncodeToString(v))
+						}
 					}
 				case reflect.String:
 					{

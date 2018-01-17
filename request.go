@@ -43,16 +43,53 @@ type onBeforeHook interface {
 }
 
 const (
-	// PENDING represents a job in progress
-	PENDING JobStatusType = iota
-	// SUCCESS represents a successfully completed job
-	SUCCESS
-	// FAILURE represents a job that has failed to complete
-	FAILURE
+	// Pending represents a job in progress
+	Pending JobStatusType = iota
+	// Success represents a successfully completed job
+	Success
+	// Failure represents a job that has failed to complete
+	Failure
 )
 
 // JobStatusType represents the status of a Job
 type JobStatusType int
+
+const (
+	// Unauthorized represents ... (TODO)
+	Unauthorized ErrorCode = 401
+	// MethodNotAllowed represents ... (TODO)
+	MethodNotAllowed = 405
+	// UnsupportedActionError represents ... (TODO)
+	UnsupportedActionError = 422
+	// APILimitExceeded represents ... (TODO)
+	APILimitExceeded = 429
+	// MalformedParameterError represents ... (TODO)
+	MalformedParameterError
+	// ParamError represents ... (TODO)
+	ParamError
+
+	// InternalError represents a server error
+	InternalError = 530
+	// AccountError represents ... (TODO)
+	AccountError
+	// AccountResourceLimitError represents ... (TODO)
+	AccountResourceLimitError
+	// InsufficientCapacityError represents ... (TODO)
+	InsufficientCapacityError
+	// ResourceUnavailableError represents ... (TODO)
+	ResourceUnavailableError
+	// ResourceAllocationError represents ... (TODO)
+	ResourceAllocationError
+	// ResourceInUseError represents ... (TODO)
+	ResourceInUseError
+	// NetworkRuleConflictError represents ... (TODO)
+	NetworkRuleConflictError
+)
+
+// ErrorCode represents the CloudStack ApiErrorCode enum
+//
+// See: https://github.com/apache/cloudstack/blob/master/api/src/org/apache/cloudstack/api/ApiErrorCode.java
+type ErrorCode int
 
 // JobResultResponse represents a generic response to a job task
 type JobResultResponse struct {
@@ -69,10 +106,10 @@ type JobResultResponse struct {
 
 // ErrorResponse represents the standard error response from CloudStack
 type ErrorResponse struct {
-	ErrorCode   int      `json:"errorcode"`
-	CsErrorCode int      `json:"cserrorcode"`
-	ErrorText   string   `json:"errortext"`
-	UUIDList    []string `json:"uuidList,omitempty"` // uuid*L*ist is not a typo
+	ErrorCode   ErrorCode `json:"errorcode"`
+	CsErrorCode int       `json:"cserrorcode"`
+	ErrorText   string    `json:"errortext"`
+	UUIDList    []string  `json:"uuidList,omitempty"` // uuid*L*ist is not a typo
 }
 
 // Error formats a CloudStack error into a standard error
@@ -191,7 +228,7 @@ func (exo *Client) AsyncRequest(req AsyncCommand, async AsyncInfo) (interface{},
 	errorResponse := new(ErrorResponse)
 	// Successful response
 	resp := req.asyncResponse()
-	if job.JobID == "" || job.JobStatus != PENDING {
+	if job.JobID == "" || job.JobStatus != Pending {
 		if err := json.Unmarshal(*job.JobResult, resp); err != nil {
 			return job, err
 		}
@@ -202,7 +239,7 @@ func (exo *Client) AsyncRequest(req AsyncCommand, async AsyncInfo) (interface{},
 	result := &QueryAsyncJobResultResponse{
 		JobStatus: job.JobStatus,
 	}
-	for async.Retries > 0 && result.JobStatus == PENDING {
+	for async.Retries > 0 && result.JobStatus == Pending {
 		time.Sleep(time.Duration(async.Delay) * time.Second)
 
 		async.Retries--
@@ -215,14 +252,14 @@ func (exo *Client) AsyncRequest(req AsyncCommand, async AsyncInfo) (interface{},
 		result = resp.(*QueryAsyncJobResultResponse)
 	}
 
-	if result.JobStatus == FAILURE {
+	if result.JobStatus == Failure {
 		if err := json.Unmarshal(*result.JobResult, &errorResponse); err != nil {
 			return nil, err
 		}
 		return errorResponse, errorResponse
 	}
 
-	if result.JobStatus == PENDING {
+	if result.JobStatus == Pending {
 		return result, fmt.Errorf("Maximum number of retries reached")
 	}
 

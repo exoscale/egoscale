@@ -195,9 +195,7 @@ func (req *DeployVirtualMachine) onBeforeSend(params *url.Values) error {
 	}
 
 	// Either SecurityGroupIDs or SecurityGroupNames must be set
-	if len(req.SecurityGroupIDs) == 0 && len(req.SecurityGroupNames) == 0 {
-		return fmt.Errorf("SecurityGroupIDs or SecurityGroupNames must be non-empty")
-	} else if len(req.SecurityGroupIDs) > 0 && len(req.SecurityGroupNames) > 0 {
+	if len(req.SecurityGroupIDs) > 0 && len(req.SecurityGroupNames) > 0 {
 		return fmt.Errorf("Either SecurityGroupIDs or SecurityGroupNames must be set")
 	}
 

@@ -185,8 +185,9 @@ func TestDeployOnBeforeSendNoSG(t *testing.T) {
 	req := &DeployVirtualMachine{}
 	params := new(url.Values)
 
-	if err := req.onBeforeSend(params); err == nil {
-		t.Errorf("DeployVM should have at least some SG")
+	// CS will pick the default oiine
+	if err := req.onBeforeSend(params); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -204,7 +205,6 @@ func TestDeployOnBeforeSendBothSG(t *testing.T) {
 
 func TestDeployOnBeforeSendBothAG(t *testing.T) {
 	req := &DeployVirtualMachine{
-		SecurityGroupIDs:   []string{"1"},
 		AffinityGroupIDs:   []string{"2"},
 		AffinityGroupNames: []string{"foo"},
 	}

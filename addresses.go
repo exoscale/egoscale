@@ -3,6 +3,7 @@ package egoscale
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/jinzhu/copier"
 )
@@ -100,4 +101,6 @@ func (req *ListPublicIPAddresses) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }

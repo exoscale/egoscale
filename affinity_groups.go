@@ -125,6 +125,7 @@ func (req *UpdateVMAffinityGroup) onBeforeSend(params *url.Values) error {
 	if len(req.AffinityGroupIDs) == 0 && len(req.AffinityGroupNames) == 0 {
 		params.Set("affinitygroupids", "")
 	}
+
 	return nil
 }
 
@@ -182,6 +183,8 @@ func (req *ListAffinityGroups) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListAffinityGroupTypes represents an (anti-)affinity groups search

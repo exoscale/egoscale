@@ -1,5 +1,9 @@
 package egoscale
 
+import (
+	"net/url"
+)
+
 // Event represents an event in the system
 type Event struct {
 	ID          string `json:"id"`
@@ -57,6 +61,8 @@ func (req *ListEvents) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListEventsResponse represents a response of a list query

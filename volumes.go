@@ -2,6 +2,7 @@ package egoscale
 
 import (
 	"context"
+	"net/url"
 )
 
 // Volume represents a volume linked to a VM
@@ -147,6 +148,8 @@ func (req *ListVolumes) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListVolumesResponse represents a list of volumes

@@ -549,6 +549,8 @@ func (req *ListVirtualMachines) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListVirtualMachinesResponse represents a list of virtual machines

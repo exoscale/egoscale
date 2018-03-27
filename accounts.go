@@ -1,5 +1,9 @@
 package egoscale
 
+import (
+	"net/url"
+)
+
 const (
 	// UserAccount represents a User
 	UserAccount = iota
@@ -97,6 +101,8 @@ func (req *ListAccounts) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListAccountsResponse represents a list of accounts

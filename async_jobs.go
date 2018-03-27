@@ -2,6 +2,7 @@ package egoscale
 
 import (
 	"encoding/json"
+	"net/url"
 )
 
 // AsyncJobResult represents an asynchronous job result
@@ -61,11 +62,13 @@ func (*ListAsyncJobs) response() interface{} {
 	return new(ListAsyncJobsResponse)
 }
 
-func (req *ListPublicIPAddresses) onBeforeSend(params *url.Values) error {
+func (req *ListAsyncJobs) onBeforeSend(params *url.Values) error {
 	// When pagesize is set, the page must also be set
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListAsyncJobsResponse represents a list of job results

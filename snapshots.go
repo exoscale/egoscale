@@ -1,5 +1,9 @@
 package egoscale
 
+import (
+	"net/url"
+)
+
 // Snapshot represents a volume snapshot
 type Snapshot struct {
 	ID           string        `json:"id"`
@@ -90,6 +94,8 @@ func (req *ListSnapshots) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListSnapshotsResponse represents a list of volume snapshots

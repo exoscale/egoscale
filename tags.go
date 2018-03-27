@@ -1,5 +1,9 @@
 package egoscale
 
+import (
+	"net/url"
+)
+
 // Taggable represents a resource which can have tags attached
 //
 // This is a helper to fill the resourcetype of a CreateTags call
@@ -94,6 +98,8 @@ func (req *ListTags) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListTagsResponse represents a list of resource tags

@@ -46,13 +46,6 @@ func (*ListAPIs) response() interface{} {
 	return new(ListAPIsResponse)
 }
 
-func (req *ListAPIs) onBeforeSend(params *url.Values) error {
-	// When pagesize is set, the page must also be set
-	if req.PageSize > 0 && req.Page == 0 {
-		params.Set("page", "0")
-	}
-}
-
 // ListAPIsResponse represents a list of API
 type ListAPIsResponse struct {
 	Count int   `json:"count"`

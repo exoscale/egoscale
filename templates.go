@@ -1,5 +1,9 @@
 package egoscale
 
+import (
+	"net/url"
+)
+
 // Template represents a machine to be deployed
 type Template struct {
 	Account               string            `json:"account,omitempty"`
@@ -75,6 +79,8 @@ func (req *ListTemplates) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListTemplatesResponse represents a list of templates

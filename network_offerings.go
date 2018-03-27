@@ -1,5 +1,9 @@
 package egoscale
 
+import (
+	"net/url"
+)
+
 // NetworkOffering corresponds to the Compute Offerings
 type NetworkOffering struct {
 	ID                       string            `json:"id"`
@@ -67,6 +71,8 @@ func (req *ListNetworkOfferings) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListNetworkOfferingsResponse represents a list of service offerings

@@ -284,6 +284,8 @@ func (req *ListSecurityGroups) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListSecurityGroupsResponse represents a list of security groups

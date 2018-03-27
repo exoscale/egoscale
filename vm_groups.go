@@ -1,5 +1,9 @@
 package egoscale
 
+import (
+	"net/url"
+)
+
 // InstanceGroup represents a group of VM
 type InstanceGroup struct {
 	ID        string `json:"id"`
@@ -108,6 +112,8 @@ func (req *ListInstanceGroups) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListInstanceGroupsResponse represents a list of instance groups

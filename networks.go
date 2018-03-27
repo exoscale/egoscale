@@ -252,6 +252,8 @@ func (req *ListNetworks) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListNetworksResponse represents the list of networks

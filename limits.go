@@ -1,5 +1,9 @@
 package egoscale
 
+import (
+	"net/url"
+)
+
 // https://github.com/apache/cloudstack/blob/master/api/src/main/java/com/cloud/configuration/Resource.java
 
 // ResourceTypeName represents the name of a resource type (for limits)
@@ -93,6 +97,8 @@ func (req *ListResourceLimits) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListResourceLimitsResponse represents a list of resource limits

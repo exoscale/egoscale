@@ -3,6 +3,7 @@ package egoscale
 import (
 	"context"
 	"net"
+	"net/url"
 )
 
 // Nic represents a Network Interface Controller (NIC)
@@ -106,6 +107,8 @@ func (req *ListNics) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListNicsResponse represents a list of templates

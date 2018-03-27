@@ -3,6 +3,7 @@ package egoscale
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/jinzhu/copier"
 )
@@ -157,6 +158,8 @@ func (req *ListSSHKeyPairs) onBeforeSend(params *url.Values) error {
 	if req.PageSize > 0 && req.Page == 0 {
 		params.Set("page", "0")
 	}
+
+	return nil
 }
 
 // ListSSHKeyPairsResponse represents a list of SSH key pairs

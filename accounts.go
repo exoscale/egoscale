@@ -92,6 +92,13 @@ func (*ListAccounts) response() interface{} {
 	return new(ListAccountsResponse)
 }
 
+func (req *ListAccounts) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListAccountsResponse represents a list of accounts
 type ListAccountsResponse struct {
 	Count   int       `json:"count"`

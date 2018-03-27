@@ -59,6 +59,13 @@ func (*ListServiceOfferings) response() interface{} {
 	return new(ListServiceOfferingsResponse)
 }
 
+func (req *ListServiceOfferings) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListServiceOfferingsResponse represents a list of service offerings
 type ListServiceOfferingsResponse struct {
 	Count           int               `json:"count"`

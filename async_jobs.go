@@ -61,6 +61,13 @@ func (*ListAsyncJobs) response() interface{} {
 	return new(ListAsyncJobsResponse)
 }
 
+func (req *ListPublicIPAddresses) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListAsyncJobsResponse represents a list of job results
 type ListAsyncJobsResponse struct {
 	Count     int              `json:"count"`

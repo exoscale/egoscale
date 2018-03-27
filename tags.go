@@ -89,6 +89,13 @@ func (*ListTags) response() interface{} {
 	return new(ListTagsResponse)
 }
 
+func (req *ListTags) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListTagsResponse represents a list of resource tags
 type ListTagsResponse struct {
 	Count int           `json:"count"`

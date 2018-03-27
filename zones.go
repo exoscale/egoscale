@@ -101,6 +101,13 @@ func (*ListZones) response() interface{} {
 	return new(ListZonesResponse)
 }
 
+func (req *ListZones) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListZonesResponse represents a list of zones
 type ListZonesResponse struct {
 	Count int    `json:"count"`

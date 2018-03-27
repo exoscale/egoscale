@@ -152,6 +152,13 @@ func (*ListSSHKeyPairs) response() interface{} {
 	return new(ListSSHKeyPairsResponse)
 }
 
+func (req *ListSSHKeyPairs) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListSSHKeyPairsResponse represents a list of SSH key pairs
 type ListSSHKeyPairsResponse struct {
 	Count      int          `json:"count"`

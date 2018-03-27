@@ -544,6 +544,13 @@ func (*ListVirtualMachines) response() interface{} {
 	return new(ListVirtualMachinesResponse)
 }
 
+func (req *ListVirtualMachines) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListVirtualMachinesResponse represents a list of virtual machines
 type ListVirtualMachinesResponse struct {
 	Count          int              `json:"count"`

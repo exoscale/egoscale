@@ -52,6 +52,13 @@ func (*ListEvents) response() interface{} {
 	return new(ListEventsResponse)
 }
 
+func (req *ListEvents) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListEventsResponse represents a response of a list query
 type ListEventsResponse struct {
 	Count int     `json:"count"`

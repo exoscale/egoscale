@@ -177,6 +177,13 @@ func (*ListAffinityGroups) response() interface{} {
 	return new(ListAffinityGroupsResponse)
 }
 
+func (req *ListAffinityGroups) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListAffinityGroupTypes represents an (anti-)affinity groups search
 //
 // CloudStack API: http://cloudstack.apache.org/api/apidocs-4.10/apis/listAffinityGroupTypes.html

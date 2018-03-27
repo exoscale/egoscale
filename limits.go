@@ -88,6 +88,13 @@ func (*ListResourceLimits) response() interface{} {
 	return new(ListResourceLimitsResponse)
 }
 
+func (req *ListResourceLimits) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListResourceLimitsResponse represents a list of resource limits
 type ListResourceLimitsResponse struct {
 	Count         int             `json:"count"`

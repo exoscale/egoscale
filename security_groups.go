@@ -279,6 +279,13 @@ func (*ListSecurityGroups) response() interface{} {
 	return new(ListSecurityGroupsResponse)
 }
 
+func (req *ListSecurityGroups) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListSecurityGroupsResponse represents a list of security groups
 type ListSecurityGroupsResponse struct {
 	Count         int             `json:"count"`

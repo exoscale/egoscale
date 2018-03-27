@@ -85,6 +85,13 @@ func (*ListSnapshots) response() interface{} {
 	return new(ListSnapshotsResponse)
 }
 
+func (req *ListSnapshots) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListSnapshotsResponse represents a list of volume snapshots
 type ListSnapshotsResponse struct {
 	Count    int        `json:"count"`

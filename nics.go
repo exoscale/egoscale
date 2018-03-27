@@ -101,6 +101,13 @@ func (*ListNics) response() interface{} {
 	return new(ListNicsResponse)
 }
 
+func (req *ListNics) onBeforeSend(params *url.Values) error {
+	// When pagesize is set, the page must also be set
+	if req.PageSize > 0 && req.Page == 0 {
+		params.Set("page", "0")
+	}
+}
+
 // ListNicsResponse represents a list of templates
 type ListNicsResponse struct {
 	Count int   `json:"count"`

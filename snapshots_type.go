@@ -31,7 +31,6 @@ type Snapshot struct {
 type CreateSnapshot struct {
 	VolumeID  string `json:"volumeid" doc:"The ID of the disk volume"`
 	Account   string `json:"account,omitempty" doc:"The account of the snapshot. The account parameter must be used with the domainId parameter."`
-	Name      string `json:"name,omitempty" doc:"the name of the snapshot"`
 	DomainID  string `json:"domainid,omitempty" doc:"The domain ID of the snapshot. If used with the account parameter, specifies a domain for the account associated with the disk volume."`
 	PolicyID  string `json:"policyid,omitempty" doc:"policy id of the snapshot, if this is null, then use MANUAL_POLICY."`
 	QuiesceVM *bool  `json:"quiescevm,omitempty" doc:"quiesce vm if true"`
@@ -44,7 +43,6 @@ type ListSnapshots struct {
 	Account      string        `json:"account,omitempty" doc:"list resources by account. Must be used with the domainId parameter."`
 	DomainID     string        `json:"domainid,omitempty" doc:"list only resources belonging to the domain specified"`
 	ID           string        `json:"id,omitempty" doc:"lists snapshot by snapshot ID"`
-	IDs          []string      `json:"ids,omitempty" doc:"the IDs of the snapshots, mutually exclusive with id"`
 	IntervalType string        `json:"intervaltype,omitempty" doc:"valid values are HOURLY, DAILY, WEEKLY, and MONTHLY."`
 	IsRecursive  *bool         `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainId till leaves."`
 	Keyword      string        `json:"keyword,omitempty" doc:"List by keyword"`

@@ -27,6 +27,14 @@ func TestListSnapshots(t *testing.T) {
 	_ = req.response().(*ListSnapshotsResponse)
 }
 
+func TestListSnapshotPolicies(t *testing.T) {
+	req := &ListSnapshotPolicies{}
+	if req.name() != "listSnapshotPolicies" {
+		t.Errorf("API call doesn't match")
+	}
+	_ = req.response().(*ListSnapshotPoliciesResponse)
+}
+
 func TestDeleteSnapshot(t *testing.T) {
 	req := &DeleteSnapshot{}
 	if req.name() != "deleteSnapshot" {

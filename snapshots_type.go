@@ -50,6 +50,17 @@ type Snapshot struct {
 	ZoneID       string        `json:"zoneid,omitempty" doc:"id of the availability zone"`
 }
 
+// SnapshotPolicy represents a snapshot policy
+type SnapshotPolicy struct {
+	ForDisplay   *bool  `json:"fordisplay,omitempty" doc:"is this policy for display to the regular user"`
+	ID           string `json:"id,omitempty" doc:"the ID of the snapshot policy"`
+	IntervalType int16  `json:"intervaltype,omitempty" doc:"the interval type of the snapshot policy"`
+	MaxSnaps     int    `json:"maxsnaps,omitempty" doc:"maximum number of snapshots retained"`
+	Schedule     string `json:"schedule,omitempty" doc:"time the snapshot is scheduled to be taken."`
+	Timezone     string `json:"timezone,omitempty" doc:"the time zone of the snapshot policy"`
+	VolumeID     string `json:"volumeid,omitempty" doc:"the ID of the disk volume"`
+}
+
 // CreateSnapshot (Async) creates an instant snapshot of a volume
 //
 // CloudStackAPI: http://cloudstack.apache.org/api/apidocs-4.10/apis/createSnapshot.html
@@ -60,6 +71,11 @@ type CreateSnapshot struct {
 	DomainID  string `json:"domainid,omitempty" doc:"The domain ID of the snapshot. If used with the account parameter, specifies a domain for the account associated with the disk volume."`
 	PolicyID  string `json:"policyid,omitempty" doc:"policy id of the snapshot, if this is null, then use MANUAL_POLICY."`
 	QuiesceVM *bool  `json:"quiescevm,omitempty" doc:"quiesce vm if true"`
+}
+
+// CreateSnapshotResponse represents a freshly created snapshot
+type CreateSnapshotResponse struct {
+	Snapshot Snapshot `json:"snapshot"`
 }
 
 // ListSnapshots lists the volume snapshots
@@ -84,6 +100,12 @@ type ListSnapshots struct {
 	ZoneID       string        `json:"zoneid,omitempty" doc:"list snapshots by zone id"`
 }
 
+// ListSnapshotsResponse represents a list of volume snapshots
+type ListSnapshotsResponse struct {
+	Count    int        `json:"count"`
+	Snapshot []Snapshot `json:"snapshot"`
+}
+
 // DeleteSnapshot (Async) deletes a snapshot of a disk volume
 //
 // CloudStackAPI: http://cloudstack.apache.org/api/apidocs-4.10/apis/deleteSnapshot.html
@@ -96,4 +118,22 @@ type DeleteSnapshot struct {
 // CloudStackAPI: http://cloudstack.apache.org/api/apidocs-4.10/apis/revertSnapshot.html
 type RevertSnapshot struct {
 	ID string `json:"id" doc:"The ID of the snapshot"`
+}
+
+// ListSnapshotPolicies lists snapshot policies
+//
+// CloudStack API: https://cloudstack.apache.org/api/apidocs-4.4/user/listSnapshotPolicies.html
+type ListSnapshotPolicies struct {
+	ForDisplay *bool  `json:"fordisplay,omitempty" doc:"list resources by display flag; only ROOT admin is eligible to pass this parameter"`
+	ID         string `json:"id,omitempty" doc:"the ID of the snapshot policy"`
+	Keyword    string `json:"keyword,omitempty" doc:"List by keyword"`
+	Page       int    `json:"page,omitempty"`
+	PageSize   int    `json:"pagesize,omitempty"`
+	VolumeID   string `json:"volumeid,omitempty" doc:"the ID of the disk volume"`
+}
+
+// ListSnapshotPoliciesResponse represents a list of snapshot policies
+type ListSnapshotPoliciesResponse struct {
+	Count          int              `json:"count"`
+	SnapshotPolicy []SnapshotPolicy `json:"snapshotpolicy"`
 }

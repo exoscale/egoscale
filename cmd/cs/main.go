@@ -75,6 +75,7 @@ var methods = map[string][]cmd{
 		{&egoscale.CreateSnapshot{}, false},
 		{&egoscale.DeleteSnapshot{}, false},
 		{&egoscale.ListSnapshots{}, false},
+		{&egoscale.ListSnapshotPolicies{}, false},
 		{&egoscale.RevertSnapshot{}, false},
 	},
 	"user": []cmd{

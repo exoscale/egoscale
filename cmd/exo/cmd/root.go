@@ -60,7 +60,6 @@ func buildClient() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-
 	envs := map[string]string{
 		"CLOUDSTACK_CONFIG": "config",
 		"CLOUDSTACK_REGION": "region",

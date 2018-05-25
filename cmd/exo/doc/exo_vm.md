@@ -20,7 +20,7 @@ Virtual machines management
 
 ### SEE ALSO
 
-* [exo](exo.md)	 - A simple CLI to use CloudStack using egoscale lib
+* [exo](README.md)	 - A simple CLI to use CloudStack using egoscale lib
 * [exo vm create](exo_vm_create.md)	 - Create and deploy a virtual machine
 * [exo vm delete](exo_vm_delete.md)	 - Delete a virtual machine instance
 * [exo vm list](exo_vm_list.md)	 - List virtual machines instances

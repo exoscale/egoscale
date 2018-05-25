@@ -20,7 +20,7 @@ SSH keys pair management
 
 ### SEE ALSO
 
-* [exo](exo.md)	 - A simple CLI to use CloudStack using egoscale lib
+* [exo](README.md)	 - A simple CLI to use CloudStack using egoscale lib
 * [exo sshkey create](exo_sshkey_create.md)	 - Create ssh keyPair
 * [exo sshkey delete](exo_sshkey_delete.md)	 - Delete ssh keyPair
 * [exo sshkey list](exo_sshkey_list.md)	 - List available ssh keyPair

@@ -20,7 +20,7 @@ Security groups management
 
 ### SEE ALSO
 
-* [exo](exo.md)	 - A simple CLI to use CloudStack using egoscale lib
+* [exo](README.md)	 - A simple CLI to use CloudStack using egoscale lib
 * [exo firewall add](exo_firewall_add.md)	 - Add rule to a security group
 * [exo firewall create](exo_firewall_create.md)	 - Create security group
 * [exo firewall delete](exo_firewall_delete.md)	 - Delete security group

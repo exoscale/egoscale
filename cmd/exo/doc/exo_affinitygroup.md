@@ -20,7 +20,7 @@ Affinity groups management
 
 ### SEE ALSO
 
-* [exo](exo.md)	 - A simple CLI to use CloudStack using egoscale lib
+* [exo](README.md)	 - A simple CLI to use CloudStack using egoscale lib
 * [exo affinitygroup create](exo_affinitygroup_create.md)	 - Create affinity group
 * [exo affinitygroup delete](exo_affinitygroup_delete.md)	 - Delete affinity group
 * [exo affinitygroup list](exo_affinitygroup_list.md)	 - List affinity group

@@ -20,7 +20,7 @@ Elastic IPs management
 
 ### SEE ALSO
 
-* [exo](exo.md)	 - A simple CLI to use CloudStack using egoscale lib
+* [exo](README.md)	 - A simple CLI to use CloudStack using egoscale lib
 * [exo eip associate](exo_eip_associate.md)	 - Associate an IP to an instance
 * [exo eip create](exo_eip_create.md)	 - Create EIP
 * [exo eip delete](exo_eip_delete.md)	 - Delete EIP

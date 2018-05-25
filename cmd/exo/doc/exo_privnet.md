@@ -20,7 +20,7 @@ Private networks management
 
 ### SEE ALSO
 
-* [exo](exo.md)	 - A simple CLI to use CloudStack using egoscale lib
+* [exo](README.md)	 - A simple CLI to use CloudStack using egoscale lib
 * [exo privnet create](exo_privnet_create.md)	 - Create private network
 * [exo privnet delete](exo_privnet_delete.md)	 - Delete private network
 * [exo privnet list](exo_privnet_list.md)	 - List private networks

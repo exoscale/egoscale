@@ -61,27 +61,6 @@ func buildClient() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 
-	envRegion := os.Getenv("CLOUDSTACK_REGION")
-	if envRegion != "" {
-		region = envRegion
-	}
-
-	envEndpoint := os.Getenv("CLOUDSTACK_ENDPOINT")
-	envKey := os.Getenv("CLOUDSTACK_KEY")
-	envSecret := os.Getenv("CLOUDSTACK_SECRET")
-
-	if envEndpoint != "" && envKey != "" && envSecret != "" {
-		cs = egoscale.NewClient(envEndpoint, envKey, envSecret)
-		return
-	}
-
-	envConfigFile := os.Getenv("CLOUDSTACK_CONFIG")
-
-	if envConfigFile != "" {
-		configFilePath = envConfigFile
-		return
-	}
-
 	envs := map[string]string{
 		"CLOUDSTACK_CONFIG": "config",
 		"CLOUDSTACK_REGION": "region",

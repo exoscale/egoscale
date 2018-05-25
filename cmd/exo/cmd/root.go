@@ -13,6 +13,7 @@ import (
 	"github.com/exoscale/egoscale/cmd/exo/client"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 )
 
 var region = "cloudstack"
@@ -55,6 +56,11 @@ func buildClient() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+
+	err := doc.GenMarkdownTree(rootCmd, ".")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	usr, _ := user.Current()
 	configFolder = path.Join(usr.HomeDir, ".exoscale")

@@ -94,7 +94,7 @@ func privnetCreate(name, desc, zone string) {
 		log.Fatal(err)
 	}
 
-	newNet := creatResp.(*egoscale.CreateNetworkResponse).Network
+	newNet := creatResp.(*egoscale.Network)
 
 	table := table.NewTable(os.Stdout)
 	table.SetHeader([]string{"Name", "Description", "ID"})

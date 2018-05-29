@@ -238,7 +238,7 @@ func createVM(vmInfos *egoscale.DeployVirtualMachine) (*egoscale.VirtualMachine,
 
 	}
 
-	r := &egoscale.DeployVirtualMachineResponse{}
+	virtualMachine := &egoscale.VirtualMachine{}
 	var errorReq error
 	print("Deploying")
 	cs.AsyncRequest(vmInfos, func(jobResult *egoscale.AsyncJobResult, err error) bool {
@@ -250,7 +250,7 @@ func createVM(vmInfos *egoscale.DeployVirtualMachine) (*egoscale.VirtualMachine,
 
 		if jobResult.JobStatus == egoscale.Success {
 
-			if err := jobResult.Response(r); err != nil {
+			if err := jobResult.Response(virtualMachine); err != nil {
 				errorReq = err
 			}
 
@@ -266,10 +266,10 @@ func createVM(vmInfos *egoscale.DeployVirtualMachine) (*egoscale.VirtualMachine,
 	}
 
 	if isDefaultKeyPair {
-		saveKeyPair(keyPairs, r.VirtualMachine.ID)
+		saveKeyPair(keyPairs, virtualMachine.ID)
 	}
 
-	return &r.VirtualMachine, nil
+	return virtualMachine, nil
 }
 
 func saveKeyPair(keyPairs *egoscale.SSHKeyPair, vmID string) {

@@ -39,15 +39,15 @@ func firewallCreate(name, desc string) {
 		log.Fatal(err)
 	}
 
-	sgResp := resp.(*egoscale.CreateSecurityGroupResponse)
+	sgResp := resp.(*egoscale.SecurityGroup)
 
 	table := table.NewTable(os.Stdout)
 	if desc == "" {
 		table.SetHeader([]string{"Name", "ID"})
-		table.Append([]string{sgResp.SecurityGroup.Name, sgResp.SecurityGroup.ID})
+		table.Append([]string{sgResp.Name, sgResp.ID})
 	} else {
 		table.SetHeader([]string{"Name", "Description", "ID"})
-		table.Append([]string{sgResp.SecurityGroup.Name, sgResp.SecurityGroup.Description, sgResp.SecurityGroup.ID})
+		table.Append([]string{sgResp.Name, sgResp.Description, sgResp.ID})
 	}
 	table.Render()
 }

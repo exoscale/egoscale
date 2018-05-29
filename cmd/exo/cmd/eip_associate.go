@@ -50,12 +50,12 @@ func associateIP(ipAddr, instance string) error {
 		return err
 	}
 
-	result := resp.(*egoscale.AddIPToNicResponse)
+	result := resp.(*egoscale.NicSecondaryIP)
 
 	table := table.NewTable(os.Stdout)
 	table.SetHeader([]string{"Virtual machine", "IP", "Secondary IP"})
 
-	table.Append([]string{vm.Name, vm.IP().String(), result.NicSecondaryIP.IPAddress.String()})
+	table.Append([]string{vm.Name, vm.IP().String(), result.IPAddress.String()})
 
 	table.Render()
 

@@ -37,12 +37,12 @@ func associateIPAddress(name string) {
 		log.Fatal(err)
 	}
 
-	ipResp := resp.(*egoscale.AssociateIPAddressResponse)
+	ipResp := resp.(*egoscale.IPAddress)
 
 	table := table.NewTable(os.Stdout)
 	table.SetHeader([]string{"Zone", "IP", "ID"})
 
-	table.Append([]string{ipResp.IPAddress.ZoneName, ipResp.IPAddress.IPAddress.String(), ipResp.IPAddress.ID})
+	table.Append([]string{ipResp.ZoneName, ipResp.IPAddress.String(), ipResp.ID})
 
 	table.Render()
 

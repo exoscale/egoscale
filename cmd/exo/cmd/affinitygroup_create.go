@@ -36,7 +36,7 @@ func createAffinityGroup(name, desc string) error {
 		return err
 	}
 
-	affinityGroup := resp.(*egoscale.CreateAffinityGroupResponse).AffinityGroup
+	affinityGroup := resp.(*egoscale.AffinityGroup)
 
 	table := table.NewTable(os.Stdout)
 	table.SetHeader([]string{"Name", "Description", "ID"})

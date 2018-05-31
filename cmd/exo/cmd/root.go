@@ -28,6 +28,7 @@ var gAllAccount *config
 
 //egoscale client
 var cs *egoscale.Client
+var csDNS *egoscale.Client
 
 //Aliases
 var gListAlias = []string{"ls"}

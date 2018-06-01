@@ -9,13 +9,7 @@ import (
 // ACmd represents the A command
 var ACmd = &cobra.Command{
 	Use:   "A",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add A record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("A called")
 	},
@@ -28,13 +22,7 @@ func init() {
 // AAAACmd represents the AAAA command
 var AAAACmd = &cobra.Command{
 	Use:   "AAAA",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add AAAA record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("AAAA called")
 	},
@@ -47,13 +35,7 @@ func init() {
 // ALIASCmd represents the ALIAS command
 var ALIASCmd = &cobra.Command{
 	Use:   "ALIAS",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add ALIAS record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("ALIAS called")
 	},
@@ -66,13 +48,7 @@ func init() {
 // CNAMECmd represents the CNAME command
 var CNAMECmd = &cobra.Command{
 	Use:   "CNAME",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add CNAME record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("CNAME called")
 	},
@@ -86,13 +62,7 @@ func init() {
 // HINFOCmd represents the HINFO command
 var HINFOCmd = &cobra.Command{
 	Use:   "HINFO",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add HINFO record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("HINFO called")
 	},
@@ -105,13 +75,7 @@ func init() {
 // MXCmd represents the MX command
 var MXCmd = &cobra.Command{
 	Use:   "MX",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add MX record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("MX called")
 	},
@@ -124,13 +88,7 @@ func init() {
 // NAPTRCmd represents the NAPTR command
 var NAPTRCmd = &cobra.Command{
 	Use:   "NAPTR",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add NAPTR record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("NAPTR called")
 	},
@@ -143,13 +101,7 @@ func init() {
 // NSCmd represents the NS command
 var NSCmd = &cobra.Command{
 	Use:   "NS",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add NS record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("NS called")
 	},
@@ -162,13 +114,7 @@ func init() {
 // POOLCmd represents the POOL command
 var POOLCmd = &cobra.Command{
 	Use:   "POOL",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add POOL record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("POOL called")
 	},
@@ -181,13 +127,7 @@ func init() {
 // SPFCmd represents the SPF command
 var SPFCmd = &cobra.Command{
 	Use:   "SPF",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add SPF record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("SPF called")
 	},
@@ -195,19 +135,12 @@ to quickly create a Cobra application.`,
 
 func init() {
 	dnsAddCmd.AddCommand(SPFCmd)
-
 }
 
 // SRVCmd represents the SRV command
 var SRVCmd = &cobra.Command{
 	Use:   "SRV",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add SRV record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("SRV called")
 	},
@@ -220,13 +153,7 @@ func init() {
 // SSHFPCmd represents the SSHFP command
 var SSHFPCmd = &cobra.Command{
 	Use:   "SSHFP",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add SSHFP record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("SSHFP called")
 	},
@@ -239,13 +166,7 @@ func init() {
 // TXTCmd represents the TXT command
 var TXTCmd = &cobra.Command{
 	Use:   "TXT",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add TXT record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("TXT called")
 	},
@@ -258,13 +179,7 @@ func init() {
 // URLCmd represents the URL command
 var URLCmd = &cobra.Command{
 	Use:   "URL",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Add URL record type",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("URL called")
 	},

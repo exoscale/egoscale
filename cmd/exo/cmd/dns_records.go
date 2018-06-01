@@ -748,10 +748,43 @@ This type of record uses an HTTP redirect to redirect visitors from a domain to 
 			cmd.Usage()
 			return
 		}
-		fmt.Println("URL called")
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			log.Fatal(err)
+		}
+		destUrl, err := cmd.Flags().GetString("destination-url")
+		if err != nil {
+			log.Fatal(err)
+		}
+		ttl, err := cmd.Flags().GetInt("ttl")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		domain, err := csDNS.GetDomain(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+			DomainID:   domain.ID,
+			TTL:        ttl,
+			RecordType: "URL",
+			Name:       name,
+			Content:    destUrl,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		println(resp.ID)
 	},
 }
 
 func init() {
 	dnsAddCmd.AddCommand(dnsURLCmd)
+	dnsURLCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
+	dnsURLCmd.Flags().StringP("destination-url", "d", "", "Example: https://www.example.com")
+	dnsURLCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
+	//dnsURLCmd.MarkFlagRequired("ttl")
+	dnsURLCmd.MarkFlagRequired("destination-url")
 }

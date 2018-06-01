@@ -12,7 +12,7 @@ import (
 // dnsACmd represents the A command
 var dnsACmd = &cobra.Command{
 	Use:   "A <domain name>",
-	Short: "Add A record type to a domain",
+	Short: "Add an \"A\" record that points your domain or a subdomain to an IP address.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -63,7 +63,7 @@ func init() {
 // AAAACmd represents the AAAA command
 var dnsAAAACmd = &cobra.Command{
 	Use:   "AAAA <domain name>",
-	Short: "Add AAAA record type to a domain",
+	Short: "Add an \"AAAA\" record that points your domain to an IPv6 address. These records are the same as A records except they use IPv6 addresses.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -114,6 +114,13 @@ func init() {
 var dnsALIASCmd = &cobra.Command{
 	Use:   "ALIAS <domain name>",
 	Short: "Add ALIAS record type to a domain",
+	Long: `
+	Add an "ALIAS" record. An ALIAS record is a special record that will
+	map a domain to another domain transparently. It can be used like a CNAME but
+	for a name with other records, like the root. When the record is resolved it will
+	look up the A records for the aliased domain and return those as the records for 
+	the record name. Note: If you want to redirect to a URL, use a URL record instead.
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -566,12 +573,81 @@ var dnsSRVCmd = &cobra.Command{
 			cmd.Usage()
 			return
 		}
-		fmt.Println("SRV called")
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if name != "" {
+			name = fmt.Sprintf(".%s", name)
+		}
+
+		symbName, err := cmd.Flags().GetString("symbolic-name")
+		if err != nil {
+			log.Fatal(err)
+		}
+		protocol, err := cmd.Flags().GetString("protocol")
+		if err != nil {
+			log.Fatal(err)
+		}
+		prio, err := cmd.Flags().GetInt("priority")
+		if err != nil {
+			log.Fatal(err)
+		}
+		weight, err := cmd.Flags().GetInt("weight")
+		if err != nil {
+			log.Fatal(err)
+		}
+		port, err := cmd.Flags().GetString("port")
+		if err != nil {
+			log.Fatal(err)
+		}
+		target, err := cmd.Flags().GetString("target")
+		if err != nil {
+			log.Fatal(err)
+		}
+		ttl, err := cmd.Flags().GetInt("ttl")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		domain, err := csDNS.GetDomain(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+			DomainID:   domain.ID,
+			TTL:        ttl,
+			RecordType: "SRV",
+			Name:       fmt.Sprintf("_%s._%s%s", symbName, protocol, name),
+			Content:    fmt.Sprintf("%d %s %s", weight, port, target),
+			Prio:       prio,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		println(resp.ID)
 	},
 }
 
 func init() {
 	dnsAddCmd.AddCommand(dnsSRVCmd)
+	dnsSRVCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
+	dnsSRVCmd.Flags().StringP("symbolic-name", "s", "", "This will be a symbolic name for the service, like 'sip'. It might also be called Service at other DNS providers.")
+	dnsSRVCmd.Flags().StringP("protocol", "p", "", "This will usually be 'TCP' or 'UDP'.")
+	dnsSRVCmd.Flags().IntP("priority", "", 0, "Priority")
+	dnsSRVCmd.Flags().IntP("weight", "w", 0, "A relative weight for 'SRV' records with the same priority.")
+	dnsSRVCmd.Flags().StringP("port", "P", "", "The 'TCP' or 'UDP' port on which the service is found.")
+	dnsSRVCmd.Flags().StringP("target", "", "", "The canonical hostname of the machine providing the service.")
+	dnsSRVCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
+	//dnsSRVCmd.MarkFlagRequired("ttl")
+	dnsSRVCmd.MarkFlagRequired("symbolic-name")
+	dnsSRVCmd.MarkFlagRequired("protocol")
+	dnsSRVCmd.MarkFlagRequired("priority")
+	dnsSRVCmd.MarkFlagRequired("weight")
+	dnsSRVCmd.MarkFlagRequired("port")
+	dnsSRVCmd.MarkFlagRequired("target")
 }
 
 // SSHFPCmd represents the SSHFP command

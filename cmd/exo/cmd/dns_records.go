@@ -8,8 +8,8 @@ import (
 
 // ACmd represents the A command
 var ACmd = &cobra.Command{
-	Use:   "A",
-	Short: "Add A record type",
+	Use:   "A <domain name>",
+	Short: "Add A record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("A called")
 	},
@@ -21,8 +21,8 @@ func init() {
 
 // AAAACmd represents the AAAA command
 var AAAACmd = &cobra.Command{
-	Use:   "AAAA",
-	Short: "Add AAAA record type",
+	Use:   "AAAA <domain name>",
+	Short: "Add AAAA record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("AAAA called")
 	},
@@ -34,8 +34,8 @@ func init() {
 
 // ALIASCmd represents the ALIAS command
 var ALIASCmd = &cobra.Command{
-	Use:   "ALIAS",
-	Short: "Add ALIAS record type",
+	Use:   "ALIAS <domain name>",
+	Short: "Add ALIAS record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("ALIAS called")
 	},
@@ -47,8 +47,8 @@ func init() {
 
 // CNAMECmd represents the CNAME command
 var CNAMECmd = &cobra.Command{
-	Use:   "CNAME",
-	Short: "Add CNAME record type",
+	Use:   "CNAME <domain name>",
+	Short: "Add CNAME record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("CNAME called")
 	},
@@ -61,8 +61,8 @@ func init() {
 
 // HINFOCmd represents the HINFO command
 var HINFOCmd = &cobra.Command{
-	Use:   "HINFO",
-	Short: "Add HINFO record type",
+	Use:   "HINFO <domain name>",
+	Short: "Add HINFO record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("HINFO called")
 	},
@@ -74,8 +74,8 @@ func init() {
 
 // MXCmd represents the MX command
 var MXCmd = &cobra.Command{
-	Use:   "MX",
-	Short: "Add MX record type",
+	Use:   "MX <domain name>",
+	Short: "Add MX record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("MX called")
 	},
@@ -87,8 +87,8 @@ func init() {
 
 // NAPTRCmd represents the NAPTR command
 var NAPTRCmd = &cobra.Command{
-	Use:   "NAPTR",
-	Short: "Add NAPTR record type",
+	Use:   "NAPTR <domain name>",
+	Short: "Add NAPTR record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("NAPTR called")
 	},
@@ -100,8 +100,8 @@ func init() {
 
 // NSCmd represents the NS command
 var NSCmd = &cobra.Command{
-	Use:   "NS",
-	Short: "Add NS record type",
+	Use:   "NS <domain name>",
+	Short: "Add NS record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("NS called")
 	},
@@ -113,8 +113,8 @@ func init() {
 
 // POOLCmd represents the POOL command
 var POOLCmd = &cobra.Command{
-	Use:   "POOL",
-	Short: "Add POOL record type",
+	Use:   "POOL <domain name>",
+	Short: "Add POOL record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("POOL called")
 	},
@@ -126,8 +126,8 @@ func init() {
 
 // SPFCmd represents the SPF command
 var SPFCmd = &cobra.Command{
-	Use:   "SPF",
-	Short: "Add SPF record type",
+	Use:   "SPF <domain name>",
+	Short: "Add SPF record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("SPF called")
 	},
@@ -139,8 +139,8 @@ func init() {
 
 // SRVCmd represents the SRV command
 var SRVCmd = &cobra.Command{
-	Use:   "SRV",
-	Short: "Add SRV record type",
+	Use:   "SRV <domain name>",
+	Short: "Add SRV record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("SRV called")
 	},
@@ -152,8 +152,8 @@ func init() {
 
 // SSHFPCmd represents the SSHFP command
 var SSHFPCmd = &cobra.Command{
-	Use:   "SSHFP",
-	Short: "Add SSHFP record type",
+	Use:   "SSHFP <domain name>",
+	Short: "Add SSHFP record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("SSHFP called")
 	},
@@ -165,8 +165,8 @@ func init() {
 
 // TXTCmd represents the TXT command
 var TXTCmd = &cobra.Command{
-	Use:   "TXT",
-	Short: "Add TXT record type",
+	Use:   "TXT <domain name>",
+	Short: "Add TXT record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("TXT called")
 	},
@@ -178,8 +178,8 @@ func init() {
 
 // URLCmd represents the URL command
 var URLCmd = &cobra.Command{
-	Use:   "URL",
-	Short: "Add URL record type",
+	Use:   "URL <domain name>",
+	Short: "Add URL record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("URL called")
 	},

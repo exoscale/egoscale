@@ -13,7 +13,7 @@ func TestListServiceOfferings(t *testing.T) {
 }
 
 func TestGetServiceOffering(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listserviceofferingsresponse": {
 	"count": 1,
 	"serviceoffering": [
@@ -30,7 +30,7 @@ func TestGetServiceOffering(t *testing.T) {
       "storagetype": "local"
     }
   ]
-}}`, jsonContentType})
+}}`})
 
 	defer ts.Close()
 

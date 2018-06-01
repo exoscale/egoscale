@@ -75,7 +75,7 @@ func TestTemplate(t *testing.T) {
 }
 
 func TestTemplateGet(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 		
 		{ "listtemplatesresponse": {
 			"count": 1,
@@ -105,7 +105,7 @@ func TestTemplateGet(t *testing.T) {
 				"zonename": "ch-gva-2"
 			  }
 			]
-		  }}`, jsonContentType})
+		  }}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -126,7 +126,7 @@ func TestTemplateGet(t *testing.T) {
 }
 
 func TestListTemplate(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 		
 		{ "listtemplatesresponse": {
 			"count": 1,
@@ -162,7 +162,7 @@ func TestListTemplate(t *testing.T) {
 				"zonename": "at-vie-1"
 			  }
 			]
-		  }}`, jsonContentType})
+		  }}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -190,7 +190,7 @@ func TestListTemplate(t *testing.T) {
 }
 
 func TestListTemplatesPaginate(t *testing.T) {
-	ts := newServer(response{200, `{
+	ts := newServer(response{200, jsonContentType, `{
 	"listtemplatesresponse": {
 		"count": 2,
 		"template": [
@@ -256,7 +256,7 @@ func TestListTemplatesPaginate(t *testing.T) {
 			}
 		]
 	}
-}`, jsonContentType})
+}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -281,12 +281,12 @@ func TestListTemplatesPaginate(t *testing.T) {
 }
 
 func TestListTemplatesFailure(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 		
 		{ "listtemplatesresponse": {
 			"count": 1,
 			"template": {}
-		  }}`, jsonContentType})
+		  }}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

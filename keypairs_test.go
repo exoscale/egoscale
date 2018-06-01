@@ -45,7 +45,7 @@ func TestListSSHKeyPairsResponse(t *testing.T) {
 }
 
 func TestGetSSHKeyPair(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listsshkeypairsresponse": {
 	"count": 1,
 	"sshkeypair": [
@@ -54,7 +54,7 @@ func TestGetSSHKeyPair(t *testing.T) {
 			"name": "yoan@herp"
 		}
 	]
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -71,7 +71,7 @@ func TestGetSSHKeyPair(t *testing.T) {
 }
 
 func TestListSSHKeyPairs(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listsshkeypairsresponse": {
 	"count": 2,
 	"sshkeypair": [
@@ -84,7 +84,7 @@ func TestListSSHKeyPairs(t *testing.T) {
 			"name": "yoan@derp"
 		}
 	]
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -101,11 +101,11 @@ func TestListSSHKeyPairs(t *testing.T) {
 }
 
 func TestListSSHKeysFailure(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listsshkeypairsresponse": {
 	"count": 2,
 	"sshkeypair": {}
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -122,7 +122,7 @@ func TestListSSHKeysFailure(t *testing.T) {
 }
 
 func TestListSSHKeyPaginate(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listsshkeypairsresponse": {
 	"count": 2,
 	"sshkeypair": [
@@ -135,7 +135,7 @@ func TestListSSHKeyPaginate(t *testing.T) {
 			"name": "hello"
 		}
 	]
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -156,11 +156,11 @@ func TestListSSHKeyPaginate(t *testing.T) {
 }
 
 func TestGetSSHKeyPairNotFound(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listsshkeypairsresponse": {
 	"count": 0,
 	"sshkeypair": []
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

@@ -211,7 +211,7 @@ func TestDeployOnBeforeSendBothAG(t *testing.T) {
 }
 
 func TestGetVirtualMachine(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listvirtualmachinesresponse": {
 	"count": 1,
 	"virtualmachine": [
@@ -279,7 +279,7 @@ func TestGetVirtualMachine(t *testing.T) {
 			"zonename": "ch-dk-2"
 		}
 	]
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -296,12 +296,12 @@ func TestGetVirtualMachine(t *testing.T) {
 }
 
 func TestGetVirtualMachinePassword(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"getvmpasswordresponse": {
 	"password": {
 		"encryptedpassword": "test"
 	}
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -318,7 +318,7 @@ func TestGetVirtualMachinePassword(t *testing.T) {
 }
 
 func TestListMachines(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listvirtualmachinesresponse": {
 	"count": 3,
 	"virtualmachine": [
@@ -332,7 +332,7 @@ func TestListMachines(t *testing.T) {
 			"id": "487eda20-eea1-43f7-9456-e870a359b173"
 		}
 	]
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -348,11 +348,11 @@ func TestListMachines(t *testing.T) {
 }
 
 func TestListMachinesFailure(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listvirtualmachinesresponse": {
 	"count": 3,
 	"virtualmachine": {}
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -368,7 +368,7 @@ func TestListMachinesFailure(t *testing.T) {
 }
 
 func TestListMachinesPaginate(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listvirtualmachinesresponse": {
 	"count": 3,
 	"virtualmachine": [
@@ -382,7 +382,7 @@ func TestListMachinesPaginate(t *testing.T) {
 			"id": "487eda20-eea1-43f7-9456-e870a359b173"
 		}
 	]
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

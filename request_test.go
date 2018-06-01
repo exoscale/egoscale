@@ -24,7 +24,7 @@ func TestRequest(t *testing.T) {
 	params.Set("apikey", "KEY")
 	params.Set("name", "dummy")
 	params.Set("response", "json")
-	ts := newGetServer(params, `
+	ts := newGetServer(params, jsonContentType, `
 {
 	"listapisresponse": {
 		"api": [{
@@ -41,7 +41,7 @@ func TestRequest(t *testing.T) {
 		"count": 1
 	}
 }
-	`, jsonContentType)
+	`)
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -59,13 +59,13 @@ func TestRequest(t *testing.T) {
 }
 
 func TestRequestSignatureFailure(t *testing.T) {
-	ts := newServer(response{401, `
+	ts := newServer(response{401, jsonContentType, `
 {"createsshkeypairresponse" : {
 	"uuidList":[],
 	"errorcode":401,
 	"errortext":"unable to verify usercredentials and/or request signature"
 }}
-	`, jsonContentType})
+	`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
@@ -86,7 +86,7 @@ func TestRequestSignatureFailure(t *testing.T) {
 }
 
 func TestBooleanAsyncRequest(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {
 	"expungevirtualmachineresponse": {
 		"jobid": "1",
@@ -94,7 +94,7 @@ func TestBooleanAsyncRequest(t *testing.T) {
 		"jobstatus": 0
 	}
 }
-	`, jsonContentType}, response{200, `
+	`}, response{200, jsonContentType, `
 {
 	"queryasyncjobresultresponse": {
 		"accountid": "1",
@@ -111,7 +111,7 @@ func TestBooleanAsyncRequest(t *testing.T) {
 		"userid": "1"
 	}
 }
-	`, jsonContentType})
+	`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
@@ -124,7 +124,7 @@ func TestBooleanAsyncRequest(t *testing.T) {
 }
 
 func TestBooleanAsyncRequestWithContext(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {
 	"expungevirtualmachineresponse": {
 		"jobid": "1",
@@ -132,7 +132,7 @@ func TestBooleanAsyncRequestWithContext(t *testing.T) {
 		"jobstatus": 0
 	}
 }
-	`, jsonContentType}, response{200, `
+	`}, response{200, jsonContentType, `
 {
 	"queryasyncjobresultresponse": {
 		"accountid": "1",
@@ -149,7 +149,7 @@ func TestBooleanAsyncRequestWithContext(t *testing.T) {
 		"userid": "1"
 	}
 }
-	`, jsonContentType})
+	`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
@@ -164,7 +164,7 @@ func TestBooleanAsyncRequestWithContext(t *testing.T) {
 }
 
 func TestBooleanRequestTimeout(t *testing.T) {
-	ts := newSleepyServer(time.Second, 200, `
+	ts := newSleepyServer(time.Second, 200, jsonContentType, `
 {
 	"expungevirtualmachine": {
 		"jobid": "1",
@@ -174,7 +174,7 @@ func TestBooleanRequestTimeout(t *testing.T) {
 		"jobstatus": 0
 	}
 }
-	`, jsonContentType)
+	`)
 	defer ts.Close()
 	done := make(chan bool)
 
@@ -205,14 +205,14 @@ func TestBooleanRequestTimeout(t *testing.T) {
 func TestAsyncRequestWithoutContext(t *testing.T) {
 
 	ts := newServer(
-		response{200, `{
+		response{200, jsonContentType, `{
 	"deployvirtualmachineresponse": {
 		"jobid": "1",
 		"jobresult": {},
 		"jobstatus": 0
 	}
-}`, jsonContentType},
-		response{200, `{
+}`},
+		response{200, jsonContentType, `{
 	"queryasyncjobresultresponse": {
 		"jobid": "1",
 		"jobresult": {
@@ -226,7 +226,7 @@ func TestAsyncRequestWithoutContext(t *testing.T) {
 		},
 		"jobstatus": 1
 	}
-}`, jsonContentType},
+}`},
 	)
 
 	defer ts.Close()
@@ -264,14 +264,14 @@ func TestAsyncRequestWithoutContext(t *testing.T) {
 
 func TestAsyncRequestWithoutContextFailure(t *testing.T) {
 	ts := newServer(
-		response{200, `{
+		response{200, jsonContentType, `{
 	"deployvirtualmachineresponse": {
 		"jobid": "1",
 		"jobresult": {},
 		"jobstatus": 0
 	}
-}`, jsonContentType},
-		response{200, `{
+}`},
+		response{200, jsonContentType, `{
 	"queryasyncjobresultresponse": {
 		"jobid": "1",
 		"jobresult": {
@@ -279,7 +279,7 @@ func TestAsyncRequestWithoutContextFailure(t *testing.T) {
 		},
 		"jobstatus": 1
 	}
-}`, jsonContentType},
+}`},
 	)
 
 	defer ts.Close()
@@ -313,13 +313,13 @@ func TestAsyncRequestWithoutContextFailure(t *testing.T) {
 func TestAsyncRequestWithoutContextFailureNext(t *testing.T) {
 
 	ts := newServer(
-		response{200, `{
+		response{200, jsonContentType, `{
 	"deployvirtualmachineresponse: {
 		"jobid": "1",
 		"jobresult": {},
 		"jobstatus": 0
 	}
-}`, jsonContentType},
+}`},
 	)
 
 	defer ts.Close()
@@ -340,7 +340,7 @@ func TestAsyncRequestWithoutContextFailureNext(t *testing.T) {
 func TestAsyncRequestWithoutContextFailureNextNext(t *testing.T) {
 
 	ts := newServer(
-		response{200, `{
+		response{200, jsonContentType, `{
 	"deployvirtualmachineresponse": {
 		"jobid": "1",
 		"jobresult": {
@@ -348,21 +348,21 @@ func TestAsyncRequestWithoutContextFailureNextNext(t *testing.T) {
 		},
 		"jobstatus": 2
 	}
-}`, jsonContentType},
-		response{200, `{
+}`},
+		response{200, jsonContentType, `{
 	"queryasyncjobresultresponse": {
 		"jobid": "1",
 		"jobresult": {},
 		"jobstatus": 0
 	}
-}`, jsonContentType},
-		response{200, `{
+}`},
+		response{200, jsonContentType, `{
 	"queryasyncjobresultresponse": {
 		"jobid": "1",
 		"jobresult": [],
 		"jobstatus": 1
 	}
-}`, jsonContentType},
+}`},
 	)
 	defer ts.Close()
 
@@ -393,7 +393,7 @@ func TestAsyncRequestWithoutContextFailureNextNext(t *testing.T) {
 }
 
 func TestBooleanRequestWithContext(t *testing.T) {
-	ts := newSleepyServer(time.Second, 200, `
+	ts := newSleepyServer(time.Second, 200, jsonContentType, `
 {
 	"expungevirtualmachine": {
 		"jobid": "1",
@@ -403,7 +403,7 @@ func TestBooleanRequestWithContext(t *testing.T) {
 		"jobstatus": 0
 	}
 }
-	`, jsonContentType)
+	`)
 	defer ts.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
@@ -436,7 +436,7 @@ func TestBooleanRequestWithContext(t *testing.T) {
 }
 
 func TestRequestWithContextTimeoutPost(t *testing.T) {
-	ts := newSleepyServer(time.Second, 200, `
+	ts := newSleepyServer(time.Second, 200, jsonContentType, `
 {
 	"deployvirtualmachineresponse": {
 		"jobid": "1",
@@ -446,7 +446,7 @@ func TestRequestWithContextTimeoutPost(t *testing.T) {
 		"jobstatus": 0
 	}
 }
-	`, jsonContentType)
+	`)
 	defer ts.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
@@ -488,7 +488,7 @@ func TestRequestWithContextTimeoutPost(t *testing.T) {
 }
 
 func TestBooleanRequestWithContextAndTimeout(t *testing.T) {
-	ts := newSleepyServer(time.Second, 200, `
+	ts := newSleepyServer(time.Second, 200, jsonContentType, `
 {
 	"expungevirtualmachine": {
 		"jobid": "1",
@@ -498,7 +498,7 @@ func TestBooleanRequestWithContextAndTimeout(t *testing.T) {
 		"jobstatus": 0
 	}
 }
-	`, jsonContentType)
+	`)
 	defer ts.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -531,8 +531,8 @@ func TestBooleanRequestWithContextAndTimeout(t *testing.T) {
 
 type response struct {
 	code        int
-	body        string
 	contentType string
+	body        string
 }
 
 func newServer(responses ...response) *httptest.Server {
@@ -553,7 +553,7 @@ func newServer(responses ...response) *httptest.Server {
 	return httptest.NewServer(mux)
 }
 
-func newSleepyServer(sleep time.Duration, code int, response string, contentType string) *httptest.Server {
+func newSleepyServer(sleep time.Duration, code int, contentType, response string) *httptest.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(sleep)
@@ -564,7 +564,7 @@ func newSleepyServer(sleep time.Duration, code int, response string, contentType
 	return httptest.NewServer(mux)
 }
 
-func newGetServer(params url.Values, response string, contentType string) *httptest.Server {
+func newGetServer(params url.Values, contentType, response string) *httptest.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		errors := make(map[string][]string)

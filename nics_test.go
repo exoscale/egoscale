@@ -37,7 +37,7 @@ func TestActivateIP6(t *testing.T) {
 }
 
 func TestListNics(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listnicsresponse": {
 	"count": 1,
 	"nic": [
@@ -52,7 +52,7 @@ func TestListNics(t *testing.T) {
 			"virtualmachineid": "d7658121-64c8-4c50-96a7-3bb5ceeca7b2"
 		}
 	]
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -89,13 +89,13 @@ func TestListNicInvalid(t *testing.T) {
 }
 
 func TestListNicError(t *testing.T) {
-	ts := newServer(response{431, `
+	ts := newServer(response{431, jsonContentType, `
 {"listnicresponse": {
 	"cserrorcode": 9999,
 	"errorcode": 431,
 	"errortext": "Unable to execute API command listnics due to missing parameter virtualmachineid",
 	"uuidList": []
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

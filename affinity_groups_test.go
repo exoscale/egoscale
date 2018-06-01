@@ -59,7 +59,7 @@ func TestUpdateVMOnBeforeSend(t *testing.T) {
 }
 
 func TestGetAffinityGroup(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listaffinitygroupsresponse": {
 	"affinitygroup": [
 		{
@@ -73,7 +73,7 @@ func TestGetAffinityGroup(t *testing.T) {
 		}
 	],
 	"count": 1
-}}`, jsonContentType})
+}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

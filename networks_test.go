@@ -69,7 +69,7 @@ func TestCreateNetworkOnBeforeSend(t *testing.T) {
 }
 
 func TestListNetwork(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listnetworksresponse": {
 	"count": 5,
 	"network": [
@@ -343,7 +343,7 @@ func TestListNetwork(t *testing.T) {
 		"zonename": "ch-gva-2"
 	  }
 	]
-  }}`, jsonContentType})
+  }}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -364,11 +364,11 @@ func TestListNetwork(t *testing.T) {
 }
 
 func TestListNetworkEmpty(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listnetworksresponse": {
 	"count": 0,
 	"network": []
-  }}`, jsonContentType})
+  }}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -385,11 +385,11 @@ func TestListNetworkEmpty(t *testing.T) {
 }
 
 func TestListNetworkFailure(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listnetworksresponse": {
 	"count": 3456,
 	"network": {}
-  }}`, jsonContentType})
+  }}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -406,7 +406,7 @@ func TestListNetworkFailure(t *testing.T) {
 }
 
 func TestListNetworkPaginate(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listnetworksresponse": {
 	"count": 2,
 	"network": [
@@ -479,7 +479,7 @@ func TestListNetworkPaginate(t *testing.T) {
 		"zonename": "ch-dk-2"
 	  }
 	]
-  }}`, jsonContentType})
+  }}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -503,7 +503,7 @@ func TestListNetworkPaginate(t *testing.T) {
 }
 
 func TestFindNetwork(t *testing.T) {
-	ts := newServer(response{200, `
+	ts := newServer(response{200, jsonContentType, `
 {"listnetworksresponse": {
 	"count": 1,
 	"network": [
@@ -542,7 +542,7 @@ func TestFindNetwork(t *testing.T) {
 		"zonename": "ch-gva-2"
 	  }
 	]
-  }}`, jsonContentType})
+  }}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

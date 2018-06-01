@@ -72,7 +72,7 @@ func firewallAddRun(cmd *cobra.Command, args []string) {
 	}
 
 	if protocol != "" {
-		rule.Protocol = protocol
+		rule.Protocol = strings.ToLower(protocol)
 	}
 
 	cidr, err := cmd.Flags().GetString("cidr")
@@ -131,7 +131,8 @@ func firewallAddRun(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if port != "" {
+	//Not best practis but waiting to find better solution
+	if port != "" && (rule.Protocol == "tcp" || rule.Protocol == "udp") {
 
 		ports := getCommaflag(port)
 		portsRange, err := getPortsRange(ports)
@@ -148,8 +149,8 @@ func firewallAddRun(cmd *cobra.Command, args []string) {
 			}
 		}
 	}
-
-	if port == "" {
+	//Not best practis but waiting to find better solution
+	if port == "" || !(rule.Protocol == "tcp" || rule.Protocol == "udp") {
 		if err := addRule(rule, isEgress); err != nil {
 			log.Fatal(err)
 		}

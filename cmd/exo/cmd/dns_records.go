@@ -203,7 +203,7 @@ var dnsCNAMECmd = &cobra.Command{
 
 func init() {
 	dnsAddCmd.AddCommand(dnsCNAMECmd)
-	dnsCNAMECmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
+	dnsCNAMECmd.Flags().StringP("name", "n", "", "You may use the * wildcard here.")
 	dnsCNAMECmd.Flags().StringP("alias", "a", "", "Alias for: Example: some-other-site.com")
 	dnsCNAMECmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
 	//dnsACmd.MarkFlagRequired("ttl")
@@ -276,12 +276,52 @@ var dnsMXCmd = &cobra.Command{
 			cmd.Usage()
 			return
 		}
-		fmt.Println("MX called")
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			log.Fatal(err)
+		}
+		mailSrv, err := cmd.Flags().GetString("mail-server-host")
+		if err != nil {
+			log.Fatal(err)
+		}
+		priority, err := cmd.Flags().GetInt("priority")
+		if err != nil {
+			log.Fatal(err)
+		}
+		ttl, err := cmd.Flags().GetInt("ttl")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		domain, err := csDNS.GetDomain(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+			DomainID:   domain.ID,
+			TTL:        ttl,
+			RecordType: "MX",
+			Name:       name,
+			Content:    mailSrv,
+			Prio:       priority,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		println(resp.ID)
 	},
 }
 
 func init() {
 	dnsAddCmd.AddCommand(dnsMXCmd)
+	dnsMXCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>")
+	dnsMXCmd.Flags().StringP("mail-server-host", "m", "", "Example: mail-server.example.com")
+	dnsMXCmd.Flags().IntP("priority", "p", 0, "Common values are for example 1, 5 or 10")
+	dnsMXCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
+	//dnsACmd.MarkFlagRequired("ttl")
+	dnsMXCmd.MarkFlagRequired("mail-server-host")
+	dnsMXCmd.MarkFlagRequired("priority")
 }
 
 // NAPTRCmd represents the NAPTR command

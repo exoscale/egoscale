@@ -31,7 +31,7 @@ func TestZoneGet(t *testing.T) {
 			"zonetoken": "f9a2983b-42e5-3b12-ae74-0b1f54cd6204"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -96,7 +96,7 @@ func TestListZones(t *testing.T) {
 			"zonetoken": "c4bdb9f2-c28d-36a3-bbc5-f91fc69527e6"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -118,7 +118,7 @@ func TestListZones(t *testing.T) {
 
 func TestListZonesTypeError(t *testing.T) {
 	ts := newServer(response{200, `
-{"listzonesresponse": []}`})
+{"listzonesresponse": []}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -138,7 +138,7 @@ func TestListZonesPaginateError(t *testing.T) {
 		"errortext": "Unable to execute API command listzones due to invalid value. Invalid parameter id value=1747ef5e-5451-41fd-9f1a-58913bae9701 due to incorrect long value format, or entity does not exist or due to incorrect parameter annotation for the field in api cmd class.",
 		"uuidList": []
 	}
-}`})
+}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -208,7 +208,7 @@ func TestListZonesPaginate(t *testing.T) {
 			"zonetoken": "c4bdb9f2-c28d-36a3-bbc5-f91fc69527e6"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -263,7 +263,7 @@ func TestListZonesPaginateBreak(t *testing.T) {
 			"zonetoken": "23a24359-121a-38af-a938-e225c97c397b"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -294,7 +294,7 @@ func TestListZonesAsyncError(t *testing.T) {
 		"uuidList": []
 	}
 }
-`})
+`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -384,7 +384,7 @@ func TestListZonesAsync(t *testing.T) {
 			"zonetoken": "c4bdb9f2-c28d-36a3-bbc5-f91fc69527e6"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -454,7 +454,7 @@ func TestListZonesTwoPages(t *testing.T) {
 			"zonetoken": "23a24359-121a-38af-a938-e225c97c397b"
 		}
 	]
-}}`}, response{200, `
+}}`, jsonContentType}, response{200, `
 {"listzonesresponse": {
 	"count": 4,
 	"zone": [
@@ -481,11 +481,11 @@ func TestListZonesTwoPages(t *testing.T) {
 			"zonetoken": "c4bdb9f2-c28d-36a3-bbc5-f91fc69527e6"
 		}
 	]
-}}`}, response{200, `
+}}`, jsonContentType}, response{200, `
 {"listzonesresponse": {
 	"count": 4,
 	"zones": null
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -530,13 +530,13 @@ func TestListZonesError(t *testing.T) {
 			"zonetoken": "23a24359-121a-38af-a938-e225c97c397b"
 		}
 	]
-}}`}, response{400, `
+}}`, jsonContentType}, response{400, `
 {"listzonesresponse": {
 	"cserrorcode": 9999,
 	"errorcode": 431,
 	"errortext": "Unable to execute API command listzones",
 	"uuidList": []
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -553,7 +553,7 @@ func TestListZonesTimeout(t *testing.T) {
 	ts := newSleepyServer(time.Second, 200, `
 {"listzonesresponse": {
 	"count": 4
-}}`)
+}}`, jsonContentType)
 	defer ts.Close()
 
 	cs := NewClientWithTimeout(ts.URL, "KEY", "SECRET", time.Millisecond)

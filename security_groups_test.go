@@ -148,7 +148,7 @@ func TestGetSecurityGroup(t *testing.T) {
 			"tags": []
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -226,7 +226,7 @@ func TestListSecurityGroups(t *testing.T) {
 				"tags": []
 			  }
 			]
-		  }}`})
+		  }}`, jsonContentType})
 
 	defer ts.Close()
 

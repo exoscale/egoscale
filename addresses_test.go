@@ -70,7 +70,7 @@ func TestGetIPAddress(t *testing.T) {
 			"zonename": "ch-gva-2"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 
 	defer ts.Close()
 
@@ -115,7 +115,7 @@ func TestListIPAddress(t *testing.T) {
 			  }
 			]
 		  }}
-		`})
+		`, jsonContentType})
 
 	defer ts.Close()
 
@@ -185,7 +185,7 @@ func TestListIPAddressPaginate(t *testing.T) {
 				"zonename": "ch-dk-2"
 			  }
 			]
-		  }}`})
+		  }}`, jsonContentType})
 
 	defer ts.Close()
 
@@ -212,7 +212,7 @@ func TestListIPAddressFailure(t *testing.T) {
 	{"listpublicipaddressesresponse": {
 		"count": 1,
 		"publicipaddress": {}
-	}`})
+	}`, jsonContentType})
 
 	defer ts.Close()
 

@@ -30,7 +30,7 @@ func TestGetServiceOffering(t *testing.T) {
       "storagetype": "local"
     }
   ]
-}}`})
+}}`, jsonContentType})
 
 	defer ts.Close()
 

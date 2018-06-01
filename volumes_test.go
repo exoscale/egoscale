@@ -62,7 +62,7 @@ func TestGetVolume(t *testing.T) {
 			"zonename": "ch-gva-2"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -115,7 +115,7 @@ func TestListVolume(t *testing.T) {
 			"zonename": "ch-gva-2"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -143,7 +143,7 @@ func TestListVolumeFailure(t *testing.T) {
 {"listvolumesresponse": {
 	"count": 1,
 	"volume": {}
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -222,7 +222,7 @@ func TestListVolumePaginate(t *testing.T) {
 			"zonename": "ch-gva-2"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -252,7 +252,7 @@ func TestListVolumeError(t *testing.T) {
 	"errorcode": 431,
 	"errortext": "Unable to execute API command listvolumes due to invalid value. Invalid parameter virtualmachineid value=9ccc3d5b-9dce-4302-a955-24b80b402f87 due to incorrect long value format, or entity does not exist or due to incorrect parameter annotation for the field in api cmd class.",
 	"uuidList": []
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

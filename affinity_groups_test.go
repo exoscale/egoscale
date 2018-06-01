@@ -73,7 +73,7 @@ func TestGetAffinityGroup(t *testing.T) {
 		}
 	],
 	"count": 1
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

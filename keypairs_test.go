@@ -54,7 +54,7 @@ func TestGetSSHKeyPair(t *testing.T) {
 			"name": "yoan@herp"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -84,7 +84,7 @@ func TestListSSHKeyPairs(t *testing.T) {
 			"name": "yoan@derp"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -105,7 +105,7 @@ func TestListSSHKeysFailure(t *testing.T) {
 {"listsshkeypairsresponse": {
 	"count": 2,
 	"sshkeypair": {}
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -135,7 +135,7 @@ func TestListSSHKeyPaginate(t *testing.T) {
 			"name": "hello"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -160,7 +160,7 @@ func TestGetSSHKeyPairNotFound(t *testing.T) {
 {"listsshkeypairsresponse": {
 	"count": 0,
 	"sshkeypair": []
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

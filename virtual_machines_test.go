@@ -279,7 +279,7 @@ func TestGetVirtualMachine(t *testing.T) {
 			"zonename": "ch-dk-2"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -301,7 +301,7 @@ func TestGetVirtualMachinePassword(t *testing.T) {
 	"password": {
 		"encryptedpassword": "test"
 	}
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -332,7 +332,7 @@ func TestListMachines(t *testing.T) {
 			"id": "487eda20-eea1-43f7-9456-e870a359b173"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -352,7 +352,7 @@ func TestListMachinesFailure(t *testing.T) {
 {"listvirtualmachinesresponse": {
 	"count": 3,
 	"virtualmachine": {}
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -382,7 +382,7 @@ func TestListMachinesPaginate(t *testing.T) {
 			"id": "487eda20-eea1-43f7-9456-e870a359b173"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

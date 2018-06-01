@@ -65,9 +65,9 @@ func TestClientSyncDelete(t *testing.T) {
 
 	for _, thing := range things {
 		ts := newServer(
-			response{200, fmt.Sprintf(bodySuccessString, thing.name)},
-			response{200, fmt.Sprintf(bodySuccessBool, thing.name)},
-			response{431, fmt.Sprintf(bodyError, thing.name)},
+			response{200, fmt.Sprintf(bodySuccessString, thing.name), jsonContentType},
+			response{200, fmt.Sprintf(bodySuccessBool, thing.name), jsonContentType},
+			response{431, fmt.Sprintf(bodyError, thing.name), jsonContentType},
 		)
 		defer ts.Close()
 
@@ -116,8 +116,8 @@ func TestClientAsyncDelete(t *testing.T) {
 
 	for _, thing := range things {
 		ts := newServer(
-			response{200, fmt.Sprintf(body, thing.name)},
-			response{400, fmt.Sprintf(bodyError, thing.name)},
+			response{200, fmt.Sprintf(body, thing.name), jsonContentType},
+			response{400, fmt.Sprintf(bodyError, thing.name), jsonContentType},
 		)
 		defer ts.Close()
 
@@ -205,8 +205,8 @@ func TestClientGetNone(t *testing.T) {
 
 	for _, thing := range things {
 		ts := newServer(
-			response{200, fmt.Sprintf(body, thing.name)},
-			response{431, bodyError},
+			response{200, fmt.Sprintf(body, thing.name), jsonContentType},
+			response{431, bodyError, jsonContentType},
 		)
 		defer ts.Close()
 
@@ -268,7 +268,7 @@ func TestClientGetTooMany(t *testing.T) {
 	}
 
 	for _, thing := range things {
-		resp := response{200, fmt.Sprintf(body, thing.name)}
+		resp := response{200, fmt.Sprintf(body, thing.name), jsonContentType}
 		ts := newServer(resp)
 		defer ts.Close()
 

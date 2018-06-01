@@ -52,7 +52,7 @@ func TestListNics(t *testing.T) {
 			"virtualmachineid": "d7658121-64c8-4c50-96a7-3bb5ceeca7b2"
 		}
 	]
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -95,7 +95,7 @@ func TestListNicError(t *testing.T) {
 	"errorcode": 431,
 	"errortext": "Unable to execute API command listnics due to missing parameter virtualmachineid",
 	"uuidList": []
-}}`})
+}}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

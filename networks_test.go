@@ -343,7 +343,7 @@ func TestListNetwork(t *testing.T) {
 		"zonename": "ch-gva-2"
 	  }
 	]
-  }}`})
+  }}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -368,7 +368,7 @@ func TestListNetworkEmpty(t *testing.T) {
 {"listnetworksresponse": {
 	"count": 0,
 	"network": []
-  }}`})
+  }}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -389,7 +389,7 @@ func TestListNetworkFailure(t *testing.T) {
 {"listnetworksresponse": {
 	"count": 3456,
 	"network": {}
-  }}`})
+  }}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -479,7 +479,7 @@ func TestListNetworkPaginate(t *testing.T) {
 		"zonename": "ch-dk-2"
 	  }
 	]
-  }}`})
+  }}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -542,7 +542,7 @@ func TestFindNetwork(t *testing.T) {
 		"zonename": "ch-gva-2"
 	  }
 	]
-  }}`})
+  }}`, jsonContentType})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

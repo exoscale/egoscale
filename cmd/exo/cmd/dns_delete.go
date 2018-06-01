@@ -24,10 +24,8 @@ var dnsDeleteCmd = &cobra.Command{
 }
 
 func deleteDomain(domainName string) error {
-	if err := csDNS.DeleteDomain(domainName); err != nil {
-		return err
-	}
-	return nil
+	err := csDNS.DeleteDomain(domainName)
+	return err
 }
 
 func init() {

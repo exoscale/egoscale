@@ -333,12 +333,109 @@ var dnsNAPTRCmd = &cobra.Command{
 			cmd.Usage()
 			return
 		}
-		fmt.Println("NAPTR called")
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			log.Fatal(err)
+		}
+		order, err := cmd.Flags().GetInt("order")
+		if err != nil {
+			log.Fatal(err)
+		}
+		preference, err := cmd.Flags().GetInt("preference")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		flags := ""
+		//flags
+		s, err := cmd.Flags().GetBool("s")
+		if err != nil {
+			log.Fatal(err)
+		}
+		a, err := cmd.Flags().GetBool("a")
+		if err != nil {
+			log.Fatal(err)
+		}
+		u, err := cmd.Flags().GetBool("u")
+		if err != nil {
+			log.Fatal(err)
+		}
+		p, err := cmd.Flags().GetBool("p")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if s {
+			flags += "s"
+		}
+		if a {
+			flags += "a"
+		}
+		if u {
+			flags += "u"
+		}
+		if p {
+			flags += "p"
+		}
+
+		service, err := cmd.Flags().GetString("service")
+		if err != nil {
+			log.Fatal(err)
+		}
+		regex, err := cmd.Flags().GetString("regex")
+		if err != nil {
+			log.Fatal(err)
+		}
+		replacement, err := cmd.Flags().GetString("replacement")
+		if err != nil {
+			log.Fatal(err)
+		}
+		ttl, err := cmd.Flags().GetInt("ttl")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		domain, err := csDNS.GetDomain(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+			DomainID:   domain.ID,
+			TTL:        ttl,
+			RecordType: "NAPTR",
+			Name:       name,
+			Content:    fmt.Sprintf("%d %d %q %q %q %q", order, preference, flags, service, regex, replacement),
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		println(resp.ID)
 	},
 }
 
 func init() {
 	dnsAddCmd.AddCommand(dnsNAPTRCmd)
+	dnsNAPTRCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
+	dnsNAPTRCmd.Flags().IntP("order", "o", 0, "Used to determine the processing order, lowest first.")
+	dnsNAPTRCmd.Flags().IntP("preference", "", 0, "Used to give weight to records with the same value in the 'order' field, low to high.")
+	dnsNAPTRCmd.Flags().StringP("service", "", "", "Service")
+	dnsNAPTRCmd.Flags().StringP("regex", "", "", "The substituion expression.")
+	dnsNAPTRCmd.Flags().StringP("replacement", "", "", "The next record to look up, which must be a fully-qualified domain name.")
+
+	//flags
+	dnsNAPTRCmd.Flags().BoolP("s", "", false, "Flag indicates the next lookup is for an SRV.")
+	dnsNAPTRCmd.Flags().BoolP("a", "", false, "Flag indicates the next lookup is for an A or AAAA record.")
+	dnsNAPTRCmd.Flags().BoolP("u", "", false, "Flag indicates the next record is the output of the regular expression as a URI.")
+	dnsNAPTRCmd.Flags().BoolP("p", "", false, "Flag indicates that processing should continue in a protocol-specific fashion.")
+
+	dnsNAPTRCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
+	//dnsACmd.MarkFlagRequired("ttl")
+	dnsNAPTRCmd.MarkFlagRequired("order")
+	dnsNAPTRCmd.MarkFlagRequired("preference")
+	dnsNAPTRCmd.MarkFlagRequired("service")
+	dnsNAPTRCmd.MarkFlagRequired("regex")
+	dnsNAPTRCmd.MarkFlagRequired("replacement")
 }
 
 // NSCmd represents the NS command

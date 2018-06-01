@@ -677,12 +677,56 @@ var dnsSSHFPCmd = &cobra.Command{
 			cmd.Usage()
 			return
 		}
-		fmt.Println("SSHFP called")
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			log.Fatal(err)
+		}
+		algo, err := cmd.Flags().GetInt("algorithm")
+		if err != nil {
+			log.Fatal(err)
+		}
+		fingerIDType, err := cmd.Flags().GetInt("fingerprint-type")
+		if err != nil {
+			log.Fatal(err)
+		}
+		fingerprint, err := cmd.Flags().GetString("fingerprint")
+		if err != nil {
+			log.Fatal(err)
+		}
+		ttl, err := cmd.Flags().GetInt("ttl")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		domain, err := csDNS.GetDomain(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+			DomainID:   domain.ID,
+			TTL:        ttl,
+			RecordType: "SSHFP",
+			Name:       name,
+			Content:    fmt.Sprintf("%d %d %s", algo, fingerIDType, fingerprint),
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		println(resp.ID)
 	},
 }
 
 func init() {
 	dnsAddCmd.AddCommand(dnsSSHFPCmd)
+	dnsSSHFPCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
+	dnsSSHFPCmd.Flags().IntP("algorithm", "a", 0, "RSA(1) | DSA(2) | ECDSA(3) | ED25519(4)")
+	dnsSSHFPCmd.Flags().IntP("fingerprint-type", "", 0, "SHA1(1) | SHA256(2)")
+	dnsSSHFPCmd.Flags().StringP("fingerprint", "f", "", "Fingerprint")
+	dnsSSHFPCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
+	//dnsSSHFPCmd.MarkFlagRequired("ttl")
+	dnsSSHFPCmd.MarkFlagRequired("algorithm")
+	dnsSSHFPCmd.MarkFlagRequired("fingerprint-type")
 }
 
 // TXTCmd represents the TXT command
@@ -752,7 +796,7 @@ This type of record uses an HTTP redirect to redirect visitors from a domain to 
 		if err != nil {
 			log.Fatal(err)
 		}
-		destUrl, err := cmd.Flags().GetString("destination-url")
+		destURL, err := cmd.Flags().GetString("destination-url")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -771,7 +815,7 @@ This type of record uses an HTTP redirect to redirect visitors from a domain to 
 			TTL:        ttl,
 			RecordType: "URL",
 			Name:       name,
-			Content:    destUrl,
+			Content:    destURL,
 		})
 		if err != nil {
 			log.Fatal(err)

@@ -447,12 +447,46 @@ var dnsNSCmd = &cobra.Command{
 			cmd.Usage()
 			return
 		}
-		fmt.Println("NS called")
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			log.Fatal(err)
+		}
+		mailSrv, err := cmd.Flags().GetString("mail-server-host")
+		if err != nil {
+			log.Fatal(err)
+		}
+		ttl, err := cmd.Flags().GetInt("ttl")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		domain, err := csDNS.GetDomain(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+			DomainID:   domain.ID,
+			TTL:        ttl,
+			RecordType: "NS",
+			Name:       name,
+			Content:    mailSrv,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		println(resp.ID)
 	},
 }
 
 func init() {
 	dnsAddCmd.AddCommand(dnsNSCmd)
+	dnsNSCmd.Flags().StringP("name", "n", "", "You may use the * wildcard here.")
+	dnsNSCmd.Flags().StringP("mail-server-host", "m", "", "Example: 'ns1.example.com'")
+	dnsNSCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
+	//dnsACmd.MarkFlagRequired("ttl")
+	dnsNSCmd.MarkFlagRequired("name")
+	dnsNSCmd.MarkFlagRequired("mail-server-host")
 }
 
 // POOLCmd represents the POOL command

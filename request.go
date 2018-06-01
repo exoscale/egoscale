@@ -62,6 +62,12 @@ func (client *Client) parseResponse(resp *http.Response, key string) (json.RawMe
 		return nil, err
 	}
 
+	contentType := resp.Header.Get("content-type")
+
+	if !strings.Contains(contentType, "application/json") {
+		return nil, fmt.Errorf("body content-type response expected \"application/json\", got %q", contentType)
+	}
+
 	m := map[string]json.RawMessage{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err

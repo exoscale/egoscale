@@ -220,12 +220,51 @@ var dnsHINFOCmd = &cobra.Command{
 			cmd.Usage()
 			return
 		}
-		fmt.Println("HINFO called")
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			log.Fatal(err)
+		}
+		cpu, err := cmd.Flags().GetString("cpu")
+		if err != nil {
+			log.Fatal(err)
+		}
+		os, err := cmd.Flags().GetString("os")
+		if err != nil {
+			log.Fatal(err)
+		}
+		ttl, err := cmd.Flags().GetInt("ttl")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		domain, err := csDNS.GetDomain(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+			DomainID:   domain.ID,
+			TTL:        ttl,
+			RecordType: "HINFO",
+			Name:       name,
+			Content:    fmt.Sprintf("%s %s", cpu, os),
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		println(resp.ID)
 	},
 }
 
 func init() {
 	dnsAddCmd.AddCommand(dnsHINFOCmd)
+	dnsHINFOCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
+	dnsHINFOCmd.Flags().StringP("cpu", "c", "", "Example: IBM-PC/AT")
+	dnsHINFOCmd.Flags().StringP("os", "o", "", "The operating system of the machine, example: Linux")
+	dnsHINFOCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
+	//dnsACmd.MarkFlagRequired("ttl")
+	dnsHINFOCmd.MarkFlagRequired("cpu")
+	dnsHINFOCmd.MarkFlagRequired("os")
 }
 
 // MXCmd represents the MX command

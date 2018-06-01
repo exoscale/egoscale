@@ -2,189 +2,282 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+
+	"github.com/exoscale/egoscale"
 
 	"github.com/spf13/cobra"
 )
 
-// ACmd represents the A command
-var ACmd = &cobra.Command{
+// dnsACmd represents the A command
+var dnsACmd = &cobra.Command{
 	Use:   "A <domain name>",
 	Short: "Add A record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("A called")
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
+
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			log.Fatal(err)
+		}
+		addr, err := cmd.Flags().GetString("address")
+		if err != nil {
+			log.Fatal(err)
+		}
+		ttl, err := cmd.Flags().GetInt("ttl")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		domain, err := csDNS.GetDomain(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+			DomainID:   domain.ID,
+			TTL:        ttl,
+			RecordType: "A",
+			Name:       name,
+			Content:    addr,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		println(resp.ID)
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(ACmd)
+	dnsAddCmd.AddCommand(dnsACmd)
+	dnsACmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
+	dnsACmd.Flags().StringP("address", "a", "", "Example: 127.0.0.1")
+	dnsACmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
+	//dnsACmd.MarkFlagRequired("ttl")
+	dnsACmd.MarkFlagRequired("address")
 }
 
 // AAAACmd represents the AAAA command
-var AAAACmd = &cobra.Command{
+var dnsAAAACmd = &cobra.Command{
 	Use:   "AAAA <domain name>",
 	Short: "Add AAAA record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("AAAA called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(AAAACmd)
+	dnsAddCmd.AddCommand(dnsAAAACmd)
 }
 
 // ALIASCmd represents the ALIAS command
-var ALIASCmd = &cobra.Command{
+var dnsALIASCmd = &cobra.Command{
 	Use:   "ALIAS <domain name>",
 	Short: "Add ALIAS record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("ALIAS called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(ALIASCmd)
+	dnsAddCmd.AddCommand(dnsALIASCmd)
 }
 
 // CNAMECmd represents the CNAME command
-var CNAMECmd = &cobra.Command{
+var dnsCNAMECmd = &cobra.Command{
 	Use:   "CNAME <domain name>",
 	Short: "Add CNAME record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("CNAME called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(CNAMECmd)
+	dnsAddCmd.AddCommand(dnsCNAMECmd)
 
 }
 
 // HINFOCmd represents the HINFO command
-var HINFOCmd = &cobra.Command{
+var dnsHINFOCmd = &cobra.Command{
 	Use:   "HINFO <domain name>",
 	Short: "Add HINFO record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("HINFO called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(HINFOCmd)
+	dnsAddCmd.AddCommand(dnsHINFOCmd)
 }
 
 // MXCmd represents the MX command
-var MXCmd = &cobra.Command{
+var dnsMXCmd = &cobra.Command{
 	Use:   "MX <domain name>",
 	Short: "Add MX record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("MX called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(MXCmd)
+	dnsAddCmd.AddCommand(dnsMXCmd)
 }
 
 // NAPTRCmd represents the NAPTR command
-var NAPTRCmd = &cobra.Command{
+var dnsNAPTRCmd = &cobra.Command{
 	Use:   "NAPTR <domain name>",
 	Short: "Add NAPTR record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("NAPTR called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(NAPTRCmd)
+	dnsAddCmd.AddCommand(dnsNAPTRCmd)
 }
 
 // NSCmd represents the NS command
-var NSCmd = &cobra.Command{
+var dnsNSCmd = &cobra.Command{
 	Use:   "NS <domain name>",
 	Short: "Add NS record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("NS called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(NSCmd)
+	dnsAddCmd.AddCommand(dnsNSCmd)
 }
 
 // POOLCmd represents the POOL command
-var POOLCmd = &cobra.Command{
+var dnsPOOLCmd = &cobra.Command{
 	Use:   "POOL <domain name>",
 	Short: "Add POOL record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("POOL called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(POOLCmd)
+	dnsAddCmd.AddCommand(dnsPOOLCmd)
 }
 
 // SPFCmd represents the SPF command
-var SPFCmd = &cobra.Command{
+var dnsSPFCmd = &cobra.Command{
 	Use:   "SPF <domain name>",
 	Short: "Add SPF record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("SPF called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(SPFCmd)
+	dnsAddCmd.AddCommand(dnsSPFCmd)
 }
 
 // SRVCmd represents the SRV command
-var SRVCmd = &cobra.Command{
+var dnsSRVCmd = &cobra.Command{
 	Use:   "SRV <domain name>",
 	Short: "Add SRV record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("SRV called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(SRVCmd)
+	dnsAddCmd.AddCommand(dnsSRVCmd)
 }
 
 // SSHFPCmd represents the SSHFP command
-var SSHFPCmd = &cobra.Command{
+var dnsSSHFPCmd = &cobra.Command{
 	Use:   "SSHFP <domain name>",
 	Short: "Add SSHFP record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("SSHFP called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(SSHFPCmd)
+	dnsAddCmd.AddCommand(dnsSSHFPCmd)
 }
 
 // TXTCmd represents the TXT command
-var TXTCmd = &cobra.Command{
+var dnsTXTCmd = &cobra.Command{
 	Use:   "TXT <domain name>",
 	Short: "Add TXT record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("TXT called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(TXTCmd)
+	dnsAddCmd.AddCommand(dnsTXTCmd)
 }
 
 // URLCmd represents the URL command
-var URLCmd = &cobra.Command{
+var dnsURLCmd = &cobra.Command{
 	Use:   "URL <domain name>",
 	Short: "Add URL record type to a domain",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			return
+		}
 		fmt.Println("URL called")
 	},
 }
 
 func init() {
-	dnsAddCmd.AddCommand(URLCmd)
+	dnsAddCmd.AddCommand(dnsURLCmd)
 }

@@ -12,7 +12,8 @@ import (
 // dnsACmd represents the A command
 var dnsACmd = &cobra.Command{
 	Use:   "A <domain name>",
-	Short: "Add an \"A\" record that points your domain or a subdomain to an IP address.",
+	Short: "Add A record type to a domain",
+	Long:  `Add an "A" record that points your domain or a subdomain to an IP address.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -63,7 +64,8 @@ func init() {
 // AAAACmd represents the AAAA command
 var dnsAAAACmd = &cobra.Command{
 	Use:   "AAAA <domain name>",
-	Short: "Add an \"AAAA\" record that points your domain to an IPv6 address. These records are the same as A records except they use IPv6 addresses.",
+	Short: "Add AAAA record type to a domain",
+	Long:  `Add an "AAAA" record that points your domain to an IPv6 address. These records are the same as A records except they use IPv6 addresses.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -114,13 +116,11 @@ func init() {
 var dnsALIASCmd = &cobra.Command{
 	Use:   "ALIAS <domain name>",
 	Short: "Add ALIAS record type to a domain",
-	Long: `
-	Add an "ALIAS" record. An ALIAS record is a special record that will
-	map a domain to another domain transparently. It can be used like a CNAME but
-	for a name with other records, like the root. When the record is resolved it will
-	look up the A records for the aliased domain and return those as the records for 
-	the record name. Note: If you want to redirect to a URL, use a URL record instead.
-	`,
+	Long: `Add an "ALIAS" record. An ALIAS record is a special record that will
+map a domain to another domain transparently. It can be used like a CNAME but
+for a name with other records, like the root. When the record is resolved it will
+look up the A records for the aliased domain and return those as the records for 
+the record name. Note: If you want to redirect to a URL, use a URL record instead.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -171,6 +171,8 @@ func init() {
 var dnsCNAMECmd = &cobra.Command{
 	Use:   "CNAME <domain name>",
 	Short: "Add CNAME record type to a domain",
+	Long: `Add a "CNAME" record that aliases a subdomain to another host.
+These types of records are used when a server is reached by several names. Only use CNAME records on subdomains.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -222,6 +224,7 @@ func init() {
 var dnsHINFOCmd = &cobra.Command{
 	Use:   "HINFO <domain name>",
 	Short: "Add HINFO record type to a domain",
+	Long:  `Add an "HINFO" record is used to describe the CPU and OS of a host.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -278,6 +281,8 @@ func init() {
 var dnsMXCmd = &cobra.Command{
 	Use:   "MX <domain name>",
 	Short: "Add MX record type to a domain",
+	Long: `Add a mail exchange record that points to a mail server or relay.
+These types of records are used to describe which servers handle incoming email.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -335,6 +340,8 @@ func init() {
 var dnsNAPTRCmd = &cobra.Command{
 	Use:   "NAPTR <domain name>",
 	Short: "Add NAPTR record type to a domain",
+	Long: `Add an "NAPTR" record to provide a means to map a resource that is not in
+the domain name syntax to a label that is. More information can be found in RFC 2915.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -449,6 +456,8 @@ func init() {
 var dnsNSCmd = &cobra.Command{
 	Use:   "NS <domain name>",
 	Short: "Add NS record type to a domain",
+	Long: `Add an "NS" record the delegates a domain to another name server.
+You may only delegate subdomains (for example subdomain.yourdomain.com).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -500,6 +509,8 @@ func init() {
 var dnsPOOLCmd = &cobra.Command{
 	Use:   "POOL <domain name>",
 	Short: "Add POOL record type to a domain",
+	Long: `Add a "POOL" record that aliases a subdomain to another host as
+part of a pool of available CNAME records. This is a DNSimple custom record type.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -551,6 +562,11 @@ func init() {
 var dnsSPFCmd = &cobra.Command{
 	Use:   "SPF <domain name>",
 	Short: "Add SPF record type to a domain",
+	Long: `Add an "SPF" record to indicate what hosts and addresses are allowed to send mail from your domain.
+When creating an SPF record we will automatically create a corresponding TXT record
+for you as some older mail exchanges require a TXT version of the SPF record.
+
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -568,6 +584,7 @@ func init() {
 var dnsSRVCmd = &cobra.Command{
 	Use:   "SRV <domain name>",
 	Short: "Add SRV record type to a domain",
+	Long:  `Add an "SRV" record to specify the location of servers for a specific service.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -654,6 +671,7 @@ func init() {
 var dnsSSHFPCmd = &cobra.Command{
 	Use:   "SSHFP <domain name>",
 	Short: "Add SSHFP record type to a domain",
+	Long:  `Edit an "SSHFP" record to share your SSH fingerprint with others.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -671,6 +689,8 @@ func init() {
 var dnsTXTCmd = &cobra.Command{
 	Use:   "TXT <domain name>",
 	Short: "Add TXT record type to a domain",
+	Long: `Add a "TXT" record. This is useful for domain records that are not covered by
+the standard record types. For example, Google uses this type of record for domain verification.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()
@@ -721,6 +741,8 @@ func init() {
 var dnsURLCmd = &cobra.Command{
 	Use:   "URL <domain name>",
 	Short: "Add URL record type to a domain",
+	Long: `Add an URL redirection record that points your domain to a URL.
+This type of record uses an HTTP redirect to redirect visitors from a domain to a web site.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()

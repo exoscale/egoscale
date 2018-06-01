@@ -498,12 +498,46 @@ var dnsPOOLCmd = &cobra.Command{
 			cmd.Usage()
 			return
 		}
-		fmt.Println("POOL called")
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			log.Fatal(err)
+		}
+		alias, err := cmd.Flags().GetString("alias")
+		if err != nil {
+			log.Fatal(err)
+		}
+		ttl, err := cmd.Flags().GetInt("ttl")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		domain, err := csDNS.GetDomain(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+			DomainID:   domain.ID,
+			TTL:        ttl,
+			RecordType: "POOL",
+			Name:       name,
+			Content:    alias,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		println(resp.ID)
 	},
 }
 
 func init() {
 	dnsAddCmd.AddCommand(dnsPOOLCmd)
+	dnsPOOLCmd.Flags().StringP("name", "n", "", "You may use the * wildcard here.")
+	dnsPOOLCmd.Flags().StringP("alias", "a", "", "Alias for: Example: 'some-other-site.com'")
+	dnsPOOLCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
+	//dnsACmd.MarkFlagRequired("ttl")
+	dnsPOOLCmd.MarkFlagRequired("name")
+	dnsPOOLCmd.MarkFlagRequired("alias")
 }
 
 // SPFCmd represents the SPF command

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	jsonContentType = "application/json;charset=utf-8"
+	jsonContentType = "application/json"
 )
 
 func TestRequest(t *testing.T) {

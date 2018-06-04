@@ -75,7 +75,7 @@ func getMyCIDR(isIpv6 bool) (*net.IPNet, error) {
 	dnsServer := ""
 
 	if isIpv6 {
-		dnsServer = "resolver1.ipv6-sandbox.opendns.com"
+		dnsServer = "resolver2.ipv6-sandbox.opendns.com"
 		cidrMask = net.CIDRMask(128, 128)
 	} else {
 		dnsServer = "resolver1.opendns.com"

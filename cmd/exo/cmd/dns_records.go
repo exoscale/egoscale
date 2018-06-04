@@ -558,27 +558,39 @@ func init() {
 	dnsPOOLCmd.MarkFlagRequired("alias")
 }
 
-// SPFCmd represents the SPF command
-var dnsSPFCmd = &cobra.Command{
-	Use:   "SPF <domain name>",
-	Short: "Add SPF record type to a domain",
-	Long: `Add an "SPF" record to indicate what hosts and addresses are allowed to send mail from your domain.
-When creating an SPF record we will automatically create a corresponding TXT record
-for you as some older mail exchanges require a TXT version of the SPF record.
+// // SPFCmd represents the SPF command
+// var dnsSPFCmd = &cobra.Command{
+// 	Use:   "SPF <domain name>",
+// 	Short: "Add SPF record type to a domain",
+// 	Long: `Add an "SPF" record to indicate what hosts and addresses are allowed to send mail from your domain.
+// When creating an SPF record we will automatically create a corresponding TXT record
+// for you as some older mail exchanges require a TXT version of the SPF record.
 
-	`,
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 1 {
-			cmd.Usage()
-			return
-		}
-		fmt.Println("SPF called")
-	},
-}
+// 	`,
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		if len(args) < 1 {
+// 			cmd.Usage()
+// 			return
+// 		}
+// 		fmt.Println("SPF called")
+// 	},
+// }
 
-func init() {
-	dnsAddCmd.AddCommand(dnsSPFCmd)
-}
+// func init() {
+// 	dnsAddCmd.AddCommand(dnsSPFCmd)
+// 	dnsAddCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name> You may use the * wildcard here.")
+// 	dnsAddCmd.Flags().BoolP("from-this-host", "e", false, "Set this flag if you send email from this host.")
+// 	dnsAddCmd.Flags().BoolP("from-this-hosts-mx", "x", false, "Set this flag if you send email from this host's MX servers.")
+// 	dnsAddCmd.Flags().StringP("other-servers", "o", "", "Separate addresses by spaces e.g(127.0.0.1 192.168.1.1)")
+// 	dnsAddCmd.Flags().StringP("ip-networks", "n", "", "Separate networks by spaces e.g(127.0.0.1 192.168.1.1)")
+// 	dnsAddCmd.Flags().StringP("ipv6-networks", "6", "", "Separate networks by spaces e.g(2001:0db8:85a3:0000:0000:EA75:1337:BEEF ...)")
+// 	dnsAddCmd.Flags().StringP("include", "i", "", "If you send mail through your ISP's servers, and the ISP has published an SPF record, name the ISP here. Separate multiple domains with spaces.")
+// 	dnsAddCmd.Flags().BoolP("hard-fail", "", false, "Soft fail if flag not set")
+// 	dnsAddCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
+
+// 	dnsSPFCmd.MarkFlagRequired("")
+
+// }
 
 // SRVCmd represents the SRV command
 var dnsSRVCmd = &cobra.Command{

@@ -540,12 +540,9 @@ func TestWrongBodyResponse(t *testing.T) {
 	`})
 	defer ts.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
-	defer cancel()
-
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 
-	_, err := cs.RequestWithContext(ctx, &ListZones{})
+	_, err := cs.Request(&ListZones{})
 	if err == nil {
 		t.Error("an error was expected but got nil error")
 	}

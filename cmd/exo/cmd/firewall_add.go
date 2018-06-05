@@ -258,7 +258,7 @@ func init() {
 	firewallAddCmd.Flags().BoolP("my-ip", "", false, "Set CIDR for my ip")
 	firewallAddCmd.Flags().BoolP("engress", "e", false, "By default rule is INGRESS (set --engress to have ENGRESS rule)")
 	firewallAddCmd.Flags().StringP("protocol", "p", "", "Rule Protocol available [tcp, udp, icmp, icmpv6, ah, esp, gre]")
-	firewallAddCmd.Flags().StringP("cidr", "c", "", "Rule Cidr [CIDR 0.0.0.0/0,192.168.0.0/16...]")
+	firewallAddCmd.Flags().StringP("cidr", "c", "", "Rule Cidr [CIDR 0.0.0.0/0,::/0,...]")
 	firewallAddCmd.Flags().StringP("security-group", "s", "", "Rule security group [name or id ex: sg1,sg2...]")
 	firewallAddCmd.Flags().StringP("port", "P", "", "Rule port range [80-80,443,22-22]")
 

@@ -51,11 +51,6 @@ func (client *Client) ListWithContext(ctx context.Context, g Listable) ([]interf
 		return s, err
 	}
 
-	payload, err := client.Payload(req)
-	if err != nil {
-		return nil, err
-	}
-
 	client.PaginateWithContext(ctx, req, func(item interface{}, e error) bool {
 		if item != nil {
 			s = append(s, item)
@@ -64,10 +59,6 @@ func (client *Client) ListWithContext(ctx context.Context, g Listable) ([]interf
 		err = e
 		return false
 	})
-
-	if err != nil {
-		err = fmt.Errorf("%s %s", err.Error(), payload)
-	}
 
 	return s, err
 }

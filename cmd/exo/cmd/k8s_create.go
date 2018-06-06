@@ -183,5 +183,5 @@ func init() {
 	k8sCmd.AddCommand(k8sCreateCmd)
 	k8sCreateCmd.Flags().StringP("node", "n", "", "Node can provision existing instances [vm name | id, vm name | id,...]")
 	k8sCreateCmd.Flags().IntP("node-number", "", 1, "Node number to create (if --node not set)")
-	k8sCreateCmd.Flags().StringP("node-capacity", "", "medium", "Node(s) capacity (if --node not set)")
+	k8sCreateCmd.Flags().StringP("node-capacity", "", "medium", "Node(s) capacity (if --node not set) (micro|tiny|small|medium|large|extra-large|huge|mega|titan)")
 }

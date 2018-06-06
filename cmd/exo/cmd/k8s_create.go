@@ -47,8 +47,7 @@ var k8sCreateCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			///////MMMDDRRR J'avais pas pensé au CLOUDINIT qui job !!!!!
-			////WIP crado
+			//XXXX Look for a solution to wait cloudinit finish his job !
 			ttime.Sleep(ttime.Second * 60)
 		}
 

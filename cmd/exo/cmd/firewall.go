@@ -94,7 +94,7 @@ func getMyCIDR(isIpv6 bool) (*net.IPNet, error) {
 	}
 
 	if len(ip) < 1 {
-		return nil, fmt.Errorf("Invalid IP adress")
+		return nil, fmt.Errorf("Invalid IP address")
 	}
 
 	return &net.IPNet{IP: ip[0].IP, Mask: cidrMask}, nil

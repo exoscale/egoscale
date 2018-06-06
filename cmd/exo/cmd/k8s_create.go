@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	ttime "time"
 
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
@@ -21,11 +22,35 @@ var k8sCreateCmd = &cobra.Command{
 			cmd.Usage()
 			return
 		}
+
 		node, err := cmd.Flags().GetString("node")
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		nodes := getCommaflag(node)
+
+		if node == "" {
+
+			nodeCap, err := cmd.Flags().GetString("node-capacity")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			nodeNumber, err := cmd.Flags().GetInt("node-number")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			nodes, err = deployNodes(nodeNumber, nodeCap)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			///////MMMDDRRR J'avais pas pensé au CLOUDINIT qui job !!!!!
+			////WIP crado
+			ttime.Sleep(ttime.Second * 60)
+		}
 
 		clusterFile, err := createK8sClusterFile(nodes)
 		if err != nil {
@@ -33,9 +58,61 @@ var k8sCreateCmd = &cobra.Command{
 		}
 
 		if err := startWithRKE(clusterFile, args[0]); err != nil {
-
+			log.Fatal(err)
 		}
 	},
+}
+
+func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
+
+	nodes := make([]string, nodeNumber)
+
+	for i := 0; i < nodeNumber; i++ {
+
+		userData, err := getUserData(path.Join(configFolder, "cloudinit.yml"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		zone, err := getZoneIDByName(cs, "ch-dk-2")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		template, err := getTemplateIDByName(cs, "Linux Ubuntu 18.04", zone)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		sgs, err := getSecuGrpList(cs, "default")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		servOffering, err := getServiceOfferingIDByName(cs, "medium")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		req := &egoscale.DeployVirtualMachine{
+			Name:              fmt.Sprintf("test-node-%d", i),
+			UserData:          userData,
+			ZoneID:            zone,
+			TemplateID:        template,
+			RootDiskSize:      50,
+			SecurityGroupIDs:  sgs,
+			ServiceOfferingID: servOffering,
+		}
+
+		vm, err := createVM(req)
+		if err != nil {
+			return nil, err
+		}
+
+		nodes[i] = vm.ID
+	}
+
+	return nodes, nil
 }
 
 func startWithRKE(clusterFile, clusterName string) error {
@@ -104,5 +181,7 @@ func createK8sClusterFile(nodes []string) (string, error) {
 
 func init() {
 	k8sCmd.AddCommand(k8sCreateCmd)
-	k8sCreateCmd.Flags().StringP("node", "n", "", "node to provision [vm name | id, vm name | id,...]")
+	k8sCreateCmd.Flags().StringP("node", "n", "", "Node can provision existing instances [vm name | id, vm name | id,...]")
+	k8sCreateCmd.Flags().IntP("node-number", "", 1, "Node number to create (if --node not set)")
+	k8sCreateCmd.Flags().StringP("node-capacity", "", "medium", "Node(s) capacity (if --node not set)")
 }

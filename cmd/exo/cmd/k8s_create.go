@@ -52,7 +52,7 @@ func startWithRKE(clusterFile, clusterName string) error {
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		if err := ioutil.WriteFile(filePath, []byte(clusterFile), 0600); err != nil {
-			log.Fatalf("SSH private key could not be written. %s", err)
+			log.Fatalf("cluster.yml could not be written. %s", err)
 		}
 	}
 

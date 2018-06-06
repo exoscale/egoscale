@@ -9,42 +9,11 @@ import (
 	"io/ioutil"
 	"net"
 	"net/url"
-
-	"github.com/jinzhu/copier"
 )
 
 // ResourceType returns the type of the resource
 func (*VirtualMachine) ResourceType() string {
 	return "UserVM"
-}
-
-// Get fills the VM
-func (vm *VirtualMachine) Get(ctx context.Context, client *Client) error {
-	if vm.ID == "" && vm.Name == "" && vm.DefaultNic() == nil {
-		return fmt.Errorf("a VirtualMachine may only be searched using ID, Name or IPAddress")
-	}
-
-	vms, err := client.ListWithContext(ctx, vm)
-	if err != nil {
-		return err
-	}
-
-	payload, err := client.Payload(&ListVirtualMachines{})
-	if err != nil {
-		return err
-	}
-
-	count := len(vms)
-	if count == 0 {
-		return &ErrorResponse{
-			ErrorCode: ParamError,
-			ErrorText: fmt.Sprintf("missing VirtualMachine. id: %s, name: %s %s", vm.ID, vm.Name, payload),
-		}
-	} else if count > 1 {
-		return fmt.Errorf("more than one VirtualMachine was found. Query: id: %s, name: %s %s", vm.ID, vm.Name, payload)
-	}
-
-	return copier.Copy(vm, vms[0])
 }
 
 // Delete destroys the VM

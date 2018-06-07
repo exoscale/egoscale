@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	ttime "time"
 
 	"github.com/exoscale/egoscale"
@@ -63,15 +64,50 @@ var k8sCreateCmd = &cobra.Command{
 			}
 		}
 
-		clusterFile, err := createK8sClusterFile(nodes)
+		clusterFile, err := createK8sClusterFile(nodes, args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if err := startWithRKE(clusterFile, args[0]); err != nil {
+		if err := storeConfig(args[0], clusterFile, nodes); err != nil {
+			log.Fatal(err)
+		}
+
+		filePath = path.Join(configFolder, "k8s", "clusters", args[0], "cluster.yml")
+
+		if err := startWithRKE(filePath); err != nil {
 			log.Fatal(err)
 		}
 	},
+}
+
+func storeConfig(clusterName, clusterFile string, nodes []string) error {
+	filePath := path.Join(configFolder, "k8s", "clusters", clusterName)
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		if err := os.MkdirAll(filePath, os.ModePerm); err != nil {
+			return err
+		}
+	}
+
+	filePath = path.Join(filePath, "cluster.yml")
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		if err := ioutil.WriteFile(filePath, []byte(clusterFile), 0600); err != nil {
+			log.Fatalf("cluster.yml could not be written. %s", err)
+		}
+	}
+
+	nodesFile := strings.Join(nodes, "\n")
+
+	filePath = path.Join(configFolder, "k8s", "clusters", clusterName, "nodes")
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		if err := ioutil.WriteFile(filePath, []byte(nodesFile), 0600); err != nil {
+			log.Fatalf("nodes could not be written. %s", err)
+		}
+	}
+	return nil
 }
 
 func checkingCloudInitJob(vms []string) error {
@@ -137,7 +173,7 @@ func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
 			log.Fatal(err)
 		}
 
-		template, err := getTemplateIDByName(cs, "Linux Ubuntu 18.04 LTS 64-bit", zone)
+		template, err := getTemplateIDByName(cs, "Linux Ubuntu 18.04", zone)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -173,23 +209,7 @@ func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
 	return nodes, nil
 }
 
-func startWithRKE(clusterFile, clusterName string) error {
-
-	filePath := path.Join(configFolder, "k8s", "clusters", clusterName)
-
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		if err := os.MkdirAll(filePath, os.ModePerm); err != nil {
-			return err
-		}
-	}
-
-	filePath = path.Join(filePath, "cluster.yml")
-
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		if err := ioutil.WriteFile(filePath, []byte(clusterFile), 0600); err != nil {
-			log.Fatalf("cluster.yml could not be written. %s", err)
-		}
-	}
+func startWithRKE(filePath string) error {
 
 	args := []string{
 		"up",
@@ -197,7 +217,7 @@ func startWithRKE(clusterFile, clusterName string) error {
 		filePath,
 	}
 
-	cmd := exec.Command(path.Join(configFolder, "rke"), args...)
+	cmd := exec.Command("rke", args...)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
@@ -209,9 +229,10 @@ func startWithRKE(clusterFile, clusterName string) error {
 	return nil
 }
 
-func createK8sClusterFile(nodes []string) (string, error) {
+func createK8sClusterFile(nodes []string, clusterName string) (string, error) {
 
 	clusterYML := k8sYMLHeader
+
 	for _, node := range nodes {
 		vm, err := getVMWithNameOrID(cs, node)
 		if err != nil {

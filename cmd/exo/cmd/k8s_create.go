@@ -24,6 +24,12 @@ var k8sCreateCmd = &cobra.Command{
 			return
 		}
 
+		filePath := path.Join(configFolder, "k8s", "clusters", args[0])
+
+		if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+			log.Fatalf("kubernetes cluster %q already exist", args[0])
+		}
+
 		node, err := cmd.Flags().GetString("node")
 		if err != nil {
 			log.Fatal(err)
@@ -49,7 +55,11 @@ var k8sCreateCmd = &cobra.Command{
 			}
 
 			if err := checkingCloudInitJob(nodes); err != nil {
-				log.Fatal(err)
+				fmt.Fprintln(os.Stderr, err.Error())
+				if err := destroyAllNodes(nodes); err != nil {
+					log.Fatal(err)
+				}
+				os.Exit(1)
 			}
 		}
 
@@ -66,8 +76,10 @@ var k8sCreateCmd = &cobra.Command{
 
 func checkingCloudInitJob(vms []string) error {
 
+	defer println("")
+
 	print("Installing Docker on node(s)")
-	for i := 0; i < 60; i++ {
+	for i := 0; i < 80; i++ {
 
 		var errCMD error
 		for _, vm := range vms {
@@ -95,16 +107,23 @@ func checkingCloudInitJob(vms []string) error {
 			}
 		}
 		if errCMD == nil {
-			println("")
 			return nil
 		}
-		println(errCMD.Error())
 		ttime.Sleep(ttime.Second)
 		print(".")
 		errCMD = nil
 	}
 
 	return fmt.Errorf("waiting to installing Docker Timeout")
+}
+
+func destroyAllNodes(nodes []string) error {
+	for _, node := range nodes {
+		if err := deleteVM(node); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
@@ -118,7 +137,7 @@ func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
 			log.Fatal(err)
 		}
 
-		template, err := getTemplateIDByName(cs, "Linux Ubuntu 18.04", zone)
+		template, err := getTemplateIDByName(cs, "Linux Ubuntu 18.04 LTS 64-bit", zone)
 		if err != nil {
 			log.Fatal(err)
 		}

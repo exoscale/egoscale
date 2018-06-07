@@ -41,4 +41,22 @@ services:
   kubeproxy:
     image: rancher/k8s:v1.10.0-rancher1-2
 `
+
+	cloudINIT = `#cloud-config
+
+manage_etc_hosts: true
+
+apt_sources:
+- source: "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable"
+  keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+
+package_update: true
+package_upgrade: true
+
+packages:
+- [ docker-ce, "17.03.2~ce-0~ubuntu-xenial" ]
+
+runcmd:
+  - [ usermod, -aG, docker, ubuntu ]
+`
 )

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -89,13 +90,18 @@ func checkingCloudInitJob(vms []string) error {
 			cmd := exec.Command("ssh", args...)
 
 			errCMD = cmd.Run()
+			if errCMD != nil {
+				break
+			}
 		}
 		if errCMD == nil {
 			println("")
 			return nil
 		}
+		println(errCMD.Error())
 		ttime.Sleep(ttime.Second)
 		print(".")
+		errCMD = nil
 	}
 
 	return fmt.Errorf("waiting to installing Docker Timeout")
@@ -106,11 +112,6 @@ func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
 	nodes := make([]string, nodeNumber)
 
 	for i := 0; i < nodeNumber; i++ {
-
-		userData, err := getUserData(path.Join(configFolder, "cloudinit.yml"))
-		if err != nil {
-			log.Fatal(err)
-		}
 
 		zone, err := getZoneIDByName(cs, "ch-dk-2")
 		if err != nil {
@@ -134,7 +135,7 @@ func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
 
 		req := &egoscale.DeployVirtualMachine{
 			Name:              fmt.Sprintf("node-%d", i+1),
-			UserData:          userData,
+			UserData:          base64.StdEncoding.EncodeToString([]byte(cloudINIT)),
 			ZoneID:            zone,
 			TemplateID:        template,
 			RootDiskSize:      50,

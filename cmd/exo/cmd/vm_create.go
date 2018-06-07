@@ -245,7 +245,7 @@ func createVM(vmInfos *egoscale.DeployVirtualMachine) (*egoscale.VirtualMachine,
 
 	virtualMachine := &egoscale.VirtualMachine{}
 	var errorReq error
-	print("Deploying")
+	fmt.Printf("Deploying %s", vmInfos.Name)
 	cs.AsyncRequest(vmInfos, func(jobResult *egoscale.AsyncJobResult, err error) bool {
 
 		if err != nil {

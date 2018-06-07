@@ -47,8 +47,9 @@ var k8sCreateCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			//XXXX Look for a solution to wait cloudinit finish his job !
-			ttime.Sleep(ttime.Second * 60)
+			if err := checkingCloudInitJob(nodes); err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		clusterFile, err := createK8sClusterFile(nodes)
@@ -60,6 +61,44 @@ var k8sCreateCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 	},
+}
+
+func checkingCloudInitJob(vms []string) error {
+
+	print("Installing Docker on node(s)")
+	for i := 0; i < 60; i++ {
+
+		var errCMD error
+		for _, vm := range vms {
+
+			sshinfo, err := getSSHInfos(vm)
+			if err != nil {
+				return err
+			}
+
+			args := []string{
+				fmt.Sprintf("%s@%s", sshinfo.userName, sshinfo.ip.String()),
+				"-i",
+				sshinfo.sshKeys,
+				"-o",
+				"StrictHostKeyChecking=no",
+				"docker",
+				"-v",
+			}
+
+			cmd := exec.Command("ssh", args...)
+
+			errCMD = cmd.Run()
+		}
+		if errCMD == nil {
+			println("")
+			return nil
+		}
+		ttime.Sleep(ttime.Second)
+		print(".")
+	}
+
+	return fmt.Errorf("waiting to installing Docker Timeout")
 }
 
 func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
@@ -94,7 +133,7 @@ func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
 		}
 
 		req := &egoscale.DeployVirtualMachine{
-			Name:              fmt.Sprintf("test-node-%d", i),
+			Name:              fmt.Sprintf("node-%d", i+1),
 			UserData:          userData,
 			ZoneID:            zone,
 			TemplateID:        template,

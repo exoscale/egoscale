@@ -46,11 +46,8 @@ func deleteCluster(clusterName string) error {
 
 	folder := path.Join(configFolder, "k8s", "clusters", clusterName)
 
-	if err := os.RemoveAll(folder); err != nil {
-		return err
-	}
+	return os.RemoveAll(folder)
 
-	return nil
 }
 
 func init() {

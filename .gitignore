@@ -1,3 +1,4 @@
 vendor
 .gopath
 cloudstack.ini
+./cmd/exo/static-website/public

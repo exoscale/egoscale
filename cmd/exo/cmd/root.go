@@ -8,11 +8,13 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	ttime "time"
 
 	"github.com/exoscale/egoscale"
 	"github.com/exoscale/egoscale/cmd/exo/client"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 )
 
 var region string
@@ -60,6 +62,29 @@ func buildClient() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+
+	const fmTemplate = `---
+date: %s
+title: "%s"
+slug: %s
+url: %s
+---
+`
+
+	filePrepender := func(filename string) string {
+		now := ttime.Now().Format(ttime.RFC3339)
+		name := filepath.Base(filename)
+		base := strings.TrimSuffix(name, path.Ext(name))
+		url := "/commands/" + strings.ToLower(base) + "/"
+		return fmt.Sprintf(fmTemplate, now, strings.Replace(base, "_", " ", -1), base, url)
+	}
+
+	linkHandler := func(name string) string {
+		base := strings.TrimSuffix(name, path.Ext(name))
+		return "/commands/" + strings.ToLower(base) + "/"
+	}
+
+	doc.GenMarkdownTreeCustom(rootCmd, "./docs", filePrepender, linkHandler)
 
 	envs := map[string]string{
 		"CLOUDSTACK_CONFIG": "config",

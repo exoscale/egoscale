@@ -115,7 +115,7 @@ func checkingCloudInitJob(vms []string) error {
 	defer println("")
 
 	print("Installing Docker on node(s)")
-	for i := 0; i < 80; i++ {
+	for i := 0; i < 120; i++ {
 
 		var errCMD error
 		for _, vm := range vms {

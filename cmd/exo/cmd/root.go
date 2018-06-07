@@ -84,7 +84,7 @@ url: %s
 		return "/commands/" + strings.ToLower(base) + "/"
 	}
 
-	doc.GenMarkdownTreeCustom(rootCmd, "./doc", filePrepender, linkHandler)
+	doc.GenMarkdownTreeCustom(rootCmd, "./docs", filePrepender, linkHandler)
 
 	envs := map[string]string{
 		"CLOUDSTACK_CONFIG": "config",

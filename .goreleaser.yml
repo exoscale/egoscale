@@ -21,7 +21,7 @@ builds:
 sign:
   cmd: gpg
   args: ["-u", "ops@exoscale.ch", "--detach-sign", "${artifact}"]
-  artifacts: all
+  artifacts: none
 
 archive:
   name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
@@ -31,3 +31,26 @@ release:
     owner: exoscale
     name: egoscale
   draft: true
+
+nfpm:
+
+  name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+
+  vendor: Exoscale.
+  
+
+  homepage: https://www.exoscale.com/
+
+  
+  description: Software to create fast and easy drum rolls.
+
+  license: Apache 2.0
+
+  
+
+  # Formats to be generated.
+  formats:
+    - deb
+    - rpm
+

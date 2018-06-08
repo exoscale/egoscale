@@ -38,7 +38,7 @@ jobs:
       cd ../..
       goreleaser --snapshot --skip-sign
   - stage: gh-pages
-    if: branch = website
+    if: branch = master
     script: |
       dep ensure -v -vendor-only
       cd cmd/cs

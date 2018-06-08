@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
+	"time"
 
 	"github.com/urfave/cli"
 )
@@ -19,8 +21,18 @@ url: %s
 ---
 `
 
-// GenerateDocs generates markdown documentation for the commands in app
-func GenerateDocs(app *cli.App, docPath string) {
+func writeFlag(buffer *bytes.Buffer, flag cli.Flag) {
+	doc := strings.SplitN(flag.String(), "\t", 2)
+	if len(doc) != 2 {
+		doc = []string{flag.GetName(), ""}
+	} else {
+		doc[1] = " - " + doc[1]
+	}
+	buffer.WriteString(fmt.Sprintf("-- `%s`%s\n", doc[0], doc[1]))
+}
+
+// generateDocs generates markdown documentation for the commands in app
+func generateDocs(app *cli.App, docPath string) {
 	buffer := bytes.Buffer{}
 
 	var appDescription string
@@ -47,18 +59,22 @@ func GenerateDocs(app *cli.App, docPath string) {
 	if len(app.Flags) > 0 {
 		buffer.WriteString("## Global Flags\n\n")
 		for _, flag := range app.Flags {
-			buffer.WriteString(fmt.Sprintf("- `--%s`\n", flag.GetName()))
+			writeFlag(&buffer, flag)
 		}
 	}
 
 	globalFlag := buffer.String()
 
-	buffer = bytes.Buffer{}
-
-	//buffer.WriteString("## Subcommands\n\n")
+	now := time.Now().Format(time.RFC3339)
 
 	for _, command := range app.Commands {
-		buffer.WriteString(fmt.Sprintf("### `%s`\n\n", command.Name))
+		base := command.Name
+		slug := strings.ToLower(base)
+		url := fmt.Sprintf("/cs/%s/", slug)
+
+		buffer = bytes.Buffer{}
+		buffer.WriteString(fmt.Sprintf(frontmatter, now, base, slug, url))
+		buffer.WriteString(fmt.Sprintf("# `%s`\n\n", command.Name))
 		if command.Usage != "" {
 			buffer.WriteString(command.Usage)
 			buffer.WriteString("\n\n")
@@ -68,24 +84,20 @@ func GenerateDocs(app *cli.App, docPath string) {
 			buffer.WriteString("\n\n")
 		}
 		if len(command.Flags) > 0 {
-			buffer.WriteString("#### Flags\n\n")
+			buffer.WriteString("## Flags\n\n")
 			for _, flag := range command.Flags {
-				buffer.WriteString(fmt.Sprintf("- `--%s`\n", flag.GetName()))
+				writeFlag(&buffer, flag)
 			}
 
 			buffer.WriteString("\n")
 
 			buffer.WriteString(globalFlag)
 
-			filepath := path.Join(docPath, app.Name+"_"+command.Name+".md")
+			filepath := path.Join(docPath, slug+".md")
 
-			if _, err := os.Stat(filepath); os.IsNotExist(err) {
-				if err := ioutil.WriteFile(filepath, []byte(buffer.String()), 0644); err != nil {
-					log.Fatalf("doc could not be written. %s", err)
-				}
+			if err := ioutil.WriteFile(filepath, []byte(buffer.String()), 0644); err != nil {
+				log.Fatalf("doc could not be written. %s", err)
 			}
-
-			buffer = bytes.Buffer{}
 		}
 	}
 }

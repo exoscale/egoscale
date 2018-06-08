@@ -169,6 +169,8 @@ func main() {
 	}
 	out, _ := json.MarshalIndent(&resp, "", "  ")
 	printJSON(string(out), client.Theme)
+
+	GenerateDocs(app, "./cmd/cs/doc")
 }
 
 func buildClient(region string) (*Client, error) {

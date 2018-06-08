@@ -72,7 +72,7 @@ func generateDocs(app *cli.App, docPath string) {
 		slug := strings.ToLower(base)
 		url := fmt.Sprintf("/cs/%s/", slug)
 
-		buffer = bytes.Buffer{}
+		buffer := bytes.Buffer{}
 		buffer.WriteString(fmt.Sprintf(frontmatter, now, base, slug, url))
 		buffer.WriteString(fmt.Sprintf("# `%s`\n\n", command.Name))
 		if command.Usage != "" {

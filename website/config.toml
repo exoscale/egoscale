@@ -3,6 +3,7 @@ languageCode = "en"
 footnoteReturnLinkContents = "↩"
 title = "Egoscale, the Go toolbox for Exoscale"
 metadataFormat = "yaml"
+sectionPagesMenu = "main"
 
 [params]
 AuthorName = "Exoscale"
@@ -22,8 +23,13 @@ expiryDate = ["expiryDate"]
 [menu]
 
 [[menu.main]]
-name = "Exoscale"
+name = "exo"
 weight = 1
-identifier = "Exoscale"
-url = "https://exoscale.com/"
+identifier = "cli"
+url = "/cli/"
 
+[[menu.main]]
+name = "cs"
+weight = 2
+identifier = "cs"
+url = "/cs/"

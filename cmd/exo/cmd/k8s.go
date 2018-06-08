@@ -11,7 +11,7 @@ var k8sCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(k8sCmd)
+	RootCmd.AddCommand(k8sCmd)
 }
 
 const (

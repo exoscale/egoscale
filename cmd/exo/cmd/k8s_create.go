@@ -132,7 +132,7 @@ func checkingCloudInitJob(vms []string) error {
 				"-o",
 				"StrictHostKeyChecking=no",
 				"docker",
-				"-v",
+				"ps",
 			}
 
 			cmd := exec.Command("ssh", args...)
@@ -173,7 +173,7 @@ func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
 			log.Fatal(err)
 		}
 
-		template, err := getTemplateIDByName(cs, "Linux Ubuntu 18.04", zone)
+		template, err := getTemplateIDByName(cs, "Linux Ubuntu 18.04 LTS", zone)
 		if err != nil {
 			log.Fatal(err)
 		}

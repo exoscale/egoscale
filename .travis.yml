@@ -8,15 +8,9 @@ go:
 - tip
 
 env:
-  - DEP_VERSION=0.4.1
+  - DEP_VERSION=0.4.1 HUGO_VERSION=0.41
 
 cache: apt
-
-addons:
-  apt:
-    update: true
-    packages:
-      - hugo
 
 before_install:
   - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
@@ -24,6 +18,8 @@ before_install:
   - npm i -g codeclimate-test-reporter
   - curl -sL https://git.io/goreleaser | head -n -2 | bash
   - tar -xf /tmp/goreleaser.tar.gz -C $GOPATH/bin/
+  - wget https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_${HUGO_VERSION}_Linux-64bit.deb
+  - dpkg -i hugo_${HUGO_VERSION}_Linux-64bit.deb
 
 jobs:
   include:

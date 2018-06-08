@@ -16,7 +16,6 @@ cache: apt
 before_install:
   - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
   - chmod +x $GOPATH/bin/dep
-  - sudo npm i -g codeclimate-test-reporter
   - curl -sL https://git.io/goreleaser | head -n -2 | bash
   - tar -xf /tmp/goreleaser.tar.gz -C $GOPATH/bin/
   - wget https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_${HUGO_VERSION}_Linux-64bit.deb
@@ -28,7 +27,8 @@ jobs:
     script: |
       dep ensure -v -vendor-only
       go test -race -coverprofile=coverage.out -covermode=atomic .
-      codeclimate-test-reporter < coverage.out
+      npm i codeclimate-test-reporter
+      npx codeclimate-test-reporter < coverage.out
   - stage: goreleaser
     script: |
       dep ensure -v -vendor-only

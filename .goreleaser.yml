@@ -43,7 +43,7 @@ nfpm:
   homepage: https://www.exoscale.com/
 
   
-  description: Software to create fast and easy drum rolls.
+  description: Tools to manage (almost) everything at Exoscale from the command line.
 
   license: Apache 2.0
 

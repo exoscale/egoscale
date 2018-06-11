@@ -21,6 +21,11 @@ before_install:
   - sudo dpkg -i hugo_${HUGO_VERSION}_Linux-64bit.deb
   - wget https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VERSION}/nfpm_amd64.deb
   - sudo dpkg -i nfpm_amd64.deb
+addons:
+  apt:
+    update: true
+    packages:
+    - rpmbuild
 
 jobs:
   include:

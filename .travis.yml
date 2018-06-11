@@ -25,7 +25,7 @@ addons:
   apt:
     update: true
     packages:
-    - rpm-build
+    - rpm
 
 jobs:
   include:

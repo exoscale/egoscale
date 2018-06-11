@@ -156,11 +156,7 @@ func addK8sRules(securityGroupID string) error {
 
 	rule.SecurityGroupID = securityGroupID
 
-	if err := addRule(rule, false); err != nil {
-		return err
-	}
-
-	return nil
+	return addRule(rule, false)
 }
 
 func storeConfig(clusterName, clusterFile string, nodes []string) error {

@@ -47,8 +47,14 @@ const (
 	IRC port = 194
 	// HTTPS protocol port number
 	HTTPS port = 443
+	//ETCDCLIENT protocol port number
+	ETCDCLIENT port = 2379
+	//ETCDSERVER protocol port number
+	ETCDSERVER port = 2380
 	// RDP protocol port number
 	RDP port = 3389
+	//RKEHTTPS protocol port number
+	RKEHTTPS port = 6443
 	// Minecraft protocol port number
 	Minecraft port = 25565
 )

@@ -40,6 +40,21 @@ var k8sCreateCmd = &cobra.Command{
 
 		if node == "" {
 
+			firewallRule, err := cmd.Flags().GetBool("firewall-rules-add")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			sg, err := cmd.Flags().GetString("security-group")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			securityGroup, err := getSecuGrpWithNameOrID(cs, sg)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			nodeCap, err := cmd.Flags().GetString("node-capacity")
 			if err != nil {
 				log.Fatal(err)
@@ -50,7 +65,13 @@ var k8sCreateCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			nodes, err = deployNodes(nodeNumber, nodeCap)
+			if firewallRule {
+				if err := addK8sRules(securityGroup.ID); err != nil {
+					log.Fatal(err)
+				}
+			}
+
+			nodes, err = deployNodes(nodeNumber, nodeCap, securityGroup.ID)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -78,7 +99,58 @@ var k8sCreateCmd = &cobra.Command{
 		if err := startWithRKE(filePath); err != nil {
 			log.Fatal(err)
 		}
+
+		displayHelper()
 	},
+}
+
+func addK8sRules(securityGroupID string) error {
+
+	rule, err := getDefaultRule(SSH.String(), false)
+	if err != nil {
+		return err
+	}
+
+	rule.SecurityGroupID = securityGroupID
+
+	if err := addRule(rule, false); err != nil {
+		return err
+	}
+
+	rule, err = getDefaultRule(ETCDCLIENT.String(), false)
+	if err != nil {
+		return err
+	}
+
+	rule.SecurityGroupID = securityGroupID
+
+	if err := addRule(rule, false); err != nil {
+		return err
+	}
+
+	rule, err = getDefaultRule(ETCDSERVER.String(), false)
+	if err != nil {
+		return err
+	}
+
+	rule.SecurityGroupID = securityGroupID
+
+	if err := addRule(rule, false); err != nil {
+		return err
+	}
+
+	rule, err = getDefaultRule(RKEHTTPS.String(), false)
+	if err != nil {
+		return err
+	}
+
+	rule.SecurityGroupID = securityGroupID
+
+	if err := addRule(rule, false); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func storeConfig(clusterName, clusterFile string, nodes []string) error {
@@ -162,7 +234,7 @@ func destroyAllNodes(nodes []string) error {
 	return nil
 }
 
-func deployNodes(nodeNumber int, nodeCapacity string) ([]string, error) {
+func deployNodes(nodeNumber int, nodeCapacity, sg string) ([]string, error) {
 
 	nodes := make([]string, nodeNumber)
 
@@ -258,9 +330,15 @@ func createK8sClusterFile(nodes []string, clusterName string) (string, error) {
 	return clusterYML, nil
 }
 
+func displayHelper() {
+
+}
+
 func init() {
 	k8sCmd.AddCommand(k8sCreateCmd)
 	k8sCreateCmd.Flags().StringP("node", "n", "", "Node can provision existing instances [vm name | id, vm name | id,...]")
 	k8sCreateCmd.Flags().IntP("node-number", "", 1, "Node number to create (if --node not set)")
 	k8sCreateCmd.Flags().StringP("node-capacity", "", "medium", "Node(s) capacity (if --node not set) (micro|tiny|small|medium|large|extra-large|huge|mega|titan)")
+	k8sCreateCmd.Flags().BoolP("firewall-rules-add", "f", false, "Add firewall rules for kubernetes (if --node not set)")
+	k8sCreateCmd.Flags().StringP("security-group", "s", "default", "Create node(s) in a security group <security group name | id> (if --node not set)")
 }

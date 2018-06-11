@@ -48,6 +48,19 @@ type DNSRecord struct {
 	Prio       int    `json:"prio,omitempty"`
 }
 
+// DNSRecordUpdate represents a DNS record
+type DNSRecordUpdate struct {
+	ID         int64  `json:"id,omitempty"`
+	DomainID   int64  `json:"domain_id,omitempty"`
+	Name       string `json:"name,omitempty"`
+	TTL        int    `json:"ttl,omitempty"`
+	CreatedAt  string `json:"created_at,omitempty"`
+	UpdatedAt  string `json:"updated_at,omitempty"`
+	Content    string `json:"content,omitempty"`
+	RecordType string `json:"record_type,omitempty"`
+	Prio       int    `json:"prio,omitempty"`
+}
+
 // DNSRecordResponse represents the creation of a DNS record
 type DNSRecordResponse struct {
 	Record DNSRecord `json:"record"`

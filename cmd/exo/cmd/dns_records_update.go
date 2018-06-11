@@ -43,7 +43,7 @@ var dnsUpdateACmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -101,7 +101,7 @@ var dnsUpdateAAAACmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -163,7 +163,7 @@ the record name. Note: If you want to redirect to a URL, use a URL record instea
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -222,7 +222,7 @@ These types of records are used when a server is reached by several names. Only 
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -285,7 +285,7 @@ var dnsUpdateHINFOCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -350,7 +350,7 @@ These types of records are used to describe which servers handle incoming email.
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -461,7 +461,7 @@ the domain name syntax to a label that is. More information can be found in RFC 
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -535,7 +535,7 @@ You may only delegate subdomains (for example subdomain.yourdomain.com).`,
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -595,7 +595,7 @@ part of a pool of available CNAME records. This is a DNSimple custom record type
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -713,7 +713,7 @@ var dnsUpdateSRVCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -790,7 +790,7 @@ var dnsUpdateSSHFPCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -852,7 +852,7 @@ the standard record types. For example, Google uses this type of record for doma
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,
@@ -911,7 +911,7 @@ This type of record uses an HTTP redirect to redirect visitors from a domain to 
 			log.Fatal(err)
 		}
 
-		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecord{
+		resp, err := csDNS.UpdateRecord(args[0], egoscale.DNSRecordUpdate{
 			DomainID:   domain.ID,
 			ID:         recordID,
 			TTL:        ttl,

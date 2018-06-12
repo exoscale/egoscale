@@ -48,19 +48,6 @@ type DNSRecord struct {
 	Prio       int    `json:"prio,omitempty"`
 }
 
-// DNSRecordUpdate represents a DNS record
-type DNSRecordUpdate struct {
-	ID         int64  `json:"id,omitempty"`
-	DomainID   int64  `json:"domain_id,omitempty"`
-	Name       string `json:"name,omitempty"`
-	TTL        int    `json:"ttl,omitempty"`
-	CreatedAt  string `json:"created_at,omitempty"`
-	UpdatedAt  string `json:"updated_at,omitempty"`
-	Content    string `json:"content,omitempty"`
-	RecordType string `json:"record_type,omitempty"`
-	Prio       int    `json:"prio,omitempty"`
-}
-
 // DNSRecordResponse represents the creation of a DNS record
 type DNSRecordResponse struct {
 	Record DNSRecord `json:"record"`
@@ -333,4 +320,32 @@ func (client *Client) dnsRequest(uri string, params string, method string) (json
 	}
 
 	return b, nil
+}
+
+// GetRecordIDByName get record ID by name
+func (client *Client) GetRecordIDByName(domainName, recordName string) (int64, error) {
+	records, err := client.GetRecords(domainName)
+	if err != nil {
+		return 0, err
+	}
+
+	resRecID := []int64{}
+
+	for _, r := range records {
+		id := fmt.Sprintf("%d", r.ID)
+		if id == recordName {
+			return r.ID, nil
+		}
+		if recordName == r.Name {
+			resRecID = append(resRecID, r.ID)
+		}
+	}
+	if len(resRecID) > 1 {
+		return 0, fmt.Errorf("More than one record found")
+	}
+	if len(resRecID) == 1 {
+		return resRecID[0], nil
+	}
+
+	return 0, fmt.Errorf("Record not found")
 }

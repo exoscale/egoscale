@@ -56,11 +56,7 @@ var dnsListCmd = &cobra.Command{
 }
 
 func listDomains() ([]egoscale.DNSDomain, error) {
-	domains, err := csDNS.GetDomains()
-	if err != nil {
-		return nil, err
-	}
-	return domains, nil
+	return csDNS.GetDomains()
 }
 
 func init() {

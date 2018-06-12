@@ -25,6 +25,11 @@ var k8sCreateCmd = &cobra.Command{
 			return
 		}
 
+		noAuto, err := cmd.Flags().GetBool("no-auto")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		filePath := path.Join(configFolder, "k8s", "clusters", args[0])
 
 		if _, err := os.Stat(filePath); !os.IsNotExist(err) {
@@ -95,6 +100,11 @@ var k8sCreateCmd = &cobra.Command{
 		}
 
 		filePath = path.Join(configFolder, "k8s", "clusters", args[0], "cluster.yml")
+
+		if noAuto {
+			println(clusterFile)
+			return
+		}
 
 		if err := startWithRKE(filePath); err != nil {
 			log.Fatal(err)
@@ -341,4 +351,5 @@ func init() {
 	k8sCreateCmd.Flags().StringP("node-capacity", "", "medium", "Node(s) capacity (if --node not set) (micro|tiny|small|medium|large|extra-large|huge|mega|titan)")
 	k8sCreateCmd.Flags().BoolP("firewall-rules-add", "f", false, "Add firewall rules for kubernetes (if --node not set)")
 	k8sCreateCmd.Flags().StringP("security-group", "s", "default", "Create node(s) in a security group <security group name | id> (if --node not set)")
+	k8sCreateCmd.Flags().BoolP("no-auto", "", false, "")
 }

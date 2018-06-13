@@ -29,10 +29,21 @@ func sshCmdRun(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
+	isConnectionSTR, err := cmd.Flags().GetBool("print")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	infos, err := getSSHInfos(args[0])
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if isConnectionSTR {
+		printSSHConnectSTR(infos)
+		return
+	}
+
 	if isInfos {
 		printSSHInfos(infos)
 		return
@@ -75,6 +86,10 @@ func getSSHInfos(name string) (*sshInfos, error) {
 
 }
 
+func printSSHConnectSTR(infos *sshInfos) {
+	fmt.Printf("ssh -i %s %s@%s\n", infos.sshKeys, infos.userName, infos.ip)
+}
+
 func printSSHInfos(infos *sshInfos) {
 	println("Virtual machine name", infos.vmName, "with ID", infos.vmID)
 	println(" - sshkey path:", infos.sshKeys)
@@ -104,5 +119,6 @@ func connectSSH(cred *sshInfos) {
 func init() {
 	sshCmd.Run = sshCmdRun
 	sshCmd.Flags().BoolP("infos", "i", false, "infos show ssh connection informations")
+	sshCmd.Flags().BoolP("print", "p", false, "Print SSH connection command")
 	RootCmd.AddCommand(sshCmd)
 }

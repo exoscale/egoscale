@@ -67,12 +67,12 @@ $
 ### Configure your Exoscale firewall environement
 
 ```
-$ exo firewall create k8s-security-group --description " Security group for my new kubernetes cluster"
+$ exo firewall create k8s-security-group --description "Security group for my new kubernetes cluster"
 ```
 ### Deploy K8s
 
 ```
-$ exo k8S create example-cluster --node-number 3 --security-group k8s-security-group --firewall-rules-add
+$ exo k8s create example-cluster --node-number 3 --security-group k8s-security-group --firewall-rules-add
 ```
 
 #### this folowing command deploy k8s cluster:

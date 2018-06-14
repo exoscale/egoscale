@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-	ttime "time"
+	"time"
 
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
@@ -157,7 +157,7 @@ func addK8sRules(securityGroupID string) error {
 		return err
 	}
 
-	rule, err = getDefaultRule(ETCDCLIENT.String(), false)
+	rule, err = getDefaultRule(ETCDClient.String(), false)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func addK8sRules(securityGroupID string) error {
 		return err
 	}
 
-	rule, err = getDefaultRule(ETCDSERVER.String(), false)
+	rule, err = getDefaultRule(ETCDServer.String(), false)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func addK8sRules(securityGroupID string) error {
 		return err
 	}
 
-	rule, err = getDefaultRule(RKEHTTPS.String(), false)
+	rule, err = getDefaultRule(KubernetesAPIServer.String(), false)
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ func checkingCloudInitJob(vms []string) error {
 	defer println("")
 
 	print("Installing Docker on node(s)")
-	for i := 0; i < 120; i++ {
+	for i := 0; (time.Second * time.Duration(i)) < (time.Minute * 2); i++ {
 
 		var errCMD error
 		for _, vm := range vms {
@@ -253,7 +253,7 @@ func checkingCloudInitJob(vms []string) error {
 		if errCMD == nil {
 			return nil
 		}
-		ttime.Sleep(ttime.Second)
+		time.Sleep(time.Second)
 		print(".")
 		errCMD = nil
 	}

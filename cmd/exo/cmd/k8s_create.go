@@ -129,7 +129,7 @@ Your kubernetes cluster %q is up !
 %q file was created to use kubectl program
 
 If you want use kubectl program:
-    just copy %q file in "$HOME/.kube/config"
+    just copy %q file in "~/.kube/config"
     "$ cp %s $HOME/.kube/config"
 
 OR

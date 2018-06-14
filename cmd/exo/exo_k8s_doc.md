@@ -108,7 +108,7 @@ Your kubernetes cluster "example-cluster" is up !
 "kube_config_cluster.yml" file was created to use kubectl program
 
 If you want use kubectl program:
-    juste copy "kube_config_cluster.yml" file in "$HOME/.kube/config"
+    just copy "kube_config_cluster.yml" file in "$HOME/.kube/config"
     "$ cp ~/.exoscale/k8s/clusters/example-cluster/kube_config_cluster.yml ~/.kube/config"
 
 OR

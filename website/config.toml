@@ -6,6 +6,11 @@ metadataFormat = "yaml"
 sectionPagesMenu = "main"
 staticDir = ["static"]
 
+PygmentsCodeFences = true
+PygmentsStyle = "monokai"
+
+enableEmoji = true
+
 [params]
 AuthorName = "Exoscale"
 GitHubUser = "exoscale"
@@ -26,7 +31,7 @@ expiryDate = ["expiryDate"]
 
 [[menu.main]]
 name = "exo cli"
-weight = 2
+weight = 1
 identifier = "cli"
 url = "/cli/"
 

@@ -11,7 +11,7 @@
 <div class="container">
     <h3 class="title">Commands</h3>
     <ul>
-          {{ $paginator := .Paginate (where .Data.Pages "Type" "command") 200 }}
+          {{ $paginator := .Paginate (where .Data.Pages "Type" "command") 20 }}
           {{ range $paginator.Pages }}
                 <li>{{ partial "summary.html" . }}</li>
           {{ end }}

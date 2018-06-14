@@ -18,7 +18,6 @@ go build
 cd ../exo
 dep ensure -vendor-only
 go run doc/main.go
-cp README.md ../../website/content/cli/_index.md
 
 set +xe
 echo "we are now ready to run hugo"

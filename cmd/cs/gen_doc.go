@@ -16,6 +16,7 @@ import (
 const frontmatter = `---
 date: %s
 title: %s
+type: command
 ---
 `
 

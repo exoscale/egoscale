@@ -70,6 +70,12 @@ func getSSHInfos(name string, isIpv6 bool) (*sshInfos, error) {
 		return nil, err
 	}
 
+	sshKeyPath := path.Join(configFolder, "instances", vm.ID, "id_rsa")
+
+	if _, err := os.Stat(sshKeyPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("SSH keypair: %q not found", sshKeyPath)
+	}
+
 	nic := vm.DefaultNic()
 	if nic == nil {
 		return nil, fmt.Errorf("No default NIC on this instance")
@@ -97,7 +103,7 @@ func getSSHInfos(name string, isIpv6 bool) (*sshInfos, error) {
 	}
 
 	return &sshInfos{
-		sshKeys:  path.Join(configFolder, "instances", vm.ID, "id_rsa"),
+		sshKeys:  sshKeyPath,
 		userName: tempUser,
 		ip:       vmIP,
 		vmName:   vm.Name,

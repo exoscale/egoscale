@@ -59,4 +59,6 @@ packages:
 runcmd:
   - [ usermod, -aG, docker, ubuntu ]
 `
+
+	clusterFileName = "cluster.yml"
 )

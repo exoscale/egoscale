@@ -99,10 +99,21 @@ var k8sCreateCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		filePath = path.Join(configFolder, "k8s", "clusters", args[0], "cluster.yml")
+		filePath = path.Join(configFolder, "k8s", "clusters", args[0], clusterFileName)
 
 		if noAuto {
-			println(clusterFile)
+
+			msg := `
+%q file was created in:
+    %q
+
+If you want to deploy your Kubernetes cluster juste type:
+	"$ rke up --config %s"
+	
+More details in documentation here: (WIP comming soon)
+`
+
+			fmt.Printf(msg, clusterFileName, filePath, filePath)
 			return
 		}
 
@@ -110,7 +121,26 @@ var k8sCreateCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		displayHelper()
+		kubectlConfigFileName := "kube_config_" + clusterFileName
+
+		msg := `
+Your kubernetes cluster %q is up !
+
+%q file was created to use kubectl program
+
+If you want use kubectl program:
+    just copy %q file in "$HOME/.kube/config"
+    "$ cp %s $HOME/.kube/config"
+
+OR
+    "$ kubectl --kubeconfig %s [all kubectl commands]"
+
+If you want to connect to your web kubernetes dashboard follow this link:
+    WIP https://dfjskjskl.com 
+`
+
+		kubeCongigfilePath := path.Join(configFolder, "k8s", "clusters", args[0], kubectlConfigFileName)
+		fmt.Printf(msg, args[0], kubectlConfigFileName, kubectlConfigFileName, kubeCongigfilePath, kubeCongigfilePath)
 	},
 }
 
@@ -168,7 +198,7 @@ func storeConfig(clusterName, clusterFile string, nodes []string) error {
 		}
 	}
 
-	filePath = path.Join(filePath, "cluster.yml")
+	filePath = path.Join(filePath, clusterFileName)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		if err := ioutil.WriteFile(filePath, []byte(clusterFile), 0600); err != nil {

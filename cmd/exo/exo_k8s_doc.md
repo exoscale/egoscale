@@ -105,7 +105,7 @@ INFO[0124] Finished building Kubernetes cluster successfully
 
 Your kubernetes cluster "example-cluster" is up !
 
-"cluster.yml" file was created to use kubectl program
+"kube_config_cluster.yml" file was created to use kubectl program
 
 If you want use kubectl program:
     juste copy "kube_config_cluster.yml" file in "$HOME/.kube/config"

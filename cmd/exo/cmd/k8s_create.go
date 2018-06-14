@@ -117,6 +117,8 @@ More details in documentation here: (WIP comming soon)
 			return
 		}
 
+		println("RKE install:")
+
 		if err := startWithRKE(filePath); err != nil {
 			log.Fatal(err)
 		}

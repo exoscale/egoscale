@@ -132,17 +132,37 @@ Your kubernetes cluster %q is up !
 
 If you want use kubectl program:
     just copy %q file in "~/.kube/config"
-    "$ cp %s $HOME/.kube/config"
+    "$ cp %s ~/.kube/config"
 
 OR
     "$ kubectl --kubeconfig %s [all kubectl commands]"
 
 If you want to connect to your web kubernetes dashboard follow this link:
-    WIP https://dfjskjskl.com 
+	
+    Setting up the Dashboard
+	
+      "$ kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml"
+
+    Admin locally
+	
+      "$ kubectl --kubeconfig ~/.kube/config proxy"
+
+    Go to:
+      http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
+
+    Login using a token
+
+      "$ kubectl -n kube-system describe secrets \ 
+         %s \
+         | awk '/token:/ {print $2}'"
+
+    then copy and paste it into the token login
+
+Congratulation you are in your kubernetes dashboard !
 `
 
 		kubeCongigfilePath := path.Join(configFolder, "k8s", "clusters", args[0], kubectlConfigFileName)
-		fmt.Printf(msg, args[0], kubectlConfigFileName, kubectlConfigFileName, kubeCongigfilePath, kubeCongigfilePath)
+		fmt.Printf(msg, args[0], kubectlConfigFileName, kubectlConfigFileName, kubeCongigfilePath, kubeCongigfilePath, "`kubectl -n kube-system get secrets | awk '/clusterrole-aggregation-controller/ {print $1}'`")
 	},
 }
 

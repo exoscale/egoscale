@@ -15,6 +15,54 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	deployHelper = `
+Your kubernetes cluster %q is up !
+
+%q file was created to use kubectl program
+
+If you want use kubectl program:
+    just copy %q file in "~/.kube/config"
+    "$ cp %s ~/.kube/config"
+
+OR
+    "$ kubectl --kubeconfig %s [all kubectl commands]"
+
+If you want to connect to your web kubernetes dashboard follow this link:
+	
+    Setting up the Dashboard
+	
+      "$ kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml"
+
+    Admin locally
+	
+      "$ kubectl --kubeconfig ~/.kube/config proxy"
+
+    Go to:
+      http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
+
+    Login using a token
+
+      "$ kubectl -n kube-system describe secrets \ 
+         %s \
+         | awk '/token:/ {print $2}'"
+
+    then copy and paste it into the token login
+
+Congratulation you are in your kubernetes dashboard !
+`
+
+	noAutoDeployHelper = `
+%q file was created in:
+    %q
+
+If you want to deploy your Kubernetes cluster juste type:
+	"$ rke up --config %s"
+	
+More details in documentation here: (WIP comming soon)
+`
+)
+
 // createCmd represents the create command
 var k8sCreateCmd = &cobra.Command{
 	Use:   "create <name>",
@@ -102,18 +150,7 @@ var k8sCreateCmd = &cobra.Command{
 		filePath = path.Join(configFolder, "k8s", "clusters", args[0], clusterFileName)
 
 		if noAuto {
-
-			msg := `
-%q file was created in:
-    %q
-
-If you want to deploy your Kubernetes cluster juste type:
-	"$ rke up --config %s"
-	
-More details in documentation here: (WIP comming soon)
-`
-
-			fmt.Printf(msg, clusterFileName, filePath, filePath)
+			fmt.Printf(noAutoDeployHelper, clusterFileName, filePath, filePath)
 			return
 		}
 
@@ -125,44 +162,8 @@ More details in documentation here: (WIP comming soon)
 
 		kubectlConfigFileName := "kube_config_" + clusterFileName
 
-		msg := `
-Your kubernetes cluster %q is up !
-
-%q file was created to use kubectl program
-
-If you want use kubectl program:
-    just copy %q file in "~/.kube/config"
-    "$ cp %s ~/.kube/config"
-
-OR
-    "$ kubectl --kubeconfig %s [all kubectl commands]"
-
-If you want to connect to your web kubernetes dashboard follow this link:
-	
-    Setting up the Dashboard
-	
-      "$ kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml"
-
-    Admin locally
-	
-      "$ kubectl --kubeconfig ~/.kube/config proxy"
-
-    Go to:
-      http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
-
-    Login using a token
-
-      "$ kubectl -n kube-system describe secrets \ 
-         %s \
-         | awk '/token:/ {print $2}'"
-
-    then copy and paste it into the token login
-
-Congratulation you are in your kubernetes dashboard !
-`
-
 		kubeCongigfilePath := path.Join(configFolder, "k8s", "clusters", args[0], kubectlConfigFileName)
-		fmt.Printf(msg, args[0], kubectlConfigFileName, kubectlConfigFileName, kubeCongigfilePath, kubeCongigfilePath, "`kubectl -n kube-system get secrets | awk '/clusterrole-aggregation-controller/ {print $1}'`")
+		fmt.Printf(deployHelper, args[0], kubectlConfigFileName, kubectlConfigFileName, kubeCongigfilePath, kubeCongigfilePath, "`kubectl -n kube-system get secrets | awk '/clusterrole-aggregation-controller/ {print $1}'`")
 	},
 }
 

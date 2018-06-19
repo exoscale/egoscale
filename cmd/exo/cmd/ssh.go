@@ -45,7 +45,9 @@ func sshCmdRun(cmd *cobra.Command, args []string) {
 	}
 
 	if isConnectionSTR {
-		printSSHConnectSTR(infos)
+		if err := printSSHConnectSTR(infos); err != nil {
+			log.Fatal(err)
+		}
 		return
 	}
 
@@ -73,7 +75,7 @@ func getSSHInfos(name string, isIpv6 bool) (*sshInfos, error) {
 	sshKeyPath := path.Join(configFolder, "instances", vm.ID, "id_rsa")
 
 	if _, err := os.Stat(sshKeyPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("SSH keypair: %q not found", sshKeyPath)
+		sshKeyPath = "Default ssh keypair not found"
 	}
 
 	nic := vm.DefaultNic()
@@ -112,8 +114,15 @@ func getSSHInfos(name string, isIpv6 bool) (*sshInfos, error) {
 
 }
 
-func printSSHConnectSTR(infos *sshInfos) {
+func printSSHConnectSTR(infos *sshInfos) error {
+
+	if _, err := os.Stat(infos.sshKeys); os.IsNotExist(err) {
+		return fmt.Errorf("Default ssh keypair not found")
+	}
+
 	fmt.Printf("ssh -i %s %s@%s\n", infos.sshKeys, infos.userName, infos.ip)
+
+	return nil
 }
 
 func printSSHInfos(infos *sshInfos) {

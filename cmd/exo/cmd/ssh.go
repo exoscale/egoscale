@@ -86,7 +86,7 @@ func getSSHInfos(name string, isIpv6 bool) (*sshInfos, error) {
 	vmIP := vm.IP()
 
 	if isIpv6 {
-		if nic.IP6Address.String() != "<nil>" {
+		if nic.IP6Address != nil {
 			vmIP = &nic.IP6Address
 		} else {
 			return nil, fmt.Errorf("IPv6 not found on this virtual machine ID %q", vm.ID)

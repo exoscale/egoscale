@@ -73,6 +73,21 @@ var k8sCreateCmd = &cobra.Command{
 			return
 		}
 
+		userDataPath, err := cmd.Flags().GetString("cloud-init-file")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		userData := ""
+		if userDataPath != "" {
+			userData, err = getUserData(userDataPath)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			userData = base64.StdEncoding.EncodeToString([]byte(cloudINIT))
+		}
+
 		noAuto, err := cmd.Flags().GetBool("no-auto")
 		if err != nil {
 			log.Fatal(err)
@@ -124,7 +139,7 @@ var k8sCreateCmd = &cobra.Command{
 				}
 			}
 
-			nodes, err = deployNodes(nodeNumber, nodeCap, securityGroup.ID)
+			nodes, err = deployNodes(nodeNumber, nodeCap, securityGroup.ID, userData)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -293,7 +308,7 @@ func destroyAllNodes(nodes []string) error {
 	return nil
 }
 
-func deployNodes(nodeNumber int, nodeCapacity, sg string) ([]string, error) {
+func deployNodes(nodeNumber int, nodeCapacity, sg, userData string) ([]string, error) {
 
 	nodes := make([]string, nodeNumber)
 
@@ -321,7 +336,7 @@ func deployNodes(nodeNumber int, nodeCapacity, sg string) ([]string, error) {
 
 		req := &egoscale.DeployVirtualMachine{
 			Name:              fmt.Sprintf("node-%d", i+1),
-			UserData:          base64.StdEncoding.EncodeToString([]byte(cloudINIT)),
+			UserData:          userData,
 			ZoneID:            zone,
 			TemplateID:        template,
 			RootDiskSize:      50,
@@ -401,4 +416,5 @@ func init() {
 	k8sCreateCmd.Flags().BoolP("firewall-rules-add", "f", false, "Add firewall rules for kubernetes (if --node not set)")
 	k8sCreateCmd.Flags().StringP("security-group", "s", "default", "Create node(s) in a security group <security group name | id> (if --node not set)")
 	k8sCreateCmd.Flags().BoolP("no-auto", "", false, "")
+	k8sCreateCmd.Flags().StringP("cloud-init-file", "i", "", "specify a cloud-init file other than the default one (if --node not set)")
 }

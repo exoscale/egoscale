@@ -95,7 +95,7 @@ func exoGenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender func
 	}
 	defer f.Close()
 
-	fmt.Printf("exo: create file : %s", filename)
+	fmt.Printf("exo: create file : %s\n", filename)
 
 	if _, err := io.WriteString(f, filePrepender(filename, cmd)); err != nil {
 		return err

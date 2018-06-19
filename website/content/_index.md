@@ -7,7 +7,7 @@ description: the Go library for Exoscale
 
 [![Build Status](https://travis-ci.org/exoscale/egoscale.svg?branch=master)](https://travis-ci.org/exoscale/egoscale) [![Maintainability](https://api.codeclimate.com/v1/badges/fcab3b624b7d3ca96a9d/maintainability)](https://codeclimate.com/github/exoscale/egoscale/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/fcab3b624b7d3ca96a9d/test_coverage)](https://codeclimate.com/github/exoscale/egoscale/test_coverage) [![GoDoc](https://godoc.org/github.com/exoscale/egoscale?status.svg)](https://godoc.org/github.com/exoscale/egoscale) [![Go Report Card](https://goreportcard.com/badge/github.com/exoscale/egoscale)](https://goreportcard.com/report/github.com/exoscale/egoscale)
 
-An wrapper for the [Exoscale public cloud](https://www.exoscale.com) API.
+A wrapper for the [Exoscale public cloud](https://www.exoscale.com) API.
 
 ## License
 

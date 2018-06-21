@@ -69,13 +69,14 @@ brew:
 
   # Your app's description.
   # Default is empty.
-  description: "Manage easily your Exoscale infrastructure from the exo command-line"
+  description: "EXO manage easily your Exoscale infrastructure from the exo command-line"
 
   # Setting this will prevent goreleaser to actually try to commit the updated
   # formula - instead, the formula file will be stored on the dist folder only,
   # leaving the responsibility of publishing it to the user.
   # Default is false.
-  skip_upload: true
+  
+  #skip_upload: false
 
   install: |
     bin.install "exo"

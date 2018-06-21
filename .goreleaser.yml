@@ -25,7 +25,7 @@ builds:
 sign:
   cmd: gpg
   args: ["-u", "ops@exoscale.ch", "--detach-sign", "${artifact}"]
-  artifacts: all
+  artifacts: none
 
 archive:
   format_overrides:
@@ -49,3 +49,30 @@ nfpm:
   formats:
     - deb
     - rpm
+
+brew:
+  name: exo
+
+  github:
+    owner: pierre-emmanuelJ
+    name: homebrew-tap
+
+  # Git author used to commit to the repository.
+  # Defaults are shown.
+  commit_author:
+    name: pierre-emmanuelJ
+    email: pierre-emmanuel.jacquier@epitech.eu
+
+  # Your app's homepage.
+  # Default is empty.
+  homepage: "https://github.com/exoscale/egoscale/tree/master/cmd/exo"
+
+  # Your app's description.
+  # Default is empty.
+  description: "Manage easily your Exoscale infrastructure from the exo command-line"
+
+  # Setting this will prevent goreleaser to actually try to commit the updated
+  # formula - instead, the formula file will be stored on the dist folder only,
+  # leaving the responsibility of publishing it to the user.
+  # Default is false.
+  skip_upload: true

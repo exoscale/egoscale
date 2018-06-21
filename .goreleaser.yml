@@ -69,7 +69,7 @@ brew:
 
   # Your app's description.
   # Default is empty.
-  description: "EXO Manage easily your Exoscale infrastructure from the exo command-line"
+  description: "Manage easily your Exoscale infrastructure with the exo command-line"
 
   # Setting this will prevent goreleaser to actually try to commit the updated
   # formula - instead, the formula file will be stored on the dist folder only,

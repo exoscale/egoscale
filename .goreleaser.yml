@@ -76,3 +76,6 @@ brew:
   # leaving the responsibility of publishing it to the user.
   # Default is false.
   skip_upload: true
+
+  install: |
+    bin.install "exo"

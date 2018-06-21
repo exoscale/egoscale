@@ -25,7 +25,7 @@ builds:
 sign:
   cmd: gpg
   args: ["-u", "ops@exoscale.ch", "--detach-sign", "${artifact}"]
-  artifacts: all
+  artifacts: none
 
 archive:
   format_overrides:
@@ -69,14 +69,15 @@ brew:
 
   # Your app's description.
   # Default is empty.
-  description: "EXO manage easily your Exoscale infrastructure from the exo command-line"
+  description: "EXO Manage easily your Exoscale infrastructure from the exo command-line"
 
   # Setting this will prevent goreleaser to actually try to commit the updated
   # formula - instead, the formula file will be stored on the dist folder only,
   # leaving the responsibility of publishing it to the user.
   # Default is false.
-  
-  #skip_upload: false
+  skip_upload: true
 
+  # Custom install script for brew.
+  # Default is 'bin.install "program"'.
   install: |
     bin.install "exo"

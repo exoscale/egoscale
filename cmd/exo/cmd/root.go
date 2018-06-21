@@ -120,7 +120,7 @@ func initConfig() {
 	}
 }
 
-// return a command position in by fetching os.args and ignoring flags
+// return a command position by fetching os.args and ignoring flags
 //
 //example: "$ exo -r preprod vm create" vm position is 1 and create is 2
 //

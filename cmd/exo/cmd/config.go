@@ -12,8 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var isFirstRun = true
-
 type configFile struct {
 	APIURL    string
 	APIKey    string
@@ -32,9 +30,6 @@ func configCmdRun(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if !isFirstRun {
-		return
-	}
 	_, err = generateConfigFile(isPrint)
 	if err != nil {
 		log.Fatal(err)
@@ -42,9 +37,6 @@ func configCmdRun(cmd *cobra.Command, args []string) {
 }
 
 func generateConfigFile(isPrint bool) (string, error) {
-
-	isFirstRun = false
-
 	filepath := ""
 	if !isPrint {
 		if _, err := os.Stat(configFolder); os.IsNotExist(err) {

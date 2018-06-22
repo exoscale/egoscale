@@ -20,7 +20,7 @@ var configFolder string
 var configFilePath string
 var cfgFilePath string
 
-var ignoreBuilClient = false
+var ignoreClientBuild = false
 
 var cs *egoscale.Client
 
@@ -49,7 +49,7 @@ func init() {
 }
 
 func buildClient() {
-	if ignoreBuilClient {
+	if ignoreClientBuild {
 		return
 	}
 
@@ -111,7 +111,7 @@ func initConfig() {
 	}
 
 	if getCmdPosition("config") == 1 {
-		ignoreBuilClient = true
+		ignoreClientBuild = true
 		return
 	}
 

@@ -3,20 +3,15 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"html/template"
 	"log"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/spf13/viper"
+
 	"github.com/spf13/cobra"
 )
-
-type configFile struct {
-	APIURL    string
-	APIKey    string
-	SecretKey string
-}
 
 // configCmd represents the config command
 var configCmd = &cobra.Command{
@@ -30,82 +25,101 @@ func configCmdRun(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	_, err = generateConfigFile(isPrint)
-	if err != nil {
-		log.Fatal(err)
+	reader := bufio.NewReader(os.Stdin)
+
+	if viper.ConfigFileUsed() != "" {
+		println("Good day! exo is already configured with accounts:")
+		for _, acc := range allAccount.Accounts {
+			print("- ", acc.Name)
+			if acc.Name == allAccount.DefaultAccount {
+				print(" [current]")
+			}
+			println("")
+		}
+		resp, err := readInput(reader, "Do you wish to add another account?", "Yn")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if validateResponse(resp) {
+			getAccount()
+		}
+	} else {
+		println("Hi happy Exoscalian, some configuration is required to use exo")
+		resp, err := readInput(reader, "Do you have an exoscale account already?", "Yn")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if !validateResponse(resp) {
+			println("explain how to create one's account")
+			return
+		}
+		println(`
+We now need some very important informations, find them there.
+https://portal.exoscale.com/account/profile/api
+`)
+		account, err := getAccount()
+		if err != nil {
+			log.Fatal(err)
+		}
+		generateConfigFile(isPrint, account)
 	}
 }
 
-func generateConfigFile(isPrint bool) (string, error) {
-	filepath := ""
-	if !isPrint {
-		if _, err := os.Stat(configFolder); os.IsNotExist(err) {
-			if err := os.MkdirAll(configFolder, os.ModePerm); err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		filepath = path.Join(configFolder, "cloudstack.ini")
-
-		_, err := os.Stat(filepath)
-
-		if err == nil {
-			return "", fmt.Errorf("File %q already exist", filepath)
-		}
-	}
-
+func getAccount() (*account, error) {
 	reader := bufio.NewReader(os.Stdin)
-	confFile := &configFile{}
 
-	apiURL, err := getConfig(reader, "Compute API Endpoint", "https://api.exoscale.ch/compute")
+	account := &account{}
+
+	apiURL, err := readInput(reader, "Compute API Endpoint", "https://api.exoscale.ch/compute")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	confFile.APIURL = apiURL
+	account.Endpoint = apiURL
 
-	apiKey, err := getConfig(reader, "API Key", "")
+	apiKey, err := readInput(reader, "API Key", "")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	confFile.APIKey = apiKey
+	account.Key = apiKey
 
-	secretKey, err := getConfig(reader, "Secret Key", "")
+	secretKey, err := readInput(reader, "Secret Key", "")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	confFile.SecretKey = secretKey
+	account.Secret = secretKey
 
-	tmpl, err := template.New("config").Parse(
-		`[cloudstack]
-endpoint={{.APIURL}}
-key={{.APIKey}}
-secret={{.SecretKey}}
-`)
-	if err != nil {
-		return "", err
-	}
+	return account, nil
+}
 
-	var outPut *os.File
-
-	if isPrint {
-		outPut = os.Stdout
-	} else {
-
-		file, err := os.Create(filepath)
-		if err != nil {
-			return "", err
+func generateConfigFile(isPrint bool, newAccount *account) (string, error) {
+	if _, err := os.Stat(configFolder); os.IsNotExist(err) {
+		if err := os.MkdirAll(configFolder, os.ModePerm); err != nil {
+			log.Fatal(err)
 		}
-		outPut = file
-		defer file.Close()
 	}
 
-	if err = tmpl.Execute(outPut, confFile); err != nil {
+	filepath := path.Join(configFolder, "exoscale.toml")
+
+	if _, err := os.Stat(filepath); !os.IsNotExist(err) {
+		return "", fmt.Errorf("File %q already exist", filepath)
+	}
+
+	viper.SetConfigType("toml")
+
+	viper.SetConfigFile(filepath)
+
+	viper.Set("defaultAccount", newAccount.Name)
+
+	//config := &config{DefaultAccount: newAccount.Name, Accounts: []account{*newAccount}}
+
+	if err := viper.WriteConfig(); err != nil {
 		return "", err
 	}
+
 	return filepath, nil
 }
 
-func getConfig(reader *bufio.Reader, text, def string) (string, error) {
+func readInput(reader *bufio.Reader, text, def string) (string, error) {
 	if def == "" {
 		fmt.Printf("[+] %s [%s]: ", text, "none")
 	} else {
@@ -121,6 +135,10 @@ func getConfig(reader *bufio.Reader, text, def string) (string, error) {
 		return input, nil
 	}
 	return def, nil
+}
+
+func validateResponse(response string) bool {
+	return (strings.ToLower(response) == "y" || strings.ToLower(response) == "yes")
 }
 
 func init() {

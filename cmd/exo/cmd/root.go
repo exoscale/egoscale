@@ -19,7 +19,9 @@ var configFilePath string
 //current Account informations
 var defaultZone = "ch-dk-2"
 var accountName string
-var currentAccount account
+var currentAccount *account
+
+var allAccount *config
 
 var ignoreClientBuild = false
 
@@ -119,18 +121,17 @@ func initConfig() {
 		viper.AddConfigPath(".")
 	}
 
-	err = viper.ReadInConfig()
-	if err != nil {
-		log.Fatal(fmt.Errorf("fatal error config file: %s ", err))
+	if err := viper.ReadInConfig(); err != nil && getCmdPosition("config") == 1 {
+		ignoreClientBuild = true
+		return
+	}
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatal(err)
 	}
 
 	if err := viper.Unmarshal(config); err != nil {
 		log.Fatal(fmt.Errorf("couldn't read config: %s", err))
-	}
-
-	if getCmdPosition("config") == 1 {
-		ignoreClientBuild = true
-		return
 	}
 
 	if config.DefaultAccount == "" && accountName == "" {
@@ -141,9 +142,12 @@ func initConfig() {
 		accountName = config.DefaultAccount
 	}
 
-	for _, acc := range config.Accounts {
+	allAccount = config
+	allAccount.DefaultAccount = accountName
+
+	for i, acc := range config.Accounts {
 		if acc.Name == accountName {
-			currentAccount = acc
+			currentAccount = &config.Accounts[i]
 			return
 		}
 	}

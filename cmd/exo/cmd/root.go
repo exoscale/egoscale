@@ -6,23 +6,38 @@ import (
 	"os"
 	"os/user"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/exoscale/egoscale"
-	"github.com/exoscale/egoscale/cmd/exo/client"
-
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-var region string
 var configFolder string
 var configFilePath string
-var cfgFilePath string
+
+//current Account informations
+var defaultZone = "ch-dk-2"
+var accountName string
+var currentAccount account
 
 var ignoreClientBuild = false
 
+//egoscale client
 var cs *egoscale.Client
+
+type account struct {
+	Name        string
+	Endpoint    string
+	Key         string
+	Secret      string
+	DefaultZone string
+}
+
+type config struct {
+	DefaultAccount string
+	Accounts       []account
+}
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -41,8 +56,8 @@ func Execute() {
 }
 
 func init() {
-	RootCmd.PersistentFlags().StringVar(&cfgFilePath, "config", "", "Specify an alternate config file [env CLOUDSTACK_CONFIG]")
-	RootCmd.PersistentFlags().StringVarP(&region, "region", "r", "cloudstack", "config ini file section name [env CLOUDSTACK_REGION]")
+	RootCmd.PersistentFlags().StringVar(&configFilePath, "config", "", "Specify an alternate config file [env EXO_CONFIG]")
+	RootCmd.PersistentFlags().StringVarP(&accountName, "account", "a", "", "Account to use in config file [env EXO_ACCOUNT]")
 
 	cobra.OnInitialize(initConfig, buildClient)
 
@@ -57,18 +72,15 @@ func buildClient() {
 		return
 	}
 
-	var err error
-	cs, err = client.BuildClient(configFilePath, region)
-	if err != nil {
-		log.Fatal(err)
-	}
+	cs = egoscale.NewClient(currentAccount.Endpoint, currentAccount.Key, currentAccount.Secret)
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+
 	envs := map[string]string{
-		"CLOUDSTACK_CONFIG": "config",
-		"CLOUDSTACK_REGION": "region",
+		"EXO_CONFIG":  "config",
+		"EXO_ACCOUNT": "account",
 	}
 
 	for env, flag := range envs {
@@ -78,36 +90,42 @@ func initConfig() {
 		}
 	}
 
-	envEndpoint := os.Getenv("CLOUDSTACK_ENDPOINT")
-	envKey := os.Getenv("CLOUDSTACK_KEY")
-	envSecret := os.Getenv("CLOUDSTACK_SECRET")
+	envEndpoint := os.Getenv("EXO_ENDPOINT")
+	envKey := os.Getenv("EXO_KEY")
+	envSecret := os.Getenv("EXO_SECRET")
 
 	if envEndpoint != "" && envKey != "" && envSecret != "" {
 		cs = egoscale.NewClient(envEndpoint, envKey, envSecret)
 		return
 	}
 
-	usr, _ := user.Current()
+	config := &config{}
+
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	configFolder = path.Join(usr.HomeDir, ".exoscale")
 
-	localConfig, _ := filepath.Abs("cloudstack.ini")
-	inis := []string{
-		localConfig,
-		filepath.Join(usr.HomeDir, ".cloudstack.ini"),
-		filepath.Join(configFolder, "cloudstack.ini"),
+	if configFilePath != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(configFilePath)
+	} else {
+		// Search config in home directory with name ".cobra_test" (without extension).
+		viper.SetConfigName("exoscale")
+		viper.AddConfigPath(path.Join(usr.HomeDir, ".exoscale"))
+		viper.AddConfigPath(usr.HomeDir)
+		viper.AddConfigPath(".")
 	}
 
-	for _, i := range inis {
-		if _, err := os.Stat(i); err != nil {
-			continue
-		}
-		configFilePath = i
-		break
+	err = viper.ReadInConfig()
+	if err != nil {
+		log.Fatal(fmt.Errorf("fatal error config file: %s ", err))
 	}
 
-	if cfgFilePath != "" {
-		configFilePath = cfgFilePath
-		return
+	if err := viper.Unmarshal(config); err != nil {
+		log.Fatal(fmt.Errorf("couldn't read config: %s", err))
 	}
 
 	if getCmdPosition("config") == 1 {
@@ -115,9 +133,21 @@ func initConfig() {
 		return
 	}
 
-	if configFilePath == "" {
-		log.Fatalf("Config file not found within: %s", strings.Join(inis, ", "))
+	if config.DefaultAccount == "" && accountName == "" {
+		log.Fatalf("default account not defined: run %q", "$ exo config set <account name>")
 	}
+
+	if accountName == "" {
+		accountName = config.DefaultAccount
+	}
+
+	for _, acc := range config.Accounts {
+		if acc.Name == accountName {
+			currentAccount = acc
+			return
+		}
+	}
+	log.Fatalf("Could't find any account with name: %q", accountName)
 }
 
 // return a command position by fetching os.args and ignoring flags

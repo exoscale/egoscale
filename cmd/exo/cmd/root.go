@@ -58,8 +58,8 @@ func Execute() {
 }
 
 func init() {
-	RootCmd.PersistentFlags().StringVar(&configFilePath, "config", "", "Specify an alternate config file [env EXO_CONFIG]")
-	RootCmd.PersistentFlags().StringVarP(&accountName, "account", "a", "", "Account to use in config file [env EXO_ACCOUNT]")
+	RootCmd.PersistentFlags().StringVar(&configFilePath, "config", "", "Specify an alternate config file [env EXOSCALE_CONFIG]")
+	RootCmd.PersistentFlags().StringVarP(&accountName, "account", "a", "", "Account to use in config file [env EXOSCALE_ACCOUNT]")
 
 	cobra.OnInitialize(initConfig, buildClient)
 
@@ -81,8 +81,8 @@ func buildClient() {
 func initConfig() {
 
 	envs := map[string]string{
-		"EXO_CONFIG":  "config",
-		"EXO_ACCOUNT": "account",
+		"EXOSCALE_CONFIG":  "config",
+		"EXOSCALE_ACCOUNT": "account",
 	}
 
 	for env, flag := range envs {
@@ -92,9 +92,9 @@ func initConfig() {
 		}
 	}
 
-	envEndpoint := os.Getenv("EXO_ENDPOINT")
-	envKey := os.Getenv("EXO_KEY")
-	envSecret := os.Getenv("EXO_SECRET")
+	envEndpoint := os.Getenv("EXOSCALE_ENDPOINT")
+	envKey := os.Getenv("EXOSCALE_KEY")
+	envSecret := os.Getenv("EXOSCALE_SECRET")
 
 	if envEndpoint != "" && envKey != "" && envSecret != "" {
 		cs = egoscale.NewClient(envEndpoint, envKey, envSecret)

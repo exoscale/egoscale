@@ -5,12 +5,19 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
 	"path"
+	"path/filepath"
 	"strings"
 
+	"github.com/go-ini/ini"
 	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
+)
+
+const (
+	exoConfigFileName = "exoscale"
 )
 
 // configCmd represents the config command
@@ -25,62 +32,86 @@ func configCmdRun(cmd *cobra.Command, args []string) {
 	// 	log.Fatal(err)
 	// }
 
-	reader := bufio.NewReader(os.Stdin)
-
 	if viper.ConfigFileUsed() != "" {
 		println("Good day! exo is already configured with accounts:")
-		for _, acc := range allAccount.Accounts {
-			print("- ", acc.Name)
-			if acc.Name == allAccount.DefaultAccount {
-				print(" [current]")
+		listAccounts()
+		if askQuestion("Do you wish to add another account?") {
+			if err := addNewAccount(); err != nil {
+				log.Fatal(err)
 			}
-			println("")
 		}
-		resp, err := readInput(reader, "Do you wish to add another account?", "Yn")
+		return
+	}
+	csPath, ok := isCloudstackINIFileExist()
+	if ok {
+		resp, ok, err := askCloudstackINIMigration(csPath)
 		if err != nil {
 			log.Fatal(err)
 		}
-		if validateResponse(resp) {
-			account, err := getAccount()
-			if err != nil {
+		if !ok {
+			if err := createAccount(false); err != nil {
 				log.Fatal(err)
 			}
-			isDefault := false
-			resp, err := readInput(reader, "Make "+account.Name+" your current profile?", "Yn")
-			if err != nil {
-				log.Fatal(err)
-			}
-			if validateResponse(resp) {
-				isDefault = true
-			}
-			if err := addAccount(viper.ConfigFileUsed(), account, isDefault); err != nil {
-				log.Fatal(err)
-			}
-		}
-	} else {
-		println("Hi happy Exoscalian, some configuration is required to use exo")
-		resp, err := readInput(reader, "Do you have an exoscale account already?", "Yn")
-		if err != nil {
-			log.Fatal(err)
-		}
-		if !validateResponse(resp) {
-			println("explain how to create one's account")
 			return
 		}
-		println(`
+
+		cfgPath, err := createConfigFile(exoConfigFileName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := importCloudstackINI(resp, csPath, cfgPath); err != nil {
+			log.Fatal(err)
+		}
+		if !askQuestion("Do you wish to add another account?") {
+			return
+		}
+		if err := addNewAccount(); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+	println("Hi happy Exoscalian, some configuration is required to use exo")
+	println(`
 We now need some very important informations, find them there.
 https://portal.exoscale.com/account/profile/api
 `)
-		account, err := getAccount()
-		if err != nil {
-			log.Fatal(err)
-		}
-		filePath, err := createConfigFile("exoscale")
-		if err != nil {
-			log.Fatal(err)
-		}
-		addAccount(filePath, account, true)
+	createAccount(false)
+
+}
+
+func addNewAccount() error {
+	newAccount, err := getAccount()
+	if err != nil {
+		return err
 	}
+	isDefault := false
+	if askQuestion("Make " + newAccount.Name + " your current profile?") {
+		isDefault = true
+	}
+	if err := addAccount(viper.ConfigFileUsed(), &config{DefaultAccount: newAccount.Name, Accounts: []account{*newAccount}}, isDefault); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createAccount(askDefault bool) error {
+	newAccount, err := getAccount()
+	if err != nil {
+		return err
+	}
+	filePath, err := createConfigFile(exoConfigFileName)
+	if err != nil {
+		return err
+	}
+
+	if askDefault {
+		if !askQuestion("Make " + newAccount.Name + " your current profile?") {
+			askDefault = false
+		}
+	}
+
+	return addAccount(filePath, &config{DefaultAccount: newAccount.Name, Accounts: []account{*newAccount}}, askDefault)
 }
 
 func getAccount() (*account, error) {
@@ -160,7 +191,7 @@ func createConfigFile(fileName string) (string, error) {
 	return filepath, nil
 }
 
-func addAccount(filePath string, newAccount *account, isDefault bool) error {
+func addAccount(filePath string, newAccounts *config, isDefault bool) error {
 
 	accountsSize := 0
 	currentAccounts := []account{}
@@ -169,7 +200,9 @@ func addAccount(filePath string, newAccount *account, isDefault bool) error {
 		currentAccounts = allAccount.Accounts
 	}
 
-	accounts := make([]map[string]string, accountsSize+1)
+	accounts := make([]map[string]string, accountsSize+len(newAccounts.Accounts))
+
+	conf := &config{}
 
 	for i, acc := range currentAccounts {
 
@@ -180,21 +213,26 @@ func addAccount(filePath string, newAccount *account, isDefault bool) error {
 		accounts[i]["key"] = acc.Key
 		accounts[i]["secret"] = acc.Secret
 		accounts[i]["defaultZone"] = acc.DefaultZone
+		conf.Accounts = append(conf.Accounts, acc)
 	}
 
-	accounts[accountsSize] = map[string]string{}
+	for i, acc := range newAccounts.Accounts {
 
-	accounts[accountsSize]["name"] = newAccount.Name
-	accounts[accountsSize]["endpoint"] = newAccount.Endpoint
-	accounts[accountsSize]["key"] = newAccount.Key
-	accounts[accountsSize]["secret"] = newAccount.Secret
-	accounts[accountsSize]["defaultZone"] = newAccount.DefaultZone
+		accounts[accountsSize+i] = map[string]string{}
+
+		accounts[accountsSize+i]["name"] = acc.Name
+		accounts[accountsSize+i]["endpoint"] = acc.Endpoint
+		accounts[accountsSize+i]["key"] = acc.Key
+		accounts[accountsSize+i]["secret"] = acc.Secret
+		accounts[accountsSize+i]["defaultZone"] = acc.DefaultZone
+		conf.Accounts = append(conf.Accounts, acc)
+	}
 
 	viper.SetConfigType("toml")
 	viper.SetConfigFile(filePath)
 
 	if isDefault {
-		viper.Set("defaultAccount", newAccount.Name)
+		viper.Set("defaultAccount", newAccounts.DefaultAccount)
 	}
 
 	viper.Set("accounts", accounts)
@@ -203,8 +241,123 @@ func addAccount(filePath string, newAccount *account, isDefault bool) error {
 		return err
 	}
 
+	conf.DefaultAccount = viper.Get("defaultAccount").(string)
+	allAccount = conf
+
 	return nil
 
+}
+
+func isCloudstackINIFileExist() (string, bool) {
+
+	envConfigPath := os.Getenv("CLOUDSTACK_CONFIG")
+
+	usr, _ := user.Current()
+
+	localConfig, _ := filepath.Abs("cloudstack.ini")
+	inis := []string{
+		localConfig,
+		filepath.Join(usr.HomeDir, ".cloudstack.ini"),
+		filepath.Join(configFolder, "cloudstack.ini"),
+		envConfigPath,
+	}
+
+	cfgPath := ""
+
+	for _, i := range inis {
+		if _, err := os.Stat(i); err != nil {
+			continue
+		}
+		cfgPath = i
+		break
+	}
+
+	if cfgPath == "" {
+		return "", false
+	}
+	return cfgPath, true
+}
+
+func askCloudstackINIMigration(csFilePath string) (string, bool, error) {
+
+	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, csFilePath)
+	if err != nil {
+		return "", false, err
+	}
+
+	if len(cfg.Sections()) <= 0 {
+		return "", false, nil
+	}
+
+	println("We've found the following configurations:")
+	for i, acc := range cfg.Sections() {
+		if i == 0 {
+			continue
+		}
+		fmt.Printf("- [%s] %s\n", acc.Name(), acc.Key("key").String())
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+
+	resp, err := readInput(reader, "Do you wish to import them automagically?", "All, some, none")
+	if err != nil {
+		return "", false, err
+	}
+
+	resp = strings.ToLower(resp)
+
+	return resp, (resp == "all" || resp == "some"), nil
+}
+
+func importCloudstackINI(option, csPath, cfgPath string) error {
+	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, csPath)
+	if err != nil {
+		return err
+	}
+
+	config := &config{}
+
+	for i, acc := range cfg.Sections() {
+		if i == 0 {
+			continue
+		}
+
+		if option == "some" {
+			if !askQuestion(fmt.Sprintf("Importing %s %s?", acc.Name(), acc.Key("key").String())) {
+				continue
+			}
+		}
+
+		reader := bufio.NewReader(os.Stdin)
+
+		defaultZone, err := readInput(reader, fmt.Sprintf("%s default zone", acc.Name()), "ch-dk-2")
+		if err != nil {
+			return err
+		}
+
+		isDefault := false
+		if askQuestion("Make " + acc.Name() + " your current profile?") {
+			isDefault = true
+		}
+
+		account := account{
+			Name:        acc.Name(),
+			Endpoint:    acc.Key("endpoint").String(),
+			Key:         acc.Key("key").String(),
+			Secret:      acc.Key("secret").String(),
+			DefaultZone: defaultZone,
+		}
+
+		config.Accounts = append(config.Accounts, account)
+
+		if i == 1 || isDefault {
+			config.DefaultAccount = acc.Name()
+		}
+	}
+
+	addAccount(cfgPath, config, true)
+
+	return nil
 }
 
 func readInput(reader *bufio.Reader, text, def string) (string, error) {
@@ -225,8 +378,26 @@ func readInput(reader *bufio.Reader, text, def string) (string, error) {
 	return def, nil
 }
 
-func validateResponse(response string) bool {
-	return (strings.ToLower(response) == "y" || strings.ToLower(response) == "yes")
+func askQuestion(text string) bool {
+
+	reader := bufio.NewReader(os.Stdin)
+
+	resp, err := readInput(reader, text, "Yn")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return (strings.ToLower(resp) == "y" || strings.ToLower(resp) == "yes")
+}
+
+func listAccounts() {
+	for _, acc := range allAccount.Accounts {
+		print("- ", acc.Name)
+		if acc.Name == allAccount.DefaultAccount {
+			print(" [current]")
+		}
+		println("")
+	}
 }
 
 func init() {

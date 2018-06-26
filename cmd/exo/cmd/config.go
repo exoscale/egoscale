@@ -29,10 +29,6 @@ var configCmd = &cobra.Command{
 }
 
 func configCmdRun(cmd *cobra.Command, args []string) {
-	// isPrint, err := configCmd.Flags().GetBool("print")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	if viper.ConfigFileUsed() != "" {
 		println("Good day! exo is already configured with accounts:")
@@ -455,6 +451,5 @@ func listAccounts() {
 func init() {
 
 	configCmd.Run = configCmdRun
-	configCmd.Flags().BoolP("print", "p", false, "Print configuration")
 	RootCmd.AddCommand(configCmd)
 }

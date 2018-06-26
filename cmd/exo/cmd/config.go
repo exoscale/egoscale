@@ -354,22 +354,11 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 
 		reader := bufio.NewReader(os.Stdin)
 
-		defaultZone, err := readInput(reader, fmt.Sprintf("%s default zone", acc.Name()), "ch-dk-2")
-		if err != nil {
-			return err
-		}
-
-		isDefault := false
-		if askQuestion("Make " + acc.Name() + " your current profile?") {
-			isDefault = true
-		}
-
 		account := account{
-			Name:        acc.Name(),
-			Endpoint:    acc.Key("endpoint").String(),
-			Key:         acc.Key("key").String(),
-			Secret:      acc.Key("secret").String(),
-			DefaultZone: defaultZone,
+			Name:     acc.Name(),
+			Endpoint: acc.Key("endpoint").String(),
+			Key:      acc.Key("key").String(),
+			Secret:   acc.Key("secret").String(),
 		}
 
 		accountResp, err := checkCredentials(&account)
@@ -378,6 +367,18 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 			if !askQuestion("Do you want to keep this account?") {
 				continue
 			}
+		}
+
+		defaultZone, err := readInput(reader, fmt.Sprintf("%s default zone", acc.Name()), "ch-dk-2")
+		if err != nil {
+			return err
+		}
+
+		account.DefaultZone = defaultZone
+
+		isDefault := false
+		if askQuestion("Make " + acc.Name() + " your current profile?") {
+			isDefault = true
 		}
 
 		account.Account = accountResp.Name

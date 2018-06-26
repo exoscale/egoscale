@@ -266,7 +266,7 @@ func (client *Client) UpdateRecord(name string, rec UpdateDNSRecord) (*DNSRecord
 		return nil, err
 	}
 
-	var r UpdateDNSRecordResponse
+	var r DNSRecordResponse
 	if err = json.Unmarshal(resp, &r); err != nil {
 		return nil, err
 	}
@@ -302,8 +302,13 @@ func (client *Client) dnsRequest(uri string, params string, method string) (json
 	if err != nil {
 		return nil, err
 	}
-
 	defer response.Body.Close() // nolint: errcheck
+
+	contentType := response.Header.Get("content-type")
+	if !strings.Contains(contentType, "application/json") {
+		return nil, fmt.Errorf(`response content-type expected to be "application/json", got %q`, contentType)
+	}
+
 	b, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err

@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/exoscale/egoscale"
+
 	"github.com/go-ini/ini"
 	"github.com/spf13/viper"
 
@@ -147,6 +149,20 @@ func getAccount() (*account, error) {
 		return nil, err
 	}
 	account.Secret = secretKey
+
+	accountResp, err := checkCredentials(account)
+	if err != nil {
+		fmt.Printf("Account %q: unable to verify user credentials\n", account.Name)
+	}
+
+	for err != nil {
+		account, err = getAccount()
+		if err == nil {
+			return account, nil
+		}
+	}
+
+	account.Account = accountResp.Name
 
 	defaultZone, err := readInput(reader, "Default zone", "ch-dk-2")
 	if err != nil {
@@ -353,6 +369,16 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 			DefaultZone: defaultZone,
 		}
 
+		accountResp, err := checkCredentials(&account)
+		if err != nil {
+			fmt.Printf("Account %q: unable to verify user credentials\n", acc.Name())
+			if !askQuestion("Do you want to keep this account?") {
+				continue
+			}
+		}
+
+		account.Account = accountResp.Name
+
 		config.Accounts = append(config.Accounts, account)
 
 		if i == 1 || isDefault {
@@ -393,6 +419,23 @@ func askQuestion(text string) bool {
 	}
 
 	return (strings.ToLower(resp) == "y" || strings.ToLower(resp) == "yes")
+}
+
+func checkCredentials(account *account) (*egoscale.Account, error) {
+	cs := egoscale.NewClient(account.Endpoint, account.Key, account.Secret)
+
+	resp, err := cs.Request(&egoscale.ListAccounts{})
+	if err != nil {
+		return nil, err
+	}
+
+	accountsResp := resp.(*egoscale.ListAccountsResponse)
+
+	if accountsResp.Count == 1 {
+		return &accountsResp.Account[0], nil
+	}
+
+	return nil, fmt.Errorf("more than one account found")
 }
 
 func listAccounts() {

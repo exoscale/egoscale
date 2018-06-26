@@ -30,6 +30,7 @@ var cs *egoscale.Client
 
 type account struct {
 	Name        string
+	Account     string
 	Endpoint    string
 	Key         string
 	Secret      string

@@ -88,11 +88,7 @@ func addNewAccount() error {
 	if askQuestion("Make " + newAccount.Name + " your current profile?") {
 		isDefault = true
 	}
-	if err := addAccount(viper.ConfigFileUsed(), &config{DefaultAccount: newAccount.Name, Accounts: []account{*newAccount}}, isDefault); err != nil {
-		return err
-	}
-
-	return nil
+	return addAccount(viper.ConfigFileUsed(), &config{DefaultAccount: newAccount.Name, Accounts: []account{*newAccount}}, isDefault)
 }
 
 func createAccount(askDefault bool) error {

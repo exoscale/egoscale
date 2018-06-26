@@ -200,7 +200,13 @@ func addAccount(filePath string, newAccounts *config, isDefault bool) error {
 		currentAccounts = allAccount.Accounts
 	}
 
-	accounts := make([]map[string]string, accountsSize+len(newAccounts.Accounts))
+	newAccountsSize := 0
+
+	if newAccounts != nil {
+		newAccountsSize = len(newAccounts.Accounts)
+	}
+
+	accounts := make([]map[string]string, accountsSize+newAccountsSize)
 
 	conf := &config{}
 
@@ -216,16 +222,19 @@ func addAccount(filePath string, newAccounts *config, isDefault bool) error {
 		conf.Accounts = append(conf.Accounts, acc)
 	}
 
-	for i, acc := range newAccounts.Accounts {
+	if newAccounts != nil {
 
-		accounts[accountsSize+i] = map[string]string{}
+		for i, acc := range newAccounts.Accounts {
 
-		accounts[accountsSize+i]["name"] = acc.Name
-		accounts[accountsSize+i]["endpoint"] = acc.Endpoint
-		accounts[accountsSize+i]["key"] = acc.Key
-		accounts[accountsSize+i]["secret"] = acc.Secret
-		accounts[accountsSize+i]["defaultZone"] = acc.DefaultZone
-		conf.Accounts = append(conf.Accounts, acc)
+			accounts[accountsSize+i] = map[string]string{}
+
+			accounts[accountsSize+i]["name"] = acc.Name
+			accounts[accountsSize+i]["endpoint"] = acc.Endpoint
+			accounts[accountsSize+i]["key"] = acc.Key
+			accounts[accountsSize+i]["secret"] = acc.Secret
+			accounts[accountsSize+i]["defaultZone"] = acc.DefaultZone
+			conf.Accounts = append(conf.Accounts, acc)
+		}
 	}
 
 	viper.SetConfigType("toml")

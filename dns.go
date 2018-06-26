@@ -39,6 +39,24 @@ type DNSDomainResponse struct {
 type DNSRecord struct {
 	ID         int64  `json:"id,omitempty"`
 	DomainID   int64  `json:"domain_id,omitempty"`
+	Name       string `json:"name"`
+	TTL        int    `json:"ttl,omitempty"`
+	CreatedAt  string `json:"created_at,omitempty"`
+	UpdatedAt  string `json:"updated_at,omitempty"`
+	Content    string `json:"content"`
+	RecordType string `json:"record_type"`
+	Prio       int    `json:"prio,omitempty"`
+}
+
+// DNSRecordResponse represents the creation of a DNS record
+type DNSRecordResponse struct {
+	Record DNSRecord `json:"record"`
+}
+
+// UpdateDNSRecord represents a DNS record
+type UpdateDNSRecord struct {
+	ID         int64  `json:"id,omitempty"`
+	DomainID   int64  `json:"domain_id,omitempty"`
 	Name       string `json:"name,omitempty"`
 	TTL        int    `json:"ttl,omitempty"`
 	CreatedAt  string `json:"created_at,omitempty"`
@@ -48,9 +66,9 @@ type DNSRecord struct {
 	Prio       int    `json:"prio,omitempty"`
 }
 
-// DNSRecordResponse represents the creation of a DNS record
-type DNSRecordResponse struct {
-	Record DNSRecord `json:"record"`
+// UpdateDNSRecordResponse represents the creation of a DNS record
+type UpdateDNSRecordResponse struct {
+	Record UpdateDNSRecord `json:"record"`
 }
 
 // DNSErrorResponse represents an error in the API
@@ -234,8 +252,8 @@ func (client *Client) CreateRecord(name string, rec DNSRecord) (*DNSRecord, erro
 }
 
 // UpdateRecord updates a DNS record
-func (client *Client) UpdateRecord(name string, rec DNSRecord) (*DNSRecord, error) {
-	body, err := json.Marshal(DNSRecordResponse{
+func (client *Client) UpdateRecord(name string, rec UpdateDNSRecord) (*DNSRecord, error) {
+	body, err := json.Marshal(UpdateDNSRecordResponse{
 		Record: rec,
 	})
 	if err != nil {
@@ -248,7 +266,7 @@ func (client *Client) UpdateRecord(name string, rec DNSRecord) (*DNSRecord, erro
 		return nil, err
 	}
 
-	var r DNSRecordResponse
+	var r UpdateDNSRecordResponse
 	if err = json.Unmarshal(resp, &r); err != nil {
 		return nil, err
 	}

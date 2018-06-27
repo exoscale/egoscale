@@ -8,7 +8,6 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/exoscale/egoscale"
@@ -22,13 +21,6 @@ import (
 const (
 	exoConfigFileName = "exoscale"
 )
-
-var zones = []string{
-	"ch-gva-2",
-	"ch-dk-2",
-	"at-vie-1",
-	"de-fra-1",
-}
 
 // configCmd represents the config command
 var configCmd = &cobra.Command{
@@ -161,7 +153,9 @@ func getAccount() (*account, error) {
 
 	account.Account = accountResp.Name
 
-	defaultZone, err := chooseZone(account.Name)
+	cs := egoscale.NewClient(account.Endpoint, account.Key, account.Secret)
+
+	defaultZone, err := chooseZone(account.Name, cs)
 	if err != nil {
 		return nil, err
 	}
@@ -169,17 +163,6 @@ func getAccount() (*account, error) {
 	account.DefaultZone = defaultZone
 
 	return account, nil
-}
-
-func getSelectedZone(number string) (string, error) {
-	n, err := strconv.Atoi(number)
-	if err != nil {
-		return "", err
-	}
-	if n < 1 || n > len(zones) {
-		return "", fmt.Errorf(`Number "%d": not in zones range`, n)
-	}
-	return zones[n], nil
 }
 
 func isAccountExist(name string) bool {
@@ -376,7 +359,9 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 			}
 		}
 
-		defaultZone, err := chooseZone(acc.Name())
+		cs := egoscale.NewClient(account.Endpoint, account.Key, account.Secret)
+
+		defaultZone, err := chooseZone(acc.Name(), cs)
 		if err != nil {
 			return err
 		}
@@ -474,25 +459,54 @@ func getAccountByName(name string) *account {
 	return nil
 }
 
-func chooseZone(accountName string) (string, error) {
+func getSelectedZone(number string, zones map[string]string) (string, bool) {
+	zName, ok := zones[number]
+	if !ok {
+		return "", false
+	}
+	return zName, true
+}
+
+func chooseZone(accountName string, cs *egoscale.Client) (string, error) {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Printf(`Choose [%s] default zone:		
-1: ch-gva-2
-2: ch-dk-2
-3: at-vie-1
-4: de-fra-1
-`, accountName)
-	zone, err := readInput(reader, "Select", "1")
+	zonesResp, err := cs.List(&egoscale.Zone{})
 	if err != nil {
 		return "", err
 	}
 
-	defaultZone, err := getSelectedZone(zone)
-	for err != nil {
-		println(err.Error())
-		defaultZone, err = chooseZone(accountName)
+	zones := map[string]string{}
+
+	// XXX if no zone is found like in preprod bug
+	if len(zonesResp) == 0 {
+		println(`No zones found: take "ch-dk-2" by default`)
+		return "ch-dk-2", nil
+	}
+
+	fmt.Printf("Choose [%s] default zone:\n", accountName)
+
+	for i, z := range zonesResp {
+		zone := z.(*egoscale.Zone)
+
+		zName := strings.ToLower(zone.Name)
+
+		n := fmt.Sprintf("%d", i+1)
+
+		zones[n] = zName
+
+		fmt.Printf("%d: %s\n", i+1, zName)
+	}
+
+	zoneNumber, err := readInput(reader, "Select", "1")
+	if err != nil {
+		return "", err
+	}
+
+	defaultZone, ok := getSelectedZone(zoneNumber, zones)
+	for !ok {
+		println("Error: Invalid zone number")
+		defaultZone, err = chooseZone(accountName, cs)
 		if err == nil {
 			break
 		}

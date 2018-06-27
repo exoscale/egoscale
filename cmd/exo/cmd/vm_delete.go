@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
@@ -22,18 +24,38 @@ func vmDeleteCmdRun(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if err := deleteVM(args[0]); err != nil {
+	force, err := cmd.Flags().GetBool("force")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := deleteVM(args[0], force); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func deleteVM(name string) error {
+func deleteVM(name string, force bool) error {
 	vm, err := getVMWithNameOrID(cs, name)
 	if err != nil {
 		return err
 	}
 
 	var errorReq error
+
+	//XXX waiting for exo-config merge for askQuestion()
+	if !force {
+		reader := bufio.NewReader(os.Stdin)
+
+		resp, err := getConfig(reader, fmt.Sprintf("sure you want to delete %q virtual machine", vm.Name), "Yn")
+		if err != nil {
+			return err
+		}
+
+		if strings.ToLower(resp) != "y" {
+			return nil
+		}
+	}
+	//XXX
 
 	req := &egoscale.DestroyVirtualMachine{ID: vm.ID}
 	print("Destroying")
@@ -71,5 +93,8 @@ func deleteVM(name string) error {
 
 func init() {
 	vmDeleteCmd.Run = vmDeleteCmdRun
+
+	vmDeleteCmd.Flags().BoolP("force", "f", false, "Attempt to remove vitual machine without prompting for confirmation")
+
 	vmCmd.AddCommand(vmDeleteCmd)
 }

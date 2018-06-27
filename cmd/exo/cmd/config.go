@@ -119,6 +119,14 @@ func getAccount() (*account, error) {
 		return nil, err
 	}
 
+	for name == "" {
+		fmt.Printf("Must be not empty\n")
+		name, err = readInput(reader, "Account name", "")
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	for isAccountExist(name) {
 		fmt.Printf("Account name [%s] already exist\n", name)
 		name, err = readInput(reader, "Account name", "")

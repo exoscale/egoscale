@@ -205,9 +205,11 @@ func getSGs(cs *egoscale.Client, sgs []string) ([]egoscale.UserSecurityGroup, er
 
 func getDefaultRule(ruleName string, isIpv6 bool) (*egoscale.AuthorizeSecurityGroupIngress, error) {
 
+	icmpType := uint8(8)
 	cidr := defaultCidr
 	if isIpv6 {
 		cidr = defaultCidr6
+		icmpType = uint8(128)
 	}
 
 	ruleName = strings.ToLower(ruleName)
@@ -215,7 +217,7 @@ func getDefaultRule(ruleName string, isIpv6 bool) (*egoscale.AuthorizeSecurityGr
 		return &egoscale.AuthorizeSecurityGroupIngress{
 			Protocol:    "icmp",
 			CidrList:    []string{cidr},
-			IcmpType:    8,
+			IcmpType:    icmpType,
 			IcmpCode:    0,
 			Description: "",
 		}, nil

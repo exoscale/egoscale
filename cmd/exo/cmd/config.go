@@ -20,6 +20,7 @@ import (
 
 const (
 	exoConfigFileName = "exoscale"
+	computeEndpoint   = "https://api.exoscale.ch/compute"
 )
 
 // configCmd represents the config command
@@ -137,11 +138,7 @@ func getAccount() (*account, error) {
 
 	account.Name = name
 
-	apiURL, err := readInput(reader, "Compute API Endpoint", "https://api.exoscale.ch/compute")
-	if err != nil {
-		return nil, err
-	}
-	account.Endpoint = apiURL
+	account.Endpoint = computeEndpoint
 
 	apiKey, err := readInput(reader, "API Key", "")
 	if err != nil {

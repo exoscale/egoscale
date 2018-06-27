@@ -136,7 +136,7 @@ func initConfig() {
 	}
 
 	if config.DefaultAccount == "" && accountName == "" {
-		log.Fatalf("default account not defined: run %q", "$ exo config set <account name>")
+		log.Fatalf("default account not defined")
 	}
 
 	if accountName == "" {

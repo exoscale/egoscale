@@ -8,6 +8,7 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/exoscale/egoscale"
@@ -21,6 +22,13 @@ import (
 const (
 	exoConfigFileName = "exoscale"
 )
+
+var zones = []string{
+	"ch-gva-2",
+	"ch-dk-2",
+	"at-vie-1",
+	"de-fra-1",
+}
 
 // configCmd represents the config command
 var configCmd = &cobra.Command{
@@ -83,7 +91,7 @@ func addNewAccount() error {
 		return err
 	}
 	isDefault := false
-	if askQuestion("Make " + newAccount.Name + " your current profile?") {
+	if askQuestion("Make [" + newAccount.Name + "] your default profile?") {
 		isDefault = true
 	}
 	return addAccount(viper.ConfigFileUsed(), &config{DefaultAccount: newAccount.Name, Accounts: []account{*newAccount}}, isDefault)
@@ -100,7 +108,7 @@ func createAccount(askDefault bool) error {
 	}
 
 	if askDefault {
-		if !askQuestion("Make " + newAccount.Name + " your current profile?") {
+		if !askQuestion("Make [" + newAccount.Name + "] your default profile?") {
 			askDefault = false
 		}
 	}
@@ -119,7 +127,7 @@ func getAccount() (*account, error) {
 	}
 
 	for isAccountExist(name) {
-		fmt.Printf("Account name %q already exist\n", name)
+		fmt.Printf("Account name [%s] already exist\n", name)
 		name, err = readInput(reader, "Account name", "")
 		if err != nil {
 			return nil, err
@@ -148,25 +156,40 @@ func getAccount() (*account, error) {
 
 	accountResp, err := checkCredentials(account)
 	if err != nil {
-		fmt.Printf("Account %q: unable to verify user credentials\n", account.Name)
-	}
-
-	for err != nil {
-		account, err = getAccount()
-		if err == nil {
-			return account, nil
-		}
+		return nil, fmt.Errorf("Account [%s]: unable to verify user credentials", account.Name)
 	}
 
 	account.Account = accountResp.Name
 
-	defaultZone, err := readInput(reader, "Default zone", "ch-dk-2")
+	println(`Choose a default zone:
+1: ch-gva-2
+2: ch-dk-2
+3: at-vie-1
+4: de-fra-1`)
+	zone, err := readInput(reader, "Select", "1")
 	if err != nil {
 		return nil, err
 	}
+
+	defaultZone, err := getSelectedZone(zone)
+	if err != nil {
+		return nil, err
+	}
+
 	account.DefaultZone = defaultZone
 
 	return account, nil
+}
+
+func getSelectedZone(number string) (string, error) {
+	n, err := strconv.Atoi(number)
+	if err != nil {
+		return "", err
+	}
+	if n < 1 || n > len(zones) {
+		return "", fmt.Errorf(`Number "%d": not in zones range`, n)
+	}
+	return zones[n], nil
 }
 
 func isAccountExist(name string) bool {
@@ -309,7 +332,7 @@ func askCloudstackINIMigration(csFilePath string) (string, bool, error) {
 		return "", false, nil
 	}
 
-	println("We've found the following configurations:")
+	println("We've found a %q configuration file with the following configurations:", "cloudstack.ini")
 	for i, acc := range cfg.Sections() {
 		if i == 0 {
 			continue
@@ -359,21 +382,33 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 
 		accountResp, err := checkCredentials(&account)
 		if err != nil {
-			fmt.Printf("Account %q: unable to verify user credentials\n", acc.Name())
+			fmt.Printf("Account [%s]: unable to verify user credentials\n", acc.Name())
 			if !askQuestion("Do you want to keep this account?") {
 				continue
 			}
 		}
 
-		defaultZone, err := readInput(reader, fmt.Sprintf("%s default zone", acc.Name()), "ch-dk-2")
+		fmt.Printf(`Choose [%s] default zone:		
+1: ch-gva-2
+2: ch-dk-2
+3: at-vie-1
+4: de-fra-1
+`, acc.Name())
+		zone, err := readInput(reader, "Select", "1")
 		if err != nil {
 			return err
+		}
+
+		defaultZone, err := getSelectedZone(zone)
+		if err != nil {
+			fmt.Printf("Skip [%s] account import: %s\n", acc.Name(), err.Error())
+			continue
 		}
 
 		account.DefaultZone = defaultZone
 
 		isDefault := false
-		if askQuestion("Make " + acc.Name() + " your current profile?") {
+		if askQuestion("Make [" + acc.Name() + "] your default profile?") {
 			isDefault = true
 		}
 
@@ -439,13 +474,28 @@ func checkCredentials(account *account) (*egoscale.Account, error) {
 }
 
 func listAccounts() {
+	if allAccount == nil {
+		return
+	}
 	for _, acc := range allAccount.Accounts {
 		print("- ", acc.Name)
 		if acc.Name == allAccount.DefaultAccount {
-			print(" [current]")
+			print(" [Default]")
 		}
 		println("")
 	}
+}
+
+func getAccountByName(name string) *account {
+	if allAccount == nil {
+		return nil
+	}
+	for i, acc := range allAccount.Accounts {
+		if acc.Name == name {
+			return &allAccount.Accounts[i]
+		}
+	}
+	return nil
 }
 
 func init() {

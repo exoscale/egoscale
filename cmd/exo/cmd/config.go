@@ -161,17 +161,7 @@ func getAccount() (*account, error) {
 
 	account.Account = accountResp.Name
 
-	println(`Choose a default zone:
-1: ch-gva-2
-2: ch-dk-2
-3: at-vie-1
-4: de-fra-1`)
-	zone, err := readInput(reader, "Select", "1")
-	if err != nil {
-		return nil, err
-	}
-
-	defaultZone, err := getSelectedZone(zone)
+	defaultZone, err := chooseZone(account.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -371,8 +361,6 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 			}
 		}
 
-		reader := bufio.NewReader(os.Stdin)
-
 		account := account{
 			Name:     acc.Name(),
 			Endpoint: acc.Key("endpoint").String(),
@@ -388,21 +376,9 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 			}
 		}
 
-		fmt.Printf(`Choose [%s] default zone:		
-1: ch-gva-2
-2: ch-dk-2
-3: at-vie-1
-4: de-fra-1
-`, acc.Name())
-		zone, err := readInput(reader, "Select", "1")
+		defaultZone, err := chooseZone(acc.Name())
 		if err != nil {
 			return err
-		}
-
-		defaultZone, err := getSelectedZone(zone)
-		if err != nil {
-			fmt.Printf("Skip [%s] account import: %s\n", acc.Name(), err.Error())
-			continue
 		}
 
 		account.DefaultZone = defaultZone
@@ -496,6 +472,32 @@ func getAccountByName(name string) *account {
 		}
 	}
 	return nil
+}
+
+func chooseZone(accountName string) (string, error) {
+
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Printf(`Choose [%s] default zone:		
+1: ch-gva-2
+2: ch-dk-2
+3: at-vie-1
+4: de-fra-1
+`, accountName)
+	zone, err := readInput(reader, "Select", "1")
+	if err != nil {
+		return "", err
+	}
+
+	defaultZone, err := getSelectedZone(zone)
+	for err != nil {
+		println(err.Error())
+		defaultZone, err = chooseZone(accountName)
+		if err == nil {
+			break
+		}
+	}
+	return defaultZone, nil
 }
 
 func init() {

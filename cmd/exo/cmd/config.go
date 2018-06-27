@@ -33,10 +33,8 @@ func configCmdRun(cmd *cobra.Command, args []string) {
 	if viper.ConfigFileUsed() != "" {
 		println("Good day! exo is already configured with accounts:")
 		listAccounts()
-		if askQuestion("Do you wish to add another account?") {
-			if err := addNewAccount(); err != nil {
-				log.Fatal(err)
-			}
+		if err := addNewAccount(false); err != nil {
+			log.Fatal(err)
 		}
 		return
 	}
@@ -47,7 +45,7 @@ func configCmdRun(cmd *cobra.Command, args []string) {
 			log.Fatal(err)
 		}
 		if !ok {
-			if err := createAccount(false); err != nil {
+			if err := addNewAccount(true); err != nil {
 				log.Fatal(err)
 			}
 			return
@@ -60,12 +58,7 @@ func configCmdRun(cmd *cobra.Command, args []string) {
 		if err := importCloudstackINI(resp, csPath, cfgPath); err != nil {
 			log.Fatal(err)
 		}
-		if !askQuestion("Do you wish to add another account?") {
-			return
-		}
-		if err := addNewAccount(); err != nil {
-			log.Fatal(err)
-		}
+		addNewAccount(false)
 		return
 	}
 	println("Hi happy Exoscalian, some configuration is required to use exo")
@@ -73,39 +66,47 @@ func configCmdRun(cmd *cobra.Command, args []string) {
 We now need some very important informations, find them there.
 https://portal.exoscale.com/account/profile/api
 `)
-	createAccount(false)
-
+	addNewAccount(true)
 }
 
-func addNewAccount() error {
-	newAccount, err := getAccount()
-	if err != nil {
-		return err
-	}
-	isDefault := false
-	if askQuestion("Make [" + newAccount.Name + "] your default profile?") {
-		isDefault = true
-	}
-	return addAccount(viper.ConfigFileUsed(), &config{DefaultAccount: newAccount.Name, Accounts: []account{*newAccount}}, isDefault)
-}
+func addNewAccount(firstRun bool) error {
 
-func createAccount(askDefault bool) error {
-	newAccount, err := getAccount()
-	if err != nil {
-		return err
-	}
-	filePath, err := createConfigFile(exoConfigFileName)
-	if err != nil {
-		return err
+	config := &config{}
+
+	if firstRun {
+		filePath, err := createConfigFile(exoConfigFileName)
+		if err != nil {
+			return err
+		}
+
+		viper.SetConfigFile(filePath)
+
+		newAccount, err := getAccount()
+		if err != nil {
+			return err
+		}
+		config.DefaultAccount = newAccount.Name
+		config.Accounts = []account{*newAccount}
+		viper.Set("defaultAccount", newAccount.Name)
 	}
 
-	if askDefault {
-		if !askQuestion("Make [" + newAccount.Name + "] your default profile?") {
-			askDefault = false
+	for askQuestion("Do you wish to add another account?") {
+		newAccount, err := getAccount()
+		if err != nil {
+			return err
+		}
+		config.Accounts = append(config.Accounts, *newAccount)
+		if askQuestion("Make [" + newAccount.Name + "] your default profile?") {
+			config.DefaultAccount = newAccount.Name
+			viper.Set("defaultAccount", newAccount.Name)
 		}
 	}
 
-	return addAccount(filePath, &config{DefaultAccount: newAccount.Name, Accounts: []account{*newAccount}}, askDefault)
+	if len(config.Accounts) == 0 {
+		return nil
+	}
+
+	return addAccount(viper.ConfigFileUsed(), config)
 }
 
 func getAccount() (*account, error) {
@@ -165,37 +166,7 @@ func getAccount() (*account, error) {
 	return account, nil
 }
 
-func isAccountExist(name string) bool {
-
-	if allAccount == nil {
-		return false
-	}
-
-	for _, acc := range allAccount.Accounts {
-		if acc.Name == name {
-			return true
-		}
-	}
-
-	return false
-}
-
-func createConfigFile(fileName string) (string, error) {
-	if _, err := os.Stat(configFolder); os.IsNotExist(err) {
-		if err := os.MkdirAll(configFolder, os.ModePerm); err != nil {
-			return "", err
-		}
-	}
-
-	filepath := path.Join(configFolder, fileName+".toml")
-
-	if _, err := os.Stat(filepath); !os.IsNotExist(err) {
-		return "", fmt.Errorf("File %q already exist", filepath)
-	}
-	return filepath, nil
-}
-
-func addAccount(filePath string, newAccounts *config, isDefault bool) error {
+func addAccount(filePath string, newAccounts *config) error {
 
 	accountsSize := 0
 	currentAccounts := []account{}
@@ -246,10 +217,6 @@ func addAccount(filePath string, newAccounts *config, isDefault bool) error {
 
 	viper.SetConfigType("toml")
 	viper.SetConfigFile(filePath)
-
-	if isDefault {
-		viper.Set("defaultAccount", newAccounts.DefaultAccount)
-	}
 
 	viper.Set("accounts", accounts)
 
@@ -379,12 +346,43 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 
 		if i == 1 || isDefault {
 			config.DefaultAccount = acc.Name()
+			viper.Set("defaultAccount", acc.Name())
 		}
 	}
 
-	addAccount(cfgPath, config, true)
+	addAccount(cfgPath, config)
 
 	return nil
+}
+
+func isAccountExist(name string) bool {
+
+	if allAccount == nil {
+		return false
+	}
+
+	for _, acc := range allAccount.Accounts {
+		if acc.Name == name {
+			return true
+		}
+	}
+
+	return false
+}
+
+func createConfigFile(fileName string) (string, error) {
+	if _, err := os.Stat(configFolder); os.IsNotExist(err) {
+		if err := os.MkdirAll(configFolder, os.ModePerm); err != nil {
+			return "", err
+		}
+	}
+
+	filepath := path.Join(configFolder, fileName+".toml")
+
+	if _, err := os.Stat(filepath); !os.IsNotExist(err) {
+		return "", fmt.Errorf("File %q already exist", filepath)
+	}
+	return filepath, nil
 }
 
 func readInput(reader *bufio.Reader, text, def string) (string, error) {

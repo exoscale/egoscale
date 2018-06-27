@@ -37,7 +37,7 @@ var configDeleteCmd = &cobra.Command{
 
 		allAccount.Accounts = append(allAccount.Accounts[:pos], allAccount.Accounts[pos+1:]...)
 
-		if err := addAccount(viper.ConfigFileUsed(), nil, false); err != nil {
+		if err := addAccount(viper.ConfigFileUsed(), nil); err != nil {
 			log.Fatal(err)
 		}
 

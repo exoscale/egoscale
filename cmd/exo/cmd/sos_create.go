@@ -27,8 +27,6 @@ var sosCreateCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		println("test")
-
 		if err := createBucket(minioClient, args[0], zone); err != nil {
 			log.Fatal(err)
 		}

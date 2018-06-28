@@ -16,8 +16,7 @@ var sosCmd = &cobra.Command{
 func newMinioClient(zone string) (*minio.Client, error) {
 	endpoint := strings.Replace(gCurrentAccount.SosEndpoint, "https://", "", -1)
 	endpoint = strings.Replace(endpoint, "{zone}", zone, -1)
-	println(endpoint)
-	return minio.New(zone, gCurrentAccount.Key, gCurrentAccount.Secret, true)
+	return minio.New(endpoint, gCurrentAccount.Key, gCurrentAccount.Secret, true)
 }
 
 func init() {

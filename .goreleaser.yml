@@ -8,6 +8,8 @@ builds:
       - darwin
       - linux
       - openbsd
+      - freebsd
+
     goarch:
       - amd64
   - main: ./cmd/exo/
@@ -25,7 +27,7 @@ builds:
 sign:
   cmd: gpg
   args: ["-u", "ops@exoscale.ch", "--detach-sign", "${artifact}"]
-  artifacts: all
+  artifacts: none
 
 archive:
   format_overrides:
@@ -34,6 +36,8 @@ archive:
   files:
     - LICENSE
     - CHANGELOG.md
+    - bash_completion
+    - zsh_completion
 
 release:
   github:

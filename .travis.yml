@@ -45,9 +45,11 @@ jobs:
       cd ../exo
       dep ensure -v -vendor-only
       cd ../..
+      cd cmd/exo/completion
+      go run main.go
+      cp bash_completion zsh_completion ../../../
+      cd ../../..
       goreleaser --snapshot --skip-sign
-      cd cmd/exo
-      go run ./completion/main.go
   - stage: gh-pages
     if: branch = master AND type = push
     script: |

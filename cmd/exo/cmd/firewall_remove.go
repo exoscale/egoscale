@@ -14,7 +14,7 @@ import (
 var firewallRemoveCmd = &cobra.Command{
 	Use:     "remove <security group name | id> <rule id | default rule name> [flags]\n  exo firewall remove <security group name | id> [flags]",
 	Short:   "Remove a rule from a security group",
-	Aliases: []string{"rm"},
+	Aliases: gRemoveAlias,
 }
 
 func firewallRemoveRun(cmd *cobra.Command, args []string) {

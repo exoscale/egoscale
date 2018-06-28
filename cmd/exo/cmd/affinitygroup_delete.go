@@ -9,7 +9,7 @@ import (
 var affinitygroupDeleteCmd = &cobra.Command{
 	Use:     "delete <name | id>",
 	Short:   "Delete affinity group",
-	Aliases: []string{"del"},
+	Aliases: gDeleteAlias,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()

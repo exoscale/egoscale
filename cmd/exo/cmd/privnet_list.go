@@ -13,7 +13,7 @@ import (
 var privnetListCmd = &cobra.Command{
 	Use:     "list",
 	Short:   "List private networks",
-	Aliases: []string{"ls"},
+	Aliases: gListAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		zone, err := cmd.Flags().GetString("zone")
 		if err != nil {

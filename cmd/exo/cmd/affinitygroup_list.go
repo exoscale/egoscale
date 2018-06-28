@@ -14,7 +14,7 @@ import (
 var affinitygroupListCmd = &cobra.Command{
 	Use:     "list",
 	Short:   "List affinity group",
-	Aliases: []string{"ls"},
+	Aliases: gListAlias,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := displayAffinitygroup(); err != nil {
 			log.Fatal(err)

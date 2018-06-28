@@ -10,7 +10,7 @@ import (
 var configListCmd = &cobra.Command{
 	Use:     "list",
 	Short:   "List available accounts",
-	Aliases: []string{"ls"},
+	Aliases: gListAlias,
 	Run: func(cmd *cobra.Command, args []string) {
 		if allAccount == nil {
 			log.Fatalf("No accounts defined")

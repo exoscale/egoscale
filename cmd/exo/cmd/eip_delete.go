@@ -12,7 +12,7 @@ import (
 var eipDeleteCmd = &cobra.Command{
 	Use:     "delete <ip | eip id>",
 	Short:   "Delete EIP",
-	Aliases: []string{"del"},
+	Aliases: gDeleteAlias,
 }
 
 func eipDeleteRun(cmd *cobra.Command, args []string) {

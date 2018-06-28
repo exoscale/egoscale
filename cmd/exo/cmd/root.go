@@ -28,6 +28,11 @@ var ignoreClientBuild = false
 //egoscale client
 var cs *egoscale.Client
 
+//Aliases
+var gListAlias = []string{"ls"}
+var gRemoveAlias = []string{"rm"}
+var gDeleteAlias = []string{"del"}
+
 type account struct {
 	Name        string
 	Account     string

@@ -13,7 +13,7 @@ import (
 var listCmd = &cobra.Command{
 	Use:     "list",
 	Short:   "List available ssh keyPair",
-	Aliases: []string{"ls"},
+	Aliases: gListAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return listSSHKey()
 	},

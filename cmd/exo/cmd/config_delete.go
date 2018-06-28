@@ -11,7 +11,7 @@ import (
 var configDeleteCmd = &cobra.Command{
 	Use:     "delete <account name>",
 	Short:   "Delete an account from config file",
-	Aliases: []string{"del"},
+	Aliases: gDeleteAlias,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()

@@ -8,8 +8,9 @@ import (
 
 // listCmd represents the list command
 var configListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List available accounts",
+	Use:     "list",
+	Short:   "List available accounts",
+	Aliases: []string{"ls"},
 	Run: func(cmd *cobra.Command, args []string) {
 		if allAccount == nil {
 			log.Fatalf("No accounts defined")

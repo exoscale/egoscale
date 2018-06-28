@@ -89,7 +89,7 @@ type UpdateHost struct {
 	Allocationstate string   `json:"allocationstate,omitempty" doc:"Change resource state of host, valid values are [Enable, Disable]. Operation may failed if host in states not allowing Enable/Disable"`
 	HostTags        []string `json:"hosttags,omitempty" doc:"list of tags to be added to the host"`
 	ID              string   `json:"id" doc:"the ID of the host to update"`
-	OSSCategoryID   string   `json:"oscategoryid,omitempty" doc:"the id of Os category to update the host with"`
+	OSCategoryID    string   `json:"oscategoryid,omitempty" doc:"the id of Os category to update the host with"`
 	URL             string   `json:"url,omitempty" doc:"the new uri for the secondary storage: nfs://host/path"`
 	_               bool     `name:"updateHost" description:"Updates a host."`
 }

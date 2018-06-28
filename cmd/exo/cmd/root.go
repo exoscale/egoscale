@@ -29,6 +29,7 @@ var cs *egoscale.Client
 var gListAlias = []string{"ls"}
 var gRemoveAlias = []string{"rm"}
 var gDeleteAlias = []string{"del"}
+var gShowAlias = []string{"get"}
 
 type account struct {
 	Name        string

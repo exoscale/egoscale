@@ -278,7 +278,7 @@ func createVM(vmInfos *egoscale.DeployVirtualMachine) (*egoscale.VirtualMachine,
 }
 
 func saveKeyPair(keyPairs *egoscale.SSHKeyPair, vmID string) {
-	filePath := path.Join(configFolder, "instances", vmID)
+	filePath := path.Join(gConfigFolder, "instances", vmID)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		if err := os.MkdirAll(filePath, os.ModePerm); err != nil {

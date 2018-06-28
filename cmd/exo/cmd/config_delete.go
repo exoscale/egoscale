@@ -17,26 +17,26 @@ var configDeleteCmd = &cobra.Command{
 			cmd.Usage()
 			return
 		}
-		if allAccount == nil {
+		if gAllAccount == nil {
 			log.Fatalf("No accounts defined")
 		}
 		if !isAccountExist(args[0]) {
 			log.Fatalf("Account %q doesn't exist", args[0])
 		}
 
-		if args[0] == allAccount.DefaultAccount {
+		if args[0] == gAllAccount.DefaultAccount {
 			log.Fatalf("Can't delete a default account")
 		}
 
 		pos := 0
-		for i, acc := range allAccount.Accounts {
+		for i, acc := range gAllAccount.Accounts {
 			if acc.Name == args[0] {
 				pos = i
 				break
 			}
 		}
 
-		allAccount.Accounts = append(allAccount.Accounts[:pos], allAccount.Accounts[pos+1:]...)
+		gAllAccount.Accounts = append(gAllAccount.Accounts[:pos], gAllAccount.Accounts[pos+1:]...)
 
 		if err := addAccount(viper.ConfigFileUsed(), nil); err != nil {
 			log.Fatal(err)

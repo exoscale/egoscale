@@ -15,7 +15,7 @@ var showCmd = &cobra.Command{
 			cmd.Usage()
 			return
 		}
-		if allAccount == nil {
+		if gAllAccount == nil {
 			log.Fatalf("No accounts defined")
 		}
 		if !isAccountExist(args[0]) {

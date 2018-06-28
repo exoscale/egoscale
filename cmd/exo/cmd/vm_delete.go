@@ -57,7 +57,7 @@ func deleteVM(name string) error {
 		return errorReq
 	}
 
-	folder := path.Join(configFolder, "instances", vm.ID)
+	folder := path.Join(gConfigFolder, "instances", vm.ID)
 
 	if _, err := os.Stat(folder); !os.IsNotExist(err) {
 		if err := os.RemoveAll(folder); err != nil {

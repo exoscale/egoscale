@@ -46,6 +46,8 @@ jobs:
       dep ensure -v -vendor-only
       cd ../..
       goreleaser --snapshot --skip-sign
+      cd cmd/exo
+      go run ./completion/main.go
   - stage: gh-pages
     if: branch = master AND type = push
     script: |

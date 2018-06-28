@@ -9,8 +9,9 @@ import (
 
 // deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
-	Use:   "delete <name>",
-	Short: "Delete ssh keyPair",
+	Use:     "delete <name>",
+	Short:   "Delete ssh keyPair",
+	Aliases: []string{"del"},
 }
 
 func runDeleteCmd(cmd *cobra.Command, args []string) {

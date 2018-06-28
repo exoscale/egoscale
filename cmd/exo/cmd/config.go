@@ -275,7 +275,7 @@ func askCloudstackINIMigration(csFilePath string) (string, bool, error) {
 		return "", false, nil
 	}
 
-	println("We've found a %q configuration file with the following configurations:", "cloudstack.ini")
+	fmt.Printf("We've found a %q configuration file with the following configurations:\n", "cloudstack.ini")
 	for i, acc := range cfg.Sections() {
 		if i == 0 {
 			continue

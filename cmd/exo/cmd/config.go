@@ -20,6 +20,7 @@ const (
 	defaultConfigFileName = "exoscale"
 	defaultEndpoint       = "https://api.exoscale.ch/compute"
 	defaultTemplate       = "Linux Ubuntu 18.04 LTS 64-bit"
+	defaultSosEndpoint    = "https://sos-{zone}.exo.io"
 )
 
 // configCmd represents the config command
@@ -219,6 +220,7 @@ func addAccount(filePath string, newAccounts *config) error {
 		accounts[i]["name"] = acc.Name
 		accounts[i]["computeEndpoint"] = acc.Endpoint
 		accounts[i]["dnsEndpoint"] = acc.DNSEndpoint
+		accounts[i]["sosEndpoint"] = acc.SosEndpoint
 		accounts[i]["key"] = acc.Key
 		accounts[i]["secret"] = acc.Secret
 		accounts[i]["defaultZone"] = acc.DefaultZone
@@ -237,6 +239,7 @@ func addAccount(filePath string, newAccounts *config) error {
 			accounts[accountsSize+i]["name"] = acc.Name
 			accounts[accountsSize+i]["computeEndpoint"] = acc.Endpoint
 			accounts[accountsSize+i]["dnsEndpoint"] = acc.DNSEndpoint
+			accounts[accountsSize+i]["sosEndpoint"] = acc.SosEndpoint
 			accounts[accountsSize+i]["key"] = acc.Key
 			accounts[accountsSize+i]["secret"] = acc.Secret
 			accounts[accountsSize+i]["defaultZone"] = acc.DefaultZone
@@ -353,10 +356,11 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 		}
 
 		csAccount := account{
-			Name:     acc.Name(),
-			Endpoint: acc.Key("endpoint").String(),
-			Key:      acc.Key("key").String(),
-			Secret:   acc.Key("secret").String(),
+			Name:        acc.Name(),
+			Endpoint:    acc.Key("endpoint").String(),
+			Key:         acc.Key("key").String(),
+			Secret:      acc.Key("secret").String(),
+			SosEndpoint: sosEndpoint,
 		}
 
 		csClient := egoscale.NewClient(csAccount.Endpoint, csAccount.Key, csAccount.Secret)

@@ -45,6 +45,7 @@ type account struct {
 	Account         string
 	Endpoint        string
 	DNSEndpoint     string
+	SosEndpoint     string
 	Key             string
 	Secret          string
 	DefaultZone     string
@@ -120,7 +121,6 @@ func buildClient() {
 	}
 
 	csDNS = egoscale.NewClient(gCurrentAccount.DNSEndpoint, gCurrentAccount.Key, gCurrentAccount.Secret)
-
 	cs = egoscale.NewClient(gCurrentAccount.Endpoint, gCurrentAccount.Key, gCurrentAccount.Secret)
 }
 

@@ -30,6 +30,8 @@ var gListAlias = []string{"ls"}
 var gRemoveAlias = []string{"rm"}
 var gDeleteAlias = []string{"del"}
 var gShowAlias = []string{"get"}
+var gCreateAlias = []string{"add"}
+var gUploadAlias = []string{"up"}
 
 type account struct {
 	Name        string

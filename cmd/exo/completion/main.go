@@ -6,5 +6,4 @@ import (
 
 func main() {
 	cmd.RootCmd.GenBashCompletionFile("bash_completion")
-	cmd.RootCmd.GenZshCompletionFile("zsh_completion")
 }

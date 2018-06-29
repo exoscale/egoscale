@@ -37,7 +37,6 @@ archive:
     - LICENSE
     - CHANGELOG.md
     - bash_completion
-    - zsh_completion
 
 release:
   github:

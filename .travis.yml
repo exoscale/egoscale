@@ -47,7 +47,7 @@ jobs:
       cd ../..
       cd cmd/exo/completion
       go run main.go
-      cp bash_completion zsh_completion ../../../
+      cp bash_completion ../../../
       cd ../../..
       goreleaser --snapshot --skip-sign
   - stage: gh-pages

@@ -245,7 +245,7 @@ func createVM(vmInfos *egoscale.DeployVirtualMachine) (*egoscale.VirtualMachine,
 
 	virtualMachine := &egoscale.VirtualMachine{}
 	var errorReq error
-	print("Deploying")
+	fmt.Printf("Deploying %s", vmInfos.Name)
 	cs.AsyncRequest(vmInfos, func(jobResult *egoscale.AsyncJobResult, err error) bool {
 
 		if err != nil {
@@ -306,6 +306,6 @@ func init() {
 	vmCreateCmd.Flags().StringP("privnet", "p", "", "<name | id, name | id, ...>")
 	vmCreateCmd.Flags().StringP("anti-affinity-group", "a", "", "<name | id, name | id, ...>")
 	vmCreateCmd.Flags().BoolP("ipv6", "6", false, "enable ipv6")
-	vmCreateCmd.Flags().StringP("service-offering", "o", "Small", "<name | id> (micro|tiny|small|medium|large|extra-large|huge|mega|titan")
+	vmCreateCmd.Flags().StringP("service-offering", "o", "Small", "<name | id> (micro|tiny|small|medium|large|extra-large|huge|mega|titan)")
 	vmCmd.AddCommand(vmCreateCmd)
 }

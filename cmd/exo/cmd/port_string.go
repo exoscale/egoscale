@@ -4,7 +4,7 @@ package cmd
 
 import "strconv"
 
-const _port_name = "daytimeftpsshtelnetsmtptimewhoisdnstftpgopherhttpkerberosnicsftpntpimapsnmpirchttpsrdpminecraft"
+const _port_name = "DaytimeFTPSSHTelnetSMTPTimeWhoisDNSTFTPGopherHTTPKerberosNicSFTPNTPIMAPSNMPIRCHTTPSETCDClientETCDServerRDPKubernetesAPIServerMinecraft"
 
 var _port_map = map[port]string{
 	13:    _port_name[0:7],
@@ -26,8 +26,11 @@ var _port_map = map[port]string{
 	161:   _port_name[71:75],
 	194:   _port_name[75:78],
 	443:   _port_name[78:83],
-	3389:  _port_name[83:86],
-	25565: _port_name[86:95],
+	2379:  _port_name[83:93],
+	2380:  _port_name[93:103],
+	3389:  _port_name[103:106],
+	6443:  _port_name[106:125],
+	25565: _port_name[125:134],
 }
 
 func (i port) String() string {

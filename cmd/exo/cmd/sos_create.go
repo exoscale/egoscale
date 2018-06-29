@@ -9,8 +9,9 @@ import (
 
 // createCmd represents the create command
 var sosCreateCmd = &cobra.Command{
-	Use:   "create <name>",
-	Short: "create bucket",
+	Use:     "create <name>",
+	Short:   "create bucket",
+	Aliases: gCreateAlias,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()

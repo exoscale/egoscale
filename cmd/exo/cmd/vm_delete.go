@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
@@ -42,20 +40,12 @@ func deleteVM(name string, force bool) error {
 
 	var errorReq error
 
-	//XXX waiting for exo-config merge for askQuestion()
 	if !force {
-		reader := bufio.NewReader(os.Stdin)
-
-		resp, err := getConfig(reader, fmt.Sprintf("sure you want to delete %q virtual machine", vm.Name), "Yn")
-		if err != nil {
-			return err
-		}
-
-		if strings.ToLower(resp) != "y" {
+		if !askQuestion(fmt.Sprintf("sure you want to delete %q virtual machine", vm.Name)) {
 			return nil
 		}
+
 	}
-	//XXX
 
 	req := &egoscale.DestroyVirtualMachine{ID: vm.ID}
 	print("Destroying")

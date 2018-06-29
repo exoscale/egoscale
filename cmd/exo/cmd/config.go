@@ -356,11 +356,11 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 		}
 
 		csAccount := account{
-			Name:        acc.Name(),
-			Endpoint:    acc.Key("endpoint").String(),
-			Key:         acc.Key("key").String(),
-			Secret:      acc.Key("secret").String(),
-			SosEndpoint: sosEndpoint,
+			Name:            acc.Name(),
+			ComputeEndpoint: acc.Key("endpoint").String(),
+			Key:             acc.Key("key").String(),
+			Secret:          acc.Key("secret").String(),
+			SosEndpoint:     sosEndpoint,
 		}
 
 		csClient := egoscale.NewClient(csAccount.Endpoint, csAccount.Key, csAccount.Secret)

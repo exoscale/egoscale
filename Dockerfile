@@ -1,3 +1,16 @@
+#
+# First, export the ops.asc key locally.
+#
+#   gpg --export-secret-key E458F9F85608DF5A22ECCD158B58C61D4FFE0C86 > ops.asc
+#
+# Build the container
+#
+#   docker build -t egoscale .
+#
+# Publish egoscale exposing a valid GITHUB_TOKEN
+#
+#   docker run -v $PWD:/go/src/github.com/exoscale/egoscale -e GITHUB_TOKEN=... egoscale -- goreleaser
+#
 FROM golang:1.10-stretch
 
 ARG DEBIAN_FRONTEND=noninteractive

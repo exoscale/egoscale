@@ -24,7 +24,7 @@ func getTemplateIDByName(cs *egoscale.Client, name, zoneID string) (string, erro
 		return "", err
 	}
 
-	keywords := []string{}
+	IDs := []string{}
 
 	for _, template := range templates {
 		t := template.(*egoscale.Template)
@@ -32,15 +32,15 @@ func getTemplateIDByName(cs *egoscale.Client, name, zoneID string) (string, erro
 			return t.ID, nil
 		}
 		if strings.Contains(strings.ToLower(t.Name), strings.ToLower(name)) {
-			keywords = append(keywords, t.ID)
+			IDs = append(IDs, t.ID)
 		}
 	}
 
-	if len(keywords) > 1 {
+	if len(IDs) > 1 {
 		return "", fmt.Errorf("More than one template found")
 	}
-	if len(keywords) == 1 {
-		return keywords[0], nil
+	if len(IDs) == 1 {
+		return IDs[0], nil
 	}
 
 	return "", fmt.Errorf("Template not found")

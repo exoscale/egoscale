@@ -9,7 +9,7 @@
 #
 # Publish egoscale exposing a valid GITHUB_TOKEN
 #
-#   docker run -v $PWD:/go/src/github.com/exoscale/egoscale -e GITHUB_TOKEN=... egoscale -- goreleaser
+#   docker run -v $PWD:/go/src/github.com/exoscale/egoscale -e GITHUB_TOKEN=... egoscale goreleaser --snaphost
 #
 FROM golang:1.10-stretch
 

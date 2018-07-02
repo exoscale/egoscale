@@ -52,22 +52,15 @@ func listTemplates(keywords string) ([]*egoscale.Template, error) {
 		return nil, err
 	}
 
-	template := &egoscale.Template{IsFeatured: true, ZoneID: zoneID}
-	req, err := template.ListRequest()
-	if err != nil {
-		return nil, err
-	}
-
 	allOS := make(map[string]*egoscale.Template)
 
 	reLinux := regexp.MustCompile(`^Linux (?P<name>.+?) (?P<version>[0-9]+(\.[0-9]+)?)`)
 	reVersion := regexp.MustCompile(`(?P<version>[0-9]+(\.[0-9]+)?)`)
 
+	req := &egoscale.ListTemplates{TemplateFilter: "featured", ZoneID: zoneID, Keyword: keywords}
+
 	cs.Paginate(req, func(i interface{}, err error) bool {
 		template := i.(*egoscale.Template)
-		if !strings.Contains(template.Name, keywords) {
-			return true
-		}
 		template.Size = template.Size >> 30 //Size in Gib
 		if strings.HasPrefix(template.Name, "Linux") {
 			m := reSubMatchMap(reLinux, template.DisplayText)

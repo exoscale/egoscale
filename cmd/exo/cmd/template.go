@@ -3,40 +3,19 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/exoscale/egoscale"
-	"github.com/exoscale/egoscale/cmd/exo/table"
 	"github.com/spf13/cobra"
 )
 
 // templateCmd represents the template command
 var templateCmd = &cobra.Command{
 	Use:   "template",
-	Short: "List all available templates",
-	Run: func(cmd *cobra.Command, args []string) {
-
-		infos, err := listTemplates()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		table := table.NewTable(os.Stdout)
-		table.SetHeader([]string{"Operating System", "Disk", "Release Date", "ID"})
-
-		for _, v := range infos {
-			sz := strconv.FormatInt(v.Size, 10)
-			if sz == "0" {
-				sz = ""
-			}
-			table.Append([]string{v.Name, sz, v.Created, v.ID})
-		}
-		table.Render()
-	},
+	Short: "Templates informations",
 }
 
 func getTemplateIDByName(cs *egoscale.Client, name, zoneID string) (string, error) {
@@ -67,8 +46,13 @@ func getTemplateIDByName(cs *egoscale.Client, name, zoneID string) (string, erro
 	return "", fmt.Errorf("Template not found")
 }
 
-func listTemplates() ([]*egoscale.Template, error) {
-	template := &egoscale.Template{IsFeatured: true, ZoneID: "1"}
+func listTemplates(keywords string) ([]*egoscale.Template, error) {
+	zoneID, err := getZoneIDByName(cs, gCurrentAccount.DefaultZone)
+	if err != nil {
+		return nil, err
+	}
+
+	template := &egoscale.Template{IsFeatured: true, ZoneID: zoneID}
 	req, err := template.ListRequest()
 	if err != nil {
 		return nil, err
@@ -81,6 +65,9 @@ func listTemplates() ([]*egoscale.Template, error) {
 
 	cs.Paginate(req, func(i interface{}, err error) bool {
 		template := i.(*egoscale.Template)
+		if !strings.Contains(template.Name, keywords) {
+			return true
+		}
 		template.Size = template.Size >> 30 //Size in Gib
 		if strings.HasPrefix(template.Name, "Linux") {
 			m := reSubMatchMap(reLinux, template.DisplayText)

@@ -7,9 +7,18 @@
 #
 #   docker build -t egoscale .
 #
+# Prepare a snapshot release
+#
+#   docker run -v $PWD:/go/src/github.com/exoscale/egoscale egoscale goreleaser --snaphost
+#
 # Publish egoscale exposing a valid GITHUB_TOKEN
 #
-#   docker run -v $PWD:/go/src/github.com/exoscale/egoscale -e GITHUB_TOKEN=... egoscale goreleaser --snaphost
+#   git tag -a v0.10
+#   git push --tag
+#   docker run -v $PWD:/go/src/github.com/exoscale/egoscale -e GITHUB_TOKEN=... egoscale goreleaser
+#
+#
+# ⚠ do not push this container anywhere ⚠
 #
 FROM golang:1.10-stretch
 

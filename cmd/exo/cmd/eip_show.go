@@ -31,29 +31,49 @@ var eipShowCmd = &cobra.Command{
 		if len(args) < 1 {
 			return cmd.Usage()
 		}
-		return eipDetails(args[0])
+		ip, vms, err := eipDetails(args[0])
+		if err != nil {
+			return err
+		}
+
+		table := table.NewTable(os.Stdout)
+		table.SetHeader([]string{"Zone", "IP", "Virtual Machine", "Virtual Machine ID"})
+
+		zone := ip.ZoneName
+		ipaddr := ip.IPAddress.String()
+		if len(vms) > 0 {
+			for _, vm := range vms {
+				table.Append([]string{zone, ipaddr, vm.Name, vm.ID})
+				zone = ""
+				ipaddr = ""
+			}
+		} else {
+			table.Append([]string{zone, ipaddr})
+		}
+		table.Render()
+		return nil
 	},
 }
 
-func eipDetails(eip string) error {
+func eipDetails(eip string) (*egoscale.IPAddress, []egoscale.VirtualMachine, error) {
 
 	var eipID = eip
 	if !isUUID(eip) {
 		var err error
 		eipID, err = getEIPIDByIP(cs, eip)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 	}
 
 	addr := &egoscale.IPAddress{ID: eipID, IsElastic: true}
 	if err := cs.Get(addr); err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	vms, err := cs.List(&egoscale.VirtualMachine{ZoneID: addr.ZoneID})
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	vmAssociated := []egoscale.VirtualMachine{}
@@ -71,23 +91,7 @@ func eipDetails(eip string) error {
 		}
 	}
 
-	table := table.NewTable(os.Stdout)
-	table.SetHeader([]string{"Zone", "IP", "Virtual Machine", "Virtual Machine ID"})
-
-	zone := addr.ZoneName
-	ipaddr := addr.IPAddress.String()
-	if len(vmAssociated) > 0 {
-		for _, vm := range vmAssociated {
-			table.Append([]string{zone, ipaddr, vm.Name, vm.ID})
-			zone = ""
-			ipaddr = ""
-		}
-	} else {
-		table.Append([]string{zone, ipaddr})
-	}
-	table.Render()
-
-	return nil
+	return addr, vmAssociated, nil
 }
 
 func init() {

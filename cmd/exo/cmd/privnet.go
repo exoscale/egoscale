@@ -15,28 +15,28 @@ var privnetCmd = &cobra.Command{
 	Short: "Private networks management",
 }
 
-func getNetworkIDByName(cs *egoscale.Client, name, zone string) (string, error) {
+func getNetworkIDByName(cs *egoscale.Client, name, zone string) (*egoscale.Network, error) {
 	nets, err := cs.List(&egoscale.Network{Type: "Isolated", CanUseForDeploy: true, ZoneID: zone})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	res := ""
+	var res *egoscale.Network
 	match := 0
 	for _, net := range nets {
 		n := net.(*egoscale.Network)
 		if strings.Compare(name, n.Name) == 0 || strings.Compare(name, n.ID) == 0 {
-			res = n.ID
+			res = n
 			match++
 		}
 	}
 	switch match {
 	case 0:
-		return "", fmt.Errorf("Unable to find this private network")
+		return nil, fmt.Errorf("Unable to find this private network")
 	case 1:
 		return res, nil
 	default:
-		return "", fmt.Errorf("Multiple private network found")
+		return nil, fmt.Errorf("Multiple private network found")
 
 	}
 }

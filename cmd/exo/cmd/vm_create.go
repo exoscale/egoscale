@@ -190,7 +190,7 @@ func getPrivnetList(cs *egoscale.Client, commaParameter, zoneID string) ([]strin
 		if err != nil {
 			return nil, err
 		}
-		sgs[i] = s
+		sgs[i] = s.ID
 	}
 
 	return sgs, nil

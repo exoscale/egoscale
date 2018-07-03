@@ -14,8 +14,18 @@ var privnetAssociateCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
+		resp, err := cs.List(&egoscale.Zone{})
+		if err != nil {
+			return err
+		}
+
+		network, err := searchPrivnet(args[0], resp)
+		if err != nil {
+			return err
+		}
+
 		for _, vm := range args[1:] {
-			resp, err := associatePrivNet(args[0], vm)
+			resp, err := associatePrivNet(network, vm)
 			if err != nil {
 				return err
 			}
@@ -25,13 +35,8 @@ var privnetAssociateCmd = &cobra.Command{
 	},
 }
 
-func associatePrivNet(privnetName, vmName string) (string, error) {
+func associatePrivNet(privnet *egoscale.Network, vmName string) (string, error) {
 	vm, err := getVMWithNameOrID(cs, vmName)
-	if err != nil {
-		return "", err
-	}
-
-	privnet, err := getNetworkIDByName(cs, privnetName, vm.ZoneID)
 	if err != nil {
 		return "", err
 	}

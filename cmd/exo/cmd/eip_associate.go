@@ -26,7 +26,7 @@ var eipAssociateCmd = &cobra.Command{
 func associateIP(ipAddr, instance string) error {
 	ip := net.ParseIP(ipAddr)
 	if ip == nil {
-		return fmt.Errorf("Invalide IP address")
+		return fmt.Errorf("Invalid IP address")
 	}
 
 	vm, err := getVMWithNameOrID(cs, instance)

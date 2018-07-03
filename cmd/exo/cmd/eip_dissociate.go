@@ -23,7 +23,7 @@ import (
 )
 
 // dissociateCmd represents the dissociate command
-var dissociateCmd = &cobra.Command{
+var eipDissociateCmd = &cobra.Command{
 	Use:   "dissociate <IP address> <instance name | instance id>",
 	Short: "Dissociate an IP from an instance",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -75,5 +75,5 @@ func getSecondaryIP(nic *egoscale.Nic, ip net.IP) (string, error) {
 }
 
 func init() {
-	eipCmd.AddCommand(dissociateCmd)
+	eipCmd.AddCommand(eipDissociateCmd)
 }

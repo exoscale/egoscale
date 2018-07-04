@@ -10,13 +10,13 @@ import (
 
 // dissociateCmd represents the dissociate command
 var eipDissociateCmd = &cobra.Command{
-	Use:   "dissociate <IP address> <instance name | instance id> [instance name | instance id] [...]",
-	Short: "Dissociate an IP from instance(s)",
+	Use:     "dissociate <IP address> <instance name | instance id> [instance name | instance id] [...]",
+	Short:   "Dissociate an IP from instance(s)",
+	Aliases: gDissociateAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return cmd.Usage()
 		}
-
 		for _, arg := range args[1:] {
 			if err := dissociateIP(args[0], arg); err != nil {
 				return err

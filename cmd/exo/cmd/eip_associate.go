@@ -11,8 +11,9 @@ import (
 
 // associateCmd represents the associate command
 var eipAssociateCmd = &cobra.Command{
-	Use:   "associate <IP address> <instance name | instance id> [instance name | instance id] [...]",
-	Short: "Associate an IP to instance(s)",
+	Use:     "associate <IP address> <instance name | instance id> [instance name | instance id] [...]",
+	Short:   "Associate an IP to instance(s)",
+	Aliases: gAssociateAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return cmd.Usage()

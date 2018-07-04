@@ -21,7 +21,17 @@ var firewallRemoveCmd = &cobra.Command{
 			return err
 		}
 
+		force, err := cmd.Flags().GetBool("force")
+		if err != nil {
+			return err
+		}
+
 		if len(args) == 1 && deleteAll {
+			if !force {
+				if !askQuestion(fmt.Sprintf("sure you want to delete all %d firewall rules", len(args)-1)) {
+					return nil
+				}
+			}
 			res, rErr := removeAllRules(args[0])
 
 			for _, r := range res {
@@ -32,6 +42,12 @@ var firewallRemoveCmd = &cobra.Command{
 
 		if len(args) < 2 {
 			return cmd.Usage()
+		}
+
+		if !force {
+			if !askQuestion(fmt.Sprintf("sure you want to delete %q firewall rule", args[0])) {
+				return nil
+			}
 		}
 
 		isMyIP, err := cmd.Flags().GetBool("my-ip")

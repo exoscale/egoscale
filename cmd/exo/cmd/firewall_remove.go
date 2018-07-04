@@ -174,6 +174,7 @@ func removeDefault(sgName, ruleName string, rule *egoscale.IngressRule, cidr str
 }
 
 func init() {
+	firewallRemoveCmd.Flags().BoolP("force", "f", false, "Attempt to remove firewall rule without prompting for confirmation")
 	firewallRemoveCmd.Flags().BoolP("ipv6", "6", false, "Remove rule with any IPv6 source")
 	firewallRemoveCmd.Flags().BoolP("my-ip", "m", false, "Remove rule with my IP as a source")
 	firewallRemoveCmd.Flags().BoolP("all", "", false, "Remove all rules")

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/exoscale/egoscale"
@@ -43,12 +42,7 @@ var privnetShowCmd = &cobra.Command{
 
 func privnetDetails(privnetName string) (*egoscale.Network, []egoscale.VirtualMachine, error) {
 
-	resp, err := cs.List(&egoscale.Zone{})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	network, err := searchPrivnet(privnetName, resp)
+	network, err := getNetworkIDByName(cs, privnetName)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -68,19 +62,6 @@ func privnetDetails(privnetName string) (*egoscale.Network, []egoscale.VirtualMa
 	}
 
 	return network, vmsRes, nil
-}
-
-func searchPrivnet(privName string, zones []interface{}) (*egoscale.Network, error) {
-
-	for _, z := range zones {
-		zone := z.(*egoscale.Zone)
-		net, err := getNetworkIDByName(cs, privName, zone.ID)
-		if err != nil {
-			continue
-		}
-		return net, nil
-	}
-	return nil, fmt.Errorf("Private Network %q not found", privName)
 }
 
 func init() {

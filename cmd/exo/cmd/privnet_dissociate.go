@@ -16,12 +16,7 @@ var dissociateCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
-		resp, err := cs.List(&egoscale.Zone{})
-		if err != nil {
-			return err
-		}
-
-		network, err := searchPrivnet(args[0], resp)
+		network, err := getNetworkIDByName(cs, args[0])
 		if err != nil {
 			return err
 		}

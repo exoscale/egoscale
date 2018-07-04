@@ -9,8 +9,9 @@ import (
 
 // dissociateCmd represents the dissociate command
 var dissociateCmd = &cobra.Command{
-	Use:   "dissociate <privnet name | id> <vm name | vm id> [vm name | vm id] [...]",
-	Short: "Dissociate a private network from instance(s)",
+	Use:     "dissociate <privnet name | id> <vm name | vm id> [vm name | vm id] [...]",
+	Short:   "Dissociate a private network from instance(s)",
+	Aliases: gDissociateAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return cmd.Usage()

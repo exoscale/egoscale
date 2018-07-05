@@ -120,9 +120,10 @@ func printSSHConnectSTR(infos *sshInfos) error {
 }
 
 func printSSHInfos(infos *sshInfos) {
-	println("Virtual machine name", infos.vmName, "with ID", infos.vmID)
-	println(" - sshkey path:", infos.sshKeys)
-	println(" - username@IPadress:", infos.userName+"@"+infos.ip.String())
+	println("Host", infos.vmName)
+	println("\tHostName", infos.ip.String())
+	println("\tUser", infos.userName)
+	println("\tIdentityFile", infos.sshKeys)
 }
 
 func connectSSH(cred *sshInfos) error {

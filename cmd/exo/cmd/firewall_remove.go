@@ -29,9 +29,9 @@ var firewallRemoveCmd = &cobra.Command{
 		sgName := args[0]
 
 		if len(args) == 1 && deleteAll {
-			securGrp, err := getSecuGrpWithNameOrID(cs, sgName)
-			if err != nil {
-				return err
+			securGrp, errGet := getSecuGrpWithNameOrID(cs, sgName)
+			if errGet != nil {
+				return errGet
 			}
 			count := len(securGrp.IngressRule) + len(securGrp.EgressRule)
 			if !force {

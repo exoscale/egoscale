@@ -136,7 +136,7 @@ var methods = map[string][]cmd{
 		{&egoscale.UpdateHost{}, true},
 	},
 	"reversedns": {
-		{&egoscale.UpdateReverseDnsForPublicIPAddress{}, false},
-		{&egoscale.UpdateReverseDnsForVirtualMachine{}, false},
+		{&egoscale.UpdateReverseDNSForPublicIPAddress{}, false},
+		{&egoscale.UpdateReverseDNSForVirtualMachine{}, false},
 	},
 }

@@ -4,12 +4,12 @@ import (
 	"testing"
 )
 
-func TestUpdateReverseDnsForVirtualMachine(t *testing.T) {
-	req := &UpdateReverseDnsForVirtualMachine{}
+func TestUpdateReverseDNSForVirtualMachine(t *testing.T) {
+	req := &UpdateReverseDNSForVirtualMachine{}
 	_ = req.response().(*VirtualMachine)
 }
 
-func TestUpdateReverseDnsForPublicIPAddress(t *testing.T) {
-	req := &UpdateReverseDnsForPublicIPAddress{}
+func TestUpdateReverseDNSForPublicIPAddress(t *testing.T) {
+	req := &UpdateReverseDNSForPublicIPAddress{}
 	_ = req.response().(*IPAddress)
 }

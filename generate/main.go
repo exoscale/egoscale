@@ -301,7 +301,7 @@ func main() {
 				}
 			}
 
-			if !hasMeta && *cmd == "" {
+			if !hasMeta && *rtype == "" {
 				command.errors["_"] = fmt.Errorf("meta field missing, wanted\n\t\t_ bool `name:%q description:%q`", a.Name, a.Description)
 			}
 

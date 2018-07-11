@@ -62,7 +62,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version of exo",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("exo the Exoscale CLI (egoscale/%s)\n", egoscale.Version)
+		fmt.Printf("exo version %s\n", egoscale.Version)
 	},
 }
 

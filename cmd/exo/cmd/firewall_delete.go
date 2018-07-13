@@ -28,26 +28,32 @@ var firewallDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		if !force {
-			if !askQuestion(fmt.Sprintf("sure you want to delete %q security group", args[0])) {
-				return nil
+		for _, arg := range args {
+			q := fmt.Sprintf("Are you sure you want to delete the security group: %q", arg)
+			if !force && !askQuestion(q) {
+				continue
 			}
+
+			output, err := firewallDelete(arg)
+			if err != nil {
+				return err
+			}
+			fmt.Println(output)
 		}
 
-		return deleteFirewall(args[0])
+		return nil
 	},
 }
 
-func deleteFirewall(name string) error {
+func firewallDelete(name string) (string, error) {
 	sg, err := getSecurityGroupByNameOrID(cs, name)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if err := cs.Delete(&egoscale.SecurityGroup{Name: sg.Name, ID: sg.ID}); err != nil {
-		return err
+		return "", err
 	}
 
-	println(sg.ID)
-	return nil
+	return sg.ID, nil
 }

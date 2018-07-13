@@ -108,7 +108,7 @@ func initConfig() {
 
 	for env, flag := range envs {
 		flag := RootCmd.Flags().Lookup(flag)
-		if value := os.Getenv(env); value != "" {
+		if value, ok := os.LookupEnv(env); ok {
 			if err := flag.Value.Set(value); err != nil {
 				log.Fatal(err)
 			}
@@ -236,13 +236,10 @@ func getCmdPosition(cmd string) int {
 
 // readFromEnv is a os.Getenv on steroids
 func readFromEnv(keys ...string) string {
-	value = ""
-
 	for _, key := range keys {
-		value = os.Getenv(key)
-		if value != "" {
-			break
+		if value, ok := os.LookupEnv(key); ok {
+			return value
 		}
 	}
-	return value
+	return ""
 }

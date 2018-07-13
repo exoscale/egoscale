@@ -8,6 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func init() {
+	firewallDeleteCmd.Flags().BoolP("force", "f", false, "Attempt to remove security group without prompting for confirmation")
+	firewallCmd.AddCommand(firewallDeleteCmd)
+}
+
 // deleteCmd represents the delete command
 var firewallDeleteCmd = &cobra.Command{
 	Use:     "delete <security group name | id>",
@@ -34,19 +39,15 @@ var firewallDeleteCmd = &cobra.Command{
 }
 
 func deleteFirewall(name string) error {
-	securGrp, err := getSecuGrpWithNameOrID(cs, name)
+	sg, err := getSecurityGroupByNameOrID(cs, name)
 	if err != nil {
 		return err
 	}
 
-	if err := cs.Delete(&egoscale.SecurityGroup{Name: securGrp.Name, ID: securGrp.ID}); err != nil {
+	if err := cs.Delete(&egoscale.SecurityGroup{Name: sg.Name, ID: sg.ID}); err != nil {
 		return err
 	}
-	println(securGrp.ID)
-	return nil
-}
 
-func init() {
-	firewallDeleteCmd.Flags().BoolP("force", "f", false, "Attempt to remove security group without prompting for confirmation")
-	firewallCmd.AddCommand(firewallDeleteCmd)
+	println(sg.ID)
+	return nil
 }

@@ -116,8 +116,16 @@ func initConfig() {
 	}
 
 	envEndpoint := os.Getenv("EXOSCALE_ENDPOINT")
+
 	envKey := os.Getenv("EXOSCALE_KEY")
+	if envKey == "" {
+		envKey = os.Getenv("EXOSCALE_API_KEY")
+	}
+
 	envSecret := os.Getenv("EXOSCALE_SECRET")
+	if envSecret == "" {
+		envSecret = os.Getenv("EXOSCALE_API_SECRET")
+	}
 
 	if envEndpoint != "" && envKey != "" && envSecret != "" {
 		cs = egoscale.NewClient(envEndpoint, envKey, envSecret)

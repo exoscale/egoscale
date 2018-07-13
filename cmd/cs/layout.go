@@ -118,6 +118,7 @@ var methods = map[string][]cmd{
 	},
 	"async job": {
 		{&egoscale.QueryAsyncJobResult{}, false},
+		{&egoscale.ListAsyncJobs{}, false},
 	},
 	"apis": {
 		{&egoscale.ListAPIs{}, false},

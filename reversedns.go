@@ -16,8 +16,8 @@ type ReverseDNS struct {
 
 // DeleteReverseDNSFromPublicIPAddress is a command to create/delete the PTR record of a public IP address
 type DeleteReverseDNSFromPublicIPAddress struct {
-	ID string `json:"id,omitempty" doc:"the ID of the Public IP Address"`
-	_  bool   `name:"deleteReverseDnsFromPublicIpAddress" description:"delete the PTR DNS record from the Public IP Address"`
+	ID string `json:"id,omitempty" doc:"the ID of the public IP address"`
+	_  bool   `name:"deleteReverseDnsFromPublicIpAddress" description:"delete the PTR DNS record from the public IP address"`
 }
 
 func (*DeleteReverseDNSFromPublicIPAddress) response() interface{} {
@@ -27,7 +27,7 @@ func (*DeleteReverseDNSFromPublicIPAddress) response() interface{} {
 // DeleteReverseDNSFromVirtualMachine is a command to create/delete the PTR record(s) of a virtual machine
 type DeleteReverseDNSFromVirtualMachine struct {
 	ID string `json:"id,omitempty" doc:"the ID of the virtual machine"`
-	_  bool   `name:"deleteReverseDnsFromVirtualMachine" description:"Delete the PTR DNS record(s) from the Virtual Machine"`
+	_  bool   `name:"deleteReverseDnsFromVirtualMachine" description:"Delete the PTR DNS record(s) from the virtual machine"`
 }
 
 func (*DeleteReverseDNSFromVirtualMachine) response() interface{} {
@@ -37,7 +37,7 @@ func (*DeleteReverseDNSFromVirtualMachine) response() interface{} {
 // QueryReverseDNSForPublicIPAddress is a command to create/query the PTR record of a public IP address
 type QueryReverseDNSForPublicIPAddress struct {
 	ID string `json:"id,omitempty" doc:"the ID of the Public IP Address"`
-	_  bool   `name:"queryReverseDnsForPublicIpAddress" description:"Query the PTR DNS record for the Public IP Address"`
+	_  bool   `name:"queryReverseDnsForPublicIpAddress" description:"Query the PTR DNS record for the public IP address"`
 }
 
 func (*QueryReverseDNSForPublicIPAddress) response() interface{} {
@@ -47,7 +47,7 @@ func (*QueryReverseDNSForPublicIPAddress) response() interface{} {
 // QueryReverseDNSForVirtualMachine is a command to create/query the PTR record(s) of a virtual machine
 type QueryReverseDNSForVirtualMachine struct {
 	ID string `json:"id,omitempty" doc:"the ID of the virtual machine"`
-	_  bool   `name:"queryReverseDnsForVirtualMachine" description:"Query the PTR DNS record(s) for the Virtual Machine"`
+	_  bool   `name:"queryReverseDnsForVirtualMachine" description:"Query the PTR DNS record(s) for the virtual machine"`
 }
 
 func (*QueryReverseDNSForVirtualMachine) response() interface{} {
@@ -57,8 +57,8 @@ func (*QueryReverseDNSForVirtualMachine) response() interface{} {
 // UpdateReverseDNSForPublicIPAddress is a command to create/update the PTR record of a public IP address
 type UpdateReverseDNSForPublicIPAddress struct {
 	DomainName string `json:"domainname,omitempty" doc:"the domain name for the PTR record. It must have a valid TLD"`
-	ID         string `json:"id,omitempty" doc:"the ID of the Public IP Address"`
-	_          bool   `name:"updateReverseDnsForPublicIpAddress" description:"Update/create the PTR DNS record for the Public IP Address"`
+	ID         string `json:"id,omitempty" doc:"the ID of the public IP address"`
+	_          bool   `name:"updateReverseDnsForPublicIpAddress" description:"Update/create the PTR DNS record for the public IP address"`
 }
 
 func (*UpdateReverseDNSForPublicIPAddress) response() interface{} {
@@ -69,7 +69,7 @@ func (*UpdateReverseDNSForPublicIPAddress) response() interface{} {
 type UpdateReverseDNSForVirtualMachine struct {
 	DomainName string `json:"domainname,omitempty" doc:"the domain name for the PTR record(s). It must have a valid TLD"`
 	ID         string `json:"id,omitempty" doc:"the ID of the virtual machine"`
-	_          bool   `name:"updateReverseDnsForVirtualMachine" description:"Update/create the PTR DNS record(s) for the Virtual Machine"`
+	_          bool   `name:"updateReverseDnsForVirtualMachine" description:"Update/create the PTR DNS record(s) for the virtual machine"`
 }
 
 func (*UpdateReverseDNSForVirtualMachine) response() interface{} {

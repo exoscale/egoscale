@@ -13,7 +13,7 @@ import (
 // sosListCmd represents the list command
 var sosListCmd = &cobra.Command{
 	Use:     "list",
-	Short:   "A brief description of your command",
+	Short:   "List all buckets",
 	Aliases: gListAlias,
 	Run: func(cmd *cobra.Command, args []string) {
 

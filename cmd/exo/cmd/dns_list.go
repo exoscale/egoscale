@@ -13,8 +13,9 @@ import (
 
 // listCmd represents the list command
 var dnsListCmd = &cobra.Command{
-	Use:   "list [domain name]",
-	Short: "List all domain or domain records",
+	Use:     "list [domain name]",
+	Short:   "List all domain or domain records",
+	Aliases: gListAlias,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			domains, err := listDomains()

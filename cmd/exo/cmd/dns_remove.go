@@ -8,8 +8,9 @@ import (
 
 // dnsRemoveCmd represents the remove command
 var dnsRemoveCmd = &cobra.Command{
-	Use:   "remove <domain name> <record name | id>",
-	Short: "Remove a domain record",
+	Use:     "remove <domain name> <record name | id>",
+	Short:   "Remove a domain record",
+	Aliases: gRemoveAlias,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 {
 			cmd.Usage()

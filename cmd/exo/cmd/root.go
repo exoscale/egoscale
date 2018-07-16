@@ -44,6 +44,7 @@ type account struct {
 	Name            string
 	Account         string
 	Endpoint        string
+	DNSEndpoint     string
 	Key             string
 	Secret          string
 	DefaultZone     string
@@ -117,6 +118,8 @@ func buildClient() {
 	if cs != nil {
 		return
 	}
+
+	csDNS = egoscale.NewClient(gCurrentAccount.DNSEndpoint, gCurrentAccount.Key, gCurrentAccount.Secret)
 
 	cs = egoscale.NewClient(gCurrentAccount.Endpoint, gCurrentAccount.Key, gCurrentAccount.Secret)
 }
@@ -220,7 +223,7 @@ func initConfig() {
 	}
 
 	if gCurrentAccount.Endpoint == "" {
-		gCurrentAccount.Endpoint = defaultComputeEndpoint
+		gCurrentAccount.Endpoint = defaultEndpoint
 	}
 
 	if gCurrentAccount.DefaultTemplate == "" {

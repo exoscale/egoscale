@@ -9,8 +9,9 @@ import (
 
 // dnsCreateCmd represents the create command
 var dnsCreateCmd = &cobra.Command{
-	Use:   "create <domain name>",
-	Short: "Create a domain",
+	Use:     "create <domain name>",
+	Short:   "Create a domain",
+	Aliases: gCreateAlias,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
 			cmd.Usage()

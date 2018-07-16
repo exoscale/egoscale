@@ -341,11 +341,11 @@ func (client *Client) GetRecordIDByName(domainName, recordName string) (int64, e
 		}
 	}
 	if len(resRecID) > 1 {
-		return 0, fmt.Errorf("More than one record found")
+		return 0, fmt.Errorf("more than one records were found")
 	}
 	if len(resRecID) == 1 {
 		return resRecID[0], nil
 	}
 
-	return 0, fmt.Errorf("Record not found")
+	return 0, fmt.Errorf("no records were found")
 }

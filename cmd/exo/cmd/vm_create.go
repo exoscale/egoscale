@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/exoscale/egoscale"
-	"github.com/exoscale/egoscale/cmd/exo/table"
 	"github.com/exoscale/egoscale/cmd/exo/utils"
 	"github.com/spf13/cobra"
 )
@@ -137,12 +136,33 @@ var vmCreateCmd = &cobra.Command{
 			return err
 		}
 
-		table := table.NewTable(os.Stdout)
-		table.SetHeader([]string{"Name", "IP", "ID"})
+		sshinfo, err := getSSHInfo(r.ID, ipv6)
+		if err != nil {
+			return err
+		}
 
-		table.Append([]string{r.Name, r.IP().String(), r.ID})
-		table.Render()
-		return nil
+		fmt.Printf(`The deployment of %q went well! What to do now?
+
+Connect to the machine
+
+> exo ssh %s --print
+`, r.Name, r.Name)
+
+		if err = printSSHConnectSTR(sshinfo); err != nil {
+			return err
+		}
+
+		fmt.Printf(`
+Put the SSH configuration into ".ssh/config"
+
+> exo ssh %s --info
+`, r.Name)
+
+		printSSHInfo(sshinfo)
+
+		_, err = fmt.Println("\nTip of the day: you're the sole owner of the private key. Be cautious with it.")
+
+		return err
 	},
 }
 

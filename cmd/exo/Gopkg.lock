@@ -94,8 +94,8 @@
     "pkg/s3utils",
     "pkg/set"
   ]
-  revision = "3adf3e30ef96aea8469c7aff8ef19ed38901817b"
-  version = "v6.0.4"
+  revision = "70799fe8dae6ecfb6c7d7e9e048fce27f23a1992"
+  version = "v6.0.5"
 
 [[projects]]
   branch = "master"

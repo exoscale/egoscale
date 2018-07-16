@@ -10,8 +10,9 @@ import (
 
 // showCmd represents the show command
 var sosShowCmd = &cobra.Command{
-	Use:   "show <bucket name>",
-	Short: "Show bucket object(s)",
+	Use:     "show <bucket name>",
+	Short:   "Show bucket object(s)",
+	Aliases: gShowAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return cmd.Usage()

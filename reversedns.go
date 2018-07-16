@@ -36,7 +36,7 @@ func (*DeleteReverseDNSFromVirtualMachine) response() interface{} {
 
 // QueryReverseDNSForPublicIPAddress is a command to create/query the PTR record of a public IP address
 type QueryReverseDNSForPublicIPAddress struct {
-	ID string `json:"id,omitempty" doc:"the ID of the Public IP Address"`
+	ID string `json:"id,omitempty" doc:"the ID of the public IP address"`
 	_  bool   `name:"queryReverseDnsForPublicIpAddress" description:"Query the PTR DNS record for the public IP address"`
 }
 

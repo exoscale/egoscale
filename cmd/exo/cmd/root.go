@@ -83,7 +83,7 @@ func Execute() {
 	}()
 	go func() {
 		select {
-		case sig := <-c:
+		case <-c:
 			cancel()
 		case <-ctx.Done():
 		}

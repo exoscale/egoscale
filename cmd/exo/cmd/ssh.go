@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -107,18 +108,19 @@ func getSSHInfo(name string, isIpv6 bool) (*sshInfo, error) {
 
 }
 
-func printSSHConnectSTR(info *sshInfo) error {
+func printSSHConnectSTR(info *sshInfo) {
 
 	if _, err := os.Stat(info.sshKeys); os.IsNotExist(err) {
-		return fmt.Errorf("default ssh KeyPair not found %q infos.sshKeys", info.sshKeys)
+		log.Println("Warning: Identity file Default ssh keypair not found not accessible: No such file or directory.")
 	}
 
 	fmt.Printf("ssh -i %s %s@%s\n", info.sshKeys, info.userName, info.ip)
-
-	return nil
 }
 
 func printSSHInfo(info *sshInfo) {
+	if _, err := os.Stat(info.sshKeys); os.IsNotExist(err) {
+		log.Println("Warning: Identity file Default ssh keypair not found not accessible: No such file or directory.")
+	}
 	println("Host", info.vmName)
 	println("\tHostName", info.ip.String())
 	println("\tUser", info.userName)

@@ -42,7 +42,8 @@ var sshCmd = &cobra.Command{
 		}
 
 		if isConnectionSTR {
-			return printSSHConnectSTR(info)
+			printSSHConnectSTR(info)
+			return nil
 		}
 
 		if isInfo {

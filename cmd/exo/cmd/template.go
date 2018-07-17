@@ -59,7 +59,11 @@ func listTemplates(keywords string) ([]*egoscale.Template, error) {
 
 	req := &egoscale.ListTemplates{TemplateFilter: "featured", ZoneID: zoneID, Keyword: keywords}
 
-	cs.Paginate(req, func(i interface{}, err error) bool {
+	cs.PaginateWithContext(gContext, req, func(i interface{}, e error) bool {
+		if e != nil {
+			err = e
+			return false
+		}
 		template := i.(*egoscale.Template)
 		template.Size = template.Size >> 30 //Size in Gib
 		if strings.HasPrefix(template.Name, "Linux") {
@@ -109,6 +113,9 @@ func listTemplates(keywords string) ([]*egoscale.Template, error) {
 		allOS[template.Name] = template
 		return true
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	var keys []string
 	for k := range allOS {

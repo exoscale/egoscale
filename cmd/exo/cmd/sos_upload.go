@@ -16,7 +16,7 @@ var sosUploadCmd = &cobra.Command{
 	Short:   "Upload an object into a bucket",
 	Aliases: gUploadAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
+		if len(args) < 2 {
 			return cmd.Usage()
 		}
 
@@ -48,7 +48,7 @@ var sosUploadCmd = &cobra.Command{
 		// Upload object with FPutObject
 		n, err := minioClient.FPutObject(bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
 		if err != nil {
-			log.Fatalln(err)
+			return err
 		}
 
 		log.Printf("Successfully uploaded %s of size %d\n", objectName, n)

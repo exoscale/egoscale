@@ -160,9 +160,9 @@ Put the SSH configuration into ".ssh/config"
 
 		printSSHInfo(sshinfo)
 
-		_, err = fmt.Println("\nTip of the day: you're the sole owner of the private key. Be cautious with it.")
+		fmt.Println("\nTip of the day: you're the sole owner of the private key. Be cautious with it.")
 
-		return err
+		return nil
 	},
 }
 

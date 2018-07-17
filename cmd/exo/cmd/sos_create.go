@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"log"
-
 	minio "github.com/minio/minio-go"
 	"github.com/spf13/cobra"
 )
@@ -12,25 +10,22 @@ var sosCreateCmd = &cobra.Command{
 	Use:     "create <name>",
 	Short:   "create bucket",
 	Aliases: gCreateAlias,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
 		}
 
 		zone, err := cmd.Flags().GetString("zone")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		minioClient, err := newMinioClient(zone)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
-		if err := createBucket(minioClient, args[0], zone); err != nil {
-			log.Fatal(err)
-		}
+		return createBucket(minioClient, args[0], zone)
 	},
 }
 

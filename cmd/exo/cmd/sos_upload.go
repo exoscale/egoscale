@@ -34,7 +34,7 @@ var sosUploadCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer file.Close()
+		defer file.Close() // nolint: errcheck
 
 		// Only the first 512 bytes are used to sniff the content type.
 		buffer := make([]byte, 512)

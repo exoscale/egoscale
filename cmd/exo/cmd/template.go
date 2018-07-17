@@ -74,8 +74,8 @@ func listTemplates(keywords string) ([]*egoscale.Template, error) {
 					return true
 				}
 
-				version, err := strconv.ParseFloat(m["version"], 64)
-				if err != nil {
+				version, errParse := strconv.ParseFloat(m["version"], 64)
+				if errParse != nil {
 					log.Printf("Malformed Linux version. got %q in %q", m["version"], template.Name)
 					return true
 				}
@@ -95,8 +95,8 @@ func listTemplates(keywords string) ([]*egoscale.Template, error) {
 		if strings.HasPrefix(template.Name, "Windows Server") || strings.HasPrefix(template.Name, "OpenBSD") {
 			m := reSubMatchMap(reVersion, template.DisplayText)
 			if len(m) > 0 {
-				version, err := strconv.ParseFloat(m["version"], 64)
-				if err != nil {
+				version, errParse := strconv.ParseFloat(m["version"], 64)
+				if errParse != nil {
 					log.Printf("Malformed Windows/OpenBSD version. %q", template.Name)
 					return true
 				}

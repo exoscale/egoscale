@@ -137,14 +137,14 @@ func (client *Client) asyncRequest(ctx context.Context, request AsyncCommand) (i
 	return res, err
 }
 
-// syncRequest performs a sync request with a context
-func (client *Client) syncRequest(ctx context.Context, request Command) (interface{}, error) {
-	body, err := client.request(ctx, request)
+// SyncRequestWithContext performs a sync request with a context
+func (client *Client) SyncRequestWithContext(ctx context.Context, command Command) (interface{}, error) {
+	body, err := client.request(ctx, command)
 	if err != nil {
 		return nil, err
 	}
 
-	response := request.response()
+	response := command.response()
 	err = json.Unmarshal(body, response)
 
 	// booleanResponse will alway be valid...
@@ -200,57 +200,29 @@ func (client *Client) BooleanRequestWithContext(ctx context.Context, req Command
 }
 
 // Request performs the given command
-func (client *Client) Request(request Command) (interface{}, error) {
+func (client *Client) Request(command Command) (interface{}, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), client.Timeout)
 	defer cancel()
 
-	switch request.(type) {
-	case AsyncCommand:
-		return client.asyncRequest(ctx, request.(AsyncCommand))
-	default:
-		return client.syncRequest(ctx, request)
-	}
+	return client.RequestWithContext(ctx, command)
 }
 
 // RequestWithContext preforms a request with a context
-func (client *Client) RequestWithContext(ctx context.Context, request Command) (interface{}, error) {
-	switch request.(type) {
+func (client *Client) RequestWithContext(ctx context.Context, command Command) (interface{}, error) {
+	switch command.(type) {
 	case AsyncCommand:
-		return client.asyncRequest(ctx, request.(AsyncCommand))
+		return client.asyncRequest(ctx, command.(AsyncCommand))
 	default:
-		return client.syncRequest(ctx, request)
+		return client.SyncRequestWithContext(ctx, command)
 	}
 }
 
-// SyncRequest performs the async command in a sync way (job id)
-func (client *Client) SyncRequest(request AsyncCommand) (*AsyncJobResult, error) {
+// SyncRequest performs the command as is
+func (client *Client) SyncRequest(command Command) (interface{}, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), client.Timeout)
 	defer cancel()
 
-	return client.SyncRequestWithContext(ctx, request)
-}
-
-// SyncRequestWithContext performs the async command in a sync way within a given context
-func (client *Client) SyncRequestWithContext(ctx context.Context, request AsyncCommand) (*AsyncJobResult, error) {
-	body, err := client.request(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-
-	jobResult, ok := request.response().(*AsyncJobResult)
-	if !ok {
-		return nil, fmt.Errorf("%T response() type should be AsyncJobResult", request)
-	}
-
-	if err := json.Unmarshal(body, jobResult); err != nil {
-		r := new(ErrorResponse)
-		if e := json.Unmarshal(body, r); e != nil && r.ErrorCode > 0 {
-			return nil, r
-		}
-		return nil, err
-	}
-
-	return jobResult, nil
+	return client.SyncRequestWithContext(ctx, command)
 }
 
 // AsyncRequest performs the given command
@@ -262,11 +234,16 @@ func (client *Client) AsyncRequest(request AsyncCommand, callback WaitAsyncJobRe
 
 // AsyncRequestWithContext preforms a request with a context
 func (client *Client) AsyncRequestWithContext(ctx context.Context, request AsyncCommand, callback WaitAsyncJobResultFunc) {
-	jobResult, err := client.SyncRequestWithContext(ctx, request)
+	result, err := client.SyncRequestWithContext(ctx, request)
 	if err != nil {
 		if !callback(nil, err) {
 			return
 		}
+	}
+
+	jobResult, ok := result.(*AsyncJobResult)
+	if !ok {
+		callback(nil, fmt.Errorf("wrong type, AsyncJobResult was expected instead of %T", result))
 	}
 
 	// Successful response
@@ -280,7 +257,7 @@ func (client *Client) AsyncRequestWithContext(ctx context.Context, request Async
 		time.Sleep(client.RetryStrategy(int64(iteration)))
 
 		req := &QueryAsyncJobResult{JobID: jobResult.JobID}
-		resp, err := client.syncRequest(ctx, req)
+		resp, err := client.SyncRequestWithContext(ctx, req)
 		if err != nil && !callback(nil, err) {
 			return
 		}
@@ -305,19 +282,19 @@ func (client *Client) AsyncRequestWithContext(ctx context.Context, request Async
 }
 
 // Payload builds the HTTP request from the given command
-func (client *Client) Payload(request Command) (string, error) {
+func (client *Client) Payload(command Command) (string, error) {
 	params := url.Values{}
-	err := prepareValues("", &params, request)
+	err := prepareValues("", &params, command)
 	if err != nil {
 		return "", err
 	}
-	if hookReq, ok := request.(onBeforeHook); ok {
+	if hookReq, ok := command.(onBeforeHook); ok {
 		if err := hookReq.onBeforeSend(&params); err != nil {
 			return "", err
 		}
 	}
 	params.Set("apikey", client.APIKey)
-	params.Set("command", client.APIName(request))
+	params.Set("command", client.APIName(command))
 	params.Set("response", "json")
 
 	// This code is borrowed from net/url/url.go

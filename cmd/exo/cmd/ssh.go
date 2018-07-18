@@ -118,7 +118,7 @@ func printSSHConnectSTR(info *sshInfo) {
 		sshArgs = fmt.Sprintf("-i %q", info.sshKeys)
 	}
 
-	fmt.Printf("ssh %s %s@%s\n", info.sshKeys, sshArgs, info.userName, info.ip)
+	fmt.Printf("ssh %s %s@%s\n", sshArgs, info.userName, info.ip)
 }
 
 func printSSHInfo(info *sshInfo) {

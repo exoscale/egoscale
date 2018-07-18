@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -33,8 +32,6 @@ var removeCmd = &cobra.Command{
 			return err
 		}
 
-		ctx := context.Background()
-
 		chName := make(chan string, len(args[1:]))
 
 		go func() {
@@ -44,7 +41,7 @@ var removeCmd = &cobra.Command{
 			}
 		}()
 
-		for objectErr := range minioClient.RemoveObjectsWithContext(ctx, args[0], chName) {
+		for objectErr := range minioClient.RemoveObjectsWithContext(gContext, args[0], chName) {
 			return fmt.Errorf("Error detected during deletion: %v", objectErr)
 		}
 

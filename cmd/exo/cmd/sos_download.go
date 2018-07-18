@@ -31,7 +31,7 @@ var downloadCmd = &cobra.Command{
 			return err
 		}
 
-		if err = minioClient.FGetObject(args[0], args[1], args[2], minio.GetObjectOptions{}); err != nil {
+		if err = minioClient.FGetObjectWithContext(gContext, args[0], args[1], args[2], minio.GetObjectOptions{}); err != nil {
 			return err
 		}
 

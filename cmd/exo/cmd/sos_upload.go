@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	minio "github.com/minio/minio-go"
 	"github.com/spf13/cobra"
@@ -12,11 +13,11 @@ import (
 
 // uploadCmd represents the upload command
 var sosUploadCmd = &cobra.Command{
-	Use:     "upload <bucket name> <file path>",
+	Use:     "upload <bucket name> <remote file path> <file path>",
 	Short:   "Upload an object into a bucket",
 	Aliases: gUploadAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 2 {
+		if len(args) < 3 {
 			return cmd.Usage()
 		}
 
@@ -37,8 +38,14 @@ var sosUploadCmd = &cobra.Command{
 
 		// Upload the zip file
 		bucketName := args[0]
-		objectName := filepath.Base(args[1])
-		filePath := args[1]
+		objectName := filepath.Base(args[2])
+		filePath := args[2]
+
+		remoteFilePath := args[1]
+
+		if strings.HasSuffix(remoteFilePath, "/") {
+			remoteFilePath = remoteFilePath + objectName
+		}
 
 		file, err := os.Open(filePath)
 		if err != nil {
@@ -56,7 +63,7 @@ var sosUploadCmd = &cobra.Command{
 		contentType := http.DetectContentType(buffer)
 
 		// Upload object with FPutObject
-		n, err := minioClient.FPutObjectWithContext(gContext, bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
+		n, err := minioClient.FPutObjectWithContext(gContext, bucketName, remoteFilePath, filePath, minio.PutObjectOptions{ContentType: contentType})
 		if err != nil {
 			return err
 		}

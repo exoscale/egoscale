@@ -117,24 +117,28 @@ func (client *Client) parseResponse(resp *http.Response, key string) (json.RawMe
 }
 
 // asyncRequest perform an asynchronous job with a context
-func (client *Client) asyncRequest(ctx context.Context, request AsyncCommand) (interface{}, error) {
+func (client *Client) asyncRequest(ctx context.Context, asyncCommand AsyncCommand) (interface{}, error) {
 	var err error
 
-	res := request.asyncResponse()
-	client.AsyncRequestWithContext(ctx, request, func(j *AsyncJobResult, er error) bool {
-		if er != nil {
-			err = er
-			return false
-		}
-		if j.JobStatus == Success {
-			if r := j.Response(res); err != nil {
-				err = r
+	resp := asyncCommand.asyncResponse()
+	client.AsyncRequestWithContext(
+		ctx,
+		asyncCommand,
+		func(j *AsyncJobResult, e error) bool {
+			if e != nil {
+				err = e
+				return false
 			}
-			return false
-		}
-		return true
-	})
-	return res, err
+			if j.JobStatus == Success {
+				if r := j.Result(resp); r != nil {
+					err = r
+				}
+				return false
+			}
+			return true
+		},
+	)
+	return resp, err
 }
 
 // SyncRequestWithContext performs a sync request with a context
@@ -172,8 +176,8 @@ func (client *Client) SyncRequestWithContext(ctx context.Context, command Comman
 }
 
 // BooleanRequest performs the given boolean command
-func (client *Client) BooleanRequest(req Command) error {
-	resp, err := client.Request(req)
+func (client *Client) BooleanRequest(command Command) error {
+	resp, err := client.Request(command)
 	if err != nil {
 		return err
 	}
@@ -182,12 +186,12 @@ func (client *Client) BooleanRequest(req Command) error {
 		return b.Error()
 	}
 
-	panic(fmt.Errorf("command %q is not a proper boolean response. %#v", client.APIName(req), resp))
+	panic(fmt.Errorf("command %q is not a proper boolean response. %#v", client.APIName(command), resp))
 }
 
 // BooleanRequestWithContext performs the given boolean command
-func (client *Client) BooleanRequestWithContext(ctx context.Context, req Command) error {
-	resp, err := client.RequestWithContext(ctx, req)
+func (client *Client) BooleanRequestWithContext(ctx context.Context, command Command) error {
+	resp, err := client.RequestWithContext(ctx, command)
 	if err != nil {
 		return err
 	}
@@ -196,7 +200,7 @@ func (client *Client) BooleanRequestWithContext(ctx context.Context, req Command
 		return b.Error()
 	}
 
-	panic(fmt.Errorf("command %q is not a proper boolean response. %#v", client.APIName(req), resp))
+	panic(fmt.Errorf("command %q is not a proper boolean response. %#v", client.APIName(command), resp))
 }
 
 // Request performs the given command
@@ -207,7 +211,7 @@ func (client *Client) Request(command Command) (interface{}, error) {
 	return client.RequestWithContext(ctx, command)
 }
 
-// RequestWithContext preforms a request with a context
+// RequestWithContext preforms a command with a context
 func (client *Client) RequestWithContext(ctx context.Context, command Command) (interface{}, error) {
 	switch command.(type) {
 	case AsyncCommand:
@@ -226,15 +230,16 @@ func (client *Client) SyncRequest(command Command) (interface{}, error) {
 }
 
 // AsyncRequest performs the given command
-func (client *Client) AsyncRequest(request AsyncCommand, callback WaitAsyncJobResultFunc) {
+func (client *Client) AsyncRequest(asyncCommand AsyncCommand, callback WaitAsyncJobResultFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), client.Timeout)
 	defer cancel()
-	client.AsyncRequestWithContext(ctx, request, callback)
+
+	client.AsyncRequestWithContext(ctx, asyncCommand, callback)
 }
 
 // AsyncRequestWithContext preforms a request with a context
-func (client *Client) AsyncRequestWithContext(ctx context.Context, request AsyncCommand, callback WaitAsyncJobResultFunc) {
-	result, err := client.SyncRequestWithContext(ctx, request)
+func (client *Client) AsyncRequestWithContext(ctx context.Context, asyncCommand AsyncCommand, callback WaitAsyncJobResultFunc) {
+	result, err := client.SyncRequestWithContext(ctx, asyncCommand)
 	if err != nil {
 		if !callback(nil, err) {
 			return
@@ -334,8 +339,8 @@ func (client *Client) Sign(query string) (string, error) {
 }
 
 // request makes a Request while being close to the metal
-func (client *Client) request(ctx context.Context, req Command) (json.RawMessage, error) {
-	payload, err := client.Payload(req)
+func (client *Client) request(ctx context.Context, command Command) (json.RawMessage, error) {
+	payload, err := client.Payload(command)
 	if err != nil {
 		return nil, err
 	}
@@ -373,8 +378,9 @@ func (client *Client) request(ctx context.Context, req Command) (json.RawMessage
 	}
 	defer resp.Body.Close() // nolint: errcheck
 
+	apiName := client.APIName(command)
+	key := fmt.Sprintf("%sresponse", strings.ToLower(apiName))
 	// XXX: addIpToNic is kind of special
-	key := fmt.Sprintf("%sresponse", strings.ToLower(client.APIName(req)))
 	if key == "addiptonicresponse" {
 		key = "addiptovmnicresponse"
 	}

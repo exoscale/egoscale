@@ -222,6 +222,37 @@ func (client *Client) RequestWithContext(ctx context.Context, request Command) (
 	}
 }
 
+// SyncRequest performs the async command in a sync way (job id)
+func (client *Client) SyncRequest(request AsyncCommand) (*AsyncJobResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), client.Timeout)
+	defer cancel()
+
+	return client.SyncRequestWithContext(ctx, request)
+}
+
+// SyncRequestWithContext performs the async command in a sync way within a given context
+func (client *Client) SyncRequestWithContext(ctx context.Context, request AsyncCommand) (*AsyncJobResult, error) {
+	body, err := client.request(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	jobResult, ok := request.response().(*AsyncJobResult)
+	if !ok {
+		return nil, fmt.Errorf("%T response() type should be AsyncJobResult", request)
+	}
+
+	if err := json.Unmarshal(body, jobResult); err != nil {
+		r := new(ErrorResponse)
+		if e := json.Unmarshal(body, r); e != nil && r.ErrorCode > 0 {
+			return nil, r
+		}
+		return nil, err
+	}
+
+	return jobResult, nil
+}
+
 // AsyncRequest performs the given command
 func (client *Client) AsyncRequest(request AsyncCommand, callback WaitAsyncJobResultFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), client.Timeout)
@@ -231,20 +262,8 @@ func (client *Client) AsyncRequest(request AsyncCommand, callback WaitAsyncJobRe
 
 // AsyncRequestWithContext preforms a request with a context
 func (client *Client) AsyncRequestWithContext(ctx context.Context, request AsyncCommand, callback WaitAsyncJobResultFunc) {
-	body, err := client.request(ctx, request)
+	jobResult, err := client.SyncRequestWithContext(ctx, request)
 	if err != nil {
-		callback(nil, err)
-		return
-	}
-
-	jobResult := new(AsyncJobResult)
-	if err := json.Unmarshal(body, jobResult); err != nil {
-		r := new(ErrorResponse)
-		if e := json.Unmarshal(body, r); e != nil && r.ErrorCode > 0 {
-			if !callback(nil, r) {
-				return
-			}
-		}
 		if !callback(nil, err) {
 			return
 		}

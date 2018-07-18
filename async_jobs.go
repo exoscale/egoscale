@@ -62,7 +62,7 @@ func (ListAsyncJobs) response() interface{} {
 	return new(ListAsyncJobsResponse)
 }
 
-//Response return response of AsyncJobResult from a given type
+// Result unmarshals the result of an AsyncJobResult into the given interface
 func (a AsyncJobResult) Result(i interface{}) error {
 	if a.JobStatus == Failure {
 		return a.Error()

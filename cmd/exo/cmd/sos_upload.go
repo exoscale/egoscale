@@ -25,6 +25,16 @@ var sosUploadCmd = &cobra.Command{
 			return err
 		}
 
+		location, err := minioClient.GetBucketLocation(args[0])
+		if err != nil {
+			return err
+		}
+
+		minioClient, err = newMinioClient(location)
+		if err != nil {
+			return err
+		}
+
 		// Upload the zip file
 		bucketName := args[0]
 		objectName := filepath.Base(args[1])

@@ -23,6 +23,16 @@ var sosShowCmd = &cobra.Command{
 			return err
 		}
 
+		location, err := minioClient.GetBucketLocation(args[0])
+		if err != nil {
+			return err
+		}
+
+		minioClient, err = newMinioClient(location)
+		if err != nil {
+			return err
+		}
+
 		table := table.NewTable(os.Stdout)
 		table.SetHeader([]string{"Name", "Size", "Last modified"})
 

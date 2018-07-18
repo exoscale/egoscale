@@ -23,6 +23,16 @@ var removeCmd = &cobra.Command{
 			return err
 		}
 
+		location, err := minioClient.GetBucketLocation(args[0])
+		if err != nil {
+			return err
+		}
+
+		minioClient, err = newMinioClient(location)
+		if err != nil {
+			return err
+		}
+
 		ctx := context.Background()
 
 		chName := make(chan string, len(args[1:]))
@@ -35,7 +45,7 @@ var removeCmd = &cobra.Command{
 		}()
 
 		for objectErr := range minioClient.RemoveObjectsWithContext(ctx, args[0], chName) {
-			fmt.Println("Error detected during deletion: ", objectErr)
+			return fmt.Errorf("Error detected during deletion: %v", objectErr)
 		}
 
 		log.Printf("Object(s):\n")

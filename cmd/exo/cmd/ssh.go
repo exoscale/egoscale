@@ -70,10 +70,6 @@ func getSSHInfo(name string, isIpv6 bool) (*sshInfo, error) {
 
 	sshKeyPath := path.Join(gConfigFolder, "instances", vm.ID, "id_rsa")
 
-	if _, err := os.Stat(sshKeyPath); os.IsNotExist(err) {
-		sshKeyPath = "Default ssh keypair not found"
-	}
-
 	nic := vm.DefaultNic()
 	if nic == nil {
 		return nil, fmt.Errorf("this instance %q has no default NIC", vm.ID)
@@ -112,7 +108,7 @@ func getSSHInfo(name string, isIpv6 bool) (*sshInfo, error) {
 func printSSHConnectSTR(info *sshInfo) {
 
 	if _, err := os.Stat(info.sshKeys); os.IsNotExist(err) {
-		log.Println("Warning: Identity file Default ssh keypair not found not accessible: No such file or directory.")
+		log.Printf("Warning: Identity file Default ssh keypair not found not accessible: %q No such file or directory.", info.sshKeys)
 	}
 
 	fmt.Printf("ssh -i %s %s@%s\n", info.sshKeys, info.userName, info.ip)
@@ -120,7 +116,7 @@ func printSSHConnectSTR(info *sshInfo) {
 
 func printSSHInfo(info *sshInfo) {
 	if _, err := os.Stat(info.sshKeys); os.IsNotExist(err) {
-		log.Println("Warning: Identity file Default ssh keypair not found not accessible: No such file or directory.")
+		log.Printf("Warning: Identity file Default ssh keypair not found not accessible: %q No such file or directory.", info.sshKeys)
 	}
 	println("Host", info.vmName)
 	println("\tHostName", info.ip.String())

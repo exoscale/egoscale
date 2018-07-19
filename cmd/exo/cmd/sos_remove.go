@@ -42,7 +42,7 @@ var removeCmd = &cobra.Command{
 		}()
 
 		for objectErr := range minioClient.RemoveObjectsWithContext(gContext, args[0], chName) {
-			return fmt.Errorf("Error detected during deletion: %v", objectErr)
+			return fmt.Errorf("error detected during deletion: %v", objectErr)
 		}
 
 		log.Printf("Object(s):\n")

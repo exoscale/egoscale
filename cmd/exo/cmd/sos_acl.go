@@ -39,9 +39,11 @@ var sosACLCmd = &cobra.Command{
 		}
 
 		if meta == nil {
-			println("Error: You have to choose one flag")
-			cmd.Usage()
-			return fmt.Errorf("Error: You have to choose one flag")
+			println("error: You have to choose one flag")
+			if err = cmd.Usage(); err != nil {
+				return err
+			}
+			return fmt.Errorf("error: You have to choose one flag")
 		}
 
 		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
@@ -68,12 +70,7 @@ var sosACLCmd = &cobra.Command{
 		}
 
 		// Copy object call
-		err = minioClient.CopyObject(dst, src)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return minioClient.CopyObject(dst, src)
 	},
 }
 

@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/exoscale/egoscale/cmd/exo/table"
 	"github.com/spf13/cobra"
@@ -10,12 +11,18 @@ import (
 
 // showCmd represents the show command
 var sosShowCmd = &cobra.Command{
-	Use:     "show <bucket name>",
+	Use:     "show <bucket name> <keyword>",
 	Short:   "Show bucket object(s)",
 	Aliases: gShowAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return cmd.Usage()
+		}
+
+		var prefix string
+
+		if len(args) >= 2 {
+			prefix = strings.Join(args[1:], "/")
 		}
 
 		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
@@ -38,9 +45,9 @@ var sosShowCmd = &cobra.Command{
 
 		doneCh := make(chan struct{})
 		defer close(doneCh)
-		recursive := false
+		recursive := true
 
-		for message := range minioClient.ListObjectsV2(args[0], "", recursive, doneCh) {
+		for message := range minioClient.ListObjectsV2(args[0], prefix, recursive, doneCh) {
 			size := fmt.Sprintf("%d", message.Size)
 			lastModified := fmt.Sprintf("%v", message.LastModified)
 			table.Append([]string{message.Key, size, lastModified})

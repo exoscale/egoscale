@@ -145,12 +145,10 @@ var vmCreateCmd = &cobra.Command{
 
 Connect to the machine
 
-> exo ssh %s --print
+> exo ssh %s
 `, r.Name, r.Name)
 
-		if err = printSSHConnectSTR(sshinfo); err != nil {
-			return err
-		}
+		printSSHConnectSTR(sshinfo)
 
 		fmt.Printf(`
 Put the SSH configuration into ".ssh/config"
@@ -245,7 +243,7 @@ func createVM(vmInfos *egoscale.DeployVirtualMachine) (*egoscale.VirtualMachine,
 
 	if vmInfos.KeyPair == "" {
 		isDefaultKeyPair = true
-		println("Creating sshkey")
+		fmt.Println("Creating sshkey")
 		sshKeyName, err := utils.RandStringBytes(64)
 		if err != nil {
 			return nil, err

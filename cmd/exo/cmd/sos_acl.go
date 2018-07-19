@@ -62,7 +62,14 @@ var sosACLCmd = &cobra.Command{
 			return err
 		}
 
+		objInfo, err := minioClient.StatObject(args[0], args[1], minio.StatObjectOptions{})
+		if err != nil {
+			return err
+		}
+
 		src := minio.NewSourceInfo(args[0], args[1], nil)
+
+		src.Headers = objInfo.Metadata
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, meta)
@@ -89,24 +96,25 @@ func getACL(cmd *cobra.Command) (map[string]string, error) {
 		return meta, nil
 	}
 
-	ManualACL, acls, err := getManualACL(cmd)
+	manualACLs, err := getManualACL(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	meta[manualFullControl] = "id=" + gCurrentAccount.Account
 
-	if ManualACL == "" && acls == nil {
+	if manualACLs == nil {
 		return nil, nil
 	}
 
-	for i := range acls {
-		acls[i] = fmt.Sprintf("id=%s", acls[i])
+	for k, v := range manualACLs {
+
+		for i := range v {
+			v[i] = fmt.Sprintf("id=%s", v[i])
+		}
+
+		meta[k] = strings.Join(v, ", ")
 	}
-
-	acl := strings.Join(acls, ", ")
-
-	meta[ManualACL] = acl
 
 	return meta, nil
 }
@@ -164,49 +172,55 @@ func getDefaultCannedACL(cmd *cobra.Command) (string, error) {
 	return "", nil
 }
 
-func getManualACL(cmd *cobra.Command) (string, []string, error) {
+func getManualACL(cmd *cobra.Command) (map[string][]string, error) {
+
+	res := map[string][]string{}
 
 	acl, err := cmd.Flags().GetString("read")
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	if acl != "" {
-		return manualRead, getCommaflag(acl), nil
+		res[manualRead] = getCommaflag(acl)
 	}
 
 	acl, err = cmd.Flags().GetString("write")
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	if acl != "" {
-		return manualRead, getCommaflag(acl), nil
+		res[manualWrite] = getCommaflag(acl)
 	}
 
 	acl, err = cmd.Flags().GetString("read-acp")
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	if acl != "" {
-		return manualRead, getCommaflag(acl), nil
+		res[manualReadACP] = getCommaflag(acl)
 	}
 
 	acl, err = cmd.Flags().GetString("write-acp")
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	if acl != "" {
-		return manualRead, getCommaflag(acl), nil
+		res[manualWriteACP] = getCommaflag(acl)
 	}
 
 	acl, err = cmd.Flags().GetString("full-control")
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	if acl != "" {
-		return manualRead, getCommaflag(acl), nil
+		res[manualFullControl] = getCommaflag(acl)
 	}
 
-	return "", nil, nil
+	if len(res) == 0 {
+		return nil, nil
+	}
+
+	return res, err
 }
 
 func init() {

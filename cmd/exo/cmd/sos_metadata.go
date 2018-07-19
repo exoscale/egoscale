@@ -9,7 +9,7 @@ import (
 // metadataCmd represents the metadata command
 var sosMetadataCmd = &cobra.Command{
 	Use:   "metadata",
-	Short: "Add and remove metadata from an object",
+	Short: "Object metadate management",
 }
 
 func init() {

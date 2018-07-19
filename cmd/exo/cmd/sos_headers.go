@@ -9,7 +9,7 @@ import (
 // headersCmd represents the headers command
 var sosHeadersCmd = &cobra.Command{
 	Use:   "header",
-	Short: "Add or remove an header key/value from an object",
+	Short: "Object headers management",
 }
 
 func init() {

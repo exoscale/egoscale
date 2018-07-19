@@ -28,7 +28,17 @@ const (
 // aclCmd represents the acl command
 var sosACLCmd = &cobra.Command{
 	Use:   "acl <bucket name> <object name> [object name] ...",
-	Short: "Set acl on object(s) in bucket",
+	Short: "Object(s) ACLs managment",
+}
+
+func init() {
+	sosCmd.AddCommand(sosACLCmd)
+}
+
+// aclCmd represents the acl command
+var sosAddACLCmd = &cobra.Command{
+	Use:   "add <bucket name> <object name> [object name] ...",
+	Short: "Add ACL(s) to object(s)",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return cmd.Usage()
@@ -281,21 +291,49 @@ func getManualACL(cmd *cobra.Command) (map[string][]string, error) {
 }
 
 func init() {
-	sosCmd.AddCommand(sosACLCmd)
-	sosACLCmd.Flags().SortFlags = false
+	sosACLCmd.AddCommand(sosAddACLCmd)
+	sosAddACLCmd.Flags().SortFlags = false
 
 	//Canned ACLs
-	sosACLCmd.Flags().BoolP(private, "p", false, "Canned ACL private")
-	sosACLCmd.Flags().BoolP(publicRead, "r", false, "Canned ACL public read")
-	sosACLCmd.Flags().BoolP(publicReadWrite, "w", false, "Canned ACL public read and write")
-	sosACLCmd.Flags().BoolP(authenticatedRead, "", false, "Canned ACL authenticated read")
-	sosACLCmd.Flags().BoolP(bucketOwnerRead, "", false, "Canned ACL bucket owner read")
-	sosACLCmd.Flags().BoolP(bucketOwnerFullControl, "f", false, "Canned ACL bucket owner full control")
+	sosAddACLCmd.Flags().BoolP(private, "p", false, "Canned ACL private")
+	sosAddACLCmd.Flags().BoolP(publicRead, "r", false, "Canned ACL public read")
+	sosAddACLCmd.Flags().BoolP(publicReadWrite, "w", false, "Canned ACL public read and write")
+	sosAddACLCmd.Flags().BoolP(authenticatedRead, "", false, "Canned ACL authenticated read")
+	sosAddACLCmd.Flags().BoolP(bucketOwnerRead, "", false, "Canned ACL bucket owner read")
+	sosAddACLCmd.Flags().BoolP(bucketOwnerFullControl, "f", false, "Canned ACL bucket owner full control")
 
 	//Manual ACLs
-	sosACLCmd.Flags().StringP("read", "", "", "Manual acl edit grant read e.g(value, value, ...)")
-	sosACLCmd.Flags().StringP("write", "", "", "Manual acl edit grant write e.g(value, value, ...)")
-	sosACLCmd.Flags().StringP("read-acp", "", "", "Manual acl edit grant acp read e.g(value, value, ...)")
-	sosACLCmd.Flags().StringP("write-acp", "", "", "Manual acl edit grant acp write e.g(value, value, ...)")
-	sosACLCmd.Flags().StringP("full-control", "", "", "Manual acl edit grant full control e.g(value, value, ...)")
+	sosAddACLCmd.Flags().StringP("read", "", "", "Manual acl edit grant read e.g(value, value, ...)")
+	sosAddACLCmd.Flags().StringP("write", "", "", "Manual acl edit grant write e.g(value, value, ...)")
+	sosAddACLCmd.Flags().StringP("read-acp", "", "", "Manual acl edit grant acp read e.g(value, value, ...)")
+	sosAddACLCmd.Flags().StringP("write-acp", "", "", "Manual acl edit grant acp write e.g(value, value, ...)")
+	sosAddACLCmd.Flags().StringP("full-control", "", "", "Manual acl edit grant full control e.g(value, value, ...)")
+}
+
+// aclCmd represents the acl command
+var sosRemoveACLCmd = &cobra.Command{
+	Use:     "remove <bucket name> <object name> [object name] ...",
+	Short:   "Remove ACL(s) from object(s)",
+	Aliases: gRemoveAlias,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return nil
+	},
+}
+
+func init() {
+	sosACLCmd.AddCommand(sosRemoveACLCmd)
+}
+
+// aclCmd represents the acl command
+var sosShowACLCmd = &cobra.Command{
+	Use:     "show <bucket name> <object name> [object name] ...",
+	Short:   "show Object ACLs",
+	Aliases: gShowAlias,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return nil
+	},
+}
+
+func init() {
+	sosACLCmd.AddCommand(sosShowACLCmd)
 }

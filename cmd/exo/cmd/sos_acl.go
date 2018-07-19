@@ -62,12 +62,69 @@ var sosACLCmd = &cobra.Command{
 			return err
 		}
 
+		/*var writer bytes.Buffer
+
+		minioClient.TraceOn(&writer)
+		*/
+
 		objInfo, err := minioClient.StatObject(args[0], args[1], minio.StatObjectOptions{})
 		if err != nil {
 			return err
 		}
 
+		/*
+
+			r := writer.String()
+
+			httpInfo := strings.Split(r, "\n")
+
+			var host string
+			var auth string
+
+			for _, v := range httpInfo {
+				if strings.HasPrefix(v, "Host: ") {
+					host = v[len("Host: "):]
+				}
+				if strings.HasPrefix(v, "Authorization: ") {
+					auth = v[len("Authorization: "):]
+				}
+			}
+
+			host = strings.TrimSpace(host)
+
+			authorization := getCommaflag(auth)
+
+			minioClient.TraceOff()
+		*/
+
 		src := minio.NewSourceInfo(args[0], args[1], nil)
+
+		/*
+
+			req, err := http.NewRequest("GET", fmt.Sprintf("http://%s/%s?acl", host, args[1]), nil)
+			if err != nil {
+				return err
+			}
+
+			req.Host = host
+			req.Header["Authorization"] = authorization
+
+			httpCli := &http.Client{}
+
+			resp, err := httpCli.Do(req)
+			if err != nil {
+				return err
+			}
+
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+
+			println(string(body))
+
+		*/
 
 		src.Headers = objInfo.Metadata
 

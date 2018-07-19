@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	minio "github.com/minio/minio-go"
 	"github.com/spf13/cobra"
@@ -88,18 +89,24 @@ func getACL(cmd *cobra.Command) (map[string]string, error) {
 		return meta, nil
 	}
 
-	ManualACL, acl, err := getManualACL(cmd)
+	ManualACL, acls, err := getManualACL(cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	meta[manualFullControl] = "id=" + gCurrentAccount.Account
 
-	if ManualACL == "" {
+	if ManualACL == "" && acls == nil {
 		return nil, nil
 	}
 
-	meta[ManualACL] = "id=" + acl
+	for i := range acls {
+		acls[i] = fmt.Sprintf("id=%s", acls[i])
+	}
+
+	acl := strings.Join(acls, ", ")
+
+	meta[ManualACL] = acl
 
 	return meta, nil
 }
@@ -157,49 +164,49 @@ func getDefaultCannedACL(cmd *cobra.Command) (string, error) {
 	return "", nil
 }
 
-func getManualACL(cmd *cobra.Command) (string, string, error) {
+func getManualACL(cmd *cobra.Command) (string, []string, error) {
 
 	acl, err := cmd.Flags().GetString("read")
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 	if acl != "" {
-		return manualRead, acl, nil
+		return manualRead, getCommaflag(acl), nil
 	}
 
 	acl, err = cmd.Flags().GetString("write")
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 	if acl != "" {
-		return manualWrite, acl, nil
+		return manualRead, getCommaflag(acl), nil
 	}
 
 	acl, err = cmd.Flags().GetString("read-acp")
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 	if acl != "" {
-		return manualReadACP, acl, nil
+		return manualRead, getCommaflag(acl), nil
 	}
 
 	acl, err = cmd.Flags().GetString("write-acp")
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 	if acl != "" {
-		return manualWriteACP, acl, nil
+		return manualRead, getCommaflag(acl), nil
 	}
 
 	acl, err = cmd.Flags().GetString("full-control")
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 	if acl != "" {
-		return manualFullControl, acl, nil
+		return manualRead, getCommaflag(acl), nil
 	}
 
-	return "", "", nil
+	return "", nil, nil
 }
 
 func init() {
@@ -215,9 +222,9 @@ func init() {
 	sosACLCmd.Flags().BoolP(bucketOwnerFullControl, "f", false, "Canned ACL bucket owner full control")
 
 	//Manual ACLs
-	sosACLCmd.Flags().StringP("read", "", "", "Manual acl edit grant read")
-	sosACLCmd.Flags().StringP("write", "", "", "Manual acl edit grant write")
-	sosACLCmd.Flags().StringP("read-acp", "", "", "Manual acl edit grant acp read")
-	sosACLCmd.Flags().StringP("write-acp", "", "", "Manual acl edit grant acp write")
-	sosACLCmd.Flags().StringP("full-control", "", "", "Manual acl edit grant full control")
+	sosACLCmd.Flags().StringP("read", "", "", "Manual acl edit grant read e.g(value, value, ...)")
+	sosACLCmd.Flags().StringP("write", "", "", "Manual acl edit grant write e.g(value, value, ...)")
+	sosACLCmd.Flags().StringP("read-acp", "", "", "Manual acl edit grant acp read e.g(value, value, ...)")
+	sosACLCmd.Flags().StringP("write-acp", "", "", "Manual acl edit grant acp write e.g(value, value, ...)")
+	sosACLCmd.Flags().StringP("full-control", "", "", "Manual acl edit grant full control e.g(value, value, ...)")
 }

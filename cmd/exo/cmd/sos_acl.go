@@ -1,17 +1,27 @@
 package cmd
 
 import (
+	"fmt"
+
 	minio "github.com/minio/minio-go"
 	"github.com/spf13/cobra"
 )
 
 const (
+	//Canned ACLs
 	private                string = "private"
 	publicRead             string = "public-read"
 	publicReadWrite        string = "public-read-write"
 	authenticatedRead      string = "authenticated-read"
 	bucketOwnerRead        string = "bucket-owner-read"
 	bucketOwnerFullControl string = "bucket-owner-full-control"
+
+	//Manual edit ACLs
+	manualRead        string = "x-amz-grant-read"
+	manualWrite       string = "x-amz-grant-write"
+	manualReadACP     string = "x-amz-grant-read-acp"
+	manualWriteACP    string = "x-amz-grant-write-acp"
+	manualFullControl string = "x-amz-grant-full-control"
 )
 
 // aclCmd represents the acl command
@@ -23,27 +33,16 @@ var sosACLCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
-		meta := map[string]string{
-			//"x-amz-grant-read": "pej@exoscale.ch",
-			//"x-amz-grant-read": "bre@exoscale.ch,pej@exoscale.ch",
-			// "x-amz-grant-read-acp":     "",
-			// "x-amz-grant-write-acp":    "",
-			//"x-amz-grant-full-control": "exoscale-1",
-			//"x-amz-acl": "public-read",
-		}
-
-		defACL, err := getDefaultACL(cmd)
+		meta, err := getACL(cmd)
 		if err != nil {
 			return err
 		}
 
-		//WIP
-		if defACL == "" {
-			println("Error: Choose one default Quick ACL flag")
-			return cmd.Usage()
+		if meta == nil {
+			println("Error: You have to choose one flag")
+			cmd.Usage()
+			return fmt.Errorf("Error: You have to choose one flag")
 		}
-
-		meta["x-amz-acl"] = defACL
 
 		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
 		if err != nil {
@@ -78,7 +77,37 @@ var sosACLCmd = &cobra.Command{
 	},
 }
 
-func getDefaultACL(cmd *cobra.Command) (string, error) {
+func getACL(cmd *cobra.Command) (map[string]string, error) {
+
+	meta := map[string]string{}
+
+	defACL, err := getDefaultCannedACL(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	if defACL != "" {
+		meta["x-amz-acl"] = defACL
+		return meta, nil
+	}
+
+	ManualACL, acl, err := getManualACL(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	meta[manualFullControl] = "id=" + gCurrentAccount.Account
+
+	if ManualACL == "" {
+		return nil, nil
+	}
+
+	meta[ManualACL] = "id=" + acl
+
+	return meta, nil
+}
+
+func getDefaultCannedACL(cmd *cobra.Command) (string, error) {
 
 	acl, err := cmd.Flags().GetBool(private)
 	if err != nil {
@@ -131,12 +160,67 @@ func getDefaultACL(cmd *cobra.Command) (string, error) {
 	return "", nil
 }
 
+func getManualACL(cmd *cobra.Command) (string, string, error) {
+
+	acl, err := cmd.Flags().GetString("read")
+	if err != nil {
+		return "", "", err
+	}
+	if acl != "" {
+		return manualRead, acl, nil
+	}
+
+	acl, err = cmd.Flags().GetString("write")
+	if err != nil {
+		return "", "", err
+	}
+	if acl != "" {
+		return manualWrite, acl, nil
+	}
+
+	acl, err = cmd.Flags().GetString("read-acp")
+	if err != nil {
+		return "", "", err
+	}
+	if acl != "" {
+		return manualReadACP, acl, nil
+	}
+
+	acl, err = cmd.Flags().GetString("write-acp")
+	if err != nil {
+		return "", "", err
+	}
+	if acl != "" {
+		return manualWriteACP, acl, nil
+	}
+
+	acl, err = cmd.Flags().GetString("full-control")
+	if err != nil {
+		return "", "", err
+	}
+	if acl != "" {
+		return manualFullControl, acl, nil
+	}
+
+	return "", "", nil
+}
+
 func init() {
 	sosCmd.AddCommand(sosACLCmd)
-	sosACLCmd.Flags().BoolP(private, "p", false, "Quick ACL private")
-	sosACLCmd.Flags().BoolP(publicRead, "r", false, "Quick ACL public read")
-	sosACLCmd.Flags().BoolP(publicReadWrite, "w", false, "Quick ACL public read and write")
-	sosACLCmd.Flags().BoolP(authenticatedRead, "", false, "Quick ACL authenticated read")
-	sosACLCmd.Flags().BoolP(bucketOwnerRead, "", false, "Quick ACL bucket owner read")
-	sosACLCmd.Flags().BoolP(bucketOwnerFullControl, "f", false, "Quick ACL bucket owner full control")
+	sosACLCmd.Flags().SortFlags = false
+
+	//Canned ACLs
+	sosACLCmd.Flags().BoolP(private, "p", false, "Canned ACL private")
+	sosACLCmd.Flags().BoolP(publicRead, "r", false, "Canned ACL public read")
+	sosACLCmd.Flags().BoolP(publicReadWrite, "w", false, "Canned ACL public read and write")
+	sosACLCmd.Flags().BoolP(authenticatedRead, "", false, "Canned ACL authenticated read")
+	sosACLCmd.Flags().BoolP(bucketOwnerRead, "", false, "Canned ACL bucket owner read")
+	sosACLCmd.Flags().BoolP(bucketOwnerFullControl, "f", false, "Canned ACL bucket owner full control")
+
+	//Manual ACLs
+	sosACLCmd.Flags().StringP("read", "", "", "Manual acl edit grant read")
+	sosACLCmd.Flags().StringP("write", "", "", "Manual acl edit grant write")
+	sosACLCmd.Flags().StringP("read-acp", "", "", "Manual acl edit grant acp read")
+	sosACLCmd.Flags().StringP("write-acp", "", "", "Manual acl edit grant acp write")
+	sosACLCmd.Flags().StringP("full-control", "", "", "Manual acl edit grant full control")
 }

@@ -112,13 +112,11 @@ func getSSHInfo(name string, isIpv6 bool) (*sshInfo, error) {
 func printSSHConnectSTR(info *sshInfo) {
 	sshArgs := ""
 
-	if _, err := os.Stat(info.sshKeys); os.IsNotExist(err) {
-		log.Printf("Warning: Identity file %s not found or not accessible.", info.sshKeys)
-	} else {
-		sshArgs = fmt.Sprintf("-i %q", info.sshKeys)
+	if _, err := os.Stat(info.sshKeys); err == nil {
+		sshArgs = fmt.Sprintf("-i %q ", info.sshKeys)
 	}
 
-	fmt.Printf("ssh %s %s@%s\n", sshArgs, info.userName, info.ip)
+	fmt.Printf("ssh %s%s@%s\n", sshArgs, info.userName, info.ip)
 }
 
 func printSSHInfo(info *sshInfo) {
@@ -134,7 +132,9 @@ func connectSSH(info *sshInfo) error {
 
 	args := make([]string, 0, 3)
 
-	if _, err := os.Stat(info.sshKeys); err == nil {
+	if _, err := os.Stat(info.sshKeys); os.IsNotExist(err) {
+		log.Printf("Warning: Identity file %s not found or not accessible.", info.sshKeys)
+	} else {
 		args = append(args, "-i")
 		args = append(args, info.sshKeys)
 	}

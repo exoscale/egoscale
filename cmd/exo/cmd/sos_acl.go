@@ -77,8 +77,6 @@ var sosAddACLCmd = &cobra.Command{
 			return err
 		}
 
-		println("pdpdpd", objInfo.Owner.ID)
-
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
 		_, okMeta := meta["X-Amz-Acl"]
@@ -86,15 +84,10 @@ var sosAddACLCmd = &cobra.Command{
 
 		if okHeader && !okMeta {
 			objInfo.Metadata.Del("X-Amz-Acl")
-			objInfo.Metadata.Add(manualFullControl, gCurrentAccount.Account)
+			objInfo.Metadata.Add(manualFullControl, "id="+gCurrentAccount.Account)
 		}
 
 		src.Headers = objInfo.Metadata
-
-		// for k, v := range objInfo.Metadata {
-		// 	//meta[strings.ToLower(k)] = string
-		// 	fmt.Printf("%s: %#v\n", k, v)
-		// }
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, meta)

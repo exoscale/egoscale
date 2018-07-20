@@ -18,11 +18,11 @@ const (
 	bucketOwnerFullControl string = "bucket-owner-full-control"
 
 	//Manual edit ACLs
-	manualRead        string = "x-amz-grant-read"
-	manualWrite       string = "x-amz-grant-write"
-	manualReadACP     string = "x-amz-grant-read-acp"
-	manualWriteACP    string = "x-amz-grant-write-acp"
-	manualFullControl string = "x-amz-grant-full-control"
+	manualRead        string = "X-Amz-Grant-Read"
+	manualWrite       string = "X-Amz-Grant-Write"
+	manualReadACP     string = "X-Amz-Grant-Read-Acp"
+	manualWriteACP    string = "X-Amz-Grant-Write-Acp"
+	manualFullControl string = "X-Amz-Grant-Full-Control"
 )
 
 // aclCmd represents the acl command
@@ -72,71 +72,29 @@ var sosAddACLCmd = &cobra.Command{
 			return err
 		}
 
-		/*var writer bytes.Buffer
-
-		minioClient.TraceOn(&writer)
-		*/
-
-		objInfo, err := minioClient.StatObject(args[0], args[1], minio.StatObjectOptions{})
+		objInfo, err := minioClient.GetObjectACLS(args[0], args[1])
 		if err != nil {
 			return err
 		}
 
-		/*
-
-			r := writer.String()
-
-			httpInfo := strings.Split(r, "\n")
-
-			var host string
-			var auth string
-
-			for _, v := range httpInfo {
-				if strings.HasPrefix(v, "Host: ") {
-					host = v[len("Host: "):]
-				}
-				if strings.HasPrefix(v, "Authorization: ") {
-					auth = v[len("Authorization: "):]
-				}
-			}
-
-			host = strings.TrimSpace(host)
-
-			authorization := getCommaflag(auth)
-
-			minioClient.TraceOff()
-		*/
+		println("pdpdpd", objInfo.Owner.ID)
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
-		/*
+		_, okMeta := meta["X-Amz-Acl"]
+		_, okHeader := objInfo.Metadata["X-Amz-Acl"]
 
-			req, err := http.NewRequest("GET", fmt.Sprintf("http://%s/%s?acl", host, args[1]), nil)
-			if err != nil {
-				return err
-			}
-
-			req.Host = host
-			req.Header["Authorization"] = authorization
-
-			httpCli := &http.Client{}
-
-			resp, err := httpCli.Do(req)
-			if err != nil {
-				return err
-			}
-
-			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return err
-			}
-
-			println(string(body))
-
-		*/
+		if okHeader && !okMeta {
+			objInfo.Metadata.Del("X-Amz-Acl")
+			objInfo.Metadata.Add(manualFullControl, gCurrentAccount.Account)
+		}
 
 		src.Headers = objInfo.Metadata
+
+		// for k, v := range objInfo.Metadata {
+		// 	//meta[strings.ToLower(k)] = string
+		// 	fmt.Printf("%s: %#v\n", k, v)
+		// }
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, meta)
@@ -159,7 +117,7 @@ func getACL(cmd *cobra.Command) (map[string]string, error) {
 	}
 
 	if defACL != "" {
-		meta["x-amz-acl"] = defACL
+		meta["X-Amz-Acl"] = defACL
 		return meta, nil
 	}
 
@@ -167,8 +125,6 @@ func getACL(cmd *cobra.Command) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	meta[manualFullControl] = "id=" + gCurrentAccount.Account
 
 	if manualACLs == nil {
 		return nil, nil

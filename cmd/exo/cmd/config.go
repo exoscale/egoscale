@@ -52,11 +52,12 @@ func configCmdRun(cmd *cobra.Command, args []string) error {
 		}
 		return addNewAccount(false)
 	}
-	fmt.Println(`
+	fmt.Print(`
 Hi happy Exoscalian, some configuration is required to use exo.
 
 We now need some very important information, find them there.
 	<https://portal.exoscale.com/account/profile/api>
+
 `)
 	return addNewAccount(true)
 }
@@ -139,18 +140,23 @@ func getAccount() (*account, error) {
 		if err != nil {
 			return nil, err
 		}
-		if secretKey != account.Secret {
+		if secretKey != account.Secret && secretKey != secret {
 			account.Secret = secretKey
 		}
 
 		client = egoscale.NewClient(account.Endpoint, account.Key, account.Secret)
 
-		fmt.Printf("Checking the credentials of %q...\n", account.Key)
+		fmt.Printf("Checking the credentials of %q...", account.Key)
 		acc := &egoscale.Account{}
 		err = client.GetWithContext(gContext, acc)
 		if err != nil {
-			fmt.Printf("Unable to verify API credentials for %q", apiKey)
+			fmt.Print(` failure.
+
+Let's start over.
+
+`)
 		} else {
+			fmt.Print(" success!\n\n")
 			account.Name = acc.Name
 			account.Account = acc.Name
 			break
@@ -506,7 +512,7 @@ func chooseZone(accountName string, cs *egoscale.Client) (string, error) {
 	zones := map[string]string{}
 
 	if len(zonesResp) == 0 {
-		return "", fmt.Errorf("No zones were found")
+		return "", fmt.Errorf("no zones were found")
 	}
 
 	fmt.Printf("Choose %q default zone:\n", accountName)

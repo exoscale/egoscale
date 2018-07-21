@@ -7,20 +7,23 @@ import (
 )
 
 // MACAddress is a nicely JSON serializable net.HardwareAddr
-type MACAddress struct {
-	net.HardwareAddr
+type MACAddress net.HardwareAddr
+
+// String returns the MAC address in standard format
+func (mac MACAddress) String() string {
+	return (net.HardwareAddr)(mac).String()
 }
 
 // MAC48 builds a MAC-48 MACAddress
 func MAC48(a, b, c, d, e, f byte) MACAddress {
-	m := make(net.HardwareAddr, 6)
+	m := make(MACAddress, 6)
 	m[0] = a
 	m[1] = b
 	m[2] = c
 	m[3] = d
 	m[4] = e
 	m[5] = f
-	return MACAddress{m}
+	return m
 }
 
 // UnmarshalJSON unmarshals the raw JSON into the MAC address
@@ -33,7 +36,7 @@ func (mac *MACAddress) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	*mac = hw
+	copy(*mac, hw)
 	return nil
 }
 
@@ -45,7 +48,7 @@ func (mac MACAddress) MarshalJSON() ([]byte, error) {
 // ParseMAC converts a string into a MACAddress
 func ParseMAC(s string) (MACAddress, error) {
 	hw, err := net.ParseMAC(s)
-	return MACAddress{hw}, err
+	return (MACAddress)(hw), err
 }
 
 // ForceParseMAC acts like ParseMAC but panics if in case of an error

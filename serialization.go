@@ -155,6 +155,16 @@ func prepareValues(prefix string, params url.Values, command interface{}) error 
 						} else {
 							params.Set(name, ip.String())
 						}
+					case reflect.TypeOf(MAC48(0, 0, 0, 0, 0, 0)):
+						mac := val.Interface().(MACAddress)
+						s := mac.String()
+						if s == "" {
+							if required {
+								return fmt.Errorf("%s.%s (%v) is required, got empty MAC address", typeof.Name(), field.Name, val.Kind())
+							}
+						} else {
+							params.Set(name, s)
+						}
 					default:
 						if val.Len() == 0 {
 							if required {
@@ -202,19 +212,6 @@ func prepareValues(prefix string, params url.Values, command interface{}) error 
 					err := prepareMap(name, params, val.Interface())
 					if err != nil {
 						return err
-					}
-				}
-			case reflect.Struct:
-				switch field.Type {
-				case reflect.TypeOf(MAC48(0, 0, 0, 0, 0, 0)):
-					mac := val.Interface().(MACAddress)
-					s := mac.String()
-					if s == "" {
-						if required {
-							return fmt.Errorf("%s.%s (%v) is required, got empty MAC address", typeof.Name(), field.Name, val.Kind())
-						}
-					} else {
-						params.Set(name, s)
 					}
 				}
 			default:

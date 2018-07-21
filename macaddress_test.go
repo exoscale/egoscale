@@ -29,9 +29,16 @@ func TestMACAddressMarshalJSON(t *testing.T) {
 }
 
 func TestMACAddresUnmarshalJSONFailure(t *testing.T) {
-	s := `{"macaddress": "123"}`
+	ss := []string{
+		`{"macaddress": 123}`,
+		`{"macaddress": "123"}`,
+		`{"macaddress": "01:23:45:67:89:a"}`,
+		`{"macaddress": "01:23:45:67:89:ab\""}`,
+	}
 	nic := &Nic{}
-	if err := json.Unmarshal([]byte(s), nic); err == nil {
-		t.Errorf("a JSON was expected")
+	for _, s := range ss {
+		if err := json.Unmarshal([]byte(s), nic); err == nil {
+			t.Errorf("an error was expected, %#v", nic)
+		}
 	}
 }

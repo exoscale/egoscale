@@ -1,9 +1,9 @@
 package egoscale
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
-	"strings"
 )
 
 // MACAddress is a nicely JSON serializable net.HardwareAddr
@@ -25,7 +25,10 @@ func MAC48(a, b, c, d, e, f byte) MACAddress {
 
 // UnmarshalJSON unmarshals the raw JSON into the MAC address
 func (mac *MACAddress) UnmarshalJSON(b []byte) error {
-	addr := strings.Trim(string(b), "\"")
+	var addr string
+	if err := json.Unmarshal(b, &addr); err != nil {
+		return err
+	}
 	hw, err := ParseMAC(addr)
 	if err != nil {
 		return err

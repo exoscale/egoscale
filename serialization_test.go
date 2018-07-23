@@ -32,6 +32,7 @@ func TestPrepareValues(t *testing.T) {
 		Tags        []tag             `json:"tags,omitempty"`
 		Map         map[string]string `json:"map"`
 		IP          net.IP            `json:"ip,omitempty"`
+		CIDR        *CIDR             `json:"cidr,omitempty"`
 		MAC         MACAddress        `json:"mac,omitempty"`
 	}{
 		IgnoreMe: "bar",
@@ -55,8 +56,9 @@ func TestPrepareValues(t *testing.T) {
 		Map: map[string]string{
 			"foo": "bar",
 		},
-		IP:  net.IPv4(192, 168, 0, 11),
-		MAC: MAC48(0x01, 0x23, 0x45, 0x67, 0x89, 0xab),
+		IP:   net.IPv4(192, 168, 0, 11),
+		CIDR: ForceParseCIDR("192.168.0.0/32"),
+		MAC:  MAC48(0x01, 0x23, 0x45, 0x67, 0x89, 0xab),
 	}
 
 	params := url.Values{}
@@ -120,6 +122,11 @@ func TestPrepareValues(t *testing.T) {
 	v = params.Get("ip")
 	if v != "192.168.0.11" {
 		t.Errorf(`expected ip to be serialized as "192.168.0.11", got %q`, v)
+	}
+
+	v = params.Get("cidr")
+	if v != "192.168.0.0/32" {
+		t.Errorf(`expected cidr to be serialized as "192.168.0.0/32", got %q`, v)
 	}
 
 	v = params.Get("mac")

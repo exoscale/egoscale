@@ -72,7 +72,7 @@ var sosAddACLCmd = &cobra.Command{
 			return err
 		}
 
-		objInfo, err := minioClient.GetObjectACLS(args[0], args[1])
+		objInfo, err := minioClient.GetObjectACL(args[0], args[1])
 		if err != nil {
 			return err
 		}
@@ -265,12 +265,123 @@ var sosRemoveACLCmd = &cobra.Command{
 	Short:   "Remove ACL(s) from object(s)",
 	Aliases: gRemoveAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return nil
+		if len(args) < 2 {
+			return cmd.Usage()
+		}
+
+		meta, err := getManualACLBool(cmd)
+		if err != nil {
+			return err
+		}
+
+		if meta == nil {
+			println("error: You have to choose one flag")
+			if err = cmd.Usage(); err != nil {
+				return err
+			}
+			return fmt.Errorf("error: You have to choose one flag")
+		}
+
+		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
+		if err != nil {
+			return err
+		}
+
+		location, err := minioClient.GetBucketLocation(args[0])
+		if err != nil {
+			return err
+		}
+
+		minioClient, err = newMinioClient(location)
+		if err != nil {
+			return err
+		}
+
+		objInfo, err := minioClient.GetObjectACL(args[0], args[1])
+		if err != nil {
+			return err
+		}
+
+		src := minio.NewSourceInfo(args[0], args[1], nil)
+
+		_, okHeader := objInfo.Metadata["X-Amz-Acl"]
+
+		if okHeader {
+			return fmt.Errorf("Error: No Manual ACL are set")
+		}
+
+		for _, k := range meta {
+			objInfo.Metadata[k] = []string{""}
+		}
+
+		src.Headers = objInfo.Metadata
+
+		// Destination object
+		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, nil)
+		if err != nil {
+			return err
+		}
+
+		// Copy object call
+		return minioClient.CopyObject(dst, src)
 	},
 }
 
 func init() {
 	sosACLCmd.AddCommand(sosRemoveACLCmd)
+	sosRemoveACLCmd.Flags().SortFlags = false
+	sosRemoveACLCmd.Flags().BoolP("read", "r", false, "Remove grant read ACL")
+	sosRemoveACLCmd.Flags().BoolP("write", "w", false, "Remove grant write ACL")
+	sosRemoveACLCmd.Flags().BoolP("read-acp", "", false, "Remove grant acp read ACL")
+	sosRemoveACLCmd.Flags().BoolP("write-acp", "", false, "Remove grant acp write ACL")
+	sosRemoveACLCmd.Flags().BoolP("full-control", "f", false, "Remove grant full control ACL")
+}
+
+func getManualACLBool(cmd *cobra.Command) ([]string, error) {
+
+	var res []string
+
+	acl, err := cmd.Flags().GetBool("read")
+	if err != nil {
+		return nil, err
+	}
+	if acl {
+		res = append(res, manualRead)
+	}
+
+	acl, err = cmd.Flags().GetBool("write")
+	if err != nil {
+		return nil, err
+	}
+	if acl {
+		res = append(res, manualWrite)
+	}
+
+	acl, err = cmd.Flags().GetBool("read-acp")
+	if err != nil {
+		return nil, err
+	}
+	if acl {
+		res = append(res, manualReadACP)
+	}
+
+	acl, err = cmd.Flags().GetBool("write-acp")
+	if err != nil {
+		return nil, err
+	}
+	if acl {
+		res = append(res, manualWriteACP)
+	}
+
+	acl, err = cmd.Flags().GetBool("full-control")
+	if err != nil {
+		return nil, err
+	}
+	if acl {
+		res = append(res, manualFullControl)
+	}
+
+	return res, nil
 }
 
 // aclCmd represents the acl command

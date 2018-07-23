@@ -102,9 +102,9 @@ var sosRemoveMetadataCmd = &cobra.Command{
 		}
 
 		for k := range objInfo.Metadata {
-			k = strings.ToLower(k)
-			if strings.HasPrefix(k, "x-amz-meta-") {
-				objInfo.Metadata.Del(args[2])
+			key := strings.ToLower(k)
+			if strings.HasPrefix(key, "x-amz-meta-") && strings.HasSuffix(key, args[2]) {
+				objInfo.Metadata.Del(k)
 			}
 		}
 

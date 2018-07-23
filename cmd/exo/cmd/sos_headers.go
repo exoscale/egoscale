@@ -6,8 +6,29 @@ import (
 	"strings"
 
 	"github.com/exoscale/egoscale/cmd/exo/table"
+	minio "github.com/minio/minio-go"
 	"github.com/spf13/cobra"
 )
+
+type supHeader int
+
+const (
+	contentType = iota
+	cacheControl
+	contentEncoding
+	contentDisposition
+	contentLanguage
+	expires
+)
+
+var supportedHeaders = []string{
+	"content-type",
+	"cache-control",
+	"content-encoding",
+	"content-disposition",
+	"content-language",
+	"expires",
+}
 
 // headersCmd represents the headers command
 var sosHeadersCmd = &cobra.Command{
@@ -21,34 +42,189 @@ func init() {
 
 // headersCmd represents the headers command
 var sosAddHeadersCmd = &cobra.Command{
-	Use:   "add",
+	Use:   "add <bucket name> <object name>",
 	Short: "Add an header key/value to an object",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("headers called")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 2 {
+			return cmd.Usage()
+		}
+
+		meta, err := getHeader(cmd)
+		if err != nil {
+			return err
+		}
+
+		if len(meta) == 0 {
+			println("error: You have to choose one flag")
+			if err = cmd.Usage(); err != nil {
+				return err
+			}
+			return fmt.Errorf("error: You have to choose one flag")
+		}
+
+		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
+		if err != nil {
+			return err
+		}
+
+		location, err := minioClient.GetBucketLocation(args[0])
+		if err != nil {
+			return err
+		}
+
+		minioClient, err = newMinioClient(location)
+		if err != nil {
+			return err
+		}
+
+		objInfo, err := minioClient.GetObjectACL(args[0], args[1])
+		if err != nil {
+			return err
+		}
+
+		_, ok := meta["content-type"]
+		if !ok {
+			objInfo.Metadata["content-type"] = []string{objInfo.ContentType}
+		}
+
+		src := minio.NewSourceInfo(args[0], args[1], nil)
+
+		src.Headers = objInfo.Metadata
+
+		// Destination object
+		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, meta)
+		if err != nil {
+			return err
+		}
+
+		// Copy object call
+		return minioClient.CopyObject(dst, src)
 	},
+}
+
+func getHeader(cmd *cobra.Command) (map[string]string, error) {
+	res := map[string]string{}
+
+	for i := 0; i <= expires; i++ {
+		key, err := cmd.Flags().GetString(supportedHeaders[i])
+		if err != nil {
+			return nil, err
+		}
+		if key != "" {
+			res[supportedHeaders[i]] = key
+		}
+	}
+	return res, nil
 }
 
 func init() {
 	sosHeadersCmd.AddCommand(sosAddHeadersCmd)
+	sosAddHeadersCmd.Flags().SortFlags = false
+	for i := 0; i <= expires; i++ {
+		sosAddHeadersCmd.Flags().StringP(
+			supportedHeaders[i],
+			"",
+			"",
+			fmt.Sprintf("Add %s with <key>", strings.Replace(supportedHeaders[i], "-", " ", -1)))
+	}
+
 }
 
 // headersCmd represents the headers command
 var sosRemoveHeadersCmd = &cobra.Command{
-	Use:   "remove",
-	Short: "Remove an header key/value from an object",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("headers called")
+	Use:     "remove",
+	Short:   "Remove an header key/value from an object",
+	Aliases: gRemoveAlias,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 2 {
+			return cmd.Usage()
+		}
+		meta, err := getHeaderBool(cmd)
+		if err != nil {
+			return err
+		}
+
+		if meta == nil {
+			println("error: You have to choose one flag")
+			if err = cmd.Usage(); err != nil {
+				return err
+			}
+			return fmt.Errorf("error: You have to choose one flag")
+		}
+
+		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
+		if err != nil {
+			return err
+		}
+
+		location, err := minioClient.GetBucketLocation(args[0])
+		if err != nil {
+			return err
+		}
+
+		minioClient, err = newMinioClient(location)
+		if err != nil {
+			return err
+		}
+
+		objInfo, err := minioClient.GetObjectACL(args[0], args[1])
+		if err != nil {
+			return err
+		}
+
+		objInfo.Metadata["content-type"] = []string{objInfo.ContentType}
+
+		for _, v := range meta {
+			objInfo.Metadata.Del(v)
+		}
+
+		src := minio.NewSourceInfo(args[0], args[1], nil)
+
+		src.Headers = objInfo.Metadata
+
+		// Destination object
+		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, nil)
+		if err != nil {
+			return err
+		}
+
+		// Copy object call
+		return minioClient.CopyObject(dst, src)
 	},
+}
+
+func getHeaderBool(cmd *cobra.Command) ([]string, error) {
+	var res []string
+
+	for i := 1; i <= expires; i++ {
+		key, err := cmd.Flags().GetBool(supportedHeaders[i])
+		if err != nil {
+			return nil, err
+		}
+		if key {
+			res = append(res, supportedHeaders[i])
+		}
+	}
+	return res, nil
 }
 
 func init() {
 	sosHeadersCmd.AddCommand(sosRemoveHeadersCmd)
+	sosRemoveHeadersCmd.Flags().SortFlags = false
+	for i := 1; i <= expires; i++ {
+		sosRemoveHeadersCmd.Flags().BoolP(
+			supportedHeaders[i],
+			"",
+			false,
+			fmt.Sprintf("Remove %s with <key>", strings.Replace(supportedHeaders[i], "-", " ", -1)))
+	}
 }
 
 // headersCmd represents the headers command
 var sosShowHeadersCmd = &cobra.Command{
-	Use:   "show <bucket name> <object name>",
-	Short: "Show object headers",
+	Use:     "show <bucket name> <object name>",
+	Short:   "Show object headers",
+	Aliases: gShowAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return cmd.Usage()
@@ -93,16 +269,6 @@ var sosShowHeadersCmd = &cobra.Command{
 
 		return nil
 	},
-}
-
-var supportedHeaders = []string{
-	"content-type",
-	"cache-control",
-	"content-encoding",
-	"content-disposition",
-	"content-language",
-	"x-amz-website-redirect-location",
-	"expires",
 }
 
 func isStandardHeader(headerKey string) bool {

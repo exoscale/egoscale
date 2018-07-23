@@ -398,7 +398,7 @@ func readInput(reader *bufio.Reader, text, def string) (string, error) {
 	select {
 	case <-c:
 	case <-gContext.Done():
-		return "", fmt.Errorf("")
+		err = fmt.Errorf("")
 	}
 
 	if err != nil {

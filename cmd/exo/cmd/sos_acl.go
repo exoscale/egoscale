@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/exoscale/egoscale/cmd/exo/table"
 	minio "github.com/minio/minio-go"
 	"github.com/spf13/cobra"
 )
@@ -386,12 +388,85 @@ func getManualACLBool(cmd *cobra.Command) ([]string, error) {
 
 // aclCmd represents the acl command
 var sosShowACLCmd = &cobra.Command{
-	Use:     "show <bucket name> <object name> [object name] ...",
+	Use:     "show <bucket name> <object name>",
 	Short:   "show Object ACLs",
 	Aliases: gShowAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 2 {
+			return cmd.Usage()
+		}
+
+		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
+		if err != nil {
+			return err
+		}
+
+		location, err := minioClient.GetBucketLocation(args[0])
+		if err != nil {
+			return err
+		}
+
+		minioClient, err = newMinioClient(location)
+		if err != nil {
+			return err
+		}
+
+		objInfo, err := minioClient.GetObjectACL(args[0], args[1])
+		if err != nil {
+			return err
+		}
+
+		cannedACL, okHeader := objInfo.Metadata["X-Amz-Acl"]
+
+		table := table.NewTable(os.Stdout)
+		table.SetHeader([]string{"File Name", "ACL", "Value"})
+
+		if okHeader && len(cannedACL) > 0 {
+			table.Append([]string{objInfo.Key, "Canned", cannedACL[0]})
+		}
+
+		for k, v := range objInfo.Metadata {
+			if len(v) > 0 {
+				if isGrantACL(k) {
+					s := getGrantValue(v)
+					table.Append([]string{objInfo.Key, formatGrantKey(k), s})
+				}
+			}
+		}
+
+		table.Render()
+
 		return nil
 	},
+}
+
+func getGrantValue(values []string) string {
+	for i, v := range values {
+		values[i] = strings.Trim(v, "id=")
+	}
+	return strings.Join(values, ", ")
+}
+
+func formatGrantKey(k string) string {
+	var res string
+	switch {
+	case k == manualRead:
+		res = "Read"
+	case k == manualWrite:
+		res = "Write"
+	case k == manualReadACP:
+		res = "Read ACP"
+	case k == manualWriteACP:
+		res = "Write ACP"
+	case k == manualFullControl:
+		res = "Full Control"
+	}
+	return res
+}
+
+func isGrantACL(key string) bool {
+	key = strings.ToLower(key)
+	return strings.HasPrefix(key, "x-amz-grant-")
 }
 
 func init() {

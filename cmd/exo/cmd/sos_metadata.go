@@ -48,6 +48,8 @@ var sosAddMetadataCmd = &cobra.Command{
 			return err
 		}
 
+		objInfo.Metadata["content-type"] = []string{objInfo.ContentType}
+
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
 		src.Headers = objInfo.Metadata
@@ -100,6 +102,8 @@ var sosRemoveMetadataCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		objInfo.Metadata["content-type"] = []string{objInfo.ContentType}
 
 		for k := range objInfo.Metadata {
 			key := strings.ToLower(k)

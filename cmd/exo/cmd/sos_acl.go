@@ -442,7 +442,7 @@ var sosShowACLCmd = &cobra.Command{
 
 func getGrantValue(values []string) string {
 	for i, v := range values {
-		values[i] = strings.Trim(v, "id=")
+		values[i] = v[len("id="):]
 	}
 	return strings.Join(values, ", ")
 }

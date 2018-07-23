@@ -392,9 +392,9 @@ func getManualACLBool(cmd *cobra.Command) ([]string, error) {
 
 // aclCmd represents the acl command
 var sosShowACLCmd = &cobra.Command{
-	Use:     "show <bucket name> <object name>",
-	Short:   "show Object ACLs",
-	Aliases: gShowAlias,
+	Use:     "list <bucket name> <object name>",
+	Short:   "list Object ACLs",
+	Aliases: gListAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return cmd.Usage()

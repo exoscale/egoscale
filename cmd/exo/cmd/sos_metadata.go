@@ -133,9 +133,9 @@ func init() {
 
 // metadataCmd represents the metadata command
 var sosShowMetadataCmd = &cobra.Command{
-	Use:     "show <bucket name> <object name>",
-	Short:   "Show object metadatas",
-	Aliases: gShowAlias,
+	Use:     "list <bucket name> <object name>",
+	Short:   "list object metadatas",
+	Aliases: gListAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return cmd.Usage()

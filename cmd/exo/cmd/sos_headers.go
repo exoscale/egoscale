@@ -222,9 +222,9 @@ func init() {
 
 // headersCmd represents the headers command
 var sosShowHeadersCmd = &cobra.Command{
-	Use:     "show <bucket name> <object name>",
-	Short:   "Show object headers",
-	Aliases: gShowAlias,
+	Use:     "list <bucket name> <object name>",
+	Short:   "list object headers",
+	Aliases: gListAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 2 {
 			return cmd.Usage()
@@ -259,7 +259,6 @@ var sosShowHeadersCmd = &cobra.Command{
 
 		for k, v := range objInfo.Metadata {
 			k = strings.ToLower(k)
-			println(k)
 			if isStandardHeader(k) && len(v) > 0 {
 				table.Append([]string{objInfo.Key, k, v[0]})
 			}

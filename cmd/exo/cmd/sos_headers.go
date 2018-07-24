@@ -48,7 +48,7 @@ var sosAddHeadersCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
-		meta, err := getHeader(cmd)
+		meta, err := getHeaderFlags(cmd)
 		if err != nil {
 			return err
 		}
@@ -88,7 +88,7 @@ var sosAddHeadersCmd = &cobra.Command{
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
-		src.Headers = objInfo.Metadata
+		src.Headers = mergeHeader(src.Headers, objInfo.Metadata)
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, meta)
@@ -101,7 +101,7 @@ var sosAddHeadersCmd = &cobra.Command{
 	},
 }
 
-func getHeader(cmd *cobra.Command) (map[string]string, error) {
+func getHeaderFlags(cmd *cobra.Command) (map[string]string, error) {
 	res := map[string]string{}
 
 	for i := 0; i <= expires; i++ {
@@ -172,6 +172,7 @@ var sosRemoveHeadersCmd = &cobra.Command{
 		}
 
 		objInfo.Metadata["content-type"] = []string{objInfo.ContentType}
+		objInfo.Metadata["x-amz-metadata-directive"] = []string{"REPLACE"}
 
 		for _, v := range meta {
 			objInfo.Metadata.Del(v)
@@ -179,7 +180,7 @@ var sosRemoveHeadersCmd = &cobra.Command{
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
-		src.Headers = objInfo.Metadata
+		src.Headers = mergeHeader(src.Headers, objInfo.Metadata)
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, nil)

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -92,7 +93,7 @@ var sosAddACLCmd = &cobra.Command{
 			objInfo.Metadata.Add(manualFullControl, "id="+gCurrentAccount.Account)
 		}
 
-		src.Headers = objInfo.Metadata
+		src.Headers = mergeHeader(src.Headers, objInfo.Metadata)
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, meta)
@@ -103,6 +104,14 @@ var sosAddACLCmd = &cobra.Command{
 		// Copy object call
 		return minioClient.CopyObject(dst, src)
 	},
+}
+
+//merge src header in dst header
+func mergeHeader(src, dst http.Header) http.Header {
+	for k, v := range src {
+		dst[k] = v
+	}
+	return dst
 }
 
 func getACL(cmd *cobra.Command) (map[string]string, error) {
@@ -308,6 +317,7 @@ var sosRemoveACLCmd = &cobra.Command{
 		}
 
 		objInfo.Metadata["content-type"] = []string{objInfo.ContentType}
+		objInfo.Metadata["x-amz-metadata-directive"] = []string{"REPLACE"}
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
@@ -318,10 +328,10 @@ var sosRemoveACLCmd = &cobra.Command{
 		}
 
 		for _, k := range meta {
-			objInfo.Metadata[k] = []string{""}
+			objInfo.Metadata.Del(k)
 		}
 
-		src.Headers = objInfo.Metadata
+		src.Headers = mergeHeader(src.Headers, objInfo.Metadata)
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, nil)

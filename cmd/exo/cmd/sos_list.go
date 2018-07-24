@@ -3,8 +3,11 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/exoscale/egoscale/cmd/exo/table"
 
 	"github.com/minio/minio-go"
 
@@ -36,7 +39,6 @@ var sosListCmd = &cobra.Command{
 
 		path := filepath.ToSlash(args[0])
 		path = strings.Trim(path, "/")
-
 		p := splitPath(args[0])
 
 		if len(p) == 0 {
@@ -51,8 +53,10 @@ var sosListCmd = &cobra.Command{
 			prefix = path[len(p[0]):]
 			prefix = strings.Trim(prefix, "/")
 		}
+
 		bucketName := p[0]
 
+		///XXX waiting for pithos 301 redirect
 		location, err := minioClient.GetBucketLocation(bucketName)
 		if err != nil {
 			return err
@@ -62,9 +66,14 @@ var sosListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		///
+
+		table := table.NewTable(os.Stdout)
+		table.RemoveFrame()
 
 		if isRec {
-			listRecursively(minioClient, bucketName, prefix, "", false)
+			listRecursively(minioClient, bucketName, prefix, "", false, table)
+			table.Render()
 			return nil
 		}
 
@@ -88,40 +97,38 @@ var sosListCmd = &cobra.Command{
 			lastModified := fmt.Sprintf("%v", message.LastModified)
 			key := filepath.ToSlash(message.Key)
 			key = strings.TrimLeft(message.Key[len(prefix):], "/")
-			fmt.Printf("[%s]    %s %s\n", lastModified, size, key)
+
+			table.AppendArgs(fmt.Sprintf("[%s]    ", lastModified), size, key)
 		}
+
+		table.Render()
 
 		return nil
 
 	},
 }
 
-func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBucket bool) {
+func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBucket bool, table *table.Table) {
 	doneCh := make(chan struct{})
 	defer close(doneCh)
+
+	table.RemoveFrame()
 
 	for message := range c.ListObjectsV2(bucketName, prefix, true, doneCh) {
 
 		size := fmt.Sprintf("%dB", message.Size)
 		lastModified := fmt.Sprintf("%v", message.LastModified)
 		if displayBucket {
-			fmt.Printf("[%s] [%s]%s    %s %s/%s\n", lastModified, zone, alignZone(zone), size, bucketName, message.Key)
+			table.AppendArgs(fmt.Sprintf("[%s]", lastModified),
+				fmt.Sprintf("[%s]    ", zone),
+				size,
+				fmt.Sprintf("%s/%s", bucketName, message.Key))
 		} else {
-			fmt.Printf("[%s]    %s %s\n", lastModified, size, message.Key)
+			table.AppendArgs(fmt.Sprintf("[%s]    ", lastModified),
+				size,
+				fmt.Sprintf("%s/%s", bucketName, message.Key))
 		}
 	}
-}
-
-func isPrefix(prefix, file string) bool {
-	prefix = strings.Trim(prefix, "/")
-	file = strings.Trim(file, "/")
-	return prefix == file
-}
-
-func splitPath(s string) []string {
-	path := filepath.ToSlash(s)
-	path = strings.Trim(path, "/")
-	return strings.Split(path, "/")
 }
 
 func displayBucket(minioClient *minio.Client, isRecursive bool) error {
@@ -129,6 +136,9 @@ func displayBucket(minioClient *minio.Client, isRecursive bool) error {
 	if err != nil {
 		return err
 	}
+
+	table := table.NewTable(os.Stdout)
+	table.RemoveFrame()
 
 	for zoneName, buckets := range allBuckets {
 		for _, bucket := range buckets {
@@ -139,25 +149,18 @@ func displayBucket(minioClient *minio.Client, isRecursive bool) error {
 					return err
 				}
 				///
-				listRecursively(minioClient, bucket.Name, "", zoneName, true)
+				listRecursively(minioClient, bucket.Name, "", zoneName, true, table)
 				continue
 			}
-			fmt.Println(
-				fmt.Sprintf("[%s]", bucket.CreationDate.String()),
-				fmt.Sprintf("[%s]%s     ", zoneName, alignZone(zoneName)),
+			table.AppendArgs(fmt.Sprintf("[%s]",
+				bucket.CreationDate.String()),
+				fmt.Sprintf("[%s]    ", zoneName),
 				"0B",
 				bucket.Name)
 		}
 	}
+	table.Render()
 	return nil
-}
-
-func alignZone(z string) string {
-	len := 8 - len(z)
-	if len < 0 {
-		len = 0
-	}
-	return strings.Repeat(" ", len)
 }
 
 func listBucket(minioClient *minio.Client) (map[string][]minio.BucketInfo, error) {
@@ -183,6 +186,18 @@ func listBucket(minioClient *minio.Client) (map[string][]minio.BucketInfo, error
 
 	}
 	return res, nil
+}
+
+func isPrefix(prefix, file string) bool {
+	prefix = strings.Trim(prefix, "/")
+	file = strings.Trim(file, "/")
+	return prefix == file
+}
+
+func splitPath(s string) []string {
+	path := filepath.ToSlash(s)
+	path = strings.Trim(path, "/")
+	return strings.Split(path, "/")
 }
 
 func init() {

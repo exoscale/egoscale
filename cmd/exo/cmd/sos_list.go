@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/minio/minio-go"
+	minio "github.com/pierre-emmanuelJ/minio-go"
 
 	"github.com/spf13/cobra"
 )

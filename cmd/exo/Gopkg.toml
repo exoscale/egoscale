@@ -21,8 +21,8 @@ ignored = ["github.com/exoscale/egoscale"]
   version = "3.3.1"
 
 [[constraint]]
-  name = "github.com/minio/minio-go"
-  version = "6.0.5"
+  branch = "object-acl"
+  name = "github.com/pierre-emmanuelJ/minio-go"
 
 [prune]
   go-tests = true

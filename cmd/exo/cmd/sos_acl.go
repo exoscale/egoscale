@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/exoscale/egoscale/cmd/exo/table"
-	minio "github.com/minio/minio-go"
+	minio "github.com/pierre-emmanuelJ/minio-go"
 	"github.com/spf13/cobra"
 )
 
@@ -313,7 +313,7 @@ var sosRemoveACLCmd = &cobra.Command{
 		_, okHeader := objInfo.Metadata["X-Amz-Acl"]
 
 		if okHeader {
-			return fmt.Errorf("Error: No Manual ACL are set")
+			return fmt.Errorf("error: No Manual ACL are set")
 		}
 
 		for _, k := range meta {

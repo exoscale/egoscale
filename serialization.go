@@ -205,14 +205,35 @@ func prepareValues(prefix string, params url.Values, command interface{}) error 
 						}
 					}
 				default:
-					if val.Len() == 0 {
-						if required {
-							return fmt.Errorf("%s.%s (%v) is required, got empty slice", typeof.Name(), n, val.Kind())
+					switch field.Type.Elem() {
+					case reflect.TypeOf(CIDR{}):
+						if val.Len() == 0 {
+							if required {
+								return fmt.Errorf("%s.%s (%v) is required, got empty slice", typeof.Name(), n, val.Kind())
+							}
+						} else {
+							value := reflect.ValueOf(val.Interface())
+							ss := make([]string, val.Len())
+							for i := 0; i < value.Len(); i++ {
+								v := value.Index(i).Interface()
+								s, ok := v.(fmt.Stringer)
+								if !ok {
+									return fmt.Errorf("not a String, %T", v)
+								}
+								ss[i] = s.String()
+							}
+							params.Set(name, strings.Join(ss, ","))
 						}
-					} else {
-						err := prepareList(name, params, val.Interface())
-						if err != nil {
-							return err
+					default:
+						if val.Len() == 0 {
+							if required {
+								return fmt.Errorf("%s.%s (%v) is required, got empty slice", typeof.Name(), n, val.Kind())
+							}
+						} else {
+							err := prepareList(name, params, val.Interface())
+							if err != nil {
+								return err
+							}
 						}
 					}
 				}

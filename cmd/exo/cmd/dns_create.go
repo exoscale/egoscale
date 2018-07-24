@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
@@ -12,23 +12,21 @@ var dnsCreateCmd = &cobra.Command{
 	Use:     "create <domain name>",
 	Short:   "Create a domain",
 	Aliases: gCreateAlias,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
 		}
 		resp, err := createDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
-		println(resp.ID)
-
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
 func createDomain(domainName string) (*egoscale.DNSDomain, error) {
-
 	return csDNS.CreateDomain(domainName)
 }
 

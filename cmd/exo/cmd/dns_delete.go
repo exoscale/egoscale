@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -11,22 +11,21 @@ var dnsDeleteCmd = &cobra.Command{
 	Use:     "delete <domain name>",
 	Short:   "Delete a domain",
 	Aliases: gDeleteAlias,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
 		}
 		if err := deleteDomain(args[0]); err != nil {
-			log.Fatal(err)
+			return err
 		}
 
-		println(args[0])
+		fmt.Println(args[0])
+		return nil
 	},
 }
 
 func deleteDomain(domainName string) error {
-	err := csDNS.DeleteDomain(domainName)
-	return err
+	return csDNS.DeleteDomain(domainName)
 }
 
 func init() {

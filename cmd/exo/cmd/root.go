@@ -215,15 +215,20 @@ func initConfig() {
 	for i, acc := range config.Accounts {
 		if acc.Name == gAccountName {
 			gCurrentAccount = &config.Accounts[i]
+			break
 		}
 	}
 
 	if gCurrentAccount == nil {
-		log.Fatalf("Could't find any account with name: %q", gAccountName)
+		log.Fatalf("could't find any account with name: %q", gAccountName)
 	}
 
 	if gCurrentAccount.Endpoint == "" {
 		gCurrentAccount.Endpoint = defaultEndpoint
+	}
+
+	if gCurrentAccount.DNSEndpoint == "" {
+		gCurrentAccount.DNSEndpoint = strings.Replace(gCurrentAccount.Endpoint, "/compute", "/dns", 1)
 	}
 
 	if gCurrentAccount.DefaultTemplate == "" {

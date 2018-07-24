@@ -14,28 +14,27 @@ var dnsACmd = &cobra.Command{
 	Use:   "A <domain name>",
 	Short: "Add A record type to a domain",
 	Long:  `Add an "A" record that points your domain or a subdomain to an IP address.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
 		}
 
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		addr, err := cmd.Flags().GetString("address")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -46,9 +45,10 @@ var dnsACmd = &cobra.Command{
 			Content:    addr,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -57,8 +57,10 @@ func init() {
 	dnsACmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
 	dnsACmd.Flags().StringP("address", "a", "", "Example: 127.0.0.1")
 	dnsACmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsACmd.MarkFlagRequired("ttl")
-	dnsACmd.MarkFlagRequired("address")
+
+	if err := dnsACmd.MarkFlagRequired("address"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // AAAACmd represents the AAAA command
@@ -66,27 +68,26 @@ var dnsAAAACmd = &cobra.Command{
 	Use:   "AAAA <domain name>",
 	Short: "Add AAAA record type to a domain",
 	Long:  `Add an "AAAA" record that points your domain to an IPv6 address. These records are the same as A records except they use IPv6 addresses.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		addr, err := cmd.Flags().GetString("address")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -97,9 +98,10 @@ var dnsAAAACmd = &cobra.Command{
 			Content:    addr,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -108,8 +110,10 @@ func init() {
 	dnsAAAACmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
 	dnsAAAACmd.Flags().StringP("address", "a", "", "Example: 2001:0db8:85a3:0000:0000:EA75:1337:BEEF")
 	dnsAAAACmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsACmd.MarkFlagRequired("ttl")
-	dnsAAAACmd.MarkFlagRequired("address")
+
+	if err := dnsAAAACmd.MarkFlagRequired("address"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // ALIASCmd represents the ALIAS command
@@ -121,27 +125,26 @@ map a domain to another domain transparently. It can be used like a CNAME but
 for a name with other records, like the root. When the record is resolved it will
 look up the A records for the aliased domain and return those as the records for 
 the record name. Note: If you want to redirect to a URL, use a URL record instead.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		alias, err := cmd.Flags().GetString("alias")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -152,9 +155,10 @@ the record name. Note: If you want to redirect to a URL, use a URL record instea
 			Content:    alias,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -163,8 +167,10 @@ func init() {
 	dnsALIASCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
 	dnsALIASCmd.Flags().StringP("alias", "a", "", "Alias for: Example: some-other-site.com")
 	dnsALIASCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsACmd.MarkFlagRequired("ttl")
-	dnsALIASCmd.MarkFlagRequired("alias")
+
+	if err := dnsALIASCmd.MarkFlagRequired("alias"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // CNAMECmd represents the CNAME command
@@ -173,27 +179,26 @@ var dnsCNAMECmd = &cobra.Command{
 	Short: "Add CNAME record type to a domain",
 	Long: `Add a "CNAME" record that aliases a subdomain to another host.
 These types of records are used when a server is reached by several names. Only use CNAME records on subdomains.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		alias, err := cmd.Flags().GetString("alias")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -204,9 +209,10 @@ These types of records are used when a server is reached by several names. Only 
 			Content:    alias,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -215,9 +221,13 @@ func init() {
 	dnsCNAMECmd.Flags().StringP("name", "n", "", "You may use the * wildcard here.")
 	dnsCNAMECmd.Flags().StringP("alias", "a", "", "Alias for: Example: some-other-site.com")
 	dnsCNAMECmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsACmd.MarkFlagRequired("ttl")
-	dnsCNAMECmd.MarkFlagRequired("alias")
-	dnsCNAMECmd.MarkFlagRequired("name")
+
+	if err := dnsCNAMECmd.MarkFlagRequired("alias"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsCNAMECmd.MarkFlagRequired("name"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // HINFOCmd represents the HINFO command
@@ -225,31 +235,31 @@ var dnsHINFOCmd = &cobra.Command{
 	Use:   "HINFO <domain name>",
 	Short: "Add HINFO record type to a domain",
 	Long:  `Add an "HINFO" record is used to describe the CPU and OS of a host.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
+
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		cpu, err := cmd.Flags().GetString("cpu")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		os, err := cmd.Flags().GetString("os")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -260,9 +270,10 @@ var dnsHINFOCmd = &cobra.Command{
 			Content:    fmt.Sprintf("%s %s", cpu, os),
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -272,9 +283,13 @@ func init() {
 	dnsHINFOCmd.Flags().StringP("cpu", "c", "", "Example: IBM-PC/AT")
 	dnsHINFOCmd.Flags().StringP("os", "o", "", "The operating system of the machine, example: Linux")
 	dnsHINFOCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsACmd.MarkFlagRequired("ttl")
-	dnsHINFOCmd.MarkFlagRequired("cpu")
-	dnsHINFOCmd.MarkFlagRequired("os")
+
+	if err := dnsHINFOCmd.MarkFlagRequired("cpu"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsHINFOCmd.MarkFlagRequired("os"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // MXCmd represents the MX command
@@ -283,31 +298,31 @@ var dnsMXCmd = &cobra.Command{
 	Short: "Add MX record type to a domain",
 	Long: `Add a mail exchange record that points to a mail server or relay.
 These types of records are used to describe which servers handle incoming email.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
+
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		mailSrv, err := cmd.Flags().GetString("mail-server-host")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		priority, err := cmd.Flags().GetInt("priority")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -319,9 +334,10 @@ These types of records are used to describe which servers handle incoming email.
 			Prio:       priority,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -331,9 +347,13 @@ func init() {
 	dnsMXCmd.Flags().StringP("mail-server-host", "m", "", "Example: mail-server.example.com")
 	dnsMXCmd.Flags().IntP("priority", "p", 0, "Common values are for example 1, 5 or 10")
 	dnsMXCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsACmd.MarkFlagRequired("ttl")
-	dnsMXCmd.MarkFlagRequired("mail-server-host")
-	dnsMXCmd.MarkFlagRequired("priority")
+
+	if err := dnsMXCmd.MarkFlagRequired("mail-server-host"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsMXCmd.MarkFlagRequired("priority"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // NAPTRCmd represents the NAPTR command
@@ -342,41 +362,41 @@ var dnsNAPTRCmd = &cobra.Command{
 	Short: "Add NAPTR record type to a domain",
 	Long: `Add an "NAPTR" record to provide a means to map a resource that is not in
 the domain name syntax to a label that is. More information can be found in RFC 2915.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
+
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		order, err := cmd.Flags().GetInt("order")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		preference, err := cmd.Flags().GetInt("preference")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		flags := ""
 		//flags
 		s, err := cmd.Flags().GetBool("s")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		a, err := cmd.Flags().GetBool("a")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		u, err := cmd.Flags().GetBool("u")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		p, err := cmd.Flags().GetBool("p")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		if s {
@@ -394,24 +414,24 @@ the domain name syntax to a label that is. More information can be found in RFC 
 
 		service, err := cmd.Flags().GetString("service")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		regex, err := cmd.Flags().GetString("regex")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		replacement, err := cmd.Flags().GetString("replacement")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -422,9 +442,10 @@ the domain name syntax to a label that is. More information can be found in RFC 
 			Content:    fmt.Sprintf("%d %d %q %q %q %q", order, preference, flags, service, regex, replacement),
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -444,12 +465,22 @@ func init() {
 	dnsNAPTRCmd.Flags().BoolP("p", "", false, "Flag indicates that processing should continue in a protocol-specific fashion.")
 
 	dnsNAPTRCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsACmd.MarkFlagRequired("ttl")
-	dnsNAPTRCmd.MarkFlagRequired("order")
-	dnsNAPTRCmd.MarkFlagRequired("preference")
-	dnsNAPTRCmd.MarkFlagRequired("service")
-	dnsNAPTRCmd.MarkFlagRequired("regex")
-	dnsNAPTRCmd.MarkFlagRequired("replacement")
+
+	if err := dnsNAPTRCmd.MarkFlagRequired("order"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsNAPTRCmd.MarkFlagRequired("preference"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsNAPTRCmd.MarkFlagRequired("service"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsNAPTRCmd.MarkFlagRequired("regex"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsNAPTRCmd.MarkFlagRequired("replacement"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // NSCmd represents the NS command
@@ -458,27 +489,27 @@ var dnsNSCmd = &cobra.Command{
 	Short: "Add NS record type to a domain",
 	Long: `Add an "NS" record the delegates a domain to another name server.
 You may only delegate subdomains (for example subdomain.yourdomain.com).`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
+
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		mailSrv, err := cmd.Flags().GetString("mail-server-host")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -489,9 +520,10 @@ You may only delegate subdomains (for example subdomain.yourdomain.com).`,
 			Content:    mailSrv,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -500,9 +532,12 @@ func init() {
 	dnsNSCmd.Flags().StringP("name", "n", "", "You may use the * wildcard here.")
 	dnsNSCmd.Flags().StringP("mail-server-host", "m", "", "Example: 'ns1.example.com'")
 	dnsNSCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsACmd.MarkFlagRequired("ttl")
-	dnsNSCmd.MarkFlagRequired("name")
-	dnsNSCmd.MarkFlagRequired("mail-server-host")
+	if err := dnsNSCmd.MarkFlagRequired("name"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsNSCmd.MarkFlagRequired("mail-server-host"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // POOLCmd represents the POOL command
@@ -511,27 +546,27 @@ var dnsPOOLCmd = &cobra.Command{
 	Short: "Add POOL record type to a domain",
 	Long: `Add a "POOL" record that aliases a subdomain to another host as
 part of a pool of available CNAME records. This is a DNSimple custom record type.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
+
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		alias, err := cmd.Flags().GetString("alias")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -542,9 +577,10 @@ part of a pool of available CNAME records. This is a DNSimple custom record type
 			Content:    alias,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -553,58 +589,28 @@ func init() {
 	dnsPOOLCmd.Flags().StringP("name", "n", "", "You may use the * wildcard here.")
 	dnsPOOLCmd.Flags().StringP("alias", "a", "", "Alias for: Example: 'some-other-site.com'")
 	dnsPOOLCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsACmd.MarkFlagRequired("ttl")
-	dnsPOOLCmd.MarkFlagRequired("name")
-	dnsPOOLCmd.MarkFlagRequired("alias")
+
+	if err := dnsPOOLCmd.MarkFlagRequired("name"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsPOOLCmd.MarkFlagRequired("alias"); err != nil {
+		log.Fatal(err)
+	}
 }
-
-// // SPFCmd represents the SPF command
-// var dnsSPFCmd = &cobra.Command{
-// 	Use:   "SPF <domain name>",
-// 	Short: "Add SPF record type to a domain",
-// 	Long: `Add an "SPF" record to indicate what hosts and addresses are allowed to send mail from your domain.
-// When creating an SPF record we will automatically create a corresponding TXT record
-// for you as some older mail exchanges require a TXT version of the SPF record.
-
-// 	`,
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		if len(args) < 1 {
-// 			cmd.Usage()
-// 			return
-// 		}
-// 		fmt.Println("SPF called")
-// 	},
-// }
-
-// func init() {
-// 	dnsAddCmd.AddCommand(dnsSPFCmd)
-// 	dnsAddCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name> You may use the * wildcard here.")
-// 	dnsAddCmd.Flags().BoolP("from-this-host", "e", false, "Set this flag if you send email from this host.")
-// 	dnsAddCmd.Flags().BoolP("from-this-hosts-mx", "x", false, "Set this flag if you send email from this host's MX servers.")
-// 	dnsAddCmd.Flags().StringP("other-servers", "o", "", "Separate addresses by spaces e.g(127.0.0.1 192.168.1.1)")
-// 	dnsAddCmd.Flags().StringP("ip-networks", "n", "", "Separate networks by spaces e.g(127.0.0.1 192.168.1.1)")
-// 	dnsAddCmd.Flags().StringP("ipv6-networks", "6", "", "Separate networks by spaces e.g(2001:0db8:85a3:0000:0000:EA75:1337:BEEF ...)")
-// 	dnsAddCmd.Flags().StringP("include", "i", "", "If you send mail through your ISP's servers, and the ISP has published an SPF record, name the ISP here. Separate multiple domains with spaces.")
-// 	dnsAddCmd.Flags().BoolP("hard-fail", "", false, "Soft fail if flag not set")
-// 	dnsAddCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-
-// 	dnsSPFCmd.MarkFlagRequired("")
-
-// }
 
 // SRVCmd represents the SRV command
 var dnsSRVCmd = &cobra.Command{
 	Use:   "SRV <domain name>",
 	Short: "Add SRV record type to a domain",
 	Long:  `Add an "SRV" record to specify the location of servers for a specific service.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
+
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		if name != "" {
@@ -613,36 +619,36 @@ var dnsSRVCmd = &cobra.Command{
 
 		symbName, err := cmd.Flags().GetString("symbolic-name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		protocol, err := cmd.Flags().GetString("protocol")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		prio, err := cmd.Flags().GetInt("priority")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		weight, err := cmd.Flags().GetInt("weight")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		port, err := cmd.Flags().GetString("port")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		target, err := cmd.Flags().GetString("target")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -654,9 +660,10 @@ var dnsSRVCmd = &cobra.Command{
 			Prio:       prio,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -670,13 +677,25 @@ func init() {
 	dnsSRVCmd.Flags().StringP("port", "P", "", "The 'TCP' or 'UDP' port on which the service is found.")
 	dnsSRVCmd.Flags().StringP("target", "", "", "The canonical hostname of the machine providing the service.")
 	dnsSRVCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsSRVCmd.MarkFlagRequired("ttl")
-	dnsSRVCmd.MarkFlagRequired("symbolic-name")
-	dnsSRVCmd.MarkFlagRequired("protocol")
-	dnsSRVCmd.MarkFlagRequired("priority")
-	dnsSRVCmd.MarkFlagRequired("weight")
-	dnsSRVCmd.MarkFlagRequired("port")
-	dnsSRVCmd.MarkFlagRequired("target")
+
+	if err := dnsSRVCmd.MarkFlagRequired("symbolic-name"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsSRVCmd.MarkFlagRequired("protocol"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsSRVCmd.MarkFlagRequired("priority"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsSRVCmd.MarkFlagRequired("weight"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsSRVCmd.MarkFlagRequired("port"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsSRVCmd.MarkFlagRequired("target"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // SSHFPCmd represents the SSHFP command
@@ -684,35 +703,35 @@ var dnsSSHFPCmd = &cobra.Command{
 	Use:   "SSHFP <domain name>",
 	Short: "Add SSHFP record type to a domain",
 	Long:  `Edit an "SSHFP" record to share your SSH fingerprint with others.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
+
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		algo, err := cmd.Flags().GetInt("algorithm")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		fingerIDType, err := cmd.Flags().GetInt("fingerprint-type")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		fingerprint, err := cmd.Flags().GetString("fingerprint")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -723,9 +742,10 @@ var dnsSSHFPCmd = &cobra.Command{
 			Content:    fmt.Sprintf("%d %d %s", algo, fingerIDType, fingerprint),
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -736,9 +756,13 @@ func init() {
 	dnsSSHFPCmd.Flags().IntP("fingerprint-type", "", 0, "SHA1(1) | SHA256(2)")
 	dnsSSHFPCmd.Flags().StringP("fingerprint", "f", "", "Fingerprint")
 	dnsSSHFPCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsSSHFPCmd.MarkFlagRequired("ttl")
-	dnsSSHFPCmd.MarkFlagRequired("algorithm")
-	dnsSSHFPCmd.MarkFlagRequired("fingerprint-type")
+
+	if err := dnsSSHFPCmd.MarkFlagRequired("algorithm"); err != nil {
+		log.Fatal(err)
+	}
+	if err := dnsSSHFPCmd.MarkFlagRequired("fingerprint-type"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // TXTCmd represents the TXT command
@@ -747,27 +771,27 @@ var dnsTXTCmd = &cobra.Command{
 	Short: "Add TXT record type to a domain",
 	Long: `Add a "TXT" record. This is useful for domain records that are not covered by
 the standard record types. For example, Google uses this type of record for domain verification.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
+
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		content, err := cmd.Flags().GetString("content")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -778,9 +802,10 @@ the standard record types. For example, Google uses this type of record for doma
 			Content:    content,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -789,8 +814,10 @@ func init() {
 	dnsTXTCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
 	dnsTXTCmd.Flags().StringP("content", "c", "", "Content record")
 	dnsTXTCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsTXTCmd.MarkFlagRequired("ttl")
-	dnsTXTCmd.MarkFlagRequired("content")
+
+	if err := dnsTXTCmd.MarkFlagRequired("content"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // URLCmd represents the URL command
@@ -799,27 +826,26 @@ var dnsURLCmd = &cobra.Command{
 	Short: "Add URL record type to a domain",
 	Long: `Add an URL redirection record that points your domain to a URL.
 This type of record uses an HTTP redirect to redirect visitors from a domain to a web site.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			cmd.Usage()
-			return
+			return cmd.Usage()
 		}
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		destURL, err := cmd.Flags().GetString("destination-url")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		ttl, err := cmd.Flags().GetInt("ttl")
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		domain, err := csDNS.GetDomain(args[0])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
@@ -830,9 +856,10 @@ This type of record uses an HTTP redirect to redirect visitors from a domain to 
 			Content:    destURL,
 		})
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		println(resp.ID)
+		fmt.Println(resp.ID)
+		return nil
 	},
 }
 
@@ -841,6 +868,8 @@ func init() {
 	dnsURLCmd.Flags().StringP("name", "n", "", "Leave this blank to create a record for <domain name>, You may use the '*' wildcard here.")
 	dnsURLCmd.Flags().StringP("destination-url", "d", "", "Example: https://www.example.com")
 	dnsURLCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
-	//dnsURLCmd.MarkFlagRequired("ttl")
-	dnsURLCmd.MarkFlagRequired("destination-url")
+
+	if err := dnsURLCmd.MarkFlagRequired("destination-url"); err != nil {
+		log.Fatal(err)
+	}
 }

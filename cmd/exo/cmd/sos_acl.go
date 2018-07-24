@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// nolint
 const (
 	//Canned ACLs
 	private                string = "private"

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -71,8 +72,7 @@ var sosListCmd = &cobra.Command{
 
 		if isRec {
 			listRecursively(minioClient, bucketName, prefix, "", false, table)
-			table.Flush()
-			return nil
+			return table.Flush()
 		}
 
 		doneCh := make(chan struct{})
@@ -93,17 +93,16 @@ var sosListCmd = &cobra.Command{
 			}
 			lastModified := fmt.Sprintf("%v", message.LastModified)
 			key := filepath.ToSlash(message.Key)
-			key = strings.TrimLeft(message.Key[len(prefix):], "/")
+			key = strings.TrimLeft(key[len(prefix):], "/")
 
-			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]    ", lastModified), message.Size, key)
+			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]    ", lastModified), message.Size, key) // nolint: errcheck
 		}
 
-		table.Flush()
-		return nil
+		return table.Flush()
 	},
 }
 
-func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBucket bool, table *tabwriter.Writer) {
+func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBucket bool, table io.Writer) {
 	doneCh := make(chan struct{})
 	defer close(doneCh)
 
@@ -111,14 +110,14 @@ func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBu
 
 		lastModified := fmt.Sprintf("%v", message.LastModified)
 		if displayBucket {
-			fmt.Fprintf(table, "%s\t%s\t%dB\t%s\n", fmt.Sprintf("[%s]", lastModified),
+			fmt.Fprintf(table, "%s\t%s\t%dB\t%s\n", fmt.Sprintf("[%s]", lastModified), // nolint: errcheck
 				fmt.Sprintf("[%s]    ", zone),
 				message.Size,
-				fmt.Sprintf("%s/%s", bucketName, message.Key))
+				fmt.Sprintf("%s/%s", bucketName, message.Key)) // nolint: errcheck
 		} else {
-			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]    ", lastModified),
+			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]    ", lastModified), // nolint: errcheck
 				message.Size,
-				fmt.Sprintf("%s/%s", bucketName, message.Key))
+				fmt.Sprintf("%s/%s", bucketName, message.Key)) // nolint: errcheck
 		}
 	}
 }
@@ -143,15 +142,14 @@ func displayBucket(minioClient *minio.Client, isRecursive bool) error {
 				listRecursively(minioClient, bucket.Name, "", zoneName, true, table)
 				continue
 			}
-			fmt.Fprintf(table, "%s\t%s\t%dB\t%s/\n",
+			fmt.Fprintf(table, "%s\t%s\t%dB\t%s/\n", // nolint: errcheck
 				fmt.Sprintf("[%s]", bucket.CreationDate.String()),
 				fmt.Sprintf("[%s]    ", zoneName),
 				0,
-				bucket.Name)
+				bucket.Name) // nolint: errcheck
 		}
 	}
-	table.Flush()
-	return nil
+	return table.Flush()
 }
 
 func listBucket(minioClient *minio.Client) (map[string][]minio.BucketInfo, error) {

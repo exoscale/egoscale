@@ -10,8 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type supHeader int
-
+// nolint
 const (
 	contentType = iota
 	cacheControl

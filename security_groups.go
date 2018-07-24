@@ -110,6 +110,11 @@ type UserSecurityGroup struct {
 	Account string `json:"account,omitempty"`
 }
 
+// String gives the UserSecurityGroup name
+func (usg UserSecurityGroup) String() string {
+	return usg.Group
+}
+
 // CreateSecurityGroup represents a security group creation
 type CreateSecurityGroup struct {
 	Name        string `json:"name" doc:"name of the security group"`

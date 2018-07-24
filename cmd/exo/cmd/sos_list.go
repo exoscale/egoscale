@@ -6,8 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/exoscale/egoscale/cmd/exo/table"
+	"text/tabwriter"
 
 	"github.com/minio/minio-go"
 
@@ -68,12 +67,11 @@ var sosListCmd = &cobra.Command{
 		}
 		///
 
-		table := table.NewTable(os.Stdout)
-		table.RemoveFrame()
+		table := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 
 		if isRec {
 			listRecursively(minioClient, bucketName, prefix, "", false, table)
-			table.Render()
+			table.Flush()
 			return nil
 		}
 
@@ -93,39 +91,33 @@ var sosListCmd = &cobra.Command{
 			if isPrefix(prefix, message.Key) {
 				continue
 			}
-			size := fmt.Sprintf("%dB", message.Size)
 			lastModified := fmt.Sprintf("%v", message.LastModified)
 			key := filepath.ToSlash(message.Key)
 			key = strings.TrimLeft(message.Key[len(prefix):], "/")
 
-			table.AppendArgs(fmt.Sprintf("[%s]    ", lastModified), size, key)
+			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]    ", lastModified), message.Size, key)
 		}
 
-		table.Render()
-
+		table.Flush()
 		return nil
-
 	},
 }
 
-func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBucket bool, table *table.Table) {
+func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBucket bool, table *tabwriter.Writer) {
 	doneCh := make(chan struct{})
 	defer close(doneCh)
 
-	table.RemoveFrame()
-
 	for message := range c.ListObjectsV2(bucketName, prefix, true, doneCh) {
 
-		size := fmt.Sprintf("%dB", message.Size)
 		lastModified := fmt.Sprintf("%v", message.LastModified)
 		if displayBucket {
-			table.AppendArgs(fmt.Sprintf("[%s]", lastModified),
+			fmt.Fprintf(table, "%s\t%s\t%dB\t%s\n", fmt.Sprintf("[%s]", lastModified),
 				fmt.Sprintf("[%s]    ", zone),
-				size,
+				message.Size,
 				fmt.Sprintf("%s/%s", bucketName, message.Key))
 		} else {
-			table.AppendArgs(fmt.Sprintf("[%s]    ", lastModified),
-				size,
+			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]    ", lastModified),
+				message.Size,
 				fmt.Sprintf("%s/%s", bucketName, message.Key))
 		}
 	}
@@ -137,8 +129,7 @@ func displayBucket(minioClient *minio.Client, isRecursive bool) error {
 		return err
 	}
 
-	table := table.NewTable(os.Stdout)
-	table.RemoveFrame()
+	table := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 
 	for zoneName, buckets := range allBuckets {
 		for _, bucket := range buckets {
@@ -152,14 +143,14 @@ func displayBucket(minioClient *minio.Client, isRecursive bool) error {
 				listRecursively(minioClient, bucket.Name, "", zoneName, true, table)
 				continue
 			}
-			table.AppendArgs(fmt.Sprintf("[%s]",
-				bucket.CreationDate.String()),
+			fmt.Fprintf(table, "%s\t%s\t%dB\t%s/\n",
+				fmt.Sprintf("[%s]", bucket.CreationDate.String()),
 				fmt.Sprintf("[%s]    ", zoneName),
-				"0B",
+				0,
 				bucket.Name)
 		}
 	}
-	table.Render()
+	table.Flush()
 	return nil
 }
 

@@ -81,7 +81,7 @@ var sosAddACLCmd = &cobra.Command{
 			return err
 		}
 
-		objInfo.Metadata["content-type"] = []string{objInfo.ContentType}
+		objInfo.Metadata.Add("content-type", objInfo.ContentType)
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
@@ -316,8 +316,8 @@ var sosRemoveACLCmd = &cobra.Command{
 			return err
 		}
 
-		objInfo.Metadata["content-type"] = []string{objInfo.ContentType}
-		objInfo.Metadata["x-amz-metadata-directive"] = []string{"REPLACE"}
+		objInfo.Metadata.Add("content-type", objInfo.ContentType)
+		objInfo.Metadata.Add("x-amz-metadata-directive", "REPLACE")
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 

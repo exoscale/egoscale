@@ -83,7 +83,7 @@ var sosAddHeadersCmd = &cobra.Command{
 
 		_, ok := meta["content-type"]
 		if !ok {
-			objInfo.Metadata["content-type"] = []string{objInfo.ContentType}
+			objInfo.Metadata.Add("content-type", objInfo.ContentType)
 		}
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
@@ -171,8 +171,8 @@ var sosRemoveHeadersCmd = &cobra.Command{
 			return err
 		}
 
-		objInfo.Metadata["content-type"] = []string{objInfo.ContentType}
-		objInfo.Metadata["x-amz-metadata-directive"] = []string{"REPLACE"}
+		objInfo.Metadata.Add("content-type", objInfo.ContentType)
+		objInfo.Metadata.Add("x-amz-metadata-directive", "REPLACE")
 
 		for _, v := range meta {
 			objInfo.Metadata.Del(v)

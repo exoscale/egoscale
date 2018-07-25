@@ -95,7 +95,7 @@ var sosListCmd = &cobra.Command{
 			key := filepath.ToSlash(message.Key)
 			key = strings.TrimLeft(key[len(prefix):], "/")
 
-			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]    ", lastModified), message.Size, key) // nolint: errcheck
+			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]", lastModified), message.Size, key) // nolint: errcheck
 		}
 
 		return table.Flush()
@@ -111,11 +111,11 @@ func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBu
 		lastModified := fmt.Sprintf("%v", message.LastModified)
 		if displayBucket {
 			fmt.Fprintf(table, "%s\t%s\t%dB\t%s\n", fmt.Sprintf("[%s]", lastModified), // nolint: errcheck
-				fmt.Sprintf("[%s]    ", zone),
+				fmt.Sprintf("[%s]", zone),
 				message.Size,
 				fmt.Sprintf("%s/%s", bucketName, message.Key)) // nolint: errcheck
 		} else {
-			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]    ", lastModified), // nolint: errcheck
+			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]", lastModified), // nolint: errcheck
 				message.Size,
 				fmt.Sprintf("%s/%s", bucketName, message.Key)) // nolint: errcheck
 		}
@@ -144,7 +144,7 @@ func displayBucket(minioClient *minio.Client, isRecursive bool) error {
 			}
 			fmt.Fprintf(table, "%s\t%s\t%dB\t%s/\n", // nolint: errcheck
 				fmt.Sprintf("[%s]", bucket.CreationDate.String()),
-				fmt.Sprintf("[%s]    ", zoneName),
+				fmt.Sprintf("[%s]", zoneName),
 				0,
 				bucket.Name) // nolint: errcheck
 		}

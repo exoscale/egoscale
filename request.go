@@ -358,6 +358,13 @@ func (client *Client) request(ctx context.Context, command Command) (json.RawMes
 		url = client.Endpoint
 		method = "POST"
 		body = strings.NewReader(query)
+		if client.Logger != nil {
+			client.Logger.Printf("%s %s (size=%d)\n", method, client.Endpoint, len(query))
+		}
+	} else {
+		if client.Logger != nil {
+			client.Logger.Printf("%s %s %s\n", method, client.Endpoint, payload)
+		}
 	}
 
 	request, err := http.NewRequest(method, url, body)
@@ -377,6 +384,10 @@ func (client *Client) request(ctx context.Context, command Command) (json.RawMes
 		return nil, err
 	}
 	defer resp.Body.Close() // nolint: errcheck
+
+	if client.Logger != nil {
+		client.Logger.Println(resp.Status)
+	}
 
 	apiName := client.APIName(command)
 	key := fmt.Sprintf("%sresponse", strings.ToLower(apiName))

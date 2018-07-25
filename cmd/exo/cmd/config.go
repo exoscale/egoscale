@@ -110,19 +110,20 @@ func getAccount() (*account, error) {
 	var client *egoscale.Client
 
 	account := &account{
-		Endpoint: defaultEndpoint,
-		Key:      "",
-		Secret:   "",
+		Endpoint:    defaultEndpoint,
+		Key:         "",
+		Secret:      "",
+		SosEndpoint: defaultSosEndpoint,
 	}
 
 	for i := 0; ; i++ {
 		if i > 0 {
-			endpoint, err := readInput(reader, "API Endpoint", account.Endpoint)
+			endpoint, err := readInput(reader, "API Endpoint", account.ComputeEndpoint)
 			if err != nil {
 				return nil, err
 			}
-			if endpoint != account.Endpoint {
-				account.Endpoint = endpoint
+			if endpoint != account.ComputeEndpoint {
+				account.ComputeEndpoint = endpoint
 			}
 		}
 
@@ -146,7 +147,7 @@ func getAccount() (*account, error) {
 			account.Secret = secretKey
 		}
 
-		client = egoscale.NewClient(account.Endpoint, account.Key, account.Secret)
+		client = egoscale.NewClient(account.ComputeEndpoint, account.Key, account.Secret)
 
 		fmt.Printf("Checking the credentials of %q...", account.Key)
 		acc := &egoscale.Account{}
@@ -360,10 +361,10 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 			ComputeEndpoint: acc.Key("endpoint").String(),
 			Key:             acc.Key("key").String(),
 			Secret:          acc.Key("secret").String(),
-			SosEndpoint:     sosEndpoint,
+			SosEndpoint:     defaultSosEndpoint,
 		}
 
-		csClient := egoscale.NewClient(csAccount.Endpoint, csAccount.Key, csAccount.Secret)
+		csClient := egoscale.NewClient(csAccount.ComputeEndpoint, csAccount.Key, csAccount.Secret)
 
 		fmt.Printf("Checking the credentials of %q...", csAccount.Key)
 		a := &egoscale.Account{}

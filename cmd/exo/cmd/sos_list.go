@@ -15,6 +15,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	printDate = "2006-01-02 15:04:05 MST"
+)
+
 // sosListCmd represents the list command
 var sosListCmd = &cobra.Command{
 	Use:     "list [<bucket name>/path]",
@@ -69,7 +73,7 @@ var sosListCmd = &cobra.Command{
 		}
 		///
 
-		table := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+		table := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.AlignRight)
 
 		if isRec {
 			listRecursively(minioClient, bucketName, prefix, "", false, table)
@@ -92,7 +96,7 @@ var sosListCmd = &cobra.Command{
 			if isPrefix(prefix, message.Key) {
 				continue
 			}
-			lastModified := fmt.Sprintf("%v", message.LastModified)
+			lastModified := message.LastModified.Format(printDate)
 			key := filepath.ToSlash(message.Key)
 			key = strings.TrimLeft(key[len(prefix):], "/")
 
@@ -112,7 +116,7 @@ func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBu
 
 	for message := range c.ListObjectsV2(bucketName, prefix, true, doneCh) {
 
-		lastModified := fmt.Sprintf("%v", message.LastModified)
+		lastModified := message.LastModified.Format(printDate)
 		if displayBucket {
 			fmt.Fprintf(table, "%s\t%s\t%s\t%s\n", fmt.Sprintf("[%s]", lastModified), // nolint: errcheck
 				fmt.Sprintf("[%s]", zone),
@@ -132,7 +136,7 @@ func displayBucket(minioClient *minio.Client, isRecursive bool) error {
 		return err
 	}
 
-	table := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	table := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.AlignRight)
 
 	for zoneName, buckets := range allBuckets {
 		for _, bucket := range buckets {
@@ -147,7 +151,7 @@ func displayBucket(minioClient *minio.Client, isRecursive bool) error {
 				continue
 			}
 			fmt.Fprintf(table, "%s\t%s\t%s\t%s/\n", // nolint: errcheck
-				fmt.Sprintf("[%s]", bucket.CreationDate.String()),
+				fmt.Sprintf("[%s]", bucket.CreationDate.Format(printDate)),
 				fmt.Sprintf("[%s]", zoneName),
 				fmt.Sprintf("%6s ", humanize.IBytes(uint64(0))),
 				bucket.Name) // nolint: errcheck

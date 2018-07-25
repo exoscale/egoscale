@@ -2,8 +2,8 @@ package egoscale
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -64,21 +64,17 @@ type IterateItemFunc func(interface{}, error) bool
 // WaitAsyncJobResultFunc represents the callback to wait a results of an async request, if false stops
 type WaitAsyncJobResultFunc func(*AsyncJobResult, error) bool
 
-// NewClientWithTimeout creates a CloudStack API client
+// NewClient creates a CloudStack API client with default timeout (60)
 //
 // Timeout is set to both the HTTP client and the client itself.
-func NewClientWithTimeout(endpoint, apiKey, apiSecret string, timeout time.Duration) *Client {
+func NewClient(endpoint, apiKey, apiSecret string) *Client {
+	timeout := 60 * time.Second
+
 	client := &http.Client{
-		Timeout: timeout,
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: false,
-			},
-		},
+		Transport: http.DefaultTransport,
 	}
 
-	cs := &Client{
+	return &Client{
 		HTTPClient:    client,
 		Endpoint:      endpoint,
 		APIKey:        apiKey,
@@ -86,16 +82,8 @@ func NewClientWithTimeout(endpoint, apiKey, apiSecret string, timeout time.Durat
 		PageSize:      50,
 		Timeout:       timeout,
 		RetryStrategy: MonotonicRetryStrategyFunc(2),
-		Logger:        nil,
+		Logger:        log.New(ioutil.Discard, "", 0),
 	}
-
-	return cs
-}
-
-// NewClient creates a CloudStack API client with default timeout (60)
-func NewClient(endpoint, apiKey, apiSecret string) *Client {
-	timeout := 60 * time.Second
-	return NewClientWithTimeout(endpoint, apiKey, apiSecret, timeout)
 }
 
 // Get populates the given resource or fails

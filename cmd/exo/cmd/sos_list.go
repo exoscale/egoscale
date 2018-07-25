@@ -9,6 +9,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	humanize "github.com/dustin/go-humanize"
 	minio "github.com/pierre-emmanuelJ/minio-go"
 
 	"github.com/spf13/cobra"
@@ -95,7 +96,10 @@ var sosListCmd = &cobra.Command{
 			key := filepath.ToSlash(message.Key)
 			key = strings.TrimLeft(key[len(prefix):], "/")
 
-			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]", lastModified), message.Size, key) // nolint: errcheck
+			fmt.Fprintf(table, "%s\t%s\t%s\n", // nolint: errcheck
+				fmt.Sprintf("[%s]", lastModified),
+				fmt.Sprintf("%6s ", humanize.IBytes(uint64(message.Size))),
+				key) // nolint: errcheck
 		}
 
 		return table.Flush()
@@ -110,13 +114,13 @@ func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBu
 
 		lastModified := fmt.Sprintf("%v", message.LastModified)
 		if displayBucket {
-			fmt.Fprintf(table, "%s\t%s\t%dB\t%s\n", fmt.Sprintf("[%s]", lastModified), // nolint: errcheck
+			fmt.Fprintf(table, "%s\t%s\t%s\t%s\n", fmt.Sprintf("[%s]", lastModified), // nolint: errcheck
 				fmt.Sprintf("[%s]", zone),
-				message.Size,
+				fmt.Sprintf("%6s ", humanize.IBytes(uint64(message.Size))),
 				fmt.Sprintf("%s/%s", bucketName, message.Key)) // nolint: errcheck
 		} else {
-			fmt.Fprintf(table, "%s\t%dB\t%s\n", fmt.Sprintf("[%s]", lastModified), // nolint: errcheck
-				message.Size,
+			fmt.Fprintf(table, "%s\t%s\t%s\n", fmt.Sprintf("[%s]", lastModified), // nolint: errcheck
+				fmt.Sprintf("%6s ", humanize.IBytes(uint64(message.Size))),
 				fmt.Sprintf("%s/%s", bucketName, message.Key)) // nolint: errcheck
 		}
 	}
@@ -142,10 +146,10 @@ func displayBucket(minioClient *minio.Client, isRecursive bool) error {
 				listRecursively(minioClient, bucket.Name, "", zoneName, true, table)
 				continue
 			}
-			fmt.Fprintf(table, "%s\t%s\t%dB\t%s/\n", // nolint: errcheck
+			fmt.Fprintf(table, "%s\t%s\t%s\t%s/\n", // nolint: errcheck
 				fmt.Sprintf("[%s]", bucket.CreationDate.String()),
 				fmt.Sprintf("[%s]", zoneName),
-				0,
+				fmt.Sprintf("%6s ", humanize.IBytes(uint64(0))),
 				bucket.Name) // nolint: errcheck
 		}
 	}

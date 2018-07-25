@@ -24,6 +24,10 @@ ignored = ["github.com/exoscale/egoscale"]
   branch = "object-acl"
   name = "github.com/pierre-emmanuelJ/minio-go"
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/dustin/go-humanize"
+
 [prune]
   go-tests = true
   unused-packages = true

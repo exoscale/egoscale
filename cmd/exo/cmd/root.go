@@ -101,8 +101,8 @@ func Execute() {
 }
 
 func init() {
-	RootCmd.PersistentFlags().StringVar(&gConfigFilePath, "config", "", "Specify an alternate config file [env EXOSCALE_CONFIG]")
-	RootCmd.PersistentFlags().StringVarP(&gAccountName, "account", "a", "", "Account to use in config file [env EXOSCALE_ACCOUNT]")
+	RootCmd.PersistentFlags().StringVarP(&gConfigFilePath, "config", "C", "", "Specify an alternate config file [env EXOSCALE_CONFIG]")
+	RootCmd.PersistentFlags().StringVarP(&gAccountName, "account", "A", "", "Account to use in config file [env EXOSCALE_ACCOUNT]")
 	RootCmd.AddCommand(versionCmd)
 
 	cobra.OnInitialize(initConfig, buildClient)

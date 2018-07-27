@@ -138,7 +138,7 @@ var firewallAddCmd = &cobra.Command{
 				for _, cidr := range cidrs {
 					c, errCidr := egoscale.ParseCIDR(cidr)
 					if errCidr != nil {
-						return err
+						return errCidr
 					}
 					rule.CIDRList = append(rule.CIDRList, *c)
 				}

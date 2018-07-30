@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"os"
 	"strings"
 	"time"
 )
@@ -53,6 +55,8 @@ type Client struct {
 	RetryStrategy RetryStrategyFunc
 	// Logger contains any log, plug your own
 	Logger *log.Logger
+	// traceOn is true if dump request/response is activated
+	traceOn bool
 }
 
 // RetryStrategyFunc represents a how much time to wait between two calls to CloudStack
@@ -70,12 +74,12 @@ type WaitAsyncJobResultFunc func(*AsyncJobResult, error) bool
 func NewClient(endpoint, apiKey, apiSecret string) *Client {
 	timeout := 60 * time.Second
 
-	client := &http.Client{
+	httpClient := &http.Client{
 		Transport: http.DefaultTransport,
 	}
 
-	return &Client{
-		HTTPClient:    client,
+	client := &Client{
+		HTTPClient:    httpClient,
 		Endpoint:      endpoint,
 		APIKey:        apiKey,
 		apiSecret:     apiSecret,
@@ -84,6 +88,13 @@ func NewClient(endpoint, apiKey, apiSecret string) *Client {
 		RetryStrategy: MonotonicRetryStrategyFunc(2),
 		Logger:        log.New(ioutil.Discard, "", 0),
 	}
+
+	if prefix, ok := os.LookupEnv("EXOSCALE_TRACE"); ok {
+		client.Logger = log.New(os.Stderr, prefix, log.LstdFlags)
+		client.TraceOn()
+	}
+
+	return client
 }
 
 // Get populates the given resource or fails
@@ -310,6 +321,55 @@ func (client *Client) Response(command Command) interface{} {
 	default:
 		return command.response()
 	}
+}
+
+// TraceOn activates the HTTP tracer
+func (client *Client) TraceOn() {
+	if client.traceOn {
+		return
+	}
+
+	client.HTTPClient.Transport = &traceTransport{
+		transport: client.HTTPClient.Transport,
+		logger:    client.Logger,
+	}
+	client.traceOn = true
+}
+
+// TraceOff deactivates the HTTP tracer
+func (client *Client) TraceOff() {
+	if !client.traceOn {
+		return
+	}
+
+	client.traceOn = false
+	if rt, ok := client.HTTPClient.Transport.(*traceTransport); ok {
+		client.HTTPClient.Transport = rt.transport
+	}
+}
+
+// traceTransport  contains the original HTTP transport to enable it to be reverted
+type traceTransport struct {
+	transport http.RoundTripper
+	logger    *log.Logger
+}
+
+// RoundTrip executes a single HTTP transaction
+func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if dump, err := httputil.DumpRequest(req, true); err == nil {
+		t.logger.Printf("%s", dump)
+	}
+
+	resp, err := t.transport.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if dump, err := httputil.DumpResponse(resp, true); err == nil {
+		t.logger.Printf("%s", dump)
+	}
+
+	return resp, nil
 }
 
 // MonotonicRetryStrategyFunc returns a function that waits for n seconds for each iteration

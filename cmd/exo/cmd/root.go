@@ -230,10 +230,12 @@ func initConfig() {
 	if gCurrentAccount.DNSEndpoint == "" {
 		gCurrentAccount.DNSEndpoint = strings.Replace(gCurrentAccount.Endpoint, "/compute", "/dns", 1)
 	}
-
 	if gCurrentAccount.DefaultTemplate == "" {
 		gCurrentAccount.DefaultTemplate = defaultTemplate
 	}
+
+	gCurrentAccount.Endpoint = strings.TrimRight(gCurrentAccount.Endpoint, "/")
+	gCurrentAccount.DNSEndpoint = strings.TrimRight(gCurrentAccount.DNSEndpoint, "/")
 }
 
 // getCmdPosition returns a command position by fetching os.args and ignoring flags

@@ -37,7 +37,7 @@ func listDomains(t *table.Table, filters []string) error {
 		if len(filters) > 0 {
 			keep = false
 			s := strings.ToLower(
-				fmt.Sprintf("%s#%s#%s", d.ID, d.Name, d.UnicodeName))
+				fmt.Sprintf("%d#%s#%s", d.ID, d.Name, d.UnicodeName))
 
 			for _, filter := range filters {
 				substr := strings.ToLower(filter)

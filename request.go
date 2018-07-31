@@ -122,8 +122,8 @@ func (client *Client) SyncRequestWithContext(ctx context.Context, command Comman
 	b, ok := response.(*booleanResponse)
 	if ok {
 		m := make(map[string]interface{})
-		if errJson := json.Unmarshal(body, &m); errJson != nil {
-			return nil, errJson
+		if errUnmarshal := json.Unmarshal(body, &m); errUnmarshal != nil {
+			return nil, errUnmarshal
 		}
 
 		b.DisplayText, _ = m["displaytext"].(string)

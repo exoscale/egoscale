@@ -55,8 +55,6 @@ type Client struct {
 	RetryStrategy RetryStrategyFunc
 	// Logger contains any log, plug your own
 	Logger *log.Logger
-	// traceOn is true if dump request/response is activated
-	traceOn bool
 }
 
 // RetryStrategyFunc represents a how much time to wait between two calls to CloudStack
@@ -325,24 +323,16 @@ func (client *Client) Response(command Command) interface{} {
 
 // TraceOn activates the HTTP tracer
 func (client *Client) TraceOn() {
-	if client.traceOn {
-		return
+	if _, ok := client.HTTPClient.Transport.(*traceTransport); !ok {
+		client.HTTPClient.Transport = &traceTransport{
+			transport: client.HTTPClient.Transport,
+			logger:    client.Logger,
+		}
 	}
-
-	client.HTTPClient.Transport = &traceTransport{
-		transport: client.HTTPClient.Transport,
-		logger:    client.Logger,
-	}
-	client.traceOn = true
 }
 
 // TraceOff deactivates the HTTP tracer
 func (client *Client) TraceOff() {
-	if !client.traceOn {
-		return
-	}
-
-	client.traceOn = false
 	if rt, ok := client.HTTPClient.Transport.(*traceTransport); ok {
 		client.HTTPClient.Transport = rt.transport
 	}

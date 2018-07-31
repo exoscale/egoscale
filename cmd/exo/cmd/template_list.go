@@ -40,7 +40,7 @@ func listTemplates(t *table.Table, filters []string) error {
 
 	t.SetHeader([]string{"Operating System", "Disk", "Release Date", "ID"})
 	for _, template := range templates {
-		sz := strconv.FormatInt(template.Size<<30, 10)
+		sz := strconv.FormatInt(template.Size>>30, 10)
 		if sz == "0" {
 			sz = ""
 		}

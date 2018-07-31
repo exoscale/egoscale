@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/exoscale/egoscale/cmd/exo/table"
 	"github.com/spf13/cobra"
@@ -41,7 +42,7 @@ func listTemplates(t *table.Table, filters []string) error {
 	t.SetHeader([]string{"Operating System", "Disk", "Release Date", "ID"})
 	for _, template := range templates {
 		sz := strconv.FormatInt(template.Size>>30, 10)
-		if sz == "0" {
+		if sz == "10" && strings.HasPrefix(template.Name, "Linux") {
 			sz = ""
 		}
 		t.Append([]string{template.Name, sz, template.Created, template.ID})

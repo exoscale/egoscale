@@ -10,7 +10,7 @@ import (
 	"text/tabwriter"
 
 	humanize "github.com/dustin/go-humanize"
-	minio "github.com/pierre-emmanuelJ/minio-go"
+	minio "github.com/minio/minio-go"
 
 	"github.com/spf13/cobra"
 )

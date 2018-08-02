@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	minio "github.com/pierre-emmanuelJ/minio-go"
+	minio "github.com/minio/minio-go"
 	"github.com/spf13/cobra"
 )
 

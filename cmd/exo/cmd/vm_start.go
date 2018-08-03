@@ -19,14 +19,8 @@ var vmStartCmd = &cobra.Command{
 		}
 
 		for _, v := range args {
-			vm, err := getVMWithNameOrID(cs, v)
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("Starting %q ", vm.Name)
-			if err := vm.asyncStartWithCtx(gContext, *cs, true); err != nil {
-				fmt.Fprintln(os.Stderr, err)
+			if err := asyncStartWithCtx(gContext, v); err != nil {
+				fmt.Fprintln(os.Stderr, err) // nolint: errcheck
 			} else {
 				fmt.Println("\nStarted !")
 			}
@@ -35,32 +29,18 @@ var vmStartCmd = &cobra.Command{
 	},
 }
 
-// Start a virtual machine instance
-func (vm virtualMachine) start(cs egoscale.Client) error {
-	return vm.startWithCtx(context.Background(), cs)
-}
-
-// StartWithCtx a virtual machine instance
-func (vm virtualMachine) startWithCtx(ctx context.Context, cs egoscale.Client) error {
-	_, err := cs.RequestWithContext(ctx, &egoscale.StartVirtualMachine{ID: vm.ID})
+// AsyncStartWithCtx start a virtual machine instance Async
+func asyncStartWithCtx(ctx context.Context, vmName string) error {
+	vm, err := getVMWithNameOrID(cs, vmName)
 	if err != nil {
 		return err
 	}
-	return nil
-}
 
-// AsyncStart start a virtual machine instance Async
-func (vm virtualMachine) asyncStart(cs egoscale.Client, displayLoad bool) error {
-	return vm.asyncStartWithCtx(context.Background(), cs, displayLoad)
-}
-
-// AsyncStartWithCtx start a virtual machine instance Async
-func (vm virtualMachine) asyncStartWithCtx(ctx context.Context, cs egoscale.Client, displayLoad bool) error {
+	fmt.Printf("Starting %q ", vm.Name)
 	var errorReq error
 	cs.AsyncRequest(&egoscale.StartVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
-		if displayLoad {
-			fmt.Printf(".")
-		}
+
+		fmt.Printf(".")
 
 		if err != nil {
 			errorReq = err

@@ -137,6 +137,46 @@ func (vm VirtualMachine) IP() *net.IP {
 	return nil
 }
 
+// Stop a virtual machine instance
+func (vm VirtualMachine) Stop(cs Client) error {
+	return vm.StopWithCtx(context.Background(), cs)
+}
+
+// StopWithCtx a virtual machine instance
+func (vm VirtualMachine) StopWithCtx(ctx context.Context, cs Client) error {
+	_, err := cs.RequestWithContext(ctx, &StopVirtualMachine{ID: vm.ID})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// AsyncStop stop a virtual machine instance Async
+func (vm VirtualMachine) AsyncStop(cs Client, displayLoad bool) error {
+	return vm.AsyncStopWithCtx(context.Background(), cs, displayLoad)
+}
+
+// AsyncStopWithCtx stop a virtual machine instance Async
+func (vm VirtualMachine) AsyncStopWithCtx(ctx context.Context, cs Client, displayLoad bool) error {
+	var errorReq error
+	cs.AsyncRequest(&StopVirtualMachine{ID: vm.ID}, func(jobResult *AsyncJobResult, err error) bool {
+		if displayLoad {
+			fmt.Printf(".")
+		}
+
+		if err != nil {
+			errorReq = err
+			return false
+		}
+
+		if jobResult.JobStatus == Success {
+			return false
+		}
+		return true
+	})
+	return errorReq
+}
+
 // NicsByType returns the corresponding interfaces base on the given type
 func (vm VirtualMachine) NicsByType(nicType string) []Nic {
 	nics := make([]Nic, 0)

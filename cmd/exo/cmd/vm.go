@@ -11,6 +11,13 @@ var vmCmd = &cobra.Command{
 	Short: "Virtual machines management",
 }
 
+const (
+	starting = "Starting"
+	running  = "Running"
+	stoping  = "Stopping"
+	stopped  = "Stopped"
+)
+
 // VirtualMachine represente egoscale virtual machine
 type virtualMachine struct {
 	*egoscale.VirtualMachine

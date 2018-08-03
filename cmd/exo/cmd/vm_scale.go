@@ -38,7 +38,7 @@ var vmScaleCmd = &cobra.Command{
 
 			fmt.Printf("Scaling %q ", vm.Name)
 			if err := vm.asyncScaleWithCtx(gContext, *cs, serviceoffering, true); err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				fmt.Fprintf(os.Stderr, "\n%v\n", err)
 			} else {
 				fmt.Println("\nScaled !")
 			}
@@ -55,15 +55,15 @@ func (vm virtualMachine) scale(cs egoscale.Client, so *egoscale.ServiceOffering)
 // ScaleWithCtx a virtual machine instance
 func (vm virtualMachine) scaleWithCtx(ctx context.Context, cs egoscale.Client, so *egoscale.ServiceOffering) error {
 
-	if err := vm.stopWithCtx(ctx, cs); err != nil {
-		return err
+	if vm.State != stopped {
+		return fmt.Errorf("This operation is not permitted if your VM is running")
 	}
 
 	_, err := cs.RequestWithContext(ctx, &egoscale.ScaleVirtualMachine{ID: vm.ID, ServiceOfferingID: so.ID})
 	if err != nil {
 		return err
 	}
-	return vm.startWithCtx(ctx, cs)
+	return nil
 }
 
 // AsyncScale scale a virtual machine instance Async
@@ -74,8 +74,8 @@ func (vm virtualMachine) asyncScale(cs egoscale.Client, so *egoscale.ServiceOffe
 // AsyncscaleWithCtx scale a virtual machine instance Async with context
 func (vm virtualMachine) asyncScaleWithCtx(ctx context.Context, cs egoscale.Client, so *egoscale.ServiceOffering, displayLoad bool) error {
 
-	if err := vm.asyncStopWithCtx(ctx, cs, displayLoad); err != nil {
-		return err
+	if vm.State != stopped {
+		return fmt.Errorf("This operation is not permitted if your VM is running")
 	}
 
 	var errorReq error
@@ -94,11 +94,7 @@ func (vm virtualMachine) asyncScaleWithCtx(ctx context.Context, cs egoscale.Clie
 		}
 		return true
 	})
-	if errorReq != nil {
-		return errorReq
-	}
-
-	return vm.asyncStartWithCtx(ctx, cs, displayLoad)
+	return errorReq
 }
 
 func init() {

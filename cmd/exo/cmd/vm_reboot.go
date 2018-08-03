@@ -9,27 +9,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// stopCmd represents the stop command
-var vmStopCmd = &cobra.Command{
-	Use:   "stop <vm name> [vm name] ...",
-	Short: "Stop virtual machine instance",
+// rebootCmd represents the reboot command
+var vmRebootCmd = &cobra.Command{
+	Use:   "reboot <vm name> [vm name] ...",
+	Short: "Reboot virtual machine instance",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return cmd.Usage()
 		}
 
 		for _, v := range args {
-
 			vm, err := getVMWithNameOrID(cs, v)
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf("Stoping %q ", vm.Name)
+			fmt.Printf("Rebooting %q ", vm.Name)
 			if err := vm.asyncStopWithCtx(gContext, *cs, true); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 			} else {
-				fmt.Println("\nStopped !")
+				fmt.Println("\nRebooted !")
 			}
 		}
 		return nil
@@ -37,13 +36,13 @@ var vmStopCmd = &cobra.Command{
 }
 
 // Stop a virtual machine instance
-func (vm virtualMachine) stop(cs egoscale.Client) error {
+func (vm virtualMachine) reboot(cs egoscale.Client) error {
 	return vm.stopWithCtx(context.Background(), cs)
 }
 
 // StopWithCtx a virtual machine instance
-func (vm virtualMachine) stopWithCtx(ctx context.Context, cs egoscale.Client) error {
-	_, err := cs.RequestWithContext(ctx, &egoscale.StopVirtualMachine{ID: vm.ID})
+func (vm virtualMachine) rebootWithCtx(ctx context.Context, cs egoscale.Client) error {
+	_, err := cs.RequestWithContext(ctx, &egoscale.RebootVirtualMachine{ID: vm.ID})
 	if err != nil {
 		return err
 	}
@@ -51,14 +50,14 @@ func (vm virtualMachine) stopWithCtx(ctx context.Context, cs egoscale.Client) er
 }
 
 // AsyncStop stop a virtual machine instance Async
-func (vm virtualMachine) asyncStop(cs egoscale.Client, displayLoad bool) error {
+func (vm virtualMachine) asyncReboot(cs egoscale.Client, displayLoad bool) error {
 	return vm.asyncStopWithCtx(context.Background(), cs, displayLoad)
 }
 
 // AsyncStopWithCtx stop a virtual machine instance Async
-func (vm virtualMachine) asyncStopWithCtx(ctx context.Context, cs egoscale.Client, displayLoad bool) error {
+func (vm virtualMachine) asyncRebootWithCtx(ctx context.Context, cs egoscale.Client, displayLoad bool) error {
 	var errorReq error
-	cs.AsyncRequest(&egoscale.StopVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
+	cs.AsyncRequest(&egoscale.RebootVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
 		if displayLoad {
 			fmt.Printf(".")
 		}
@@ -77,5 +76,5 @@ func (vm virtualMachine) asyncStopWithCtx(ctx context.Context, cs egoscale.Clien
 }
 
 func init() {
-	vmCmd.AddCommand(vmStopCmd)
+	vmCmd.AddCommand(vmRebootCmd)
 }

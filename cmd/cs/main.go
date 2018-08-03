@@ -113,7 +113,14 @@ func main() {
 		},
 	})
 
-	if err := app.Run(os.Args); err != nil {
+	args := os.Args
+	for i := 2; i < len(args); i++ {
+		if !strings.HasPrefix(args[i], "-") && !strings.HasPrefix(args[i], "--") && strings.Contains(args[i], "=") {
+			args[i] = "--" + args[i]
+		}
+	}
+
+	if err := app.Run(args); err != nil {
 		log.Fatal(err)
 	}
 

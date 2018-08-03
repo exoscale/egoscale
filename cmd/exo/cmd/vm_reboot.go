@@ -25,7 +25,7 @@ var vmRebootCmd = &cobra.Command{
 			}
 
 			fmt.Printf("Rebooting %q ", vm.Name)
-			if err := vm.asyncStopWithCtx(gContext, *cs, true); err != nil {
+			if err := vm.asyncRebootWithCtx(gContext, *cs, true); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 			} else {
 				fmt.Println("\nRebooted !")
@@ -35,12 +35,12 @@ var vmRebootCmd = &cobra.Command{
 	},
 }
 
-// Stop a virtual machine instance
+// Reboot a virtual machine instance
 func (vm virtualMachine) reboot(cs egoscale.Client) error {
-	return vm.stopWithCtx(context.Background(), cs)
+	return vm.rebootWithCtx(context.Background(), cs)
 }
 
-// StopWithCtx a virtual machine instance
+// RebootWithCtx a virtual machine instance
 func (vm virtualMachine) rebootWithCtx(ctx context.Context, cs egoscale.Client) error {
 	_, err := cs.RequestWithContext(ctx, &egoscale.RebootVirtualMachine{ID: vm.ID})
 	if err != nil {
@@ -49,12 +49,12 @@ func (vm virtualMachine) rebootWithCtx(ctx context.Context, cs egoscale.Client) 
 	return nil
 }
 
-// AsyncStop stop a virtual machine instance Async
+// AsyncReboot reboot a virtual machine instance Async
 func (vm virtualMachine) asyncReboot(cs egoscale.Client, displayLoad bool) error {
-	return vm.asyncStopWithCtx(context.Background(), cs, displayLoad)
+	return vm.asyncRebootWithCtx(context.Background(), cs, displayLoad)
 }
 
-// AsyncStopWithCtx stop a virtual machine instance Async
+// AsyncRebootWithCtx reboot a virtual machine instance Async
 func (vm virtualMachine) asyncRebootWithCtx(ctx context.Context, cs egoscale.Client, displayLoad bool) error {
 	var errorReq error
 	cs.AsyncRequest(&egoscale.RebootVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {

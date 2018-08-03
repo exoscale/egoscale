@@ -29,7 +29,7 @@ func listVMs() error {
 	table.SetHeader([]string{"Name", "Security Group", "IP Address", "Status", "Zone", "ID"})
 
 	for _, key := range vms {
-		vm := key.(*egoscale.VirtualMachine)
+		vm := &virtualMachine{key.(*egoscale.VirtualMachine)}
 
 		sgs := getSecurityGroup(vm)
 

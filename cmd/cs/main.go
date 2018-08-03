@@ -460,15 +460,16 @@ func buildFlags(method egoscale.Command) []cli.Flag {
 				},
 			})
 		case reflect.String:
-			if argName == "resourcetypename" {
+			typeName := field.Type.Name()
+			if typeName != "string" {
 				flags = append(flags, cli.GenericFlag{
 					Name:  argName,
 					Usage: description,
-					Value: &resourceTypeNameGeneric{
-						value: addr.(*egoscale.ResourceTypeName),
+					Value: &stringerTypeGeneric{
+						addr: addr,
+						typ:  field.Type,
 					},
 				})
-
 			} else {
 				flags = append(flags, cli.StringFlag{
 					Name:        argName,

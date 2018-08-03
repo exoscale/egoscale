@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -202,20 +203,25 @@ func (g *resourceTypeGeneric) String() string {
 	return ""
 }
 
-type resourceTypeNameGeneric struct {
-	value *egoscale.ResourceTypeName
+type stringerTypeGeneric struct {
+	addr  interface{}
+	value string
+	typ   reflect.Type
 }
 
-func (g *resourceTypeNameGeneric) Set(value string) error {
-	*g.value = egoscale.ResourceTypeName(value)
+func (g *stringerTypeGeneric) Set(value string) error {
+	tv := reflect.ValueOf(g.addr)
+	fv := reflect.ValueOf(&value)
+
+	tv.Elem().Set(fv.Convert(reflect.PtrTo(g.typ)).Elem())
+
+	g.value = value
+
 	return nil
 }
 
-func (g *resourceTypeNameGeneric) String() string {
-	if g.value != nil {
-		return (string)(*g.value)
-	}
-	return ""
+func (g *stringerTypeGeneric) String() string {
+	return g.value
 }
 
 type mapGeneric struct {

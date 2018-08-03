@@ -280,6 +280,9 @@ func buildCommands(out *egoscale.Command, methods map[string][]cmd) []cli.Comman
 			}
 			// report back the current command
 			cmd.Action = func(c *cli.Context) error {
+				if len(c.Args()) > 0 {
+					return fmt.Errorf("unexpected extra arguments found: %s.", strings.Join(c.Args(), ", "))
+				}
 				*out = s.command
 				return nil
 			}

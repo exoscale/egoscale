@@ -11,6 +11,7 @@ import (
 	"net/url"
 )
 
+// VirtualMachineState holds the state of the instance
 type VirtualMachineState string
 
 const (
@@ -35,55 +36,72 @@ const (
 	// VirtualMachineShutdowned VM is shutdowned from inside
 	VirtualMachineShutdowned VirtualMachineState = "Shutdowned"
 )
-	DiskKbsRead           int64               `json:"diskkbsread,omitempty" doc:"the read (bytes) of disk on the vm"`
-	DiskKbsWrite          int64               `json:"diskkbswrite,omitempty" doc:"the write (bytes) of disk on the vm"`
-	DiskOfferingID        string              `json:"diskofferingid,omitempty" doc:"the ID of the disk offering of the virtual machine"`
-	DiskOfferingName      string              `json:"diskofferingname,omitempty" doc:"the name of the disk offering of the virtual machine"`
-	DisplayName           string              `json:"displayname,omitempty" doc:"user generated name. The name of the virtual machine is returned if no displayname exists."`
-	DisplayVM             bool                `json:"displayvm,omitempty" doc:"an optional field whether to the display the vm to the end user or not."`
-	Domain                string              `json:"domain,omitempty" doc:"the name of the domain in which the virtual machine exists"`
-	DomainID              string              `json:"domainid,omitempty" doc:"the ID of the domain in which the virtual machine exists"`
-	ForVirtualNetwork     bool                `json:"forvirtualnetwork,omitempty" doc:"the virtual network for the service offering"`
-	Group                 string              `json:"group,omitempty" doc:"the group name of the virtual machine"`
-	GroupID               string              `json:"groupid,omitempty" doc:"the group ID of the virtual machine"`
-	HAEnable              bool                `json:"haenable,omitempty" doc:"true if high-availability is enabled, false otherwise"`
-	HostID                string              `json:"hostid,omitempty" doc:"the ID of the host for the virtual machine"`
-	HostName              string              `json:"hostname,omitempty" doc:"the name of the host for the virtual machine"`
-	Hypervisor            string              `json:"hypervisor,omitempty" doc:"the hypervisor on which the template runs"`
-	ID                    string              `json:"id,omitempty" doc:"the ID of the virtual machine"`
-	InstanceName          string              `json:"instancename,omitempty" doc:"instance name of the user vm; this parameter is returned to the ROOT admin only"`
-	IsDynamicallyScalable bool                `json:"isdynamicallyscalable,omitempty" doc:"true if vm contains XS/VMWare tools inorder to support dynamic scaling of VM cpu/memory."`
-	IsoDisplayText        string              `json:"isodisplaytext,omitempty" doc:"an alternate display text of the ISO attached to the virtual machine"`
-	IsoID                 string              `json:"isoid,omitempty" doc:"the ID of the ISO attached to the virtual machine"`
-	IsoName               string              `json:"isoname,omitempty" doc:"the name of the ISO attached to the virtual machine"`
-	KeyPair               string              `json:"keypair,omitempty" doc:"ssh key-pair"`
-	Memory                int                 `json:"memory,omitempty" doc:"the memory allocated for the virtual machine"`
-	Name                  string              `json:"name,omitempty" doc:"the name of the virtual machine"`
-	NetworkKbsRead        int64               `json:"networkkbsread,omitempty" doc:"the incoming network traffic on the vm"`
-	NetworkKbsWrite       int64               `json:"networkkbswrite,omitempty" doc:"the outgoing network traffic on the host"`
-	Nic                   []Nic               `json:"nic,omitempty" doc:"the list of nics associated with vm"`
-	OsCategoryID          string              `json:"oscategoryid,omitempty" doc:"Os category ID of the virtual machine"`
-	OsCategoryName        string              `json:"oscategoryname,omitempty" doc:"Os category name of the virtual machine"`
-	Password              string              `json:"password,omitempty" doc:"the password (if exists) of the virtual machine"`
-	PasswordEnabled       bool                `json:"passwordenabled,omitempty" doc:"true if the password rest feature is enabled, false otherwise"`
-	PCIDevices            []PCIDevice         `json:"pcidevices,omitempty" doc:"list of PCI devices"`
-	PodID                 string              `json:"podid,omitempty" doc:"the ID of the vm's pod"`
-	PodName               string              `json:"podname,omitempty" doc:"the name of the vm's pod"`
-	PublicIP              string              `json:"publicip,omitempty" doc:"public IP address id associated with vm via Static nat rule"`
-	PublicIPID            string              `json:"publicipid,omitempty" doc:"public IP address id associated with vm via Static nat rule"`
-	RootDeviceID          int64               `json:"rootdeviceid,omitempty" doc:"device ID of the root volume"`
-	RootDeviceType        string              `json:"rootdevicetype,omitempty" doc:"device type of the root volume"`
-	SecurityGroup         []SecurityGroup     `json:"securitygroup,omitempty" doc:"list of security groups associated with the virtual machine"`
-	ServiceOfferingID     string              `json:"serviceofferingid,omitempty" doc:"the ID of the service offering of the virtual machine"`
-	ServiceOfferingName   string              `json:"serviceofferingname,omitempty" doc:"the name of the service offering of the virtual machine"`
-	ServiceState          string              `json:"servicestate,omitempty" doc:"State of the Service from LB rule"`
-	State                 VirtualMachineState `json:"state,omitempty" doc:"the state of the virtual machine"`
-	Tags                  []ResourceTag       `json:"tags,omitempty" doc:"the list of resource tags associated with vm"`
-	TemplateDisplayText   string              `json:"templatedisplaytext,omitempty" doc:"an alternate display text of the template for the virtual machine"`
-	TemplateID            string              `json:"templateid,omitempty" doc:"the ID of the template for the virtual machine. A -1 is returned if the virtual machine was created from an ISO file."`
-	TemplateName          string              `json:"templatename,omitempty" doc:"the name of the template for the virtual machine"`
-	ZoneID                string              `json:"zoneid,omitempty" doc:"the ID of the availablility zone for the virtual machine"`
-	ZoneName              string              `json:"zonename,omitempty" doc:"the name of the availability zone for the virtual machine"`
+
+// VirtualMachine represents a virtual machine
+//
+// See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/stable/virtual_machines.html
+type VirtualMachine struct {
+	Account               string            `json:"account,omitempty" doc:"the account associated with the virtual machine"`
+	AccountID             string            `json:"accountid,omitempty" doc:"the account ID associated with the virtual machine"`
+	AffinityGroup         []AffinityGroup   `json:"affinitygroup,omitempty" doc:"list of affinity groups associated with the virtual machine"`
+	ClusterID             string            `json:"clusterid,omitempty" doc:"the ID of the vm's cluster"`
+	ClusterName           string            `json:"clustername,omitempty" doc:"the name of the vm's cluster"`
+	CPUNumber             int               `json:"cpunumber,omitempty" doc:"the number of cpu this virtual machine is running with"`
+	CPUSpeed              int               `json:"cpuspeed,omitempty" doc:"the speed of each cpu"`
+	CPUUsed               string            `json:"cpuused,omitempty" doc:"the amount of the vm's CPU currently used"`
+	Created               string            `json:"created,omitempty" doc:"the date when this virtual machine was created"`
+	Details               map[string]string `json:"details,omitempty" doc:"Vm details in key/value pairs."`
+	DiskIoRead            int64             `json:"diskioread,omitempty" doc:"the read (io) of disk on the vm"`
+	DiskIoWrite           int64             `json:"diskiowrite,omitempty" doc:"the write (io) of disk on the vm"`
+	DiskKbsRead           int64             `json:"diskkbsread,omitempty" doc:"the read (bytes) of disk on the vm"`
+	DiskKbsWrite          int64             `json:"diskkbswrite,omitempty" doc:"the write (bytes) of disk on the vm"`
+	DiskOfferingID        string            `json:"diskofferingid,omitempty" doc:"the ID of the disk offering of the virtual machine"`
+	DiskOfferingName      string            `json:"diskofferingname,omitempty" doc:"the name of the disk offering of the virtual machine"`
+	DisplayName           string            `json:"displayname,omitempty" doc:"user generated name. The name of the virtual machine is returned if no displayname exists."`
+	DisplayVM             bool              `json:"displayvm,omitempty" doc:"an optional field whether to the display the vm to the end user or not."`
+	Domain                string            `json:"domain,omitempty" doc:"the name of the domain in which the virtual machine exists"`
+	DomainID              string            `json:"domainid,omitempty" doc:"the ID of the domain in which the virtual machine exists"`
+	ForVirtualNetwork     bool              `json:"forvirtualnetwork,omitempty" doc:"the virtual network for the service offering"`
+	Group                 string            `json:"group,omitempty" doc:"the group name of the virtual machine"`
+	GroupID               string            `json:"groupid,omitempty" doc:"the group ID of the virtual machine"`
+	HAEnable              bool              `json:"haenable,omitempty" doc:"true if high-availability is enabled, false otherwise"`
+	HostID                string            `json:"hostid,omitempty" doc:"the ID of the host for the virtual machine"`
+	HostName              string            `json:"hostname,omitempty" doc:"the name of the host for the virtual machine"`
+	Hypervisor            string            `json:"hypervisor,omitempty" doc:"the hypervisor on which the template runs"`
+	ID                    string            `json:"id,omitempty" doc:"the ID of the virtual machine"`
+	InstanceName          string            `json:"instancename,omitempty" doc:"instance name of the user vm; this parameter is returned to the ROOT admin only"`
+	IsDynamicallyScalable bool              `json:"isdynamicallyscalable,omitempty" doc:"true if vm contains XS/VMWare tools inorder to support dynamic scaling of VM cpu/memory."`
+	IsoDisplayText        string            `json:"isodisplaytext,omitempty" doc:"an alternate display text of the ISO attached to the virtual machine"`
+	IsoID                 string            `json:"isoid,omitempty" doc:"the ID of the ISO attached to the virtual machine"`
+	IsoName               string            `json:"isoname,omitempty" doc:"the name of the ISO attached to the virtual machine"`
+	KeyPair               string            `json:"keypair,omitempty" doc:"ssh key-pair"`
+	Memory                int               `json:"memory,omitempty" doc:"the memory allocated for the virtual machine"`
+	Name                  string            `json:"name,omitempty" doc:"the name of the virtual machine"`
+	NetworkKbsRead        int64             `json:"networkkbsread,omitempty" doc:"the incoming network traffic on the vm"`
+	NetworkKbsWrite       int64             `json:"networkkbswrite,omitempty" doc:"the outgoing network traffic on the host"`
+	Nic                   []Nic             `json:"nic,omitempty" doc:"the list of nics associated with vm"`
+	OsCategoryID          string            `json:"oscategoryid,omitempty" doc:"Os category ID of the virtual machine"`
+	OsCategoryName        string            `json:"oscategoryname,omitempty" doc:"Os category name of the virtual machine"`
+	Password              string            `json:"password,omitempty" doc:"the password (if exists) of the virtual machine"`
+	PasswordEnabled       bool              `json:"passwordenabled,omitempty" doc:"true if the password rest feature is enabled, false otherwise"`
+	PCIDevices            []PCIDevice       `json:"pcidevices,omitempty" doc:"list of PCI devices"`
+	PodID                 string            `json:"podid,omitempty" doc:"the ID of the vm's pod"`
+	PodName               string            `json:"podname,omitempty" doc:"the name of the vm's pod"`
+	PublicIP              string            `json:"publicip,omitempty" doc:"public IP address id associated with vm via Static nat rule"`
+	PublicIPID            string            `json:"publicipid,omitempty" doc:"public IP address id associated with vm via Static nat rule"`
+	RootDeviceID          int64             `json:"rootdeviceid,omitempty" doc:"device ID of the root volume"`
+	RootDeviceType        string            `json:"rootdevicetype,omitempty" doc:"device type of the root volume"`
+	SecurityGroup         []SecurityGroup   `json:"securitygroup,omitempty" doc:"list of security groups associated with the virtual machine"`
+	ServiceOfferingID     string            `json:"serviceofferingid,omitempty" doc:"the ID of the service offering of the virtual machine"`
+	ServiceOfferingName   string            `json:"serviceofferingname,omitempty" doc:"the name of the service offering of the virtual machine"`
+	ServiceState          string            `json:"servicestate,omitempty" doc:"State of the Service from LB rule"`
+	State                 string            `json:"state,omitempty" doc:"the state of the virtual machine"`
+	Tags                  []ResourceTag     `json:"tags,omitempty" doc:"the list of resource tags associated with vm"`
+	TemplateDisplayText   string            `json:"templatedisplaytext,omitempty" doc:"an alternate display text of the template for the virtual machine"`
+	TemplateID            string            `json:"templateid,omitempty" doc:"the ID of the template for the virtual machine. A -1 is returned if the virtual machine was created from an ISO file."`
+	TemplateName          string            `json:"templatename,omitempty" doc:"the name of the template for the virtual machine"`
+	ZoneID                string            `json:"zoneid,omitempty" doc:"the ID of the availablility zone for the virtual machine"`
+	ZoneName              string            `json:"zonename,omitempty" doc:"the name of the availability zone for the virtual machine"`
 }
 
 // ResourceType returns the type of the resource
@@ -472,32 +490,32 @@ func (GetVMPassword) response() interface{} {
 
 // ListVirtualMachines represents a search for a VM
 type ListVirtualMachines struct {
-	Account           string              `json:"account,omitempty" doc:"list resources by account. Must be used with the domainId parameter."`
-	AffinityGroupID   string              `json:"affinitygroupid,omitempty" doc:"list vms by affinity group"`
-	Details           []string            `json:"details,omitempty" doc:"comma separated list of host details requested, value can be a list of [all, group, nics, stats, secgrp, tmpl, servoff, diskoff, iso, volume, min, affgrp]. If no parameter is passed in, the details will be defaulted to all"`
-	DisplayVM         *bool               `json:"displayvm,omitempty" doc:"list resources by display flag; only ROOT admin is eligible to pass this parameter"`
-	DomainID          string              `json:"domainid,omitempty" doc:"list only resources belonging to the domain specified"`
-	ForVirtualNetwork *bool               `json:"forvirtualnetwork,omitempty" doc:"list by network type; true if need to list vms using Virtual Network, false otherwise"`
-	GroupID           string              `json:"groupid,omitempty" doc:"the group ID"`
-	HostID            string              `json:"hostid,omitempty" doc:"the host ID"`
-	Hypervisor        string              `json:"hypervisor,omitempty" doc:"the target hypervisor for the template"`
-	ID                string              `json:"id,omitempty" doc:"the ID of the virtual machine"`
-	IDs               []string            `json:"ids,omitempty" doc:"the IDs of the virtual machines, mutually exclusive with id"`
-	IPAddress         net.IP              `json:"ipaddress,omitempty" doc:"an IP address to filter the result"`
-	IsoID             string              `json:"isoid,omitempty" doc:"list vms by iso"`
-	IsRecursive       *bool               `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainId till leaves."`
-	Keyword           string              `json:"keyword,omitempty" doc:"List by keyword"`
-	ListAll           *bool               `json:"listall,omitempty" doc:"If set to false, list only resources belonging to the command's caller; if set to true - list resources that the caller is authorized to see. Default value is false"`
-	Name              string              `json:"name,omitempty" doc:"name of the virtual machine"`
-	NetworkID         string              `json:"networkid,omitempty" doc:"list by network id"`
-	Page              int                 `json:"page,omitempty"`
-	PageSize          int                 `json:"pagesize,omitempty"`
-	ServiceOfferindID string              `json:"serviceofferingid,omitempty" doc:"list by the service offering"`
-	State             VirtualMachineState `json:"state,omitempty" doc:"state of the virtual machine"`
-	Tags              []ResourceTag       `json:"tags,omitempty" doc:"List resources by tags (key/value pairs)"`
-	TemplateID        string              `json:"templateid,omitempty" doc:"list vms by template"`
-	ZoneID            string              `json:"zoneid,omitempty" doc:"the availability zone ID"`
-	_                 bool                `name:"listVirtualMachines" description:"List the virtual machines owned by the account."`
+	Account           string        `json:"account,omitempty" doc:"list resources by account. Must be used with the domainId parameter."`
+	AffinityGroupID   string        `json:"affinitygroupid,omitempty" doc:"list vms by affinity group"`
+	Details           []string      `json:"details,omitempty" doc:"comma separated list of host details requested, value can be a list of [all, group, nics, stats, secgrp, tmpl, servoff, diskoff, iso, volume, min, affgrp]. If no parameter is passed in, the details will be defaulted to all"`
+	DisplayVM         *bool         `json:"displayvm,omitempty" doc:"list resources by display flag; only ROOT admin is eligible to pass this parameter"`
+	DomainID          string        `json:"domainid,omitempty" doc:"list only resources belonging to the domain specified"`
+	ForVirtualNetwork *bool         `json:"forvirtualnetwork,omitempty" doc:"list by network type; true if need to list vms using Virtual Network, false otherwise"`
+	GroupID           string        `json:"groupid,omitempty" doc:"the group ID"`
+	HostID            string        `json:"hostid,omitempty" doc:"the host ID"`
+	Hypervisor        string        `json:"hypervisor,omitempty" doc:"the target hypervisor for the template"`
+	ID                string        `json:"id,omitempty" doc:"the ID of the virtual machine"`
+	IDs               []string      `json:"ids,omitempty" doc:"the IDs of the virtual machines, mutually exclusive with id"`
+	IPAddress         net.IP        `json:"ipaddress,omitempty" doc:"an IP address to filter the result"`
+	IsoID             string        `json:"isoid,omitempty" doc:"list vms by iso"`
+	IsRecursive       *bool         `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainId till leaves."`
+	Keyword           string        `json:"keyword,omitempty" doc:"List by keyword"`
+	ListAll           *bool         `json:"listall,omitempty" doc:"If set to false, list only resources belonging to the command's caller; if set to true - list resources that the caller is authorized to see. Default value is false"`
+	Name              string        `json:"name,omitempty" doc:"name of the virtual machine"`
+	NetworkID         string        `json:"networkid,omitempty" doc:"list by network id"`
+	Page              int           `json:"page,omitempty"`
+	PageSize          int           `json:"pagesize,omitempty"`
+	ServiceOfferindID string        `json:"serviceofferingid,omitempty" doc:"list by the service offering"`
+	State             string        `json:"state,omitempty" doc:"state of the virtual machine"`
+	Tags              []ResourceTag `json:"tags,omitempty" doc:"List resources by tags (key/value pairs)"`
+	TemplateID        string        `json:"templateid,omitempty" doc:"list vms by template"`
+	ZoneID            string        `json:"zoneid,omitempty" doc:"the availability zone ID"`
+	_                 bool          `name:"listVirtualMachines" description:"List the virtual machines owned by the account."`
 }
 
 // ListVirtualMachinesResponse represents a list of virtual machines

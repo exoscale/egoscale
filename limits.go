@@ -33,34 +33,33 @@ const (
 )
 
 // ResourceType represents the ID of a resource type (for limits)
-type ResourceType int64
+type ResourceType string
 
-//go:generate stringer -type=ResourceType
 const (
 	// VirtualMachineType is the resource type ID of a VM
-	VirtualMachineType ResourceType = iota
+	VirtualMachineType ResourceType = "0"
 	// IPAddressType is the resource type ID of an IP address
-	IPAddressType
+	IPAddressType ResourceType = "1"
 	// VolumeType is the resource type ID of a volume
-	VolumeType
+	VolumeType ResourceType = "2"
 	// SnapshotType is the resource type ID of a snapshot
-	SnapshotType
+	SnapshotType ResourceType = "3"
 	// TemplateType is the resource type ID of a template
-	TemplateType
+	TemplateType ResourceType = "4"
 	// ProjectType is the resource type ID of a project
-	ProjectType
+	ProjectType ResourceType = "5"
 	// NetworkType is the resource type ID of a network
-	NetworkType
+	NetworkType ResourceType = "6"
 	// VPCType is the resource type ID of a VPC
-	VPCType
+	VPCType ResourceType = "7"
 	// CPUType is the resource type ID of a CPU
-	CPUType
+	CPUType ResourceType = "8"
 	// MemoryType is the resource type ID of Memory
-	MemoryType
+	MemoryType ResourceType = "9"
 	// PrimaryStorageType is the resource type ID of primary storage
-	PrimaryStorageType
+	PrimaryStorageType ResourceType = "10"
 	// SecondaryStorageType is the resource type ID of secondary storage
-	SecondaryStorageType
+	SecondaryStorageType ResourceType = "11"
 )
 
 // ResourceLimit represents the limit on a particular resource

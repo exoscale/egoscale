@@ -183,26 +183,6 @@ func (g *accountTypeGeneric) String() string {
 	return ""
 }
 
-type resourceTypeGeneric struct {
-	value *egoscale.ResourceType
-}
-
-func (g *resourceTypeGeneric) Set(value string) error {
-	v, err := strconv.ParseInt(value, 10, 64)
-	if err == nil {
-		*g.value = egoscale.ResourceType(v)
-	}
-
-	return err
-}
-
-func (g *resourceTypeGeneric) String() string {
-	if g.value != nil {
-		return (*g.value).String()
-	}
-	return ""
-}
-
 type stringerTypeGeneric struct {
 	addr  interface{}
 	value string

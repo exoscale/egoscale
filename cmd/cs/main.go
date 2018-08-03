@@ -395,21 +395,11 @@ func buildFlags(method egoscale.Command) []cli.Flag {
 				Destination: addr.(*int),
 			})
 		case reflect.Int64:
-			if argName == "resourcetype" {
-				flags = append(flags, cli.GenericFlag{
-					Name:  argName,
-					Usage: description,
-					Value: &resourceTypeGeneric{
-						value: addr.(*egoscale.ResourceType),
-					},
-				})
-			} else {
-				flags = append(flags, cli.Int64Flag{
-					Name:        argName,
-					Usage:       description,
-					Destination: addr.(*int64),
-				})
-			}
+			flags = append(flags, cli.Int64Flag{
+				Name:        argName,
+				Usage:       description,
+				Destination: addr.(*int64),
+			})
 		case reflect.Uint:
 			flags = append(flags, cli.UintFlag{
 				Name:        argName,

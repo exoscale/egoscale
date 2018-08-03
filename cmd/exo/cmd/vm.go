@@ -11,11 +11,22 @@ var vmCmd = &cobra.Command{
 	Short: "Virtual machines management",
 }
 
-func getVMWithNameOrID(cs *egoscale.Client, name string) (*egoscale.VirtualMachine, error) {
+const (
+	starting = "Starting"
+	running  = "Running"
+	stoping  = "Stopping"
+	stopped  = "Stopped"
+)
 
+// VirtualMachine represente egoscale virtual machine
+type virtualMachine struct {
+	*egoscale.VirtualMachine
+}
+
+func getVMWithNameOrID(cs *egoscale.Client, name string) (*virtualMachine, error) {
 	vm := &egoscale.VirtualMachine{ID: name}
 	if err := cs.Get(vm); err == nil {
-		return vm, err
+		return &virtualMachine{vm}, err
 	}
 
 	vm.Name = name
@@ -24,10 +35,10 @@ func getVMWithNameOrID(cs *egoscale.Client, name string) (*egoscale.VirtualMachi
 	if err := cs.Get(vm); err != nil {
 		return nil, err
 	}
-	return vm, nil
+	return &virtualMachine{vm}, nil
 }
 
-func getSecurityGroup(vm *egoscale.VirtualMachine) []string {
+func getSecurityGroup(vm *virtualMachine) []string {
 	sgs := []string{}
 	for _, sgN := range vm.SecurityGroup {
 		sgs = append(sgs, sgN.Name)

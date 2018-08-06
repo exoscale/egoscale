@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -21,7 +20,7 @@ var vmStopCmd = &cobra.Command{
 
 		errs := []error{}
 		for _, v := range args {
-			if err := stopVirtualMachine(gContext, v); err != nil {
+			if err := stopVirtualMachine(v); err != nil {
 				errs = append(errs, fmt.Errorf("could not stop %q: %s", v, err))
 			}
 		}
@@ -44,7 +43,7 @@ var vmStopCmd = &cobra.Command{
 }
 
 // stopVirtualMachine stop a virtual machine instance
-func stopVirtualMachine(ctx context.Context, vmName string) error {
+func stopVirtualMachine(vmName string) error {
 	vm, err := getVMWithNameOrID(cs, vmName)
 	if err != nil {
 		return err
@@ -56,7 +55,7 @@ func stopVirtualMachine(ctx context.Context, vmName string) error {
 
 	fmt.Printf("Stopping %q ", vm.Name)
 	var errorReq error
-	cs.AsyncRequest(&egoscale.StopVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
+	cs.AsyncRequestWithContext(gContext, &egoscale.StopVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
 
 		fmt.Print(".")
 

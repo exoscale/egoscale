@@ -36,6 +36,10 @@ func asyncStartWithCtx(ctx context.Context, vmName string) error {
 		return err
 	}
 
+	if egoscale.VirtualMachineState(vm.State) == egoscale.VirtualMachineRunning {
+		return fmt.Errorf("virtual machine already started")
+	}
+
 	fmt.Printf("Starting %q ", vm.Name)
 	var errorReq error
 	cs.AsyncRequest(&egoscale.StartVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {

@@ -52,8 +52,7 @@ func (v *int64PtrValue) Set(val string) error {
 	if err != nil {
 		return err
 	}
-	res := int64(r)
-	v.int64 = &res
+	v.int64 = &r
 	return nil
 }
 
@@ -65,7 +64,7 @@ func (v *int64PtrValue) String() string {
 	if v.int64 == nil {
 		return "nil"
 	}
-	return strconv.FormatInt(int64(*v.int64), 10)
+	return strconv.FormatInt(*v.int64, 10)
 }
 
 func getInt64CustomFlag(cmd *cobra.Command, name string) (int64PtrValue, error) {

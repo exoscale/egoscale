@@ -9,8 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var resetCmdDiskSize *int64
-
 // vmResetCmd represents the stop command
 var vmResetCmd = &cobra.Command{
 	Use:   "reset <vm name> [vm name] ...",
@@ -25,9 +23,14 @@ var vmResetCmd = &cobra.Command{
 			return err
 		}
 
+		force, err := cmd.Flags().GetBool("force")
+		if err != nil {
+			return err
+		}
+
 		errs := []error{}
 		for _, v := range args {
-			if err := resetVirtualMachine(v, diskValue); err != nil {
+			if err := resetVirtualMachine(v, diskValue, force); err != nil {
 				errs = append(errs, fmt.Errorf("could not reset %q: %s", v, err))
 			}
 		}
@@ -50,10 +53,16 @@ var vmResetCmd = &cobra.Command{
 }
 
 // resetVirtualMachine stop a virtual machine instance
-func resetVirtualMachine(vmName string, diskValue int64PtrValue) error {
+func resetVirtualMachine(vmName string, diskValue int64PtrValue, force bool) error {
 	vm, err := getVMWithNameOrID(vmName)
 	if err != nil {
 		return err
+	}
+
+	if !force {
+		if !askQuestion(fmt.Sprintf("sure you want to reset %q virtual machine", vm.Name)) {
+			return nil
+		}
 	}
 
 	volume := &egoscale.Volume{
@@ -104,4 +113,5 @@ func init() {
 	vmCmd.AddCommand(vmResetCmd)
 	diskSizeVarP := new(int64PtrValue)
 	vmResetCmd.Flags().VarP(diskSizeVarP, "disk", "d", "New disk size after reset in GB")
+	vmResetCmd.Flags().BoolP("force", "f", false, "Attempt to reset vitual machine without prompting for confirmation")
 }

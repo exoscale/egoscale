@@ -49,8 +49,9 @@ func startVirtualMachine(vmName string) error {
 		return err
 	}
 
-	if vm.State != (string)(egoscale.VirtualMachineStopped) {
-		return fmt.Errorf("virtual machine already running")
+	state := (string)(egoscale.VirtualMachineStopped)
+	if vm.State != state {
+		return fmt.Errorf("%q is not in a %s state, got: %s", vmName, state, vm.State)
 	}
 
 	fmt.Printf("Starting %q ", vm.Name)

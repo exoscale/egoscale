@@ -44,7 +44,7 @@ var vmStopCmd = &cobra.Command{
 
 // stopVirtualMachine stop a virtual machine instance
 func stopVirtualMachine(vmName string) error {
-	vm, err := getVMWithNameOrID(cs, vmName)
+	vm, err := getVMWithNameOrID(vmName)
 	if err != nil {
 		return err
 	}

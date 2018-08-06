@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
@@ -18,12 +19,15 @@ var vmStopCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
+		var errors []string
 		for _, v := range args {
 			if err := asyncStopWithCtx(gContext, v); err != nil {
-				fmt.Fprintln(os.Stderr, err) // nolint: errcheck
-			} else {
-				fmt.Println("\nStopped !")
+				errors = append(errors, fmt.Sprintf("error: virtual machine %s:\n %s", v, err.Error()))
 			}
+		}
+
+		if len(errors) > 0 {
+			return fmt.Errorf("%s", strings.Join(errors, "\n"))
 		}
 		return nil
 	},
@@ -56,6 +60,11 @@ func asyncStopWithCtx(ctx context.Context, vmName string) error {
 		}
 		return true
 	})
+	if errorReq == nil {
+		fmt.Println("\nStopped")
+	} else {
+		fmt.Fprintln(os.Stderr, "\nFailed to stop") // nolint: errcheck
+	}
 	return errorReq
 }
 

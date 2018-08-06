@@ -48,7 +48,7 @@ var apiTypes = map[string]string{
 	"map":     "map[string]string",
 	"list":    "[]struct{}",
 	"set":     "[]struct{}",
-	"uuid":    "string",
+	"uuid":    "*UUID",
 	"boolean": "*bool",
 	"date":    "string",
 }
@@ -265,10 +265,6 @@ func main() {
 					if typename != "int" && typename != "uint16" && typename != "uint8" {
 						expected = "int"
 					}
-					// skip enums
-					if typename == "egoscale.ResourceType" {
-						expected = ""
-					}
 				case "long":
 					if typename != "int64" && typename != "uint64" {
 						expected = "int64"
@@ -278,12 +274,15 @@ func main() {
 						expected = "bool"
 					}
 				case "string":
-				case "uuid":
 				case "date":
 				case "tzdate":
 				case "imageformat":
 					if typename != "string" {
 						expected = "string"
+					}
+				case "uuid":
+					if typename != "*egoscale.UUID" {
+						expected = "*UUID"
 					}
 				case "list":
 					if !strings.HasPrefix(typename, "[]") {

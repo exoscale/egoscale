@@ -31,12 +31,13 @@ func listZones() error {
 
 	for _, zone := range zones {
 		z := zone.(*egoscale.Zone)
-		table.Append([]string{z.Name, z.ID})
+		table.Append([]string{z.Name, z.ID.String()})
 	}
 	table.Render()
 	return nil
 }
 
+// func getZoneIDByName(name string) (*egoscale.UUID, error) {
 func getZoneIDByName(name string) (string, error) {
 	zoneReq := egoscale.Zone{}
 
@@ -45,26 +46,28 @@ func getZoneIDByName(name string) (string, error) {
 		return "", err
 	}
 
-	keywords := []string{}
+	var zoneID *egoscale.UUID
 
 	for _, zone := range zones {
 		z := zone.(*egoscale.Zone)
-		if name == z.ID {
-			return z.ID, nil
+		if name == z.ID.String() {
+			zoneID = z.ID
+			break
 		}
+
 		if strings.Contains(strings.ToLower(z.Name), strings.ToLower(name)) {
-			keywords = append(keywords, z.ID)
+			if zoneID != nil {
+				return "", fmt.Errorf("more than one zones were found")
+			}
+			zoneID = z.ID
 		}
 	}
 
-	if len(keywords) > 1 {
-		return "", fmt.Errorf("more than one zones were found")
-	}
-	if len(keywords) == 1 {
-		return keywords[0], nil
+	if zoneID == nil {
+		return "", fmt.Errorf("zone %q was not found", name)
 	}
 
-	return "", fmt.Errorf("zone %q was not found", name)
+	return zoneID.String(), nil
 }
 
 func init() {

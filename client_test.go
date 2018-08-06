@@ -194,7 +194,7 @@ func TestClientGetNone(t *testing.T) {
 		name     string
 		gettable Gettable
 	}{
-		{"zones", &Zone{ID: "1"}},
+		{"zones", &Zone{ID: MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")}},
 		{"zones", &Zone{Name: "test zone"}},
 		{"publicipaddresses", &IPAddress{ID: "1"}},
 		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},
@@ -260,7 +260,7 @@ func TestClientGetTooMany(t *testing.T) {
 		name     string
 		gettable Gettable
 	}{
-		{"zones", &Zone{ID: "1"}},
+		{"zones", &Zone{ID: MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")}},
 		{"zones", &Zone{Name: "test zone"}},
 		{"publicipaddresses", &IPAddress{ID: "1"}},
 		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},

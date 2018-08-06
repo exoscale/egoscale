@@ -18,8 +18,8 @@ type Zone struct {
 	Domain                string            `json:"domain,omitempty" doc:"Network domain name for the networks in the zone"`
 	DomainID              string            `json:"domainid,omitempty" doc:"the UUID of the containing domain, null for public zones"`
 	DomainName            string            `json:"domainname,omitempty" doc:"the name of the containing domain, null for public zones"`
-	GuestCidrAddress      string            `json:"guestcidraddress,omitempty" doc:"the guest CIDR address for the Zone"`
-	ID                    string            `json:"id,omitempty" doc:"Zone id"`
+	GuestCIDRAddress      *CIDR             `json:"guestcidraddress,omitempty" doc:"the guest CIDR address for the Zone"`
+	ID                    *UUID             `json:"id,omitempty" doc:"Zone id"`
 	InternalDNS1          net.IP            `json:"internaldns1,omitempty" doc:"the first internal DNS for the Zone"`
 	InternalDNS2          net.IP            `json:"internaldns2,omitempty" doc:"the second internal DNS for the Zone"`
 	IP6DNS1               net.IP            `json:"ip6dns1,omitempty" doc:"the first IPv6 DNS for the Zone"`
@@ -49,7 +49,7 @@ func (zone Zone) ListRequest() (ListCommand, error) {
 type ListZones struct {
 	Available      *bool         `json:"available,omitempty" doc:"true if you want to retrieve all available Zones. False if you only want to return the Zones from which you have at least one VM. Default is false."`
 	DomainID       string        `json:"domainid,omitempty" doc:"the ID of the domain associated with the zone"`
-	ID             string        `json:"id,omitempty" doc:"the ID of the zone"`
+	ID             *UUID         `json:"id,omitempty" doc:"the ID of the zone"`
 	Keyword        string        `json:"keyword,omitempty" doc:"List by keyword"`
 	Name           string        `json:"name,omitempty" doc:"the name of the zone"`
 	Page           int           `json:"page,omitempty"`

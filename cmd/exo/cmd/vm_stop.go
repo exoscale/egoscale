@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/exoscale/egoscale"
@@ -19,36 +19,46 @@ var vmStopCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
-		var errors []string
+		errs := []error{}
 		for _, v := range args {
-			if err := asyncStopWithCtx(gContext, v); err != nil {
-				errors = append(errors, fmt.Sprintf("error: virtual machine %s:\n %s", v, err.Error()))
+			if err := stopVirtualMachine(gContext, v); err != nil {
+				errs = append(errs, fmt.Errorf("could not stop %q: %s", v, err))
 			}
 		}
 
-		if len(errors) > 0 {
-			return fmt.Errorf("%s", strings.Join(errors, "\n"))
+		if len(errs) == 1 {
+			return errs[0]
 		}
+		if len(errs) > 1 {
+			var b strings.Builder
+			for _, err := range errs {
+				if _, e := fmt.Fprintln(&b, err); e != nil {
+					return e
+				}
+			}
+			return errors.New(b.String())
+		}
+
 		return nil
 	},
 }
 
-// AsyncStopWithCtx stop a virtual machine instance Async
-func asyncStopWithCtx(ctx context.Context, vmName string) error {
+// stopVirtualMachine stop a virtual machine instance
+func stopVirtualMachine(ctx context.Context, vmName string) error {
 	vm, err := getVMWithNameOrID(cs, vmName)
 	if err != nil {
 		return err
 	}
 
-	if egoscale.VirtualMachineState(vm.State) == egoscale.VirtualMachineStopped {
-		return fmt.Errorf("virtual machine already stopped")
+	if vm.State != (string)(egoscale.VirtualMachineRunning) {
+		return fmt.Errorf("virtual machine is not running")
 	}
 
-	fmt.Printf("Stoping %q ", vm.Name)
+	fmt.Printf("Stopping %q ", vm.Name)
 	var errorReq error
 	cs.AsyncRequest(&egoscale.StopVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
 
-		fmt.Printf(".")
+		fmt.Print(".")
 
 		if err != nil {
 			errorReq = err
@@ -56,15 +66,17 @@ func asyncStopWithCtx(ctx context.Context, vmName string) error {
 		}
 
 		if jobResult.JobStatus == egoscale.Success {
+			fmt.Println(" success.")
 			return false
 		}
+
 		return true
 	})
-	if errorReq == nil {
-		fmt.Println("\nStopped")
-	} else {
-		fmt.Fprintln(os.Stderr, "\nFailed to stop") // nolint: errcheck
+
+	if errorReq != nil {
+		fmt.Println(" failure!")
 	}
+
 	return errorReq
 }
 

@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"log"
-	"os"
+	"strings"
 
 	"github.com/exoscale/egoscale"
 
@@ -30,31 +30,46 @@ var vmScaleCmd = &cobra.Command{
 			return err
 		}
 
+		errs := []error{}
 		for _, v := range args {
-			if err := asyncScaleWithCtx(gContext, v, serviceoffering.ID); err != nil {
-				fmt.Fprintf(os.Stderr, "\n%v\n", err) // nolint: errcheck
-			} else {
-				fmt.Println("\nScaled !")
+			if err := scaleVirtualMachine(v, serviceoffering.ID); err != nil {
+				errs = append(errs, fmt.Errorf("could not scale %q: %s", v, err))
 			}
 		}
+
+		if len(errs) == 1 {
+			return errs[0]
+		}
+		if len(errs) > 1 {
+			var b strings.Builder
+			for _, err := range errs {
+				if _, e := fmt.Fprintln(&b, err); e != nil {
+					return e
+				}
+			}
+			return errors.New(b.String())
+		}
+
 		return nil
 	},
 }
 
-// AsyncscaleWithCtx scale a virtual machine instance Async with context
-func asyncScaleWithCtx(ctx context.Context, vmName, serviceofferingID string) error {
-	vm, err := getVMWithNameOrID(cs, vmName)
+// scaleVirtualMachine scale a virtual machine instance Async with context
+func scaleVirtualMachine(vmName, serviceofferingID string) error {
+	vm, err := getVMWithNameOrID(vmName)
 	if err != nil {
 		return err
 	}
 
-	if egoscale.VirtualMachineState(vm.State) != egoscale.VirtualMachineStopped {
-		return fmt.Errorf("this operation is not permitted if your VM is running")
+	if vm.State != (string)(egoscale.VirtualMachineStopped) {
+		return fmt.Errorf("this operation is not permitted if your VM is not stopped")
 	}
 
 	fmt.Printf("Scaling %q ", vm.Name)
 	var errorReq error
-	cs.AsyncRequest(&egoscale.ScaleVirtualMachine{ID: vm.ID, ServiceOfferingID: serviceofferingID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
+	cs.AsyncRequestWithContext(gContext, &egoscale.ScaleVirtualMachine{ID: vm.ID, ServiceOfferingID: serviceofferingID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
+
+		fmt.Print(".")
 
 		if err != nil {
 			errorReq = err
@@ -62,10 +77,17 @@ func asyncScaleWithCtx(ctx context.Context, vmName, serviceofferingID string) er
 		}
 
 		if jobResult.JobStatus == egoscale.Success {
+			fmt.Println(" success.")
 			return false
 		}
+
 		return true
 	})
+
+	if errorReq != nil {
+		fmt.Println(" failure!")
+	}
+
 	return errorReq
 }
 

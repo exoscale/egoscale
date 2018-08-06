@@ -163,22 +163,45 @@ func (g *cidrListGeneric) String() string {
 	return strings.Join(vs, ",")
 }
 
-type accountTypeGeneric struct {
-	value *egoscale.AccountType
+type intTypeGeneric struct {
+	addr    interface{}
+	value   int64
+	base    int
+	bitSize int
+	typ     reflect.Type
 }
 
-func (g *accountTypeGeneric) Set(value string) error {
-	v, err := strconv.ParseUint(value, 10, 16)
-	if err == nil {
-		*g.value = egoscale.AccountType(v)
+func (g *intTypeGeneric) Set(value string) error {
+	v, err := strconv.ParseInt(value, g.base, g.bitSize)
+	if err != nil {
+		return err
 	}
 
-	return err
+	tv := reflect.ValueOf(g.addr)
+	var fv reflect.Value
+	switch g.bitSize {
+	case 8:
+		val := (int8)(v)
+		fv = reflect.ValueOf(&val)
+	case 16:
+		val := (int16)(v)
+		fv = reflect.ValueOf(&val)
+	case 32:
+		val := (int)(v)
+		fv = reflect.ValueOf(&val)
+	case 64:
+		fv = reflect.ValueOf(&v)
+	}
+	tv.Elem().Set(fv.Convert(reflect.PtrTo(g.typ)).Elem())
+
+	g.value = v
+
+	return nil
 }
 
-func (g *accountTypeGeneric) String() string {
-	if g.value != nil {
-		return (*g.value).String()
+func (g *intTypeGeneric) String() string {
+	if g.addr != nil {
+		return strconv.FormatInt(g.value, g.base)
 	}
 	return ""
 }

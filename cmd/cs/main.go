@@ -423,9 +423,13 @@ func buildFlags(method egoscale.Command) []cli.Flag {
 				Name:  argName,
 				Usage: description,
 			}
-			if argName == "accounttype" {
-				flag.Value = &accountTypeGeneric{
-					value: addr.(*egoscale.AccountType),
+			typeName := field.Type.Name()
+			if typeName != "int16" {
+				flag.Value = &intTypeGeneric{
+					addr:    addr,
+					base:    10,
+					bitSize: 16,
+					typ:     field.Type,
 				}
 			} else {
 				flag.Value = &int16Generic{

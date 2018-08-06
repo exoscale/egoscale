@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"context"
+	"errors"
 	"fmt"
-	"os"
+	"strings"
 
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
@@ -18,33 +18,46 @@ var vmStartCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
+		errs := []error{}
 		for _, v := range args {
-			if err := asyncStartWithCtx(gContext, v); err != nil {
-				fmt.Fprintln(os.Stderr, err) // nolint: errcheck
-			} else {
-				fmt.Println("\nStarted !")
+			if err := startVirtualMachine(v); err != nil {
+				errs = append(errs, fmt.Errorf("could not start %q: %s", v, err))
 			}
 		}
+
+		if len(errs) == 1 {
+			return errs[0]
+		}
+		if len(errs) > 1 {
+			var b strings.Builder
+			for _, err := range errs {
+				if _, e := fmt.Fprintln(&b, err); e != nil {
+					return e
+				}
+			}
+			return errors.New(b.String())
+		}
+
 		return nil
 	},
 }
 
-// AsyncStartWithCtx start a virtual machine instance Async
-func asyncStartWithCtx(ctx context.Context, vmName string) error {
-	vm, err := getVMWithNameOrID(cs, vmName)
+// startVirtualMachine start a virtual machine instance Async
+func startVirtualMachine(vmName string) error {
+	vm, err := getVMWithNameOrID(vmName)
 	if err != nil {
 		return err
 	}
 
-	if egoscale.VirtualMachineState(vm.State) == egoscale.VirtualMachineRunning {
-		return fmt.Errorf("virtual machine already started")
+	if vm.State != (string)(egoscale.VirtualMachineStopped) {
+		return fmt.Errorf("virtual machine already running")
 	}
 
 	fmt.Printf("Starting %q ", vm.Name)
 	var errorReq error
-	cs.AsyncRequest(&egoscale.StartVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
+	cs.AsyncRequestWithContext(gContext, &egoscale.StartVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
 
-		fmt.Printf(".")
+		fmt.Print(".")
 
 		if err != nil {
 			errorReq = err
@@ -52,10 +65,17 @@ func asyncStartWithCtx(ctx context.Context, vmName string) error {
 		}
 
 		if jobResult.JobStatus == egoscale.Success {
+			fmt.Println(" success.")
 			return false
 		}
+
 		return true
 	})
+
+	if errorReq != nil {
+		fmt.Println(" failure!")
+	}
+
 	return errorReq
 }
 

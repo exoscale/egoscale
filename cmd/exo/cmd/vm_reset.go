@@ -49,9 +49,20 @@ func resetVirtualMachine(vmName string) error {
 		return err
 	}
 
+	volume := &egoscale.Volume{
+		VirtualMachineID: vm.ID,
+		Type:             "ROOT",
+	}
+
+	if err := cs.Get(volume); err != nil {
+		return err
+	}
+
+	rootDiskSize := int64(volume.Size >> 30)
+
 	fmt.Printf("Resetting %q ", vm.Name)
 	var errorReq error
-	cs.AsyncRequestWithContext(gContext, &egoscale.RestoreVirtualMachine{VirtualMachineID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
+	cs.AsyncRequestWithContext(gContext, &egoscale.RestoreVirtualMachine{VirtualMachineID: vm.ID, RootDiskSize: rootDiskSize}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
 
 		fmt.Print(".")
 

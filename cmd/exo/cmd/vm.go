@@ -12,7 +12,6 @@ var vmCmd = &cobra.Command{
 }
 
 func getVMWithNameOrID(cs *egoscale.Client, name string) (*egoscale.VirtualMachine, error) {
-
 	vm := &egoscale.VirtualMachine{ID: name}
 	if err := cs.Get(vm); err == nil {
 		return vm, err

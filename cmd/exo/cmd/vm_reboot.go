@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"context"
+	"errors"
 	"fmt"
-	"os"
+	"strings"
 
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
@@ -18,29 +18,46 @@ var vmRebootCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
+		errs := []error{}
 		for _, v := range args {
-			if err := asyncRebootWithCtx(gContext, v); err != nil {
-				fmt.Fprintln(os.Stderr, err) // nolint: errcheck
-			} else {
-				fmt.Println("\nRebooted !")
+			if err := rebootVirtualMachine(v); err != nil {
+				errs = append(errs, fmt.Errorf("could not reboot %q: %s", v, err))
 			}
 		}
+
+		if len(errs) == 1 {
+			return errs[0]
+		}
+		if len(errs) > 1 {
+			var b strings.Builder
+			for _, err := range errs {
+				if _, e := fmt.Fprintln(&b, err); e != nil {
+					return e
+				}
+			}
+			return errors.New(b.String())
+		}
+
 		return nil
 	},
 }
 
-// AsyncRebootWithCtx reboot a virtual machine instance Async
-func asyncRebootWithCtx(ctx context.Context, vmName string) error {
-	vm, err := getVMWithNameOrID(cs, vmName)
+// rebootVirtualMachine reboot a virtual machine instance Async
+func rebootVirtualMachine(vmName string) error {
+	vm, err := getVMWithNameOrID(vmName)
 	if err != nil {
 		return err
 	}
 
+	if vm.State != (string)(egoscale.VirtualMachineRunning) {
+		return fmt.Errorf("virtual machine is not running")
+	}
+
 	fmt.Printf("Rebooting %q ", vm.Name)
 	var errorReq error
-	cs.AsyncRequest(&egoscale.RebootVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
+	cs.AsyncRequestWithContext(gContext, &egoscale.RebootVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
 
-		fmt.Printf(".")
+		fmt.Print(".")
 
 		if err != nil {
 			errorReq = err
@@ -48,10 +65,17 @@ func asyncRebootWithCtx(ctx context.Context, vmName string) error {
 		}
 
 		if jobResult.JobStatus == egoscale.Success {
+			fmt.Println(" success.")
 			return false
 		}
+
 		return true
 	})
+
+	if errorReq != nil {
+		fmt.Println(" failure!")
+	}
+
 	return errorReq
 }
 

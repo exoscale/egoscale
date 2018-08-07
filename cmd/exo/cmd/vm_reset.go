@@ -76,7 +76,7 @@ func resetVirtualMachine(vmName string, diskValue int64PtrValue, force bool) err
 
 	volumeSize := volume.Size >> 30
 
-	temp := &egoscale.Template{IsFeatured: true, ID: vm.TemplateID, ZoneID: "1128bd56-b4d9-4ac6-a7b9-c715b187ce11"}
+	temp := &egoscale.Template{IsFeatured: true, ID: vm.TemplateID, ZoneID: vm.ZoneID}
 
 	if err := cs.Get(temp); err != nil {
 		return err

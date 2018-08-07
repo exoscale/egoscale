@@ -375,6 +375,7 @@ func (client *Client) request(ctx context.Context, command Command) (json.RawMes
 	return text, nil
 }
 
+// XXX: addIpToNic, activateIp6, restorevmresponse are kind of special
 var responseKeys = map[string]string{
 	"addiptonicresponse":            "addiptovmnicresponse",
 	"activateip6response":           "activateip6nicresponse",

@@ -54,30 +54,7 @@ func startVirtualMachine(vmName string) error {
 		return fmt.Errorf("%q is not in a %s state, got: %s", vmName, state, vm.State)
 	}
 
-	fmt.Printf("Starting %q ", vm.Name)
-	var errorReq error
-	cs.AsyncRequestWithContext(gContext, &egoscale.StartVirtualMachine{ID: vm.ID}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
-
-		fmt.Print(".")
-
-		if err != nil {
-			errorReq = err
-			return false
-		}
-
-		if jobResult.JobStatus == egoscale.Success {
-			fmt.Println(" success.")
-			return false
-		}
-
-		return true
-	})
-
-	if errorReq != nil {
-		fmt.Println(" failure!")
-	}
-
-	return errorReq
+	return asyncRequest(&egoscale.StartVirtualMachine{ID: vm.ID}, fmt.Sprintf("Starting %q ", vm.Name), nil)
 }
 
 func init() {

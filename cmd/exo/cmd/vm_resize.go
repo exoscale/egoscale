@@ -80,30 +80,7 @@ func resizeVirtualMachine(vmName string, diskValue int64, force bool) error {
 		return err
 	}
 
-	fmt.Printf("Resizing %q ", vm.Name)
-	var errorReq error
-	cs.AsyncRequestWithContext(gContext, &egoscale.ResizeVolume{ID: volume.ID, Size: diskValue}, func(jobResult *egoscale.AsyncJobResult, err error) bool {
-
-		fmt.Print(".")
-
-		if err != nil {
-			errorReq = err
-			return false
-		}
-
-		if jobResult.JobStatus == egoscale.Success {
-			fmt.Println(" success.")
-			return false
-		}
-
-		return true
-	})
-
-	if errorReq != nil {
-		fmt.Println(" failure!")
-	}
-
-	return errorReq
+	return asyncRequest(&egoscale.ResizeVolume{ID: volume.ID, Size: diskValue}, fmt.Sprintf("Resizing %q ", vm.Name), nil)
 }
 
 func init() {

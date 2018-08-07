@@ -74,11 +74,21 @@ func resetVirtualMachine(vmName string, diskValue int64PtrValue, force bool) err
 		return err
 	}
 
-	rootDiskSize := int64(volume.Size >> 30)
+	volumeSize := volume.Size >> 30
+
+	temp := &egoscale.Template{IsFeatured: true, ID: vm.TemplateID, ZoneID: "1"}
+
+	if err := cs.Get(temp); err != nil {
+		return err
+	}
+
+	tempSize := temp.Size >> 30
+
+	rootDiskSize := int64(volumeSize)
 
 	if diskValue.int64 != nil {
-		if *diskValue.int64 < 10 {
-			return fmt.Errorf("root disk size must be greater or equal than 10GB")
+		if *diskValue.int64 < tempSize {
+			return fmt.Errorf("root disk size must be greater or equal than %dGB", tempSize)
 		}
 		rootDiskSize = *diskValue.int64
 	}

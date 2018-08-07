@@ -189,12 +189,12 @@ func TestClientGetNone(t *testing.T) {
 		"errortext": "Unable to execute API command due to invalid value.",
 		"uuidList": []
 	}}`
-
+	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")
 	things := []struct {
 		name     string
 		gettable Gettable
 	}{
-		{"zones", &Zone{ID: MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")}},
+		{"zones", &Zone{ID: id}},
 		{"zones", &Zone{Name: "test zone"}},
 		{"publicipaddresses", &IPAddress{ID: "1"}},
 		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},
@@ -206,7 +206,7 @@ func TestClientGetNone(t *testing.T) {
 		{"securitygroups", &SecurityGroup{Name: "test affinity group"}},
 		{"virtualmachines", &VirtualMachine{ID: "1"}},
 		{"volumes", &Volume{ID: "1"}},
-		{"templates", &Template{ID: "1", IsFeatured: true}},
+		{"templates", &Template{ID: id, IsFeatured: true}},
 		{"serviceofferings", &ServiceOffering{ID: "1"}},
 		{"accounts", &Account{}},
 	}
@@ -256,11 +256,12 @@ func TestClientGetTooMany(t *testing.T) {
 		"account": [{}, {}]
 	}}`
 
+	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")
 	things := []struct {
 		name     string
 		gettable Gettable
 	}{
-		{"zones", &Zone{ID: MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")}},
+		{"zones", &Zone{ID: id}},
 		{"zones", &Zone{Name: "test zone"}},
 		{"publicipaddresses", &IPAddress{ID: "1"}},
 		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},
@@ -272,7 +273,7 @@ func TestClientGetTooMany(t *testing.T) {
 		{"securitygroups", &SecurityGroup{Name: "test affinity group"}},
 		{"virtualmachines", &VirtualMachine{ID: "1"}},
 		{"volumes", &Volume{ID: "1"}},
-		{"templates", &Template{ID: "1", IsFeatured: true}},
+		{"templates", &Template{ID: id, IsFeatured: true}},
 		{"serviceofferings", &ServiceOffering{ID: "1"}},
 		{"accounts", &Account{}},
 	}

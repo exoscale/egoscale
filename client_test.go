@@ -109,11 +109,12 @@ func TestClientAsyncDelete(t *testing.T) {
 	"jobstatus": 2
 }}`
 
+	id := MustParseUUID("96816f59-9986-499c-91c5-f47bd1122c4b")
 	things := []struct {
 		name      string
 		deletable Deletable
 	}{
-		{"deleteaffinitygroup", &AffinityGroup{ID: "affinity group id"}},
+		{"deleteaffinitygroup", &AffinityGroup{ID: id}},
 		{"deleteaffinitygroup", &AffinityGroup{Name: "affinity group name"}},
 		{"disassociateipaddress", &IPAddress{ID: "ip address id"}},
 		{"destroyvirtualmachine", &VirtualMachine{ID: "virtual machine id"}},
@@ -200,7 +201,7 @@ func TestClientGetNone(t *testing.T) {
 		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},
 		{"sshkeypairs", &SSHKeyPair{Name: "1"}},
 		{"sshkeypairs", &SSHKeyPair{Fingerprint: "test ssh keypair"}},
-		{"affinitygroups", &AffinityGroup{ID: "1"}},
+		{"affinitygroups", &AffinityGroup{ID: id}},
 		{"affinitygroups", &AffinityGroup{Name: "test affinity group"}},
 		{"securitygroups", &SecurityGroup{ID: "1"}},
 		{"securitygroups", &SecurityGroup{Name: "test affinity group"}},
@@ -267,7 +268,7 @@ func TestClientGetTooMany(t *testing.T) {
 		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},
 		{"sshkeypairs", &SSHKeyPair{Name: "1"}},
 		{"sshkeypairs", &SSHKeyPair{Fingerprint: "test ssh keypair"}},
-		{"affinitygroups", &AffinityGroup{ID: "1"}},
+		{"affinitygroups", &AffinityGroup{ID: id}},
 		{"affinitygroups", &AffinityGroup{Name: "test affinity group"}},
 		{"securitygroups", &SecurityGroup{ID: "1"}},
 		{"securitygroups", &SecurityGroup{Name: "test affinity group"}},

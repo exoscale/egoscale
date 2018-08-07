@@ -109,6 +109,9 @@ var firewallAddCmd = &cobra.Command{
 			ip = cidr
 		}
 
+		requests := &[]egoscale.AsyncCommand{}
+		msgs := []string{}
+
 		for i := 1; true; i++ {
 			if i >= len(args) && len(args) != 1 {
 				break
@@ -174,17 +177,16 @@ var firewallAddCmd = &cobra.Command{
 				for _, portRange := range portsRange {
 					rule.StartPort = portRange.start
 					rule.EndPort = portRange.end
-					if err := addRule(rule, isEgress); err != nil {
-						return err
-					}
+
+					addRule(*rule, requests, isEgress)
+					msgs = append(msgs, fmt.Sprintf("Add rule for %q with port %d", securityGroup.Name, rule.StartPort))
 				}
 			}
 
 			// Not best practice but waiting to find better solution
 			if port == "" || !(rule.Protocol == "tcp" || rule.Protocol == "udp") {
-				if err := addRule(rule, isEgress); err != nil {
-					return err
-				}
+				addRule(*rule, requests, isEgress)
+				msgs = append(msgs, fmt.Sprintf("Add rule for  %q", securityGroup.Name))
 			}
 
 			if len(args) == 1 {
@@ -192,7 +194,16 @@ var firewallAddCmd = &cobra.Command{
 			}
 		}
 
+<<<<<<< HEAD
 		return firewallShow.RunE(cmd, []string{securityGroup.ID.String()})
+=======
+		errs := asyncTask(*requests, msgs)
+		if len(errs) > 0 {
+			return errs[0]
+		}
+
+		return firewallShow.RunE(cmd, []string{securityGroup.ID})
+>>>>>>> c653b64... Add async task on firewall add
 	},
 }
 
@@ -270,13 +281,11 @@ func getDefaultRule(ruleName string, isIpv6 bool) (*egoscale.AuthorizeSecurityGr
 	return nil, fmt.Errorf("default rule %q not found", ruleName)
 }
 
-func addRule(rule *egoscale.AuthorizeSecurityGroupIngress, isEgress bool) error {
-	var err error
+func addRule(rule egoscale.AuthorizeSecurityGroupIngress, cmds *[]egoscale.AsyncCommand, isEgress bool) {
 	if isEgress {
-		_, err = cs.RequestWithContext(gContext, (*egoscale.AuthorizeSecurityGroupEgress)(rule))
+		req := (egoscale.AuthorizeSecurityGroupEgress)(rule)
+		*cmds = append(*cmds, &req)
 	} else {
-		_, err = cs.RequestWithContext(gContext, rule)
+		*cmds = append(*cmds, &rule)
 	}
-
-	return err
 }

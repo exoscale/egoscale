@@ -121,7 +121,7 @@ func asyncRequest(cmd egoscale.AsyncCommand, msg string) (interface{}, error) {
 		fmt.Print(".")
 
 		if err != nil {
-			errors = append(errors, err)
+			errorReq = err
 			return false
 		}
 

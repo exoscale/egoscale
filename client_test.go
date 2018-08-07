@@ -207,7 +207,7 @@ func TestClientGetNone(t *testing.T) {
 		{"virtualmachines", &VirtualMachine{ID: "1"}},
 		{"volumes", &Volume{ID: "1"}},
 		{"templates", &Template{ID: id, IsFeatured: true}},
-		{"serviceofferings", &ServiceOffering{ID: "1"}},
+		{"serviceofferings", &ServiceOffering{ID: id}},
 		{"accounts", &Account{}},
 	}
 
@@ -274,7 +274,7 @@ func TestClientGetTooMany(t *testing.T) {
 		{"virtualmachines", &VirtualMachine{ID: "1"}},
 		{"volumes", &Volume{ID: "1"}},
 		{"templates", &Template{ID: id, IsFeatured: true}},
-		{"serviceofferings", &ServiceOffering{ID: "1"}},
+		{"serviceofferings", &ServiceOffering{ID: id}},
 		{"accounts", &Account{}},
 	}
 

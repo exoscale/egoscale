@@ -3,6 +3,7 @@ package egoscale
 import (
 	"net"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -33,6 +34,7 @@ func TestPrepareValues(t *testing.T) {
 		Map         map[string]string `json:"map"`
 		IP          net.IP            `json:"ip,omitempty"`
 		UUID        *UUID             `json:"uuid,omitempty"`
+		UUIDs       []UUID            `json:"uuids,omitempty"`
 		CIDR        *CIDR             `json:"cidr,omitempty"`
 		CIDRList    []CIDR            `json:"cidrlist,omitempty"`
 		MAC         MACAddress        `json:"mac,omitempty"`
@@ -60,6 +62,10 @@ func TestPrepareValues(t *testing.T) {
 		},
 		IP:   net.IPv4(192, 168, 0, 11),
 		UUID: MustParseUUID("5361a11b-615c-42bf-9bdb-e2c3790ada14"),
+		UUIDs: []UUID{
+			*MustParseUUID("5361a11b-615c-42bf-9bdb-e2c3790ada14"),
+			*MustParseUUID("5361a11b-615c-42bf-9bdb-e2c3790ada11"),
+		},
 		CIDR: MustParseCIDR("192.168.0.0/32"),
 		CIDRList: []CIDR{
 			*MustParseCIDR("192.168.0.0/32"),
@@ -134,6 +140,11 @@ func TestPrepareValues(t *testing.T) {
 	v = params.Get("uuid")
 	if v != "5361a11b-615c-42bf-9bdb-e2c3790ada14" {
 		t.Errorf(`expected uuid to be serialized as "5361a11b-615c-42bf-9bdb-e2c3790ada14", got %q`, v)
+	}
+
+	v = params.Get("uuids")
+	if strings.Contains(v, "5361a11b-615c-42bf-9bdb-e2c3790ada14,") {
+		t.Errorf(`expected uuids to contains "5361a11b-615c-42bf-9bdb-e2c3790ada14", got %q`, v)
 	}
 
 	v = params.Get("cidr")

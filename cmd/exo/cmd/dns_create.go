@@ -21,7 +21,7 @@ var dnsCreateCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(resp.ID)
+		fmt.Printf("Domain %q was created successfully\n", resp.Name)
 		return nil
 	},
 }

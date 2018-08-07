@@ -12,6 +12,8 @@ import (
 )
 
 // VirtualMachineState holds the state of the instance
+//
+// https://github.com/apache/cloudstack/blob/master/api/src/main/java/com/cloud/vm/VirtualMachine.java
 type VirtualMachineState string
 
 const (

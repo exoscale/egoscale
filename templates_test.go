@@ -173,7 +173,7 @@ func TestListTemplate(t *testing.T) {
 
 	temp := temps[0].(*Template)
 
-	if temp.ZoneID != zoneID && temp.ID != id {
+	if !temp.ZoneID.Equal(*zoneID) || !temp.ID.Equal(*id) {
 		t.Errorf("Wrong result")
 	}
 }
@@ -226,7 +226,7 @@ func TestListTemplatesPaginate(t *testing.T) {
 				"domainid": "4a8857b8-7235-4e31-a7ef-b8b44d180850",
 				"format": "QCOW2",
 				"hypervisor": "KVM",
-				"id": "testesteteteteteet",
+				"id": "4a8857b9-7235-4e31-a7ef-b8b44d180850",
 				"isdynamicallyscalable": false,
 				"isextractable": false,
 				"isfeatured": true,
@@ -262,7 +262,7 @@ func TestListTemplatesPaginate(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if i.(*Template).ID != id {
+		if !id.Equal(*i.(*Template).ID) {
 			t.Errorf("Expected id '%s' but got %s", id, i.(*Template).ID)
 		}
 		return false

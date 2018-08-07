@@ -194,16 +194,12 @@ var firewallAddCmd = &cobra.Command{
 			}
 		}
 
-<<<<<<< HEAD
-		return firewallShow.RunE(cmd, []string{securityGroup.ID.String()})
-=======
 		errs := asyncTask(*requests, msgs)
 		if len(errs) > 0 {
 			return errs[0]
 		}
 
 		return firewallShow.RunE(cmd, []string{securityGroup.ID})
->>>>>>> c653b64... Add async task on firewall add
 	},
 }
 

@@ -23,6 +23,7 @@ func asyncRequest(cmd egoscale.AsyncCommand, msg string, response interface{}) e
 			if response != nil {
 				if errR := jobResult.Result(response); errR != nil {
 					errorReq = errR
+					return false
 				}
 			}
 			fmt.Println(" success.")

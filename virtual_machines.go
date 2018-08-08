@@ -195,7 +195,9 @@ func (vm VirtualMachine) NicByNetworkID(networkID UUID) *Nic {
 func (vm VirtualMachine) NicByID(nicID UUID) *Nic {
 	for _, nic := range vm.Nic {
 		if nic.ID.Equal(nicID) {
-			nic.VirtualMachineID = MustParseUUID(vm.ID)
+			if vm.ID != "" {
+				nic.VirtualMachineID = MustParseUUID(vm.ID)
+			}
 			return &nic
 		}
 	}

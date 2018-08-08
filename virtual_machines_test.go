@@ -358,9 +358,10 @@ func TestListMachinesPaginate(t *testing.T) {
 
 func TestNicHelpers(t *testing.T) {
 	vm := &VirtualMachine{
+		ID: "25ce0763-f34d-435a-8b84-08466908355a",
 		Nic: []Nic{
 			{
-				ID:           MustParseUUID("2b50e232-b6d3-491c-92ce-12b24c6123e5"),
+				ID:           MustParseUUID("e3b9c165-f3c3-4672-be54-08bfa6bac6fe"),
 				IsDefault:    true,
 				MACAddress:   MustParseMAC("06:aa:14:00:00:18"),
 				IPAddress:    net.ParseIP("192.168.0.10"),
@@ -403,8 +404,8 @@ func TestNicHelpers(t *testing.T) {
 		t.Errorf("IP Address doesn't match")
 	}
 
-	nic1 := vm.NicByID(*MustParseUUID("2b50e232-b6d3-491c-92ce-12b24c6123e5"))
-	if nic.ID != nic1.ID {
+	nic1 := vm.NicByID(*MustParseUUID("e3b9c165-f3c3-4672-be54-08bfa6bac6fe"))
+	if nic1.ID != nil && !nic.ID.Equal(*nic1.ID) {
 		t.Errorf("NicByID does not match %#v %#v", nic, nic1)
 	}
 

@@ -171,7 +171,7 @@ func (vm VirtualMachine) NicsByType(nicType string) []Nic {
 	for _, nic := range vm.Nic {
 		if nic.Type == nicType {
 			// XXX The API forgets to specify it
-			nic.VirtualMachineID = vm.ID
+			nic.VirtualMachineID = MustParseUUID(vm.ID)
 			nics = append(nics, nic)
 		}
 	}
@@ -181,10 +181,10 @@ func (vm VirtualMachine) NicsByType(nicType string) []Nic {
 // NicByNetworkID returns the corresponding interface based on the given NetworkID
 //
 // A VM cannot be connected twice to a same network.
-func (vm VirtualMachine) NicByNetworkID(networkID string) *Nic {
+func (vm VirtualMachine) NicByNetworkID(networkID UUID) *Nic {
 	for _, nic := range vm.Nic {
-		if nic.NetworkID == networkID {
-			nic.VirtualMachineID = vm.ID
+		if nic.NetworkID.Equal(networkID) {
+			nic.VirtualMachineID = MustParseUUID(vm.ID)
 			return &nic
 		}
 	}
@@ -192,10 +192,10 @@ func (vm VirtualMachine) NicByNetworkID(networkID string) *Nic {
 }
 
 // NicByID returns the corresponding interface base on its ID
-func (vm VirtualMachine) NicByID(nicID string) *Nic {
+func (vm VirtualMachine) NicByID(nicID UUID) *Nic {
 	for _, nic := range vm.Nic {
-		if nic.ID == nicID {
-			nic.VirtualMachineID = vm.ID
+		if nic.ID.Equal(nicID) {
+			nic.VirtualMachineID = MustParseUUID(vm.ID)
 			return &nic
 		}
 	}

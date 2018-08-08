@@ -109,8 +109,7 @@ var firewallAddCmd = &cobra.Command{
 			ip = cidr
 		}
 
-		requests := &[]egoscale.AsyncCommand{}
-		msgs := []string{}
+		tasks := &[]task{}
 
 		for i := 1; true; i++ {
 			if i >= len(args) && len(args) != 1 {
@@ -178,15 +177,15 @@ var firewallAddCmd = &cobra.Command{
 					rule.StartPort = portRange.start
 					rule.EndPort = portRange.end
 
-					addRule(*rule, requests, isEgress)
-					msgs = append(msgs, fmt.Sprintf("Add rule for %q with port %d", securityGroup.Name, rule.StartPort))
+					msg := fmt.Sprintf("Add rule for %q with port %d", securityGroup.Name, rule.StartPort)
+					addRule(*rule, tasks, msg, isEgress)
 				}
 			}
 
 			// Not best practice but waiting to find better solution
 			if port == "" || !(rule.Protocol == "tcp" || rule.Protocol == "udp") {
-				addRule(*rule, requests, isEgress)
-				msgs = append(msgs, fmt.Sprintf("Add rule for  %q", securityGroup.Name))
+				msg := fmt.Sprintf("Add rule for  %q", securityGroup.Name)
+				addRule(*rule, tasks, msg, isEgress)
 			}
 
 			if len(args) == 1 {
@@ -194,7 +193,7 @@ var firewallAddCmd = &cobra.Command{
 			}
 		}
 
-		_, errs := asyncTask(*requests, msgs)
+		_, errs := asyncTasks(*tasks)
 		if len(errs) > 0 {
 			return errs[0]
 		}
@@ -277,11 +276,11 @@ func getDefaultRule(ruleName string, isIpv6 bool) (*egoscale.AuthorizeSecurityGr
 	return nil, fmt.Errorf("default rule %q not found", ruleName)
 }
 
-func addRule(rule egoscale.AuthorizeSecurityGroupIngress, cmds *[]egoscale.AsyncCommand, isEgress bool) {
+func addRule(rule egoscale.AuthorizeSecurityGroupIngress, tasks *[]task, msg string, isEgress bool) {
 	if isEgress {
 		req := (egoscale.AuthorizeSecurityGroupEgress)(rule)
-		*cmds = append(*cmds, &req)
+		*tasks = append(*tasks, task{&req, msg})
 	} else {
-		*cmds = append(*cmds, &rule)
+		*tasks = append(*tasks, task{&rule, msg})
 	}
 }

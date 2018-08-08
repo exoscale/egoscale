@@ -98,19 +98,16 @@ func removeAllRules(sgName string) error {
 		return err
 	}
 
-	reqs := []egoscale.AsyncCommand{}
-	messages := []string{}
+	tasks := []task{}
 
 	for _, in := range sg.IngressRule {
-		reqs = append(reqs, &egoscale.RevokeSecurityGroupIngress{ID: in.RuleID})
-		messages = append(messages, fmt.Sprintf("Remove %q", in.RuleID))
+		tasks = append(tasks, task{&egoscale.RevokeSecurityGroupIngress{ID: in.RuleID}, fmt.Sprintf("Remove %q", in.RuleID)})
 	}
 	for _, eg := range sg.EgressRule {
-		reqs = append(reqs, &egoscale.RevokeSecurityGroupEgress{ID: eg.RuleID})
-		messages = append(messages, fmt.Sprintf("Remove %q", eg.RuleID))
+		tasks = append(tasks, task{&egoscale.RevokeSecurityGroupEgress{ID: eg.RuleID}, fmt.Sprintf("Remove %q", eg.RuleID)})
 	}
 
-	_, errs := asyncTask(reqs, messages)
+	_, errs := asyncTasks(tasks)
 
 	if len(errs) > 0 {
 		return errs[0]

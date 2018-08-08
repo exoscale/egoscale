@@ -116,7 +116,7 @@ func TestClientAsyncDelete(t *testing.T) {
 	}{
 		{"deleteaffinitygroup", &AffinityGroup{ID: id}},
 		{"deleteaffinitygroup", &AffinityGroup{Name: "affinity group name"}},
-		{"disassociateipaddress", &IPAddress{ID: "ip address id"}},
+		{"disassociateipaddress", &IPAddress{ID: id}},
 		{"destroyvirtualmachine", &VirtualMachine{ID: "virtual machine id"}},
 	}
 
@@ -197,7 +197,7 @@ func TestClientGetNone(t *testing.T) {
 	}{
 		{"zones", &Zone{ID: id}},
 		{"zones", &Zone{Name: "test zone"}},
-		{"publicipaddresses", &IPAddress{ID: "1"}},
+		{"publicipaddresses", &IPAddress{ID: id}},
 		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},
 		{"sshkeypairs", &SSHKeyPair{Name: "1"}},
 		{"sshkeypairs", &SSHKeyPair{Fingerprint: "test ssh keypair"}},
@@ -264,7 +264,7 @@ func TestClientGetTooMany(t *testing.T) {
 	}{
 		{"zones", &Zone{ID: id}},
 		{"zones", &Zone{Name: "test zone"}},
-		{"publicipaddresses", &IPAddress{ID: "1"}},
+		{"publicipaddresses", &IPAddress{ID: id}},
 		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},
 		{"sshkeypairs", &SSHKeyPair{Name: "1"}},
 		{"sshkeypairs", &SSHKeyPair{Fingerprint: "test ssh keypair"}},

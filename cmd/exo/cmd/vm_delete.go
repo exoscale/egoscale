@@ -49,7 +49,7 @@ func deleteVM(name string, force bool) error {
 
 	}
 
-	if err := asyncRequest(&egoscale.DestroyVirtualMachine{ID: vm.ID}, fmt.Sprintf("Destroying %q ", vm.Name), nil); err != nil {
+	if _, err := asyncRequest(&egoscale.DestroyVirtualMachine{ID: vm.ID}, fmt.Sprintf("Destroying %q ", vm.Name)); err != nil {
 		return err
 	}
 

@@ -80,7 +80,8 @@ func resizeVirtualMachine(vmName string, diskValue int64, force bool) error {
 		return err
 	}
 
-	return asyncRequest(&egoscale.ResizeVolume{ID: volume.ID, Size: diskValue}, fmt.Sprintf("Resizing %q ", vm.Name), nil)
+	_, err = asyncRequest(&egoscale.ResizeVolume{ID: volume.ID, Size: diskValue}, fmt.Sprintf("Resizing %q ", vm.Name))
+	return err
 }
 
 func init() {

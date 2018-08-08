@@ -54,7 +54,8 @@ func stopVirtualMachine(vmName string) error {
 		return fmt.Errorf("%q is not in a %s state, got %s", vmName, state, vm.State)
 	}
 
-	return asyncRequest(&egoscale.StopVirtualMachine{ID: vm.ID}, fmt.Sprintf("Stopping %q ", vm.Name), nil)
+	_, err = asyncRequest(&egoscale.StopVirtualMachine{ID: vm.ID}, fmt.Sprintf("Stopping %q ", vm.Name))
+	return err
 }
 
 func init() {

@@ -267,11 +267,12 @@ func createVM(vmInfos *egoscale.DeployVirtualMachine) (*egoscale.VirtualMachine,
 
 	}
 
-	virtualMachine := &egoscale.VirtualMachine{}
-
-	if err := asyncRequest(vmInfos, fmt.Sprintf("Deploying %q ", vmInfos.Name), virtualMachine); err != nil {
+	resp, err := asyncRequest(vmInfos, fmt.Sprintf("Deploying %q ", vmInfos.Name))
+	if err != nil {
 		return nil, err
 	}
+
+	virtualMachine := resp.(*egoscale.VirtualMachine)
 
 	if isDefaultKeyPair {
 		saveKeyPair(keyPairs, virtualMachine.ID)

@@ -7,7 +7,9 @@ import (
 )
 
 // asyncRequest if no response expected send nil
-func asyncRequest(cmd egoscale.AsyncCommand, msg string, response interface{}) error {
+func asyncRequest(cmd egoscale.AsyncCommand, msg string) (interface{}, error) {
+	response := cs.Response(cmd)
+
 	fmt.Print(msg)
 	var errorReq error
 	cs.AsyncRequestWithContext(gContext, cmd, func(jobResult *egoscale.AsyncJobResult, err error) bool {
@@ -20,12 +22,11 @@ func asyncRequest(cmd egoscale.AsyncCommand, msg string, response interface{}) e
 		}
 
 		if jobResult.JobStatus == egoscale.Success {
-			if response != nil {
-				if errR := jobResult.Result(response); errR != nil {
-					errorReq = errR
-					return false
-				}
+			if errR := jobResult.Result(response); errR != nil {
+				errorReq = errR
+				return false
 			}
+
 			fmt.Println(" success.")
 			return false
 		}
@@ -37,5 +38,5 @@ func asyncRequest(cmd egoscale.AsyncCommand, msg string, response interface{}) e
 		fmt.Println(" failure!")
 	}
 
-	return errorReq
+	return response, errorReq
 }

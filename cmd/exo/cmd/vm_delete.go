@@ -24,46 +24,54 @@ var vmDeleteCmd = &cobra.Command{
 			return err
 		}
 
+		tasks := []task{}
+
 		for _, arg := range args {
-			if err := deleteVM(arg, force); err != nil {
-				_, err = fmt.Fprintf(os.Stderr, err.Error())
-				if err != nil {
+			tsk, err := prepareDeleteVM(&arg, force)
+			if err != nil {
+				return err
+			}
+			if tsk != nil {
+				tasks = append(tasks, task{tsk, fmt.Sprintf("Destroying %q ", arg)})
+			}
+		}
+
+		resps, errs := asyncTasks(tasks)
+		if len(errs) > 0 {
+			return errs[0]
+		}
+
+		for _, r := range resps {
+			resp := r.(*egoscale.VirtualMachine)
+
+			folder := path.Join(gConfigFolder, "instances", resp.ID)
+
+			if _, err := os.Stat(folder); !os.IsNotExist(err) {
+				if err := os.RemoveAll(folder); err != nil {
 					return err
 				}
 			}
 		}
+
 		return nil
 	},
 }
 
-func deleteVM(name string, force bool) error {
-	vm, err := getVMWithNameOrID(name)
+func prepareDeleteVM(name *string, force bool) (*egoscale.DestroyVirtualMachine, error) {
+	vm, err := getVMWithNameOrID(*name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !force {
 		if !askQuestion(fmt.Sprintf("sure you want to delete %q virtual machine", vm.Name)) {
-			return nil
-		}
-
-	}
-
-	if _, err := asyncRequest(&egoscale.DestroyVirtualMachine{ID: vm.ID}, fmt.Sprintf("Destroying %q ", vm.Name)); err != nil {
-		return err
-	}
-
-	folder := path.Join(gConfigFolder, "instances", vm.ID.String())
-
-	if _, err := os.Stat(folder); !os.IsNotExist(err) {
-		if err := os.RemoveAll(folder); err != nil {
-			return err
+			return nil, nil
 		}
 	}
 
-	fmt.Println(vm.ID)
+	*name = vm.Name
 
-	return nil
+	return &egoscale.DestroyVirtualMachine{ID: vm.ID}, nil
 }
 
 func init() {

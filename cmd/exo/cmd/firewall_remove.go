@@ -110,7 +110,7 @@ func removeAllRules(sgName string) error {
 		messages = append(messages, fmt.Sprintf("Remove %q", eg.RuleID))
 	}
 
-	errs := asyncTask(reqs, messages)
+	_, errs := asyncTask(reqs, messages)
 
 	if len(errs) > 0 {
 		return errs[0]

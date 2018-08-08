@@ -93,7 +93,7 @@ func TestClientSyncDelete(t *testing.T) {
 func TestClientAsyncDelete(t *testing.T) {
 	body := `
 {"%sresponse": {
-	"jobid": "1",
+	"jobid": "01ed7adc-8b81-4e33-a0f2-4f55a3b880cd",
 	"jobresult": {
 		"success": true
 	},
@@ -101,7 +101,7 @@ func TestClientAsyncDelete(t *testing.T) {
 }}`
 	bodyError := `
 {"%sresponse": {
-	"jobid": "1",
+	"jobid": "01ed7adc-8b81-4e33-a0f2-4f55a3b880cd",
 	"jobresult": {
 		"success": false,
 		"displaytext": "herp derp",

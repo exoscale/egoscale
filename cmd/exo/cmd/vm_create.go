@@ -16,7 +16,7 @@ import (
 
 // vmCreateCmd represents the create command
 var vmCreateCmd = &cobra.Command{
-	Use:     "create <vm name>",
+	Use:     "create <vm name>+",
 	Short:   "Create and deploy a virtual machine",
 	Aliases: gCreateAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {

@@ -26,7 +26,6 @@ func asyncTasks(tasks []task) ([]interface{}, []error) {
 
 	//create task Progress
 	taskBars := make([]*mpb.Bar, len(tasks))
-	maximum := 10
 	var wg sync.WaitGroup
 	p := mpb.New(mpb.WithWaitGroup(&wg), mpb.WithContext(gContext), mpb.WithWidth(40))
 	wg.Add(len(tasks))

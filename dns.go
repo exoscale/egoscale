@@ -208,11 +208,42 @@ func (client *Client) GetRecord(domain string, recordID int64) (*DNSRecord, erro
 }
 
 // GetRecords returns the DNS records
-func (client *Client) GetRecords(domain, recType string) ([]DNSRecord, error) {
+func (client *Client) GetRecords(domain string) ([]DNSRecord, error) {
+	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records", "", "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	var r []DNSRecordResponse
+	if err = json.Unmarshal(resp, &r); err != nil {
+		return nil, err
+	}
+
+	records := make([]DNSRecord, 0, len(r))
+	for _, rec := range r {
+		records = append(records, rec.Record)
+	}
+
+	return records, nil
+}
+
+// GetRecordsWithFilters returns the DNS records (filters can be empty)
+func (client *Client) GetRecordsWithFilters(domain, name, content, recordType string) ([]DNSRecord, error) {
+
+	var filters []string
+	if name != "" {
+		filters = append(filters, fmt.Sprintf("name=%s", url.QueryEscape(name)))
+	}
+	if content != "" {
+		filters = append(filters, fmt.Sprintf("content=%s", url.QueryEscape(content)))
+	}
+	if recordType != "" {
+		filters = append(filters, fmt.Sprintf("record_type=%s", url.QueryEscape(recordType)))
+	}
 
 	var filter string
-	if recType != "" {
-		filter = fmt.Sprintf("?type=%s", url.QueryEscape(recType))
+	if len(filters) > 0 {
+		filter = fmt.Sprintf("?%s", strings.Join(filters, "&"))
 	}
 
 	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records"+filter, "", "GET")
@@ -331,7 +362,7 @@ func (client *Client) dnsRequest(uri string, params string, method string) (json
 
 // GetRecordIDByName get record ID by name
 func (client *Client) GetRecordIDByName(domainName, recordName string) (int64, error) {
-	records, err := client.GetRecords(domainName, "")
+	records, err := client.GetRecords(domainName)
 	if err != nil {
 		return 0, err
 	}

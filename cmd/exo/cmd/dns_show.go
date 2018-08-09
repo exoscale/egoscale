@@ -11,6 +11,8 @@ import (
 
 func init() {
 	dnsCmd.AddCommand(dnsShowCmd)
+	dnsShowCmd.Flags().StringP("name", "n", "", "List records by name")
+	dnsShowCmd.Flags().StringP("content", "c", "", "List records by content keyword")
 }
 
 // dnsShowCmd represents the show command
@@ -22,13 +24,24 @@ var dnsShowCmd = &cobra.Command{
 			return errors.New("show expects one DNS domain by name or id")
 		}
 
-		var recType string
-		if len(args) == 2 {
-			recType = args[1]
+		types := []string{}
+		if len(args) > 1 {
+			types = args[1:]
+		} else {
+			types = []string{""}
+		}
+
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			return err
+		}
+		content, err := cmd.Flags().GetString("content")
+		if err != nil {
+			return err
 		}
 
 		t := table.NewTable(os.Stdout)
-		err := domainListRecords(t, args[0], recType)
+		err = domainListRecords(t, args[0], name, content, types)
 		if err == nil {
 			t.Render()
 		}
@@ -36,23 +49,26 @@ var dnsShowCmd = &cobra.Command{
 	},
 }
 
-func domainListRecords(t *table.Table, name, keyword string) error {
-	records, err := csDNS.GetRecords(name, keyword)
-	if err != nil {
-		return err
-	}
+func domainListRecords(t *table.Table, domain, name, content string, types []string) error {
 
 	t.SetHeader([]string{"Type", "Name", "Content", "TTL", "Prio", "ID"})
 
-	for _, record := range records {
-		t.Append([]string{
-			record.RecordType,
-			record.Name,
-			record.Content,
-			strconv.Itoa(record.TTL),
-			strconv.Itoa(record.Prio),
-			strconv.FormatInt(record.ID, 10),
-		})
+	for _, recordType := range types {
+		records, err := csDNS.GetRecordsWithFilters(domain, name, content, recordType)
+		if err != nil {
+			return err
+		}
+
+		for _, record := range records {
+			t.Append([]string{
+				record.RecordType,
+				record.Name,
+				record.Content,
+				strconv.Itoa(record.TTL),
+				strconv.Itoa(record.Prio),
+				strconv.FormatInt(record.ID, 10),
+			})
+		}
 	}
 
 	return nil

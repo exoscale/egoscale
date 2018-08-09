@@ -40,14 +40,16 @@ var privnetShowCmd = &cobra.Command{
 	},
 }
 
-func privnetDetails(privnetName string) (*egoscale.Network, []egoscale.VirtualMachine, error) {
+func privnetDetails(privnetID egoscale.UUID) (*egoscale.Network, []egoscale.VirtualMachine, error) {
 
-	network, err := getNetworkIDByName(cs, privnetName)
-	if err != nil {
+	network := &egoscale.Network{ID: &privnetID}
+	if err := cs.GetWithContext(gContext, network); err != nil {
 		return nil, nil, err
 	}
 
-	vms, err := cs.ListWithContext(gContext, &egoscale.VirtualMachine{ZoneID: network.ZoneID})
+	vms, err := cs.ListWithContext(gContext, &egoscale.VirtualMachine{
+		ZoneID: network.ZoneID,
+	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -56,7 +58,8 @@ func privnetDetails(privnetName string) (*egoscale.Network, []egoscale.VirtualMa
 	for _, v := range vms {
 		vm := v.(*egoscale.VirtualMachine)
 
-		if _, err := containNetID(network, vm.Nic); err == nil {
+		nic := vm.NicByNetworkID(*network.ID)
+		if nic != nil {
 			vmsRes = append(vmsRes, *vm)
 		}
 	}

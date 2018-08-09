@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
 )
@@ -25,24 +27,31 @@ var privnetAssociateCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			println(resp)
+			fmt.Println(resp)
 		}
+
 		return nil
 	},
 }
 
-func associatePrivNet(privnet *egoscale.Network, vmName string) (string, error) {
+func associatePrivNet(privnet *egoscale.Network, vmName string) (*egoscale.UUID, error) {
 	vm, err := getVMWithNameOrID(vmName)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	_, err = cs.RequestWithContext(gContext, &egoscale.AddNicToVirtualMachine{NetworkID: privnet.ID, VirtualMachineID: vm.ID})
+	req := &egoscale.AddNicToVirtualMachine{NetworkID: privnet.ID, VirtualMachineID: vm.ID}
+	resp, err := cs.RequestWithContext(gContext, req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return vm.ID, nil
+	nic := resp.(*egoscale.VirtualMachine).NicByNetworkID(*privnet.ID)
+	if nic == nil {
+		return nil, fmt.Errorf("no nics found for network %q", privnet.ID)
+	}
+
+	return nic.ID, nil
 
 }
 

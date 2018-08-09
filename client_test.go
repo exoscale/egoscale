@@ -63,7 +63,7 @@ func TestClientSyncDelete(t *testing.T) {
 		name      string
 		deletable Deletable
 	}{
-		{"securitygroup", &SecurityGroup{ID: "test"}},
+		{"securitygroup", &SecurityGroup{ID: MustParseUUID("09ae3132-3a35-458c-9607-e3c77dd0465b")}},
 		{"securitygroup", &SecurityGroup{Name: "test"}},
 		{"sshkeypair", &SSHKeyPair{Name: "test"}},
 	}
@@ -203,7 +203,7 @@ func TestClientGetNone(t *testing.T) {
 		{"sshkeypairs", &SSHKeyPair{Fingerprint: "test ssh keypair"}},
 		{"affinitygroups", &AffinityGroup{ID: id}},
 		{"affinitygroups", &AffinityGroup{Name: "test affinity group"}},
-		{"securitygroups", &SecurityGroup{ID: "1"}},
+		{"securitygroups", &SecurityGroup{ID: id}},
 		{"securitygroups", &SecurityGroup{Name: "test affinity group"}},
 		{"virtualmachines", &VirtualMachine{ID: "1"}},
 		{"volumes", &Volume{ID: id}},
@@ -270,7 +270,7 @@ func TestClientGetTooMany(t *testing.T) {
 		{"sshkeypairs", &SSHKeyPair{Fingerprint: "test ssh keypair"}},
 		{"affinitygroups", &AffinityGroup{ID: id}},
 		{"affinitygroups", &AffinityGroup{Name: "test affinity group"}},
-		{"securitygroups", &SecurityGroup{ID: "1"}},
+		{"securitygroups", &SecurityGroup{ID: id}},
 		{"securitygroups", &SecurityGroup{Name: "test affinity group"}},
 		{"virtualmachines", &VirtualMachine{ID: "1"}},
 		{"volumes", &Volume{ID: id}},

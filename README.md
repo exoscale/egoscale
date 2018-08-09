@@ -9,6 +9,8 @@ description: the Go library for Exoscale
 
 A wrapper for the [Exoscale public cloud](https://www.exoscale.com) API.
 
+This project also provides an executable CLI client. See [the relevant subtree](https://github.com/exoscale/egoscale/tree/master/cmd/exo) for installation instructions.
+
 ## License
 
 Licensed under the Apache License, Version 2.0 (the "License"); you

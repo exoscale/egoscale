@@ -25,7 +25,12 @@ $ go install
 ## Configuration
 
 A configuration file holding your credentials is required.
-You can generate one via a guided prompt.
+You can generate one via a guided interactive prompt with:
+
+```
+$ exo config
+```
+
 The following parameters are requested:
 
 - `API Key`

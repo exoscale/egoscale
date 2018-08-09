@@ -330,8 +330,10 @@ func (client *Client) dnsRequest(uri string, urlValues url.Values, params, metho
 
 	q := req.URL.Query()
 
-	for k, v := range urlValues {
-		q[k] = v
+	for k, vs := range urlValues {
+		for _, v := range vs {
+			q.Add(k, v)
+		}
 	}
 
 	req.URL.RawQuery = q.Encode()

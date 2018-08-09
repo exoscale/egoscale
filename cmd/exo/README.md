@@ -31,23 +31,7 @@ You can find your credentials in our [Exoscale Console](https://portal.exoscale.
 
 ```shell
 $ exo config
-Hi happy Exoscalian, some configuration is required to use exo
-
-We now need some very important information, find them there.
-<https://portal.exoscale.com/account/profile/api>
-
-[+] Account name [none]: Production
-[+] API Key [none]: EXO...
-[+] Secret Key [none]: ...
-Choose [Production] default zone:
-1: ch-gva-2
-2: ch-dk-2
-3: at-vie-1
-4: de-fra-1
-[+] Select [1]: 1
-[+] Do you wish to add another account? [Yn]: n
 ```
-
 
 ## Usage
 

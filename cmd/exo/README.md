@@ -24,24 +24,10 @@ $ go install
 
 ## Configuration
 
-A configuration file holding your credentials is required.
-You can generate one via a guided interactive prompt with:
-
-```
-$ exo config
-```
-
-The following parameters are requested:
-
-- `API Key`
-- `Secret Key`
-
-You can find those in our [Exoscale Console](https://portal.exoscale.com/account/profile/api)
-
-### Automatic configuration
-
 The CLI will guide you in the initial configuration.
 The configuration file and all assets created by any `exo` command will be saved in the `~/.exoscale/` folder.
+
+You can find your credentials in our [Exoscale Console](https://portal.exoscale.com/account/profile/api)
 
 ```shell
 $ exo config

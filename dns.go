@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 )
@@ -138,7 +137,7 @@ func (client *Client) CreateDomain(name string) (*DNSDomain, error) {
 		return nil, err
 	}
 
-	resp, err := client.dnsRequest("/v1/domains", string(m), "POST")
+	resp, err := client.dnsRequest("/v1/domains", nil, string(m), "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +152,7 @@ func (client *Client) CreateDomain(name string) (*DNSDomain, error) {
 
 // GetDomain gets a DNS domain
 func (client *Client) GetDomain(name string) (*DNSDomain, error) {
-	resp, err := client.dnsRequest("/v1/domains/"+name, "", "GET")
+	resp, err := client.dnsRequest("/v1/domains/"+name, nil, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +167,7 @@ func (client *Client) GetDomain(name string) (*DNSDomain, error) {
 
 // GetDomains gets DNS domains
 func (client *Client) GetDomains() ([]DNSDomain, error) {
-	resp, err := client.dnsRequest("/v1/domains", "", "GET")
+	resp, err := client.dnsRequest("/v1/domains", nil, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -187,14 +186,14 @@ func (client *Client) GetDomains() ([]DNSDomain, error) {
 
 // DeleteDomain delets a DNS domain
 func (client *Client) DeleteDomain(name string) error {
-	_, err := client.dnsRequest("/v1/domains/"+name, "", "DELETE")
+	_, err := client.dnsRequest("/v1/domains/"+name, nil, "", "DELETE")
 	return err
 }
 
 // GetRecord returns a DNS record
 func (client *Client) GetRecord(domain string, recordID int64) (*DNSRecord, error) {
 	id := strconv.FormatInt(recordID, 10)
-	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records/"+id, "", "GET")
+	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records/"+id, nil, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +208,7 @@ func (client *Client) GetRecord(domain string, recordID int64) (*DNSRecord, erro
 
 // GetRecords returns the DNS records
 func (client *Client) GetRecords(domain string) ([]DNSRecord, error) {
-	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records", "", "GET")
+	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records", nil, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -230,23 +229,18 @@ func (client *Client) GetRecords(domain string) ([]DNSRecord, error) {
 // GetRecordsWithFilters returns the DNS records (filters can be empty)
 func (client *Client) GetRecordsWithFilters(domain, name, content, recordType string) ([]DNSRecord, error) {
 
-	var filters []string
+	filters := map[string]string{}
 	if name != "" {
-		filters = append(filters, fmt.Sprintf("name=%s", url.QueryEscape(name)))
+		filters["name"] = name
 	}
 	if content != "" {
-		filters = append(filters, fmt.Sprintf("content=%s", url.QueryEscape(content)))
+		filters["content"] = content
 	}
 	if recordType != "" {
-		filters = append(filters, fmt.Sprintf("record_type=%s", url.QueryEscape(recordType)))
+		filters["record_type"] = recordType
 	}
 
-	var filter string
-	if len(filters) > 0 {
-		filter = fmt.Sprintf("?%s", strings.Join(filters, "&"))
-	}
-
-	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records"+filter, "", "GET")
+	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records", filters, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +267,7 @@ func (client *Client) CreateRecord(name string, rec DNSRecord) (*DNSRecord, erro
 		return nil, err
 	}
 
-	resp, err := client.dnsRequest("/v1/domains/"+name+"/records", string(body), "POST")
+	resp, err := client.dnsRequest("/v1/domains/"+name+"/records", nil, string(body), "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +290,7 @@ func (client *Client) UpdateRecord(name string, rec UpdateDNSRecord) (*DNSRecord
 	}
 
 	id := strconv.FormatInt(rec.ID, 10)
-	resp, err := client.dnsRequest("/v1/domains/"+name+"/records/"+id, string(body), "PUT")
+	resp, err := client.dnsRequest("/v1/domains/"+name+"/records/"+id, nil, string(body), "PUT")
 	if err != nil {
 		return nil, err
 	}
@@ -312,12 +306,12 @@ func (client *Client) UpdateRecord(name string, rec UpdateDNSRecord) (*DNSRecord
 // DeleteRecord deletes a record
 func (client *Client) DeleteRecord(name string, recordID int64) error {
 	id := strconv.FormatInt(recordID, 10)
-	_, err := client.dnsRequest("/v1/domains/"+name+"/records/"+id, "", "DELETE")
+	_, err := client.dnsRequest("/v1/domains/"+name+"/records/"+id, nil, "", "DELETE")
 
 	return err
 }
 
-func (client *Client) dnsRequest(uri string, params string, method string) (json.RawMessage, error) {
+func (client *Client) dnsRequest(uri string, uriParams map[string]string, params, method string) (json.RawMessage, error) {
 	url := client.Endpoint + uri
 	req, err := http.NewRequest(method, url, strings.NewReader(params))
 	if err != nil {
@@ -332,6 +326,14 @@ func (client *Client) dnsRequest(uri string, params string, method string) (json
 		hdr.Add("Content-Type", "application/json")
 	}
 	req.Header = hdr
+
+	q := req.URL.Query()
+
+	for k, v := range uriParams {
+		q.Add(k, v)
+	}
+
+	req.URL.RawQuery = q.Encode()
 
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {

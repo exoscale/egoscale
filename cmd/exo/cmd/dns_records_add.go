@@ -37,7 +37,7 @@ var dnsACmd = &cobra.Command{
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "A",
@@ -47,7 +47,7 @@ var dnsACmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -90,7 +90,7 @@ var dnsAAAACmd = &cobra.Command{
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "AAAA",
@@ -100,7 +100,7 @@ var dnsAAAACmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -147,7 +147,7 @@ the record name. Note: If you want to redirect to a URL, use a URL record instea
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "ALIAS",
@@ -157,7 +157,7 @@ the record name. Note: If you want to redirect to a URL, use a URL record instea
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -201,7 +201,7 @@ These types of records are used when a server is reached by several names. Only 
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "CNAME",
@@ -211,7 +211,7 @@ These types of records are used when a server is reached by several names. Only 
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -262,7 +262,7 @@ var dnsHINFOCmd = &cobra.Command{
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "HINFO",
@@ -272,7 +272,7 @@ var dnsHINFOCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -325,7 +325,7 @@ These types of records are used to describe which servers handle incoming email.
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "MX",
@@ -336,7 +336,7 @@ These types of records are used to describe which servers handle incoming email.
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -434,7 +434,7 @@ the domain name syntax to a label that is. More information can be found in RFC 
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "NAPTR",
@@ -444,7 +444,7 @@ the domain name syntax to a label that is. More information can be found in RFC 
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -512,7 +512,7 @@ You may only delegate subdomains (for example subdomain.yourdomain.com).`,
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "NS",
@@ -522,7 +522,7 @@ You may only delegate subdomains (for example subdomain.yourdomain.com).`,
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -569,7 +569,7 @@ part of a pool of available CNAME records. This is a DNSimple custom record type
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "POOL",
@@ -579,7 +579,7 @@ part of a pool of available CNAME records. This is a DNSimple custom record type
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -651,7 +651,7 @@ var dnsSRVCmd = &cobra.Command{
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "SRV",
@@ -662,7 +662,7 @@ var dnsSRVCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -734,7 +734,7 @@ var dnsSSHFPCmd = &cobra.Command{
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "SSHFP",
@@ -744,7 +744,7 @@ var dnsSSHFPCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -794,7 +794,7 @@ the standard record types. For example, Google uses this type of record for doma
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "TXT",
@@ -804,7 +804,7 @@ the standard record types. For example, Google uses this type of record for doma
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }
@@ -848,7 +848,7 @@ This type of record uses an HTTP redirect to redirect visitors from a domain to 
 			return err
 		}
 
-		resp, err := csDNS.CreateRecord(args[0], egoscale.DNSRecord{
+		_, err = csDNS.CreateRecord(args[0], egoscale.DNSRecord{
 			DomainID:   domain.ID,
 			TTL:        ttl,
 			RecordType: "URL",
@@ -858,7 +858,7 @@ This type of record uses an HTTP redirect to redirect visitors from a domain to 
 		if err != nil {
 			return err
 		}
-		fmt.Println(resp.ID)
+		fmt.Printf("Record %q was created successfully to %q\n", cmd.Name(), args[0])
 		return nil
 	},
 }

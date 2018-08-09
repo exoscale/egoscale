@@ -19,7 +19,7 @@ var dnsDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(args[0])
+		fmt.Printf("Domain %q was deleted successfully\n", args[0])
 		return nil
 	},
 }

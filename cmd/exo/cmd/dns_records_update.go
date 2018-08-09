@@ -42,7 +42,7 @@ func init() {
 					return err
 				}
 
-				resp, err := csDNS.UpdateRecord(args[0], egoscale.UpdateDNSRecord{
+				_, err = csDNS.UpdateRecord(args[0], egoscale.UpdateDNSRecord{
 					ID:         recordID,
 					DomainID:   domain.ID,
 					TTL:        ttl,
@@ -53,7 +53,7 @@ func init() {
 				if err != nil {
 					return err
 				}
-				fmt.Println(resp.ID)
+				fmt.Printf("Record %q was updated successfully to %q\n", cmd.Name(), args[0])
 				return nil
 			},
 		}

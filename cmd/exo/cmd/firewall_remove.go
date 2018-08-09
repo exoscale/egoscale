@@ -109,13 +109,13 @@ func removeAllRules(sgName string) ([]string, error) {
 		if reqErr := cs.BooleanRequestWithContext(gContext, &egoscale.RevokeSecurityGroupIngress{ID: in.RuleID}); reqErr != nil {
 			return res, reqErr
 		}
-		res = append(res, in.RuleID)
+		res = append(res, in.RuleID.String())
 	}
 	for _, eg := range sg.EgressRule {
 		if err = cs.BooleanRequestWithContext(gContext, &egoscale.RevokeSecurityGroupEgress{ID: eg.RuleID}); err != nil {
 			return res, err
 		}
-		res = append(res, eg.RuleID)
+		res = append(res, eg.RuleID.String())
 	}
 	return res, nil
 }
@@ -126,7 +126,12 @@ func removeRule(name, ruleID string) error {
 		return err
 	}
 
-	in, eg := sg.RuleByID(ruleID)
+	id, err := egoscale.ParseUUID(ruleID)
+	if err != nil {
+		return err
+	}
+
+	in, eg := sg.RuleByID(*id)
 
 	if in != nil {
 		err = cs.BooleanRequestWithContext(gContext, &egoscale.RevokeSecurityGroupIngress{ID: in.RuleID})

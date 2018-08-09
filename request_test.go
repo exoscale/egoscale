@@ -116,7 +116,7 @@ func TestBooleanAsyncRequest(t *testing.T) {
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	req := &ExpungeVirtualMachine{
-		ID: "123",
+		ID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 	}
 	if err := cs.BooleanRequest(req); err != nil {
 		t.Error(err)
@@ -156,7 +156,7 @@ func TestBooleanAsyncRequestFailure(t *testing.T) {
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	req := &ExpungeVirtualMachine{
-		ID: "123",
+		ID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 	}
 	if err := cs.BooleanRequest(req); err == nil {
 		t.Error("An error was expected")
@@ -194,7 +194,7 @@ func TestBooleanAsyncRequestWithContext(t *testing.T) {
 
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	req := &ExpungeVirtualMachine{
-		ID: "123",
+		ID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 	}
 
 	// WithContext
@@ -223,7 +223,7 @@ func TestBooleanRequestTimeout(t *testing.T) {
 		cs.HTTPClient.Timeout = time.Millisecond
 
 		req := &ExpungeVirtualMachine{
-			ID: "123",
+			ID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 		}
 		err := cs.BooleanRequest(req)
 
@@ -260,9 +260,9 @@ func TestSyncRequestWithoutContext(t *testing.T) {
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	req := &DeployVirtualMachine{
 		Name:              "test",
-		ServiceOfferingID: "71004023-bb72-4a97-b1e9-bc66dfce9470",
-		ZoneID:            "1128bd56-b4d9-4ac6-a7b9-c715b187ce11",
-		TemplateID:        "78c2cbe6-8e11-4722-b01f-bf06f4e28108",
+		ServiceOfferingID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
+		ZoneID:            MustParseUUID("1128bd56-b4d9-4ac6-a7b9-c715b187ce11"),
+		TemplateID:        MustParseUUID("78c2cbe6-8e11-4722-b01f-bf06f4e28108"),
 	}
 
 	// WithContext
@@ -313,9 +313,9 @@ func TestAsyncRequestWithoutContext(t *testing.T) {
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	req := &DeployVirtualMachine{
 		Name:              "test",
-		ServiceOfferingID: "71004023-bb72-4a97-b1e9-bc66dfce9470",
-		ZoneID:            "1128bd56-b4d9-4ac6-a7b9-c715b187ce11",
-		TemplateID:        "78c2cbe6-8e11-4722-b01f-bf06f4e28108",
+		ServiceOfferingID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
+		ZoneID:            MustParseUUID("1128bd56-b4d9-4ac6-a7b9-c715b187ce11"),
+		TemplateID:        MustParseUUID("78c2cbe6-8e11-4722-b01f-bf06f4e28108"),
 	}
 
 	resp := &VirtualMachine{}
@@ -336,9 +336,8 @@ func TestAsyncRequestWithoutContext(t *testing.T) {
 		return true
 	})
 
-	//id := MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470")
-	id := "71004023-bb72-4a97-b1e9-bc66dfce9470"
-	if resp.ServiceOfferingID != id {
+	id := MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470")
+	if !resp.ServiceOfferingID.Equal(*id) {
 		t.Errorf("Expected ServiceOfferingID %q, got %q", id, resp.ServiceOfferingID)
 	}
 }
@@ -368,9 +367,10 @@ func TestAsyncRequestWithoutContextFailure(t *testing.T) {
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	req := &DeployVirtualMachine{
 		Name:              "test",
-		ServiceOfferingID: "71004023-bb72-4a97-b1e9-bc66dfce9470",
-		ZoneID:            "1128bd56-b4d9-4ac6-a7b9-c715b187ce11",
-		TemplateID:        "78c2cbe6-8e11-4722-b01f-bf06f4e28108"}
+		ServiceOfferingID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
+		ZoneID:            MustParseUUID("1128bd56-b4d9-4ac6-a7b9-c715b187ce11"),
+		TemplateID:        MustParseUUID("78c2cbe6-8e11-4722-b01f-bf06f4e28108"),
+	}
 
 	resp := &VirtualMachine{}
 
@@ -408,9 +408,9 @@ func TestAsyncRequestWithoutContextFailureNext(t *testing.T) {
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	req := &DeployVirtualMachine{
 		Name:              "test",
-		ServiceOfferingID: "71004023-bb72-4a97-b1e9-bc66dfce9470",
-		ZoneID:            "1128bd56-b4d9-4ac6-a7b9-c715b187ce11",
-		TemplateID:        "78c2cbe6-8e11-4722-b01f-bf06f4e28108",
+		ServiceOfferingID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
+		ZoneID:            MustParseUUID("1128bd56-b4d9-4ac6-a7b9-c715b187ce11"),
+		TemplateID:        MustParseUUID("78c2cbe6-8e11-4722-b01f-bf06f4e28108"),
 	}
 
 	cs.AsyncRequest(req, func(j *AsyncJobResult, err error) bool {
@@ -450,9 +450,10 @@ func TestAsyncRequestWithoutContextFailureNextNext(t *testing.T) {
 	cs := NewClient(ts.URL, "TOKEN", "SECRET")
 	req := &DeployVirtualMachine{
 		Name:              "test",
-		ServiceOfferingID: "71004023-bb72-4a97-b1e9-bc66dfce9470",
-		ZoneID:            "1128bd56-b4d9-4ac6-a7b9-c715b187ce11",
-		TemplateID:        "78c2cbe6-8e11-4722-b01f-bf06f4e28108"}
+		ServiceOfferingID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
+		ZoneID:            MustParseUUID("1128bd56-b4d9-4ac6-a7b9-c715b187ce11"),
+		TemplateID:        MustParseUUID("78c2cbe6-8e11-4722-b01f-bf06f4e28108"),
+	}
 
 	resp := &VirtualMachine{}
 
@@ -495,7 +496,7 @@ func TestBooleanRequestWithContext(t *testing.T) {
 	go func() {
 		cs := NewClient(ts.URL, "TOKEN", "SECRET")
 		req := &ExpungeVirtualMachine{
-			ID: "123",
+			ID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 		}
 
 		err := cs.BooleanRequestWithContext(ctx, req)
@@ -544,10 +545,10 @@ func TestRequestWithContextTimeoutPost(t *testing.T) {
 	go func() {
 		cs := NewClient(ts.URL, "TOKEN", "SECRET")
 		req := &DeployVirtualMachine{
-			ServiceOfferingID: "test",
-			TemplateID:        "test",
+			ServiceOfferingID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
+			TemplateID:        MustParseUUID("d2fcd819-7f6e-462d-b8c0-bfae83e4d273"),
 			UserData:          base64.StdEncoding.EncodeToString(userData),
-			ZoneID:            "test",
+			ZoneID:            MustParseUUID("68f0e13a-2ba8-4f8f-81c0-bd78491d81ea"),
 		}
 
 		_, err := cs.RequestWithContext(ctx, req)
@@ -592,7 +593,7 @@ func TestBooleanRequestWithContextAndTimeout(t *testing.T) {
 		cs.HTTPClient.Timeout = time.Millisecond
 
 		req := &ExpungeVirtualMachine{
-			ID: "123",
+			ID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 		}
 		err := cs.BooleanRequestWithContext(ctx, req)
 

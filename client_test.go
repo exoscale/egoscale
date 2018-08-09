@@ -117,7 +117,7 @@ func TestClientAsyncDelete(t *testing.T) {
 		{"deleteaffinitygroup", &AffinityGroup{ID: id}},
 		{"deleteaffinitygroup", &AffinityGroup{Name: "affinity group name"}},
 		{"disassociateipaddress", &IPAddress{ID: id}},
-		{"destroyvirtualmachine", &VirtualMachine{ID: "virtual machine id"}},
+		{"destroyvirtualmachine", &VirtualMachine{ID: id}},
 	}
 
 	for _, thing := range things {
@@ -205,7 +205,7 @@ func TestClientGetNone(t *testing.T) {
 		{"affinitygroups", &AffinityGroup{Name: "test affinity group"}},
 		{"securitygroups", &SecurityGroup{ID: id}},
 		{"securitygroups", &SecurityGroup{Name: "test affinity group"}},
-		{"virtualmachines", &VirtualMachine{ID: "1"}},
+		{"virtualmachines", &VirtualMachine{ID: id}},
 		{"volumes", &Volume{ID: id}},
 		{"templates", &Template{ID: id, IsFeatured: true}},
 		{"serviceofferings", &ServiceOffering{ID: id}},
@@ -272,7 +272,7 @@ func TestClientGetTooMany(t *testing.T) {
 		{"affinitygroups", &AffinityGroup{Name: "test affinity group"}},
 		{"securitygroups", &SecurityGroup{ID: id}},
 		{"securitygroups", &SecurityGroup{Name: "test affinity group"}},
-		{"virtualmachines", &VirtualMachine{ID: "1"}},
+		{"virtualmachines", &VirtualMachine{ID: id}},
 		{"volumes", &Volume{ID: id}},
 		{"templates", &Template{ID: id, IsFeatured: true}},
 		{"serviceofferings", &ServiceOffering{ID: id}},

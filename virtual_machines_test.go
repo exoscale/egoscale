@@ -240,7 +240,7 @@ func TestGetVirtualMachine(t *testing.T) {
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 	vm := &VirtualMachine{
-		ID: "69069d5e-1591-4214-937e-4c8cba63fcfb",
+		ID: MustParseUUID("69069d5e-1591-4214-937e-4c8cba63fcfb"),
 	}
 	if err := cs.Get(vm); err != nil {
 		t.Error(err)
@@ -262,7 +262,7 @@ func TestGetVirtualMachinePassword(t *testing.T) {
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 	req := &GetVMPassword{
-		ID: "test",
+		ID: MustParseUUID("69069d5e-1591-4214-937e-4c8cba63fcfb"),
 	}
 	resp, err := cs.Request(req)
 	if err != nil {
@@ -347,9 +347,11 @@ func TestListMachinesPaginate(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	id := MustParseUUID("84752707-a1d6-4e93-8207-bafeda83fe15")
 	cs.Paginate(req, func(i interface{}, err error) bool {
-		if i.(*VirtualMachine).ID != "84752707-a1d6-4e93-8207-bafeda83fe15" {
-			t.Errorf("Expected id '84752707-a1d6-4e93-8207-bafeda83fe15', got %v", i.(*VirtualMachine).ID)
+		if !i.(*VirtualMachine).ID.Equal(*id) {
+			t.Errorf("Expected id %q, got %q", id, i.(*VirtualMachine).ID)
 		}
 		return false
 	})
@@ -358,7 +360,7 @@ func TestListMachinesPaginate(t *testing.T) {
 
 func TestNicHelpers(t *testing.T) {
 	vm := &VirtualMachine{
-		ID: "25ce0763-f34d-435a-8b84-08466908355a",
+		ID: MustParseUUID("25ce0763-f34d-435a-8b84-08466908355a"),
 		Nic: []Nic{
 			{
 				ID:           MustParseUUID("e3b9c165-f3c3-4672-be54-08bfa6bac6fe"),

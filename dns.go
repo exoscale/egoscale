@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -229,15 +230,15 @@ func (client *Client) GetRecords(domain string) ([]DNSRecord, error) {
 // GetRecordsWithFilters returns the DNS records (filters can be empty)
 func (client *Client) GetRecordsWithFilters(domain, name, content, recordType string) ([]DNSRecord, error) {
 
-	filters := map[string]string{}
+	filters := url.Values{}
 	if name != "" {
-		filters["name"] = name
+		filters.Add("name", name)
 	}
 	if content != "" {
-		filters["content"] = content
+		filters.Add("content", content)
 	}
 	if recordType != "" {
-		filters["record_type"] = recordType
+		filters.Add("record_type", recordType)
 	}
 
 	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records", filters, "", "GET")
@@ -311,7 +312,7 @@ func (client *Client) DeleteRecord(name string, recordID int64) error {
 	return err
 }
 
-func (client *Client) dnsRequest(uri string, uriParams map[string]string, params, method string) (json.RawMessage, error) {
+func (client *Client) dnsRequest(uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
 	url := client.Endpoint + uri
 	req, err := http.NewRequest(method, url, strings.NewReader(params))
 	if err != nil {
@@ -329,8 +330,8 @@ func (client *Client) dnsRequest(uri string, uriParams map[string]string, params
 
 	q := req.URL.Query()
 
-	for k, v := range uriParams {
-		q.Add(k, v)
+	for k, v := range urlValues {
+		q[k] = v
 	}
 
 	req.URL.RawQuery = q.Encode()

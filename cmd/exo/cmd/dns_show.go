@@ -15,15 +15,20 @@ func init() {
 
 // dnsShowCmd represents the show command
 var dnsShowCmd = &cobra.Command{
-	Use:   "show <domain name | id>",
+	Use:   "show <domain name | id> [type]",
 	Short: "Show the domain records",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) != 1 {
+		if len(args) < 1 {
 			return errors.New("show expects one DNS domain by name or id")
 		}
 
+		var recType string
+		if len(args) == 2 {
+			recType = args[1]
+		}
+
 		t := table.NewTable(os.Stdout)
-		err := domainListRecords(t, args[0])
+		err := domainListRecords(t, args[0], recType)
 		if err == nil {
 			t.Render()
 		}
@@ -31,8 +36,8 @@ var dnsShowCmd = &cobra.Command{
 	},
 }
 
-func domainListRecords(t *table.Table, name string) error {
-	records, err := csDNS.GetRecords(name)
+func domainListRecords(t *table.Table, name, keyword string) error {
+	records, err := csDNS.GetRecords(name, keyword)
 	if err != nil {
 		return err
 	}

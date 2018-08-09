@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -207,8 +208,14 @@ func (client *Client) GetRecord(domain string, recordID int64) (*DNSRecord, erro
 }
 
 // GetRecords returns the DNS records
-func (client *Client) GetRecords(name string) ([]DNSRecord, error) {
-	resp, err := client.dnsRequest("/v1/domains/"+name+"/records", "", "GET")
+func (client *Client) GetRecords(domain, recType string) ([]DNSRecord, error) {
+
+	var filter string
+	if recType != "" {
+		filter = fmt.Sprintf("?type=%s", url.QueryEscape(recType))
+	}
+
+	resp, err := client.dnsRequest("/v1/domains/"+domain+"/records"+filter, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +331,7 @@ func (client *Client) dnsRequest(uri string, params string, method string) (json
 
 // GetRecordIDByName get record ID by name
 func (client *Client) GetRecordIDByName(domainName, recordName string) (int64, error) {
-	records, err := client.GetRecords(domainName)
+	records, err := client.GetRecords(domainName, "")
 	if err != nil {
 		return 0, err
 	}

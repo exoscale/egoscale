@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/exoscale/egoscale"
 	"github.com/exoscale/egoscale/cmd/exo/table"
@@ -37,37 +36,25 @@ func listZones() error {
 	return nil
 }
 
-// func getZoneIDByName(name string) (*egoscale.UUID, error) {
-func getZoneIDByName(name string) (string, error) {
-	zoneReq := egoscale.Zone{}
+func getZoneIDByName(name string) (*egoscale.UUID, error) {
+	zone := egoscale.Zone{}
 
-	zones, err := cs.ListWithContext(gContext, &zoneReq)
+	id, err := egoscale.ParseUUID(name)
 	if err != nil {
-		return "", err
+		zone.ID = id
+	} else {
+		zone.Name = zone
 	}
 
-	var zoneID *egoscale.UUID
-
-	for _, zone := range zones {
-		z := zone.(*egoscale.Zone)
-		if name == z.ID.String() {
-			zoneID = z.ID
-			break
+	if err := cs.GetWithContext(gContext, &zone); err != nil {
+		if e, ok := err.(*egoscale.ErrorResponse); ok && e.ErrorCode == egoscale.ParamError {
+			return nil, fmt.Errorf("missing Zone %q", name)
 		}
 
-		if strings.Contains(strings.ToLower(z.Name), strings.ToLower(name)) {
-			if zoneID != nil {
-				return "", fmt.Errorf("more than one zones were found")
-			}
-			zoneID = z.ID
-		}
+		return nil, err
 	}
 
-	if zoneID == nil {
-		return "", fmt.Errorf("zone %q was not found", name)
-	}
-
-	return zoneID.String(), nil
+	return zone.ID, nil
 }
 
 func init() {

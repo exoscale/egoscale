@@ -40,12 +40,13 @@ var gDissociateAlias = []string{"disassociate", "dissoc"}
 var gAssociateAlias = []string{"assoc"}
 
 type account struct {
-	Name        string
-	Account     string
-	Endpoint    string
-	Key         string
-	Secret      string
-	DefaultZone string
+	Name            string
+	Account         string
+	Endpoint        string
+	Key             string
+	Secret          string
+	DefaultZone     string
+	DefaultTemplate string
 }
 
 type config struct {

@@ -188,6 +188,26 @@ Let's start over.
 
 	account.DefaultZone = defaultZone
 
+	account.DefaultTemplate = "Linux Ubuntu 18.04 LTS 64-bit"
+
+	cs = client
+
+	zoneID, err := getZoneIDByName(defaultZone)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = getTemplateByName(zoneID, account.DefaultTemplate)
+	for err != nil {
+		if !askQuestion(fmt.Sprintf("Do you want to set default template?")) {
+			account.DefaultTemplate = ""
+			break
+		}
+		account.DefaultTemplate, err = readInput(reader, "Choose default template", "Linux Ubuntu 18.04 LTS 64-bit")
+	}
+
+	cs = nil
+
 	return account, nil
 }
 
@@ -219,6 +239,7 @@ func addAccount(filePath string, newAccounts *config) error {
 		accounts[i]["key"] = acc.Key
 		accounts[i]["secret"] = acc.Secret
 		accounts[i]["defaultZone"] = acc.DefaultZone
+		accounts[i]["defaulttemplate"] = acc.DefaultTemplate
 		accounts[i]["account"] = acc.Account
 
 		conf.Accounts = append(conf.Accounts, acc)
@@ -235,6 +256,7 @@ func addAccount(filePath string, newAccounts *config) error {
 			accounts[accountsSize+i]["key"] = acc.Key
 			accounts[accountsSize+i]["secret"] = acc.Secret
 			accounts[accountsSize+i]["defaultZone"] = acc.DefaultZone
+			accounts[accountsSize+i]["defaulttemplate"] = acc.DefaultTemplate
 			accounts[accountsSize+i]["account"] = acc.Account
 			conf.Accounts = append(conf.Accounts, acc)
 		}
@@ -394,6 +416,26 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 		}
 
 		csAccount.DefaultZone = defaultZone
+
+		csAccount.DefaultTemplate = "Linux Ubuntu 18.04 LTS 64-bit"
+
+		cs = csClient
+
+		zoneID, err := getZoneIDByName(defaultZone)
+		if err != nil {
+			return err
+		}
+
+		_, err = getTemplateByName(zoneID, csAccount.DefaultTemplate)
+		for err != nil {
+			if !askQuestion(fmt.Sprintf("Do you want to set default template?")) {
+				csAccount.DefaultTemplate = ""
+				break
+			}
+			csAccount.DefaultTemplate, err = readInput(reader, "Choose default template", "Linux Ubuntu 18.04 LTS 64-bit")
+		}
+
+		cs = nil
 
 		isDefault := false
 		if askQuestion(fmt.Sprintf("Is %q your default profile?", csAccount.Name)) {

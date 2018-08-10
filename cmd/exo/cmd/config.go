@@ -190,31 +190,6 @@ Let's start over.
 
 	account.DefaultTemplate = "Linux Ubuntu 18.04 LTS 64-bit"
 
-	cs = client
-
-	zoneID, err := getZoneIDByName(defaultZone)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = getTemplateByName(zoneID, account.DefaultTemplate)
-	for err != nil {
-		if !askQuestion(fmt.Sprintf("Do you want to set default template?")) {
-			account.DefaultTemplate = ""
-			break
-		}
-		account.DefaultTemplate, err = readInput(reader, "Choose default template", "Linux Ubuntu 18.04 LTS 64-bit")
-		if err != nil {
-			return nil, err
-		}
-		_, err = getTemplateByName(zoneID, account.DefaultTemplate)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "failed to verify this template") // nolint: errcheck
-		}
-	}
-
-	cs = nil
-
 	return account, nil
 }
 
@@ -425,31 +400,6 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 		csAccount.DefaultZone = defaultZone
 
 		csAccount.DefaultTemplate = "Linux Ubuntu 18.04 LTS 64-bit"
-
-		cs = csClient
-
-		zoneID, err := getZoneIDByName(defaultZone)
-		if err != nil {
-			return err
-		}
-
-		_, err = getTemplateByName(zoneID, csAccount.DefaultTemplate)
-		for err != nil {
-			if !askQuestion(fmt.Sprintf("Do you want to set default template?")) {
-				csAccount.DefaultTemplate = ""
-				break
-			}
-			csAccount.DefaultTemplate, err = readInput(reader, "Choose default template", "Linux Ubuntu 18.04 LTS 64-bit")
-			if err != nil {
-				return err
-			}
-			_, err = getTemplateByName(zoneID, csAccount.DefaultTemplate)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "failed to verify this template") // nolint: errcheck
-			}
-		}
-
-		cs = nil
 
 		isDefault := false
 		if askQuestion(fmt.Sprintf("Is %q your default profile?", csAccount.Name)) {

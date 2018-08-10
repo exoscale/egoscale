@@ -19,7 +19,7 @@ func init() {
 					return cmd.Usage()
 				}
 
-				recordID, err := csDNS.GetRecordIDByName(args[0], args[1])
+				recordID, err := getRecordIDByName(args[0], args[1])
 				if err != nil {
 					return err
 				}

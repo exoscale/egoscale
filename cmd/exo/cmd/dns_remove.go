@@ -25,7 +25,7 @@ var dnsRemoveCmd = &cobra.Command{
 }
 
 func removeRecord(domainName, record string) (int64, error) {
-	id, err := csDNS.GetRecordIDByName(domainName, record)
+	id, err := getRecordIDByName(domainName, record)
 	if err != nil {
 		return 0, err
 	}

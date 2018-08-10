@@ -211,10 +211,20 @@ func initConfig() {
 	for i, acc := range config.Accounts {
 		if acc.Name == gAccountName {
 			gCurrentAccount = &config.Accounts[i]
-			return
 		}
 	}
-	log.Fatalf("Could't find any account with name: %q", gAccountName)
+
+	if gCurrentAccount == nil {
+		log.Fatalf("Could't find any account with name: %q", gAccountName)
+	}
+
+	if gCurrentAccount.Endpoint == "" {
+		gCurrentAccount.Endpoint = defaultComputeEndpoint
+	}
+
+	if gCurrentAccount.DefaultTemplate == "" {
+		gCurrentAccount.DefaultTemplate = defaultTemplate
+	}
 }
 
 // getCmdPosition returns a command position by fetching os.args and ignoring flags

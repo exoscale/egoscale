@@ -189,8 +189,6 @@ Let's start over.
 
 	account.DefaultZone = defaultZone
 
-	account.DefaultTemplate = defaultTemplate
-
 	return account, nil
 }
 
@@ -222,7 +220,6 @@ func addAccount(filePath string, newAccounts *config) error {
 		accounts[i]["key"] = acc.Key
 		accounts[i]["secret"] = acc.Secret
 		accounts[i]["defaultZone"] = acc.DefaultZone
-		accounts[i]["defaulttemplate"] = acc.DefaultTemplate
 		accounts[i]["account"] = acc.Account
 
 		conf.Accounts = append(conf.Accounts, acc)
@@ -239,7 +236,6 @@ func addAccount(filePath string, newAccounts *config) error {
 			accounts[accountsSize+i]["key"] = acc.Key
 			accounts[accountsSize+i]["secret"] = acc.Secret
 			accounts[accountsSize+i]["defaultZone"] = acc.DefaultZone
-			accounts[accountsSize+i]["defaulttemplate"] = acc.DefaultTemplate
 			accounts[accountsSize+i]["account"] = acc.Account
 			conf.Accounts = append(conf.Accounts, acc)
 		}
@@ -399,8 +395,6 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 		}
 
 		csAccount.DefaultZone = defaultZone
-
-		csAccount.DefaultTemplate = defaultTemplate
 
 		isDefault := false
 		if askQuestion(fmt.Sprintf("Is %q your default profile?", csAccount.Name)) {

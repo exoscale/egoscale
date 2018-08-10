@@ -152,7 +152,7 @@ var vmCreateCmd = &cobra.Command{
 			return nil
 		}
 
-		sshinfo, err := getSSHInfo(r.ID.String(), ipv6)
+		sshinfo, err := getSSHInfo(r[0].ID.String(), ipv6)
 		if err != nil {
 			return err
 		}
@@ -311,7 +311,7 @@ func createVM(deploys []egoscale.DeployVirtualMachine) ([]egoscale.VirtualMachin
 		for i, vm := range resps {
 			v := vm.(*egoscale.VirtualMachine)
 			vmResp[i] = *v
-			saveKeyPair(keyPairs, v.ID)
+			saveKeyPair(keyPairs, *v.ID)
 		}
 	}
 	return vmResp, nil

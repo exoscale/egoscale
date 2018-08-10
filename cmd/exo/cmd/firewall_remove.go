@@ -93,7 +93,7 @@ var firewallRemoveCmd = &cobra.Command{
 }
 
 func removeAllRules(sgName string) error {
-	sg, err := getSecurityGroupByNameOrID(cs, sgName)
+	sg, err := getSecurityGroupByNameOrID(sgName)
 	if err != nil {
 		return err
 	}

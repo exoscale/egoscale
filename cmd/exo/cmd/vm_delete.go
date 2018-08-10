@@ -50,7 +50,7 @@ var vmDeleteCmd = &cobra.Command{
 		for _, r := range resps {
 			resp := r.(*egoscale.VirtualMachine)
 
-			folder := path.Join(gConfigFolder, "instances", resp.ID)
+			folder := path.Join(gConfigFolder, "instances", resp.ID.String())
 
 			if _, err := os.Stat(folder); !os.IsNotExist(err) {
 				if err := os.RemoveAll(folder); err != nil {

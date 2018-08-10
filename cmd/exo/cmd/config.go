@@ -19,6 +19,7 @@ import (
 const (
 	defaultConfigFileName  = "exoscale"
 	defaultComputeEndpoint = "https://api.exoscale.ch/compute"
+	defaultTemplate        = "Linux Ubuntu 18.04 LTS 64-bit"
 )
 
 // configCmd represents the config command
@@ -188,7 +189,7 @@ Let's start over.
 
 	account.DefaultZone = defaultZone
 
-	account.DefaultTemplate = "Linux Ubuntu 18.04 LTS 64-bit"
+	account.DefaultTemplate = defaultTemplate
 
 	return account, nil
 }
@@ -399,7 +400,7 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 
 		csAccount.DefaultZone = defaultZone
 
-		csAccount.DefaultTemplate = "Linux Ubuntu 18.04 LTS 64-bit"
+		csAccount.DefaultTemplate = defaultTemplate
 
 		isDefault := false
 		if askQuestion(fmt.Sprintf("Is %q your default profile?", csAccount.Name)) {

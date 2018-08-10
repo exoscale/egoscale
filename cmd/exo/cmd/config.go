@@ -205,6 +205,9 @@ Let's start over.
 		}
 		account.DefaultTemplate, err = readInput(reader, "Choose default template", "Linux Ubuntu 18.04 LTS 64-bit")
 		_, err = getTemplateByName(zoneID, account.DefaultTemplate)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "failed to verify this template") // nolint: errcheck
+		}
 	}
 
 	cs = nil
@@ -435,6 +438,9 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 			}
 			csAccount.DefaultTemplate, err = readInput(reader, "Choose default template", "Linux Ubuntu 18.04 LTS 64-bit")
 			_, err = getTemplateByName(zoneID, csAccount.DefaultTemplate)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "failed to verify this template") // nolint: errcheck
+			}
 		}
 
 		cs = nil

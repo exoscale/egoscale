@@ -204,6 +204,7 @@ Let's start over.
 			break
 		}
 		account.DefaultTemplate, err = readInput(reader, "Choose default template", "Linux Ubuntu 18.04 LTS 64-bit")
+		_, err = getTemplateByName(zoneID, account.DefaultTemplate)
 	}
 
 	cs = nil
@@ -433,6 +434,7 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 				break
 			}
 			csAccount.DefaultTemplate, err = readInput(reader, "Choose default template", "Linux Ubuntu 18.04 LTS 64-bit")
+			_, err = getTemplateByName(zoneID, csAccount.DefaultTemplate)
 		}
 
 		cs = nil

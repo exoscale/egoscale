@@ -16,6 +16,11 @@ type task struct {
 	string
 }
 
+type taskStatus struct {
+	id        int
+	jobStatus egoscale.JobStatusType
+}
+
 // asyncTasks message variable must have same size with cmds
 func asyncTasks(tasks []task) ([]interface{}, []error) {
 
@@ -33,7 +38,7 @@ func asyncTasks(tasks []task) ([]interface{}, []error) {
 
 	//exec task and init bars
 	for i, task := range tasks {
-		c := make(chan []int)
+		c := make(chan taskStatus)
 		go execTask(task, i, c, responses, errors)
 		taskBars[i] = p.AddBar(int64(maximum),
 			mpb.PrependDecorators(
@@ -52,7 +57,7 @@ func asyncTasks(tasks []task) ([]interface{}, []error) {
 		)
 
 		//listen for bar progress
-		go func(chanel chan []int) {
+		go func(chanel chan taskStatus) {
 			defer wg.Done()
 			defer close(chanel)
 			max := 100 * time.Millisecond
@@ -60,12 +65,12 @@ func asyncTasks(tasks []task) ([]interface{}, []error) {
 			for status := range chanel {
 				start := time.Now()
 				time.Sleep(time.Duration(rand.Intn(10)+1) * max / 10)
-				if status[1] == int(egoscale.Pending) {
+				if status.jobStatus == egoscale.Pending {
 					if count < maximum {
-						taskBars[status[0]].IncrBy(1, time.Since(start))
+						taskBars[status.id].IncrBy(1, time.Since(start))
 					}
 				} else {
-					taskBars[status[0]].IncrBy(maximum, time.Since(start))
+					taskBars[status.id].IncrBy(maximum, time.Since(start))
 					return
 				}
 				count++
@@ -81,7 +86,7 @@ func asyncTasks(tasks []task) ([]interface{}, []error) {
 	return *responses, nil
 }
 
-func execTask(task task, id int, c chan []int, resps *[]interface{}, errors *[]error) {
+func execTask(task task, id int, c chan taskStatus, resps *[]interface{}, errors *[]error) {
 	response := cs.Response(task.AsyncCommand)
 	var errorReq error
 	cs.AsyncRequestWithContext(gContext, task.AsyncCommand, func(jobResult *egoscale.AsyncJobResult, err error) bool {
@@ -96,16 +101,16 @@ func execTask(task task, id int, c chan []int, resps *[]interface{}, errors *[]e
 				return false
 			}
 			(*resps)[id] = response
-			c <- []int{id, int(egoscale.Success)}
+			c <- taskStatus{id, egoscale.Success}
 			return false
 		}
 
-		c <- []int{id, int(egoscale.Pending)}
+		c <- taskStatus{id, egoscale.Pending}
 		return true
 	})
 
 	if errorReq != nil {
-		c <- []int{id, int(egoscale.Failure)}
+		c <- taskStatus{id, egoscale.Failure}
 		*errors = append(*errors, errorReq)
 	}
 }

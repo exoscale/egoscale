@@ -25,7 +25,8 @@ type taskStatus struct {
 func asyncTasks(tasks []task) ([]interface{}, []error) {
 
 	//init results
-	errors := &[]error{}
+	e := make([]error, 0, len(tasks))
+	errors := &e
 	r := make([]interface{}, len(tasks))
 	responses := &r
 

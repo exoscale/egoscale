@@ -12,7 +12,6 @@ import (
 func init() {
 	dnsCmd.AddCommand(dnsShowCmd)
 	dnsShowCmd.Flags().StringP("name", "n", "", "List records by name")
-	dnsShowCmd.Flags().StringP("content", "c", "", "List records by content keyword")
 }
 
 // dnsShowCmd represents the show command
@@ -35,13 +34,9 @@ var dnsShowCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		content, err := cmd.Flags().GetString("content")
-		if err != nil {
-			return err
-		}
 
 		t := table.NewTable(os.Stdout)
-		err = domainListRecords(t, args[0], name, content, types)
+		err = domainListRecords(t, args[0], name, types)
 		if err == nil {
 			t.Render()
 		}
@@ -49,12 +44,12 @@ var dnsShowCmd = &cobra.Command{
 	},
 }
 
-func domainListRecords(t *table.Table, domain, name, content string, types []string) error {
+func domainListRecords(t *table.Table, domain, name string, types []string) error {
 
 	t.SetHeader([]string{"Type", "Name", "Content", "TTL", "Prio", "ID"})
 
 	for _, recordType := range types {
-		records, err := csDNS.GetRecordsWithFilters(domain, name, content, recordType)
+		records, err := csDNS.GetRecordsWithFilters(domain, name, recordType)
 		if err != nil {
 			return err
 		}

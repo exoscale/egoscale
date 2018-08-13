@@ -228,14 +228,11 @@ func (client *Client) GetRecords(domain string) ([]DNSRecord, error) {
 }
 
 // GetRecordsWithFilters returns the DNS records (filters can be empty)
-func (client *Client) GetRecordsWithFilters(domain, name, content, recordType string) ([]DNSRecord, error) {
+func (client *Client) GetRecordsWithFilters(domain, name, recordType string) ([]DNSRecord, error) {
 
 	filters := url.Values{}
 	if name != "" {
 		filters.Add("name", name)
-	}
-	if content != "" {
-		filters.Add("content", content)
 	}
 	if recordType != "" {
 		filters.Add("record_type", recordType)

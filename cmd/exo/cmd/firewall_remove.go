@@ -35,7 +35,7 @@ var firewallRemoveCmd = &cobra.Command{
 		sgName := args[0]
 
 		if len(args) == 1 && deleteAll {
-			sg, errGet := getSecurityGroupByNameOrID(cs, sgName)
+			sg, errGet := getSecurityGroupByNameOrID(sgName)
 			if errGet != nil {
 				return errGet
 			}
@@ -98,7 +98,7 @@ var firewallRemoveCmd = &cobra.Command{
 }
 
 func removeAllRules(sgName string) ([]string, error) {
-	sg, err := getSecurityGroupByNameOrID(cs, sgName)
+	sg, err := getSecurityGroupByNameOrID(sgName)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func removeAllRules(sgName string) ([]string, error) {
 }
 
 func removeRule(name, ruleID string) error {
-	sg, err := getSecurityGroupByNameOrID(cs, name)
+	sg, err := getSecurityGroupByNameOrID(name)
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func isDefaultRule(rule, defaultRule *egoscale.IngressRule, isIpv6 bool, myCidr 
 }
 
 func removeDefault(sgName, ruleName string, rule *egoscale.IngressRule, cidr *egoscale.CIDR, isIpv6 bool) error {
-	sg, err := getSecurityGroupByNameOrID(cs, sgName)
+	sg, err := getSecurityGroupByNameOrID(sgName)
 	if err != nil {
 		return err
 	}

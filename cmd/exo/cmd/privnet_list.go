@@ -52,7 +52,7 @@ func listPrivnets(zone string, table *table.Table) error {
 				zone = pn.ZoneName
 			}
 
-			_, vms, err := privnetDetails(*pn.ID)
+			vms, err := privnetDetails(pn)
 			if err != nil {
 				return err
 			}

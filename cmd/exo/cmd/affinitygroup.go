@@ -13,7 +13,7 @@ var affinitygroupCmd = &cobra.Command{
 	Short: "Affinity groups management",
 }
 
-func getAffinityGroupIDByName(cs *egoscale.Client, name string) (*egoscale.UUID, error) {
+func getAffinityGroupByName(name string) (*egoscale.AffinityGroup, error) {
 	aff := &egoscale.AffinityGroup{}
 
 	id, err := egoscale.ParseUUID(name)
@@ -31,7 +31,7 @@ func getAffinityGroupIDByName(cs *egoscale.Client, name string) (*egoscale.UUID,
 		return nil, err
 	}
 
-	return aff.ID, nil
+	return aff, nil
 }
 
 func init() {

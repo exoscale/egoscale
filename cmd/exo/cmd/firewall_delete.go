@@ -46,7 +46,7 @@ var firewallDeleteCmd = &cobra.Command{
 }
 
 func firewallDelete(name string) (*egoscale.UUID, error) {
-	sg, err := getSecurityGroupByNameOrID(cs, name)
+	sg, err := getSecurityGroupByNameOrID(name)
 	if err != nil {
 		return nil, err
 	}

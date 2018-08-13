@@ -60,7 +60,7 @@ func formatRules(name string, rule *egoscale.IngressRule) []string {
 	return []string{name, source, rule.Protocol, ports, rule.Description, rule.RuleID.String()}
 }
 
-func getSecurityGroupByNameOrID(cs *egoscale.Client, name string) (*egoscale.SecurityGroup, error) {
+func getSecurityGroupByNameOrID(name string) (*egoscale.SecurityGroup, error) {
 	sg := &egoscale.SecurityGroup{}
 
 	id, err := egoscale.ParseUUID(name)

@@ -261,7 +261,7 @@ func (userdata VirtualMachineUserData) Decode() (string, error) {
 // Regarding the UserData field, the client is responsible to base64 (and probably gzip) it. Doing it within this library would make the integration with other tools, e.g. Terraform harder.
 type DeployVirtualMachine struct {
 	Account            string            `json:"account,omitempty" doc:"an optional account for the virtual machine. Must be used with domainId."`
-	AffinityGroupIDs   []string          `json:"affinitygroupids,omitempty" doc:"comma separated list of affinity groups id that are going to be applied to the virtual machine. Mutually exclusive with affinitygroupnames parameter"`
+	AffinityGroupIDs   []UUID            `json:"affinitygroupids,omitempty" doc:"comma separated list of affinity groups id that are going to be applied to the virtual machine. Mutually exclusive with affinitygroupnames parameter"`
 	AffinityGroupNames []string          `json:"affinitygroupnames,omitempty" doc:"comma separated list of affinity groups names that are going to be applied to the virtual machine.Mutually exclusive with affinitygroupids parameter"`
 	CustomID           *UUID             `json:"customid,omitempty" doc:"an optional field, in case you want to set a custom id to the resource. Allowed to Root Admins only"`
 	DeploymentPlanner  string            `json:"deploymentplanner,omitempty" doc:"Deployment planner to use for vm allocation. Available to ROOT admin only"`
@@ -281,9 +281,9 @@ type DeployVirtualMachine struct {
 	Keyboard           string            `json:"keyboard,omitempty" doc:"an optional keyboard device type for the virtual machine. valid value can be one of de,de-ch,es,fi,fr,fr-be,fr-ch,is,it,jp,nl-be,no,pt,uk,us"`
 	KeyPair            string            `json:"keypair,omitempty" doc:"name of the ssh key pair used to login to the virtual machine"`
 	Name               string            `json:"name,omitempty" doc:"host name for the virtual machine"`
-	NetworkIDs         []string          `json:"networkids,omitempty" doc:"list of network ids used by virtual machine. Can't be specified with ipToNetworkList parameter"`
+	NetworkIDs         []UUID            `json:"networkids,omitempty" doc:"list of network ids used by virtual machine. Can't be specified with ipToNetworkList parameter"`
 	RootDiskSize       int64             `json:"rootdisksize,omitempty" doc:"Optional field to resize root disk on deploy. Value is in GB. Only applies to template-based deployments. Analogous to details[0].rootdisksize, which takes precedence over this parameter if both are provided"`
-	SecurityGroupIDs   []string          `json:"securitygroupids,omitempty" doc:"comma separated list of security groups id that going to be applied to the virtual machine. Should be passed only when vm is created from a zone with Basic Network support. Mutually exclusive with securitygroupnames parameter"`
+	SecurityGroupIDs   []UUID            `json:"securitygroupids,omitempty" doc:"comma separated list of security groups id that going to be applied to the virtual machine. Should be passed only when vm is created from a zone with Basic Network support. Mutually exclusive with securitygroupnames parameter"`
 	SecurityGroupNames []string          `json:"securitygroupnames,omitempty" doc:"comma separated list of security groups names that going to be applied to the virtual machine. Should be passed only when vm is created from a zone with Basic Network support. Mutually exclusive with securitygroupids parameter"`
 	ServiceOfferingID  *UUID             `json:"serviceofferingid" doc:"the ID of the service offering for the virtual machine"`
 	Size               int64             `json:"size,omitempty" doc:"the arbitrary size for the DATADISK volume. Mutually exclusive with diskOfferingId"`
@@ -413,7 +413,7 @@ type UpdateVirtualMachine struct {
 	HAEnable              *bool             `json:"haenable,omitempty" doc:"true if high-availability is enabled for the virtual machine, false otherwise"`
 	IsDynamicallyScalable *bool             `json:"isdynamicallyscalable,omitempty" doc:"true if VM contains XS/VMWare tools inorder to support dynamic scaling of VM cpu/memory"`
 	Name                  string            `json:"name,omitempty" doc:"new host name of the vm. The VM has to be stopped/started for this update to take affect"`
-	SecurityGroupIDs      []string          `json:"securitygroupids,omitempty" doc:"list of security group ids to be applied on the virtual machine."`
+	SecurityGroupIDs      []UUID            `json:"securitygroupids,omitempty" doc:"list of security group ids to be applied on the virtual machine."`
 	UserData              string            `json:"userdata,omitempty" doc:"an optional binary data that can be sent to the virtual machine upon a successful deployment. This binary data must be base64 encoded before adding it to the request. Using HTTP GET (via querystring), you can send up to 2KB of data after base64 encoding. Using HTTP POST(via POST body), you can send up to 32K of data after base64 encoding."`
 	_                     bool              `name:"updateVirtualMachine" description:"Updates properties of a virtual machine. The VM has to be stopped and restarted for the new properties to take effect. UpdateVirtualMachine does not first check whether the VM is stopped. Therefore, stop the VM manually before issuing this call."`
 }

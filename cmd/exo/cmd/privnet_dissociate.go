@@ -17,7 +17,7 @@ var dissociateCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
-		network, err := getNetworkIDByName(cs, args[0])
+		network, err := getNetworkByName(args[0])
 		if err != nil {
 			return err
 		}

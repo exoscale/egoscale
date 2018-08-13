@@ -11,7 +11,7 @@ var privnetCmd = &cobra.Command{
 	Short: "Private networks management",
 }
 
-func getNetworkIDByName(cs *egoscale.Client, name string) (*egoscale.Network, error) {
+func getNetworkByName(name string) (*egoscale.Network, error) {
 	net := &egoscale.Network{
 		Type:            "Isolated",
 		CanUseForDeploy: true,

@@ -14,7 +14,7 @@ var eipCmd = &cobra.Command{
 	Short: "Elastic IPs management",
 }
 
-func getEIPIDByIP(cs *egoscale.Client, ipAddr string) (*egoscale.UUID, error) {
+func getEIPIDByIP(ipAddr string) (*egoscale.UUID, error) {
 	ip := net.ParseIP(ipAddr)
 	if ip == nil {
 		return nil, fmt.Errorf("invalid IP address %q", ipAddr)

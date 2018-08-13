@@ -1,6 +1,5 @@
 {
     "Test": false,
-    "Vendor": false,
     "Enable": [
         "deadcode",
         "errcheck",
@@ -21,5 +20,6 @@
         "gocyclo",
         "gosec",
         "maligned"
-    ]
+    ],
+    "Skip": ["vendor"]
 }

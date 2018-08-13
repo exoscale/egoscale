@@ -1,5 +1,25 @@
 {
-    "Enable": ["misspell", "gosimple"],
-    "Disable": ["gocyclo", "goconst", "maligned"],
-    "Skip": ["vendor"]
+    "Test": false,
+    "Vendor": false,
+    "Enable": [
+        "deadcode",
+        "errcheck",
+        "golint",
+        "gosimple",
+        "gotype",
+        "ineffassign",
+        "interfacer",
+        "misspell",
+        "structcheck",
+        "unconvert",
+        "varcheck",
+        "vet",
+        "vetshadow"
+    ],
+    "Disable": [
+        "goconst",
+        "gocyclo",
+        "gosec",
+        "maligned"
+    ]
 }

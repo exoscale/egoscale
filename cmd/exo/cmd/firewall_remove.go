@@ -150,7 +150,7 @@ func removeRule(sg *egoscale.SecurityGroup, ruleID string, tasks *[]task) error 
 		msg = fmt.Sprintf("Remove %q", eg.RuleID)
 		*tasks = append(*tasks, task{egoscale.RevokeSecurityGroupEgress{ID: eg.RuleID}, msg})
 	} else {
-		return fmt.Errorf("rule with id %q is not ingress or egress rule", ruleID)
+		return fmt.Errorf("rule with id %q doesn't exist", ruleID)
 	}
 	return nil
 }

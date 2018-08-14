@@ -54,3 +54,8 @@ func MustParseCIDR(s string) *CIDR {
 
 	return cidr
 }
+
+// Equal compare two CIDR
+func (cidr CIDR) Equal(c CIDR) bool {
+	return (fmt.Sprintf("%q", cidr) == fmt.Sprintf("%q", c))
+}

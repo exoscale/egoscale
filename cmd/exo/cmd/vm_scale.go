@@ -65,7 +65,7 @@ func scaleVirtualMachine(vmName string, serviceofferingID egoscale.UUID) error {
 		return fmt.Errorf("this operation is not permitted if your VM is not stopped")
 	}
 
-	_, err = asyncRequest(&egoscale.ScaleVirtualMachine{ID: vm.ID, ServiceOfferingID: serviceofferingID}, fmt.Sprintf("Scaling %q ", vm.Name))
+	_, err = asyncRequest(&egoscale.ScaleVirtualMachine{ID: vm.ID, ServiceOfferingID: &serviceofferingID}, fmt.Sprintf("Scaling %q ", vm.Name))
 	return err
 }
 

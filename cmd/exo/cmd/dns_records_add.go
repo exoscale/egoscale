@@ -530,12 +530,12 @@ You may only delegate subdomains (for example subdomain.yourdomain.com).`,
 func init() {
 	dnsAddCmd.AddCommand(dnsNSCmd)
 	dnsNSCmd.Flags().StringP("name", "n", "", "You may use the * wildcard here.")
-	dnsNSCmd.Flags().StringP("mail-server-host", "m", "", "Example: 'ns1.example.com'")
+	dnsNSCmd.Flags().StringP("name-server", "s", "", "Example: 'ns1.example.com'")
 	dnsNSCmd.Flags().IntP("ttl", "t", 3600, "The time in second to leave (refresh rate) of the record.")
 	if err := dnsNSCmd.MarkFlagRequired("name"); err != nil {
 		log.Fatal(err)
 	}
-	if err := dnsNSCmd.MarkFlagRequired("mail-server-host"); err != nil {
+	if err := dnsNSCmd.MarkFlagRequired("name-server"); err != nil {
 		log.Fatal(err)
 	}
 }

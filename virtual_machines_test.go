@@ -144,7 +144,7 @@ func TestDeployOnBeforeSendNoSG(t *testing.T) {
 
 func TestDeployOnBeforeSendBothSG(t *testing.T) {
 	req := &DeployVirtualMachine{
-		SecurityGroupIDs:   []string{"1"},
+		SecurityGroupIDs:   []UUID{*MustParseUUID("f2b4e439-2b23-441c-ba66-0e25cdfe1b2b")},
 		SecurityGroupNames: []string{"foo"},
 	}
 	params := url.Values{}
@@ -156,7 +156,7 @@ func TestDeployOnBeforeSendBothSG(t *testing.T) {
 
 func TestDeployOnBeforeSendBothAG(t *testing.T) {
 	req := &DeployVirtualMachine{
-		AffinityGroupIDs:   []string{"2"},
+		AffinityGroupIDs:   []UUID{*MustParseUUID("f2b4e439-2b23-441c-ba66-0e25cdfe1b2b")},
 		AffinityGroupNames: []string{"foo"},
 	}
 	params := url.Values{}

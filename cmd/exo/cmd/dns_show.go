@@ -23,11 +23,11 @@ var dnsShowCmd = &cobra.Command{
 			return errors.New("show expects one DNS domain by name or id")
 		}
 
-		types := []string{}
+		var types []string
 		if len(args) > 1 {
-			types = args[1:]
+			copy(types, args[1:])
 		} else {
-			types = []string{""}
+			types = append(types, "")
 		}
 
 		name, err := cmd.Flags().GetString("name")

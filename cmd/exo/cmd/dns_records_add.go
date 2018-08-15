@@ -455,7 +455,7 @@ func init() {
 	dnsNAPTRCmd.Flags().IntP("order", "o", 0, "Used to determine the processing order, lowest first.")
 	dnsNAPTRCmd.Flags().IntP("preference", "", 0, "Used to give weight to records with the same value in the 'order' field, low to high.")
 	dnsNAPTRCmd.Flags().StringP("service", "", "", "Service")
-	dnsNAPTRCmd.Flags().StringP("regex", "", "", "The substituion expression.")
+	dnsNAPTRCmd.Flags().StringP("regex", "", "", "The substitution expression.")
 	dnsNAPTRCmd.Flags().StringP("replacement", "", "", "The next record to look up, which must be a fully-qualified domain name.")
 
 	//flags

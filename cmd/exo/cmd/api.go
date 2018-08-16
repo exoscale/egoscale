@@ -29,12 +29,9 @@ func init() {
 	apiCmd.PersistentFlags().BoolP("dry-run", "D", false, "produce a cURL ready URL")
 	apiCmd.PersistentFlags().BoolP("dry-json", "j", false, "produce a JSON preview of the query")
 	apiCmd.PersistentFlags().StringP("theme", "t", "", "syntax highlighting theme, see: https://xyproto.github.io/splash/docs/")
-
 }
 
-func buildCommands(out *egoscale.Command, methods map[string][]cmd) []cobra.Command {
-	commands := make([]cobra.Command, 0)
-
+func buildCommands(out *egoscale.Command, methods map[string][]cmd) {
 	for category, ms := range methods {
 
 		cmd := cobra.Command{
@@ -72,11 +69,8 @@ func buildCommands(out *egoscale.Command, methods map[string][]cmd) []cobra.Comm
 			}
 
 			cmd.AddCommand(&subCMD)
-			commands = append(commands, cmd)
 		}
 	}
-
-	return commands
 }
 
 func buildFlags(method egoscale.Command, cmd *cobra.Command) {

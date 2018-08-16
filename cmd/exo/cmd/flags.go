@@ -110,17 +110,6 @@ func (v *uuid) String() string {
 	return (*(v.UUID)).String()
 }
 
-func getUUIDFlag(cmd *cobra.Command, name string) (uuid, error) {
-	it := cmd.Flags().Lookup(name)
-	if it != nil {
-		r := it.Value.(*uuid)
-		if r != nil {
-			return *r, nil
-		}
-	}
-	return uuid{}, fmt.Errorf("unable to get flag %q", name)
-}
-
 //cidr flag
 type cidr struct {
 	CIDR **egoscale.CIDR
@@ -146,17 +135,6 @@ func (v *cidr) String() string {
 	}
 
 	return (*(v.CIDR)).String()
-}
-
-func getCIDRFlag(cmd *cobra.Command, name string) (cidr, error) {
-	it := cmd.Flags().Lookup(name)
-	if it != nil {
-		r := it.Value.(*cidr)
-		if r != nil {
-			return *r, nil
-		}
-	}
-	return cidr{}, fmt.Errorf("unable to get flag %q", name)
 }
 
 //bool flag
@@ -192,17 +170,6 @@ func (v *boolFlag) String() string {
 		return "true"
 	}
 	return "false"
-}
-
-func getBoolFlag(cmd *cobra.Command, name string) (boolFlag, error) {
-	it := cmd.Flags().Lookup(name)
-	if it != nil {
-		r := it.Value.(*boolFlag)
-		if r != nil {
-			return *r, nil
-		}
-	}
-	return boolFlag{}, fmt.Errorf("unable to get flag %q", name)
 }
 
 // uuid list flag

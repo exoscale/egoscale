@@ -12,9 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const userDocumentationURL string = "http://cloudstack.apache.org/api/apidocs-4.4/user/%s.html"
-const rootDocumentationURL string = "http://cloudstack.apache.org/api/apidocs-4.4/root_admin/%s.html"
-
 // apiCmd represents the api command
 var apiCmd = &cobra.Command{
 	Use:   "api <command>",
@@ -33,7 +30,6 @@ func init() {
 
 func buildCommands(out *egoscale.Command, methods map[string][]cmd) {
 	for category, ms := range methods {
-
 		cmd := cobra.Command{
 			Use: strings.Replace(category, " ", "-", -1),
 		}
@@ -203,7 +199,6 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 
 type cmd struct {
 	command egoscale.Command
-	hidden  bool
 }
 
 var methods = map[string][]cmd{

@@ -166,7 +166,7 @@ func (v *boolFlag) String() string {
 		return "nil"
 	}
 
-	if *(*(v.bool)) == true {
+	if *(*(v.bool)) {
 		return "true"
 	}
 	return "false"

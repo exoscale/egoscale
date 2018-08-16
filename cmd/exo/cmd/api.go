@@ -18,6 +18,9 @@ var apiCmd = &cobra.Command{
 	Short: "Exoscale api",
 }
 
+const userDocumentationURL = "http://cloudstack.apache.org/api/apidocs-4.4/user/%s.html"
+const rootDocumentationURL = "http://cloudstack.apache.org/api/apidocs-4.4/root_admin/%s.html"
+
 func init() {
 	RootCmd.AddCommand(apiCmd)
 	var method egoscale.Command
@@ -42,9 +45,14 @@ func buildCommands(out *egoscale.Command, methods map[string][]cmd) {
 			name := cs.APIName(s.command)
 			description := cs.APIDescription(s.command)
 
+			url := userDocumentationURL
+			if s.hidden {
+				url = rootDocumentationURL
+			}
+
 			subCMD := cobra.Command{
 				Use:  name,
-				Long: description,
+				Long: fmt.Sprintf("%s <%s>", description, fmt.Sprintf(url, name)),
 			}
 			buildFlags(s.command, &subCMD)
 
@@ -62,6 +70,10 @@ func buildCommands(out *egoscale.Command, methods map[string][]cmd) {
 				fmt.Println(string(data))
 
 				return nil
+			}
+
+			if s.hidden {
+				subCMD.Hidden = true
 			}
 
 			cmd.AddCommand(&subCMD)
@@ -199,6 +211,7 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 
 type cmd struct {
 	command egoscale.Command
+	hidden  bool
 }
 
 var methods = map[string][]cmd{

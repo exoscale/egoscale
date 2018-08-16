@@ -145,6 +145,7 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 		case reflect.Int16:
 			typeName := field.Type.Name()
 			if typeName != "int16" {
+				log.Printf("[SKIP] int16 of %s is not supported!", typeName)
 				// flag.Value = &intTypeGeneric{
 				// 	addr:    addr,
 				// 	base:    10,
@@ -161,6 +162,7 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 		case reflect.String:
 			typeName := field.Type.Name()
 			if typeName != "string" {
+				log.Printf("[SKIP] string of %s is not supported!", typeName)
 				// flags = append(flags, cli.GenericFlag{
 				// 	Name:  argName,
 				// 	Usage: description,
@@ -184,6 +186,7 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 			default:
 				switch field.Type.Elem() {
 				case reflect.TypeOf(egoscale.ResourceTag{}):
+					log.Printf("[SKIP] Slice of %s is not supported!", field.Name)
 					// flags = append(flags, cli.GenericFlag{
 					// 	Name:  argName,
 					// 	Usage: description,
@@ -192,6 +195,7 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 					// 	},
 					// })
 				case reflect.TypeOf(egoscale.CIDR{}):
+					log.Printf("[SKIP] Slice of %s is not supported!", field.Name)
 					// flags = append(flags, cli.GenericFlag{
 					// 	Name:  argName,
 					// 	Usage: description,
@@ -207,6 +211,7 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 			key := reflect.TypeOf(val.Interface()).Key()
 			switch key.Kind() {
 			case reflect.String:
+				log.Printf("[SKIP] Type map for %s is not supported!", field.Name)
 				// flags = append(flags, cli.GenericFlag{
 				// 	Name:  argName,
 				// 	Usage: description,
@@ -220,6 +225,7 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 		case reflect.Ptr:
 			switch field.Type.Elem() {
 			case reflect.TypeOf(true):
+				log.Printf("[SKIP] Ptr type of %s is not supported!", field.Name)
 				// flags = append(flags, cli.GenericFlag{
 				// 	Name:  argName,
 				// 	Usage: description,
@@ -228,6 +234,7 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 				// 	},
 				// })
 			case reflect.TypeOf(egoscale.CIDR{}):
+				log.Printf("[SKIP] Ptr type of %s is not supported!", field.Name)
 				// flags = append(flags, cli.GenericFlag{
 				// 	Name:  argName,
 				// 	Usage: description,
@@ -236,6 +243,7 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 				// 	},
 				// })
 			case reflect.TypeOf(egoscale.UUID{}):
+				log.Printf("[SKIP] Ptr type of %s is not supported!", field.Name)
 				// flags = append(flags, cli.GenericFlag{
 				// 	Name:  argName,
 				// 	Usage: description,

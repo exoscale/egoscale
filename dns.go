@@ -310,8 +310,21 @@ func (client *Client) DeleteRecord(name string, recordID int64) error {
 }
 
 func (client *Client) dnsRequest(uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
-	url := client.Endpoint + uri
-	req, err := http.NewRequest(method, url, strings.NewReader(params))
+	rawURL := client.Endpoint + uri
+	url, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, err
+	}
+
+	q := url.Query()
+	for k, vs := range urlValues {
+		for _, v := range vs {
+			q.Add(k, v)
+		}
+	}
+	url.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(method, url.String(), strings.NewReader(params))
 	if err != nil {
 		return nil, err
 	}
@@ -324,16 +337,6 @@ func (client *Client) dnsRequest(uri string, urlValues url.Values, params, metho
 		hdr.Add("Content-Type", "application/json")
 	}
 	req.Header = hdr
-
-	q := req.URL.Query()
-
-	for k, vs := range urlValues {
-		for _, v := range vs {
-			q.Add(k, v)
-		}
-	}
-
-	req.URL.RawQuery = q.Encode()
 
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {

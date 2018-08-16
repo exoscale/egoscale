@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
-	"reflect"
 
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"

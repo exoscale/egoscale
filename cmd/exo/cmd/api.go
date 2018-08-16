@@ -145,16 +145,7 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 		case reflect.Int16:
 			typeName := field.Type.Name()
 			if typeName != "int16" {
-				cmd.Flags().VarP(
-					&intTypeGeneric{
-						addr: addr,
-						base: 10,
-						bitSize: 16,
-						typ: field.Type,
-						},
-					argName,
-					"",
-					description)
+				cmd.Flags().VarP(&intTypeGeneric{addr: addr, base: 10, bitSize: 16, typ: field.Type}, argName, "", description)
 			} else {
 				cmd.Flags().Int16VarP(addr.(*int16), argName, "", 0, description)
 			}

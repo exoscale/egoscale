@@ -203,6 +203,14 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 					// 		value: addr.(*[]egoscale.CIDR),
 					// 	},
 					// })
+				case reflect.TypeOf(egoscale.UUID{}):
+					// flags = append(flags, cli.GenericFlag{
+					// 	Name:  argName,
+					// 	Usage: description,
+					// 	Value: &uuidListGeneric{
+					// 		value: addr.(*[]egoscale.UUID),
+					// 	},
+					// })
 				default:
 					//log.Printf("[SKIP] Slice of %s is not supported!", field.Name)
 				}
@@ -234,23 +242,10 @@ func buildFlags(method egoscale.Command, cmd *cobra.Command) {
 				// 	},
 				// })
 			case reflect.TypeOf(egoscale.CIDR{}):
-				log.Printf("[SKIP] Ptr type of %s is not supported!", field.Name)
-				// flags = append(flags, cli.GenericFlag{
-				// 	Name:  argName,
-				// 	Usage: description,
-				// 	Value: &cidrGeneric{
-				// 		value: addr.(**egoscale.CIDR),
-				// 	},
-				// })
+				cmd.Flags().VarP(&CIDR{addr.(**egoscale.CIDR)}, argName, "", description)
 			case reflect.TypeOf(egoscale.UUID{}):
-				log.Printf("[SKIP] Ptr type of %s is not supported!", field.Name)
-				// flags = append(flags, cli.GenericFlag{
-				// 	Name:  argName,
-				// 	Usage: description,
-				// 	Value: &uuidGeneric{
-				// 		value: addr.(**egoscale.UUID),
-				// 	},
-				// })
+				cmd.Flags().VarP(&UUID{addr.(**egoscale.UUID)}, argName, "", description)
+
 			default:
 				log.Printf("[SKIP] Ptr type of %s is not supported!", field.Name)
 			}

@@ -146,11 +146,12 @@ func main() {
 
 	// Show request and quit
 	if debug || innerDebug {
-		payload, err := client.Payload(method)
-		if err != nil {
-			log.Fatal(err)
+		payload, errP := client.Payload(method)
+		if errP != nil {
+			log.Fatal(errP)
 		}
-		if _, err = fmt.Fprintf(os.Stdout, "%s\\\n?%s", client.Endpoint, strings.Replace(payload, "&", "\\\n&", -1)); err != nil {
+
+		if _, err := fmt.Fprintf(os.Stdout, "%s\\\n?%s", client.Endpoint, strings.Replace(payload, "&", "\\\n&", -1)); err != nil {
 			log.Fatal(err)
 		}
 

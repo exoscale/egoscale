@@ -1,6 +1,13 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net"
+	"reflect"
+	"strings"
+
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
 )
@@ -31,7 +38,7 @@ func buildCommands(out *egoscale.Command, methods map[string][]cmd) []cobra.Comm
 	for category, ms := range methods {
 
 		cmd := cobra.Command{
-			Use: category,
+			Use: strings.Replace(category, " ", "-", -1),
 		}
 
 		apiCmd.AddCommand(&cmd)
@@ -43,19 +50,206 @@ func buildCommands(out *egoscale.Command, methods map[string][]cmd) []cobra.Comm
 			description := cs.APIDescription(s.command)
 
 			subCMD := cobra.Command{
-				Use:   name,
-				Short: description,
-				RunE: func(cmd *cobra.Command, args []string) error {
-					return cmd.Usage()
-				},
+				Use:  name,
+				Long: description,
 			}
-			// report back the current command
+			buildFlags(s.command, &subCMD)
+
+			subCMD.RunE = func(cmd *cobra.Command, args []string) error {
+				resp, err := cs.RequestWithContext(gContext, s.command)
+				if err != nil {
+					return err
+				}
+
+				data, err := json.MarshalIndent(&resp, "", "  ")
+				if err != nil {
+					return err
+				}
+
+				fmt.Println(string(data))
+
+				return nil
+			}
+
 			cmd.AddCommand(&subCMD)
 			commands = append(commands, cmd)
 		}
 	}
 
 	return commands
+}
+
+func buildFlags(method egoscale.Command, cmd *cobra.Command) {
+	val := reflect.ValueOf(method)
+	// we've got a pointer
+	value := val.Elem()
+
+	if value.Kind() != reflect.Struct {
+		log.Fatalf("struct was expected")
+		return
+	}
+
+	ty := value.Type()
+	for i := 0; i < value.NumField(); i++ {
+		field := ty.Field(i)
+
+		if field.Name == "_" {
+			continue
+		}
+
+		// XXX refactor with request.go
+		var argName string
+		required := false
+		if json, ok := field.Tag.Lookup("json"); ok {
+			tags := strings.Split(json, ",")
+			argName = tags[0]
+			required = true
+			for _, tag := range tags {
+				if tag == "omitempty" {
+					required = false
+				}
+			}
+			if argName == "" || argName == "omitempty" {
+				continue
+			}
+		}
+
+		description := ""
+		if required {
+			description = "required"
+		}
+
+		if doc, ok := field.Tag.Lookup("doc"); ok {
+			if description != "" {
+				description = fmt.Sprintf("[%s] %s", description, doc)
+			} else {
+				description = doc
+			}
+		}
+
+		val := value.Field(i)
+		addr := val.Addr().Interface()
+		switch val.Kind() {
+		case reflect.Bool:
+			cmd.Flags().BoolVarP(addr.(*bool), argName, "", false, description)
+		case reflect.Int:
+			cmd.Flags().IntVarP(addr.(*int), argName, "", 0, description)
+		case reflect.Int64:
+			cmd.Flags().Int64VarP(addr.(*int64), argName, "", 0, description)
+		case reflect.Uint:
+			cmd.Flags().UintVarP(addr.(*uint), argName, "", 0, description)
+		case reflect.Uint64:
+			cmd.Flags().Uint64VarP(addr.(*uint64), argName, "", 0, description)
+		case reflect.Float64:
+			cmd.Flags().Float64VarP(addr.(*float64), argName, "", 0, description)
+		case reflect.Int16:
+			typeName := field.Type.Name()
+			if typeName != "int16" {
+				// flag.Value = &intTypeGeneric{
+				// 	addr:    addr,
+				// 	base:    10,
+				// 	bitSize: 16,
+				// 	typ:     field.Type,
+				// }
+			} else {
+				cmd.Flags().Int16VarP(addr.(*int16), argName, "", 0, description)
+			}
+		case reflect.Uint8:
+			cmd.Flags().Uint8VarP(addr.(*uint8), argName, "", 0, description)
+		case reflect.Uint16:
+			cmd.Flags().Uint16VarP(addr.(*uint16), argName, "", 0, description)
+		case reflect.String:
+			typeName := field.Type.Name()
+			if typeName != "string" {
+				// flags = append(flags, cli.GenericFlag{
+				// 	Name:  argName,
+				// 	Usage: description,
+				// 	Value: &stringerTypeGeneric{
+				// 		addr: addr,
+				// 		typ:  field.Type,
+				// 	},
+				// })
+			} else {
+				cmd.Flags().StringVarP(addr.(*string), argName, "", "", description)
+			}
+		case reflect.Slice:
+			switch field.Type.Elem().Kind() {
+			case reflect.Uint8:
+				ip := addr.(*net.IP)
+				if *ip == nil || (*ip).Equal(net.IPv4zero) || (*ip).Equal(net.IPv6zero) {
+					cmd.Flags().IPP(argName, "", *ip, description)
+				}
+			case reflect.String:
+				cmd.Flags().StringSliceP(argName, "", *addr.(*[]string), description)
+			default:
+				switch field.Type.Elem() {
+				case reflect.TypeOf(egoscale.ResourceTag{}):
+					// flags = append(flags, cli.GenericFlag{
+					// 	Name:  argName,
+					// 	Usage: description,
+					// 	Value: &tagGeneric{
+					// 		value: addr.(*[]egoscale.ResourceTag),
+					// 	},
+					// })
+				case reflect.TypeOf(egoscale.CIDR{}):
+					// flags = append(flags, cli.GenericFlag{
+					// 	Name:  argName,
+					// 	Usage: description,
+					// 	Value: &cidrListGeneric{
+					// 		value: addr.(*[]egoscale.CIDR),
+					// 	},
+					// })
+				default:
+					//log.Printf("[SKIP] Slice of %s is not supported!", field.Name)
+				}
+			}
+		case reflect.Map:
+			key := reflect.TypeOf(val.Interface()).Key()
+			switch key.Kind() {
+			case reflect.String:
+				// flags = append(flags, cli.GenericFlag{
+				// 	Name:  argName,
+				// 	Usage: description,
+				// 	Value: &mapGeneric{
+				// 		value: addr.(*map[string]string),
+				// 	},
+				// })
+			default:
+				log.Printf("[SKIP] Type map for %s is not supported!", field.Name)
+			}
+		case reflect.Ptr:
+			switch field.Type.Elem() {
+			case reflect.TypeOf(true):
+				// flags = append(flags, cli.GenericFlag{
+				// 	Name:  argName,
+				// 	Usage: description,
+				// 	Value: &boolPtrGeneric{
+				// 		value: addr.(**bool),
+				// 	},
+				// })
+			case reflect.TypeOf(egoscale.CIDR{}):
+				// flags = append(flags, cli.GenericFlag{
+				// 	Name:  argName,
+				// 	Usage: description,
+				// 	Value: &cidrGeneric{
+				// 		value: addr.(**egoscale.CIDR),
+				// 	},
+				// })
+			case reflect.TypeOf(egoscale.UUID{}):
+				// flags = append(flags, cli.GenericFlag{
+				// 	Name:  argName,
+				// 	Usage: description,
+				// 	Value: &uuidGeneric{
+				// 		value: addr.(**egoscale.UUID),
+				// 	},
+				// })
+			default:
+				log.Printf("[SKIP] Ptr type of %s is not supported!", field.Name)
+			}
+		default:
+			log.Printf("[SKIP] Type of %s is not supported! %v", field.Name, val.Kind())
+		}
+	}
 }
 
 type cmd struct {
@@ -72,7 +266,7 @@ var methods = map[string][]cmd{
 		{&egoscale.RestartNetwork{}, true},
 		{&egoscale.UpdateNetwork{}, false},
 	},
-	"virtual machine": {
+	"virtual-machine": {
 		{&egoscale.AddNicToVirtualMachine{}, false},
 		{&egoscale.ChangeServiceForVirtualMachine{}, false},
 		{&egoscale.DeployVirtualMachine{}, false},
@@ -128,7 +322,7 @@ var methods = map[string][]cmd{
 		{&egoscale.ListUsers{}, false},
 		{&egoscale.RegisterUserKeys{}, false},
 	},
-	"security group": {
+	"security-group": {
 		{&egoscale.AuthorizeSecurityGroupEgress{}, false},
 		{&egoscale.AuthorizeSecurityGroupIngress{}, false},
 		{&egoscale.CreateSecurityGroup{}, false},
@@ -144,7 +338,7 @@ var methods = map[string][]cmd{
 		{&egoscale.DeleteSSHKeyPair{}, false},
 		{&egoscale.ResetSSHKeyForVirtualMachine{}, false},
 	},
-	"affinity group": {
+	"affinity-group": {
 		{&egoscale.CreateAffinityGroup{}, false},
 		{&egoscale.DeleteAffinityGroup{}, false},
 		{&egoscale.ListAffinityGroups{}, false},

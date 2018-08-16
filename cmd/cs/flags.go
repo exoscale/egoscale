@@ -269,7 +269,7 @@ func (g *mapGeneric) Set(value string) error {
 
 func (g *mapGeneric) String() string {
 	m := g.value
-	if *m == nil {
+	if m == nil {
 		return ""
 	}
 	vs := make([]string, 0, len(*m))

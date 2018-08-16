@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
-	"text/tabwriter"
 	"time"
 
 	"github.com/exoscale/egoscale"
@@ -155,12 +154,24 @@ func main() {
 			log.Fatal(err)
 		}
 
-		response := client.Response(method)
-
 		if _, err := fmt.Fprintln(os.Stdout); err != nil {
 			log.Fatal(err)
 		}
-		printResponseHelp(os.Stdout, response)
+
+		apiName := client.APIName(method)
+		resp, err := client.Request(&egoscale.ListAPIs{Name: apiName})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		help, err := responseHelp(os.Stdout, resp.(*egoscale.ListAPIsResponse).API[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+		if _, err := fmt.Fprintln(os.Stdout, string(help)); err != nil {
+			log.Fatal(err)
+		}
+
 		os.Exit(0)
 	}
 
@@ -569,44 +580,21 @@ type Client struct {
 	Theme string
 }
 
-func printResponseHelp(out io.Writer, response interface{}) {
-	value := reflect.ValueOf(response)
-	typeof := reflect.TypeOf(response)
+func responseHelp(out io.Writer, api egoscale.API) ([]byte, error) {
+	response := make(map[string]interface{})
+	gather(response, api.Response)
 
-	w := tabwriter.NewWriter(out, 0, 0, 1, ' ', tabwriter.FilterHTML)
-	if _, err := fmt.Fprintln(w, "FIELD\tTYPE\tDOCUMENTATION"); err != nil {
-		log.Fatal(err)
-	}
+	return json.MarshalIndent(response, "", "  ")
+}
 
-	for typeof.Kind() == reflect.Ptr {
-		typeof = typeof.Elem()
-		value = value.Elem()
-	}
-
-	for i := 0; i < typeof.NumField(); i++ {
-		field := typeof.Field(i)
-		tag := field.Tag
-		doc := "-"
-		if d, ok := tag.Lookup("doc"); ok {
-			doc = d
+func gather(r map[string]interface{}, fields []egoscale.APIField) {
+	for _, field := range fields {
+		if len(field.Response) > 0 {
+			response := make(map[string]interface{})
+			gather(response, field.Response)
+			r[field.Name] = []map[string]interface{}{response}
+		} else {
+			r[field.Name] = fmt.Sprintf("%s (%s) - %s", field.Name, field.Type, field.Description)
 		}
-
-		name := field.Type.Name()
-		if name == "" {
-			if field.Type.Kind() == reflect.Slice {
-				name = "[]" + field.Type.Elem().Name()
-			}
-		}
-
-		if json, ok := tag.Lookup("json"); ok {
-			n, _ := egoscale.ExtractJSONTag(field.Name, json)
-			if _, err := fmt.Fprintf(w, "%s\t%s\t%s\n", n, name, doc); err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-
-	if err := w.Flush(); err != nil {
-		log.Fatal(err)
 	}
 }

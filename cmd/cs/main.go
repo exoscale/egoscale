@@ -168,9 +168,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if _, err := fmt.Fprintln(os.Stdout, string(help)); err != nil {
-			log.Fatal(err)
-		}
+		fmt.Println()
+		printJSON(string(help), client.Theme)
 
 		os.Exit(0)
 	}

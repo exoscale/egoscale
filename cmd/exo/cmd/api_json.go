@@ -1,3 +1,5 @@
+// +build linux darwin openbsd freebsd
+
 package cmd
 
 import (

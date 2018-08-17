@@ -15,7 +15,7 @@ import (
 
 // apiCmd represents the api command
 var apiCmd = &cobra.Command{
-	Use:   "api <command>",
+	Use:   "api",
 	Short: "Exoscale api",
 }
 
@@ -43,8 +43,16 @@ func init() {
 
 func buildCommands(methods map[string][]cmd) {
 	for category, ms := range methods {
+
+		var alias []string
+		names := strings.Split(category, ",")
+		if len(names) > 1 {
+			alias = names[1:]
+		}
+
 		cmd := cobra.Command{
-			Use: strings.Replace(category, " ", "-", -1),
+			Use:     names[0],
+			Aliases: alias,
 		}
 
 		apiCmd.AddCommand(&cmd)
@@ -58,6 +66,10 @@ func buildCommands(methods map[string][]cmd) {
 			url := userDocumentationURL
 			if s.hidden {
 				url = rootDocumentationURL
+			}
+
+			if s.name != "" {
+				name = s.name
 			}
 
 			subCMD := cobra.Command{

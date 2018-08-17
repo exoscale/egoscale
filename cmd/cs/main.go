@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -148,15 +147,11 @@ func main() {
 	if debug || innerDebug {
 		payload, errP := client.Payload(method)
 		if errP != nil {
-			log.Fatal(errP)
-		}
-
-		if _, err := fmt.Fprintf(os.Stdout, "%s\\\n?%s", client.Endpoint, strings.Replace(payload, "&", "\\\n&", -1)); err != nil {
-			log.Fatal(err)
-		}
-
-		if _, err := fmt.Fprintln(os.Stdout); err != nil {
-			log.Fatal(err)
+			if _, err := fmt.Fprintf(os.Stderr, "cannot build payload: %s\n", errP); err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			fmt.Printf("%s\\\n?%s\n", client.Endpoint, strings.Replace(payload, "&", "\\\n&", -1))
 		}
 
 		apiName := client.APIName(method)
@@ -165,7 +160,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		help, err := responseHelp(os.Stdout, resp.(*egoscale.ListAPIsResponse).API[0])
+		help, err := formatHelp(resp.(*egoscale.ListAPIsResponse).API[0])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -580,7 +575,7 @@ type Client struct {
 	Theme string
 }
 
-func responseHelp(out io.Writer, api egoscale.API) ([]byte, error) {
+func formatHelp(api egoscale.API) ([]byte, error) {
 	response := make(map[string]interface{})
 	gather(response, api.Response)
 

@@ -20,7 +20,6 @@ var apiCmd = &cobra.Command{
 }
 
 const userDocumentationURL = "http://cloudstack.apache.org/api/apidocs-4.4/user/%s.html"
-const rootDocumentationURL = "http://cloudstack.apache.org/api/apidocs-4.4/root_admin/%s.html"
 
 // global flags
 var apiDebug bool
@@ -64,9 +63,6 @@ func buildCommands(methods map[string][]cmd) {
 			description := cs.APIDescription(s.command)
 
 			url := userDocumentationURL
-			if s.hidden {
-				url = rootDocumentationURL
-			}
 
 			if s.name != "" {
 				name = s.name
@@ -141,10 +137,6 @@ func buildCommands(methods map[string][]cmd) {
 				fmt.Println(string(data))
 
 				return nil
-			}
-
-			if s.hidden {
-				subCMD.Hidden = true
 			}
 
 			cmd.AddCommand(&subCMD)

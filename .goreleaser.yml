@@ -27,7 +27,7 @@ builds:
 sign:
   cmd: gpg
   args: ["-u", "ops@exoscale.ch", "--detach-sign", "${artifact}"]
-  artifacts: all
+  artifacts: none
 
 archive:
   format_overrides:

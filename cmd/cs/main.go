@@ -170,7 +170,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if dryRun || innerDryRun {
+	if dryRun {
 		payload, err := client.Payload(method)
 		if err != nil {
 			log.Fatal(err)

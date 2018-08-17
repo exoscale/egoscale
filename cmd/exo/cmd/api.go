@@ -3,13 +3,18 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
+	"os"
 	"reflect"
 	"strings"
+	"syscall"
+	"text/tabwriter"
 
 	"github.com/exoscale/egoscale"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // apiCmd represents the api command
@@ -21,17 +26,27 @@ var apiCmd = &cobra.Command{
 const userDocumentationURL = "http://cloudstack.apache.org/api/apidocs-4.4/user/%s.html"
 const rootDocumentationURL = "http://cloudstack.apache.org/api/apidocs-4.4/root_admin/%s.html"
 
+// global flags
+var apiDebug bool
+var apiDryRun bool
+var apiDryJSON bool
+var apiRegion string
+
 func init() {
 	RootCmd.AddCommand(apiCmd)
-	var method egoscale.Command
-	buildCommands(&method, methods)
-	apiCmd.PersistentFlags().BoolP("debug", "d", false, "debug mode on")
-	apiCmd.PersistentFlags().BoolP("dry-run", "D", false, "produce a cURL ready URL")
-	apiCmd.PersistentFlags().BoolP("dry-json", "j", false, "produce a JSON preview of the query")
-	apiCmd.PersistentFlags().StringP("theme", "t", "", "syntax highlighting theme, see: https://xyproto.github.io/splash/docs/")
+	buildCommands(methods)
+	apiCmd.PersistentFlags().BoolVarP(&apiDebug, "debug", "d", false, "debug mode on")
+	apiCmd.PersistentFlags().BoolVarP(&apiDryRun, "dry-run", "D", false, "produce a cURL ready URL")
+	if err := apiCmd.PersistentFlags().MarkHidden("dry-run"); err != nil {
+		log.Fatal(err)
+	}
+	apiCmd.PersistentFlags().BoolVarP(&apiDryJSON, "dry-json", "j", false, "produce a JSON preview of the query")
+	if err := apiCmd.PersistentFlags().MarkHidden("dry-json"); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func buildCommands(out *egoscale.Command, methods map[string][]cmd) {
+func buildCommands(methods map[string][]cmd) {
 	for category, ms := range methods {
 		cmd := cobra.Command{
 			Use: strings.Replace(category, " ", "-", -1),
@@ -54,9 +69,58 @@ func buildCommands(out *egoscale.Command, methods map[string][]cmd) {
 				Use:  name,
 				Long: fmt.Sprintf("%s <%s>", description, fmt.Sprintf(url, name)),
 			}
+
 			buildFlags(s.command, &subCMD)
 
 			subCMD.RunE = func(cmd *cobra.Command, args []string) error {
+
+				// Show request and quit DEBUG
+				if apiDebug {
+					payload, err := cs.Payload(s.command)
+					if err != nil {
+						log.Fatal(err)
+					}
+					if _, err = fmt.Fprintf(os.Stdout, "%s\\\n?%s", cs.Endpoint, strings.Replace(payload, "&", "\\\n&", -1)); err != nil {
+						log.Fatal(err)
+					}
+
+					response := cs.Response(s.command)
+
+					if _, err := fmt.Fprintln(os.Stdout); err != nil {
+						log.Fatal(err)
+					}
+					printResponseHelp(os.Stdout, response)
+					os.Exit(0)
+				}
+
+				if apiDryRun {
+					payload, err := cs.Payload(s.command)
+					if err != nil {
+						log.Fatal(err)
+					}
+					signature, err := cs.Sign(payload)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					if _, err := fmt.Fprintf(os.Stdout, "%s?%s\n", cs.Endpoint, signature); err != nil {
+						log.Fatal(err)
+					}
+					os.Exit(0)
+				}
+
+				if apiDryJSON {
+					request, err := json.MarshalIndent(s.command, "", "  ")
+					if err != nil {
+						log.Panic(err)
+					}
+
+					printJSON(string(request))
+					os.Exit(0)
+				}
+
+				// End debug section
+
 				resp, err := cs.RequestWithContext(gContext, s.command)
 				if err != nil {
 					return err
@@ -350,4 +414,58 @@ var methods = map[string][]cmd{
 		{&egoscale.QueryReverseDNSForVirtualMachine{}, false},
 		{&egoscale.UpdateReverseDNSForVirtualMachine{}, false},
 	},
+}
+
+func printJSON(out string) {
+	if terminal.IsTerminal(syscall.Stdout) {
+		if _, err := fmt.Fprintln(os.Stdout, ""); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		if _, err := fmt.Fprintln(os.Stdout, out); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func printResponseHelp(out io.Writer, response interface{}) {
+	value := reflect.ValueOf(response)
+	typeof := reflect.TypeOf(response)
+
+	w := tabwriter.NewWriter(out, 0, 0, 1, ' ', tabwriter.FilterHTML)
+	if _, err := fmt.Fprintln(w, "FIELD\tTYPE\tDOCUMENTATION"); err != nil {
+		log.Fatal(err)
+	}
+
+	for typeof.Kind() == reflect.Ptr {
+		typeof = typeof.Elem()
+		value = value.Elem()
+	}
+
+	for i := 0; i < typeof.NumField(); i++ {
+		field := typeof.Field(i)
+		tag := field.Tag
+		doc := "-"
+		if d, ok := tag.Lookup("doc"); ok {
+			doc = d
+		}
+
+		name := field.Type.Name()
+		if name == "" {
+			if field.Type.Kind() == reflect.Slice {
+				name = "[]" + field.Type.Elem().Name()
+			}
+		}
+
+		if json, ok := tag.Lookup("json"); ok {
+			n, _ := egoscale.ExtractJSONTag(field.Name, json)
+			if _, err := fmt.Fprintf(w, "%s\t%s\t%s\n", n, name, doc); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+
+	if err := w.Flush(); err != nil {
+		log.Fatal(err)
+	}
 }

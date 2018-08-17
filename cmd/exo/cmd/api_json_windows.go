@@ -8,6 +8,6 @@ import (
 )
 
 // nolint: deadcode
-func printJSON(out, theme string) {
+func printJSON(out string) {
 	fmt.Fprintln(os.Stdout, out)
 }

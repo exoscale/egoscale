@@ -26,7 +26,6 @@ const rootDocumentationURL = "http://cloudstack.apache.org/api/apidocs-4.4/root_
 var apiDebug bool
 var apiDryRun bool
 var apiDryJSON bool
-var apiRegion string
 
 func init() {
 	RootCmd.AddCommand(apiCmd)

@@ -15,7 +15,6 @@ var methods = map[string][]cmd{
 		{&egoscale.DeleteNetwork{}, "delete"},
 		{&egoscale.ListNetworkOfferings{}, ""},
 		{&egoscale.ListNetworks{}, "list"},
-		{&egoscale.RestartNetwork{}, "restart"},
 		{&egoscale.UpdateNetwork{}, "update"},
 	},
 	"vm": {
@@ -36,24 +35,23 @@ var methods = map[string][]cmd{
 		{&egoscale.ScaleVirtualMachine{}, "scale"},
 		{&egoscale.StartVirtualMachine{}, "start"},
 		{&egoscale.StopVirtualMachine{}, "stop"},
-		{&egoscale.UpdateDefaultNicForVirtualMachine{}, ""},
 		{&egoscale.UpdateVirtualMachine{}, "update"},
+		{&egoscale.CreateAffinityGroup{}, "createAffinityGroup"},
+		{&egoscale.DeleteAffinityGroup{}, "deleteAffinityGroup"},
+		{&egoscale.ListAffinityGroups{}, "listAffinityGroup"},
+		{&egoscale.UpdateVMAffinityGroup{}, ""},
+		{&egoscale.DeleteReverseDNSFromVirtualMachine{}, "deleteReverseDNSFromVM"},
+		{&egoscale.QueryReverseDNSForVirtualMachine{}, "queryReverseDNSForVM"},
+		{&egoscale.UpdateReverseDNSForVirtualMachine{}, "updateReverseDNSForVM"},
 	},
 	"volume": {
 		{&egoscale.ListVolumes{}, "list"},
 		{&egoscale.ResizeVolume{}, "resize"},
 	},
 	"template": {
-		{&egoscale.CopyTemplate{}, ""},
-		{&egoscale.CreateTemplate{}, ""},
 		{&egoscale.ListTemplates{}, "list"},
-		{&egoscale.PrepareTemplate{}, ""},
-		{&egoscale.RegisterTemplate{}, ""},
-		{&egoscale.ListOSCategories{}, ""},
 	},
 	"account": {
-		{&egoscale.EnableAccount{}, ""},
-		{&egoscale.DisableAccount{}, ""},
 		{&egoscale.ListAccounts{}, "list"},
 	},
 	"zone": {
@@ -66,11 +64,6 @@ var methods = map[string][]cmd{
 		{&egoscale.RevertSnapshot{}, "revert"},
 	},
 	"user": {
-		{&egoscale.CreateUser{}, ""},
-		{&egoscale.DeleteUser{}, ""},
-		//{&egoscale.DisableUser{}, ""},
-		//{&egoscale.GetUser{}, ""},
-		{&egoscale.UpdateUser{}, ""},
 		{&egoscale.ListUsers{}, "list"},
 		{&egoscale.RegisterUserKeys{}, ""},
 	},
@@ -89,12 +82,6 @@ var methods = map[string][]cmd{
 		{&egoscale.CreateSSHKeyPair{}, "create"},
 		{&egoscale.DeleteSSHKeyPair{}, "delete"},
 		{&egoscale.ResetSSHKeyForVirtualMachine{}, "reset"},
-	},
-	"affinity-group,ag": {
-		{&egoscale.CreateAffinityGroup{}, "create"},
-		{&egoscale.DeleteAffinityGroup{}, "delete"},
-		{&egoscale.ListAffinityGroups{}, "list"},
-		{&egoscale.UpdateVMAffinityGroup{}, ""},
 	},
 	"vm-group,vg": {
 		{&egoscale.CreateInstanceGroup{}, "create"},
@@ -116,6 +103,9 @@ var methods = map[string][]cmd{
 		{&egoscale.DisassociateIPAddress{}, "disassociate"},
 		{&egoscale.ListPublicIPAddresses{}, "list"},
 		{&egoscale.UpdateIPAddress{}, "update"},
+		{&egoscale.DeleteReverseDNSFromPublicIPAddress{}, "deleteReverseDNSFromAddress"},
+		{&egoscale.QueryReverseDNSForPublicIPAddress{}, "queryReverseDNSForAddress"},
+		{&egoscale.UpdateReverseDNSForPublicIPAddress{}, "updateReverseDNSForAddress"},
 	},
 	"async-job,aj": {
 		{&egoscale.QueryAsyncJobResult{}, ""},
@@ -132,17 +122,5 @@ var methods = map[string][]cmd{
 		{&egoscale.ListResourceDetails{}, "listDetails"},
 		{&egoscale.ListResourceLimits{}, "listLimits"},
 		{&egoscale.ListServiceOfferings{}, "list"},
-	},
-	"host": {
-		{&egoscale.ListHosts{}, ""},
-		{&egoscale.UpdateHost{}, ""},
-	},
-	"reversedns": {
-		{&egoscale.DeleteReverseDNSFromPublicIPAddress{}, "deleteFromAddress"},
-		{&egoscale.QueryReverseDNSForPublicIPAddress{}, "queryForAddress"},
-		{&egoscale.UpdateReverseDNSForPublicIPAddress{}, "updateForAddress"},
-		{&egoscale.DeleteReverseDNSFromVirtualMachine{}, "deleteFromVM"},
-		{&egoscale.QueryReverseDNSForVirtualMachine{}, "queryForVM"},
-		{&egoscale.UpdateReverseDNSForVirtualMachine{}, "updateForVM"},
 	},
 }

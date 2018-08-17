@@ -24,7 +24,6 @@ const userDocumentationURL = "http://cloudstack.apache.org/api/apidocs-4.4/user/
 // global flags
 var apiDebug bool
 var apiDryRun bool
-var apiDryJSON bool
 
 func init() {
 	RootCmd.AddCommand(apiCmd)
@@ -32,10 +31,6 @@ func init() {
 	apiCmd.PersistentFlags().BoolVarP(&apiDebug, "debug", "d", false, "debug mode on")
 	apiCmd.PersistentFlags().BoolVarP(&apiDryRun, "dry-run", "D", false, "produce a cURL ready URL")
 	if err := apiCmd.PersistentFlags().MarkHidden("dry-run"); err != nil {
-		log.Fatal(err)
-	}
-	apiCmd.PersistentFlags().BoolVarP(&apiDryJSON, "dry-json", "j", false, "produce a JSON preview of the query")
-	if err := apiCmd.PersistentFlags().MarkHidden("dry-json"); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -109,16 +104,6 @@ func buildCommands(methods map[string][]cmd) {
 					os.Exit(0)
 				}
 
-				if apiDryJSON {
-					request, err := json.MarshalIndent(s.command, "", "  ")
-					if err != nil {
-						log.Panic(err)
-					}
-
-					printJSON(string(request))
-					os.Exit(0)
-				}
-
 				// End debug section
 
 				resp, err := cs.RequestWithContext(gContext, s.command)
@@ -135,6 +120,7 @@ func buildCommands(methods map[string][]cmd) {
 
 				return nil
 			}
+			subCMD.Flags().SortFlags = false
 
 			cmd.AddCommand(&subCMD)
 		}

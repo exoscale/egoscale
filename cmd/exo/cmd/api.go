@@ -35,24 +35,19 @@ func init() {
 	}
 }
 
-func buildCommands(methods map[string][]cmd) {
-	for category, ms := range methods {
-
-		var alias []string
-		names := strings.Split(category, ",")
-		if len(names) > 1 {
-			alias = names[1:]
-		}
+func buildCommands(methods []category) {
+	for _, category := range methods {
 
 		cmd := cobra.Command{
-			Use:     names[0],
-			Aliases: alias,
+			Use:     category.name,
+			Aliases: category.alias,
+			Short:   category.doc,
 		}
 
 		apiCmd.AddCommand(&cmd)
 
-		for i := range ms {
-			s := ms[i]
+		for i := range category.cmd {
+			s := category.cmd[i]
 
 			name := cs.APIName(s.command)
 			description := cs.APIDescription(s.command)

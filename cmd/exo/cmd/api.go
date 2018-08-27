@@ -59,9 +59,10 @@ func buildCommands(methods []category) {
 			}
 
 			subCMD := cobra.Command{
-				Use:   name,
-				Short: description,
-				Long:  fmt.Sprintf("%s <%s>", description, fmt.Sprintf(url, name)),
+				Use:     name,
+				Short:   description,
+				Long:    fmt.Sprintf("%s <%s>", description, fmt.Sprintf(url, name)),
+				Aliases: s.alias,
 			}
 
 			buildFlags(s.command, &subCMD)

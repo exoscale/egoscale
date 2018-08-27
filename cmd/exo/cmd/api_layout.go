@@ -17,7 +17,7 @@ type cmd struct {
 }
 
 var methods = []category{
-	category{
+	{
 		"network",
 		[]string{"net"},
 		"doc net",
@@ -29,7 +29,7 @@ var methods = []category{
 			{&egoscale.UpdateNetwork{}, "update"},
 		},
 	},
-	category{
+	{
 		"vm",
 		[]string{"virtual-machine"},
 		"doc vm",
@@ -61,7 +61,7 @@ var methods = []category{
 			{&egoscale.UpdateReverseDNSForVirtualMachine{}, "updateReverseDNSForVM"},
 		},
 	},
-	category{
+	{
 		"volume",
 		[]string{"vol"},
 		"doc volume",
@@ -70,7 +70,7 @@ var methods = []category{
 			{&egoscale.ResizeVolume{}, "resize"},
 		},
 	},
-	category{
+	{
 		"template",
 		[]string{"temp"},
 		"doc template",
@@ -78,7 +78,7 @@ var methods = []category{
 			{&egoscale.ListTemplates{}, "list"},
 		},
 	},
-	category{
+	{
 		"account",
 		[]string{"acc"},
 		"doc account",
@@ -86,7 +86,7 @@ var methods = []category{
 			{&egoscale.ListAccounts{}, "list"},
 		},
 	},
-	category{
+	{
 		"zone",
 		nil,
 		"doc zone",
@@ -94,7 +94,7 @@ var methods = []category{
 			{&egoscale.ListZones{}, "list"},
 		},
 	},
-	category{
+	{
 		"snapshot",
 		[]string{"snap"},
 		"doc snapshot",
@@ -105,7 +105,7 @@ var methods = []category{
 			{&egoscale.RevertSnapshot{}, "revert"},
 		},
 	},
-	category{
+	{
 		"user",
 		[]string{"usr"},
 		"doc user",
@@ -114,7 +114,7 @@ var methods = []category{
 			{&egoscale.RegisterUserKeys{}, ""},
 		},
 	},
-	category{
+	{
 		"security-group",
 		[]string{"sg"},
 		"doc security-group",
@@ -128,7 +128,7 @@ var methods = []category{
 			{&egoscale.RevokeSecurityGroupIngress{}, "revokeIngress"},
 		},
 	},
-	category{
+	{
 		"ssh",
 		nil,
 		"doc ssh",
@@ -140,7 +140,7 @@ var methods = []category{
 			{&egoscale.ResetSSHKeyForVirtualMachine{}, "reset"},
 		},
 	},
-	category{
+	{
 		"vm-group",
 		[]string{"vg"},
 		"doc vm-group",
@@ -149,7 +149,7 @@ var methods = []category{
 			{&egoscale.ListInstanceGroups{}, "list"},
 		},
 	},
-	category{
+	{
 		"tags",
 		nil,
 		"doc tags",
@@ -159,7 +159,7 @@ var methods = []category{
 			{&egoscale.ListTags{}, "list"},
 		},
 	},
-	category{
+	{
 		"nic",
 		nil,
 		"doc nic",
@@ -170,7 +170,7 @@ var methods = []category{
 			{&egoscale.RemoveIPFromNic{}, ""},
 		},
 	},
-	category{
+	{
 		"address",
 		[]string{"addr"},
 		"doc address",
@@ -184,7 +184,7 @@ var methods = []category{
 			{&egoscale.UpdateReverseDNSForPublicIPAddress{}, "updateReverseDNSForAddress"},
 		},
 	},
-	category{
+	{
 		"async-job",
 		[]string{"aj"},
 		"doc async-job",
@@ -193,7 +193,7 @@ var methods = []category{
 			{&egoscale.ListAsyncJobs{}, ""},
 		},
 	},
-	category{
+	{
 		"apis",
 		nil,
 		"doc apis",
@@ -201,7 +201,7 @@ var methods = []category{
 			{&egoscale.ListAPIs{}, "list"},
 		},
 	},
-	category{
+	{
 		"event",
 		nil,
 		"doc event",
@@ -210,7 +210,7 @@ var methods = []category{
 			{&egoscale.ListEvents{}, "list"},
 		},
 	},
-	category{
+	{
 		"offerings",
 		nil,
 		"doc offerings",

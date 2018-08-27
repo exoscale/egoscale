@@ -20,7 +20,7 @@ var methods = []category{
 	{
 		"network",
 		[]string{"net"},
-		"doc net",
+		"Network management",
 		[]cmd{
 			{&egoscale.CreateNetwork{}, "create"},
 			{&egoscale.DeleteNetwork{}, "delete"},
@@ -32,7 +32,7 @@ var methods = []category{
 	{
 		"vm",
 		[]string{"virtual-machine"},
-		"doc vm",
+		"Virtual machine management",
 		[]cmd{
 			{&egoscale.AddNicToVirtualMachine{}, "addNic"},
 			{&egoscale.ChangeServiceForVirtualMachine{}, "changeService"},
@@ -64,7 +64,7 @@ var methods = []category{
 	{
 		"volume",
 		[]string{"vol"},
-		"doc volume",
+		"Volume management",
 		[]cmd{
 			{&egoscale.ListVolumes{}, "list"},
 			{&egoscale.ResizeVolume{}, "resize"},
@@ -73,7 +73,7 @@ var methods = []category{
 	{
 		"template",
 		[]string{"temp"},
-		"doc template",
+		"Template management",
 		[]cmd{
 			{&egoscale.ListTemplates{}, "list"},
 		},
@@ -81,7 +81,7 @@ var methods = []category{
 	{
 		"account",
 		[]string{"acc"},
-		"doc account",
+		"Account management",
 		[]cmd{
 			{&egoscale.ListAccounts{}, "list"},
 		},
@@ -89,7 +89,7 @@ var methods = []category{
 	{
 		"zone",
 		nil,
-		"doc zone",
+		"Zone management",
 		[]cmd{
 			{&egoscale.ListZones{}, "list"},
 		},
@@ -97,7 +97,7 @@ var methods = []category{
 	{
 		"snapshot",
 		[]string{"snap"},
-		"doc snapshot",
+		"Snapshot management",
 		[]cmd{
 			{&egoscale.CreateSnapshot{}, "create"},
 			{&egoscale.DeleteSnapshot{}, "delete"},
@@ -108,7 +108,7 @@ var methods = []category{
 	{
 		"user",
 		[]string{"usr"},
-		"doc user",
+		"User management",
 		[]cmd{
 			{&egoscale.ListUsers{}, "list"},
 			{&egoscale.RegisterUserKeys{}, ""},
@@ -117,7 +117,7 @@ var methods = []category{
 	{
 		"security-group",
 		[]string{"sg"},
-		"doc security-group",
+		"Security group management",
 		[]cmd{
 			{&egoscale.AuthorizeSecurityGroupEgress{}, "authorizeEgress"},
 			{&egoscale.AuthorizeSecurityGroupIngress{}, "authorizeIngress"},
@@ -131,7 +131,7 @@ var methods = []category{
 	{
 		"ssh",
 		nil,
-		"doc ssh",
+		"SSH management",
 		[]cmd{
 			{&egoscale.RegisterSSHKeyPair{}, "register"},
 			{&egoscale.ListSSHKeyPairs{}, "list"},
@@ -143,7 +143,7 @@ var methods = []category{
 	{
 		"vm-group",
 		[]string{"vg"},
-		"doc vm-group",
+		"VM group management",
 		[]cmd{
 			{&egoscale.CreateInstanceGroup{}, "create"},
 			{&egoscale.ListInstanceGroups{}, "list"},
@@ -152,7 +152,7 @@ var methods = []category{
 	{
 		"tags",
 		nil,
-		"doc tags",
+		"Tags management",
 		[]cmd{
 			{&egoscale.CreateTags{}, "create"},
 			{&egoscale.DeleteTags{}, "delete"},
@@ -162,7 +162,7 @@ var methods = []category{
 	{
 		"nic",
 		nil,
-		"doc nic",
+		"Nic management",
 		[]cmd{
 			{&egoscale.ActivateIP6{}, ""},
 			{&egoscale.AddIPToNic{}, ""},
@@ -173,7 +173,7 @@ var methods = []category{
 	{
 		"address",
 		[]string{"addr"},
-		"doc address",
+		"Address management",
 		[]cmd{
 			{&egoscale.AssociateIPAddress{}, "associate"},
 			{&egoscale.DisassociateIPAddress{}, "disassociate"},
@@ -187,7 +187,7 @@ var methods = []category{
 	{
 		"async-job",
 		[]string{"aj"},
-		"doc async-job",
+		"Async job management",
 		[]cmd{
 			{&egoscale.QueryAsyncJobResult{}, ""},
 			{&egoscale.ListAsyncJobs{}, ""},
@@ -196,7 +196,7 @@ var methods = []category{
 	{
 		"apis",
 		nil,
-		"doc apis",
+		"Apis management",
 		[]cmd{
 			{&egoscale.ListAPIs{}, "list"},
 		},
@@ -204,7 +204,7 @@ var methods = []category{
 	{
 		"event",
 		nil,
-		"doc event",
+		"Event management",
 		[]cmd{
 			{&egoscale.ListEventTypes{}, "listType"},
 			{&egoscale.ListEvents{}, "list"},
@@ -213,7 +213,7 @@ var methods = []category{
 	{
 		"offerings",
 		nil,
-		"doc offerings",
+		"Offerings management",
 		[]cmd{
 			{&egoscale.ListResourceDetails{}, "listDetails"},
 			{&egoscale.ListResourceLimits{}, "listLimits"},

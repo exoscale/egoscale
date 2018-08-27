@@ -192,6 +192,7 @@ func writeFlag(buffer *bytes.Buffer, flag *pflag.Flag) {
 	usage := strings.Replace(flag.Usage, "[required]", "(**required**)", 1)
 	if flag.Shorthand != "" {
 		buffer.WriteString(fmt.Sprintf("`--%s, -%s` - %s\n", flag.Name, flag.Shorthand, html.EscapeString(usage)))
+		return
 	}
 	buffer.WriteString(fmt.Sprintf("`--%s` - %s\n", flag.Name, html.EscapeString(usage)))
 }

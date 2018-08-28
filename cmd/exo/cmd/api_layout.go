@@ -53,13 +53,20 @@ var methods = []category{
 			{&egoscale.StartVirtualMachine{}, "start", nil},
 			{&egoscale.StopVirtualMachine{}, "stop", nil},
 			{&egoscale.UpdateVirtualMachine{}, "update", nil},
-			{&egoscale.CreateAffinityGroup{}, "createAffinityGroup", nil},
-			{&egoscale.DeleteAffinityGroup{}, "deleteAffinityGroup", nil},
-			{&egoscale.ListAffinityGroups{}, "listAffinityGroup", nil},
 			{&egoscale.UpdateVMAffinityGroup{}, "", nil},
 			{&egoscale.DeleteReverseDNSFromVirtualMachine{}, "deleteReverseDNSFromVM", nil},
 			{&egoscale.QueryReverseDNSForVirtualMachine{}, "queryReverseDNSForVM", nil},
 			{&egoscale.UpdateReverseDNSForVirtualMachine{}, "updateReverseDNSForVM", nil},
+		},
+	},
+	{
+		"affinity-group",
+		[]string{"ag"},
+		"Affinity group management",
+		[]cmd{
+			{&egoscale.CreateAffinityGroup{}, "create", gCreateAlias},
+			{&egoscale.DeleteAffinityGroup{}, "delete", gDeleteAlias},
+			{&egoscale.ListAffinityGroups{}, "list", gListAlias},
 		},
 	},
 	{
@@ -151,7 +158,7 @@ var methods = []category{
 		},
 	},
 	{
-		"tags",
+		"tag",
 		nil,
 		"Tags management",
 		[]cmd{
@@ -195,7 +202,7 @@ var methods = []category{
 		},
 	},
 	{
-		"apis",
+		"api",
 		nil,
 		"Apis management",
 		[]cmd{
@@ -212,7 +219,7 @@ var methods = []category{
 		},
 	},
 	{
-		"offerings",
+		"offering",
 		nil,
 		"Offerings management",
 		[]cmd{

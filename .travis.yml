@@ -8,6 +8,7 @@ go:
 - 1.8
 - 1.9
 - "1.10"
+- "1.11"
 - tip
 
 env:
@@ -38,7 +39,7 @@ script: |
 jobs:
   include:
   - stage: goreleaser
-    go: "1.10"
+    go: "1.11"
     if: type = push
     script: |
       dep ensure -v -vendor-only
@@ -50,7 +51,7 @@ jobs:
       go run cmd/exo/completion/main.go
       goreleaser --snapshot --skip-sign
   - stage: gh-pages
-    go: "1.10"
+    go: "1.11"
     if: branch = master AND type = push
     script: |
       cd website

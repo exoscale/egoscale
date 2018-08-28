@@ -234,8 +234,13 @@ func initConfig() {
 		gCurrentAccount.DefaultTemplate = defaultTemplate
 	}
 
+	if gCurrentAccount.SosEndpoint == "" {
+		gCurrentAccount.SosEndpoint = defaultSosEndpoint
+	}
+
 	gCurrentAccount.Endpoint = strings.TrimRight(gCurrentAccount.Endpoint, "/")
 	gCurrentAccount.DNSEndpoint = strings.TrimRight(gCurrentAccount.DNSEndpoint, "/")
+	gCurrentAccount.SosEndpoint = strings.TrimRight(gCurrentAccount.SosEndpoint, "/")
 }
 
 // getCmdPosition returns a command position by fetching os.args and ignoring flags

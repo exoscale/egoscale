@@ -110,10 +110,9 @@ func getAccount() (*account, error) {
 	var client *egoscale.Client
 
 	account := &account{
-		Endpoint:    defaultEndpoint,
-		Key:         "",
-		Secret:      "",
-		SosEndpoint: defaultSosEndpoint,
+		Endpoint: defaultEndpoint,
+		Key:      "",
+		Secret:   "",
 	}
 
 	for i := 0; ; i++ {
@@ -220,12 +219,10 @@ func addAccount(filePath string, newAccounts *config) error {
 
 		accounts[i]["name"] = acc.Name
 		accounts[i]["computeEndpoint"] = acc.Endpoint
-		accounts[i]["dnsEndpoint"] = acc.DNSEndpoint
-		accounts[i]["sosEndpoint"] = acc.SosEndpoint
 		accounts[i]["key"] = acc.Key
 		accounts[i]["secret"] = acc.Secret
 		accounts[i]["defaultZone"] = acc.DefaultZone
-		accounts[i]["defaultTemplate"] = acc.DefaultTemplate
+		accounts[i]["defaultTemplate"] = defaultTemplate
 		accounts[i]["account"] = acc.Account
 
 		conf.Accounts = append(conf.Accounts, acc)
@@ -239,12 +236,10 @@ func addAccount(filePath string, newAccounts *config) error {
 
 			accounts[accountsSize+i]["name"] = acc.Name
 			accounts[accountsSize+i]["computeEndpoint"] = acc.Endpoint
-			accounts[accountsSize+i]["dnsEndpoint"] = acc.DNSEndpoint
-			accounts[accountsSize+i]["sosEndpoint"] = acc.SosEndpoint
 			accounts[accountsSize+i]["key"] = acc.Key
 			accounts[accountsSize+i]["secret"] = acc.Secret
 			accounts[accountsSize+i]["defaultZone"] = acc.DefaultZone
-			accounts[accountsSize+i]["defaultTemplate"] = acc.DefaultTemplate
+			accounts[accountsSize+i]["defaultTemplate"] = defaultTemplate
 			accounts[accountsSize+i]["account"] = acc.Account
 			conf.Accounts = append(conf.Accounts, acc)
 		}
@@ -357,11 +352,10 @@ func importCloudstackINI(option, csPath, cfgPath string) error {
 		}
 
 		csAccount := account{
-			Name:        acc.Name(),
-			Endpoint:    acc.Key("endpoint").String(),
-			Key:         acc.Key("key").String(),
-			Secret:      acc.Key("secret").String(),
-			SosEndpoint: defaultSosEndpoint,
+			Name:     acc.Name(),
+			Endpoint: acc.Key("endpoint").String(),
+			Key:      acc.Key("key").String(),
+			Secret:   acc.Key("secret").String(),
 		}
 
 		csClient := egoscale.NewClient(csAccount.Endpoint, csAccount.Key, csAccount.Secret)

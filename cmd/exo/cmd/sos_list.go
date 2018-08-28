@@ -25,11 +25,10 @@ var sosListCmd = &cobra.Command{
 	Short:   "List file and folder",
 	Aliases: gListAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		///XXX you must use a default zone support SOS
 		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
 		if err != nil {
-			println("XXX wainting for all zone supporting SOS: use a supported defaultZone")
+			fmt.Fprintf(os.Stderr, "XXX waiting for all zone suport SOS: current zone is %q. use a supported defaultZone", gCurrentAccount.DefaultZone)
 			log.Fatal(err)
 		}
 

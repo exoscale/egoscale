@@ -10,7 +10,18 @@ import (
 // sosCmd represents the sos command
 var sosCmd = &cobra.Command{
 	Use:   "sos",
-	Short: "Simple Object Storage managment",
+	Short: "Simple Object Storage management",
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		zone, err := cmd.Flags().GetString("zone")
+		if err != nil {
+			return err
+		}
+
+		if zone != "" {
+			gCurrentAccount.DefaultZone = zone
+		}
+		return nil
+	},
 }
 
 func newMinioClient(zone string) (*minio.Client, error) {
@@ -21,4 +32,5 @@ func newMinioClient(zone string) (*minio.Client, error) {
 
 func init() {
 	RootCmd.AddCommand(sosCmd)
+	sosCmd.PersistentFlags().StringP("zone", "z", "", "Simple object storage zone")
 }

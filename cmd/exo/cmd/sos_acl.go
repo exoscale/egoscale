@@ -32,7 +32,7 @@ const (
 // aclCmd represents the acl command
 var sosACLCmd = &cobra.Command{
 	Use:   "acl <bucket name> <object name> [object name] ...",
-	Short: "Object(s) ACLs managment",
+	Short: "Object(s) ACLs management",
 }
 
 func init() {

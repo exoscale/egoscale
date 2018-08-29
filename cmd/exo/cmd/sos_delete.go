@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+	"log"
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -14,11 +18,10 @@ var sosDeleteCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
-		///XXX you must use a default zone support SOS
 		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
 		if err != nil {
-			println("XXX wainting for all zone supporting SOS: use a supported defaultZone")
-			return err
+			fmt.Fprintf(os.Stderr, "XXX waiting for all zone support SOS: current zone is %q. use a supported defaultZone", gCurrentAccount.DefaultZone) // nolint: errcheck
+			log.Fatal(err)
 		}
 
 		zone, err := minioClient.GetBucketLocation(args[0])

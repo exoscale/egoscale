@@ -15,21 +15,12 @@ var sosCreateCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
-		zone, err := cmd.Flags().GetString("zone")
+		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
 		if err != nil {
 			return err
 		}
 
-		if zone == "" {
-			zone = gCurrentAccount.DefaultZone
-		}
-
-		minioClient, err := newMinioClient(zone)
-		if err != nil {
-			return err
-		}
-
-		return createBucket(minioClient, args[0], zone)
+		return createBucket(minioClient, args[0], gCurrentAccount.DefaultZone)
 	},
 }
 
@@ -39,5 +30,4 @@ func createBucket(minioClient *minio.Client, bucketName, zone string) error {
 
 func init() {
 	sosCmd.AddCommand(sosCreateCmd)
-	sosCreateCmd.Flags().StringP("zone", "z", "", "Object storage zone")
 }

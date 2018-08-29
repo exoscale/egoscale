@@ -86,7 +86,7 @@ func asyncTasks(tasks []task) []taskResponse {
 	return responses
 }
 
-func execTask(task task, id int, c chan taskStatus, resps *taskResponse) {
+func execTask(task task, id int, c chan taskStatus, resp *taskResponse) {
 	response := cs.Response(task.AsyncCommand)
 	var errorReq error
 	cs.AsyncRequestWithContext(gContext, task.AsyncCommand, func(jobResult *egoscale.AsyncJobResult, err error) bool {
@@ -100,7 +100,7 @@ func execTask(task task, id int, c chan taskStatus, resps *taskResponse) {
 				errorReq = errR
 				return false
 			}
-			resps.resp = response
+			resp.resp = response
 			c <- taskStatus{id, egoscale.Success}
 			return false
 		}
@@ -111,12 +111,12 @@ func execTask(task task, id int, c chan taskStatus, resps *taskResponse) {
 
 	if errorReq != nil {
 		c <- taskStatus{id, egoscale.Failure}
-		resps.error = errorReq
+		resp.error = fmt.Errorf("failure %s: %s", task.string, errorReq)
 	}
 }
 
-// asyncTaskError return all task with an error
-func asyncTaskError(tasks []taskResponse) []error {
+// filterErrors return all task with an error
+func filterErrors(tasks []taskResponse) []error {
 	var r []error
 	for _, task := range tasks {
 		if task.error != nil {

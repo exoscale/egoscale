@@ -106,7 +106,7 @@ var firewallRemoveCmd = &cobra.Command{
 			}
 		}
 		resps := asyncTasks(tasks)
-		errs := asyncTaskError(resps)
+		errs := filterErrors(resps)
 		if len(errs) > 0 {
 			return errs[0]
 		}
@@ -127,7 +127,7 @@ func removeAllRules(sg *egoscale.SecurityGroup) error {
 	}
 
 	resps := asyncTasks(tasks)
-	errs := asyncTaskError(resps)
+	errs := filterErrors(resps)
 	if len(errs) > 0 {
 		return errs[0]
 	}

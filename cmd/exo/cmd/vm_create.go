@@ -302,7 +302,7 @@ func createVM(deploys []egoscale.DeployVirtualMachine) ([]egoscale.VirtualMachin
 	}
 
 	resps := asyncTasks(tasks)
-	errors := asyncTaskError(resps)
+	errors := filterErrors(resps)
 	if len(errors) > 0 {
 		return nil, errors
 	}

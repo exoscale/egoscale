@@ -44,15 +44,16 @@ var vmDeleteCmd = &cobra.Command{
 		}
 
 		resps := asyncTasks(tasks)
-
-		for i, r := range resps {
-			vm := vms[i]
-
-			if r.error != nil {
-				fmt.Fprintf(os.Stderr, "virtual machine %q error: %s\n", vm.Name, r.error.Error()) // nolint: errcheck
-				continue
+		errors := filterErrors(resps)
+		if len(errors) > 0 {
+			for _, err := range errors {
+				fmt.Fprintln(os.Stderr, err) // nolint: errcheck
 			}
+			return nil
+		}
 
+		for i := range resps {
+			vm := vms[i]
 			folder := path.Join(gConfigFolder, "instances", vm.ID.String())
 
 			if _, err := os.Stat(folder); !os.IsNotExist(err) {

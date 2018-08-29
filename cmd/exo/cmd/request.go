@@ -21,14 +21,16 @@ type taskStatus struct {
 	jobStatus egoscale.JobStatusType
 }
 
+type taskResponse struct {
+	resp interface{}
+	error
+}
+
 // asyncTasks message variable must have same size with cmds
-func asyncTasks(tasks []task) ([]interface{}, []error) {
+func asyncTasks(tasks []task) []taskResponse {
 
 	//init results
-	e := make([]error, 0, len(tasks))
-	errors := &e
-	r := make([]interface{}, len(tasks))
-	responses := &r
+	responses := make([]taskResponse, len(tasks))
 
 	//create task Progress
 	taskBars := make([]*mpb.Bar, len(tasks))
@@ -40,7 +42,7 @@ func asyncTasks(tasks []task) ([]interface{}, []error) {
 	//exec task and init bars
 	for i, task := range tasks {
 		c := make(chan taskStatus)
-		go execTask(task, i, c, responses, errors)
+		go execTask(task, i, c, &responses[i])
 		taskBars[i] = p.AddBar(int64(maximum),
 			mpb.PrependDecorators(
 				// simple name decorator
@@ -81,13 +83,10 @@ func asyncTasks(tasks []task) ([]interface{}, []error) {
 
 	p.Wait()
 
-	if len(*errors) > 0 {
-		return nil, *errors
-	}
-	return *responses, nil
+	return responses
 }
 
-func execTask(task task, id int, c chan taskStatus, resps *[]interface{}, errors *[]error) {
+func execTask(task task, id int, c chan taskStatus, resps *taskResponse) {
 	response := cs.Response(task.AsyncCommand)
 	var errorReq error
 	cs.AsyncRequestWithContext(gContext, task.AsyncCommand, func(jobResult *egoscale.AsyncJobResult, err error) bool {
@@ -101,7 +100,7 @@ func execTask(task task, id int, c chan taskStatus, resps *[]interface{}, errors
 				errorReq = errR
 				return false
 			}
-			(*resps)[id] = response
+			resps.resp = response
 			c <- taskStatus{id, egoscale.Success}
 			return false
 		}
@@ -112,8 +111,19 @@ func execTask(task task, id int, c chan taskStatus, resps *[]interface{}, errors
 
 	if errorReq != nil {
 		c <- taskStatus{id, egoscale.Failure}
-		*errors = append(*errors, errorReq)
+		resps.error = errorReq
 	}
+}
+
+// asyncTaskError return all task with an error
+func asyncTaskError(tasks []taskResponse) []error {
+	var r []error
+	for _, task := range tasks {
+		if task.error != nil {
+			r = append(r, task.error)
+		}
+	}
+	return r
 }
 
 // asyncRequest if no response expected send nil

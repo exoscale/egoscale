@@ -18,6 +18,9 @@ import (
 	"time"
 )
 
+// requestValidity represents when a signed request is meant to expire
+const requestValidity = 10 * time.Second
+
 // Error formats a CloudStack error into a standard error
 func (e ErrorResponse) Error() string {
 	return fmt.Sprintf("API error %s %d (%s %d): %s", e.ErrorCode, e.ErrorCode, e.CSErrorCode, e.CSErrorCode, e.ErrorText)
@@ -296,8 +299,11 @@ func (client *Client) Payload(command Command) (url.Values, error) {
 	params.Set("apikey", client.APIKey)
 	params.Set("command", client.APIName(command))
 	params.Set("response", "json")
-	params.Set("signatureversion", "3")
-	params.Set("expires", time.Now().Local().Format("2006-01-02T15:04:05-0700"))
+
+	if params.Get("expires") == "" {
+		params.Set("signatureversion", "3")
+		params.Set("expires", time.Now().Add(requestValidity).Local().Format("2006-01-02T15:04:05-0700"))
+	}
 
 	return params, nil
 }

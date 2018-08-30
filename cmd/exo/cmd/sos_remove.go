@@ -17,7 +17,7 @@ var removeCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
-		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
+		minioClient, err := newMinioClient(sosZone)
 		if err != nil {
 			return err
 		}

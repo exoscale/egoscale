@@ -15,6 +15,15 @@ var sosCreateCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
+		zone, err := cmd.Flags().GetString("zone")
+		if err != nil {
+			return err
+		}
+
+		if zone != "" {
+			gCurrentAccount.DefaultZone = zone
+		}
+
 		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
 		if err != nil {
 			return err
@@ -30,4 +39,5 @@ func createBucket(minioClient *minio.Client, bucketName, zone string) error {
 
 func init() {
 	sosCmd.AddCommand(sosCreateCmd)
+	sosCreateCmd.Flags().StringP("zone", "z", "", "Simple object storage zone")
 }

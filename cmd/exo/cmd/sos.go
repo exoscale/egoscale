@@ -7,21 +7,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	sosZone = "ch-dk-2"
+)
+
 // sosCmd represents the sos command
 var sosCmd = &cobra.Command{
 	Use:   "sos",
 	Short: "Simple Object Storage management",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		zone, err := cmd.Flags().GetString("zone")
-		if err != nil {
-			return err
-		}
-
-		if zone != "" {
-			gCurrentAccount.DefaultZone = zone
-		}
-		return nil
-	},
 }
 
 func newMinioClient(zone string) (*minio.Client, error) {

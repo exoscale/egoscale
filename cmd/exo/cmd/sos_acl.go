@@ -61,7 +61,7 @@ var sosAddACLCmd = &cobra.Command{
 			return fmt.Errorf("error: You have to choose one flag")
 		}
 
-		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
+		minioClient, err := newMinioClient(sosZone)
 		if err != nil {
 			return err
 		}
@@ -296,7 +296,7 @@ var sosRemoveACLCmd = &cobra.Command{
 			return fmt.Errorf("error: You have to choose one flag")
 		}
 
-		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
+		minioClient, err := newMinioClient(sosZone)
 		if err != nil {
 			return err
 		}
@@ -411,7 +411,7 @@ var sosShowACLCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
-		minioClient, err := newMinioClient(gCurrentAccount.DefaultZone)
+		minioClient, err := newMinioClient(sosZone)
 		if err != nil {
 			return err
 		}

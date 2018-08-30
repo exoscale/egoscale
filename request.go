@@ -296,6 +296,8 @@ func (client *Client) Payload(command Command) (url.Values, error) {
 	params.Set("apikey", client.APIKey)
 	params.Set("command", client.APIName(command))
 	params.Set("response", "json")
+	params.Set("signatureversion", "3")
+	params.Set("expires", time.Now().UTC().Format("2006-01-02T03:04:05-0600"))
 
 	return params, nil
 }

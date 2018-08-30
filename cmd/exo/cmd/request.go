@@ -11,6 +11,10 @@ import (
 	"github.com/vbauerster/mpb/decor"
 )
 
+const (
+	parallelTask = 20
+)
+
 type task struct {
 	egoscale.AsyncCommand
 	string
@@ -40,7 +44,7 @@ func asyncTasks(tasks []task) []taskResponse {
 
 	var workerWG sync.WaitGroup
 	workerWG.Add(len(tasks))
-	workerSem := make(chan int, len(tasks))
+	workerSem := make(chan int, parallelTask)
 
 	//exec task and init bars
 	for i, task := range tasks {
@@ -62,7 +66,7 @@ func asyncTasks(tasks []task) []taskResponse {
 			),
 		)
 
-		taskSem := make(chan int, len(tasks))
+		taskSem := make(chan int, parallelTask)
 
 		//listen for bar progress
 		go func(chanel chan taskStatus, sem chan int) {

@@ -25,7 +25,7 @@ var sosUploadCmd = &cobra.Command{
 
 		var remoteFilePath string
 		if len(args) > 2 {
-			remoteFilePath = filepath.ToSlash(args[2])
+			remoteFilePath = strings.TrimLeft(filepath.ToSlash(args[2]), "/")
 		}
 
 		minioClient, err := newMinioClient(sosZone)

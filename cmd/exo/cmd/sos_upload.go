@@ -13,12 +13,17 @@ import (
 
 // uploadCmd represents the upload command
 var sosUploadCmd = &cobra.Command{
-	Use:     "upload <bucket name> <remote file path> <file path>",
+	Use:     "upload <bucket name> <local file path> [remote file path]",
 	Short:   "Upload an object into a bucket",
 	Aliases: gUploadAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 3 {
+		if len(args) < 2 {
 			return cmd.Usage()
+		}
+
+		var remoteFilePath string
+		if len(args) > 2 {
+			remoteFilePath = args[2]
 		}
 
 		minioClient, err := newMinioClient(sosZone)
@@ -36,12 +41,10 @@ var sosUploadCmd = &cobra.Command{
 			return err
 		}
 
-		// Upload the zip file
+		// Upload the  file
 		bucketName := args[0]
-		objectName := filepath.Base(args[2])
-		filePath := args[2]
-
-		remoteFilePath := args[1]
+		objectName := filepath.Base(args[1])
+		filePath := args[1]
 
 		if strings.HasSuffix(remoteFilePath, "/") {
 			remoteFilePath = remoteFilePath + objectName
@@ -58,6 +61,10 @@ var sosUploadCmd = &cobra.Command{
 		_, err = file.Read(buffer)
 		if err != nil {
 			return err
+		}
+
+		if remoteFilePath == "" {
+			remoteFilePath = filePath
 		}
 
 		contentType := http.DetectContentType(buffer)

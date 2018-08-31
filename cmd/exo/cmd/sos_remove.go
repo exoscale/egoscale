@@ -12,12 +12,28 @@ import (
 
 // removeCmd represents the remove command
 var removeCmd = &cobra.Command{
-	Use:     "remove <bucket name> <object name> [object name] ...",
+	Use:     "remove <bucket name> [object name]+",
 	Short:   "Remove object(s) from a bucket",
 	Aliases: gRemoveAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 2 {
+		if len(args) < 1 {
 			return cmd.Usage()
+		}
+
+		recursive, err := cmd.Flags().GetBool("recursive")
+		if err != nil {
+			return err
+		}
+
+		if err := validateArgs(args); err != nil {
+			return err
+		}
+
+		if len(args) < 2 {
+			if !recursive {
+				return cmd.Usage()
+			}
+			args = append(args, "")
 		}
 
 		minioClient, err := newMinioClient(sosZone)
@@ -31,11 +47,6 @@ var removeCmd = &cobra.Command{
 		}
 
 		minioClient, err = newMinioClient(location)
-		if err != nil {
-			return err
-		}
-
-		recursive, err := cmd.Flags().GetBool("recursive")
 		if err != nil {
 			return err
 		}
@@ -57,7 +68,7 @@ var removeCmd = &cobra.Command{
 					arg = filepath.ToSlash(arg)
 					arg = strings.Trim(arg, "/")
 
-					if strings.HasPrefix(obj, fmt.Sprintf("%s/", arg)) && obj != arg {
+					if (strings.HasPrefix(obj, fmt.Sprintf("%s/", arg)) && obj != arg) || arg == "" {
 						if !recursive {
 							fmt.Fprintf(os.Stderr, "%s: is a directory\n", arg) // nolint: errcheck
 							break
@@ -76,6 +87,15 @@ var removeCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func validateArgs(args []string) error {
+	for _, arg := range args {
+		if arg == "" {
+			return fmt.Errorf("invalid arg: must be not empty")
+		}
+	}
+	return nil
 }
 
 func init() {

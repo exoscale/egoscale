@@ -81,18 +81,34 @@ var sosListCmd = &cobra.Command{
 		defer close(doneCh)
 		recursive := true
 
+		last := ""
 		for message := range minioClient.ListObjectsV2(bucketName, prefix, recursive, doneCh) {
 			sPrefix := splitPath(prefix)
 			sKey := splitPath(message.Key)
-			if sPrefix[0] == "" && len(sKey) > 1 {
-				continue
-			}
-			if len(sKey) > len(sPrefix)+1 {
-				continue
-			}
+
+			// dont display if prefix == object path or folder
 			if isPrefix(prefix, message.Key) {
 				continue
 			}
+
+			// skip if message key contain prefix and is not equal
+			if len(prefix) != len(strings.Join(sKey[:len(sPrefix)], "/")) {
+				continue
+			}
+
+			// detect all file in current work dir (keep folder using last var)
+			if len(sKey) > len(sPrefix)+1 && sKey[len(sPrefix)] == last {
+				last = sKey[len(sPrefix)]
+				continue
+			}
+			last = sKey[len(sPrefix)]
+
+			// if is a folder (format key)
+			if len(sKey) > len(sPrefix)+1 {
+				message.Key = strings.Join([]string{prefix, sKey[len(sPrefix)]}, "/") + "/"
+				message.Size = 0
+			}
+
 			lastModified := message.LastModified.Format(printDate)
 			key := filepath.ToSlash(message.Key)
 			key = strings.TrimLeft(key[len(prefix):], "/")
@@ -112,6 +128,11 @@ func listRecursively(c *minio.Client, bucketName, prefix, zone string, displayBu
 	defer close(doneCh)
 
 	for message := range c.ListObjectsV2(bucketName, prefix, true, doneCh) {
+		sPrefix := splitPath(prefix)
+		sKey := splitPath(message.Key)
+		if len(prefix) != len(strings.Join(sKey[:len(sPrefix)], "/")) {
+			continue
+		}
 
 		lastModified := message.LastModified.Format(printDate)
 		if displayBucket {
@@ -191,6 +212,9 @@ func isPrefix(prefix, file string) bool {
 func splitPath(s string) []string {
 	path := filepath.ToSlash(s)
 	path = strings.Trim(path, "/")
+	if path == "" {
+		return nil
+	}
 	return strings.Split(path, "/")
 }
 

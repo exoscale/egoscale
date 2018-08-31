@@ -21,9 +21,11 @@ var sosUploadCmd = &cobra.Command{
 			return cmd.Usage()
 		}
 
+		args[1] = filepath.ToSlash(args[1])
+
 		var remoteFilePath string
 		if len(args) > 2 {
-			remoteFilePath = args[2]
+			remoteFilePath = filepath.ToSlash(args[2])
 		}
 
 		minioClient, err := newMinioClient(sosZone)
@@ -64,7 +66,7 @@ var sosUploadCmd = &cobra.Command{
 		}
 
 		if remoteFilePath == "" {
-			remoteFilePath = filePath
+			remoteFilePath = objectName
 		}
 
 		contentType := http.DetectContentType(buffer)

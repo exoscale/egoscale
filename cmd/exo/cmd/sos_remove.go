@@ -83,7 +83,7 @@ var removeCmd = &cobra.Command{
 					nbFile++
 				}
 				if nbFile == 0 {
-					errors = append(errors, fmt.Errorf("rm: cannot remove '%s': No such file or directory", arg))
+					errors = append(errors, fmt.Errorf("rm: cannot remove '%s': No such object or directory", arg))
 				}
 				nbFile = 0
 			}

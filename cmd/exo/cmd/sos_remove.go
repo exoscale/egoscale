@@ -61,7 +61,7 @@ var removeCmd = &cobra.Command{
 
 			for _, arg := range args[1:] {
 				nbFile := 0
-				for object := range minioClient.ListObjects(args[0], arg, true, nil) {
+				for object := range minioClient.ListObjects(args[0], arg, true, gContext.Done()) {
 					if object.Err != nil {
 						log.Fatalln(object.Err)
 					}

@@ -25,7 +25,7 @@ var removeCmd = &cobra.Command{
 			return err
 		}
 
-		if err := validateArgs(args); err != nil {
+		if err = validateArgs(args); err != nil {
 			return err
 		}
 

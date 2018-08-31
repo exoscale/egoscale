@@ -57,6 +57,7 @@ var removeCmd = &cobra.Command{
 		go func() {
 			defer close(objectsCh)
 			// List all objects from a bucket-name with a matching prefix.
+			errors := make([]error, 0, len(args[1:]))
 
 			for _, arg := range args[1:] {
 				nbFile := 0
@@ -71,7 +72,7 @@ var removeCmd = &cobra.Command{
 
 					if (strings.HasPrefix(obj, fmt.Sprintf("%s/", arg)) && obj != arg) || arg == "" {
 						if !recursive {
-							fmt.Fprintf(os.Stderr, "%s: is a directory\n", arg) // nolint: errcheck
+							errors = append(errors, fmt.Errorf("%s: is a directory", arg)) // nolint: errcheck
 							nbFile = 1
 							break
 						}
@@ -82,9 +83,15 @@ var removeCmd = &cobra.Command{
 					nbFile++
 				}
 				if nbFile == 0 {
-					fmt.Fprintf(os.Stderr, "rm: cannot remove '%s': No such file or directory\n", arg) // nolint: errcheck
+					errors = append(errors, fmt.Errorf("rm: cannot remove '%s': No such file or directory", arg))
 				}
 				nbFile = 0
+			}
+			if len(errors) > 0 {
+				for _, err := range errors {
+					fmt.Fprintf(os.Stderr, "%v\n", err) // nolint: errcheck
+				}
+				os.Exit(1)
 			}
 		}()
 

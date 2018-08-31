@@ -93,7 +93,7 @@ var sosAddACLCmd = &cobra.Command{
 			objInfo.Metadata.Add(manualFullControl, "id="+gCurrentAccount.Account)
 		}
 
-		src.Headers = mergeHeader(src.Headers, objInfo.Metadata)
+		mergeHeader(src.Headers, objInfo.Metadata)
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, meta)
@@ -107,11 +107,10 @@ var sosAddACLCmd = &cobra.Command{
 }
 
 //merge src header in dst header
-func mergeHeader(src, dst http.Header) http.Header {
+func mergeHeader(dst, src http.Header) {
 	for k, v := range src {
 		dst[k] = v
 	}
-	return dst
 }
 
 func getACL(cmd *cobra.Command) (map[string]string, error) {
@@ -331,7 +330,7 @@ var sosRemoveACLCmd = &cobra.Command{
 			objInfo.Metadata.Del(k)
 		}
 
-		src.Headers = mergeHeader(src.Headers, objInfo.Metadata)
+		mergeHeader(src.Headers, objInfo.Metadata)
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, nil)

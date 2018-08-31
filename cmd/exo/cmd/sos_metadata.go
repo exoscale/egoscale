@@ -52,7 +52,7 @@ var sosAddMetadataCmd = &cobra.Command{
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
-		src.Headers = mergeHeader(src.Headers, objInfo.Metadata)
+		mergeHeader(src.Headers, objInfo.Metadata)
 
 		meta := map[string]string{
 			args[2]: args[3],
@@ -115,7 +115,7 @@ var sosRemoveMetadataCmd = &cobra.Command{
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
-		src.Headers = mergeHeader(src.Headers, objInfo.Metadata)
+		mergeHeader(src.Headers, objInfo.Metadata)
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, nil)

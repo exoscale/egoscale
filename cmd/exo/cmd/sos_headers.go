@@ -88,7 +88,7 @@ var sosAddHeadersCmd = &cobra.Command{
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
-		mergeHeader(src.Headers, objInfo.Metadata)
+		src.Headers = mergeHeader(src.Headers, objInfo.Metadata)
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, meta)
@@ -180,7 +180,7 @@ var sosRemoveHeadersCmd = &cobra.Command{
 
 		src := minio.NewSourceInfo(args[0], args[1], nil)
 
-		mergeHeader(src.Headers, objInfo.Metadata)
+		src.Headers = mergeHeader(src.Headers, objInfo.Metadata)
 
 		// Destination object
 		dst, err := minio.NewDestinationInfo(args[0], args[1], nil, nil)

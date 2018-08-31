@@ -25,5 +25,4 @@ func newMinioClient(zone string) (*minio.Client, error) {
 
 func init() {
 	RootCmd.AddCommand(sosCmd)
-	sosCmd.PersistentFlags().StringP("zone", "z", "", "Simple object storage zone")
 }

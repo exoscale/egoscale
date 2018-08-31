@@ -70,15 +70,19 @@ var removeCmd = &cobra.Command{
 					arg = filepath.ToSlash(arg)
 					arg = strings.Trim(arg, "/")
 
+					if strings.HasPrefix(obj, "/") {
+						arg = fmt.Sprintf("/%s", arg)
+					}
+
 					if (strings.HasPrefix(obj, fmt.Sprintf("%s/", arg)) && obj != arg) || arg == "" {
 						if !recursive {
 							errors = append(errors, fmt.Errorf("%s: is a directory", arg)) // nolint: errcheck
 							nbFile = 1
 							break
 						}
-						objectsCh <- object.Key
+						objectsCh <- obj
 					} else if obj == arg {
-						objectsCh <- object.Key
+						objectsCh <- obj
 					}
 					nbFile++
 				}

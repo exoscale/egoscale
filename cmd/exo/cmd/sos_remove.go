@@ -59,6 +59,7 @@ var removeCmd = &cobra.Command{
 			// List all objects from a bucket-name with a matching prefix.
 
 			for _, arg := range args[1:] {
+				nbFile := 0
 				for object := range minioClient.ListObjects(args[0], arg, true, nil) {
 					if object.Err != nil {
 						log.Fatalln(object.Err)
@@ -71,13 +72,19 @@ var removeCmd = &cobra.Command{
 					if (strings.HasPrefix(obj, fmt.Sprintf("%s/", arg)) && obj != arg) || arg == "" {
 						if !recursive {
 							fmt.Fprintf(os.Stderr, "%s: is a directory\n", arg) // nolint: errcheck
+							nbFile = 1
 							break
 						}
 						objectsCh <- object.Key
 					} else if obj == arg {
 						objectsCh <- object.Key
 					}
+					nbFile++
 				}
+				if nbFile == 0 {
+					fmt.Fprintf(os.Stderr, "rm: cannot remove '%s': No such file or directory\n", arg)
+				}
+				nbFile = 0
 			}
 		}()
 

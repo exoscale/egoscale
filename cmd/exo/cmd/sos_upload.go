@@ -6,7 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/vbauerster/mpb"
+	"github.com/vbauerster/mpb/decor"
+
+	humanize "github.com/dustin/go-humanize"
 	minio "github.com/minio/minio-go"
 	"github.com/spf13/cobra"
 )
@@ -56,12 +61,15 @@ var sosUploadCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer file.Close() // nolint: errcheck
 
 		// Only the first 512 bytes are used to sniff the content type.
 		buffer := make([]byte, 512)
 		_, err = file.Read(buffer)
 		if err != nil {
+			return err
+		}
+
+		if err := file.Close(); err != nil {
 			return err
 		}
 
@@ -71,13 +79,49 @@ var sosUploadCmd = &cobra.Command{
 
 		contentType := http.DetectContentType(buffer)
 
-		// Upload object with FPutObject
-		n, err := minioClient.FPutObjectWithContext(gContext, bucketName, remoteFilePath, filePath, minio.PutObjectOptions{ContentType: contentType})
+		fileInfo, err := os.Stat(filePath)
 		if err != nil {
 			return err
 		}
 
-		log.Printf("Successfully uploaded %s of size %d\n", objectName, n)
+		progress := mpb.New(
+			mpb.WithContext(gContext),
+			// override default (80) width
+			mpb.WithWidth(64),
+			// override default 120ms refresh rate
+			mpb.WithRefreshRate(180*time.Millisecond),
+		)
+
+		bar := progress.AddBar((fileInfo.Size()),
+			mpb.PrependDecorators(
+				// display our name with one space on the right
+				decor.Name(objectName, decor.WC{W: len(objectName) + 1, C: decor.DidentRight}),
+				// replace ETA decorator with "done" message, OnComplete event
+				decor.OnComplete(
+					// ETA decorator with ewma age of 60, and width reservation of 4
+					decor.EwmaETA(decor.ET_STYLE_GO, 60, decor.WC{W: 4}), "done",
+				),
+			),
+			mpb.AppendDecorators(decor.Percentage()),
+		)
+
+		f, err := os.Open(filePath)
+		if err != nil {
+			return err
+		}
+		defer f.Close() // nolint: errcheck
+
+		reader := bar.ProxyReader(f)
+
+		// Upload object with FPutObject
+		n, err := minioClient.PutObjectWithContext(gContext, bucketName, remoteFilePath, f, fileInfo.Size(), minio.PutObjectOptions{ContentType: contentType, Progress: reader})
+		if err != nil {
+			return err
+		}
+
+		progress.Wait()
+
+		log.Printf("Successfully uploaded %s of size %s\n", objectName, humanize.IBytes(uint64(n)))
 
 		return nil
 	},

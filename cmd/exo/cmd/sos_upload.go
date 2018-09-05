@@ -92,7 +92,7 @@ var sosUploadCmd = &cobra.Command{
 			mpb.WithRefreshRate(180*time.Millisecond),
 		)
 
-		bar := progress.AddBar((fileInfo.Size()),
+		bar := progress.AddBar(fileInfo.Size(),
 			mpb.PrependDecorators(
 				// simple name decorator
 				decor.Name(objectName, decor.WC{W: len(objectName) + 1, C: decor.DidentRight}),
@@ -102,7 +102,7 @@ var sosUploadCmd = &cobra.Command{
 			mpb.AppendDecorators(
 				decor.AverageETA(decor.ET_STYLE_GO),
 
-				//XXX remove for a display issue
+				//XXX remove for a display issue https://github.com/vbauerster/mpb/issues/26
 				// replace ETA decorator with "done" message, OnComplete event
 				// decor.OnComplete(
 				// 	// ETA decorator with ewma age of 60

@@ -94,15 +94,21 @@ var sosUploadCmd = &cobra.Command{
 
 		bar := progress.AddBar((fileInfo.Size()),
 			mpb.PrependDecorators(
-				// display our name with one space on the right
+				// simple name decorator
 				decor.Name(objectName, decor.WC{W: len(objectName) + 1, C: decor.DidentRight}),
-				// replace ETA decorator with "done" message, OnComplete event
-				decor.OnComplete(
-					// ETA decorator with ewma age of 60, and width reservation of 4
-					decor.EwmaETA(decor.ET_STYLE_GO, 60, decor.WC{W: 4}), "done",
-				),
+				// decor.DSyncWidth bit enables column width synchronization
+				decor.Percentage(decor.WCSyncSpace),
 			),
-			mpb.AppendDecorators(decor.Percentage()),
+			mpb.AppendDecorators(
+				decor.AverageETA(decor.ET_STYLE_GO),
+
+				//XXX remove for a display issue
+				// replace ETA decorator with "done" message, OnComplete event
+				// decor.OnComplete(
+				// 	// ETA decorator with ewma age of 60
+				// 	decor.EwmaETA(decor.ET_STYLE_GO, 0), "done",
+				// ),
+			),
 		)
 
 		f, err := os.Open(filePath)

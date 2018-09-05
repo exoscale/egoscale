@@ -38,8 +38,8 @@ var sosUploadCmd = &cobra.Command{
 			return err
 		}
 
-		location, err := minioClient.GetBucketLocation(args[0])
-		if err != nil {
+		location, errGetBucket := minioClient.GetBucketLocation(args[0])
+		if errGetBucket != nil {
 			return err
 		}
 
@@ -69,7 +69,7 @@ var sosUploadCmd = &cobra.Command{
 			return err
 		}
 
-		if err := file.Close(); err != nil {
+		if err = file.Close(); err != nil {
 			return err
 		}
 

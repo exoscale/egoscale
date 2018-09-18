@@ -121,6 +121,11 @@ func TestUpdateDefaultNicForVirtualMachine(t *testing.T) {
 	_ = req.asyncResponse().(*VirtualMachine)
 }
 
+func TestUpdatVMNicIP(t *testing.T) {
+	req := &UpdateVMNicIP{}
+	_ = req.response().(*VirtualMachine)
+}
+
 func TestDeployOnBeforeSend(t *testing.T) {
 	req := &DeployVirtualMachine{
 		SecurityGroupNames: []string{"default"},

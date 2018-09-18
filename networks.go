@@ -31,7 +31,7 @@ type Network struct {
 	IsPersistent                bool          `json:"ispersistent,omitempty" doc:"list networks that are persistent"`
 	IsSystem                    bool          `json:"issystem,omitempty" doc:"true if network is system, false otherwise"`
 	Name                        string        `json:"name,omitempty" doc:"the name of the network"`
-	Netmask                     net.IP        `json:"netmask,omitempty" doc:"the network's netmask. Required for managed networks"`
+	Netmask                     net.IP        `json:"netmask,omitempty" doc:"the network's netmask"`
 	NetworkCIDR                 *CIDR         `json:"networkcidr,omitempty" doc:"the network CIDR of the guest network configured with IP reservation. It is the summation of CIDR and RESERVED_IP_RANGE"`
 	NetworkDomain               string        `json:"networkdomain,omitempty" doc:"the network domain"`
 	NetworkOfferingAvailability string        `json:"networkofferingavailability,omitempty" doc:"availability of the network offering the network is created from"`
@@ -123,7 +123,7 @@ type CreateNetwork struct {
 	IP6Gateway        net.IP `json:"ip6gateway,omitempty" doc:"the gateway of the IPv6 network. Required for Shared networks and Isolated networks when it belongs to VPC"`
 	IsolatedPVlan     string `json:"isolatedpvlan,omitempty" doc:"the isolated private vlan for this network"`
 	Name              string `json:"name,omitempty" doc:"the name of the network"` // This field is required but might be empty
-	Netmask           net.IP `json:"netmask,omitempty" doc:"the netmask of the network.  Required for managed networks"`
+	Netmask           net.IP `json:"netmask,omitempty" doc:"the netmask of the network. Required for managed networks."`
 	NetworkDomain     string `json:"networkdomain,omitempty" doc:"network domain"`
 	NetworkOfferingID *UUID  `json:"networkofferingid" doc:"the network offering id"`
 	PhysicalNetworkID *UUID  `json:"physicalnetworkid,omitempty" doc:"the Physical Network ID the network belongs to"`
@@ -160,7 +160,7 @@ type UpdateNetwork struct {
 	EndIP             net.IP `json:"endip,omitempty" doc:"the ending IP address in the network IP range. Required for managed networks."`
 	GuestVMCIDR       *CIDR  `json:"guestvmcidr,omitempty" doc:"CIDR for Guest VMs,Cloudstack allocates IPs to Guest VMs only from this CIDR"`
 	Name              string `json:"name,omitempty" doc:"the new name for the network"`
-	Netmask           net.IP `json:"netmask,omitempty" doc:"the netmask of the network.  Required for managed networks"`
+	Netmask           net.IP `json:"netmask,omitempty" doc:"the netmask of the network. Required for managed networks."`
 	NetworkDomain     string `json:"networkdomain,omitempty" doc:"network domain"`
 	NetworkOfferingID *UUID  `json:"networkofferingid,omitempty" doc:"network offering ID"`
 	StartIP           net.IP `json:"startip,omitempty" doc:"the beginning IP address in the network IP range. Required for managed networks."`

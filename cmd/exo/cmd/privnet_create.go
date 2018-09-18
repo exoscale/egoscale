@@ -96,16 +96,10 @@ func privnetCreate(name, desc, zoneName, startIPAddr, endIPAddr, netmaskAddr str
 		return err
 	}
 
-	var startip, endip, netmask net.IP
-	if startIPAddr != "" {
-		startip = net.ParseIP(startIPAddr)
-	}
-	if endIPAddr != "" {
-		endip = net.ParseIP(endIPAddr)
-	}
-	if netmaskAddr != "" {
-		netmask = net.ParseIP(netmaskAddr)
-	}
+	startip := net.ParseIP(startIPAddr)
+	endip := net.ParseIP(endIPAddr)
+	netmask := net.ParseIP(netmaskAddr)
+
 	s := resp.(*egoscale.ListNetworkOfferingsResponse)
 
 	req := &egoscale.CreateNetwork{

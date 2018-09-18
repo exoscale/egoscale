@@ -121,7 +121,7 @@ func TestUpdateDefaultNicForVirtualMachine(t *testing.T) {
 	_ = req.asyncResponse().(*VirtualMachine)
 }
 
-func TestUpdatVMNicIP(t *testing.T) {
+func TestUpdateVMNicIP(t *testing.T) {
 	req := &UpdateVMNicIP{}
 	_ = req.response().(*VirtualMachine)
 }

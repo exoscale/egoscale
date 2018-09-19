@@ -5,6 +5,7 @@ Changelog
 ------
 
 - feat: addition of `updateVmNicIp`
+- fix: `UpdateVMAffinityGroup` expected response
 
 0.11.4
 ------

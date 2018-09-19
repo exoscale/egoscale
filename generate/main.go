@@ -308,7 +308,7 @@ func main() {
 			}
 
 			if !hasMeta && *rtype == "" {
-				command.errors["_"] = append(command.errors["_"], fmt.Errorf("meta field missing, wanted\n\t\t_ bool `name:%q description:%q`", a.Name, a.Description))
+				command.errors["_"] = append(command.errors["_"], fmt.Errorf("meta field missing, wanted\n\t_ bool `name:%q description:%q`", a.Name, a.Description))
 			}
 
 			for name := range command.fields {

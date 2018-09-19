@@ -1,6 +1,21 @@
 Changelog
 =========
 
+0.11.5
+------
+
+- feat: addition of `updateVmNicIp`
+
+0.11.4
+------
+
+*no changes in the core library*
+
+0.11.3
+------
+
+*no changes in the core library*
+
 0.11.2
 ------
 

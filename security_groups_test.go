@@ -10,9 +10,6 @@ func TestSecurityGroup(t *testing.T) {
 		Account: "Hello",
 		Name:    "world",
 	}
-	if instance.ResourceType() != "SecurityGroup" {
-		t.Error("ResourceType doesn't match")
-	}
 
 	usg := instance.UserSecurityGroup()
 	if usg.Account != instance.Account && usg.Group != instance.Name {

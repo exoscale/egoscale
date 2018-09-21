@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.11.6
+------
+
+- fix: `Network.ListRequest` accepts a `Name` argument
+- change: `SecurityGroup` and the rules aren't `Taggable` anymore
+
 0.11.5
 ------
 

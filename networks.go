@@ -65,6 +65,7 @@ func (network Network) ListRequest() (ListCommand, error) {
 		Account:           network.Account,
 		DomainID:          network.DomainID,
 		ID:                network.ID,
+		Keyword:           network.Name, // this is a hack as listNetworks doesn't support to search by name.
 		PhysicalNetworkID: network.PhysicalNetworkID,
 		TrafficType:       network.TrafficType,
 		Type:              network.Type,

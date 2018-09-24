@@ -28,17 +28,30 @@ var privnetShowCmd = &cobra.Command{
 		}
 
 		table := table.NewTable(os.Stdout)
-		table.SetHeader([]string{"Zone", "Name", "Virtual Machine", "Virtual Machine ID"})
+		table.SetHeader([]string{"Zone", "Name", "DHCP", "Virtual Machine", "Virtual Machine ID"})
 		zone := network.ZoneName
 		name := network.Name
+		dhcp := dhcpRange(network.StartIP, network.EndIP, network.Netmask)
+
 		if len(vms) > 0 {
 			for _, vm := range vms {
-				table.Append([]string{zone, name, vm.Name, vm.ID.String()})
+				table.Append([]string{
+					zone,
+					name,
+					dhcp,
+					vm.Name,
+					vm.ID.String()})
 				zone = ""
 				name = ""
+				dhcp = ""
 			}
 		} else {
-			table.Append([]string{zone, network.Name, "", ""})
+			table.Append([]string{
+				zone,
+				network.Name,
+				dhcp,
+				"",
+				""})
 		}
 		table.Render()
 

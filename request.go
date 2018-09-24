@@ -292,6 +292,11 @@ func (client *Client) Payload(command Command) (url.Values, error) {
 	params.Set("command", client.APIName(command))
 	params.Set("response", "json")
 
+	if params.Get("expires") == "" && client.Expiration >= 0 {
+		params.Set("signatureversion", "3")
+		params.Set("expires", time.Now().Add(client.Expiration).Local().Format("2006-01-02T15:04:05-0700"))
+	}
+
 	return params, nil
 }
 

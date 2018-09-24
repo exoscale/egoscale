@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.11.7
+------
+
+- feat: new VM state `Moving`
+
 0.11.6
 ------
 

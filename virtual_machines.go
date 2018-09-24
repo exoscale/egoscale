@@ -29,8 +29,10 @@ const (
 	VirtualMachineDestroyed VirtualMachineState = "Destroyed"
 	// VirtualMachineExpunging "VM is being expunged
 	VirtualMachineExpunging VirtualMachineState = "Expunging"
-	// VirtualMachineMigrating VM is being migrated. host id holds to from host
+	// VirtualMachineMigrating VM is being live migrated. host id holds destination host, last host id holds source host
 	VirtualMachineMigrating VirtualMachineState = "Migrating"
+	// VirtualMachineMoving VM is being migrated offline (volume is being moved).
+	VirtualMachineMoving VirtualMachineState = "Moving"
 	// VirtualMachineError VM is in error
 	VirtualMachineError VirtualMachineState = "Error"
 	// VirtualMachineUnknown VM state is unknown

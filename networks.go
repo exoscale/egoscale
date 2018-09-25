@@ -208,12 +208,12 @@ func (DeleteNetwork) asyncResponse() interface{} {
 
 // ListNetworks represents a query to a network
 type ListNetworks struct {
-	Account           string        `json:"account,omitempty" doc:"list resources by account. Must be used with the domainId parameter."`
+	Account           string        `json:"account,omitempty" doc:"list resources by account. Must be used with the domainid parameter."`
 	CanUseForDeploy   *bool         `json:"canusefordeploy,omitempty" doc:"list networks available for vm deployment"`
 	DisplayNetwork    *bool         `json:"displaynetwork,omitempty" doc:"list resources by display flag; only ROOT admin is eligible to pass this parameter"`
 	DomainID          *UUID         `json:"domainid,omitempty" doc:"list only resources belonging to the domain specified"`
 	ID                *UUID         `json:"id,omitempty" doc:"list networks by id"`
-	IsRecursive       *bool         `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainId till leaves."`
+	IsRecursive       *bool         `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainid till leaves."`
 	IsSystem          *bool         `json:"issystem,omitempty" doc:"true if network is system, false otherwise"`
 	Keyword           string        `json:"keyword,omitempty" doc:"List by keyword"`
 	ListAll           *bool         `json:"listall,omitempty" doc:"If set to false, list only resources belonging to the command's caller; if set to true - list resources that the caller is authorized to see. Default value is false"`

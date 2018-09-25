@@ -57,7 +57,7 @@ func (Snapshot) ResourceType() string {
 // CreateSnapshot (Async) creates an instant snapshot of a volume
 type CreateSnapshot struct {
 	VolumeID  *UUID  `json:"volumeid" doc:"The ID of the disk volume"`
-	Account   string `json:"account,omitempty" doc:"The account of the snapshot. The account parameter must be used with the domainId parameter."`
+	Account   string `json:"account,omitempty" doc:"The account of the snapshot. The account parameter must be used with the domainid parameter."`
 	DomainID  *UUID  `json:"domainid,omitempty" doc:"The domain ID of the snapshot. If used with the account parameter, specifies a domain for the account associated with the disk volume."`
 	QuiesceVM *bool  `json:"quiescevm,omitempty" doc:"quiesce vm if true"`
 	_         bool   `name:"createSnapshot" description:"Creates an instant snapshot of a volume."`
@@ -73,11 +73,11 @@ func (CreateSnapshot) asyncResponse() interface{} {
 
 // ListSnapshots lists the volume snapshots
 type ListSnapshots struct {
-	Account      string        `json:"account,omitempty" doc:"list resources by account. Must be used with the domainId parameter."`
+	Account      string        `json:"account,omitempty" doc:"list resources by account. Must be used with the domainid parameter."`
 	DomainID     *UUID         `json:"domainid,omitempty" doc:"list only resources belonging to the domain specified"`
 	ID           *UUID         `json:"id,omitempty" doc:"lists snapshot by snapshot ID"`
 	IntervalType string        `json:"intervaltype,omitempty" doc:"valid values are HOURLY, DAILY, WEEKLY, and MONTHLY."`
-	IsRecursive  *bool         `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainId till leaves."`
+	IsRecursive  *bool         `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainid till leaves."`
 	Keyword      string        `json:"keyword,omitempty" doc:"List by keyword"`
 	ListAll      *bool         `json:"listall,omitempty" doc:"If set to false, list only resources belonging to the command's caller; if set to true - list resources that the caller is authorized to see. Default value is false"`
 	Name         string        `json:"name,omitempty" doc:"lists snapshot by snapshot name"`

@@ -15,7 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"regexp"
 	"sort"
 	"strings"
 
@@ -37,9 +36,9 @@ var ignoredFields = []string{
 	"vpctotal",
 }
 
-var cmd = flag.String("cmd", "", "CloudStack command name")
-var source = flag.String("apis", "", "listApis response in JSON")
-var rtype = flag.String("type", "", "Actual type to check against the cmd (need cmd)")
+var source = flag.String("apis", "listApis.json", "listApis response in JSON")
+var cmd = flag.String("cmd", "", "command name (e.g. listZones)")
+var rtype = flag.String("type", "", "command return type name (e.g. Zone)")
 
 var apiTypes = map[string]string{
 	"short":   "int16",
@@ -60,6 +59,17 @@ type fieldInfo struct {
 	Doc       string
 }
 
+// response represents a response struc for a command
+type response struct {
+	name        string
+	description string
+	s           *types.Struct
+	position    token.Pos
+	fields      map[string]fieldInfo
+	errors      map[string]error
+	response    *response
+}
+
 // command represents a struct within the source code
 type command struct {
 	name        string
@@ -69,6 +79,315 @@ type command struct {
 	position    token.Pos
 	fields      map[string]fieldInfo
 	errors      map[string][]error
+	response    *response
+}
+
+func newCommand(obj types.Object) *command {
+	return &command{
+		name:     obj.Name(),
+		s:        obj.Type().Underlying().(*types.Struct),
+		position: obj.Pos(),
+		fields:   map[string]fieldInfo{},
+		errors:   map[string][]error{},
+	}
+}
+
+func (c *command) setResponse(r *command) {
+	c.response = &response{
+		name:     r.name,
+		s:        r.s,
+		position: r.position,
+		fields:   map[string]fieldInfo{},
+		errors:   map[string]error{},
+	}
+}
+
+func (c *command) Check(api egoscale.API) {
+	c.description = strings.Trim(api.Description, " ")
+
+	if api.IsAsync {
+		c.sync = " (A)"
+	}
+
+	c.CheckFields(api)
+	c.CheckParams(api.Params)
+
+	if c.response != nil && len(api.Response) > 0 {
+		c.CheckResponse(api.Response)
+	}
+}
+
+func (c *command) CheckResponse(response []egoscale.APIField) {
+	fmt.Println("check response")
+	for i := 0; i < c.response.s.NumFields(); i++ {
+		f := c.response.s.Field(i)
+		if !f.IsField() || !f.Exported() {
+			continue
+		}
+
+		tag := (reflect.StructTag)(c.response.s.Tag(i))
+		var name string
+		if match, ok := tag.Lookup("json"); !ok {
+			n := f.Name()
+			c.response.errors[n] = errors.New("field error: no json annotation found")
+			continue
+		} else {
+			name = match
+		}
+
+		doc := tag.Get("doc")
+
+		c.response.fields[name] = fieldInfo{
+			Var: f,
+			Doc: doc,
+		}
+	}
+
+	for _, p := range response {
+		n := p.Name
+		index := sort.SearchStrings(ignoredFields, p.Name)
+		ignored := index < len(ignoredFields) && ignoredFields[index] == p.Name
+		if ignored {
+			continue
+		}
+
+		field, ok := c.response.fields[p.Name]
+		description := strings.Trim(p.Description, " ")
+
+		if !ok {
+			doc := ""
+			if description != "" {
+				doc = fmt.Sprintf(" doc:%q", description)
+			}
+
+			apiType, ok := apiTypes[p.Type]
+			if !ok {
+				apiType = p.Type
+			}
+
+			c.response.errors[n] = fmt.Errorf("missing field:\n\t%s %s `json:\"%s,omitempty\"%s`", strings.Title(p.Name), apiType, p.Name, doc)
+			continue
+		}
+		delete(c.fields, p.Name)
+
+		typename := field.Var.Type().String()
+
+		if field.Doc != description {
+			if field.Doc == "" {
+				c.response.errors[n] = fmt.Errorf("missing doc:\n\t\t`doc:%q`")
+			} else {
+				c.response.errors[n] = fmt.Errorf("wrong doc want %q got %q", description, field.Doc)
+			}
+		}
+
+		expected := ""
+		switch p.Type {
+		case "short":
+			if typename != "int16" {
+				expected = "int16"
+			}
+		case "int":
+		case "integer":
+			// uint are used by port and icmp types
+			if typename != "int" && typename != "uint16" && typename != "uint8" {
+				expected = "int"
+			}
+		case "long":
+			if typename != "int64" && typename != "uint64" {
+				expected = "int64"
+			}
+		case "boolean":
+			if typename != "bool" && typename != "*bool" {
+				expected = "bool"
+			}
+		case "string":
+		case "date":
+		case "tzdate":
+		case "imageformat":
+			if typename != "string" {
+				expected = "string"
+			}
+		case "uuid":
+			if typename != "*egoscale.UUID" {
+				expected = "*UUID"
+			}
+		case "list":
+			if !strings.HasPrefix(typename, "[]") {
+				expected = "[]string"
+			}
+		case "map":
+		case "set":
+			if !strings.HasPrefix(typename, "[]") {
+				expected = "array"
+			}
+		case "state":
+			// skip
+		default:
+			c.response.errors[n] = fmt.Errorf("unknown type %q <=> %q", p.Type, field.Var.Type().String())
+		}
+
+		if expected != "" {
+			c.response.errors[n] = fmt.Errorf("expected to be a %s, got %q", expected, typename)
+		}
+	}
+
+	for name := range c.fields {
+		c.response.errors[name] = errors.New("extra field found")
+	}
+}
+
+func (c *command) CheckFields(api egoscale.API) {
+	hasMeta := false
+
+	for i := 0; i < c.s.NumFields(); i++ {
+		f := c.s.Field(i)
+
+		if !f.IsField() || !f.Exported() {
+			if f.Name() != "_" {
+				continue
+			}
+
+			tag := (reflect.StructTag)(c.s.Tag(i))
+			name, nameOK := tag.Lookup("name")
+			description, descriptionOK := tag.Lookup("description")
+			if !nameOK || !descriptionOK {
+				c.errors["_"] = append(c.errors["_"], fmt.Errorf("meta field incomplete, wanted\n\t_ bool `name:%q description:%q`", api.Name, c.description))
+			} else {
+				if name != api.Name || description != c.description {
+					c.errors["_"] = append(c.errors["_"], fmt.Errorf("meta field incorrect, got name:%q description:%q, wanted\n\t_ bool `name:%q description:%q`", name, description, api.Name, c.description))
+				}
+			}
+
+			hasMeta = true
+			continue
+		}
+
+		name := ""
+		omitempty := false
+		tag := (reflect.StructTag)(c.s.Tag(i))
+		if match, ok := tag.Lookup("json"); !ok {
+			n := f.Name()
+			c.errors[n] = append(c.errors[n], errors.New("field error: no json annotation found"))
+			continue
+		} else {
+			parts := strings.Split(match, ",")
+			name = parts[0]
+			omitempty = len(parts) > 1 && parts[1] == "omitempty"
+		}
+
+		doc := tag.Get("doc")
+
+		c.fields[name] = fieldInfo{
+			Var:       f,
+			OmitEmpty: omitempty,
+			Doc:       doc,
+		}
+	}
+
+	if !hasMeta {
+		c.errors["_"] = append(c.errors["_"], fmt.Errorf("meta field missing, wanted\n\t_ bool `name:%q description:%q`", api.Name, api.Description))
+	}
+}
+
+func (c *command) CheckParams(params []egoscale.APIParam) {
+	for _, p := range params {
+		n := p.Name
+		index := sort.SearchStrings(ignoredFields, p.Name)
+		ignored := index < len(ignoredFields) && ignoredFields[index] == p.Name
+		if ignored {
+			continue
+		}
+		field, ok := c.fields[p.Name]
+		description := strings.Trim(p.Description, " ")
+
+		omit := ""
+		if !p.Required {
+			omit = ",omitempty"
+		}
+
+		if !ok {
+			doc := ""
+			if description != "" {
+				doc = fmt.Sprintf(" doc:%q", description)
+			}
+
+			apiType, ok := apiTypes[p.Type]
+			if !ok {
+				apiType = p.Type
+			}
+
+			c.errors[n] = append(c.errors[n], fmt.Errorf("missing field:\n\t%s %s `json:\"%s%s\"%s`", strings.Title(p.Name), apiType, p.Name, omit, doc))
+			continue
+		}
+		delete(c.fields, p.Name)
+
+		typename := field.Var.Type().String()
+
+		if field.Doc != description {
+			if field.Doc == "" {
+				c.errors[n] = append(c.errors[n], fmt.Errorf("missing doc:\n\t\t`doc:%q`", description))
+			} else {
+				c.errors[n] = append(c.errors[n], fmt.Errorf("wrong doc want %q got %q", description, field.Doc))
+			}
+		}
+
+		if p.Required == field.OmitEmpty {
+			c.errors[n] = append(c.errors[n], fmt.Errorf("wrong omitempty, want `json:\"%s%s\"`", p.Name, omit))
+			continue
+		}
+
+		expected := ""
+		switch p.Type {
+		case "short":
+			if typename != "int16" {
+				expected = "int16"
+			}
+		case "int":
+		case "integer":
+			// uint are used by port and icmp types
+			if typename != "int" && typename != "uint16" && typename != "uint8" {
+				expected = "int"
+			}
+		case "long":
+			if typename != "int64" && typename != "uint64" {
+				expected = "int64"
+			}
+		case "boolean":
+			if typename != "bool" && typename != "*bool" {
+				expected = "bool"
+			}
+		case "string":
+		case "date":
+		case "tzdate":
+		case "imageformat":
+			if typename != "string" {
+				expected = "string"
+			}
+		case "uuid":
+			if typename != "*egoscale.UUID" {
+				expected = "*UUID"
+			}
+		case "list":
+			if !strings.HasPrefix(typename, "[]") {
+				expected = "[]string"
+			}
+		case "map":
+		case "set":
+			if !strings.HasPrefix(typename, "[]") {
+				expected = "array"
+			}
+		default:
+			c.errors[n] = append(c.errors[n], fmt.Errorf("unknown type %q <=> %q", p.Type, field.Var.Type().String()))
+		}
+
+		if expected != "" {
+			c.errors[n] = append(c.errors[n], fmt.Errorf("expected to be a %s, got %q", expected, typename))
+		}
+	}
+
+	for name := range c.fields {
+		c.errors[name] = append(c.errors[name], errors.New("extra field found"))
+	}
 }
 
 func main() {
@@ -114,7 +433,7 @@ func main() {
 
 	commands := make(map[string]*command)
 
-	for id, obj := range info.Defs {
+	for _, obj := range info.Defs {
 		if obj == nil || !obj.Exported() {
 			continue
 		}
@@ -123,207 +442,35 @@ func main() {
 
 		switch typ.(type) {
 		case *types.Struct:
-			commands[strings.ToLower(obj.Name())] = &command{
-				name:     obj.Name(),
-				s:        typ.(*types.Struct),
-				position: id.Pos(),
-			}
+			c := newCommand(obj)
+			commands[strings.ToLower(c.name)] = c
 		}
 	}
 
-	re := regexp.MustCompile(`\bjson:"(?P<name>[^,"]+)(?P<omit>,omitempty)?"`)
-	reDoc := regexp.MustCompile(`\bdoc:"(?P<doc>[^"]+)"`)
-
 	for _, a := range apis.API {
 		name := strings.ToLower(a.Name)
-		params := a.Params
 
-		if strings.ToLower(*cmd) == name && *rtype != "" {
-			panic(fmt.Errorf("checking return type is temporary disabled"))
-			/*
-				name = strings.ToLower(*rtype)
-				*cmd = name
-				params = a.Response
-				_, e := fmt.Fprintf(os.Stderr, "Checking return type of %sResult, using %q\n", a.Name, *rtype)
-				if e != nil {
-					panic(e)
-				}
-			*/
-		}
-
-		if command, ok := commands[name]; !ok {
-			// too much information
-			//fmt.Fprintf(os.Stderr, "Unknown command: %q\n", name)
-		} else {
-			command.description = strings.Trim(a.Description, " ")
-			// mapping from name to field
-			command.fields = make(map[string]fieldInfo)
-			command.errors = make(map[string][]error)
-
-			if a.IsAsync {
-				command.sync = " (A)"
-			}
-
-			hasMeta := false
-
-			for i := 0; i < command.s.NumFields(); i++ {
-				f := command.s.Field(i)
-
-				if !f.IsField() || !f.Exported() {
-					if f.Name() != "_" {
-						continue
-					}
-
-					tag := (reflect.StructTag)(command.s.Tag(i))
-					name, nameOK := tag.Lookup("name")
-					description, descriptionOK := tag.Lookup("description")
-					if !nameOK || !descriptionOK {
-						command.errors["_"] = append(command.errors["_"], fmt.Errorf("meta field incomplete, wanted\n\t_ bool `name:%q description:%q`", a.Name, command.description))
-					} else {
-						if name != a.Name || description != command.description {
-							command.errors["_"] = append(command.errors["_"], fmt.Errorf("meta field incorrect, got %q %q, wanted\n\t_ bool `name:%q description:%q`", name, description, a.Name, command.description))
-						}
-					}
-
-					hasMeta = true
-					continue
-				}
-
-				tag := command.s.Tag(i)
-				match := re.FindStringSubmatch(tag)
-				if len(match) == 0 {
-					n := f.Name()
-					command.errors[n] = append(command.errors[n], errors.New("field error: no json annotation found"))
-					continue
-				}
-				name := match[1]
-				omitempty := len(match) == 3 && match[2] == ",omitempty"
-
-				doc := ""
-				match = reDoc.FindStringSubmatch(tag)
-				if len(match) == 2 {
-					doc = match[1]
-				}
-
-				command.fields[name] = fieldInfo{
-					Var:       f,
-					OmitEmpty: omitempty,
-					Doc:       doc,
-				}
-			}
-
-			for _, p := range params {
-				n := p.Name
-				index := sort.SearchStrings(ignoredFields, p.Name)
-				ignored := index < len(ignoredFields) && ignoredFields[index] == p.Name
-				if ignored {
-					continue
-				}
-				field, ok := command.fields[p.Name]
-				description := strings.Trim(p.Description, " ")
-
-				omit := ""
-				if !p.Required {
-					omit = ",omitempty"
-				}
-
-				if !ok {
-					doc := ""
-					if description != "" {
-						doc = fmt.Sprintf(" doc:%q", description)
-					}
-
-					apiType, ok := apiTypes[p.Type]
-					if !ok {
-						apiType = p.Type
-					}
-
-					command.errors[n] = append(command.errors[n], fmt.Errorf("missing field:\n\t%s %s `json:\"%s%s\"%s`", strings.Title(p.Name), apiType, p.Name, omit, doc))
-					continue
-				}
-				delete(command.fields, p.Name)
-
-				typename := field.Var.Type().String()
-
-				if field.Doc != description {
-					if field.Doc == "" {
-						command.errors[n] = append(command.errors[n], fmt.Errorf("missing doc:\n\t\t`doc:%q`", description))
-					} else {
-						command.errors[n] = append(command.errors[n], fmt.Errorf("wrong doc want %q got %q", description, field.Doc))
+		if command, ok := commands[name]; ok {
+			if *cmd == "" || strings.ToLower(*cmd) == name {
+				if *rtype != "" {
+					if resp, ok := commands[strings.ToLower(*rtype)]; ok {
+						command.setResponse(resp)
 					}
 				}
-
-				if p.Required == field.OmitEmpty {
-					command.errors[n] = append(command.errors[n], fmt.Errorf("wrong omitempty, want `json:\"%s%s\"`", p.Name, omit))
-					continue
-				}
-
-				expected := ""
-				switch p.Type {
-				case "short":
-					if typename != "int16" {
-						expected = "int16"
-					}
-				case "int":
-				case "integer":
-					// uint are used by port and icmp types
-					if typename != "int" && typename != "uint16" && typename != "uint8" {
-						expected = "int"
-					}
-				case "long":
-					if typename != "int64" && typename != "uint64" {
-						expected = "int64"
-					}
-				case "boolean":
-					if typename != "bool" && typename != "*bool" {
-						expected = "bool"
-					}
-				case "string":
-				case "date":
-				case "tzdate":
-				case "imageformat":
-					if typename != "string" {
-						expected = "string"
-					}
-				case "uuid":
-					if typename != "*egoscale.UUID" {
-						expected = "*UUID"
-					}
-				case "list":
-					if !strings.HasPrefix(typename, "[]") {
-						expected = "[]string"
-					}
-				case "map":
-				case "set":
-					if !strings.HasPrefix(typename, "[]") {
-						expected = "array"
-					}
-				default:
-					command.errors[n] = append(command.errors[n], fmt.Errorf("unknown type %q <=> %q", p.Type, field.Var.Type().String()))
-				}
-
-				if expected != "" {
-					command.errors[n] = append(command.errors[n], fmt.Errorf("expected to be a %s, got %q", expected, typename))
-				}
-			}
-
-			if !hasMeta && *rtype == "" {
-				command.errors["_"] = append(command.errors["_"], fmt.Errorf("meta field missing, wanted\n\t_ bool `name:%q description:%q`", a.Name, a.Description))
-			}
-
-			for name := range command.fields {
-				command.errors[name] = append(command.errors[name], errors.New("extra field found"))
+				command.Check(a)
+			} else {
+				// too much information
+				//fmt.Fprintf(os.Stderr, "command %q is missing\n", name)
 			}
 		}
 	}
 
 	for name, c := range commands {
-		pos := fset.Position(c.position)
 		er := len(c.errors)
 
 		if *cmd == "" {
 			if er != 0 {
-				fmt.Printf("%5d %s: %s%s\n", er, pos, c.name, c.sync)
+				fmt.Printf("%5d %s: %s%s\n", er, fset.Position(c.position), c.name, c.sync)
 			}
 		} else if strings.ToLower(*cmd) == name {
 			errs := make([]string, 0, len(c.errors))
@@ -345,7 +492,22 @@ func main() {
 			for _, e := range errs {
 				fmt.Println(e)
 			}
-			fmt.Printf("\n%s: %s%s has %d error(s)\n", pos, c.name, c.sync, er)
+			fmt.Printf("\n%s: %s%s has %d error(s)\n", fset.Position(c.position), c.name, c.sync, er)
+
+			if c.response != nil {
+				fmt.Println("")
+				errs = make([]string, 0, len(c.response.errors))
+				for k, e := range c.response.errors {
+					errs = append(errs, fmt.Sprintf("%s: %s", k, e.Error()))
+				}
+
+				sort.Strings(errs)
+				for _, e := range errs {
+					fmt.Println(e)
+				}
+				fmt.Printf("\n%s: %s has %d error(s)\n", fset.Position(c.response.position), c.response.name, len(errs))
+			}
+
 			os.Exit(er)
 		}
 	}

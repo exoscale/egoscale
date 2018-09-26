@@ -61,13 +61,11 @@ type fieldInfo struct {
 
 // response represents a response struc for a command
 type response struct {
-	name        string
-	description string
-	s           *types.Struct
-	position    token.Pos
-	fields      map[string]fieldInfo
-	errors      map[string][]error
-	response    *response
+	name     string
+	s        *types.Struct
+	position token.Pos
+	fields   map[string]fieldInfo
+	errors   map[string][]error
 }
 
 // command represents a struct within the source code
@@ -264,7 +262,7 @@ func (c *command) CheckFields(api egoscale.API) {
 		}
 
 		name := ""
-		omitempty := false
+		var omitempty bool
 		tag := (reflect.StructTag)(c.s.Tag(i))
 		if match, ok := tag.Lookup("json"); !ok {
 			n := f.Name()

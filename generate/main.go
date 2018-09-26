@@ -175,7 +175,7 @@ func (c *command) CheckResponse(response []egoscale.APIField) {
 
 		if field.Doc != description {
 			if field.Doc == "" {
-				errs[n] = append(errs[n], fmt.Errorf("missing doc:\n\t\t`doc:%q`"))
+				errs[n] = append(errs[n], fmt.Errorf("missing doc:\n\t\t`doc:%q`", description))
 			} else {
 				errs[n] = append(errs[n], fmt.Errorf("wrong doc want %q got %q", description, field.Doc))
 			}

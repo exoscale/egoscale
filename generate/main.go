@@ -66,7 +66,7 @@ type response struct {
 	s           *types.Struct
 	position    token.Pos
 	fields      map[string]fieldInfo
-	errors      map[string]error
+	errors      map[string][]error
 	response    *response
 }
 
@@ -98,7 +98,7 @@ func (c *command) setResponse(r *command) {
 		s:        r.s,
 		position: r.position,
 		fields:   map[string]fieldInfo{},
-		errors:   map[string]error{},
+		errors:   map[string][]error{},
 	}
 }
 
@@ -118,7 +118,7 @@ func (c *command) Check(api egoscale.API) {
 }
 
 func (c *command) CheckResponse(response []egoscale.APIField) {
-	fmt.Println("check response")
+	errs := c.response.errors
 	for i := 0; i < c.response.s.NumFields(); i++ {
 		f := c.response.s.Field(i)
 		if !f.IsField() || !f.Exported() {
@@ -129,10 +129,11 @@ func (c *command) CheckResponse(response []egoscale.APIField) {
 		var name string
 		if match, ok := tag.Lookup("json"); !ok {
 			n := f.Name()
-			c.response.errors[n] = errors.New("field error: no json annotation found")
+			errs[n] = append(errs[n], errors.New("field error: no json annotation found"))
 			continue
 		} else {
-			name = match
+			names := strings.Split(match, ",")
+			name = names[0]
 		}
 
 		doc := tag.Get("doc")
@@ -165,7 +166,7 @@ func (c *command) CheckResponse(response []egoscale.APIField) {
 				apiType = p.Type
 			}
 
-			c.response.errors[n] = fmt.Errorf("missing field:\n\t%s %s `json:\"%s,omitempty\"%s`", strings.Title(p.Name), apiType, p.Name, doc)
+			errs[n] = append(errs[n], fmt.Errorf("missing field:\n\t%s %s `json:\"%s,omitempty\"%s`", strings.Title(p.Name), apiType, p.Name, doc))
 			continue
 		}
 		delete(c.fields, p.Name)
@@ -174,9 +175,9 @@ func (c *command) CheckResponse(response []egoscale.APIField) {
 
 		if field.Doc != description {
 			if field.Doc == "" {
-				c.response.errors[n] = fmt.Errorf("missing doc:\n\t\t`doc:%q`")
+				errs[n] = append(errs[n], fmt.Errorf("missing doc:\n\t\t`doc:%q`"))
 			} else {
-				c.response.errors[n] = fmt.Errorf("wrong doc want %q got %q", description, field.Doc)
+				errs[n] = append(errs[n], fmt.Errorf("wrong doc want %q got %q", description, field.Doc))
 			}
 		}
 
@@ -223,16 +224,16 @@ func (c *command) CheckResponse(response []egoscale.APIField) {
 		case "state":
 			// skip
 		default:
-			c.response.errors[n] = fmt.Errorf("unknown type %q <=> %q", p.Type, field.Var.Type().String())
+			errs[n] = append(errs[n], fmt.Errorf("unknown type %q <=> %q", p.Type, field.Var.Type().String()))
 		}
 
 		if expected != "" {
-			c.response.errors[n] = fmt.Errorf("expected to be a %s, got %q", expected, typename)
+			errs[n] = append(errs[n], fmt.Errorf("expected to be a %s, got %q", expected, typename))
 		}
 	}
 
 	for name := range c.fields {
-		c.response.errors[name] = errors.New("extra field found")
+		errs[name] = append(errs[name], errors.New("extra field found"))
 	}
 }
 
@@ -497,8 +498,10 @@ func main() {
 			if c.response != nil {
 				fmt.Println("")
 				errs = make([]string, 0, len(c.response.errors))
-				for k, e := range c.response.errors {
-					errs = append(errs, fmt.Sprintf("%s: %s", k, e.Error()))
+				for k, es := range c.response.errors {
+					for _, e := range es {
+						errs = append(errs, fmt.Sprintf("%s: %s", k, e.Error()))
+					}
 				}
 
 				sort.Strings(errs)

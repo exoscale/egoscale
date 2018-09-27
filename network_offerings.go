@@ -28,11 +28,18 @@ type NetworkOffering struct {
 }
 
 // ListRequest builds the ListNetworkOfferings request
+//
+// This doesn't take into account the IsDefault flag as the default value is true.
 func (no NetworkOffering) ListRequest() (ListCommand, error) {
-	return &ListNetworkOfferings{
-		ID:   no.ID,
-		Name: no.Name,
-	}, nil
+	req := &ListNetworkOfferings{
+		Availability: no.Availability,
+		ID:           no.ID,
+		Name:         no.Name,
+		State:        no.State,
+		TrafficType:  no.TrafficType,
+	}
+
+	return req, nil
 }
 
 // ListNetworkOfferings represents a query for network offerings

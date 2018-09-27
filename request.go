@@ -68,9 +68,7 @@ func (client *Client) parseResponse(resp *http.Response, apiName string) (json.R
 			response, ok = m[key]
 
 			if !ok {
-				for k := range m {
-					return nil, fmt.Errorf("malformed JSON response, %q was expected, got %q", key, k)
-				}
+				return nil, fmt.Errorf("malformed JSON response %d, %q was expected.\n%s", resp.StatusCode, key, b)
 			}
 		}
 	}

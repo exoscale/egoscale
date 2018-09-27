@@ -176,6 +176,7 @@ func TestClientGetFailure(t *testing.T) {
 		&VirtualMachine{},
 		&IPAddress{},
 		&Account{},
+		&NetworkOffering{},
 	}
 
 	for _, thing := range things {
@@ -218,6 +219,7 @@ func TestClientGetNone(t *testing.T) {
 		{"templates", &Template{ID: id, IsFeatured: true}},
 		{"serviceofferings", &ServiceOffering{ID: id}},
 		{"accounts", &Account{}},
+		{"networkofferings", &NetworkOffering{}},
 	}
 
 	for _, thing := range things {
@@ -275,6 +277,7 @@ func TestClientGetZero(t *testing.T) {
 		{"template", &Template{ID: id, IsFeatured: true}},
 		{"serviceoffering", &ServiceOffering{ID: id}},
 		{"account", &Account{}},
+		{"networkoffering", &NetworkOffering{ID: id}},
 	}
 
 	for _, thing := range things {
@@ -316,7 +319,8 @@ func TestClientGetTooMany(t *testing.T) {
 		"zone": [{}, {}],
 		"template": [{}, {}],
 		"serviceoffering": [{}, {}],
-		"account": [{}, {}]
+		"account": [{}, {}],
+		"networkoffering": [{}, {}]
 	}}`
 
 	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")

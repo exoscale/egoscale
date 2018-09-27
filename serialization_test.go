@@ -262,11 +262,11 @@ func TestPrepareValuesIP(t *testing.T) {
 	}
 }
 
-func TestPrepareValuesIPZero(t *testing.T) {
+func TestPrepareValuesIPNil(t *testing.T) {
 	profile := struct {
 		RequiredField net.IP `json:"requiredfield"`
 	}{
-		RequiredField: net.IPv4zero,
+		RequiredField: net.IP{},
 	}
 
 	params := url.Values{}

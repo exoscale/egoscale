@@ -1,7 +1,6 @@
 package egoscale
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -33,19 +32,4 @@ func TestRevertSnapshot(t *testing.T) {
 	req := &RevertSnapshot{}
 	_ = req.response().(*AsyncJobResult)
 	_ = req.asyncResponse().(*booleanResponse)
-}
-
-func TestSnapshotStateString(t *testing.T) {
-	if BackingUp != SnapshotState(3) {
-		t.Error("bad enum value", (int)(BackingUp), 3)
-	}
-
-	if BackingUp.String() != "BackingUp" {
-		t.Error("mismatch", BackingUp, "BackingUp")
-	}
-	s := SnapshotState(45)
-
-	if !strings.Contains(s.String(), "45") {
-		t.Error("bad state", s.String())
-	}
 }

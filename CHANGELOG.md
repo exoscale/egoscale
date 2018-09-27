@@ -6,6 +6,7 @@ Changelog
 
 - feat: new VM state `Moving`
 - feat: `UpdateNetwork` with `startip`, `endip`, `netmask`
+- fix: `Snapshot.State` is a string, rather than an scalar
 - change: signature are now using the v3 version with expires by default
 
 0.11.6

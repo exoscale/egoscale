@@ -24,7 +24,8 @@ title: %q
 slug: %q
 url: %s
 description: %q
-type: %s
+type: %q
+redirect: true
 ---
 `
 
@@ -54,9 +55,9 @@ func main() {
 		base := strings.TrimSuffix(name, path.Ext(name))
 		url := fmt.Sprintf("/cli/%s/", strings.ToLower(base))
 		slug := strings.Replace(base, "_", " ", -1)
-		typeExo := `"command"`
+		typeExo := "command"
 		if strings.Count(base, "_") > 1 {
-			typeExo = `"subcommand"`
+			typeExo = "subcommand"
 		}
 		return fmt.Sprintf(frontmatter, now, slug, base, url, cmd.Short, typeExo)
 	}

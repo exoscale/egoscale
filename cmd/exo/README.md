@@ -1,3 +1,8 @@
+---
+slug: ""
+redirect: true
+---
+
 # exo cli
 
 Manage easily your Exoscale infrastructure from the exo command-line

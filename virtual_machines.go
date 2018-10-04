@@ -637,5 +637,9 @@ type UpdateVMNicIP struct {
 }
 
 func (UpdateVMNicIP) response() interface{} {
+	return new(AsyncJobResult)
+}
+
+func (UpdateVMNicIP) asyncResponse() interface{} {
 	return new(VirtualMachine)
 }

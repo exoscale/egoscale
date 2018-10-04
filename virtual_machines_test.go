@@ -123,7 +123,8 @@ func TestUpdateDefaultNicForVirtualMachine(t *testing.T) {
 
 func TestUpdateVMNicIP(t *testing.T) {
 	req := &UpdateVMNicIP{}
-	_ = req.response().(*VirtualMachine)
+	_ = req.response().(*AsyncJobResult)
+	_ = req.asyncResponse().(*VirtualMachine)
 }
 
 func TestDeployOnBeforeSend(t *testing.T) {

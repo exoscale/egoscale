@@ -12,7 +12,7 @@ import (
 
 // privnetAssociateCmd represents the associate command
 var privnetAssociateCmd = &cobra.Command{
-	Use:     "associate <privnet name | id> <vm name | vm id> [<ip>] [<vm name | vm id> [<ip>] [...]",
+	Use:     "associate <privnet name | id> <vm name | vm id> [<ip>] [<vm name | vm id> [<ip>]] [...]",
 	Short:   "Associate a private network to instance(s)",
 	Aliases: gAssociateAlias,
 	RunE: func(cmd *cobra.Command, args []string) error {

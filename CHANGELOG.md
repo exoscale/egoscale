@@ -1,6 +1,11 @@
 Changelog
 =========
 
+master
+------
+
+- fix: `updateVmNicIp`: the call is async
+
 0.12.0
 ------
 

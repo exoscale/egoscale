@@ -445,6 +445,13 @@ func createConfigFile(fileName string) (string, error) {
 	if _, err := os.Stat(filepath); !os.IsNotExist(err) {
 		return "", fmt.Errorf("%q exists already", filepath)
 	}
+
+	fp, err := os.OpenFile(filepath, os.O_RDONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return "", err
+	}
+	defer fp.Close() // nolint: errcheck
+
 	return filepath, nil
 }
 

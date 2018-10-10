@@ -31,13 +31,13 @@ expiryDate = ["expiryDate"]
 
 [[menu.main]]
 name = "exo cli"
-weight = 1
+weight = -1  # hidden
 identifier = "cli"
 url = "/cli/"
 
 [[menu.main]]
 name = "cs in go"
-weight = -1  # means hidden
+weight = -1  # hidden
 identifier = "cs"
 url = "/cs/"
 

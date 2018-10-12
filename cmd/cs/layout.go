@@ -99,7 +99,9 @@ var methods = map[string][]cmd{
 	},
 	"vm group": {
 		{&egoscale.CreateInstanceGroup{}, false},
+		{&egoscale.DeleteInstanceGroup{}, false},
 		{&egoscale.ListInstanceGroups{}, false},
+		{&egoscale.UpdateInstanceGroup{}, false},
 	},
 	"tags": {
 		{&egoscale.CreateTags{}, false},

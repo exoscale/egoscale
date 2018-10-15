@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.12.2
+------
+
+- fix: `ListNics` has no virtualmachineid limitations anymore
+
 0.12.1
 ------
 

@@ -5,6 +5,7 @@ Changelog
 ------
 
 - fix: `ListNics` has no virtualmachineid limitations anymore
+- fix: `PCIDevice` ids are not UUIDs
 
 0.12.1
 ------

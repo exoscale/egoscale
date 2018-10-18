@@ -40,12 +40,12 @@ script: |
 jobs:
   include:
   - stage: golangci-lint
-    go: "1.11"
+    go: 1.11.x
     if: type = pr
     script: |
       golangci-lint run ./...
   - stage: goreleaser
-    go: "1.10"
+    go: 1.10.x
     if: type = push
     script: |
       dep check
@@ -59,7 +59,7 @@ jobs:
       go run cmd/exo/completion/main.go
       goreleaser --snapshot --skip-sign
   - stage: gh-pages
-    go: "1.10"
+    go: 1.10.x
     if: branch = master AND type = push
     script: |
       cd website

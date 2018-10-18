@@ -41,7 +41,7 @@ jobs:
   include:
   - stage: golangci-lint
     go: 1.11.x
-    if: type = pr
+    if: type = pull_request
     script: |
       golangci-lint run ./...
   - stage: goreleaser

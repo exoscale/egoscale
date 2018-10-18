@@ -44,7 +44,6 @@ jobs:
     if: type = pr
     script: |
       golangci-lint run ./...
-    script: |
   - stage: goreleaser
     go: "1.10"
     if: type = push

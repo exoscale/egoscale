@@ -43,7 +43,7 @@ jobs:
     go: 1.10.x
     if: type = pull_request
     script: |
-      golangci-lint run ./...
+      golangci-lint run .
   - stage: goreleaser
     go: 1.10.x
     if: type = push

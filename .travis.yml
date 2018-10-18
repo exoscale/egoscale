@@ -40,7 +40,7 @@ script: |
 jobs:
   include:
   - stage: golangci-lint
-    go: 1.11.x
+    go: 1.10.x
     if: type = pull_request
     script: |
       golangci-lint run ./...

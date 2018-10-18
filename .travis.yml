@@ -43,6 +43,7 @@ jobs:
     go: 1.10.x
     if: type = pull_request
     script: |
+      dep ensure -v -vendor-only
       golangci-lint run .
   - stage: goreleaser
     go: 1.10.x

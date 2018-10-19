@@ -6,9 +6,7 @@ import (
 )
 
 func TestUUIDMustParse(t *testing.T) {
-	defer func() {
-		recover()
-	}()
+	defer recover() // nolint: errcheck
 	MustParseUUID("foo")
 	t.Error("invalid uuid should pazone")
 }

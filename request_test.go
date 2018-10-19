@@ -249,7 +249,7 @@ func TestBooleanAsyncRequestWithContext(t *testing.T) {
 }
 
 func TestBooleanRequestTimeout(t *testing.T) {
-	ts := newSleepyServer(time.Second, 200, jsonContentType, `
+	ts := newSleepyServer(`
 {
 	"expungevirtualmachine": {
 		"jobid": "87cf2ef9-0d1b-4763-96d8-c33676371f29",
@@ -520,7 +520,7 @@ func TestAsyncRequestWithoutContextFailureNextNext(t *testing.T) {
 }
 
 func TestBooleanRequestWithContext(t *testing.T) {
-	ts := newSleepyServer(time.Second, 200, jsonContentType, `
+	ts := newSleepyServer(`
 {
 	"expungevirtualmachine": {
 		"jobid": "01ed7adc-8b81-4e33-a0f2-4f55a3b880cd",
@@ -563,7 +563,7 @@ func TestBooleanRequestWithContext(t *testing.T) {
 }
 
 func TestRequestWithContextTimeoutPost(t *testing.T) {
-	ts := newSleepyServer(time.Second, 200, jsonContentType, `
+	ts := newSleepyServer(`
 {
 	"deployvirtualmachineresponse": {
 		"jobid": "01ed7adc-8b81-4e33-a0f2-4f55a3b880cd",
@@ -615,7 +615,7 @@ func TestRequestWithContextTimeoutPost(t *testing.T) {
 }
 
 func TestBooleanRequestWithContextAndTimeout(t *testing.T) {
-	ts := newSleepyServer(time.Second, 200, jsonContentType, `
+	ts := newSleepyServer(`
 {
 	"expungevirtualmachine": {
 		"jobid": "01ed7adc-8b81-4e33-a0f2-4f55a3b880cd",
@@ -705,24 +705,24 @@ func newServer(responses ...response) *httptest.Server {
 		if i >= len(responses) {
 			w.Header().Set("Content-Type", jsonContentType)
 			w.WriteHeader(500)
-			w.Write([]byte("{}"))
+			w.Write([]byte("{}")) // nolint: errcheck
 			return
 		}
 		w.Header().Set("Content-Type", responses[i].contentType)
 		w.WriteHeader(responses[i].code)
-		w.Write([]byte(responses[i].body))
+		w.Write([]byte(responses[i].body)) // nolint: errcheck
 		i++
 	})
 	return httptest.NewServer(mux)
 }
 
-func newSleepyServer(sleep time.Duration, code int, contentType, response string) *httptest.Server {
+func newSleepyServer(response string) *httptest.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(sleep)
-		w.Header().Set("Content-Type", contentType)
-		w.WriteHeader(code)
-		w.Write([]byte(response))
+		time.Sleep(time.Second)
+		w.Header().Set("Content-Type", jsonContentType)
+		w.WriteHeader(200)
+		w.Write([]byte(response)) // nolint: errcheck
 	})
 	return httptest.NewServer(mux)
 }
@@ -752,12 +752,12 @@ func newGetServer(params url.Values, contentType, response string) *httptest.Ser
 		if len(errors) == 0 {
 			w.Header().Set("Content-Type", contentType)
 			w.WriteHeader(200)
-			w.Write([]byte(response))
+			w.Write([]byte(response)) // nolint: errcheck
 		} else {
 			w.Header().Set("Content-Type", contentType)
 			w.WriteHeader(400)
 			body, _ := json.Marshal(errors)
-			w.Write(body)
+			w.Write(body) // nolint: errcheck
 		}
 	})
 	return httptest.NewServer(mux)

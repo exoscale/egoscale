@@ -6,7 +6,14 @@ import (
 )
 
 func TestMACAddressMustParse(t *testing.T) {
-	defer recover() // nolint: errcheck
+	defer func() {
+		if r := recover(); r != nil {
+			err, ok := r.(error)
+			if ok {
+				t.Error(err)
+			}
+		}
+	}()
 	MustParseMAC("foo")
 	t.Error("invalid mac should panic")
 }

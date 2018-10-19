@@ -7,8 +7,13 @@ import (
 
 func TestCIDRMustParse(t *testing.T) {
 	defer func() {
-		recover() // nolint: errcheck
-	}
+		if r := recover(); r != nil {
+			err, ok := r.(error)
+			if ok {
+				t.Error(err)
+			}
+		}
+	}()
 	MustParseCIDR("foo")
 	t.Error("invalid cidr should panic")
 }

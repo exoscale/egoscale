@@ -296,7 +296,7 @@ type DeployVirtualMachine struct {
 	_                  bool              `name:"deployVirtualMachine" description:"Creates and automatically starts a virtual machine based on a service offering, disk offering, and template."`
 }
 
-func (req DeployVirtualMachine) onBeforeSend(params url.Values) error {
+func (req DeployVirtualMachine) onBeforeSend(_ url.Values) error {
 	// Either AffinityGroupIDs or AffinityGroupNames must be set
 	if len(req.AffinityGroupIDs) > 0 && len(req.AffinityGroupNames) > 0 {
 		return fmt.Errorf("either AffinityGroupIDs or AffinityGroupNames must be set")

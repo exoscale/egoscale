@@ -379,7 +379,11 @@ func TestClientTrace(t *testing.T) {
 	// XXX test something... this only increases the coverage
 	cs.TraceOn()
 
-	cs.Request(&ListZones{})
+	_, err := cs.Request(&ListZones{})
 
 	cs.TraceOff()
+
+	if err != nil {
+		t.Error(err)
+	}
 }

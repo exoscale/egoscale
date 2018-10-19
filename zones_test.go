@@ -547,7 +547,7 @@ func TestListZonesError(t *testing.T) {
 }
 
 func TestListZonesTimeout(t *testing.T) {
-	ts := newSleepyServer(time.Second, 200, jsonContentType, `
+	ts := newSleepyServer(`
 {"listzonesresponse": {
 	"count": 4
 }}`)

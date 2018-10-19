@@ -7,7 +7,12 @@ import (
 
 func TestUUIDMustParse(t *testing.T) {
 	defer func() {
-		recover()
+		if r := recover(); r != nil {
+			err, ok := r.(error)
+			if ok {
+				t.Error(err)
+			}
+		}
 	}()
 	MustParseUUID("foo")
 	t.Error("invalid uuid should pazone")

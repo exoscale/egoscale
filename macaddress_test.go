@@ -7,7 +7,12 @@ import (
 
 func TestMACAddressMustParse(t *testing.T) {
 	defer func() {
-		recover()
+		if r := recover(); r != nil {
+			err, ok := r.(error)
+			if ok {
+				t.Error(err)
+			}
+		}
 	}()
 	MustParseMAC("foo")
 	t.Error("invalid mac should panic")

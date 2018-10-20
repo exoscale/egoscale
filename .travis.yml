@@ -31,27 +31,26 @@ install: |
   sudo dpkg -i nfpm_amd64.deb
   npm i codeclimate-test-reporter
 
-script: |
-  dep check
-  dep ensure -v -vendor-only
-  go test -race -coverprofile=coverage.out -covermode=atomic .
-  npx codeclimate-test-reporter < coverage.out
+script:
+  - dep check
+  - dep ensure -v -vendor-only
+  - go test -race -coverprofile=coverage.out -covermode=atomic .
+  - npx codeclimate-test-reporter < coverage.out
 
 jobs:
   include:
   - stage: golangci-lint
     go: 1.10.x
     if: type = pull_request
-    script: |
-      dep ensure -v -vendor-only
-      golangci-lint run .
+    script:
+      - dep ensure -v -vendor-only
+      - golangci-lint run .
   - stage: goreleaser
     go: 1.10.x
     if: type = push
-    script: |
-      dep check
-      dep ensure -v -vendor-only
-      cd cmd/cs
-      dep check
-      dep ensure -v -vendor-only
-      goreleaser --snapshot --skip-sign
+    script:
+      - dep check
+      - dep ensure -v -vendor-only
+      - cd cmd/cs; dep check
+      - cd cmd/cs; dep ensure -v -vendor-only
+      - goreleaser --snapshot --skip-sign

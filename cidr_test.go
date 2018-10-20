@@ -8,9 +8,9 @@ import (
 func TestCIDRMustParse(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
-			err, ok := r.(error)
-			if ok {
-				t.Error(err)
+			_, ok := r.(error)
+			if !ok {
+				t.Error(r)
 			}
 		}
 	}()

@@ -371,7 +371,7 @@ func TestClientGetTooMany(t *testing.T) {
 }
 
 func TestClientTrace(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `{"listzones":{ "count": 0, "zone": []}}`})
+	ts := newServer(response{200, jsonContentType, `{"listzonesresponse":{ "count": 0, "zone": []}}`})
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")

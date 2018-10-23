@@ -387,6 +387,59 @@ func TestAsyncRequestWithoutContext(t *testing.T) {
 	}
 }
 
+func TestAsyncRequestDestroyVirtualMachine(t *testing.T) {
+
+	ts := newServer(
+		response{200, jsonContentType, `{
+	"destroyvirtualmachineresponse": {
+		"jobid": "56bb40d1-4c65-4608-803b-2fdfcb21fa3b",
+		"jobresult": {},
+		"jobstatus": 0
+	}
+}`},
+		response{200, jsonContentType, `{
+	"queryasyncjobresultresponse": {
+		"cmd": "org.apache.cloudstack.api.command.user.vm.DestroyVMCmd",
+		"jobid": "01ed7adc-8b81-4e33-a0f2-4f55a3b880cd",
+		"jobresult": {
+			"null": {
+				"securitygroup": [],
+				"nic": [],
+				"tags": [],
+				"affinitygroup": []
+			}
+		},
+		"jobstatus": 1
+	}
+}`},
+	)
+
+	defer ts.Close()
+
+	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	req := &DestroyVirtualMachine{
+		ID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
+	}
+
+	resp := &VirtualMachine{}
+
+	// WithContext
+	cs.AsyncRequest(req, func(j *AsyncJobResult, err error) bool {
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+
+		if j.JobStatus == Success {
+			if r := j.Result(resp); r != nil {
+				t.Error(r)
+			}
+			return false
+		}
+		return true
+	})
+}
+
 func TestAsyncRequestWithoutContextFailure(t *testing.T) {
 	ts := newServer(
 		response{200, jsonContentType, `{

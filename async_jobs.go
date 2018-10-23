@@ -3,6 +3,9 @@ package egoscale
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"reflect"
+	"strings"
 )
 
 // AsyncJobResult represents an asynchronous job result
@@ -83,10 +86,18 @@ func (a AsyncJobResult) Result(i interface{}) error {
 					return json.Unmarshal(*(a.JobResult), i)
 				}
 
-				// otherwise, pick the first key
-				for k := range m {
-					return json.Unmarshal(m[k], i)
+				typ := reflect.TypeOf(i)
+				key := strings.ToLower(typ.Elem().Name())
+
+				// XXX our setup turned destroy into expunge
+				if a.Cmd == "org.apache.cloudstack.api.command.user.vm.DestroyVMCmd" {
+					key = "null"
 				}
+
+				if result, ok := m[key]; ok {
+					return json.Unmarshal(result, i)
+				}
+				return fmt.Errorf("malformed JSON response %q was expected as a key.\n%s", key, string(*a.JobResult))
 			}
 			return errors.New("empty response")
 		}

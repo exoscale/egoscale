@@ -83,8 +83,7 @@ func (vol Volume) ListRequest() (ListCommand, error) {
 type ResizeVolume struct {
 	ID             *UUID `json:"id" doc:"the ID of the disk volume"`
 	DiskOfferingID *UUID `json:"diskofferingid,omitempty" doc:"new disk offering id"`
-	ShrinkOk       *bool `json:"shrinkok,omitempty" doc:"Verify OK to Shrink"`
-	Size           int64 `json:"size,omitempty" doc:"New volume size in G"`
+	Size           int64 `json:"size,omitempty" doc:"New volume size in G (must be larger than current size since shrinking the disk is not allowed)"`
 	_              bool  `name:"resizeVolume" description:"Resizes a volume"`
 }
 

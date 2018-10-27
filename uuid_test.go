@@ -15,7 +15,7 @@ func TestUUIDMustParse(t *testing.T) {
 		}
 	}()
 	MustParseUUID("foo")
-	t.Error("invalid uuid should pazone")
+	t.Error("invalid uuid should panic")
 }
 
 func TestUUIDMarshalJSON(t *testing.T) {

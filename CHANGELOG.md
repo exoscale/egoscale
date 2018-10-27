@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.12.3
+------
+
+- replace dep by Go modules
+
 0.12.2
 ------
 

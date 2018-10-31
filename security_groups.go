@@ -142,7 +142,7 @@ type AuthorizeSecurityGroupIngress struct {
 	EndPort               uint16              `json:"endport,omitempty" doc:"end port for this ingress rule"`
 	IcmpCode              uint8               `json:"icmpcode,omitempty" doc:"error code for this icmp message"`
 	IcmpType              uint8               `json:"icmptype,omitempty" doc:"type of the icmp message being sent"`
-	Protocol              string              `json:"protocol,omitempty" doc:"TCP is default. UDP, ICMP, ICMPv6, AH, ESP, GRE are the other supported protocols"`
+	Protocol              string              `json:"protocol,omitempty" doc:"TCP is default. UDP, ICMP, ICMPv6, AH, ESP, GRE, IPIP are the other supported protocols"`
 	SecurityGroupID       *UUID               `json:"securitygroupid,omitempty" doc:"The ID of the security group. Mutually exclusive with securitygroupname parameter"`
 	SecurityGroupName     string              `json:"securitygroupname,omitempty" doc:"The name of the security group. Mutually exclusive with securitygroupid parameter"`
 	StartPort             uint16              `json:"startport,omitempty" doc:"start port for this ingress rule"`

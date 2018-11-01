@@ -279,7 +279,6 @@ type DeployVirtualMachine struct {
 	IP6                *bool             `json:"ip6,omitempty" doc:"True to set an IPv6 to the default interface"`
 	IP6Address         net.IP            `json:"ip6address,omitempty" doc:"the ipv6 address for default vm's network"`
 	IPAddress          net.IP            `json:"ipaddress,omitempty" doc:"the ip address for default vm's network"`
-	IPToNetworkList    []IPToNetwork     `json:"iptonetworklist,omitempty" doc:"ip to network mapping. Can't be specified with networkids parameter. Example: iptonetworklist[0].ip=10.10.10.11&iptonetworklist[0].ipv6=fc00:1234:5678::abcd&iptonetworklist[0].networkid=uuid - requests to use ip 10.10.10.11 in network id=uuid"`
 	Keyboard           string            `json:"keyboard,omitempty" doc:"an optional keyboard device type for the virtual machine. valid value can be one of de,de-ch,es,fi,fr,fr-be,fr-ch,is,it,jp,nl-be,no,pt,uk,us"`
 	KeyPair            string            `json:"keypair,omitempty" doc:"name of the ssh key pair used to login to the virtual machine"`
 	Name               string            `json:"name,omitempty" doc:"host name for the virtual machine"`
@@ -391,9 +390,8 @@ func (RecoverVirtualMachine) response() interface{} {
 
 // DestroyVirtualMachine (Async) represents the destruction of the virtual machine
 type DestroyVirtualMachine struct {
-	ID      *UUID `json:"id" doc:"The ID of the virtual machine"`
-	Expunge *bool `json:"expunge,omitempty" doc:"If true is passed, the vm is expunged immediately. False by default."`
-	_       bool  `name:"destroyVirtualMachine" description:"Destroys a virtual machine."`
+	ID *UUID `json:"id" doc:"The ID of the virtual machine"`
+	_  bool  `name:"destroyVirtualMachine" description:"Destroys a virtual machine."`
 }
 
 func (DestroyVirtualMachine) response() interface{} {
@@ -560,7 +558,7 @@ func (ListVirtualMachines) each(resp interface{}, callback IterateItemFunc) {
 type AddNicToVirtualMachine struct {
 	NetworkID        *UUID  `json:"networkid" doc:"Network ID"`
 	VirtualMachineID *UUID  `json:"virtualmachineid" doc:"Virtual Machine ID"`
-	IPAddress        net.IP `json:"ipaddress,omitempty" doc:"IP Address for the new network"`
+	IPAddress        net.IP `json:"ipaddress,omitempty" doc:"Static IP address lease for the corresponding NIC and network which should be in the range defined in the network"`
 	_                bool   `name:"addNicToVirtualMachine" description:"Adds VM to specified network by creating a NIC"`
 }
 

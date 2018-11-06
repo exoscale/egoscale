@@ -20,8 +20,6 @@ type Network struct {
 	DisplayText                 string        `json:"displaytext,omitempty" doc:"the displaytext of the network"`
 	DNS1                        net.IP        `json:"dns1,omitempty" doc:"the first DNS for the network"`
 	DNS2                        net.IP        `json:"dns2,omitempty" doc:"the second DNS for the network"`
-	Domain                      string        `json:"domain,omitempty" doc:"the domain name of the network owner"`
-	DomainID                    *UUID         `json:"domainid,omitempty" doc:"the domain id of the network owner"`
 	EndIP                       net.IP        `json:"endip,omitempty" doc:"the ending IP address in the network IP range. Required for managed networks."`
 	Gateway                     net.IP        `json:"gateway,omitempty" doc:"the network's gateway"`
 	ID                          *UUID         `json:"id,omitempty" doc:"the id of the network"`
@@ -62,8 +60,6 @@ type Network struct {
 func (network Network) ListRequest() (ListCommand, error) {
 	//TODO add tags support
 	req := &ListNetworks{
-		Account:           network.Account,
-		DomainID:          network.DomainID,
 		ID:                network.ID,
 		Keyword:           network.Name, // this is a hack as listNetworks doesn't support to search by name.
 		PhysicalNetworkID: network.PhysicalNetworkID,
@@ -116,7 +112,6 @@ type CreateNetwork struct {
 	Account           string `json:"account,omitempty" doc:"account who will own the network"`
 	DisplayNetwork    *bool  `json:"displaynetwork,omitempty" doc:"an optional field, whether to the display the network to the end user or not."`
 	DisplayText       string `json:"displaytext,omitempty" doc:"the display text of the network"` // This field is required but might be empty
-	DomainID          *UUID  `json:"domainid,omitempty" doc:"domain ID of the account owning a network"`
 	EndIP             net.IP `json:"endip,omitempty" doc:"the ending IP address in the network IP range. Required for managed networks."`
 	EndIpv6           net.IP `json:"endipv6,omitempty" doc:"the ending IPv6 address in the IPv6 network range"`
 	Gateway           net.IP `json:"gateway,omitempty" doc:"the gateway of the network. Required for Shared networks and Isolated networks when it belongs to VPC"`
@@ -208,15 +203,11 @@ func (DeleteNetwork) asyncResponse() interface{} {
 
 // ListNetworks represents a query to a network
 type ListNetworks struct {
-	Account           string        `json:"account,omitempty" doc:"list resources by account. Must be used with the domainid parameter."`
 	CanUseForDeploy   *bool         `json:"canusefordeploy,omitempty" doc:"list networks available for vm deployment"`
 	DisplayNetwork    *bool         `json:"displaynetwork,omitempty" doc:"list resources by display flag; only ROOT admin is eligible to pass this parameter"`
-	DomainID          *UUID         `json:"domainid,omitempty" doc:"list only resources belonging to the domain specified"`
 	ID                *UUID         `json:"id,omitempty" doc:"list networks by id"`
-	IsRecursive       *bool         `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainid till leaves."`
 	IsSystem          *bool         `json:"issystem,omitempty" doc:"true if network is system, false otherwise"`
 	Keyword           string        `json:"keyword,omitempty" doc:"List by keyword"`
-	ListAll           *bool         `json:"listall,omitempty" doc:"If set to false, list only resources belonging to the command's caller; if set to true - list resources that the caller is authorized to see. Default value is false"`
 	Page              int           `json:"page,omitempty"`
 	PageSize          int           `json:"pagesize,omitempty"`
 	PhysicalNetworkID *UUID         `json:"physicalnetworkid,omitempty" doc:"list networks by physical network id"`

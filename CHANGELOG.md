@@ -4,7 +4,8 @@ Changelog
 0.12.3
 ------
 
-- replace dep by Go modules
+- change: replace dep by Go modules
+- change: remove domainid,domain,regionid,listall,isrecursive,... fields
 
 0.12.2
 ------

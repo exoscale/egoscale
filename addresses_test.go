@@ -44,7 +44,6 @@ func TestGetIPAddress(t *testing.T) {
 			"account": "yoan.blanc@exoscale.ch",
 			"allocated": "2017-12-18T08:16:56+0100",
 			"domain": "yoan.blanc@exoscale.ch",
-			"domainid": "17b3bc0c-8aed-4920-be3a-afdd6daf4314",
 			"forvirtualnetwork": false,
 			"id": "adc31802-9413-47ea-a252-266f7eadaf00",
 			"ipaddress": "109.100.242.45",

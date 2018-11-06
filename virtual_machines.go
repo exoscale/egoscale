@@ -63,8 +63,6 @@ type VirtualMachine struct {
 	DiskOfferingName      string            `json:"diskofferingname,omitempty" doc:"the name of the disk offering of the virtual machine"`
 	DisplayName           string            `json:"displayname,omitempty" doc:"user generated name. The name of the virtual machine is returned if no displayname exists."`
 	DisplayVM             bool              `json:"displayvm,omitempty" doc:"an optional field whether to the display the vm to the end user or not."`
-	Domain                string            `json:"domain,omitempty" doc:"the name of the domain in which the virtual machine exists"`
-	DomainID              *UUID             `json:"domainid,omitempty" doc:"the ID of the domain in which the virtual machine exists"`
 	ForVirtualNetwork     bool              `json:"forvirtualnetwork,omitempty" doc:"the virtual network for the service offering"`
 	Group                 string            `json:"group,omitempty" doc:"the group name of the virtual machine"`
 	GroupID               *UUID             `json:"groupid,omitempty" doc:"the group ID of the virtual machine"`
@@ -127,8 +125,6 @@ func (vm VirtualMachine) ListRequest() (ListCommand, error) {
 	// XXX: AffinityGroupID, SecurityGroupID, Tags
 
 	req := &ListVirtualMachines{
-		Account:    vm.Account,
-		DomainID:   vm.DomainID,
 		GroupID:    vm.GroupID,
 		ID:         vm.ID,
 		Name:       vm.Name,
@@ -262,7 +258,6 @@ func (userdata VirtualMachineUserData) Decode() (string, error) {
 //
 // Regarding the UserData field, the client is responsible to base64 (and probably gzip) it. Doing it within this library would make the integration with other tools, e.g. Terraform harder.
 type DeployVirtualMachine struct {
-	Account            string            `json:"account,omitempty" doc:"an optional account for the virtual machine. Must be used with domainid."`
 	AffinityGroupIDs   []UUID            `json:"affinitygroupids,omitempty" doc:"comma separated list of affinity groups id that are going to be applied to the virtual machine. Mutually exclusive with affinitygroupnames parameter"`
 	AffinityGroupNames []string          `json:"affinitygroupnames,omitempty" doc:"comma separated list of affinity groups names that are going to be applied to the virtual machine.Mutually exclusive with affinitygroupids parameter"`
 	CustomID           *UUID             `json:"customid,omitempty" doc:"an optional field, in case you want to set a custom id to the resource. Allowed to Root Admins only"`
@@ -271,7 +266,6 @@ type DeployVirtualMachine struct {
 	DiskOfferingID     *UUID             `json:"diskofferingid,omitempty" doc:"the ID of the disk offering for the virtual machine. If the template is of ISO format, the diskofferingid is for the root disk volume. Otherwise this parameter is used to indicate the offering for the data disk volume. If the templateid parameter passed is from a Template object, the diskofferingid refers to a DATA Disk Volume created. If the templateid parameter passed is from an ISO object, the diskofferingid refers to a ROOT Disk Volume created."`
 	DisplayName        string            `json:"displayname,omitempty" doc:"an optional user generated name for the virtual machine"`
 	DisplayVM          *bool             `json:"displayvm,omitempty" doc:"an optional field, whether to the display the vm to the end user or not."`
-	DomainID           *UUID             `json:"domainid,omitempty" doc:"an optional domainid for the virtual machine. If the account parameter is used, domainid must also be used."`
 	Group              string            `json:"group,omitempty" doc:"an optional group for the virtual machine"`
 	HostID             *UUID             `json:"hostid,omitempty" doc:"destination Host ID to deploy the VM to - parameter available for root admin only"`
 	Hypervisor         string            `json:"hypervisor,omitempty" doc:"the hypervisor on which to deploy the virtual machine"`
@@ -492,11 +486,9 @@ func (GetVMPassword) response() interface{} {
 
 // ListVirtualMachines represents a search for a VM
 type ListVirtualMachines struct {
-	Account           string        `json:"account,omitempty" doc:"list resources by account. Must be used with the domainid parameter."`
 	AffinityGroupID   *UUID         `json:"affinitygroupid,omitempty" doc:"list vms by affinity group"`
 	Details           []string      `json:"details,omitempty" doc:"comma separated list of host details requested, value can be a list of [all, group, nics, stats, secgrp, tmpl, servoff, diskoff, iso, volume, min, affgrp]. If no parameter is passed in, the details will be defaulted to all"`
 	DisplayVM         *bool         `json:"displayvm,omitempty" doc:"list resources by display flag; only ROOT admin is eligible to pass this parameter"`
-	DomainID          *UUID         `json:"domainid,omitempty" doc:"list only resources belonging to the domain specified"`
 	ForVirtualNetwork *bool         `json:"forvirtualnetwork,omitempty" doc:"list by network type; true if need to list vms using Virtual Network, false otherwise"`
 	GroupID           *UUID         `json:"groupid,omitempty" doc:"the group ID"`
 	HostID            *UUID         `json:"hostid,omitempty" doc:"the host ID"`
@@ -505,9 +497,7 @@ type ListVirtualMachines struct {
 	IDs               []string      `json:"ids,omitempty" doc:"the IDs of the virtual machines, mutually exclusive with id"`
 	IPAddress         net.IP        `json:"ipaddress,omitempty" doc:"an IP address to filter the result"`
 	IsoID             *UUID         `json:"isoid,omitempty" doc:"list vms by iso"`
-	IsRecursive       *bool         `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainid till leaves."`
 	Keyword           string        `json:"keyword,omitempty" doc:"List by keyword"`
-	ListAll           *bool         `json:"listall,omitempty" doc:"If set to false, list only resources belonging to the command's caller; if set to true - list resources that the caller is authorized to see. Default value is false"`
 	Name              string        `json:"name,omitempty" doc:"name of the virtual machine"`
 	NetworkID         *UUID         `json:"networkid,omitempty" doc:"list by network id"`
 	Page              int           `json:"page,omitempty"`

@@ -22,8 +22,6 @@ type Volume struct {
 	DiskOfferingID             *UUID         `json:"diskofferingid,omitempty" doc:"ID of the disk offering"`
 	DiskOfferingName           string        `json:"diskofferingname,omitempty" doc:"name of the disk offering"`
 	DisplayVolume              bool          `json:"displayvolume,omitempty" doc:"an optional field whether to the display the volume to the end user or not."`
-	Domain                     string        `json:"domain,omitempty" doc:"the domain associated with the disk volume"`
-	DomainID                   *UUID         `json:"domainid,omitempty" doc:"the ID of the domain associated with the disk volume"`
 	Hypervisor                 string        `json:"hypervisor,omitempty" doc:"Hypervisor the volume belongs to"`
 	ID                         *UUID         `json:"id,omitempty" doc:"ID of the disk volume"`
 	IsExtractable              *bool         `json:"isextractable,omitempty" doc:"true if the volume is extractable, false otherwise"`
@@ -68,8 +66,6 @@ func (Volume) ResourceType() string {
 // ListRequest builds the ListVolumes request
 func (vol Volume) ListRequest() (ListCommand, error) {
 	req := &ListVolumes{
-		Account:          vol.Account,
-		DomainID:         vol.DomainID,
 		Name:             vol.Name,
 		Type:             vol.Type,
 		VirtualMachineID: vol.VirtualMachineID,
@@ -83,8 +79,7 @@ func (vol Volume) ListRequest() (ListCommand, error) {
 type ResizeVolume struct {
 	ID             *UUID `json:"id" doc:"the ID of the disk volume"`
 	DiskOfferingID *UUID `json:"diskofferingid,omitempty" doc:"new disk offering id"`
-	ShrinkOk       *bool `json:"shrinkok,omitempty" doc:"Verify OK to Shrink"`
-	Size           int64 `json:"size,omitempty" doc:"New volume size in G"`
+	Size           int64 `json:"size,omitempty" doc:"New volume size in G (must be larger than current size since shrinking the disk is not supported)"`
 	_              bool  `name:"resizeVolume" description:"Resizes a volume"`
 }
 
@@ -98,15 +93,11 @@ func (ResizeVolume) asyncResponse() interface{} {
 
 // ListVolumes represents a query listing volumes
 type ListVolumes struct {
-	Account          string        `json:"account,omitempty" doc:"list resources by account. Must be used with the domainid parameter."`
 	DiskOfferingID   *UUID         `json:"diskofferingid,omitempty" doc:"list volumes by disk offering"`
 	DisplayVolume    *bool         `json:"displayvolume,omitempty" doc:"list resources by display flag; only ROOT admin is eligible to pass this parameter"`
-	DomainID         *UUID         `json:"domainid,omitempty" doc:"list only resources belonging to the domain specified"`
 	HostID           *UUID         `json:"hostid,omitempty" doc:"list volumes on specified host"`
 	ID               *UUID         `json:"id,omitempty" doc:"the ID of the disk volume"`
-	IsRecursive      *bool         `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainid till leaves."`
 	Keyword          string        `json:"keyword,omitempty" doc:"List by keyword"`
-	ListAll          *bool         `json:"listall,omitempty" doc:"If set to false, list only resources belonging to the command's caller; if set to true - list resources that the caller is authorized to see. Default value is false"`
 	Name             string        `json:"name,omitempty" doc:"the name of the disk volume"`
 	Page             int           `json:"page,omitempty"`
 	PageSize         int           `json:"pagesize,omitempty"`

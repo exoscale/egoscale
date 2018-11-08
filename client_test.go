@@ -178,6 +178,7 @@ func TestClientGetFailure(t *testing.T) {
 		&Account{},
 		&NetworkOffering{},
 		&Nic{},
+		&Snapshot{},
 	}
 
 	for _, thing := range things {
@@ -222,6 +223,7 @@ func TestClientGetNone(t *testing.T) {
 		{"accounts", &Account{}},
 		{"networkofferings", &NetworkOffering{}},
 		{"nics", &Nic{}},
+		{"snapshots", &Snapshot{}},
 	}
 
 	for _, thing := range things {
@@ -281,6 +283,7 @@ func TestClientGetZero(t *testing.T) {
 		{"account", &Account{}},
 		{"networkoffering", &NetworkOffering{ID: id}},
 		{"nic", &Nic{ID: id}},
+		{"snapshot", &Snapshot{ID: id}},
 	}
 
 	for _, thing := range things {
@@ -324,7 +327,8 @@ func TestClientGetTooMany(t *testing.T) {
 		"serviceoffering": [{}, {}],
 		"account": [{}, {}],
 		"networkoffering": [{}, {}],
-		"nic": [{}, {}]
+		"nic": [{}, {}],
+		"snapshot": [{}, {}]
 	}}`
 
 	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")
@@ -348,6 +352,7 @@ func TestClientGetTooMany(t *testing.T) {
 		{"serviceofferings", &ServiceOffering{ID: id}},
 		{"accounts", &Account{}},
 		{"nics", &Nic{}},
+		{"snapshots", &Snapshot{}},
 	}
 
 	for _, thing := range things {

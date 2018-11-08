@@ -110,7 +110,6 @@ func TestFindNetwork(t *testing.T) {
 		"canusefordeploy": true,
 		"displaytext": "fddd",
 		"domain": "exoscale-1",
-		"domainid": "5b2f621e-3eb6-4a14-a315-d4d7d62f28ff",
 		"id": "772cee7a-631f-4c0e-ad2b-27776f260d71",
 		"ispersistent": true,
 		"issystem": false,

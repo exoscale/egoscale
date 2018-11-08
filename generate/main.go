@@ -23,17 +23,19 @@ import (
 
 // must be sorted
 var ignoredFields = []string{
-	"aclid",
-	"acltype",
+	"customid",
+	"deploymentplanner",
+	"displaynetwork",
+	"displayvm",
+	"displayvolume",
 	"forvpc",
+	"haenable",
+	"hostid",
+	"hypervisor",
+	"iscallerchilddomain",
+	"isdynamicallyscalable",
+	"podid",
 	"policyid",
-	"project",
-	"projectid",
-	"vpc",
-	"vpcavailable",
-	"vpcid",
-	"vpclimit",
-	"vpctotal",
 }
 
 var source = flag.String("apis", "listApis.json", "listApis response in JSON")
@@ -457,8 +459,8 @@ func main() {
 					}
 				}
 				command.Check(a)
-			} else {
 				// too much information
+				//} else {
 				//fmt.Fprintf(os.Stderr, "command %q is missing\n", name)
 			}
 		}

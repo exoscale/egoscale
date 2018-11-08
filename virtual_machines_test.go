@@ -97,12 +97,6 @@ func TestGetVirtualMachineUserData(t *testing.T) {
 	_ = req.response().(*VirtualMachineUserData)
 }
 
-func TestMigrateVirtualMachine(t *testing.T) {
-	req := &MigrateVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
-}
-
 func TestAddNicToVirtualMachine(t *testing.T) {
 	req := &AddNicToVirtualMachine{}
 	_ = req.response().(*AsyncJobResult)
@@ -191,7 +185,6 @@ func TestGetVirtualMachine(t *testing.T) {
 			"displayname": "test",
 			"displayvm": true,
 			"domain": "ROOT",
-			"domainid": "1874276d-4cac-448b-aa5e-de00fd4157e8",
 			"haenable": false,
 			"hostid": "70c12af4-b1cb-4133-97dd-3579bb88a8ce",
 			"hostname": "virt-hv-pp005.dk2.p.exoscale.net",

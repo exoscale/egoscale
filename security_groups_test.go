@@ -7,12 +7,11 @@ import (
 
 func TestSecurityGroup(t *testing.T) {
 	instance := &SecurityGroup{
-		Account: "Hello",
-		Name:    "world",
+		Name: "world",
 	}
 
 	usg := instance.UserSecurityGroup()
-	if usg.Account != instance.Account && usg.Group != instance.Name {
+	if usg.Group != instance.Name {
 		t.Error("got bad user security group")
 	}
 }

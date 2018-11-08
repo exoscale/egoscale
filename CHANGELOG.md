@@ -6,6 +6,7 @@ Changelog
 
 - change: replace dep by Go modules
 - change: remove domainid,domain,regionid,listall,isrecursive,... fields
+- remove: `MigrateVirtualMachine` is an admin call
 
 0.12.2
 ------

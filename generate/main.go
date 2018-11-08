@@ -23,33 +23,19 @@ import (
 
 // must be sorted
 var ignoredFields = []string{
-	"aclid",
-	"acltype",
 	"customid",
 	"deploymentplanner",
 	"displaynetwork",
 	"displayvm",
 	"displayvolume",
-	"domain",
-	"domainid",
 	"forvpc",
 	"haenable",
 	"hostid",
 	"hypervisor",
 	"iscallerchilddomain",
 	"isdynamicallyscalable",
-	"isrecursive",
-	"listall",
 	"podid",
 	"policyid",
-	"project",
-	"projectid",
-	"regionid",
-	"vpc",
-	"vpcavailable",
-	"vpcid",
-	"vpclimit",
-	"vpctotal",
 }
 
 var source = flag.String("apis", "listApis.json", "listApis response in JSON")

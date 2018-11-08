@@ -27,7 +27,7 @@ install:
   - npm i codeclimate-test-reporter
 
 script:
-  - [ "$TRAVIS_GO_VERSION" != "1.11.x" ] && go get -u github.com/satori/go.uuid
+  - '[ "$TRAVIS_GO_VERSION" != "1.11.x" ] && go get -u github.com/satori/go.uuid'
   - go test -race -coverprofile=coverage.out -covermode=atomic .
   - npx codeclimate-test-reporter < coverage.out
 

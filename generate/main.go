@@ -459,8 +459,8 @@ func main() {
 					}
 				}
 				command.Check(a)
-			} else {
 				// too much information
+				//} else {
 				//fmt.Fprintf(os.Stderr, "command %q is missing\n", name)
 			}
 		}

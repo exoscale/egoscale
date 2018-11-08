@@ -76,9 +76,8 @@ func (CreateSnapshot) asyncResponse() interface{} {
 func (ss Snapshot) ListRequest() (ListCommand, error) {
 	// Restricted cannot be applied here because it really has three states
 	req := &ListSnapshots{
-		ID:       ss.ID,
-		DomainID: ss.DomainID,
-		Name:     ss.Name,
+		ID:   ss.ID,
+		Name: ss.Name,
 	}
 
 	return req, nil

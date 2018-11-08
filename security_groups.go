@@ -123,13 +123,13 @@ func (DeleteSecurityGroup) response() interface{} {
 type AuthorizeSecurityGroupIngress struct {
 	CIDRList              []CIDR              `json:"cidrlist,omitempty" doc:"the cidr list associated"`
 	Description           string              `json:"description,omitempty" doc:"the description of the ingress/egress rule"`
-	EndPort               uint16              `json:"endport,omitempty" doc:"end port for this ingress rule"`
+	EndPort               uint16              `json:"endport,omitempty" doc:"end port for this ingress/egress rule"`
 	IcmpCode              uint8               `json:"icmpcode,omitempty" doc:"error code for this icmp message"`
 	IcmpType              uint8               `json:"icmptype,omitempty" doc:"type of the icmp message being sent"`
 	Protocol              string              `json:"protocol,omitempty" doc:"TCP is default. UDP, ICMP, ICMPv6, AH, ESP, GRE, IPIP are the other supported protocols"`
 	SecurityGroupID       *UUID               `json:"securitygroupid,omitempty" doc:"The ID of the security group. Mutually exclusive with securitygroupname parameter"`
 	SecurityGroupName     string              `json:"securitygroupname,omitempty" doc:"The name of the security group. Mutually exclusive with securitygroupid parameter"`
-	StartPort             uint16              `json:"startport,omitempty" doc:"start port for this ingress rule"`
+	StartPort             uint16              `json:"startport,omitempty" doc:"start port for this ingress/egress rule"`
 	UserSecurityGroupList []UserSecurityGroup `json:"usersecuritygrouplist,omitempty" doc:"user to security group mapping"`
 	_                     bool                `name:"authorizeSecurityGroupIngress" description:"Authorize a particular ingress/egress rule for this security group"`
 }

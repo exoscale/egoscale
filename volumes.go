@@ -47,7 +47,7 @@ type Volume struct {
 	StorageType                string        `json:"storagetype,omitempty" doc:"shared or local storage"`
 	Tags                       []ResourceTag `json:"tags,omitempty" doc:"the list of resource tags associated with volume"`
 	TemplateDisplayText        string        `json:"templatedisplaytext,omitempty" doc:"an alternate display text of the template for the virtual machine"`
-	TemplateID                 string        `json:"templateid,omitempty" doc:"the ID of the template for the virtual machine. A -1 is returned if the virtual machine was created from an ISO file."` // no *UUID because of the -1 thingy...
+	TemplateID                 *UUID         `json:"templateid,omitempty" doc:"the ID of the template for the virtual machine. A -1 is returned if the virtual machine was created from an ISO file."` // no *UUID because of the -1 thingy...
 	TemplateName               string        `json:"templatename,omitempty" doc:"the name of the template for the virtual machine"`
 	Type                       string        `json:"type,omitempty" doc:"type of the disk volume (ROOT or DATADISK)"`
 	VirtualMachineID           *UUID         `json:"virtualmachineid,omitempty" doc:"id of the virtual machine"`
@@ -93,20 +93,17 @@ func (ResizeVolume) asyncResponse() interface{} {
 
 // ListVolumes represents a query listing volumes
 type ListVolumes struct {
-	DiskOfferingID   *UUID         `json:"diskofferingid,omitempty" doc:"list volumes by disk offering"`
-	DisplayVolume    *bool         `json:"displayvolume,omitempty" doc:"list resources by display flag; only ROOT admin is eligible to pass this parameter"`
-	HostID           *UUID         `json:"hostid,omitempty" doc:"list volumes on specified host"`
-	ID               *UUID         `json:"id,omitempty" doc:"the ID of the disk volume"`
+	DiskOfferingID   *UUID         `json:"diskofferingid,omitempty" doc:"List volumes by disk offering"`
+	ID               *UUID         `json:"id,omitempty" doc:"The ID of the disk volume"`
 	Keyword          string        `json:"keyword,omitempty" doc:"List by keyword"`
-	Name             string        `json:"name,omitempty" doc:"the name of the disk volume"`
+	Name             string        `json:"name,omitempty" doc:"The name of the disk volume"`
 	Page             int           `json:"page,omitempty"`
 	PageSize         int           `json:"pagesize,omitempty"`
-	PodID            *UUID         `json:"podid,omitempty" doc:"the pod id the disk volume belongs to"`
-	StorageID        *UUID         `json:"storageid,omitempty" doc:"the ID of the storage pool, available to ROOT admin only"`
+	StorageID        *UUID         `json:"storageid,omitempty" doc:"The ID of the storage pool, available to ROOT admin only"`
 	Tags             []ResourceTag `json:"tags,omitempty" doc:"List resources by tags (key/value pairs)"`
-	Type             string        `json:"type,omitempty" doc:"the type of disk volume"`
-	VirtualMachineID *UUID         `json:"virtualmachineid,omitempty" doc:"the ID of the virtual machine"`
-	ZoneID           *UUID         `json:"zoneid,omitempty" doc:"the ID of the availability zone"`
+	Type             string        `json:"type,omitempty" doc:"The type of disk volume"`
+	VirtualMachineID *UUID         `json:"virtualmachineid,omitempty" doc:"The ID of the virtual machine"`
+	ZoneID           *UUID         `json:"zoneid,omitempty" doc:"The ID of the availability zone"`
 	_                bool          `name:"listVolumes" description:"Lists all volumes."`
 }
 

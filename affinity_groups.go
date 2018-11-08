@@ -51,8 +51,8 @@ type AffinityGroupType struct {
 
 // CreateAffinityGroup (Async) represents a new (anti-)affinity group
 type CreateAffinityGroup struct {
-	Description string `json:"description,omitempty" doc:"optional description of the affinity group"`
-	Name        string `json:"name" doc:"name of the affinity group"`
+	Description string `json:"description,omitempty" doc:"Optional description of the affinity group"`
+	Name        string `json:"name" doc:"Name of the affinity group"`
 	Type        string `json:"type" doc:"Type of the affinity group from the available affinity/anti-affinity group types"`
 	_           bool   `name:"createAffinityGroup" description:"Creates an affinity/anti-affinity group"`
 }
@@ -106,13 +106,13 @@ func (DeleteAffinityGroup) asyncResponse() interface{} {
 
 // ListAffinityGroups represents an (anti-)affinity groups search
 type ListAffinityGroups struct {
-	ID               *UUID  `json:"id,omitempty" doc:"list the affinity group by the ID provided"`
+	ID               *UUID  `json:"id,omitempty" doc:"List the affinity group by the ID provided"`
 	Keyword          string `json:"keyword,omitempty" doc:"List by keyword"`
-	Name             string `json:"name,omitempty" doc:"lists affinity groups by name"`
+	Name             string `json:"name,omitempty" doc:"Lists affinity groups by name"`
 	Page             int    `json:"page,omitempty"`
 	PageSize         int    `json:"pagesize,omitempty"`
-	Type             string `json:"type,omitempty" doc:"lists affinity groups by type"`
-	VirtualMachineID *UUID  `json:"virtualmachineid,omitempty" doc:"lists affinity groups by virtual machine ID"`
+	Type             string `json:"type,omitempty" doc:"Lists affinity groups by type"`
+	VirtualMachineID *UUID  `json:"virtualmachineid,omitempty" doc:"Lists affinity groups by virtual machine ID"`
 	_                bool   `name:"listAffinityGroups" description:"Lists affinity groups"`
 }
 

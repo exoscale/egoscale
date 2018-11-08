@@ -10,9 +10,8 @@ type InstanceGroup struct {
 
 // CreateInstanceGroup creates a VM group
 type CreateInstanceGroup struct {
-	Name    string `json:"name" doc:"the name of the instance group"`
-	Account string `json:"account,omitempty" doc:"the account of the instance group."`
-	_       bool   `name:"createInstanceGroup" description:"Creates a vm group"`
+	Name string `json:"name" doc:"the name of the instance group"`
+	_    bool   `name:"createInstanceGroup" description:"Creates a vm group"`
 }
 
 func (CreateInstanceGroup) response() interface{} {

@@ -97,12 +97,6 @@ func TestGetVirtualMachineUserData(t *testing.T) {
 	_ = req.response().(*VirtualMachineUserData)
 }
 
-func TestMigrateVirtualMachine(t *testing.T) {
-	req := &MigrateVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
-}
-
 func TestAddNicToVirtualMachine(t *testing.T) {
 	req := &AddNicToVirtualMachine{}
 	_ = req.response().(*AsyncJobResult)

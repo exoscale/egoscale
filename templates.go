@@ -19,7 +19,6 @@ type Template struct {
 	Format                string            `json:"format,omitempty" doc:"the format of the template."`
 	HostID                *UUID             `json:"hostid,omitempty" doc:"the ID of the secondary storage host for the template"`
 	HostName              string            `json:"hostname,omitempty" doc:"the name of the secondary storage host for the template"`
-	Hypervisor            string            `json:"hypervisor,omitempty" doc:"the hypervisor on which the template runs"`
 	ID                    *UUID             `json:"id,omitempty" doc:"the template ID"`
 	IsDynamicallyScalable bool              `json:"isdynamicallyscalable,omitempty" doc:"true if template contains XS/VMWare tools inorder to support dynamic scaling of VM cpu/memory"`
 	IsExtractable         bool              `json:"isextractable,omitempty" doc:"true if the template is extractable, false otherwise"`
@@ -52,10 +51,9 @@ func (Template) ResourceType() string {
 // ListRequest builds the ListTemplates request
 func (temp Template) ListRequest() (ListCommand, error) {
 	req := &ListTemplates{
-		Name:       temp.Name,
-		ID:         temp.ID,
-		ZoneID:     temp.ZoneID,
-		Hypervisor: temp.Hypervisor,
+		Name:   temp.Name,
+		ID:     temp.ID,
+		ZoneID: temp.ZoneID,
 		//TODO Tags
 	}
 	if temp.IsFeatured {
@@ -70,14 +68,13 @@ func (temp Template) ListRequest() (ListCommand, error) {
 
 // ListTemplates represents a template query filter
 type ListTemplates struct {
-	TemplateFilter string        `json:"templatefilter" doc:"possible values are \"featured\", \"self\", \"selfexecutable\",\"sharedexecutable\",\"executable\", and \"community\". * featured : templates that have been marked as featured and public. * self : templates that have been registered or created by the calling user. * selfexecutable : same as self, but only returns templates that can be used to deploy a new VM. * sharedexecutable : templates ready to be deployed that have been granted to the calling user by another user. * executable : templates that are owned by the calling user, or public templates, that can be used to deploy a VM. * community : templates that have been marked as public but not featured. * all : all templates (only usable by admins)."`
-	Hypervisor     string        `json:"hypervisor,omitempty" doc:"the hypervisor for which to restrict the search"`
+	TemplateFilter string        `json:"templatefilter" doc:"Possible values are \"featured\", \"self\", \"selfexecutable\",\"sharedexecutable\",\"executable\", and \"community\". * featured : templates that have been marked as featured and public. * self : templates that have been registered or created by the calling user. * selfexecutable : same as self, but only returns templates that can be used to deploy a new VM. * sharedexecutable : templates ready to be deployed that have been granted to the calling user by another user. * executable : templates that are owned by the calling user, or public templates, that can be used to deploy a VM. * community : templates that have been marked as public but not featured."`
 	ID             *UUID         `json:"id,omitempty" doc:"the template ID"`
 	Keyword        string        `json:"keyword,omitempty" doc:"List by keyword"`
 	Name           string        `json:"name,omitempty" doc:"the template name"`
 	Page           int           `json:"page,omitempty"`
 	PageSize       int           `json:"pagesize,omitempty"`
-	ShowRemoved    *bool         `json:"showremoved,omitempty" doc:"show removed templates as well"`
+	ShowRemoved    *bool         `json:"showremoved,omitempty" doc:"Show removed templates as well"`
 	Tags           []ResourceTag `json:"tags,omitempty" doc:"List resources by tags (key/value pairs)"`
 	ZoneID         *UUID         `json:"zoneid,omitempty" doc:"list templates by zoneid"`
 	_              bool          `name:"listTemplates" description:"List all public, private, and privileged templates."`
@@ -223,7 +220,6 @@ type RegisterTemplate struct {
 	Details               map[string]string `json:"details,omitempty" doc:"Template details in key/value pairs."`
 	DisplayText           string            `json:"displaytext" doc:"the display text of the template. This is usually used for display purposes."`
 	Format                string            `json:"format" doc:"the format for the template. Possible values include QCOW2, RAW, and VHD."`
-	Hypervisor            string            `json:"hypervisor" doc:"the target hypervisor for the template"`
 	IsDynamicallyScalable *bool             `json:"isdynamicallyscalable,omitempty" doc:"true if template contains XS/VMWare tools inorder to support dynamic scaling of VM cpu/memory"`
 	IsExtractable         *bool             `json:"isextractable,omitempty" doc:"true if the template or its derivatives are extractable; default is false"`
 	IsFeatured            *bool             `json:"isfeatured,omitempty" doc:"true if this template is a featured template, false otherwise"`

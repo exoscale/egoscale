@@ -113,7 +113,7 @@ func (ListSSHKeyPairs) each(resp interface{}, callback IterateItemFunc) {
 // ResetSSHKeyForVirtualMachine (Async) represents a change for the key pairs
 type ResetSSHKeyForVirtualMachine struct {
 	ID      *UUID  `json:"id" doc:"The ID of the virtual machine"`
-	KeyPair string `json:"keypair" doc:"name of the ssh key pair used to login to the virtual machine"`
+	KeyPair string `json:"keypair" doc:"Name of the ssh key pair used to login to the virtual machine"`
 	_       bool   `name:"resetSSHKeyForVirtualMachine" description:"Resets the SSH Key for virtual machine. The virtual machine must be in a \"Stopped\" state."`
 }
 

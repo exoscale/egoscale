@@ -527,6 +527,14 @@ func (ListVirtualMachines) each(resp interface{}, callback IterateItemFunc) {
 	}
 }
 
+// ListRequest returns itself
+func (ls *ListVirtualMachines) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
+}
+
 // AddNicToVirtualMachine (Async) adds a NIC to a VM
 type AddNicToVirtualMachine struct {
 	NetworkID        *UUID  `json:"networkid" doc:"Network ID"`

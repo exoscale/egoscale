@@ -101,6 +101,14 @@ func (ListAccounts) each(resp interface{}, callback IterateItemFunc) {
 	}
 }
 
+// ListRequest returns itself
+func (ls *ListAccounts) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
+}
+
 // ListAccountsResponse represents a list of accounts
 type ListAccountsResponse struct {
 	Count   int       `json:"count"`

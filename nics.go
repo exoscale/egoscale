@@ -1,6 +1,7 @@
 package egoscale
 
 import (
+	"fmt"
 	"net"
 )
 
@@ -81,12 +82,25 @@ func (ls *ListNics) SetPageSize(pageSize int) {
 }
 
 func (ListNics) each(resp interface{}, callback IterateItemFunc) {
-	nics := resp.(*ListNicsResponse)
+	nics, ok := resp.(*ListNicsResponse)
+	if !ok {
+		callback(nil, fmt.Errorf("wrong type. ListNicsResponse expected, got %T", resp))
+		return
+	}
+
 	for i := range nics.Nic {
 		if !callback(&(nics.Nic[i]), nil) {
 			break
 		}
 	}
+}
+
+// ListRequest returns itself
+func (ls *ListNics) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
 }
 
 // AddIPToNic (Async) represents the assignation of a secondary IP

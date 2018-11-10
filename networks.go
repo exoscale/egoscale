@@ -214,12 +214,6 @@ type ListNetworks struct {
 	_                 bool          `name:"listNetworks" description:"Lists all available networks."`
 }
 
-// ListNetworksResponse represents the list of networks
-type ListNetworksResponse struct {
-	Count   int       `json:"count"`
-	Network []Network `json:"network"`
-}
-
 func (ListNetworks) response() interface{} {
 	return new(ListNetworksResponse)
 }
@@ -246,4 +240,18 @@ func (ListNetworks) each(resp interface{}, callback IterateItemFunc) {
 			break
 		}
 	}
+}
+
+// ListRequest returns itself
+func (ls *ListNetworks) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
+}
+
+// ListNetworksResponse represents the list of networks
+type ListNetworksResponse struct {
+	Count   int       `json:"count"`
+	Network []Network `json:"network"`
 }

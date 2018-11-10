@@ -139,3 +139,11 @@ func (ListVolumes) each(resp interface{}, callback IterateItemFunc) {
 		}
 	}
 }
+
+// ListRequest returns itself
+func (ls *ListVolumes) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
+}

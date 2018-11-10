@@ -90,6 +90,16 @@ func (ListTemplates) response() interface{} {
 	return new(ListTemplatesResponse)
 }
 
+// SetPage sets the current page
+func (ls *ListTemplates) SetPage(page int) {
+	ls.Page = page
+}
+
+// SetPageSize sets the page size
+func (ls *ListTemplates) SetPageSize(pageSize int) {
+	ls.PageSize = pageSize
+}
+
 func (ListTemplates) each(resp interface{}, callback IterateItemFunc) {
 	temps, ok := resp.(*ListTemplatesResponse)
 	if !ok {
@@ -104,14 +114,12 @@ func (ListTemplates) each(resp interface{}, callback IterateItemFunc) {
 	}
 }
 
-// SetPage sets the current page
-func (ls *ListTemplates) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListTemplates) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
+// ListRequest returns itself
+func (ls *ListTemplates) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
 }
 
 // CreateTemplate (Async) represents a template creation

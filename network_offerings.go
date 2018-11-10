@@ -100,6 +100,14 @@ func (ListNetworkOfferings) each(resp interface{}, callback IterateItemFunc) {
 	}
 }
 
+// ListRequest returns itself
+func (ls *ListNetworkOfferings) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
+}
+
 // UpdateNetworkOffering represents a modification of a network offering
 type UpdateNetworkOffering struct {
 	Availability     string `json:"availability,omitempty" doc:"the availability of network offering. Default value is Required for Guest Virtual network offering; Optional for Guest Direct network offering"`

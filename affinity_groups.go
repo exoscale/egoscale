@@ -144,6 +144,14 @@ func (ListAffinityGroups) each(resp interface{}, callback IterateItemFunc) {
 	}
 }
 
+// ListRequest returns itself
+func (ls *ListAffinityGroups) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
+}
+
 // ListAffinityGroupsResponse represents a list of (anti-)affinity groups
 type ListAffinityGroupsResponse struct {
 	Count         int             `json:"count"`

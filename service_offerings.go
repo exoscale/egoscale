@@ -105,3 +105,11 @@ func (ListServiceOfferings) each(resp interface{}, callback IterateItemFunc) {
 		}
 	}
 }
+
+// ListRequest returns itself
+func (ls *ListServiceOfferings) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
+}

@@ -18,6 +18,7 @@ type AsyncCommand interface {
 
 // ListCommand represents a CloudStack list request
 type ListCommand interface {
+	Listable
 	Command
 	// SetPage defines the current pages
 	SetPage(int)

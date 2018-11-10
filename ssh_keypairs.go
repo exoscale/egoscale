@@ -110,6 +110,14 @@ func (ListSSHKeyPairs) each(resp interface{}, callback IterateItemFunc) {
 	}
 }
 
+// ListRequest returns itself
+func (ls *ListSSHKeyPairs) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
+}
+
 // ResetSSHKeyForVirtualMachine (Async) represents a change for the key pairs
 type ResetSSHKeyForVirtualMachine struct {
 	ID      *UUID  `json:"id" doc:"The ID of the virtual machine"`

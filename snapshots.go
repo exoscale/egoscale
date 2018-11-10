@@ -132,6 +132,14 @@ func (ListSnapshots) each(resp interface{}, callback IterateItemFunc) {
 	}
 }
 
+// ListRequest returns itself
+func (ls *ListSnapshots) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
+}
+
 // DeleteSnapshot (Async) deletes a snapshot of a disk volume
 type DeleteSnapshot struct {
 	ID *UUID `json:"id" doc:"The ID of the snapshot"`

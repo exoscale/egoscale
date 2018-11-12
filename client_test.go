@@ -85,7 +85,6 @@ func TestClientSyncDelete(t *testing.T) {
 			response{200, jsonContentType, fmt.Sprintf(bodySuccessBool, thing.name)},
 			response{431, jsonContentType, fmt.Sprintf(bodyError, thing.name)},
 		)
-		defer ts.Close()
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
@@ -98,6 +97,8 @@ func TestClientSyncDelete(t *testing.T) {
 		if err := cs.Delete(thing.deletable); err == nil {
 			t.Errorf("Deletion of %v an error was expected", thing.deletable)
 		}
+
+		ts.Close()
 	}
 }
 
@@ -136,7 +137,6 @@ func TestClientAsyncDelete(t *testing.T) {
 			response{200, jsonContentType, fmt.Sprintf(body, thing.name)},
 			response{400, jsonContentType, fmt.Sprintf(bodyError, thing.name)},
 		)
-		defer ts.Close()
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
@@ -146,6 +146,8 @@ func TestClientAsyncDelete(t *testing.T) {
 		if err := cs.Delete(thing.deletable); err == nil {
 			t.Errorf("Deletion of %#v. An error was expected", thing)
 		}
+
+		ts.Close()
 	}
 }
 
@@ -160,13 +162,14 @@ func TestClientDeleteFailure(t *testing.T) {
 
 	for _, thing := range things {
 		ts := newServer()
-		defer ts.Close()
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
 		if err := cs.Delete(thing); err == nil {
 			t.Errorf("Deletion of %#v. Should have failed", thing)
 		}
+
+		ts.Close()
 	}
 }
 
@@ -186,13 +189,14 @@ func TestClientGetFailure(t *testing.T) {
 
 	for _, thing := range things {
 		ts := newServer()
-		defer ts.Close()
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
 		if err := cs.Get(thing); err == nil {
 			t.Errorf("Get of %#v. Should have failed", thing)
 		}
+
+		ts.Close()
 	}
 }
 
@@ -234,27 +238,27 @@ func TestClientGetNone(t *testing.T) {
 			response{200, jsonContentType, fmt.Sprintf(body, thing.name)},
 			response{431, jsonContentType, bodyError},
 		)
-		defer ts.Close()
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
-		for _, text := range []string{"not found", "due to invalid value"} {
-			err := cs.Get(thing.gettable)
-			if err == nil {
-				t.Error("an error was expected")
-				continue
-			}
-
-			e, ok := err.(*ErrorResponse)
-			if !ok {
-				t.Errorf("an ErrorResponse was expected, got %T", err)
-				continue
-			}
-
-			if !strings.Contains(e.ErrorText, text) {
-				t.Errorf("bad error test, got %q", e.ErrorText)
-			}
+		errText := "not found"
+		err := cs.Get(thing.gettable)
+		if err == nil {
+			t.Error("an error was expected")
+			continue
 		}
+
+		e, ok := err.(*ErrorResponse)
+		if !ok {
+			t.Errorf("an ErrorResponse was expected, got %T", err)
+			continue
+		}
+
+		if !strings.Contains(e.ErrorText, errText) {
+			t.Errorf("bad error test, got %q", e.ErrorText)
+		}
+
+		ts.Close()
 	}
 }
 
@@ -298,7 +302,6 @@ func TestClientGetZero(t *testing.T) {
 		}
 		resp := response{200, jsonContentType, fmt.Sprintf(body, plural, thing.name)}
 		ts := newServer(resp)
-		defer ts.Close()
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
@@ -312,6 +315,8 @@ func TestClientGetZero(t *testing.T) {
 		if !strings.HasPrefix(err.Error(), "API error ParamError 431") {
 			t.Errorf("bad error %q", err)
 		}
+
+		ts.Close()
 	}
 }
 
@@ -361,7 +366,6 @@ func TestClientGetTooMany(t *testing.T) {
 	for _, thing := range things {
 		resp := response{200, jsonContentType, fmt.Sprintf(body, thing.name)}
 		ts := newServer(resp)
-		defer ts.Close()
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
@@ -375,6 +379,8 @@ func TestClientGetTooMany(t *testing.T) {
 		if !strings.HasPrefix(err.Error(), "more than one") {
 			t.Errorf("bad error %s", err)
 		}
+
+		ts.Close()
 	}
 }
 
@@ -393,5 +399,183 @@ func TestClientTrace(t *testing.T) {
 
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestClientList(t *testing.T) {
+	body := `
+	{"list%sresponse": {
+		"count": 4,
+		"affinitygroup": [{}, {}, {}, {}],
+		"publicipaddress": [{}, {}, {}, {}],
+		"securitygroup": [{}, {}, {}, {}],
+		"sshkeypair": [{}, {}, {}, {}],
+		"virtualmachine": [{}, {}, {}, {}],
+		"volume": [{}, {}, {}, {}],
+		"zone": [{}, {}, {}, {}],
+		"template": [{}, {}, {}, {}],
+		"serviceoffering": [{}, {}, {}, {}],
+		"account": [{}, {}, {}, {}],
+		"networkoffering": [{}, {}, {}, {}],
+		"nic": [{}, {}, {}, {}],
+		"snapshot": [{}, {}, {}, {}]
+	}}`
+
+	tests := []struct {
+		name      string
+		listables []Listable
+	}{
+		{"zones", []Listable{
+			&Zone{},
+			&ListZones{},
+		}},
+		{"publicipaddresses", []Listable{
+			&IPAddress{},
+			&ListPublicIPAddresses{},
+		}},
+		{"sshkeypairs", []Listable{
+			&SSHKeyPair{},
+			&ListSSHKeyPairs{},
+		}},
+		{"affinitygroups", []Listable{
+			&AffinityGroup{},
+			&ListAffinityGroups{},
+		}},
+		{"securitygroups", []Listable{
+			&SecurityGroup{},
+			&ListSecurityGroups{},
+		}},
+		{"virtualmachines", []Listable{
+			&VirtualMachine{},
+			&ListVirtualMachines{},
+		}},
+		{"volumes", []Listable{
+			&Volume{},
+			&ListVolumes{},
+		}},
+		{"templates", []Listable{
+			&Template{IsFeatured: true},
+			&ListTemplates{TemplateFilter: "featured"},
+		}},
+		{"serviceofferings", []Listable{
+			&ServiceOffering{},
+			&ListServiceOfferings{},
+		}},
+		{"accounts", []Listable{
+			&Account{},
+			&ListAccounts{},
+		}},
+		{"nics", []Listable{
+			&Nic{},
+			&ListNics{},
+		}},
+		{"snapshots", []Listable{
+			&Snapshot{},
+			&ListSnapshots{},
+		}},
+	}
+
+	for _, tt := range tests {
+		ts := newServer(
+			response{200, jsonContentType, fmt.Sprintf(body, tt.name)},
+			response{200, jsonContentType, fmt.Sprintf(body, tt.name)},
+		)
+
+		cs := NewClient(ts.URL, "KEY", "SECRET")
+
+		for _, ls := range tt.listables {
+			things, err := cs.List(ls)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if len(things) != 4 {
+				t.Errorf("four %T were expected, got %d", ls, len(things))
+			}
+		}
+
+		ts.Close()
+	}
+}
+
+func TestClientPaginateError(t *testing.T) {
+	body := `
+	{"list%sresponse": {
+		"cserrorcode": 9999,
+		"errorcode": 431,
+		"errortext": "Unable to execute API command listzones due to invalid value. Invalid parameter id value=1747ef5e-5451-41fd-9f1a-58913bae9701 due to incorrect long value format, or entity does not exist or due to incorrect parameter annotation for the field in api cmd class.",
+		"uuidList": []
+	}}
+`
+
+	tests := []struct {
+		name      string
+		listables []Listable
+	}{
+		{"zones", []Listable{
+			&Zone{},
+			&ListZones{},
+		}},
+		{"publicipaddresses", []Listable{
+			&IPAddress{},
+			&ListPublicIPAddresses{},
+		}},
+		{"sshkeypairs", []Listable{
+			&SSHKeyPair{},
+			&ListSSHKeyPairs{},
+		}},
+		{"affinitygroups", []Listable{
+			&AffinityGroup{},
+			&ListAffinityGroups{},
+		}},
+		{"securitygroups", []Listable{
+			&SecurityGroup{},
+			&ListSecurityGroups{},
+		}},
+		{"virtualmachines", []Listable{
+			&VirtualMachine{},
+			&ListVirtualMachines{},
+		}},
+		{"volumes", []Listable{
+			&Volume{},
+			&ListVolumes{},
+		}},
+		{"templates", []Listable{
+			&Template{IsFeatured: true},
+			&ListTemplates{TemplateFilter: "featured"},
+		}},
+		{"serviceofferings", []Listable{
+			&ServiceOffering{},
+			&ListServiceOfferings{},
+		}},
+		{"accounts", []Listable{
+			&Account{},
+			&ListAccounts{},
+		}},
+		{"nics", []Listable{
+			&Nic{},
+			&ListNics{},
+		}},
+		{"snapshots", []Listable{
+			&Snapshot{},
+			&ListSnapshots{},
+		}},
+	}
+
+	for _, tt := range tests {
+		ts := newServer(
+			response{431, jsonContentType, fmt.Sprintf(body, tt.name)},
+			response{431, jsonContentType, fmt.Sprintf(body, tt.name)},
+		)
+		cs := NewClient(ts.URL, "KEY", "SECRET")
+
+		for _, listable := range tt.listables {
+			cs.Paginate(listable, func(i interface{}, e error) bool {
+				t.Errorf("no %T were expected %v %s", listable, i, e)
+				return false
+			})
+		}
+
+		ts.Close()
 	}
 }

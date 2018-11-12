@@ -126,14 +126,21 @@ func (client *Client) GetWithContext(ctx context.Context, g Gettable) error {
 			return err
 		}
 
+		// removing sensitive/useless informations
+		params.Del("expires")
+		params.Del("response")
+		params.Del("signature")
+		params.Del("signatureversion")
+
 		// formatting the query string nicely
 		payload := params.Encode()
 		payload = strings.Replace(payload, "&", ", ", -1)
 
 		if count == 0 {
 			return &ErrorResponse{
-				ErrorCode: ParamError,
-				ErrorText: fmt.Sprintf("not found, query: %s", payload),
+				CSErrorCode: ServerAPIException,
+				ErrorCode:   ParamError,
+				ErrorText:   fmt.Sprintf("not found, query: %s", payload),
 			}
 		}
 		return fmt.Errorf("more than one element found: %s", payload)
@@ -254,15 +261,21 @@ func (client *Client) AsyncListWithContext(ctx context.Context, g Listable) (<-c
 }
 
 // Paginate runs the ListCommand and paginates
-func (client *Client) Paginate(req ListCommand, callback IterateItemFunc) {
+func (client *Client) Paginate(g Listable, callback IterateItemFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), client.Timeout)
 	defer cancel()
 
-	client.PaginateWithContext(ctx, req, callback)
+	client.PaginateWithContext(ctx, g, callback)
 }
 
 // PaginateWithContext runs the ListCommand as long as the ctx is valid
-func (client *Client) PaginateWithContext(ctx context.Context, req ListCommand, callback IterateItemFunc) {
+func (client *Client) PaginateWithContext(ctx context.Context, g Listable, callback IterateItemFunc) {
+	req, err := g.ListRequest()
+	if err != nil {
+		callback(nil, err)
+		return
+	}
+
 	pageSize := client.PageSize
 
 	page := 1
@@ -272,6 +285,11 @@ func (client *Client) PaginateWithContext(ctx context.Context, req ListCommand, 
 		req.SetPageSize(pageSize)
 		resp, err := client.RequestWithContext(ctx, req)
 		if err != nil {
+			// in case of 431, the response is knowingly empty
+			if errResponse, ok := err.(*ErrorResponse); ok && page == 1 && errResponse.ErrorCode == ParamError {
+				break
+			}
+
 			callback(nil, err)
 			break
 		}

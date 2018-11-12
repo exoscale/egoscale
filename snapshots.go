@@ -109,13 +109,13 @@ func (ListSnapshots) response() interface{} {
 }
 
 // SetPage sets the current page
-func (lss *ListSnapshots) SetPage(page int) {
-	lss.Page = page
+func (ls *ListSnapshots) SetPage(page int) {
+	ls.Page = page
 }
 
 // SetPageSize sets the page size
-func (lss *ListSnapshots) SetPageSize(pageSize int) {
-	lss.PageSize = pageSize
+func (ls *ListSnapshots) SetPageSize(pageSize int) {
+	ls.PageSize = pageSize
 }
 
 func (ListSnapshots) each(resp interface{}, callback IterateItemFunc) {

@@ -219,13 +219,13 @@ func (ListNetworks) response() interface{} {
 }
 
 // SetPage sets the current page
-func (listNetwork *ListNetworks) SetPage(page int) {
-	listNetwork.Page = page
+func (ls *ListNetworks) SetPage(page int) {
+	ls.Page = page
 }
 
 // SetPageSize sets the page size
-func (listNetwork *ListNetworks) SetPageSize(pageSize int) {
-	listNetwork.PageSize = pageSize
+func (ls *ListNetworks) SetPageSize(pageSize int) {
+	ls.PageSize = pageSize
 }
 
 func (ListNetworks) each(resp interface{}, callback IterateItemFunc) {

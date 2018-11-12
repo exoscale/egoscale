@@ -219,13 +219,13 @@ func (ListSecurityGroups) response() interface{} {
 }
 
 // SetPage sets the current page
-func (lsg *ListSecurityGroups) SetPage(page int) {
-	lsg.Page = page
+func (ls *ListSecurityGroups) SetPage(page int) {
+	ls.Page = page
 }
 
 // SetPageSize sets the page size
-func (lsg *ListSecurityGroups) SetPageSize(pageSize int) {
-	lsg.PageSize = pageSize
+func (ls *ListSecurityGroups) SetPageSize(pageSize int) {
+	ls.PageSize = pageSize
 }
 
 func (ListSecurityGroups) each(resp interface{}, callback IterateItemFunc) {

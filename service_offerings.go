@@ -83,13 +83,13 @@ func (ListServiceOfferings) response() interface{} {
 }
 
 // SetPage sets the current page
-func (lso *ListServiceOfferings) SetPage(page int) {
-	lso.Page = page
+func (ls *ListServiceOfferings) SetPage(page int) {
+	ls.Page = page
 }
 
 // SetPageSize sets the page size
-func (lso *ListServiceOfferings) SetPageSize(pageSize int) {
-	lso.PageSize = pageSize
+func (ls *ListServiceOfferings) SetPageSize(pageSize int) {
+	ls.PageSize = pageSize
 }
 
 func (ListServiceOfferings) each(resp interface{}, callback IterateItemFunc) {

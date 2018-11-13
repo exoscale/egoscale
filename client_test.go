@@ -461,6 +461,10 @@ func TestClientList(t *testing.T) {
 			&ServiceOffering{},
 			&ListServiceOfferings{},
 		}},
+		{"networkofferings", []Listable{
+			&NetworkOffering{},
+			&ListNetworkOfferings{},
+		}},
 		{"accounts", []Listable{
 			&Account{},
 			&ListAccounts{},
@@ -547,6 +551,10 @@ func TestClientPaginateError(t *testing.T) {
 		{"serviceofferings", []Listable{
 			&ServiceOffering{},
 			&ListServiceOfferings{},
+		}},
+		{"networkofferings", []Listable{
+			&NetworkOffering{},
+			&ListNetworkOfferings{},
 		}},
 		{"accounts", []Listable{
 			&Account{},

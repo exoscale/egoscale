@@ -467,7 +467,7 @@ func main() {
 	}
 
 	names := make([]string, 0, len(commands))
-	for name, _ := range commands {
+	for name := range commands {
 		names = append(names, name)
 	}
 

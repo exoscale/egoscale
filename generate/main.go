@@ -466,12 +466,21 @@ func main() {
 		}
 	}
 
-	for name, c := range commands {
+	names := make([]string, 0, len(commands))
+	for name, _ := range commands {
+		names = append(names, name)
+	}
+
+	sort.Strings(names)
+
+	for _, name := range names {
+		c := commands[name]
+		pos := fset.Position(c.position)
 		er := len(c.errors)
 
 		if *cmd == "" {
 			if er != 0 {
-				fmt.Printf("%5d %s: %s%s\n", er, fset.Position(c.position), c.name, c.sync)
+				fmt.Printf("%5d %s: %s%s\n", er, pos, c.name, c.sync)
 			}
 		} else if strings.ToLower(*cmd) == name {
 			errs := make([]string, 0, len(c.errors))
@@ -493,7 +502,7 @@ func main() {
 			for _, e := range errs {
 				fmt.Println(e)
 			}
-			fmt.Printf("\n%s: %s%s has %d error(s)\n", fset.Position(c.position), c.name, c.sync, er)
+			fmt.Printf("\n%s: %s%s has %d error(s)\n", pos, c.name, c.sync, er)
 
 			if c.response != nil {
 				fmt.Println("")

@@ -82,21 +82,23 @@ func (client *Client) runstatusRequest(uri string, urlValues url.Values, params,
 		return nil, err
 	}
 
-	var hdr = make(http.Header)
-
 	time := time.Now().Format("2006-01-02T15:04:05-0700")
 
+	//XXX WIP for testing
 	payload := fmt.Sprintf("%s%s%s", req.URL.String(), time, params)
+
+	println("<PAYLOAD>", payload, "<PAYLOAD>")
 
 	val, err := url.ParseQuery(payload)
 	if err != nil {
 		return nil, err
 	}
-
 	signature, err := client.Sign(val)
 	if err != nil {
 		return nil, err
 	}
+
+	var hdr = make(http.Header)
 
 	hdr.Add("Authorization", fmt.Sprintf("Exoscale-HMAC-SHA256 %s:%s", client.APIKey, signature))
 	hdr.Add("Exoscale-Date", fmt.Sprintf("%s", time))

@@ -67,7 +67,7 @@ type VirtualMachine struct {
 	GroupID             *UUID             `json:"groupid,omitempty" doc:"the group ID of the virtual machine"`
 	HAEnable            bool              `json:"haenable,omitempty" doc:"true if high-availability is enabled, false otherwise"`
 	HostName            string            `json:"hostname,omitempty" doc:"the name of the host for the virtual machine"`
-	ID                  *UUID             `json:"id,omitempty" doc:"the ID of the virtual machine"`
+	ID                  *UUID             `json:"id" doc:"the ID of the virtual machine"`
 	InstanceName        string            `json:"instancename,omitempty" doc:"instance name of the user vm; this parameter is returned to the ROOT admin only"`
 	IsoDisplayText      string            `json:"isodisplaytext,omitempty" doc:"an alternate display text of the ISO attached to the virtual machine"`
 	IsoID               *UUID             `json:"isoid,omitempty" doc:"the ID of the ISO attached to the virtual machine"`
@@ -224,8 +224,8 @@ type Password struct {
 
 // VirtualMachineUserData represents the base64 encoded user-data
 type VirtualMachineUserData struct {
-	UserData         string `json:"userdata,omitempty" doc:"Base 64 encoded VM user data"`
-	VirtualMachineID *UUID  `json:"virtualmachineid,omitempty" doc:"the ID of the virtual machine"`
+	UserData         string `json:"userdata" doc:"Base 64 encoded VM user data"`
+	VirtualMachineID *UUID  `json:"virtualmachineid" doc:"the ID of the virtual machine"`
 }
 
 // Decode decodes as a readable string the content of the user-data (base64 · gzip)

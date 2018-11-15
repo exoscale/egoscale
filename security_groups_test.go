@@ -114,10 +114,7 @@ func TestGetSecurityGroup(t *testing.T) {
 	"count": 1,
 	"securitygroup": [
 		{
-			"account": "yoan.blanc@exoscale.ch",
 			"description": "dummy (for test)",
-			"domain": "yoan.blanc@exoscale.ch",
-			"domainid": "2da0d0d3-e7b2-42ef-805d-eb2ea90ae7ef",
 			"egressrule": [],
 			"id": "4bfe1073-a6d4-48bd-8f24-2ab586674092",
 			"ingressrule": [
@@ -142,12 +139,13 @@ func TestGetSecurityGroup(t *testing.T) {
 	sg := &SecurityGroup{
 		ID: MustParseUUID("4bfe1073-a6d4-48bd-8f24-2ab586674092"),
 	}
-	if err := cs.Get(sg); err != nil {
+	sg1, err := cs.Get(sg)
+	if err != nil {
 		t.Error(err)
 	}
 
-	if sg.Account != "yoan.blanc@exoscale.ch" {
-		t.Errorf("Account doesn't match, got %v", sg.Account)
+	if sg1.(*SecurityGroup).Name != "ssh" {
+		t.Errorf("name doesn't match, want ssh, got %q", sg1.(*SecurityGroup).Name)
 	}
 }
 
@@ -157,10 +155,7 @@ func TestListSecurityGroups(t *testing.T) {
 			"count": 2,
 			"securitygroup": [
 			  {
-				"account": "exoscale-1",
 				"description": "test",
-				"domain": "exoscale-1",
-				"domainid": "5b2f621e-3eb6-4a14-a315-d4d7d62f28ff",
 				"egressrule": [],
 				"id": "55c3b385-0a9b-4970-a5d9-ad1e7f13157d",
 				"ingressrule": [
@@ -193,10 +188,7 @@ func TestListSecurityGroups(t *testing.T) {
 				"tags": []
 			  },
 			  {
-				"account": "exoscale-1",
 				"description": "Default Security Group",
-				"domain": "exoscale-1",
-				"domainid": "5b2f621e-3eb6-4a14-a315-d4d7d62f28ff",
 				"egressrule": [],
 				"id": "b1b05d21-11de-4c38-804e-c9bdacdaaa70",
 				"egressrule": [
@@ -220,11 +212,11 @@ func TestListSecurityGroups(t *testing.T) {
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 	sgs, err := cs.List(&SecurityGroup{})
 	if err != nil {
-		t.Errorf("%v", err)
+		t.Fatalf("%v", err)
 	}
 
 	if len(sgs) != 2 {
-		t.Errorf("Expected two sg, got %d", len(sgs))
+		t.Fatalf("Expected two sg, got %d", len(sgs))
 	}
 
 	sg := sgs[0].(*SecurityGroup)
@@ -244,5 +236,4 @@ func TestListSecurityGroups(t *testing.T) {
 	if eg == nil {
 		t.Errorf("egress rule not found")
 	}
-
 }

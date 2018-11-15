@@ -30,48 +30,24 @@ func TestListZonesPaginate(t *testing.T) {
 	"count": 4,
 	"zone": [
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "1747ef5e-5451-41fd-9f1a-58913bae9702",
-			"localstorageenabled": true,
 			"name": "ch-gva-2",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "f9a2983b-42e5-3b12-ae74-0b1f54cd6204"
+			"tags": []
 		},
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "381d0a95-ed4a-4ad9-b41c-b97073c1a433",
-			"localstorageenabled": true,
 			"name": "ch-dk-2",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "23a24359-121a-38af-a938-e225c97c397b"
+			"tags": []
 		},
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "b0fcd72f-47ad-4779-a64f-fe4de007ec72",
-			"localstorageenabled": true,
 			"name": "at-vie-1",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "a2a8345d-7daa-3316-8d90-5b8e49706764"
+			"tags": []
 		},
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "de88c980-78f6-467c-a431-71bcc88e437f",
-			"localstorageenabled": true,
 			"name": "de-fra-1",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "c4bdb9f2-c28d-36a3-bbc5-f91fc69527e6"
+			"tags": []
 		}
 	]
 }}`})
@@ -107,26 +83,14 @@ func TestListZonesPaginateBreak(t *testing.T) {
 	"count": 4,
 	"zone": [
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "1747ef5e-5451-41fd-9f1a-58913bae9702",
-			"localstorageenabled": true,
 			"name": "ch-gva-2",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "f9a2983b-42e5-3b12-ae74-0b1f54cd6204"
+			"tags": []
 		},
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "381d0a95-ed4a-4ad9-b41c-b97073c1a433",
-			"localstorageenabled": true,
 			"name": "ch-dk-2",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "23a24359-121a-38af-a938-e225c97c397b"
+			"tags": []
 		}
 	]
 }}`})
@@ -201,48 +165,24 @@ func TestListZonesAsync(t *testing.T) {
 	"count": 4,
 	"zone": [
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "1747ef5e-5451-41fd-9f1a-58913bae9702",
-			"localstorageenabled": true,
 			"name": "ch-gva-2",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "f9a2983b-42e5-3b12-ae74-0b1f54cd6204"
+			"tags": []
 		},
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "381d0a95-ed4a-4ad9-b41c-b97073c1a433",
-			"localstorageenabled": true,
 			"name": "ch-dk-2",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "23a24359-121a-38af-a938-e225c97c397b"
+			"tags": []
 		},
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "b0fcd72f-47ad-4779-a64f-fe4de007ec72",
-			"localstorageenabled": true,
 			"name": "at-vie-1",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "a2a8345d-7daa-3316-8d90-5b8e49706764"
+			"tags": []
 		},
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "de88c980-78f6-467c-a431-71bcc88e437f",
-			"localstorageenabled": true,
 			"name": "de-fra-1",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "c4bdb9f2-c28d-36a3-bbc5-f91fc69527e6"
+			"tags": []
 		}
 	]
 }}`})
@@ -293,26 +233,14 @@ func TestListZonesTwoPages(t *testing.T) {
 	"count": 4,
 	"zone": [
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "1747ef5e-5451-41fd-9f1a-58913bae9702",
-			"localstorageenabled": true,
 			"name": "ch-gva-2",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "f9a2983b-42e5-3b12-ae74-0b1f54cd6204"
+			"tags": []
 		},
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "381d0a95-ed4a-4ad9-b41c-b97073c1a433",
-			"localstorageenabled": true,
 			"name": "ch-dk-2",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "23a24359-121a-38af-a938-e225c97c397b"
+			"tags": []
 		}
 	]
 }}`}, response{200, jsonContentType, `
@@ -320,26 +248,14 @@ func TestListZonesTwoPages(t *testing.T) {
 	"count": 4,
 	"zone": [
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "b0fcd72f-47ad-4779-a64f-fe4de007ec72",
-			"localstorageenabled": true,
 			"name": "at-vie-1",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "a2a8345d-7daa-3316-8d90-5b8e49706764"
+			"tags": []
 		},
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "de88c980-78f6-467c-a431-71bcc88e437f",
-			"localstorageenabled": true,
 			"name": "de-fra-1",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "c4bdb9f2-c28d-36a3-bbc5-f91fc69527e6"
+			"tags": []
 		}
 	]
 }}`}, response{200, jsonContentType, `
@@ -369,26 +285,14 @@ func TestListZonesError(t *testing.T) {
 	"count": 4,
 	"zone": [
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "1747ef5e-5451-41fd-9f1a-58913bae9702",
-			"localstorageenabled": true,
 			"name": "ch-gva-2",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "f9a2983b-42e5-3b12-ae74-0b1f54cd6204"
+			"tags": []
 		},
 		{
-			"allocationstate": "Enabled",
-			"dhcpprovider": "VirtualRouter",
 			"id": "381d0a95-ed4a-4ad9-b41c-b97073c1a433",
-			"localstorageenabled": true,
 			"name": "ch-dk-2",
-			"networktype": "Basic",
-			"securitygroupsenabled": true,
-			"tags": [],
-			"zonetoken": "23a24359-121a-38af-a938-e225c97c397b"
+			"tags": []
 		}
 	]
 }}`}, response{400, jsonContentType, `

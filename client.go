@@ -33,11 +33,6 @@ type Listable interface {
 	ListRequest() (ListCommand, error)
 }
 
-// Gettable represents an Interface that can be "Get" by the client
-type Gettable interface {
-	Listable
-}
-
 // Client represents the CloudStack API client
 type Client struct {
 	// HTTPClient holds the HTTP client
@@ -101,29 +96,29 @@ func NewClient(endpoint, apiKey, apiSecret string) *Client {
 }
 
 // Get populates the given resource or fails
-func (client *Client) Get(g Gettable) error {
+func (client *Client) Get(ls Listable) (interface{}, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), client.Timeout)
 	defer cancel()
 
-	return client.GetWithContext(ctx, g)
+	return client.GetWithContext(ctx, ls)
 }
 
 // GetWithContext populates the given resource or fails
-func (client *Client) GetWithContext(ctx context.Context, g Gettable) error {
-	gs, err := client.ListWithContext(ctx, g)
+func (client *Client) GetWithContext(ctx context.Context, ls Listable) (interface{}, error) {
+	gs, err := client.ListWithContext(ctx, ls)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	count := len(gs)
 	if count != 1 {
-		req, err := g.ListRequest()
+		req, err := ls.ListRequest()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		params, err := client.Payload(req)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// removing sensitive/useless informations
@@ -137,16 +132,16 @@ func (client *Client) GetWithContext(ctx context.Context, g Gettable) error {
 		payload = strings.Replace(payload, "&", ", ", -1)
 
 		if count == 0 {
-			return &ErrorResponse{
+			return nil, &ErrorResponse{
 				CSErrorCode: ServerAPIException,
 				ErrorCode:   ParamError,
 				ErrorText:   fmt.Sprintf("not found, query: %s", payload),
 			}
 		}
-		return fmt.Errorf("more than one element found: %s", payload)
+		return nil, fmt.Errorf("more than one element found: %s", payload)
 	}
 
-	return Copy(g, gs[0])
+	return gs[0], nil
 }
 
 // Delete removes the given resource of fails

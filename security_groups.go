@@ -13,7 +13,7 @@ type SecurityGroup struct {
 	Account     string        `json:"account,omitempty" doc:"the account owning the security group"`
 	Description string        `json:"description,omitempty" doc:"the description of the security group"`
 	EgressRule  []EgressRule  `json:"egressrule,omitempty" doc:"the list of egress rules associated with the security group"`
-	ID          *UUID         `json:"id,omitempty" doc:"the ID of the security group"`
+	ID          *UUID         `json:"id" doc:"the ID of the security group"`
 	IngressRule []IngressRule `json:"ingressrule,omitempty" doc:"the list of ingress rules associated with the security group"`
 	Name        string        `json:"name,omitempty" doc:"the name of the security group"`
 }
@@ -77,7 +77,7 @@ type IngressRule struct {
 	IcmpCode              uint8               `json:"icmpcode,omitempty" doc:"the code for the ICMP message response"`
 	IcmpType              uint8               `json:"icmptype,omitempty" doc:"the type of the ICMP message response"`
 	Protocol              string              `json:"protocol,omitempty" doc:"the protocol of the security group rule"`
-	RuleID                *UUID               `json:"ruleid,omitempty" doc:"the id of the security group rule"`
+	RuleID                *UUID               `json:"ruleid" doc:"the id of the security group rule"`
 	SecurityGroupID       *UUID               `json:"securitygroupid,omitempty"`
 	SecurityGroupName     string              `json:"securitygroupname,omitempty" doc:"security group name"`
 	StartPort             uint16              `json:"startport,omitempty" doc:"the starting port of the security group rule"`

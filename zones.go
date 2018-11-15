@@ -16,7 +16,7 @@ type Zone struct {
 	DNS1                  net.IP            `json:"dns1,omitempty" doc:"the first DNS for the Zone"`
 	DNS2                  net.IP            `json:"dns2,omitempty" doc:"the second DNS for the Zone"`
 	GuestCIDRAddress      *CIDR             `json:"guestcidraddress,omitempty" doc:"the guest CIDR address for the Zone"`
-	ID                    *UUID             `json:"id,omitempty" doc:"Zone id"`
+	ID                    *UUID             `json:"id" doc:"Zone id"`
 	InternalDNS1          net.IP            `json:"internaldns1,omitempty" doc:"the first internal DNS for the Zone"`
 	InternalDNS2          net.IP            `json:"internaldns2,omitempty" doc:"the second internal DNS for the Zone"`
 	IP6DNS1               net.IP            `json:"ip6dns1,omitempty" doc:"the first IPv6 DNS for the Zone"`

@@ -174,17 +174,28 @@ func TestClientDeleteFailure(t *testing.T) {
 }
 
 func TestClientGetFailure(t *testing.T) {
-	things := []Gettable{
+	things := []Listable{
 		nil,
-		&AffinityGroup{},
-		&SecurityGroup{},
-		&SSHKeyPair{},
-		&VirtualMachine{},
-		&IPAddress{},
 		&Account{},
+		(*ListAccounts)(nil),
+		&AffinityGroup{},
+		(*ListAffinityGroups)(nil),
+		&IPAddress{},
+		(*ListPublicIPAddresses)(nil),
 		&NetworkOffering{},
+		(*ListNetworkOfferings)(nil),
 		&Nic{},
+		(*ListNics)(nil),
+		&SSHKeyPair{},
+		(*ListSSHKeyPairs)(nil),
+		&SecurityGroup{},
+		(*ListSecurityGroups)(nil),
+		&ServiceOffering{},
+		(*ListServiceOfferings)(nil),
 		&Snapshot{},
+		(*ListSnapshots)(nil),
+		&VirtualMachine{},
+		(*ListVirtualMachines)(nil),
 	}
 
 	for _, thing := range things {
@@ -192,7 +203,7 @@ func TestClientGetFailure(t *testing.T) {
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
-		if err := cs.Get(thing); err == nil {
+		if _, err := cs.Get(thing); err == nil {
 			t.Errorf("Get of %#v. Should have failed", thing)
 		}
 
@@ -211,7 +222,7 @@ func TestClientGetNone(t *testing.T) {
 	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")
 	things := []struct {
 		name     string
-		gettable Gettable
+		listable Listable
 	}{
 		{"zones", &Zone{ID: id}},
 		{"zones", &Zone{Name: "test zone"}},
@@ -242,7 +253,7 @@ func TestClientGetNone(t *testing.T) {
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
 		errText := "not found"
-		err := cs.Get(thing.gettable)
+		_, err := cs.Get(thing.listable)
 		if err == nil {
 			t.Error("an error was expected")
 			continue
@@ -271,7 +282,7 @@ func TestClientGetZero(t *testing.T) {
 	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")
 	things := []struct {
 		name     string
-		gettable Gettable
+		listable Listable
 	}{
 		{"zone", &Zone{ID: id}},
 		{"zone", &Zone{Name: "test zone"}},
@@ -306,8 +317,7 @@ func TestClientGetZero(t *testing.T) {
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
 		// fake 431
-		err := cs.Get(thing.gettable)
-
+		_, err := cs.Get(thing.listable)
 		if err == nil {
 			t.Errorf("an error was expected")
 		}
@@ -342,7 +352,7 @@ func TestClientGetTooMany(t *testing.T) {
 	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")
 	things := []struct {
 		name     string
-		gettable Gettable
+		listable Listable
 	}{
 		{"zones", &Zone{ID: id}},
 		{"zones", &Zone{Name: "test zone"}},
@@ -370,8 +380,7 @@ func TestClientGetTooMany(t *testing.T) {
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
 		// Too many
-		err := cs.Get(thing.gettable)
-
+		_, err := cs.Get(thing.listable)
 		if err == nil {
 			t.Errorf("an error was expected")
 		}

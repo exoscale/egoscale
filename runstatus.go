@@ -1,6 +1,7 @@
 package egoscale
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -38,7 +39,7 @@ type RunstatusPage struct {
 }
 
 // CreateRunstatusPage creates runstatus page
-func (client *Client) CreateRunstatusPage(name string) (*RunstatusPage, error) {
+func (client *Client) CreateRunstatusPage(ctx context.Context, name string) (*RunstatusPage, error) {
 	m, err := json.Marshal(RunstatusPage{
 		Name:      name,
 		Subdomain: name,
@@ -48,7 +49,7 @@ func (client *Client) CreateRunstatusPage(name string) (*RunstatusPage, error) {
 		return nil, err
 	}
 
-	resp, err := client.runstatusRequest("/pages", nil, string(m), "POST")
+	resp, err := client.runstatusRequest(ctx, "/pages", nil, string(m), "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func (client *Client) CreateRunstatusPage(name string) (*RunstatusPage, error) {
 	return p, nil
 }
 
-func (client *Client) runstatusRequest(uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
+func (client *Client) runstatusRequest(ctx context.Context, uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
 	rawURL := client.Endpoint + uri
 	reqURL, err := url.Parse(rawURL)
 	if err != nil {
@@ -108,6 +109,8 @@ func (client *Client) runstatusRequest(uri string, urlValues url.Values, params,
 		hdr.Add("Content-Type", "application/json")
 	}
 	req.Header = hdr
+
+	req = req.WithContext(ctx)
 
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {

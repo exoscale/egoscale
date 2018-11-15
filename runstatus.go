@@ -12,29 +12,29 @@ import (
 
 //RunstatusPage runstatus page
 type RunstatusPage struct {
-	Name             string    `json:"name"`
-	Created          time.Time `json:"created"`
-	DarkTheme        bool      `json:"dark_theme"`
-	Domain           string    `json:"domain"`
-	GradientEnd      string    `json:"gradient_end"`
-	GradientStart    string    `json:"gradient_start"`
-	HeaderBackground string    `json:"header_background"`
-	ID               int       `json:"id"`
-	IncidentsURL     string    `json:"incidents_url"`
-	Logo             string    `json:"logo"`
-	MaintenancesURL  string    `json:"maintenances_url"`
-	OkText           string    `json:"ok_text"`
-	Plan             string    `json:"plan"`
-	PublicURL        string    `json:"public_url"`
-	ServicesURL      string    `json:"services_url"`
-	State            string    `json:"state"`
-	Subdomain        string    `json:"subdomain"`
-	SupportEmail     string    `json:"support_email"`
-	TimeZone         string    `json:"time_zone"`
-	Title            string    `json:"title"`
-	TitleColor       string    `json:"title_color"`
-	TwitterUsername  string    `json:"twitter_username"`
-	URL              string    `json:"url"`
+	Name             string     `json:"name"`
+	Created          *time.Time `json:"created,omitempty"`
+	DarkTheme        bool       `json:"dark_theme,omitempty"`
+	Domain           string     `json:"domain,omitempty"`
+	GradientEnd      string     `json:"gradient_end,omitempty"`
+	GradientStart    string     `json:"gradient_start,omitempty"`
+	HeaderBackground string     `json:"header_background,omitempty"`
+	ID               int        `json:"id,omitempty"`
+	IncidentsURL     string     `json:"incidents_url,omitempty"`
+	Logo             string     `json:"logo,omitempty"`
+	MaintenancesURL  string     `json:"maintenances_url,omitempty"`
+	OkText           string     `json:"ok_text,omitempty"`
+	Plan             string     `json:"plan,omitempty"`
+	PublicURL        string     `json:"public_url,omitempty"`
+	ServicesURL      string     `json:"services_url,omitempty"`
+	State            string     `json:"state,omitempty"`
+	Subdomain        string     `json:"subdomain"`
+	SupportEmail     string     `json:"support_email,omitempty"`
+	TimeZone         string     `json:"time_zone,omitempty"`
+	Title            string     `json:"title,omitempty"`
+	TitleColor       string     `json:"title_color,omitempty"`
+	TwitterUsername  string     `json:"twitter_username,omitempty"`
+	URL              string     `json:"url,omitempty"`
 }
 
 // CreateRunstatusPage creates runstatus page
@@ -42,6 +42,7 @@ func (client *Client) CreateRunstatusPage(name string) (*RunstatusPage, error) {
 	m, err := json.Marshal(RunstatusPage{
 		Name:      name,
 		Subdomain: name,
+		Created:   nil,
 	})
 	if err != nil {
 		return nil, err
@@ -62,27 +63,44 @@ func (client *Client) CreateRunstatusPage(name string) (*RunstatusPage, error) {
 
 func (client *Client) runstatusRequest(uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
 	rawURL := client.Endpoint + uri
-	url, err := url.Parse(rawURL)
+	reqURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, err
 	}
 
-	q := url.Query()
+	q := reqURL.Query()
 	for k, vs := range urlValues {
 		for _, v := range vs {
 			q.Add(k, v)
 		}
 	}
-	url.RawQuery = q.Encode()
 
-	req, err := http.NewRequest(method, url.String(), strings.NewReader(params))
+	reqURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(method, reqURL.String(), strings.NewReader(params))
 	if err != nil {
 		return nil, err
 	}
 
 	var hdr = make(http.Header)
-	hdr.Add("Authorization", client.APIKey+":"+client.apiSecret)
-	hdr.Add("Exoscale-Date", fmt.Sprintf("%s", time.Now()))
+
+	time := time.Now().Format("2006-01-02T15:04:05-0700")
+
+	payload := fmt.Sprintf("%s%s%s", req.URL.String(), time, params)
+
+	val, err := url.ParseQuery(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	signature, err := client.Sign(val)
+	if err != nil {
+		return nil, err
+	}
+
+	hdr.Add("Authorization", fmt.Sprintf("Exoscale-HMAC-SHA256 %s:%s", client.APIKey, signature))
+	hdr.Add("Exoscale-Date", fmt.Sprintf("%s", time))
+	//hdr.Add("User-Agent", fmt.Sprintf("exoscale/egoscale (%v)", Version))
 	hdr.Add("Accept", "application/json")
 	if params != "" {
 		hdr.Add("Content-Type", "application/json")
@@ -105,8 +123,6 @@ func (client *Client) runstatusRequest(uri string, urlValues url.Values, params,
 		return nil, err
 	}
 
-	println(string(b))
-
 	if resp.StatusCode >= 400 {
 		e := new(DNSErrorResponse)
 		if err := json.Unmarshal(b, e); err != nil {
@@ -117,3 +133,25 @@ func (client *Client) runstatusRequest(uri string, urlValues url.Values, params,
 
 	return b, nil
 }
+
+// class ExoscaleAuth(AuthBase):
+//     def __init__(self, key, secret):
+//         self.key = key
+//         self.secret = secret.encode('utf-8')
+
+//     def __call__(self, request):
+//         body = request.body or b''
+//         if hasattr(body, 'encode'):
+//             body = body.encode('utf-8')
+//         date = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+//         string_to_sign = '{0}{1}'.format(request.url,
+//                                          date).encode('utf-8') + body
+//         signature = hmac.new(self.secret,
+//                              msg=string_to_sign,
+//                              digestmod=hashlib.sha256).hexdigest()
+//         auth = u'Exoscale-HMAC-SHA256 {0}:{1}'.format(self.key, signature)
+//         request.headers.update({
+//             'Exoscale-Date': date,
+//             'Authorization': auth,
+//         })
+//         return request

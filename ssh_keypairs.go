@@ -66,6 +66,8 @@ func (RegisterSSHKeyPair) response() interface{} {
 	return new(SSHKeyPair)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListSSHKeyPairs
+
 // ListSSHKeyPairs represents a query for a list of SSH KeyPairs
 type ListSSHKeyPairs struct {
 	Fingerprint string `json:"fingerprint,omitempty" doc:"A public key fingerprint to look for"`
@@ -80,34 +82,6 @@ type ListSSHKeyPairs struct {
 type ListSSHKeyPairsResponse struct {
 	Count      int          `json:"count"`
 	SSHKeyPair []SSHKeyPair `json:"sshkeypair"`
-}
-
-func (ListSSHKeyPairs) response() interface{} {
-	return new(ListSSHKeyPairsResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListSSHKeyPairs) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListSSHKeyPairs) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListSSHKeyPairs) each(resp interface{}, callback IterateItemFunc) {
-	sshs, ok := resp.(*ListSSHKeyPairsResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListSSHKeyPairsResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range sshs.SSHKeyPair {
-		if !callback(&sshs.SSHKeyPair[i], nil) {
-			break
-		}
-	}
 }
 
 // ResetSSHKeyForVirtualMachine (Async) represents a change for the key pairs

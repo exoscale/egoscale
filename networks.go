@@ -1,7 +1,6 @@
 package egoscale
 
 import (
-	"fmt"
 	"net"
 	"net/url"
 )
@@ -195,6 +194,8 @@ func (DeleteNetwork) asyncResponse() interface{} {
 	return new(booleanResponse)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListNetworks
+
 // ListNetworks represents a query to a network
 type ListNetworks struct {
 	CanUseForDeploy   *bool         `json:"canusefordeploy,omitempty" doc:"List networks available for vm deployment"`
@@ -218,32 +219,4 @@ type ListNetworks struct {
 type ListNetworksResponse struct {
 	Count   int       `json:"count"`
 	Network []Network `json:"network"`
-}
-
-func (ListNetworks) response() interface{} {
-	return new(ListNetworksResponse)
-}
-
-// SetPage sets the current page
-func (listNetwork *ListNetworks) SetPage(page int) {
-	listNetwork.Page = page
-}
-
-// SetPageSize sets the page size
-func (listNetwork *ListNetworks) SetPageSize(pageSize int) {
-	listNetwork.PageSize = pageSize
-}
-
-func (ListNetworks) each(resp interface{}, callback IterateItemFunc) {
-	networks, ok := resp.(*ListNetworksResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("type error: ListNetworksResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range networks.Network {
-		if !callback(&networks.Network[i], nil) {
-			break
-		}
-	}
 }

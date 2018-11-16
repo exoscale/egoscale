@@ -120,6 +120,8 @@ func (UpdateIPAddress) asyncResponse() interface{} {
 	return new(IPAddress)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListPublicIPAddresses
+
 // ListPublicIPAddresses represents a search for public IP addresses
 type ListPublicIPAddresses struct {
 	AllocatedOnly       *bool         `json:"allocatedonly,omitempty" doc:"limits search results to allocated public IP addresses"`
@@ -145,32 +147,4 @@ type ListPublicIPAddresses struct {
 type ListPublicIPAddressesResponse struct {
 	Count           int         `json:"count"`
 	PublicIPAddress []IPAddress `json:"publicipaddress"`
-}
-
-func (ListPublicIPAddresses) response() interface{} {
-	return new(ListPublicIPAddressesResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListPublicIPAddresses) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListPublicIPAddresses) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListPublicIPAddresses) each(resp interface{}, callback IterateItemFunc) {
-	ips, ok := resp.(*ListPublicIPAddressesResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListPublicIPAddressesResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range ips.PublicIPAddress {
-		if !callback(&ips.PublicIPAddress[i], nil) {
-			break
-		}
-	}
 }

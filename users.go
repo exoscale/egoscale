@@ -20,6 +20,16 @@ type User struct {
 	UserName  string `json:"username,omitempty" doc:"the user name"`
 }
 
+// ListRequest builds the ListUsers request
+func (user User) ListRequest() (ListCommand, error) {
+	req := &ListUsers{
+		ID:       user.ID,
+		UserName: user.UserName,
+	}
+
+	return req, nil
+}
+
 // RegisterUserKeys registers a new set of key of the given user
 //
 // NB: only the APIKey and SecretKey will be filled
@@ -32,6 +42,8 @@ func (RegisterUserKeys) response() interface{} {
 	return new(User)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListUsers
+
 // ListUsers represents the search for Users
 type ListUsers struct {
 	ID       *UUID  `json:"id,omitempty" doc:"List user by ID."`
@@ -39,7 +51,7 @@ type ListUsers struct {
 	Page     int    `json:"page,omitempty"`
 	PageSize int    `json:"pagesize,omitempty"`
 	State    string `json:"state,omitempty" doc:"List users by state of the user account."`
-	Username string `json:"username,omitempty" doc:"List user by the username"`
+	UserName string `json:"username,omitempty" doc:"List user by the username"`
 	_        bool   `name:"listUsers" description:"Lists user accounts"`
 }
 
@@ -47,8 +59,4 @@ type ListUsers struct {
 type ListUsersResponse struct {
 	Count int    `json:"count"`
 	User  []User `json:"user"`
-}
-
-func (ListUsers) response() interface{} {
-	return new(ListUsersResponse)
 }

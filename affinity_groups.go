@@ -104,6 +104,8 @@ func (DeleteAffinityGroup) asyncResponse() interface{} {
 	return new(booleanResponse)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListAffinityGroups
+
 // ListAffinityGroups represents an (anti-)affinity groups search
 type ListAffinityGroups struct {
 	ID               *UUID  `json:"id,omitempty" doc:"List the affinity group by the ID provided"`
@@ -114,34 +116,6 @@ type ListAffinityGroups struct {
 	Type             string `json:"type,omitempty" doc:"Lists affinity groups by type"`
 	VirtualMachineID *UUID  `json:"virtualmachineid,omitempty" doc:"Lists affinity groups by virtual machine ID"`
 	_                bool   `name:"listAffinityGroups" description:"Lists affinity groups"`
-}
-
-func (ListAffinityGroups) response() interface{} {
-	return new(ListAffinityGroupsResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListAffinityGroups) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListAffinityGroups) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListAffinityGroups) each(resp interface{}, callback IterateItemFunc) {
-	vms, ok := resp.(*ListAffinityGroupsResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListAffinityGroupsResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range vms.AffinityGroup {
-		if !callback(&vms.AffinityGroup[i], nil) {
-			break
-		}
-	}
 }
 
 // ListAffinityGroupsResponse represents a list of (anti-)affinity groups

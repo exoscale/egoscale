@@ -12,6 +12,19 @@ type ResourceTag struct {
 	Value        string `json:"value,omitempty" doc:"tag value"`
 }
 
+// ListRequest builds the ListZones request
+func (tag ResourceTag) ListRequest() (ListCommand, error) {
+	req := &ListTags{
+		Customer:     tag.Customer,
+		Key:          tag.Key,
+		ResourceID:   tag.ResourceID,
+		ResourceType: tag.ResourceType,
+		Value:        tag.Value,
+	}
+
+	return req, nil
+}
+
 // CreateTags (Async) creates resource tag(s)
 type CreateTags struct {
 	ResourceIDs  []UUID        `json:"resourceids" doc:"list of resources to create the tags for"`
@@ -45,6 +58,8 @@ func (DeleteTags) asyncResponse() interface{} {
 	return new(booleanResponse)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListTags
+
 // ListTags list resource tag(s)
 type ListTags struct {
 	Customer     string `json:"customer,omitempty" doc:"list by customer name"`
@@ -62,8 +77,4 @@ type ListTags struct {
 type ListTagsResponse struct {
 	Count int           `json:"count"`
 	Tag   []ResourceTag `json:"tag"`
-}
-
-func (ListTags) response() interface{} {
-	return new(ListTagsResponse)
 }

@@ -71,6 +71,16 @@ type ResourceLimit struct {
 	ResourceTypeName string       `json:"resourcetypename,omitempty" doc:"resource type name. Values include user_vm, public_ip, volume, snapshot, template, network, cpu, memory, primary_storage, secondary_storage."`
 }
 
+// ListRequest builds the ListResourceLimits request
+func (limit ResourceLimit) ListRequest() (ListCommand, error) {
+	req := &ListResourceLimits{
+		ResourceType:     limit.ResourceType,
+		ResourceTypeName: limit.ResourceTypeName,
+	}
+
+	return req, nil
+}
+
 // APILimit represents the limit count
 type APILimit struct {
 	Account     string `json:"account,omitempty" doc:"the account name of the api remaining count"`
@@ -79,6 +89,8 @@ type APILimit struct {
 	APIIssued   int    `json:"apiIssued,omitempty" doc:"number of api already issued"`
 	ExpireAfter int64  `json:"expireAfter,omitempty" doc:"seconds left to reset counters"`
 }
+
+//go:generate go run generate/main.go -interface=Listable ListResourceLimits
 
 // ListResourceLimits lists the resource limits
 type ListResourceLimits struct {
@@ -96,10 +108,6 @@ type ListResourceLimits struct {
 type ListResourceLimitsResponse struct {
 	Count         int             `json:"count"`
 	ResourceLimit []ResourceLimit `json:"resourcelimit"`
-}
-
-func (ListResourceLimits) response() interface{} {
-	return new(ListResourceLimitsResponse)
 }
 
 // UpdateResourceLimit updates the resource limit

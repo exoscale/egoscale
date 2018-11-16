@@ -49,6 +49,8 @@ type NicSecondaryIP struct {
 	VirtualMachineID *UUID  `json:"virtualmachineid,omitempty" doc:"the ID of the vm"`
 }
 
+//go:generate go run generate/main.go -interface=Listable ListNics
+
 // ListNics represents the NIC search
 type ListNics struct {
 	Keyword          string `json:"keyword,omitempty" doc:"List by keyword"`
@@ -64,29 +66,6 @@ type ListNics struct {
 type ListNicsResponse struct {
 	Count int   `json:"count"`
 	Nic   []Nic `json:"nic"`
-}
-
-func (ListNics) response() interface{} {
-	return new(ListNicsResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListNics) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListNics) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListNics) each(resp interface{}, callback IterateItemFunc) {
-	nics := resp.(*ListNicsResponse)
-	for i := range nics.Nic {
-		if !callback(&(nics.Nic[i]), nil) {
-			break
-		}
-	}
 }
 
 // AddIPToNic (Async) represents the assignation of a secondary IP

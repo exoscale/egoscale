@@ -41,7 +41,77 @@ type RunstatusPage struct {
 	URL              string     `json:"url,omitempty"`
 }
 
-// CreateRunstatusPage creates runstatus page
+//RunstatusPageList runstatus page list
+type RunstatusPageList struct {
+	Count    int             `json:"count"`
+	Next     string          `json:"next"`
+	Previous string          `json:"previous"`
+	Results  []RunstatusPage `json:"results"`
+}
+
+//RunstatusIncident is a runstatus incident
+type RunstatusIncident struct {
+	EndDate    *time.Time       `json:"end_date,omitempty"`
+	Events     []RunstatusEvent `json:"events,omitempty"`
+	EventsURL  string           `json:"events_url,omitempty"`
+	ID         int              `json:"id,omitempty"`
+	PostMortem string           `json:"post_mortem,omitempty"`
+	RealTime   bool             `json:"real_time,omitempty"`
+	Services   []string         `json:"services"`
+	StartDate  *time.Time       `json:"start_date,omitempty"`
+	State      string           `json:"state"`
+	Status     string           `json:"status"`
+	StatusText string           `json:"status_text"`
+	Title      string           `json:"title"`
+	URL        string           `json:"url,omitempty"`
+}
+
+//RunstatusEvent is a runstatus event
+type RunstatusEvent struct {
+	Created *time.Time `json:"created"`
+	State   string     `json:"state"`
+	Status  string     `json:"status"`
+	Text    string     `json:"text"`
+}
+
+//RunstatusIncidentList is a list of incident
+type RunstatusIncidentList struct {
+	Incidents []RunstatusIncident `json:"incidents"`
+}
+
+// ListRunstatusIncident list runstatus incident
+func (client *Client) ListRunstatusIncident(ctx context.Context, page string) ([]RunstatusIncident, error) {
+	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/incidents", nil, "", "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	var p *RunstatusIncidentList
+	if err := json.Unmarshal(resp, &p); err != nil {
+		return nil, err
+	}
+
+	return p.Incidents, nil
+}
+
+// CreateRunstatusIncident create runstatus incident
+func (client *Client) CreateRunstatusIncident(ctx context.Context, page string, incident RunstatusIncident) error {
+	m, err := json.Marshal(incident)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.runstatusRequest(ctx, "/pages/"+page+"/incidents", nil, string(m), "POST")
+	return err
+}
+
+// DeleteRunstatusIncident delete runstatus incident
+func (client *Client) DeleteRunstatusIncident(ctx context.Context, page, id string) error {
+	_, err := client.runstatusRequest(ctx, "/pages/"+page+"/incidents/"+id, nil, "", "DELETE")
+	return err
+}
+
+// CreateRunstatusPage create runstatus page
 func (client *Client) CreateRunstatusPage(ctx context.Context, page RunstatusPage) (*RunstatusPage, error) {
 	m, err := json.Marshal(page)
 	if err != nil {
@@ -59,6 +129,27 @@ func (client *Client) CreateRunstatusPage(ctx context.Context, page RunstatusPag
 	}
 
 	return p, nil
+}
+
+// DeleteRunstatusPage delete runstatus page
+func (client *Client) DeleteRunstatusPage(ctx context.Context, pageName string) error {
+	_, err := client.runstatusRequest(ctx, "/pages/"+pageName, nil, "", "DELETE")
+	return err
+}
+
+// ListRunstatusPage delete runstatus page
+func (client *Client) ListRunstatusPage(ctx context.Context) ([]RunstatusPage, error) {
+	resp, err := client.runstatusRequest(ctx, "/pages", nil, "", "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	var p *RunstatusPageList
+	if err := json.Unmarshal(resp, &p); err != nil {
+		return nil, err
+	}
+
+	return p.Results, nil
 }
 
 func (client *Client) runstatusRequest(ctx context.Context, uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
@@ -87,27 +178,15 @@ func (client *Client) runstatusRequest(ctx context.Context, uri string, urlValue
 	//XXX WIP for testing
 	payload := fmt.Sprintf("%s%s%s", req.URL.String(), time, params)
 
-	println("<PAYLOAD>", payload, "<PAYLOAD>")
-
-	// val, err := url.ParseQuery(payload)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	query := strings.ToLower(payload)
 	mac := hmac.New(sha256.New, []byte(client.apiSecret))
-	_, err = mac.Write([]byte(query))
-	if err != nil {
-		return nil, err
-	}
-
+	mac.Write([]byte(payload))
 	signature := hex.EncodeToString(mac.Sum(nil))
 
 	var hdr = make(http.Header)
 
 	hdr.Add("Authorization", fmt.Sprintf("Exoscale-HMAC-SHA256 %s:%s", client.APIKey, signature))
-	hdr.Add("Exoscale-Date", fmt.Sprintf("%s", time))
-	//hdr.Add("User-Agent", fmt.Sprintf("exoscale/egoscale (%v)", Version))
+	hdr.Add("Exoscale-Date", time)
+	hdr.Add("User-Agent", fmt.Sprintf("exoscale/egoscale (%v)", Version))
 	hdr.Add("Accept", "application/json")
 	if params != "" {
 		hdr.Add("Content-Type", "application/json")
@@ -123,6 +202,9 @@ func (client *Client) runstatusRequest(ctx context.Context, uri string, urlValue
 	defer resp.Body.Close() // nolint: errcheck
 
 	contentType := resp.Header.Get("content-type")
+	if resp.StatusCode < 400 && contentType == "" {
+		return nil, nil
+	}
 	if !strings.Contains(contentType, "application/json") {
 		return nil, fmt.Errorf(`response content-type expected to be "application/json", got %q`, contentType)
 	}
@@ -142,25 +224,3 @@ func (client *Client) runstatusRequest(ctx context.Context, uri string, urlValue
 
 	return b, nil
 }
-
-// class ExoscaleAuth(AuthBase):
-//     def __init__(self, key, secret):
-//         self.key = key
-//         self.secret = secret.encode('utf-8')
-
-//     def __call__(self, request):
-//         body = request.body or b''
-//         if hasattr(body, 'encode'):
-//             body = body.encode('utf-8')
-//         date = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-//         string_to_sign = '{0}{1}'.format(request.url,
-//                                          date).encode('utf-8') + body
-//         signature = hmac.new(self.secret,
-//                              msg=string_to_sign,
-//                              digestmod=hashlib.sha256).hexdigest()
-//         auth = u'Exoscale-HMAC-SHA256 {0}:{1}'.format(self.key, signature)
-//         request.headers.update({
-//             'Exoscale-Date': date,
-//             'Authorization': auth,
-//         })
-//         return request

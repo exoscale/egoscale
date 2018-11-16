@@ -17,6 +17,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"text/template"
 
 	"github.com/exoscale/egoscale"
 )
@@ -41,6 +42,7 @@ var ignoredFields = []string{
 var source = flag.String("apis", "listApis.json", "listApis response in JSON")
 var cmd = flag.String("cmd", "", "command name (e.g. listZones)")
 var rtype = flag.String("type", "", "command return type name (e.g. Zone)")
+var interfaces = flag.String("interface", "", "interface(s) to be filled")
 
 var apiTypes = map[string]string{
 	"short":   "int16",
@@ -391,16 +393,7 @@ func (c *command) CheckParams(params []egoscale.APIParam) {
 	}
 }
 
-func main() {
-	flag.Parse()
-
-	sourceFile, _ := os.Open(*source)
-	decoder := json.NewDecoder(sourceFile)
-	apis := new(egoscale.ListAPIsResponse)
-	if err := decoder.Decode(&apis); err != nil {
-		panic(err)
-	}
-
+func loadGoSources() (*types.Info, *token.FileSet) {
 	files, err := filepath.Glob("*.go")
 	if err != nil {
 		panic(err)
@@ -432,6 +425,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	return info, fset
+}
+
+func checkSource(source, cmd, rtype string) {
+	info, fset := loadGoSources()
+
 	commands := make(map[string]*command)
 
 	for _, obj := range info.Defs {
@@ -448,13 +447,21 @@ func main() {
 		}
 	}
 
+	sourceFile, _ := os.Open(source)
+
+	decoder := json.NewDecoder(sourceFile)
+	apis := new(egoscale.ListAPIsResponse)
+	if err := decoder.Decode(&apis); err != nil {
+		panic(err)
+	}
+
 	for _, a := range apis.API {
 		name := strings.ToLower(a.Name)
 
 		if command, ok := commands[name]; ok {
-			if *cmd == "" || strings.ToLower(*cmd) == name {
-				if *rtype != "" {
-					if resp, ok := commands[strings.ToLower(*rtype)]; ok {
+			if cmd == "" || strings.ToLower(cmd) == name {
+				if rtype != "" {
+					if resp, ok := commands[strings.ToLower(rtype)]; ok {
 						command.setResponse(resp)
 					}
 				}
@@ -478,11 +485,11 @@ func main() {
 		pos := fset.Position(c.position)
 		er := len(c.errors)
 
-		if *cmd == "" {
+		if cmd == "" {
 			if er != 0 {
 				fmt.Printf("%5d %s: %s%s\n", er, pos, c.name, c.sync)
 			}
-		} else if strings.ToLower(*cmd) == name {
+		} else if strings.ToLower(cmd) == name {
 			errs := make([]string, 0, len(c.errors))
 			for k, es := range c.errors {
 				var b strings.Builder
@@ -524,8 +531,102 @@ func main() {
 		}
 	}
 
-	if *cmd != "" {
-		fmt.Printf("%s not found\n", *cmd)
+	if cmd != "" {
+		fmt.Printf("%s not found\n", cmd)
 		os.Exit(1)
 	}
 }
+
+func generateInterface(interfaces, typeName string) {
+	if !strings.HasPrefix(typeName, "List") || !strings.HasSuffix(typeName, "s") {
+		fmt.Printf("Error: typeName must be of form List<type>s, got %q\n", typeName)
+	}
+
+	end := len(typeName) - 1
+	if strings.HasSuffix(typeName, "ses") {
+		end--
+	}
+	keyName := typeName[4:end]
+
+	if interfaces == "Listable" {
+		t := template.Must(template.New("listable").Parse(listableTemplate))
+
+		fileName := fmt.Sprintf("%s_response.go", strings.ToLower(typeName[4:]))
+		file, _ := os.Create(fileName)
+
+		err := t.Execute(file, struct {
+			Package string
+			Type    string
+			Key     string
+		}{
+			Package: "egoscale",
+			Type:    typeName,
+			Key:     keyName,
+		})
+
+		if err != nil {
+			fmt.Printf("Error: %s\n", err)
+		}
+
+		return
+	}
+
+	fmt.Printf("unknown interface: %q", interfaces)
+}
+
+func main() {
+	flag.Parse()
+
+	if *interfaces != "" {
+		generateInterface(*interfaces, flag.Arg(0))
+		return
+	}
+
+	if *source != "" {
+		checkSource(*source, *cmd, *rtype)
+	}
+}
+
+const listableTemplate = `// code generated; DO NOT EDIT.
+
+package {{.Package}}
+
+import "fmt"
+
+func ({{.Type}}) response() interface{} {
+	return new({{.Type}}Response)
+}
+
+// ListRequest returns itself
+func (ls *{{.Type}}) ListRequest() (ListCommand, error) {
+	if ls == nil {
+		return nil, fmt.Errorf("%T cannot be nil", ls)
+	}
+	return ls, nil
+}
+
+// SetPage sets the current apge
+func (ls *{{.Type}}) SetPage(page int) {
+	ls.Page = page
+}
+
+// SetPageSize sets the page size
+func (ls *{{.Type}}) SetPageSize(pageSize int) {
+	ls.PageSize = pageSize
+}
+
+// each triggers the callback for each, valid answer or any non 404 issue
+func ({{.Type}}) each(resp interface{}, callback IterateItemFunc) {
+	items, ok := resp.(*{{.Type}}Response)
+	if !ok {
+		callback(nil, fmt.Errorf("wrong type, {{.Type}}Response was expected, got %T", resp))
+		return
+	}
+
+	for i := range items.{{.Key}} {
+		if !callback(&items.{{.Key}}[i], nil) {
+			break
+		}
+	}
+}
+`

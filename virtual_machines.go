@@ -473,6 +473,8 @@ func (GetVMPassword) response() interface{} {
 	return new(Password)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListVirtualMachines
+
 // ListVirtualMachines represents a search for a VM
 type ListVirtualMachines struct {
 	AffinityGroupID   *UUID         `json:"affinitygroupid,omitempty" doc:"list vms by affinity group"`
@@ -500,42 +502,6 @@ type ListVirtualMachines struct {
 type ListVirtualMachinesResponse struct {
 	Count          int              `json:"count"`
 	VirtualMachine []VirtualMachine `json:"virtualmachine"`
-}
-
-func (ListVirtualMachines) response() interface{} {
-	return new(ListVirtualMachinesResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListVirtualMachines) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListVirtualMachines) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListVirtualMachines) each(resp interface{}, callback IterateItemFunc) {
-	vms, ok := resp.(*ListVirtualMachinesResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListVirtualMachinesResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range vms.VirtualMachine {
-		if !callback(&vms.VirtualMachine[i], nil) {
-			break
-		}
-	}
-}
-
-// ListRequest returns itself
-func (ls *ListVirtualMachines) ListRequest() (ListCommand, error) {
-	if ls == nil {
-		return nil, fmt.Errorf("%T cannot be nil", ls)
-	}
-	return ls, nil
 }
 
 // AddNicToVirtualMachine (Async) adds a NIC to a VM

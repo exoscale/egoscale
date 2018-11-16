@@ -1,9 +1,5 @@
 package egoscale
 
-import (
-	"fmt"
-)
-
 // ServiceOffering corresponds to the Compute Offerings
 //
 // A service offering correspond to some hardware features (CPU, RAM).
@@ -58,6 +54,8 @@ func (so ServiceOffering) ListRequest() (ListCommand, error) {
 	return req, nil
 }
 
+//go:generate go run generate/main.go -interface=Listable ListServiceOfferings
+
 // ListServiceOfferings represents a query for service offerings
 type ListServiceOfferings struct {
 	ID               *UUID  `json:"id,omitempty" doc:"ID of the service offering"`
@@ -76,40 +74,4 @@ type ListServiceOfferings struct {
 type ListServiceOfferingsResponse struct {
 	Count           int               `json:"count"`
 	ServiceOffering []ServiceOffering `json:"serviceoffering"`
-}
-
-func (ListServiceOfferings) response() interface{} {
-	return new(ListServiceOfferingsResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListServiceOfferings) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListServiceOfferings) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListServiceOfferings) each(resp interface{}, callback IterateItemFunc) {
-	sos, ok := resp.(*ListServiceOfferingsResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListServiceOfferingsResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range sos.ServiceOffering {
-		if !callback(&sos.ServiceOffering[i], nil) {
-			break
-		}
-	}
-}
-
-// ListRequest returns itself
-func (ls *ListServiceOfferings) ListRequest() (ListCommand, error) {
-	if ls == nil {
-		return nil, fmt.Errorf("%T cannot be nil", ls)
-	}
-	return ls, nil
 }

@@ -197,6 +197,8 @@ func (RevokeSecurityGroupEgress) asyncResponse() interface{} {
 	return new(booleanResponse)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListSecurityGroups
+
 // ListSecurityGroups represents a search for security groups
 type ListSecurityGroups struct {
 	ID                *UUID  `json:"id,omitempty" doc:"list the security group by the id provided"`
@@ -212,40 +214,4 @@ type ListSecurityGroups struct {
 type ListSecurityGroupsResponse struct {
 	Count         int             `json:"count"`
 	SecurityGroup []SecurityGroup `json:"securitygroup"`
-}
-
-func (ListSecurityGroups) response() interface{} {
-	return new(ListSecurityGroupsResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListSecurityGroups) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListSecurityGroups) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListSecurityGroups) each(resp interface{}, callback IterateItemFunc) {
-	sgs, ok := resp.(*ListSecurityGroupsResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListSecurityGroupsResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range sgs.SecurityGroup {
-		if !callback(&sgs.SecurityGroup[i], nil) {
-			break
-		}
-	}
-}
-
-// ListRequest returns itself
-func (ls *ListSecurityGroups) ListRequest() (ListCommand, error) {
-	if ls == nil {
-		return nil, fmt.Errorf("%T cannot be nil", ls)
-	}
-	return ls, nil
 }

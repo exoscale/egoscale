@@ -185,7 +185,6 @@ func (client *Client) ListWithContext(ctx context.Context, g Listable) (s []inte
 		err = e
 		return
 	}
-
 	client.PaginateWithContext(ctx, req, func(item interface{}, e error) bool {
 		if item != nil {
 			s = append(s, item)
@@ -241,7 +240,6 @@ func (client *Client) AsyncListWithContext(ctx context.Context, g Listable) (<-c
 			errChan <- err
 			return
 		}
-
 		client.PaginateWithContext(ctx, req, func(item interface{}, e error) bool {
 			if item != nil {
 				outChan <- item

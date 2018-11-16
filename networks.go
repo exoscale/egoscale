@@ -1,7 +1,6 @@
 package egoscale
 
 import (
-	"fmt"
 	"net"
 	"net/url"
 )
@@ -195,6 +194,8 @@ func (DeleteNetwork) asyncResponse() interface{} {
 	return new(booleanResponse)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListNetworks
+
 // ListNetworks represents a query to a network
 type ListNetworks struct {
 	CanUseForDeploy   *bool         `json:"canusefordeploy,omitempty" doc:"List networks available for vm deployment"`
@@ -212,42 +213,6 @@ type ListNetworks struct {
 	Type              string        `json:"type,omitempty" doc:"The type of the network. Supported values are: Isolated and Shared"`
 	ZoneID            *UUID         `json:"zoneid,omitempty" doc:"The Zone ID of the network"`
 	_                 bool          `name:"listNetworks" description:"Lists all available networks."`
-}
-
-func (ListNetworks) response() interface{} {
-	return new(ListNetworksResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListNetworks) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListNetworks) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListNetworks) each(resp interface{}, callback IterateItemFunc) {
-	networks, ok := resp.(*ListNetworksResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("type error: ListNetworksResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range networks.Network {
-		if !callback(&networks.Network[i], nil) {
-			break
-		}
-	}
-}
-
-// ListRequest returns itself
-func (ls *ListNetworks) ListRequest() (ListCommand, error) {
-	if ls == nil {
-		return nil, fmt.Errorf("%T cannot be nil", ls)
-	}
-	return ls, nil
 }
 
 // ListNetworksResponse represents the list of networks

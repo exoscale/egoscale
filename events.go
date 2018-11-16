@@ -13,10 +13,23 @@ type Event struct {
 	UserName    string `json:"username,omitempty" doc:"the name of the user who performed the action (can be different from the account if an admin is performing an action for a user, e.g. starting/stopping a user's virtual machine)"`
 }
 
+// ListRequest builds the ListZones request
+func (event Event) ListRequest() (ListCommand, error) {
+	req := &ListEvents{
+		ID:    event.ID,
+		Level: event.Level,
+		Type:  event.Type,
+	}
+
+	return req, nil
+}
+
 // EventType represent a type of event
 type EventType struct {
 	Name string `json:"name,omitempty" doc:"Event Type"`
 }
+
+//go:generate go run generate/main.go -interface=Listable ListEvents
 
 // ListEvents list the events
 type ListEvents struct {
@@ -37,10 +50,6 @@ type ListEvents struct {
 type ListEventsResponse struct {
 	Count int     `json:"count"`
 	Event []Event `json:"event"`
-}
-
-func (ListEvents) response() interface{} {
-	return new(ListEventsResponse)
 }
 
 // ListEventTypes list the event types

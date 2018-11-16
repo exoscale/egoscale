@@ -1,7 +1,5 @@
 package egoscale
 
-import "fmt"
-
 // SnapshotState represents the Snapshot.State enum
 //
 // See: https://github.com/apache/cloudstack/blob/master/api/src/main/java/com/cloud/storage/Snapshot.java
@@ -83,6 +81,8 @@ func (ss Snapshot) ListRequest() (ListCommand, error) {
 	return req, nil
 }
 
+//go:generate go run generate/main.go -interface=Listable ListSnapshots
+
 // ListSnapshots lists the volume snapshots
 type ListSnapshots struct {
 	ID           *UUID         `json:"id,omitempty" doc:"lists snapshot by snapshot ID"`
@@ -102,42 +102,6 @@ type ListSnapshots struct {
 type ListSnapshotsResponse struct {
 	Count    int        `json:"count"`
 	Snapshot []Snapshot `json:"snapshot"`
-}
-
-func (ListSnapshots) response() interface{} {
-	return new(ListSnapshotsResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListSnapshots) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListSnapshots) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListSnapshots) each(resp interface{}, callback IterateItemFunc) {
-	sss, ok := resp.(*ListSnapshotsResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListSnapshotsResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range sss.Snapshot {
-		if !callback(&sss.Snapshot[i], nil) {
-			break
-		}
-	}
-}
-
-// ListRequest returns itself
-func (ls *ListSnapshots) ListRequest() (ListCommand, error) {
-	if ls == nil {
-		return nil, fmt.Errorf("%T cannot be nil", ls)
-	}
-	return ls, nil
 }
 
 // DeleteSnapshot (Async) deletes a snapshot of a disk volume

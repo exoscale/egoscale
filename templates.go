@@ -1,9 +1,5 @@
 package egoscale
 
-import (
-	"fmt"
-)
-
 // Template represents a machine to be deployed
 //
 // See: http://docs.cloudstack.apache.org/projects/cloudstack-administration/en/latest/templates.html
@@ -66,6 +62,8 @@ func (temp Template) ListRequest() (ListCommand, error) {
 	return req, nil
 }
 
+//go:generate go run generate/main.go -interface=Listable ListTemplates
+
 // ListTemplates represents a template query filter
 type ListTemplates struct {
 	TemplateFilter string        `json:"templatefilter" doc:"Possible values are \"featured\", \"self\", \"selfexecutable\",\"sharedexecutable\",\"executable\", and \"community\". * featured : templates that have been marked as featured and public. * self : templates that have been registered or created by the calling user. * selfexecutable : same as self, but only returns templates that can be used to deploy a new VM. * sharedexecutable : templates ready to be deployed that have been granted to the calling user by another user. * executable : templates that are owned by the calling user, or public templates, that can be used to deploy a VM. * community : templates that have been marked as public but not featured."`
@@ -84,42 +82,6 @@ type ListTemplates struct {
 type ListTemplatesResponse struct {
 	Count    int        `json:"count"`
 	Template []Template `json:"template"`
-}
-
-func (ListTemplates) response() interface{} {
-	return new(ListTemplatesResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListTemplates) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListTemplates) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListTemplates) each(resp interface{}, callback IterateItemFunc) {
-	temps, ok := resp.(*ListTemplatesResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListTemplatesResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range temps.Template {
-		if !callback(&temps.Template[i], nil) {
-			break
-		}
-	}
-}
-
-// ListRequest returns itself
-func (ls *ListTemplates) ListRequest() (ListCommand, error) {
-	if ls == nil {
-		return nil, fmt.Errorf("%T cannot be nil", ls)
-	}
-	return ls, nil
 }
 
 // CreateTemplate (Async) represents a template creation

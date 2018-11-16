@@ -196,6 +196,10 @@ func TestClientGetFailure(t *testing.T) {
 		(*ListSnapshots)(nil),
 		&VirtualMachine{},
 		(*ListVirtualMachines)(nil),
+		&Volume{},
+		(*ListVolumes)(nil),
+		&Zone{},
+		(*ListZones)(nil),
 	}
 
 	for _, thing := range things {
@@ -226,8 +230,8 @@ func TestClientGetNone(t *testing.T) {
 	}{
 		{"zones", &Zone{ID: id}},
 		{"zones", &Zone{Name: "test zone"}},
-		{"publicipaddresses", &IPAddress{ID: id}},
-		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},
+		{"publicipaddresses", &IPAddress{ID: id, IsElastic: true, ForVirtualNetwork: true}},
+		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1"), IsSourceNat: true}},
 		{"sshkeypairs", &SSHKeyPair{Name: "1"}},
 		{"sshkeypairs", &SSHKeyPair{Fingerprint: "test ssh keypair"}},
 		{"affinitygroups", &AffinityGroup{ID: id}},

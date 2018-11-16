@@ -2,6 +2,9 @@ package egoscale
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -39,12 +42,8 @@ type RunstatusPage struct {
 }
 
 // CreateRunstatusPage creates runstatus page
-func (client *Client) CreateRunstatusPage(ctx context.Context, name string) (*RunstatusPage, error) {
-	m, err := json.Marshal(RunstatusPage{
-		Name:      name,
-		Subdomain: name,
-		Created:   nil,
-	})
+func (client *Client) CreateRunstatusPage(ctx context.Context, page RunstatusPage) (*RunstatusPage, error) {
+	m, err := json.Marshal(page)
 	if err != nil {
 		return nil, err
 	}
@@ -83,21 +82,26 @@ func (client *Client) runstatusRequest(ctx context.Context, uri string, urlValue
 		return nil, err
 	}
 
-	time := time.Now().Format("2006-01-02T15:04:05-0700")
+	time := time.Now().Local().Format("2006-01-02T15:04:05-0700")
 
 	//XXX WIP for testing
 	payload := fmt.Sprintf("%s%s%s", req.URL.String(), time, params)
 
 	println("<PAYLOAD>", payload, "<PAYLOAD>")
 
-	val, err := url.ParseQuery(payload)
+	// val, err := url.ParseQuery(payload)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	query := strings.ToLower(payload)
+	mac := hmac.New(sha256.New, []byte(client.apiSecret))
+	_, err = mac.Write([]byte(query))
 	if err != nil {
 		return nil, err
 	}
-	signature, err := client.Sign(val)
-	if err != nil {
-		return nil, err
-	}
+
+	signature := hex.EncodeToString(mac.Sum(nil))
 
 	var hdr = make(http.Header)
 

@@ -415,6 +415,68 @@ func TestClientTrace(t *testing.T) {
 	}
 }
 
+// Things that can be listed, paginated
+
+type lsTest struct {
+	name      string
+	listables []Listable
+}
+
+var lsTests = []lsTest{
+	{"zones", []Listable{
+		&Zone{},
+		&ListZones{},
+	}},
+	{"publicipaddresses", []Listable{
+		&IPAddress{},
+		&ListPublicIPAddresses{},
+	}},
+	{"sshkeypairs", []Listable{
+		&SSHKeyPair{},
+		&ListSSHKeyPairs{},
+	}},
+	{"affinitygroups", []Listable{
+		&AffinityGroup{},
+		&ListAffinityGroups{},
+	}},
+	{"securitygroups", []Listable{
+		&SecurityGroup{},
+		&ListSecurityGroups{},
+	}},
+	{"virtualmachines", []Listable{
+		&VirtualMachine{},
+		&ListVirtualMachines{},
+	}},
+	{"volumes", []Listable{
+		&Volume{},
+		&ListVolumes{},
+	}},
+	{"templates", []Listable{
+		&Template{IsFeatured: true},
+		&ListTemplates{TemplateFilter: "featured"},
+	}},
+	{"serviceofferings", []Listable{
+		&ServiceOffering{},
+		&ListServiceOfferings{},
+	}},
+	{"networkofferings", []Listable{
+		&NetworkOffering{},
+		&ListNetworkOfferings{},
+	}},
+	{"accounts", []Listable{
+		&Account{},
+		&ListAccounts{},
+	}},
+	{"nics", []Listable{
+		&Nic{},
+		&ListNics{},
+	}},
+	{"snapshots", []Listable{
+		&Snapshot{},
+		&ListSnapshots{},
+	}},
+}
+
 func TestClientList(t *testing.T) {
 	body := `
 	{"list%sresponse": {
@@ -434,69 +496,12 @@ func TestClientList(t *testing.T) {
 		"snapshot": [{}, {}, {}, {}]
 	}}`
 
-	tests := []struct {
-		name      string
-		listables []Listable
-	}{
-		{"zones", []Listable{
-			&Zone{},
-			&ListZones{},
-		}},
-		{"publicipaddresses", []Listable{
-			&IPAddress{},
-			&ListPublicIPAddresses{},
-		}},
-		{"sshkeypairs", []Listable{
-			&SSHKeyPair{},
-			&ListSSHKeyPairs{},
-		}},
-		{"affinitygroups", []Listable{
-			&AffinityGroup{},
-			&ListAffinityGroups{},
-		}},
-		{"securitygroups", []Listable{
-			&SecurityGroup{},
-			&ListSecurityGroups{},
-		}},
-		{"virtualmachines", []Listable{
-			&VirtualMachine{},
-			&ListVirtualMachines{},
-		}},
-		{"volumes", []Listable{
-			&Volume{},
-			&ListVolumes{},
-		}},
-		{"templates", []Listable{
-			&Template{IsFeatured: true},
-			&ListTemplates{TemplateFilter: "featured"},
-		}},
-		{"serviceofferings", []Listable{
-			&ServiceOffering{},
-			&ListServiceOfferings{},
-		}},
-		{"networkofferings", []Listable{
-			&NetworkOffering{},
-			&ListNetworkOfferings{},
-		}},
-		{"accounts", []Listable{
-			&Account{},
-			&ListAccounts{},
-		}},
-		{"nics", []Listable{
-			&Nic{},
-			&ListNics{},
-		}},
-		{"snapshots", []Listable{
-			&Snapshot{},
-			&ListSnapshots{},
-		}},
-	}
-
-	for _, tt := range tests {
-		ts := newServer(
-			response{200, jsonContentType, fmt.Sprintf(body, tt.name)},
-			response{200, jsonContentType, fmt.Sprintf(body, tt.name)},
-		)
+	for _, tt := range lsTests {
+		responses := make([]response, len(tt.listables))
+		for i := range tt.listables {
+			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name)}
+		}
+		ts := newServer(responses...)
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
@@ -524,70 +529,13 @@ func TestClientPaginateError(t *testing.T) {
 		"uuidList": []
 	}}
 `
+	for _, tt := range lsTests {
+		responses := make([]response, len(tt.listables))
+		for i := range tt.listables {
+			responses[i] = response{431, jsonContentType, fmt.Sprintf(body, tt.name)}
+		}
+		ts := newServer(responses...)
 
-	tests := []struct {
-		name      string
-		listables []Listable
-	}{
-		{"zones", []Listable{
-			&Zone{},
-			&ListZones{},
-		}},
-		{"publicipaddresses", []Listable{
-			&IPAddress{},
-			&ListPublicIPAddresses{},
-		}},
-		{"sshkeypairs", []Listable{
-			&SSHKeyPair{},
-			&ListSSHKeyPairs{},
-		}},
-		{"affinitygroups", []Listable{
-			&AffinityGroup{},
-			&ListAffinityGroups{},
-		}},
-		{"securitygroups", []Listable{
-			&SecurityGroup{},
-			&ListSecurityGroups{},
-		}},
-		{"virtualmachines", []Listable{
-			&VirtualMachine{},
-			&ListVirtualMachines{},
-		}},
-		{"volumes", []Listable{
-			&Volume{},
-			&ListVolumes{},
-		}},
-		{"templates", []Listable{
-			&Template{IsFeatured: true},
-			&ListTemplates{TemplateFilter: "featured"},
-		}},
-		{"serviceofferings", []Listable{
-			&ServiceOffering{},
-			&ListServiceOfferings{},
-		}},
-		{"networkofferings", []Listable{
-			&NetworkOffering{},
-			&ListNetworkOfferings{},
-		}},
-		{"accounts", []Listable{
-			&Account{},
-			&ListAccounts{},
-		}},
-		{"nics", []Listable{
-			&Nic{},
-			&ListNics{},
-		}},
-		{"snapshots", []Listable{
-			&Snapshot{},
-			&ListSnapshots{},
-		}},
-	}
-
-	for _, tt := range tests {
-		ts := newServer(
-			response{431, jsonContentType, fmt.Sprintf(body, tt.name)},
-			response{431, jsonContentType, fmt.Sprintf(body, tt.name)},
-		)
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
 		for _, listable := range tt.listables {

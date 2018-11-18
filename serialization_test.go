@@ -2,7 +2,6 @@ package egoscale
 
 import (
 	"net"
-	"net/url"
 	"strings"
 	"testing"
 )
@@ -74,8 +73,7 @@ func TestPrepareValues(t *testing.T) {
 		MAC: MAC48(0x01, 0x23, 0x45, 0x67, 0x89, 0xab),
 	}
 
-	params := url.Values{}
-	err := prepareValues("", params, profile)
+	params, err := prepareValues("", profile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,8 +166,7 @@ func TestPrepareValuesStringRequired(t *testing.T) {
 		RequiredField string `json:"requiredfield"`
 	}{}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	_, err := prepareValues("", &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -180,8 +177,7 @@ func TestPrepareValuesBoolRequired(t *testing.T) {
 		RequiredField bool `json:"requiredfield"`
 	}{}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	params, err := prepareValues("", &profile)
 	if err != nil {
 		t.Fatal(nil)
 	}
@@ -195,8 +191,7 @@ func TestPrepareValuesBoolPtrRequired(t *testing.T) {
 		RequiredField *bool `json:"requiredfield"`
 	}{}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	_, err := prepareValues("", &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -207,8 +202,7 @@ func TestPrepareValuesIntRequired(t *testing.T) {
 		RequiredField int64 `json:"requiredfield"`
 	}{}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	_, err := prepareValues("", &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -219,8 +213,7 @@ func TestPrepareValuesUintRequired(t *testing.T) {
 		RequiredField uint64 `json:"requiredfield"`
 	}{}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	_, err := prepareValues("", &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -231,8 +224,7 @@ func TestPrepareValuesBytesRequired(t *testing.T) {
 		RequiredField []byte `json:"requiredfield"`
 	}{}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	_, err := prepareValues("", &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -243,8 +235,7 @@ func TestPrepareValuesSliceString(t *testing.T) {
 		RequiredField []string `json:"requiredfield"`
 	}{}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	_, err := prepareValues("", &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -255,8 +246,7 @@ func TestPrepareValuesIP(t *testing.T) {
 		RequiredField net.IP `json:"requiredfield"`
 	}{}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	_, err := prepareValues("", &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -269,8 +259,7 @@ func TestPrepareValuesIPNil(t *testing.T) {
 		RequiredField: net.IP{},
 	}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	_, err := prepareValues("", &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -281,8 +270,7 @@ func TestPrepareValuesMap(t *testing.T) {
 		RequiredField map[string]string `json:"requiredfield"`
 	}{}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	_, err := prepareValues("", &profile)
 	if err == nil {
 		t.Errorf("It should have failed")
 	}
@@ -307,8 +295,7 @@ func TestPrepareValuesBoolPtr(t *testing.T) {
 		IsFour:  f,
 	}
 
-	params := url.Values{}
-	err := prepareValues("", params, &profile)
+	params, err := prepareValues("", &profile)
 	if err != nil {
 		t.Error(err)
 	}

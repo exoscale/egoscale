@@ -281,10 +281,9 @@ func (client *Client) AsyncRequestWithContext(ctx context.Context, asyncCommand 
 
 // Payload builds the HTTP request params from the given command
 func (client *Client) Payload(command Command) (url.Values, error) {
-	params := url.Values{}
-	err := prepareValues("", params, command)
+	params, err := prepareValues("", command)
 	if err != nil {
-		return params, err
+		return nil, err
 	}
 	if hookReq, ok := command.(onBeforeHook); ok {
 		if err := hookReq.onBeforeSend(params); err != nil {

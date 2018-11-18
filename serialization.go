@@ -54,7 +54,9 @@ func info(command interface{}) (*CommandInfo, error) {
 // prepareValues uses a command to build a POST request
 //
 // command is not a Command so it's easier to Test
-func prepareValues(prefix string, params url.Values, command interface{}) error {
+func prepareValues(prefix string, command interface{}) (url.Values, error) {
+	params := url.Values{}
+
 	value := reflect.ValueOf(command)
 	typeof := reflect.TypeOf(command)
 
@@ -66,7 +68,7 @@ func prepareValues(prefix string, params url.Values, command interface{}) error 
 
 	// Checking for nil commands
 	if !value.IsValid() {
-		return fmt.Errorf("cannot serialize the invalid value %#v", command)
+		return nil, fmt.Errorf("cannot serialize the invalid value %#v", command)
 	}
 
 	for i := 0; i < typeof.NumField(); i++ {
@@ -125,7 +127,7 @@ func prepareValues(prefix string, params url.Values, command interface{}) error 
 			}
 
 			if err != nil {
-				return fmt.Errorf("%s.%s (%v) %s", typeof.Name(), n, val.Kind(), err)
+				return nil, fmt.Errorf("%s.%s (%v) %s", typeof.Name(), n, val.Kind(), err)
 			}
 
 			switch v := value.(type) {
@@ -145,7 +147,7 @@ func prepareValues(prefix string, params url.Values, command interface{}) error 
 		}
 	}
 
-	return nil
+	return params, nil
 }
 
 func prepareInt(v int64, required bool) (*string, error) {
@@ -209,9 +211,15 @@ func prepareList(prefix string, slice interface{}) (url.Values, error) {
 	value := reflect.ValueOf(slice)
 
 	for i := 0; i < value.Len(); i++ {
-		err := prepareValues(fmt.Sprintf("%s[%d].", prefix, i), params, value.Index(i).Interface())
+		ps, err := prepareValues(fmt.Sprintf("%s[%d].", prefix, i), value.Index(i).Interface())
 		if err != nil {
-			return params, err
+			return nil, err
+		}
+
+		for k, xs := range ps {
+			for _, x := range xs {
+				params.Add(k, x)
+			}
 		}
 	}
 

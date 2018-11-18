@@ -140,9 +140,9 @@ func (vm VirtualMachine) ListRequest() (ListCommand, error) {
 
 // DefaultNic returns the default nic
 func (vm VirtualMachine) DefaultNic() *Nic {
-	for _, nic := range vm.Nic {
+	for i, nic := range vm.Nic {
 		if nic.IsDefault {
-			return &nic
+			return &vm.Nic[i]
 		}
 	}
 
@@ -166,8 +166,9 @@ func (vm VirtualMachine) NicsByType(nicType string) []Nic {
 	for _, nic := range vm.Nic {
 		if nic.Type == nicType {
 			// XXX The API forgets to specify it
-			nic.VirtualMachineID = vm.ID
-			nics = append(nics, nic)
+			n := nic
+			n.VirtualMachineID = vm.ID
+			nics = append(nics, n)
 		}
 	}
 	return nics
@@ -179,8 +180,9 @@ func (vm VirtualMachine) NicsByType(nicType string) []Nic {
 func (vm VirtualMachine) NicByNetworkID(networkID UUID) *Nic {
 	for _, nic := range vm.Nic {
 		if nic.NetworkID.Equal(networkID) {
-			nic.VirtualMachineID = vm.ID
-			return &nic
+			n := nic
+			n.VirtualMachineID = vm.ID
+			return &n
 		}
 	}
 	return nil
@@ -190,8 +192,9 @@ func (vm VirtualMachine) NicByNetworkID(networkID UUID) *Nic {
 func (vm VirtualMachine) NicByID(nicID UUID) *Nic {
 	for _, nic := range vm.Nic {
 		if nic.ID.Equal(nicID) {
-			nic.VirtualMachineID = vm.ID
-			return &nic
+			n := nic
+			n.VirtualMachineID = vm.ID
+			return &n
 		}
 	}
 

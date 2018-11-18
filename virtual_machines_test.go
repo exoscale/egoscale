@@ -251,3 +251,18 @@ func TestNicNoDefault(t *testing.T) {
 		t.Errorf("Default NIC wasn't nil?")
 	}
 }
+
+func TestUserDataDecode(t *testing.T) {
+	userDatas := []VirtualMachineUserData{{
+		UserData: "aGVsbG8h",
+	}, {
+		UserData: "H4sIAEd08VsC/8tIzcnJVwQAYMmGmgYAAAA=",
+	}}
+
+	expected := "hello!"
+	for _, tt := range userDatas {
+		if output, _ := tt.Decode(); output != "hello!" {
+			t.Errorf("bad userdata decoding, want: %q, got: %q", expected, output)
+		}
+	}
+}

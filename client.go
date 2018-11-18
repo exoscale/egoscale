@@ -342,9 +342,9 @@ func (client *Client) APIDescription(command Command) string {
 
 // Response returns the response structure of the given command
 func (client *Client) Response(command Command) interface{} {
-	switch command.(type) {
+	switch c := command.(type) {
 	case AsyncCommand:
-		return (command.(AsyncCommand)).asyncResponse()
+		return c.asyncResponse()
 	default:
 		return command.response()
 	}

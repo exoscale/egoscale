@@ -98,16 +98,7 @@ func prepareValues(prefix string, params url.Values, command interface{}) error 
 				value, err = prepareString(val.String(), required)
 
 			case reflect.Bool:
-				v := val.Bool()
-				if !v {
-					if required {
-						s := "false"
-						value = &s
-					}
-				} else {
-					s := "true"
-					value = &s
-				}
+				value, err = prepareBool(val.Bool(), required)
 
 			case reflect.Map:
 				if val.Len() == 0 {
@@ -125,17 +116,7 @@ func prepareValues(prefix string, params url.Values, command interface{}) error 
 				value, err = prepareSlice(name, field.Type, val, required)
 
 			case reflect.Struct:
-				i := val.Interface()
-				s, ok := i.(fmt.Stringer)
-				if !ok {
-					err = fmt.Errorf("struct field not a Stringer")
-				} else if s != nil {
-					value, err = prepareString(s.String(), required)
-				} else {
-					if required {
-						err = fmt.Errorf("field is required, got %#v", s)
-					}
-				}
+				value, err = prepareStruct(val.Interface(), required)
 
 			default:
 				if required {
@@ -211,6 +192,18 @@ func prepareString(v string, required bool) (*string, error) {
 	return &v, nil
 }
 
+func prepareBool(v bool, required bool) (*string, error) {
+	value := strconv.FormatBool(v)
+	if !v {
+		if required {
+			return &value, nil
+		}
+		return nil, nil
+	}
+
+	return &value, nil
+}
+
 func prepareList(prefix string, slice interface{}) (url.Values, error) {
 	params := url.Values{}
 	value := reflect.ValueOf(slice)
@@ -264,19 +257,9 @@ func preparePtr(kind reflect.Kind, val reflect.Value, required bool) (*string, e
 
 	switch kind {
 	case reflect.Bool:
-		value := strconv.FormatBool(val.Elem().Bool())
-		return &value, nil
+		return prepareBool(val.Elem().Bool(), true)
 	case reflect.Struct:
-		i := val.Interface()
-		s, ok := i.(fmt.Stringer)
-		if !ok {
-			return nil, fmt.Errorf("field is not a Stringer")
-		}
-		value := s.String()
-		if value == "" && required {
-			return nil, fmt.Errorf("field is required, got empty value")
-		}
-		return &value, nil
+		return prepareStruct(val.Interface(), required)
 	default:
 		return nil, fmt.Errorf("kind %v is not supported as a ptr", kind)
 	}
@@ -365,6 +348,21 @@ func prepareSlice(name string, fieldType reflect.Type, val reflect.Value, requir
 	}
 
 	return nil, nil
+}
+
+func prepareStruct(i interface{}, required bool) (*string, error) {
+	s, ok := i.(fmt.Stringer)
+	if !ok {
+		return nil, fmt.Errorf("struct field not a Stringer")
+	}
+
+	if s == nil {
+		if required {
+			return nil, fmt.Errorf("field is required, got %#v", s)
+		}
+	}
+
+	return prepareString(s.String(), required)
 }
 
 // ExtractJSONTag returns the variable name or defaultName as well as if the field is required (!omitempty)

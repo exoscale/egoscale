@@ -2,6 +2,7 @@ package egoscale
 
 import (
 	"encoding/json"
+	"net"
 	"testing"
 )
 
@@ -37,5 +38,19 @@ func TestCIDRUnmarshalJSONFailure(t *testing.T) {
 		if err := json.Unmarshal([]byte(s), nic); err == nil {
 			t.Errorf("an error was expected, %#v", nic)
 		}
+	}
+}
+
+func TestCIDREqual(t *testing.T) {
+	ip4CIDR := MustParseCIDR("10.0.0.0/24")
+	expected := CIDR{
+		net.IPNet{
+			net.IPv4(10, 0, 0, 0),
+			net.IPv4Mask(255, 255, 255, 0),
+		},
+	}
+
+	if !expected.Equal(*ip4CIDR) {
+		t.Errorf("the two CIDR should have been equal, want: %v, got: %v", expected, ip4CIDR)
 	}
 }

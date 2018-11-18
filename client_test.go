@@ -422,59 +422,61 @@ type lsTest struct {
 	listables []Listable
 }
 
-var lsTests = []lsTest{
-	{"zones", []Listable{
-		&Zone{},
-		&ListZones{},
-	}},
-	{"publicipaddresses", []Listable{
-		&IPAddress{},
-		&ListPublicIPAddresses{},
-	}},
-	{"sshkeypairs", []Listable{
-		&SSHKeyPair{},
-		&ListSSHKeyPairs{},
-	}},
-	{"affinitygroups", []Listable{
-		&AffinityGroup{},
-		&ListAffinityGroups{},
-	}},
-	{"securitygroups", []Listable{
-		&SecurityGroup{},
-		&ListSecurityGroups{},
-	}},
-	{"virtualmachines", []Listable{
-		&VirtualMachine{},
-		&ListVirtualMachines{},
-	}},
-	{"volumes", []Listable{
-		&Volume{},
-		&ListVolumes{},
-	}},
-	{"templates", []Listable{
-		&Template{IsFeatured: true},
-		&ListTemplates{TemplateFilter: "featured"},
-	}},
-	{"serviceofferings", []Listable{
-		&ServiceOffering{},
-		&ListServiceOfferings{},
-	}},
-	{"networkofferings", []Listable{
-		&NetworkOffering{},
-		&ListNetworkOfferings{},
-	}},
-	{"accounts", []Listable{
-		&Account{},
-		&ListAccounts{},
-	}},
-	{"nics", []Listable{
-		&Nic{},
-		&ListNics{},
-	}},
-	{"snapshots", []Listable{
-		&Snapshot{},
-		&ListSnapshots{},
-	}},
+func lsTests() []lsTest {
+	return []lsTest{
+		{"zones", []Listable{
+			&Zone{},
+			&ListZones{},
+		}},
+		{"publicipaddresses", []Listable{
+			&IPAddress{},
+			&ListPublicIPAddresses{},
+		}},
+		{"sshkeypairs", []Listable{
+			&SSHKeyPair{},
+			&ListSSHKeyPairs{},
+		}},
+		{"affinitygroups", []Listable{
+			&AffinityGroup{},
+			&ListAffinityGroups{},
+		}},
+		{"securitygroups", []Listable{
+			&SecurityGroup{},
+			&ListSecurityGroups{},
+		}},
+		{"virtualmachines", []Listable{
+			&VirtualMachine{},
+			&ListVirtualMachines{},
+		}},
+		{"volumes", []Listable{
+			&Volume{},
+			&ListVolumes{},
+		}},
+		{"templates", []Listable{
+			&Template{IsFeatured: true},
+			&ListTemplates{TemplateFilter: "featured"},
+		}},
+		{"serviceofferings", []Listable{
+			&ServiceOffering{},
+			&ListServiceOfferings{},
+		}},
+		{"networkofferings", []Listable{
+			&NetworkOffering{},
+			&ListNetworkOfferings{},
+		}},
+		{"accounts", []Listable{
+			&Account{},
+			&ListAccounts{},
+		}},
+		{"nics", []Listable{
+			&Nic{},
+			&ListNics{},
+		}},
+		{"snapshots", []Listable{
+			&Snapshot{},
+			&ListSnapshots{},
+		}},
+	}
 }
 
 func TestClientList(t *testing.T) {
@@ -496,7 +498,7 @@ func TestClientList(t *testing.T) {
 		"snapshot": [{}, {}, {}, {}]
 	}}`
 
-	for _, tt := range lsTests {
+	for _, tt := range lsTests() {
 		responses := make([]response, len(tt.listables))
 		for i := range tt.listables {
 			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name)}
@@ -529,7 +531,7 @@ func TestClientPaginateError(t *testing.T) {
 		"uuidList": []
 	}}
 `
-	for _, tt := range lsTests {
+	for _, tt := range lsTests() {
 		responses := make([]response, len(tt.listables))
 		for i := range tt.listables {
 			responses[i] = response{431, jsonContentType, fmt.Sprintf(body, tt.name)}
@@ -538,7 +540,8 @@ func TestClientPaginateError(t *testing.T) {
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
-		for _, listable := range tt.listables {
+		for i := range tt.listables {
+			listable := tt.listables[i]
 			cs.Paginate(listable, func(i interface{}, e error) bool {
 				t.Errorf("no %T were expected %v %s", listable, i, e)
 				return false

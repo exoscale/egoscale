@@ -19,6 +19,9 @@ func TestClientAPIName(t *testing.T) {
 	if cs.APIName(&AuthorizeSecurityGroupEgress{}) != "authorizeSecurityGroupEgress" {
 		t.Errorf("APIName is wrong, wanted Egress")
 	}
+	if cs.APIName(AuthorizeSecurityGroupEgress{}) != "authorizeSecurityGroupEgress" {
+		t.Errorf("APIName is wrong, wanted Egress")
+	}
 }
 
 func TestClientAPIDescription(t *testing.T) {

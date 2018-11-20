@@ -535,6 +535,49 @@ func TestClientList(t *testing.T) {
 	}
 }
 
+func TestClientPaginate(t *testing.T) {
+	body := `
+	{"list%sresponse": {
+		"count": 4,
+		"%s": [{}, {}, {}, {}]
+	}}`
+
+	for _, tt := range lsTests() {
+		end := len(tt.name) - 1
+		if strings.HasSuffix(tt.name, "ses") {
+			end--
+		}
+		responses := make([]response, len(tt.listables))
+		for i := range tt.listables {
+			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.name[:end])}
+		}
+		ts := newServer(responses...)
+
+		cs := NewClient(ts.URL, "KEY", "SECRET")
+
+		for _, ls := range tt.listables {
+			req, _ := ls.ListRequest()
+			counter := 0
+
+			cs.Paginate(req, func(i interface{}, e error) bool {
+				if e != nil {
+					t.Error(e)
+					return false
+				}
+
+				counter++
+				return true
+			})
+
+			if counter != 4 {
+				t.Errorf("Four zones were expected, got %d", counter)
+			}
+		}
+
+		ts.Close()
+	}
+}
+
 func TestClientPaginateError(t *testing.T) {
 	body := `
 	{"list%sresponse": {

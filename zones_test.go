@@ -24,59 +24,6 @@ func TestListZonesTypeError(t *testing.T) {
 	}
 }
 
-func TestListZonesPaginate(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
-{"listzonesresponse": {
-	"count": 4,
-	"zone": [
-		{
-			"id": "1747ef5e-5451-41fd-9f1a-58913bae9702",
-			"name": "ch-gva-2",
-			"tags": []
-		},
-		{
-			"id": "381d0a95-ed4a-4ad9-b41c-b97073c1a433",
-			"name": "ch-dk-2",
-			"tags": []
-		},
-		{
-			"id": "b0fcd72f-47ad-4779-a64f-fe4de007ec72",
-			"name": "at-vie-1",
-			"tags": []
-		},
-		{
-			"id": "de88c980-78f6-467c-a431-71bcc88e437f",
-			"name": "de-fra-1",
-			"tags": []
-		}
-	]
-}}`})
-	defer ts.Close()
-
-	cs := NewClient(ts.URL, "KEY", "SECRET")
-
-	zone := new(Zone)
-	req, _ := zone.ListRequest()
-
-	counter := 0
-	cs.Paginate(req, func(i interface{}, e error) bool {
-		if e != nil {
-			t.Error(e)
-			return false
-		}
-		z := i.(*Zone)
-		if z.Name == "" {
-			t.Errorf("Zone Name not set")
-		}
-		counter++
-		return true
-	})
-
-	if counter != 4 {
-		t.Errorf("Four zones were expected, got %d", counter)
-	}
-}
-
 func TestListZonesPaginateBreak(t *testing.T) {
 	ts := newServer(response{200, jsonContentType, `
 {"listzonesresponse": {

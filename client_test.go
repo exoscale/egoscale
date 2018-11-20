@@ -460,6 +460,10 @@ func lsTests() []lsTest {
 			&ServiceOffering{},
 			&ListServiceOfferings{},
 		}},
+		{"networks", []Listable{
+			&Network{},
+			&ListNetworks{},
+		}},
 		{"networkofferings", []Listable{
 			&NetworkOffering{},
 			&ListNetworkOfferings{},
@@ -476,6 +480,22 @@ func lsTests() []lsTest {
 			&Snapshot{},
 			&ListSnapshots{},
 		}},
+		{"events", []Listable{
+			&Event{},
+			&ListEvents{},
+		}},
+		{"resourcelimits", []Listable{
+			&ResourceLimit{},
+			&ListResourceLimits{},
+		}},
+		{"tags", []Listable{
+			&ResourceTag{},
+			&ListTags{},
+		}},
+		{"users", []Listable{
+			&User{},
+			&ListUsers{},
+		}},
 	}
 }
 
@@ -483,25 +503,17 @@ func TestClientList(t *testing.T) {
 	body := `
 	{"list%sresponse": {
 		"count": 4,
-		"affinitygroup": [{}, {}, {}, {}],
-		"publicipaddress": [{}, {}, {}, {}],
-		"securitygroup": [{}, {}, {}, {}],
-		"sshkeypair": [{}, {}, {}, {}],
-		"virtualmachine": [{}, {}, {}, {}],
-		"volume": [{}, {}, {}, {}],
-		"zone": [{}, {}, {}, {}],
-		"template": [{}, {}, {}, {}],
-		"serviceoffering": [{}, {}, {}, {}],
-		"account": [{}, {}, {}, {}],
-		"networkoffering": [{}, {}, {}, {}],
-		"nic": [{}, {}, {}, {}],
-		"snapshot": [{}, {}, {}, {}]
+		"%s": [{}, {}, {}, {}]
 	}}`
 
 	for _, tt := range lsTests() {
+		end := len(tt.name) - 1
+		if strings.HasSuffix(tt.name, "ses") {
+			end--
+		}
 		responses := make([]response, len(tt.listables))
 		for i := range tt.listables {
-			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name)}
+			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.name[:end])}
 		}
 		ts := newServer(responses...)
 
@@ -516,6 +528,7 @@ func TestClientList(t *testing.T) {
 			if len(things) != 4 {
 				t.Errorf("four %T were expected, got %d", ls, len(things))
 			}
+
 		}
 
 		ts.Close()

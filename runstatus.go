@@ -137,6 +137,21 @@ func (client *Client) DeleteRunstatusPage(ctx context.Context, pageName string) 
 	return err
 }
 
+// GetRunstatusPage delete runstatus page
+func (client *Client) GetRunstatusPage(ctx context.Context, pageName string) (*RunstatusPage, error) {
+	resp, err := client.runstatusRequest(ctx, "/pages/"+pageName, nil, "", "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	var p *RunstatusPage
+	if err := json.Unmarshal(resp, &p); err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
 // ListRunstatusPage delete runstatus page
 func (client *Client) ListRunstatusPage(ctx context.Context) ([]RunstatusPage, error) {
 	resp, err := client.runstatusRequest(ctx, "/pages", nil, "", "GET")

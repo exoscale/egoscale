@@ -11,7 +11,7 @@ type Nic struct {
 	BroadcastURI     string           `json:"broadcasturi,omitempty" doc:"the broadcast uri of the nic"`
 	DeviceID         *UUID            `json:"deviceid,omitempty" doc:"device id for the network when plugged into the virtual machine"`
 	Gateway          net.IP           `json:"gateway,omitempty" doc:"the gateway of the nic"`
-	ID               *UUID            `json:"id,omitempty" doc:"the ID of the nic"`
+	ID               *UUID            `json:"id" doc:"the ID of the nic"`
 	IP6Address       net.IP           `json:"ip6address,omitempty" doc:"the IPv6 address of network"`
 	IP6CIDR          *CIDR            `json:"ip6cidr,omitempty" doc:"the cidr of IPv6 network"`
 	IP6Gateway       net.IP           `json:"ip6gateway,omitempty" doc:"the gateway of IPv6 network"`

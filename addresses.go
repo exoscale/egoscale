@@ -13,7 +13,7 @@ type IPAddress struct {
 	AssociatedNetworkID       *UUID         `json:"associatednetworkid,omitempty" doc:"the ID of the Network associated with the IP address"`
 	AssociatedNetworkName     string        `json:"associatednetworkname,omitempty" doc:"the name of the Network associated with the IP address"`
 	ForVirtualNetwork         bool          `json:"forvirtualnetwork,omitempty" doc:"the virtual network for the IP address"`
-	ID                        *UUID         `json:"id,omitempty" doc:"public IP address id"`
+	ID                        *UUID         `json:"id" doc:"public IP address id"`
 	IPAddress                 net.IP        `json:"ipaddress,omitempty" doc:"public IP address"`
 	IsElastic                 bool          `json:"iselastic,omitempty" doc:"is an elastic ip"`
 	IsPortable                bool          `json:"isportable,omitempty" doc:"is public IP portable across the zones"`

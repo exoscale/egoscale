@@ -64,8 +64,6 @@ const (
 
 // ResourceLimit represents the limit on a particular resource
 type ResourceLimit struct {
-	Account          string       `json:"account,omitempty" doc:"the account of the resource limit"`
-	AccountID        *UUID        `json:"accountid,omitempty" doc:"the account ID of the resource limit"`
 	Max              int64        `json:"max,omitempty" doc:"the maximum number of the resource. A -1 means the resource currently has no limit."`
 	ResourceType     ResourceType `json:"resourcetype,omitempty" doc:"resource type. Values include 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11. See the resourceType parameter for more information on these values."`
 	ResourceTypeName string       `json:"resourcetypename,omitempty" doc:"resource type name. Values include user_vm, public_ip, volume, snapshot, template, network, cpu, memory, primary_storage, secondary_storage."`
@@ -79,15 +77,6 @@ func (limit ResourceLimit) ListRequest() (ListCommand, error) {
 	}
 
 	return req, nil
-}
-
-// APILimit represents the limit count
-type APILimit struct {
-	Account     string `json:"account,omitempty" doc:"the account name of the api remaining count"`
-	Accountid   string `json:"accountid,omitempty" doc:"the account uuid of the api remaining count"`
-	APIAllowed  int    `json:"apiAllowed,omitempty" doc:"currently allowed number of apis"`
-	APIIssued   int    `json:"apiIssued,omitempty" doc:"number of api already issued"`
-	ExpireAfter int64  `json:"expireAfter,omitempty" doc:"seconds left to reset counters"`
 }
 
 //go:generate go run generate/main.go -interface=Listable ListResourceLimits
@@ -125,18 +114,4 @@ type UpdateResourceLimitResponse struct {
 
 func (UpdateResourceLimit) response() interface{} {
 	return new(UpdateResourceLimitResponse)
-}
-
-// GetAPILimit gets API limit count for the caller
-type GetAPILimit struct {
-	_ bool `name:"getApiLimit" description:"Get API limit count for the caller"`
-}
-
-// GetAPILimitResponse represents the limits towards the API call
-type GetAPILimitResponse struct {
-	APILimit APILimit `json:"apilimit"`
-}
-
-func (GetAPILimit) response() interface{} {
-	return new(GetAPILimitResponse)
 }

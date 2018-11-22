@@ -52,9 +52,9 @@ func (DeleteInstanceGroup) response() interface{} {
 
 // ListInstanceGroups lists VM groups
 type ListInstanceGroups struct {
-	ID       *UUID  `json:"id,omitempty" doc:"list instance groups by ID"`
+	ID       *UUID  `json:"id,omitempty" doc:"List instance groups by ID"`
 	Keyword  string `json:"keyword,omitempty" doc:"List by keyword"`
-	Name     string `json:"name,omitempty" doc:"list instance groups by name"`
+	Name     string `json:"name,omitempty" doc:"List instance groups by name"`
 	Page     int    `json:"page,omitempty"`
 	PageSize int    `json:"pagesize,omitempty"`
 	_        bool   `name:"listInstanceGroups" description:"Lists vm groups"`

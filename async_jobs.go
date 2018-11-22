@@ -10,7 +10,7 @@ type AsyncJobResult struct {
 	AccountID       *UUID            `json:"accountid,omitempty" doc:"the account that executed the async command"`
 	Cmd             string           `json:"cmd,omitempty" doc:"the async command executed"`
 	Created         string           `json:"created,omitempty" doc:"the created date of the job"`
-	JobID           *UUID            `json:"jobid,omitempty" doc:"extra field for the initial async call"`
+	JobID           *UUID            `json:"jobid" doc:"extra field for the initial async call"`
 	JobInstanceID   *UUID            `json:"jobinstanceid,omitempty" doc:"the unique ID of the instance/entity object related to the job"`
 	JobInstanceType string           `json:"jobinstancetype,omitempty" doc:"the instance/entity object related to the job"`
 	JobProcStatus   int              `json:"jobprocstatus,omitempty" doc:"the progress information of the PENDING job"`

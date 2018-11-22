@@ -19,7 +19,7 @@ type ServiceOffering struct {
 	Displaytext               string            `json:"displaytext,omitempty" doc:"an alternate display text of the service offering."`
 	HostTags                  string            `json:"hosttags,omitempty" doc:"the host tag for the service offering"`
 	HypervisorSnapshotReserve int               `json:"hypervisorsnapshotreserve,omitempty" doc:"Hypervisor snapshot reserve space as a percent of a volume (for managed storage using Xen or VMware)"`
-	ID                        *UUID             `json:"id,omitempty" doc:"the id of the service offering"`
+	ID                        *UUID             `json:"id" doc:"the id of the service offering"`
 	IsCustomized              bool              `json:"iscustomized,omitempty" doc:"is true if the offering is customized"`
 	IsCustomizedIops          bool              `json:"iscustomizediops,omitempty" doc:"true if disk offering uses custom iops, false otherwise"`
 	IsSystem                  bool              `json:"issystem,omitempty" doc:"is this a system vm offering"`

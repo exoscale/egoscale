@@ -5,7 +5,7 @@ type Event struct {
 	Account     string `json:"account,omitempty" doc:"the account name for the account that owns the object being acted on in the event (e.g. the owner of the virtual machine, ip address, or security group)"`
 	Created     string `json:"created,omitempty" doc:"the date the event was created"`
 	Description string `json:"description,omitempty" doc:"a brief description of the event"`
-	ID          *UUID  `json:"id,omitempty" doc:"the ID of the event"`
+	ID          *UUID  `json:"id" doc:"the ID of the event"`
 	Level       string `json:"level,omitempty" doc:"the event level (INFO, WARN, ERROR)"`
 	ParentID    *UUID  `json:"parentid,omitempty" doc:"whether the event is parented"`
 	State       string `json:"state,omitempty" doc:"the state of the event"`

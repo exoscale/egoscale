@@ -11,7 +11,7 @@ type NetworkOffering struct {
 	DisplayText              string            `json:"displaytext,omitempty" doc:"an alternate display text of the network offering."`
 	EgressDefaultPolicy      bool              `json:"egressdefaultpolicy,omitempty" doc:"true if guest network default egress policy is allow; false if default egress policy is deny"`
 	GuestIPType              string            `json:"guestiptype,omitempty" doc:"guest type of the network offering, can be Shared or Isolated"`
-	ID                       *UUID             `json:"id,omitempty" doc:"the id of the network offering"`
+	ID                       *UUID             `json:"id" doc:"the id of the network offering"`
 	IsDefault                bool              `json:"isdefault,omitempty" doc:"true if network offering is default, false otherwise"`
 	IsPersistent             bool              `json:"ispersistent,omitempty" doc:"true if network offering supports persistent networks, false otherwise"`
 	MaxConnections           int               `json:"maxconnections,omitempty" doc:"maximum number of concurrents connections to be handled by lb"`

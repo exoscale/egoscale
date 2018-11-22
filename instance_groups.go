@@ -4,8 +4,17 @@ package egoscale
 type InstanceGroup struct {
 	Account string `json:"account,omitempty" doc:"the account owning the instance group"`
 	Created string `json:"created,omitempty" doc:"time and date the instance group was created"`
-	ID      *UUID  `json:"id,omitempty" doc:"the id of the instance group"`
+	ID      *UUID  `json:"id" doc:"the id of the instance group"`
 	Name    string `json:"name,omitempty" doc:"the name of the instance group"`
+}
+
+func (ig InstanceGroup) ListRequest() (ListCommand, error) {
+	req := &ListInstanceGroups{
+		ID:   ig.ID,
+		Name: ig.Name,
+	}
+
+	return req, nil
 }
 
 // CreateInstanceGroup creates a VM group
@@ -39,6 +48,8 @@ func (DeleteInstanceGroup) response() interface{} {
 	return new(booleanResponse)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListInstanceGroups
+
 // ListInstanceGroups lists VM groups
 type ListInstanceGroups struct {
 	ID       *UUID  `json:"id,omitempty" doc:"list instance groups by ID"`
@@ -53,8 +64,4 @@ type ListInstanceGroups struct {
 type ListInstanceGroupsResponse struct {
 	Count         int             `json:"count"`
 	InstanceGroup []InstanceGroup `json:"instancegroup"`
-}
-
-func (ListInstanceGroups) response() interface{} {
-	return new(ListInstanceGroupsResponse)
 }

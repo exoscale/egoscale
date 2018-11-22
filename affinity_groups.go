@@ -13,7 +13,7 @@ import (
 type AffinityGroup struct {
 	Account           string   `json:"account,omitempty" doc:"the account owning the affinity group"`
 	Description       string   `json:"description,omitempty" doc:"the description of the affinity group"`
-	ID                *UUID    `json:"id,omitempty" doc:"the ID of the affinity group"`
+	ID                *UUID    `json:"id" doc:"the ID of the affinity group"`
 	Name              string   `json:"name,omitempty" doc:"the name of the affinity group"`
 	Type              string   `json:"type,omitempty" doc:"the type of the affinity group"`
 	VirtualMachineIDs []string `json:"virtualmachineIds,omitempty" doc:"virtual machine Ids associated with this affinity group"`

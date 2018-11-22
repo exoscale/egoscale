@@ -496,6 +496,10 @@ func lsTests() []lsTest {
 			&User{},
 			&ListUsers{},
 		}},
+		{"instancegroups", []Listable{
+			&InstanceGroup{},
+			&ListInstanceGroups{},
+		}},
 	}
 }
 

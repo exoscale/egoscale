@@ -126,7 +126,7 @@ func (service *RunstatusService) ID() (int, error) {
 
 // DeleteRunstatusService delete runstatus service
 func (client *Client) DeleteRunstatusService(ctx context.Context, page string, id int) error {
-	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/services/%d", page, id), nil, "", "DELETE")
+	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/services/%d", page, id), "", "DELETE")
 	return err
 }
 
@@ -137,13 +137,13 @@ func (client *Client) CreateRunstatusService(ctx context.Context, page string, s
 		return err
 	}
 
-	_, err = client.runstatusRequest(ctx, "/pages/"+page+"/services", nil, string(m), "POST")
+	_, err = client.runstatusRequest(ctx, "/pages/"+page+"/services", string(m), "POST")
 	return err
 }
 
 // ListRunstatusService list runstatus service
 func (client *Client) ListRunstatusService(ctx context.Context, page string) ([]RunstatusService, error) {
-	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/services", nil, "", "GET")
+	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/services", "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -163,13 +163,13 @@ func (client *Client) CreateRunstatusEvent(ctx context.Context, page string, inc
 		return err
 	}
 
-	_, err = client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/incidents/%d/events", page, incidentID), nil, string(m), "POST")
+	_, err = client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/incidents/%d/events", page, incidentID), string(m), "POST")
 	return err
 }
 
 // ListRunstatusMaintenance list runstatus Maintenance
 func (client *Client) ListRunstatusMaintenance(ctx context.Context, page string) ([]RunstatusMaintenance, error) {
-	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/maintenances", nil, "", "GET")
+	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/maintenances", "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -189,13 +189,13 @@ func (client *Client) CreateRunstatusMaintenance(ctx context.Context, page strin
 		return err
 	}
 
-	_, err = client.runstatusRequest(ctx, "/pages/"+page+"/maintenances", nil, string(m), "POST")
+	_, err = client.runstatusRequest(ctx, "/pages/"+page+"/maintenances", string(m), "POST")
 	return err
 }
 
 // DeleteRunstatusMaintenance delete runstatus Maintenance
 func (client *Client) DeleteRunstatusMaintenance(ctx context.Context, page string, id int) error {
-	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/maintenances/%d", page, id), nil, "", "DELETE")
+	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/maintenances/%d", page, id), "", "DELETE")
 	return err
 }
 
@@ -218,13 +218,13 @@ func (client *Client) UpdateRunstatusMaintenance(ctx context.Context, page strin
 		return err
 	}
 
-	_, err = client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/maintenances/%d/events", page, id), nil, string(m), "POST")
+	_, err = client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/maintenances/%d/events", page, id), string(m), "POST")
 	return err
 }
 
 // ListRunstatusIncident list runstatus incident
 func (client *Client) ListRunstatusIncident(ctx context.Context, page string) ([]RunstatusIncident, error) {
-	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/incidents", nil, "", "GET")
+	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/incidents", "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -244,13 +244,13 @@ func (client *Client) CreateRunstatusIncident(ctx context.Context, page string, 
 		return err
 	}
 
-	_, err = client.runstatusRequest(ctx, "/pages/"+page+"/incidents", nil, string(m), "POST")
+	_, err = client.runstatusRequest(ctx, "/pages/"+page+"/incidents", string(m), "POST")
 	return err
 }
 
 // DeleteRunstatusIncident delete runstatus incident
 func (client *Client) DeleteRunstatusIncident(ctx context.Context, page string, id int) error {
-	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/incidents/%d", page, id), nil, "", "DELETE")
+	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/incidents/%d", page, id), "", "DELETE")
 	return err
 }
 
@@ -261,7 +261,7 @@ func (client *Client) CreateRunstatusPage(ctx context.Context, page RunstatusPag
 		return nil, err
 	}
 
-	resp, err := client.runstatusRequest(ctx, "/pages", nil, string(m), "POST")
+	resp, err := client.runstatusRequest(ctx, "/pages", string(m), "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -276,13 +276,13 @@ func (client *Client) CreateRunstatusPage(ctx context.Context, page RunstatusPag
 
 // DeleteRunstatusPage delete runstatus page
 func (client *Client) DeleteRunstatusPage(ctx context.Context, pageName string) error {
-	_, err := client.runstatusRequest(ctx, "/pages/"+pageName, nil, "", "DELETE")
+	_, err := client.runstatusRequest(ctx, "/pages/"+pageName, "", "DELETE")
 	return err
 }
 
 // GetRunstatusPage delete runstatus page
 func (client *Client) GetRunstatusPage(ctx context.Context, pageName string) (*RunstatusPage, error) {
-	resp, err := client.runstatusRequest(ctx, "/pages/"+pageName, nil, "", "GET")
+	resp, err := client.runstatusRequest(ctx, "/pages/"+pageName, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func (client *Client) GetRunstatusPage(ctx context.Context, pageName string) (*R
 
 // ListRunstatusPage delete runstatus page
 func (client *Client) ListRunstatusPage(ctx context.Context) ([]RunstatusPage, error) {
-	resp, err := client.runstatusRequest(ctx, "/pages", nil, "", "GET")
+	resp, err := client.runstatusRequest(ctx, "/pages", "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -310,21 +310,12 @@ func (client *Client) ListRunstatusPage(ctx context.Context) ([]RunstatusPage, e
 	return p.Results, nil
 }
 
-func (client *Client) runstatusRequest(ctx context.Context, uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
+func (client *Client) runstatusRequest(ctx context.Context, uri string, params, method string) (json.RawMessage, error) {
 	rawURL := client.Endpoint + uri
 	reqURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, err
 	}
-
-	q := reqURL.Query()
-	for k, vs := range urlValues {
-		for _, v := range vs {
-			q.Add(k, v)
-		}
-	}
-
-	reqURL.RawQuery = q.Encode()
 
 	req, err := http.NewRequest(method, reqURL.String(), strings.NewReader(params))
 	if err != nil {

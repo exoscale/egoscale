@@ -6,10 +6,10 @@ import (
 
 func TestListNetworkOfferings(t *testing.T) {
 	req := &ListNetworkOfferings{}
-	_ = req.response().(*ListNetworkOfferingsResponse)
+	_ = req.Response().(*ListNetworkOfferingsResponse)
 }
 
 func TestUpdateNetworkOffering(t *testing.T) {
 	req := &UpdateNetworkOffering{}
-	_ = req.response().(*NetworkOffering)
+	_ = req.Response().(*NetworkOffering)
 }

@@ -10,5 +10,5 @@ func TestResourceMetadata(t *testing.T) {
 
 func TestListResourceDetails(t *testing.T) {
 	req := &ListResourceDetails{}
-	_ = req.response().(*ListResourceDetailsResponse)
+	_ = req.Response().(*ListResourceDetailsResponse)
 }

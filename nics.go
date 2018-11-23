@@ -11,7 +11,7 @@ type Nic struct {
 	BroadcastURI     string           `json:"broadcasturi,omitempty" doc:"the broadcast uri of the nic"`
 	DeviceID         *UUID            `json:"deviceid,omitempty" doc:"device id for the network when plugged into the virtual machine"`
 	Gateway          net.IP           `json:"gateway,omitempty" doc:"the gateway of the nic"`
-	ID               *UUID            `json:"id" doc:"the ID of the nic"`
+	ID               *UUID            `json:"id,omitempty" doc:"the ID of the nic"`
 	IP6Address       net.IP           `json:"ip6address,omitempty" doc:"the IPv6 address of network"`
 	IP6CIDR          *CIDR            `json:"ip6cidr,omitempty" doc:"the cidr of IPv6 network"`
 	IP6Gateway       net.IP           `json:"ip6gateway,omitempty" doc:"the gateway of IPv6 network"`
@@ -75,11 +75,13 @@ type AddIPToNic struct {
 	_         bool   `name:"addIpToNic" description:"Assigns secondary IP to NIC"`
 }
 
-func (AddIPToNic) response() interface{} {
+// Response returns the struct to unmarshal
+func (AddIPToNic) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (AddIPToNic) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (AddIPToNic) AsyncResponse() interface{} {
 	return new(NicSecondaryIP)
 }
 
@@ -89,11 +91,13 @@ type RemoveIPFromNic struct {
 	_  bool  `name:"removeIpFromNic" description:"Removes secondary IP from the NIC."`
 }
 
-func (RemoveIPFromNic) response() interface{} {
+// Response returns the struct to unmarshal
+func (RemoveIPFromNic) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (RemoveIPFromNic) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (RemoveIPFromNic) AsyncResponse() interface{} {
 	return new(booleanResponse)
 }
 
@@ -105,10 +109,12 @@ type ActivateIP6 struct {
 	_     bool  `name:"activateIp6" description:"Activate the IPv6 on the VM's nic"`
 }
 
-func (ActivateIP6) response() interface{} {
+// Response returns the struct to unmarshal
+func (ActivateIP6) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (ActivateIP6) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (ActivateIP6) AsyncResponse() interface{} {
 	return new(Nic)
 }

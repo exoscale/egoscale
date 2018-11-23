@@ -6,20 +6,20 @@ import (
 
 func TestListInstanceGroups(t *testing.T) {
 	req := &ListInstanceGroups{}
-	_ = req.response().(*ListInstanceGroupsResponse)
+	_ = req.Response().(*ListInstanceGroupsResponse)
 }
 
 func TestCreateInstanceGroup(t *testing.T) {
 	req := &CreateInstanceGroup{}
-	_ = req.response().(*InstanceGroup)
+	_ = req.Response().(*InstanceGroup)
 }
 
 func TestUpdateInstanceGroup(t *testing.T) {
 	req := &UpdateInstanceGroup{}
-	_ = req.response().(*InstanceGroup)
+	_ = req.Response().(*InstanceGroup)
 }
 
 func TestDeleteInstanceGroup(t *testing.T) {
 	req := &DeleteInstanceGroup{}
-	_ = req.response().(*booleanResponse)
+	_ = req.Response().(*booleanResponse)
 }

@@ -13,7 +13,7 @@ type IPAddress struct {
 	AssociatedNetworkID       *UUID         `json:"associatednetworkid,omitempty" doc:"the ID of the Network associated with the IP address"`
 	AssociatedNetworkName     string        `json:"associatednetworkname,omitempty" doc:"the name of the Network associated with the IP address"`
 	ForVirtualNetwork         bool          `json:"forvirtualnetwork,omitempty" doc:"the virtual network for the IP address"`
-	ID                        *UUID         `json:"id" doc:"public IP address id"`
+	ID                        *UUID         `json:"id,omitempty" doc:"public IP address id"`
 	IPAddress                 net.IP        `json:"ipaddress,omitempty" doc:"public IP address"`
 	IsElastic                 bool          `json:"iselastic,omitempty" doc:"is an elastic ip"`
 	IsPortable                bool          `json:"isportable,omitempty" doc:"is public IP portable across the zones"`
@@ -83,11 +83,13 @@ type AssociateIPAddress struct {
 	_          bool  `name:"associateIpAddress" description:"Acquires and associates a public IP to an account."`
 }
 
-func (AssociateIPAddress) response() interface{} {
+// Response returns the struct to unmarshal
+func (AssociateIPAddress) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (AssociateIPAddress) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (AssociateIPAddress) AsyncResponse() interface{} {
 	return new(IPAddress)
 }
 
@@ -97,11 +99,13 @@ type DisassociateIPAddress struct {
 	_  bool  `name:"disassociateIpAddress" description:"Disassociates an ip address from the account."`
 }
 
-func (DisassociateIPAddress) response() interface{} {
+// Response returns the struct to unmarshal
+func (DisassociateIPAddress) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (DisassociateIPAddress) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (DisassociateIPAddress) AsyncResponse() interface{} {
 	return new(booleanResponse)
 }
 
@@ -112,11 +116,13 @@ type UpdateIPAddress struct {
 	_        bool  `name:"updateIpAddress" description:"Updates an ip address"`
 }
 
-func (UpdateIPAddress) response() interface{} {
+// Response returns the struct to unmarshal
+func (UpdateIPAddress) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (UpdateIPAddress) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (UpdateIPAddress) AsyncResponse() interface{} {
 	return new(IPAddress)
 }
 

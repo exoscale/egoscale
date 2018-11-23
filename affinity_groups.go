@@ -13,7 +13,7 @@ import (
 type AffinityGroup struct {
 	Account           string   `json:"account,omitempty" doc:"the account owning the affinity group"`
 	Description       string   `json:"description,omitempty" doc:"the description of the affinity group"`
-	ID                *UUID    `json:"id" doc:"the ID of the affinity group"`
+	ID                *UUID    `json:"id,omitempty" doc:"the ID of the affinity group"`
 	Name              string   `json:"name,omitempty" doc:"the name of the affinity group"`
 	Type              string   `json:"type,omitempty" doc:"the type of the affinity group"`
 	VirtualMachineIDs []string `json:"virtualmachineIds,omitempty" doc:"virtual machine Ids associated with this affinity group"`
@@ -57,11 +57,13 @@ type CreateAffinityGroup struct {
 	_           bool   `name:"createAffinityGroup" description:"Creates an affinity/anti-affinity group"`
 }
 
-func (CreateAffinityGroup) response() interface{} {
+// Response returns the struct to unmarshal
+func (CreateAffinityGroup) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (CreateAffinityGroup) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (CreateAffinityGroup) AsyncResponse() interface{} {
 	return new(AffinityGroup)
 }
 
@@ -81,11 +83,13 @@ func (req UpdateVMAffinityGroup) onBeforeSend(params url.Values) error {
 	return nil
 }
 
-func (UpdateVMAffinityGroup) response() interface{} {
+// Response returns the struct to unmarshal
+func (UpdateVMAffinityGroup) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (UpdateVMAffinityGroup) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (UpdateVMAffinityGroup) AsyncResponse() interface{} {
 	return new(VirtualMachine)
 }
 
@@ -96,11 +100,13 @@ type DeleteAffinityGroup struct {
 	_    bool   `name:"deleteAffinityGroup" description:"Deletes affinity group"`
 }
 
-func (DeleteAffinityGroup) response() interface{} {
+// Response returns the struct to unmarshal
+func (DeleteAffinityGroup) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (DeleteAffinityGroup) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (DeleteAffinityGroup) AsyncResponse() interface{} {
 	return new(booleanResponse)
 }
 
@@ -132,7 +138,8 @@ type ListAffinityGroupTypes struct {
 	_        bool   `name:"listAffinityGroupTypes" description:"Lists affinity group types available"`
 }
 
-func (ListAffinityGroupTypes) response() interface{} {
+// Response returns the struct to unmarshal
+func (ListAffinityGroupTypes) Response() interface{} {
 	return new(ListAffinityGroupTypesResponse)
 }
 

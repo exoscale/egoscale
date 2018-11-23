@@ -4,7 +4,8 @@ package egoscale
 
 import "fmt"
 
-func (ListSSHKeyPairs) response() interface{} {
+// Response returns the struct to unmarshal
+func (ListSSHKeyPairs) Response() interface{} {
 	return new(ListSSHKeyPairsResponse)
 }
 

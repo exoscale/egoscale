@@ -19,7 +19,7 @@ type Volume struct {
 	DiskOfferingName           string        `json:"diskofferingname,omitempty" doc:"name of the disk offering"`
 	DisplayVolume              bool          `json:"displayvolume,omitempty" doc:"an optional field whether to the display the volume to the end user or not."`
 	Hypervisor                 string        `json:"hypervisor,omitempty" doc:"Hypervisor the volume belongs to"`
-	ID                         *UUID         `json:"id" doc:"ID of the disk volume"`
+	ID                         *UUID         `json:"id,omitempty" doc:"ID of the disk volume"`
 	IsExtractable              *bool         `json:"isextractable,omitempty" doc:"true if the volume is extractable, false otherwise"`
 	IsoDisplayText             string        `json:"isodisplaytext,omitempty" doc:"an alternate display text of the ISO attached to the virtual machine"`
 	IsoID                      *UUID         `json:"isoid,omitempty" doc:"the ID of the ISO attached to the virtual machine"`
@@ -79,11 +79,13 @@ type ResizeVolume struct {
 	_              bool  `name:"resizeVolume" description:"Resizes a volume"`
 }
 
-func (ResizeVolume) response() interface{} {
+// Response returns the struct to unmarshal
+func (ResizeVolume) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (ResizeVolume) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (ResizeVolume) AsyncResponse() interface{} {
 	return new(Volume)
 }
 

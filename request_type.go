@@ -6,14 +6,13 @@ import (
 
 // Command represents a CloudStack request
 type Command interface {
-	response() interface{}
+	Response() interface{}
 }
 
 // AsyncCommand represents a async CloudStack request
 type AsyncCommand interface {
 	Command
-	// Response interface to Unmarshal the JSON into
-	asyncResponse() interface{}
+	AsyncResponse() interface{}
 }
 
 // ListCommand represents a CloudStack list request

@@ -4,7 +4,8 @@ package egoscale
 
 import "fmt"
 
-func (ListZones) response() interface{} {
+// Response returns the struct to unmarshal
+func (ListZones) Response() interface{} {
 	return new(ListZonesResponse)
 }
 

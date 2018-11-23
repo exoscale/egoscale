@@ -8,7 +8,7 @@ import (
 
 func TestListZonesAPIName(t *testing.T) {
 	req := &ListZones{}
-	_ = req.response().(*ListZonesResponse)
+	_ = req.Response().(*ListZonesResponse)
 }
 
 func TestListZonesTypeError(t *testing.T) {

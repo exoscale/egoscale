@@ -13,47 +13,47 @@ func TestTemplateResourceType(t *testing.T) {
 
 func TestCreateTemplate(t *testing.T) {
 	req := &CreateTemplate{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*Template)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*Template)
 }
 
 func TestCopyTemplate(t *testing.T) {
 	req := &CopyTemplate{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*Template)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*Template)
 }
 
 func TestUpdateTemplate(t *testing.T) {
 	req := &UpdateTemplate{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*Template)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*Template)
 }
 
 func TestListTemplates(t *testing.T) {
 	req := &ListTemplates{}
-	_ = req.response().(*ListTemplatesResponse)
+	_ = req.Response().(*ListTemplatesResponse)
 }
 
 func TestDeleteTemplate(t *testing.T) {
 	req := &DeleteTemplate{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestPrepareTemplate(t *testing.T) {
 	req := &PrepareTemplate{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*Template)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*Template)
 }
 
 func TestRegisterTemplate(t *testing.T) {
 	req := &RegisterTemplate{}
-	_ = req.response().(*Template)
+	_ = req.Response().(*Template)
 }
 
 func TestListOSCategories(t *testing.T) {
 	req := &ListOSCategories{}
-	_ = req.response().(*ListOSCategoriesResponse)
+	_ = req.Response().(*ListOSCategoriesResponse)
 }
 
 func TestTemplate(t *testing.T) {

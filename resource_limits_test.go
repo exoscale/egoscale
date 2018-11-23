@@ -6,10 +6,10 @@ import (
 
 func TestListResourceLimits(t *testing.T) {
 	req := &ListResourceLimits{}
-	_ = req.response().(*ListResourceLimitsResponse)
+	_ = req.Response().(*ListResourceLimitsResponse)
 }
 
 func TestUpdateResourceLimit(t *testing.T) {
 	req := &UpdateResourceLimit{}
-	_ = req.response().(*UpdateResourceLimitResponse)
+	_ = req.Response().(*UpdateResourceLimitResponse)
 }

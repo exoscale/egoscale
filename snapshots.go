@@ -58,11 +58,13 @@ type CreateSnapshot struct {
 	_         bool  `name:"createSnapshot" description:"Creates an instant snapshot of a volume."`
 }
 
-func (CreateSnapshot) response() interface{} {
+// Response returns the struct to unmarshal
+func (CreateSnapshot) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (CreateSnapshot) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (CreateSnapshot) AsyncResponse() interface{} {
 	return new(Snapshot)
 }
 
@@ -110,11 +112,13 @@ type DeleteSnapshot struct {
 	_  bool  `name:"deleteSnapshot" description:"Deletes a snapshot of a disk volume."`
 }
 
-func (DeleteSnapshot) response() interface{} {
+// Response returns the struct to unmarshal
+func (DeleteSnapshot) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (DeleteSnapshot) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (DeleteSnapshot) AsyncResponse() interface{} {
 	return new(booleanResponse)
 }
 
@@ -124,10 +128,12 @@ type RevertSnapshot struct {
 	_  bool  `name:"revertSnapshot" description:"revert a volume snapshot."`
 }
 
-func (RevertSnapshot) response() interface{} {
+// Response returns the struct to unmarshal
+func (RevertSnapshot) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (RevertSnapshot) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (RevertSnapshot) AsyncResponse() interface{} {
 	return new(booleanResponse)
 }

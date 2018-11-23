@@ -6,5 +6,5 @@ import (
 
 func TestListAccounts(t *testing.T) {
 	req := &ListAccounts{}
-	_ = req.response().(*ListAccountsResponse)
+	_ = req.Response().(*ListAccountsResponse)
 }

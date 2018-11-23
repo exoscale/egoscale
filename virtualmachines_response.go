@@ -4,7 +4,8 @@ package egoscale
 
 import "fmt"
 
-func (ListVirtualMachines) response() interface{} {
+// Response returns the struct to unmarshal
+func (ListVirtualMachines) Response() interface{} {
 	return new(ListVirtualMachinesResponse)
 }
 

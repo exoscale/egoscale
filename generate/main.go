@@ -547,6 +547,9 @@ func generateInterface(interfaces, typeName string) {
 		end--
 	}
 	keyName := typeName[4:end]
+	if strings.HasSuffix(typeName, "ies") {
+		keyName = typeName[4:end-2] + "y"
+	}
 
 	if interfaces == "Listable" {
 		t := template.Must(template.New("listable").Parse(listableTemplate))
@@ -593,7 +596,8 @@ package {{.Package}}
 
 import "fmt"
 
-func ({{.Type}}) response() interface{} {
+// Response returns the struct to unmarshal
+func ({{.Type}}) Response() interface{} {
 	return new({{.Type}}Response)
 }
 

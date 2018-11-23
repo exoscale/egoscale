@@ -13,23 +13,23 @@ func TestIPAddress(t *testing.T) {
 
 func TestAssociateIPAddress(t *testing.T) {
 	req := &AssociateIPAddress{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*IPAddress)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*IPAddress)
 }
 
 func TestDisassociateIPAddress(t *testing.T) {
 	req := &DisassociateIPAddress{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestListPublicIPAddresses(t *testing.T) {
 	req := &ListPublicIPAddresses{}
-	_ = req.response().(*ListPublicIPAddressesResponse)
+	_ = req.Response().(*ListPublicIPAddressesResponse)
 }
 
 func TestUpdateIPAddress(t *testing.T) {
 	req := &UpdateIPAddress{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*IPAddress)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*IPAddress)
 }

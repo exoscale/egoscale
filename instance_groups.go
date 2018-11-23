@@ -4,10 +4,11 @@ package egoscale
 type InstanceGroup struct {
 	Account string `json:"account,omitempty" doc:"the account owning the instance group"`
 	Created string `json:"created,omitempty" doc:"time and date the instance group was created"`
-	ID      *UUID  `json:"id" doc:"the id of the instance group"`
+	ID      *UUID  `json:"id,omitempty" doc:"the id of the instance group"`
 	Name    string `json:"name,omitempty" doc:"the name of the instance group"`
 }
 
+// ListRequest builds the ListInstanceGroups request
 func (ig InstanceGroup) ListRequest() (ListCommand, error) {
 	req := &ListInstanceGroups{
 		ID:   ig.ID,
@@ -23,7 +24,8 @@ type CreateInstanceGroup struct {
 	_    bool   `name:"createInstanceGroup" description:"Creates a vm group"`
 }
 
-func (CreateInstanceGroup) response() interface{} {
+// Response returns the struct to unmarshal
+func (CreateInstanceGroup) Response() interface{} {
 	return new(InstanceGroup)
 }
 
@@ -34,7 +36,8 @@ type UpdateInstanceGroup struct {
 	_    bool   `name:"updateInstanceGroup" description:"Updates a vm group"`
 }
 
-func (UpdateInstanceGroup) response() interface{} {
+// Response returns the struct to unmarshal
+func (UpdateInstanceGroup) Response() interface{} {
 	return new(InstanceGroup)
 }
 
@@ -44,7 +47,8 @@ type DeleteInstanceGroup struct {
 	_  bool  `name:"deleteInstanceGroup" description:"Deletes a vm group"`
 }
 
-func (DeleteInstanceGroup) response() interface{} {
+// Response returns the struct to unmarshal
+func (DeleteInstanceGroup) Response() interface{} {
 	return new(booleanResponse)
 }
 

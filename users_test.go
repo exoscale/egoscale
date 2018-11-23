@@ -6,10 +6,10 @@ import (
 
 func TestRegisterUserKeys(t *testing.T) {
 	req := &RegisterUserKeys{}
-	_ = req.response().(*User)
+	_ = req.Response().(*User)
 }
 
 func TestListUsers(t *testing.T) {
 	req := &ListUsers{}
-	_ = req.response().(*ListUsersResponse)
+	_ = req.Response().(*ListUsersResponse)
 }

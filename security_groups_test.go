@@ -18,41 +18,41 @@ func TestSecurityGroup(t *testing.T) {
 
 func TestAuthorizeSecurityGroupEgress(t *testing.T) {
 	req := &AuthorizeSecurityGroupEgress{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*SecurityGroup)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*SecurityGroup)
 }
 
 func TestAuthorizeSecurityGroupIngress(t *testing.T) {
 	req := &AuthorizeSecurityGroupIngress{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*SecurityGroup)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*SecurityGroup)
 }
 
 func TestCreateSecurityGroup(t *testing.T) {
 	req := &CreateSecurityGroup{}
-	_ = req.response().(*SecurityGroup)
+	_ = req.Response().(*SecurityGroup)
 }
 
 func TestDeleteSecurityGroup(t *testing.T) {
 	req := &DeleteSecurityGroup{}
-	_ = req.response().(*booleanResponse)
+	_ = req.Response().(*booleanResponse)
 }
 
 func TestListSecurityGroupsApiName(t *testing.T) {
 	req := &ListSecurityGroups{}
-	_ = req.response().(*ListSecurityGroupsResponse)
+	_ = req.Response().(*ListSecurityGroupsResponse)
 }
 
 func TestRevokeSecurityGroupEgress(t *testing.T) {
 	req := &RevokeSecurityGroupEgress{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestRevokeSecurityGroupIngress(t *testing.T) {
 	req := &RevokeSecurityGroupIngress{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestAuthorizeSecurityGroupEgressOnBeforeSendICMP(t *testing.T) {

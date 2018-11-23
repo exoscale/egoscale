@@ -6,26 +6,26 @@ import (
 
 func TestResetSSHKeyForVirtualMachine(t *testing.T) {
 	req := &ResetSSHKeyForVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestRegisterSSHKeyPair(t *testing.T) {
 	req := &RegisterSSHKeyPair{}
-	_ = req.response().(*SSHKeyPair)
+	_ = req.Response().(*SSHKeyPair)
 }
 
 func TestCreateSSHKeyPair(t *testing.T) {
 	req := &CreateSSHKeyPair{}
-	_ = req.response().(*SSHKeyPair)
+	_ = req.Response().(*SSHKeyPair)
 }
 
 func TestDeleteSSHKeyPair(t *testing.T) {
 	req := &DeleteSSHKeyPair{}
-	_ = req.response().(*booleanResponse)
+	_ = req.Response().(*booleanResponse)
 }
 
 func TestListSSHKeyPairsResponse(t *testing.T) {
 	req := &ListSSHKeyPairs{}
-	_ = req.response().(*ListSSHKeyPairsResponse)
+	_ = req.Response().(*ListSSHKeyPairsResponse)
 }

@@ -13,7 +13,7 @@ type Event struct {
 	UserName    string `json:"username,omitempty" doc:"the name of the user who performed the action (can be different from the account if an admin is performing an action for a user, e.g. starting/stopping a user's virtual machine)"`
 }
 
-// ListRequest builds the ListZones request
+// ListRequest builds the ListEvents request
 func (event Event) ListRequest() (ListCommand, error) {
 	req := &ListEvents{
 		ID:    event.ID,
@@ -29,6 +29,13 @@ type EventType struct {
 	Name string `json:"name,omitempty" doc:"Event Type"`
 }
 
+// ListRequest builds the ListEventTypes request
+func (EventType) ListRequest() (ListCommand, error) {
+	req := &ListEventTypes{}
+
+	return req, nil
+}
+
 //go:generate go run generate/main.go -interface=Listable ListEvents
 
 // ListEvents list the events
@@ -39,7 +46,7 @@ type ListEvents struct {
 	ID        *UUID  `json:"id,omitempty" doc:"the ID of the event"`
 	Keyword   string `json:"keyword,omitempty" doc:"List by keyword"`
 	Level     string `json:"level,omitempty" doc:"the event level (INFO, WARN, ERROR)"`
-	Page      int    `json:"page,omitempty" `
+	Page      int    `json:"page,omitempty"`
 	PageSize  int    `json:"pagesize,omitempty"`
 	StartDate string `json:"startdate,omitempty" doc:"the start date range of the list you want to retrieve (use format \"yyyy-MM-dd\" or the new format \"yyyy-MM-dd HH:mm:ss\")"`
 	Type      string `json:"type,omitempty" doc:"the event type (see event types)"`
@@ -52,9 +59,13 @@ type ListEventsResponse struct {
 	Event []Event `json:"event"`
 }
 
+//go:generate go run generate/main.go -interface=Listable ListEventTypes
+
 // ListEventTypes list the event types
 type ListEventTypes struct {
-	_ bool `name:"listEventTypes" description:"List Event Types"`
+	Page     int  `json:"page,omitempty"`     // fake
+	PageSize int  `json:"pagesize,omitempty"` // fake
+	_        bool `name:"listEventTypes" description:"List Event Types"`
 }
 
 // ListEventTypesResponse represents a response of a list query
@@ -62,8 +73,4 @@ type ListEventTypesResponse struct {
 	Count     int         `json:"count"`
 	EventType []EventType `json:"eventtype"`
 	_         bool        `name:"listEventTypes" description:"List Event Types"`
-}
-
-func (ListEventTypes) response() interface{} {
-	return new(ListEventTypesResponse)
 }

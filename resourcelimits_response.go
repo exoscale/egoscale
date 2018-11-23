@@ -4,7 +4,8 @@ package egoscale
 
 import "fmt"
 
-func (ListResourceLimits) response() interface{} {
+// Response returns the struct to unmarshal
+func (ListResourceLimits) Response() interface{} {
 	return new(ListResourceLimitsResponse)
 }
 

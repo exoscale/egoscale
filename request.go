@@ -114,7 +114,7 @@ func (client *Client) parseResponse(resp *http.Response, apiName string) (json.R
 func (client *Client) asyncRequest(ctx context.Context, asyncCommand AsyncCommand) (interface{}, error) {
 	var err error
 
-	resp := asyncCommand.asyncResponse()
+	resp := asyncCommand.AsyncResponse()
 	client.AsyncRequestWithContext(
 		ctx,
 		asyncCommand,
@@ -142,7 +142,7 @@ func (client *Client) SyncRequestWithContext(ctx context.Context, command Comman
 		return nil, err
 	}
 
-	response := command.response()
+	response := command.Response()
 	b, ok := response.(*booleanResponse)
 	if ok {
 		m := make(map[string]interface{})

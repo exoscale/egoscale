@@ -1,5 +1,7 @@
 package egoscale
 
+//go:generate go run generate/main.go -interface=Listable ListResourceDetails
+
 // ListResourceDetails lists the resource tag(s) (but different from listTags...)
 type ListResourceDetails struct {
 	ResourceType string `json:"resourcetype" doc:"list by resource type"`
@@ -17,8 +19,4 @@ type ListResourceDetails struct {
 type ListResourceDetailsResponse struct {
 	Count          int           `json:"count"`
 	ResourceDetail []ResourceTag `json:"resourcedetail"`
-}
-
-func (*ListResourceDetails) response() interface{} {
-	return new(ListResourceDetailsResponse)
 }

@@ -6,23 +6,23 @@ import (
 
 func TestAddIPToNic(t *testing.T) {
 	req := &AddIPToNic{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*NicSecondaryIP)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*NicSecondaryIP)
 }
 
 func TestRemoveIPFromNic(t *testing.T) {
 	req := &RemoveIPFromNic{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestListNicsAPIName(t *testing.T) {
 	req := &ListNics{}
-	_ = req.response().(*ListNicsResponse)
+	_ = req.Response().(*ListNicsResponse)
 }
 
 func TestActivateIP6(t *testing.T) {
 	req := &ActivateIP6{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*Nic)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*Nic)
 }

@@ -98,20 +98,3 @@ type ListResourceLimitsResponse struct {
 	Count         int             `json:"count"`
 	ResourceLimit []ResourceLimit `json:"resourcelimit"`
 }
-
-// UpdateResourceLimit updates the resource limit
-type UpdateResourceLimit struct {
-	Account      string       `json:"account,omitempty" doc:"Update resource for a specified account. Must be used with the domainid parameter."`
-	Max          int64        `json:"max,omitempty" doc:"Maximum resource limit."`
-	ResourceType ResourceType `json:"resourcetype" doc:"Type of resource to update. Values are 0, 1, 2, 3, 4, 6, 7, 8, 9, 10 and 11. 0 - Instance. Number of instances a user can create. 1 - IP. Number of public IP addresses a user can own. 2 - Volume. Number of disk volumes a user can create. 3 - Snapshot. Number of snapshots a user can create. 4 - Template. Number of templates that a user can register/create. 6 - Network. Number of guest network a user can create. 7 - VPC. Number of VPC a user can create. 8 - CPU. Total number of CPU cores a user can use. 9 - Memory. Total Memory (in MB) a user can use. 10 - PrimaryStorage. Total primary storage space (in GiB) a user can use. 11 - SecondaryStorage. Total secondary storage space (in GiB) a user can use."`
-	_            bool         `name:"updateResourceLimit" description:"Updates resource limits for an account or domain."`
-}
-
-// UpdateResourceLimitResponse represents an updated resource limit
-type UpdateResourceLimitResponse struct {
-	ResourceLimit ResourceLimit `json:"resourcelimit"`
-}
-
-func (UpdateResourceLimit) response() interface{} {
-	return new(UpdateResourceLimitResponse)
-}

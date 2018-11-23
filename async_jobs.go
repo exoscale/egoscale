@@ -35,9 +35,12 @@ type QueryAsyncJobResult struct {
 	_     bool  `name:"queryAsyncJobResult" description:"Retrieves the current status of asynchronous job."`
 }
 
-func (QueryAsyncJobResult) response() interface{} {
+// Response returns the struct to unmarshal
+func (QueryAsyncJobResult) Response() interface{} {
 	return new(AsyncJobResult)
 }
+
+//go:generate go run generate/main.go -interface=Listable ListAsyncJobs
 
 // ListAsyncJobs list the asynchronous jobs
 type ListAsyncJobs struct {
@@ -50,12 +53,8 @@ type ListAsyncJobs struct {
 
 // ListAsyncJobsResponse represents a list of job results
 type ListAsyncJobsResponse struct {
-	Count     int              `json:"count"`
-	AsyncJobs []AsyncJobResult `json:"asyncjobs"`
-}
-
-func (ListAsyncJobs) response() interface{} {
-	return new(ListAsyncJobsResponse)
+	Count    int              `json:"count"`
+	AsyncJob []AsyncJobResult `json:"asyncjobs"`
 }
 
 // Result unmarshals the result of an AsyncJobResult into the given interface

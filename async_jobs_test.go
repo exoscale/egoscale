@@ -6,10 +6,10 @@ import (
 
 func TestQueryAsyncJobResult(t *testing.T) {
 	req := &QueryAsyncJobResult{}
-	_ = req.response().(*AsyncJobResult)
+	_ = req.Response().(*AsyncJobResult)
 }
 
 func TestListAsyncJobs(t *testing.T) {
 	req := &ListAsyncJobs{}
-	_ = req.response().(*ListAsyncJobsResponse)
+	_ = req.Response().(*ListAsyncJobsResponse)
 }

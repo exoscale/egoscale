@@ -4,7 +4,8 @@ package egoscale
 
 import "fmt"
 
-func (ListNics) response() interface{} {
+// Response returns the struct to unmarshal
+func (ListNics) Response() interface{} {
 	return new(ListNicsResponse)
 }
 

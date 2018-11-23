@@ -13,13 +13,13 @@ func TestVolume(t *testing.T) {
 
 func TestListVolumes(t *testing.T) {
 	req := &ListVolumes{}
-	_ = req.response().(*ListVolumesResponse)
+	_ = req.Response().(*ListVolumesResponse)
 }
 
 func TestResizeVolume(t *testing.T) {
 	req := &ResizeVolume{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*Volume)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*Volume)
 }
 
 func TestListVolumeFailure(t *testing.T) {

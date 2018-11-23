@@ -41,7 +41,8 @@ type CreateSSHKeyPair struct {
 	_    bool   `name:"createSSHKeyPair" description:"Create a new keypair and returns the private key"`
 }
 
-func (CreateSSHKeyPair) response() interface{} {
+// Response returns the struct to unmarshal
+func (CreateSSHKeyPair) Response() interface{} {
 	return new(SSHKeyPair)
 }
 
@@ -51,7 +52,8 @@ type DeleteSSHKeyPair struct {
 	_    bool   `name:"deleteSSHKeyPair" description:"Deletes a keypair by name"`
 }
 
-func (DeleteSSHKeyPair) response() interface{} {
+// Response returns the struct to unmarshal
+func (DeleteSSHKeyPair) Response() interface{} {
 	return new(booleanResponse)
 }
 
@@ -62,7 +64,8 @@ type RegisterSSHKeyPair struct {
 	_         bool   `name:"registerSSHKeyPair" description:"Register a public key in a keypair under a certain name"`
 }
 
-func (RegisterSSHKeyPair) response() interface{} {
+// Response returns the struct to unmarshal
+func (RegisterSSHKeyPair) Response() interface{} {
 	return new(SSHKeyPair)
 }
 
@@ -91,10 +94,12 @@ type ResetSSHKeyForVirtualMachine struct {
 	_       bool   `name:"resetSSHKeyForVirtualMachine" description:"Resets the SSH Key for virtual machine. The virtual machine must be in a \"Stopped\" state."`
 }
 
-func (ResetSSHKeyForVirtualMachine) response() interface{} {
+// Response returns the struct to unmarshal
+func (ResetSSHKeyForVirtualMachine) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (ResetSSHKeyForVirtualMachine) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (ResetSSHKeyForVirtualMachine) AsyncResponse() interface{} {
 	return new(VirtualMachine)
 }

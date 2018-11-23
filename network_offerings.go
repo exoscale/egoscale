@@ -1,7 +1,5 @@
 package egoscale
 
-import "fmt"
-
 // NetworkOffering corresponds to the Compute Offerings
 type NetworkOffering struct {
 	Availability             string            `json:"availability,omitempty" doc:"availability of the network offering"`
@@ -11,7 +9,7 @@ type NetworkOffering struct {
 	DisplayText              string            `json:"displaytext,omitempty" doc:"an alternate display text of the network offering."`
 	EgressDefaultPolicy      bool              `json:"egressdefaultpolicy,omitempty" doc:"true if guest network default egress policy is allow; false if default egress policy is deny"`
 	GuestIPType              string            `json:"guestiptype,omitempty" doc:"guest type of the network offering, can be Shared or Isolated"`
-	ID                       *UUID             `json:"id" doc:"the id of the network offering"`
+	ID                       *UUID             `json:"id,omitempty" doc:"the id of the network offering"`
 	IsDefault                bool              `json:"isdefault,omitempty" doc:"true if network offering is default, false otherwise"`
 	IsPersistent             bool              `json:"ispersistent,omitempty" doc:"true if network offering supports persistent networks, false otherwise"`
 	MaxConnections           int               `json:"maxconnections,omitempty" doc:"maximum number of concurrents connections to be handled by lb"`
@@ -41,6 +39,8 @@ func (no NetworkOffering) ListRequest() (ListCommand, error) {
 
 	return req, nil
 }
+
+//go:generate go run generate/main.go -interface=Listable ListNetworkOfferings
 
 // ListNetworkOfferings represents a query for network offerings
 type ListNetworkOfferings struct {
@@ -72,42 +72,6 @@ type ListNetworkOfferingsResponse struct {
 	NetworkOffering []NetworkOffering `json:"networkoffering"`
 }
 
-func (ListNetworkOfferings) response() interface{} {
-	return new(ListNetworkOfferingsResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListNetworkOfferings) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListNetworkOfferings) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListNetworkOfferings) each(resp interface{}, callback IterateItemFunc) {
-	nos, ok := resp.(*ListNetworkOfferingsResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type, ListNetworkOfferingsResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range nos.NetworkOffering {
-		if !callback(&nos.NetworkOffering[i], nil) {
-			break
-		}
-	}
-}
-
-// ListRequest returns itself
-func (ls *ListNetworkOfferings) ListRequest() (ListCommand, error) {
-	if ls == nil {
-		return nil, fmt.Errorf("%T cannot be nil", ls)
-	}
-	return ls, nil
-}
-
 // UpdateNetworkOffering represents a modification of a network offering
 type UpdateNetworkOffering struct {
 	Availability     string `json:"availability,omitempty" doc:"the availability of network offering. Default value is Required for Guest Virtual network offering; Optional for Guest Direct network offering"`
@@ -121,6 +85,7 @@ type UpdateNetworkOffering struct {
 	_                bool   `name:"updateNetworkOffering" description:"Updates a network offering."`
 }
 
-func (UpdateNetworkOffering) response() interface{} {
+// Response returns the struct to unmarshal
+func (UpdateNetworkOffering) Response() interface{} {
 	return new(NetworkOffering)
 }

@@ -15,110 +15,110 @@ func TestVirtualMachine(t *testing.T) {
 
 func TestDeployVirtualMachine(t *testing.T) {
 	req := &DeployVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestDestroyVirtualMachine(t *testing.T) {
 	req := &DestroyVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestRebootVirtualMachine(t *testing.T) {
 	req := &RebootVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestStartVirtualMachine(t *testing.T) {
 	req := &StartVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestStopVirtualMachine(t *testing.T) {
 	req := &StopVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestResetPasswordForVirtualMachine(t *testing.T) {
 	req := &ResetPasswordForVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestUpdateVirtualMachine(t *testing.T) {
 	req := &UpdateVirtualMachine{}
-	_ = req.response().(*VirtualMachine)
+	_ = req.Response().(*VirtualMachine)
 }
 
 func TestListVirtualMachines(t *testing.T) {
 	req := &ListVirtualMachines{}
-	_ = req.response().(*ListVirtualMachinesResponse)
+	_ = req.Response().(*ListVirtualMachinesResponse)
 }
 
 func TestGetVMPassword(t *testing.T) {
 	req := &GetVMPassword{}
-	_ = req.response().(*Password)
+	_ = req.Response().(*Password)
 }
 
 func TestRestoreVirtualMachine(t *testing.T) {
 	req := &RestoreVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestChangeServiceForVirtualMachine(t *testing.T) {
 	req := &ChangeServiceForVirtualMachine{}
-	_ = req.response().(*VirtualMachine)
+	_ = req.Response().(*VirtualMachine)
 }
 
 func TestScaleVirtualMachine(t *testing.T) {
 	req := &ScaleVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestRecoverVirtualMachine(t *testing.T) {
 	req := &RecoverVirtualMachine{}
-	_ = req.response().(*VirtualMachine)
+	_ = req.Response().(*VirtualMachine)
 }
 
 func TestExpungeVirtualMachine(t *testing.T) {
 	req := &ExpungeVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestGetVirtualMachineUserData(t *testing.T) {
 	req := &GetVirtualMachineUserData{}
-	_ = req.response().(*VirtualMachineUserData)
+	_ = req.Response().(*VirtualMachineUserData)
 }
 
 func TestAddNicToVirtualMachine(t *testing.T) {
 	req := &AddNicToVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestRemoveNicFromVirtualMachine(t *testing.T) {
 	req := &RemoveNicFromVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestUpdateDefaultNicForVirtualMachine(t *testing.T) {
 	req := &UpdateDefaultNicForVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestUpdateVMNicIP(t *testing.T) {
 	req := &UpdateVMNicIP{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestDeployOnBeforeSend(t *testing.T) {

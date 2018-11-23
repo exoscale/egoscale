@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -66,17 +67,160 @@ type RunstatusIncident struct {
 	URL        string           `json:"url,omitempty"`
 }
 
+//RunstatusIncidentList is a list of incident
+type RunstatusIncidentList struct {
+	Incidents []RunstatusIncident `json:"incidents"`
+}
+
+// RunstatusMaintenance is a runstatus maintenance
+type RunstatusMaintenance struct {
+	Created     *time.Time       `json:"created,omitempty"`
+	Description string           `json:"description,omitempty"`
+	EndDate     *time.Time       `json:"end_date"`
+	Events      []RunstatusEvent `json:"events,omitempty"`
+	EventsURL   string           `json:"events_url,omitempty"`
+	RealTime    bool             `json:"real_time,omitempty"`
+	Services    []string         `json:"services"`
+	StartDate   *time.Time       `json:"start_date"`
+	Status      string           `json:"status"`
+	Title       string           `json:"title"`
+	Text        string           `json:"text"`
+	URL         string           `json:"url,omitempty"`
+}
+
+//RunstatusMaintenanceList is a list of incident
+type RunstatusMaintenanceList struct {
+	Maintenances []RunstatusMaintenance `json:"maintenances"`
+}
+
 //RunstatusEvent is a runstatus event
 type RunstatusEvent struct {
-	Created *time.Time `json:"created"`
-	State   string     `json:"state"`
+	Created *time.Time `json:"created,omitempty"`
+	State   string     `json:"state,omitempty"`
 	Status  string     `json:"status"`
 	Text    string     `json:"text"`
 }
 
-//RunstatusIncidentList is a list of incident
-type RunstatusIncidentList struct {
-	Incidents []RunstatusIncident `json:"incidents"`
+// RunstatusService is a runstatus service
+type RunstatusService struct {
+	Name  string `json:"name"`
+	State string `json:"state,omitempty"`
+	URL   string `json:"url,omitempty"`
+}
+
+// RunstatusServiceList service list
+type RunstatusServiceList struct {
+	Services []RunstatusService `json:"services"`
+}
+
+// ID give the service ID
+func (service *RunstatusService) ID() (int, error) {
+	url := strings.TrimRight(service.URL, "/")
+	urlSplited := strings.Split(url, "/")
+	id, err := strconv.ParseInt(urlSplited[len(urlSplited)-1], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(id), nil
+}
+
+// DeleteRunstatusService delete runstatus service
+func (client *Client) DeleteRunstatusService(ctx context.Context, page string, id int) error {
+	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/services/%d", page, id), nil, "", "DELETE")
+	return err
+}
+
+// CreateRunstatusService create runstatus service
+func (client *Client) CreateRunstatusService(ctx context.Context, page string, service RunstatusService) error {
+	m, err := json.Marshal(service)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.runstatusRequest(ctx, "/pages/"+page+"/services", nil, string(m), "POST")
+	return err
+}
+
+// ListRunstatusService list runstatus service
+func (client *Client) ListRunstatusService(ctx context.Context, page string) ([]RunstatusService, error) {
+	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/services", nil, "", "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	var p *RunstatusServiceList
+	if err := json.Unmarshal(resp, &p); err != nil {
+		return nil, err
+	}
+
+	return p.Services, nil
+}
+
+// CreateRunstatusEvent create runstatus incident event
+func (client *Client) CreateRunstatusEvent(ctx context.Context, page string, incidentID int, event RunstatusEvent) error {
+	m, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/incidents/%d/events", page, incidentID), nil, string(m), "POST")
+	return err
+}
+
+// ListRunstatusMaintenance list runstatus Maintenance
+func (client *Client) ListRunstatusMaintenance(ctx context.Context, page string) ([]RunstatusMaintenance, error) {
+	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/maintenances", nil, "", "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	var p *RunstatusMaintenanceList
+	if err := json.Unmarshal(resp, &p); err != nil {
+		return nil, err
+	}
+
+	return p.Maintenances, nil
+}
+
+// CreateRunstatusMaintenance create runstatus Maintenance
+func (client *Client) CreateRunstatusMaintenance(ctx context.Context, page string, maintenance RunstatusMaintenance) error {
+	m, err := json.Marshal(maintenance)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.runstatusRequest(ctx, "/pages/"+page+"/maintenances", nil, string(m), "POST")
+	return err
+}
+
+// DeleteRunstatusMaintenance delete runstatus Maintenance
+func (client *Client) DeleteRunstatusMaintenance(ctx context.Context, page string, id int) error {
+	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/maintenances/%d", page, id), nil, "", "DELETE")
+	return err
+}
+
+// ID give the maintenance ID
+func (service *RunstatusMaintenance) ID() (int, error) {
+	url := strings.TrimRight(service.URL, "/")
+	urlSplited := strings.Split(url, "/")
+	id, err := strconv.ParseInt(urlSplited[len(urlSplited)-1], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(id), nil
+}
+
+// UpdateRunstatusMaintenance update runstatus Maintenance
+func (client *Client) UpdateRunstatusMaintenance(ctx context.Context, page string, id int, event RunstatusEvent) error {
+	m, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/maintenances/%d/events", page, id), nil, string(m), "POST")
+	return err
 }
 
 // ListRunstatusIncident list runstatus incident
@@ -106,8 +250,8 @@ func (client *Client) CreateRunstatusIncident(ctx context.Context, page string, 
 }
 
 // DeleteRunstatusIncident delete runstatus incident
-func (client *Client) DeleteRunstatusIncident(ctx context.Context, page, id string) error {
-	_, err := client.runstatusRequest(ctx, "/pages/"+page+"/incidents/"+id, nil, "", "DELETE")
+func (client *Client) DeleteRunstatusIncident(ctx context.Context, page string, id int) error {
+	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/incidents/%d", page, id), nil, "", "DELETE")
 	return err
 }
 
@@ -194,7 +338,10 @@ func (client *Client) runstatusRequest(ctx context.Context, uri string, urlValue
 	payload := fmt.Sprintf("%s%s%s", req.URL.String(), time, params)
 
 	mac := hmac.New(sha256.New, []byte(client.apiSecret))
-	mac.Write([]byte(payload))
+	_, err = mac.Write([]byte(payload))
+	if err != nil {
+		return nil, err
+	}
 	signature := hex.EncodeToString(mac.Sum(nil))
 
 	var hdr = make(http.Header)

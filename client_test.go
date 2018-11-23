@@ -419,88 +419,127 @@ func TestClientTrace(t *testing.T) {
 
 type lsTest struct {
 	name      string
+	fieldName string
 	listables []Listable
 }
 
 func lsTests() []lsTest {
-	return []lsTest{
-		{"zones", []Listable{
+	ts := []lsTest{
+		{"zones", "", []Listable{
 			&Zone{},
 			&ListZones{},
 		}},
-		{"publicipaddresses", []Listable{
+		{"publicipaddresses", "", []Listable{
 			&IPAddress{},
 			&ListPublicIPAddresses{},
 		}},
-		{"sshkeypairs", []Listable{
+		{"sshkeypairs", "", []Listable{
 			&SSHKeyPair{},
 			&ListSSHKeyPairs{},
 		}},
-		{"affinitygroups", []Listable{
+		{"affinitygroups", "", []Listable{
 			&AffinityGroup{},
 			&ListAffinityGroups{},
 		}},
-		{"securitygroups", []Listable{
+		{"securitygroups", "", []Listable{
 			&SecurityGroup{},
 			&ListSecurityGroups{},
 		}},
-		{"virtualmachines", []Listable{
+		{"virtualmachines", "", []Listable{
 			&VirtualMachine{},
 			&ListVirtualMachines{},
 		}},
-		{"volumes", []Listable{
+		{"volumes", "", []Listable{
 			&Volume{},
 			&ListVolumes{},
 		}},
-		{"templates", []Listable{
+		{"templates", "", []Listable{
 			&Template{IsFeatured: true},
 			&ListTemplates{TemplateFilter: "featured"},
 		}},
-		{"serviceofferings", []Listable{
+		{"serviceofferings", "", []Listable{
 			&ServiceOffering{},
 			&ListServiceOfferings{},
 		}},
-		{"networks", []Listable{
+		{"networks", "", []Listable{
 			&Network{},
 			&ListNetworks{},
 		}},
-		{"networkofferings", []Listable{
+		{"networkofferings", "", []Listable{
 			&NetworkOffering{},
 			&ListNetworkOfferings{},
 		}},
-		{"accounts", []Listable{
+		{"accounts", "", []Listable{
 			&Account{},
 			&ListAccounts{},
 		}},
-		{"nics", []Listable{
+		{"nics", "", []Listable{
 			&Nic{},
 			&ListNics{},
 		}},
-		{"snapshots", []Listable{
+		{"snapshots", "", []Listable{
 			&Snapshot{},
 			&ListSnapshots{},
 		}},
-		{"events", []Listable{
+		{"events", "", []Listable{
 			&Event{},
 			&ListEvents{},
 		}},
-		{"resourcelimits", []Listable{
+		{"eventtypes", "", []Listable{
+			&EventType{},
+			&ListEventTypes{},
+		}},
+		{"resourcelimits", "", []Listable{
 			&ResourceLimit{},
 			&ListResourceLimits{},
 		}},
-		{"tags", []Listable{
+		{"resourcedetails", "", []Listable{
+			&ResourceDetail{
+				ResourceType: "UserVM",
+			},
+			&ListResourceDetails{
+				ResourceType: "UserVM",
+			},
+		}},
+		{"tags", "", []Listable{
 			&ResourceTag{},
 			&ListTags{},
 		}},
-		{"users", []Listable{
+		{"users", "", []Listable{
 			&User{},
 			&ListUsers{},
 		}},
-		{"instancegroups", []Listable{
+		{"instancegroups", "", []Listable{
 			&InstanceGroup{},
 			&ListInstanceGroups{},
 		}},
+		{"asyncjobs", "", []Listable{
+			&AsyncJobResult{},
+			&ListAsyncJobs{},
+		}},
+		{"oscategories", "", []Listable{
+			&OSCategory{},
+			&ListOSCategories{},
+		}},
 	}
+
+	for i, t := range ts {
+		end := len(t.name) - 1
+		if strings.HasSuffix(t.name, "ses") {
+			end--
+		}
+		if strings.HasSuffix(t.name, "jobs") {
+			end++
+		}
+		fieldName := t.name[:end]
+		if strings.HasSuffix(fieldName, "ie") {
+			fieldName = t.name[:end-2] + "y"
+		}
+
+		ts[i].fieldName = fieldName
+	}
+
+	return ts
 }
 
 func TestClientList(t *testing.T) {
@@ -511,13 +550,9 @@ func TestClientList(t *testing.T) {
 	}}`
 
 	for _, tt := range lsTests() {
-		end := len(tt.name) - 1
-		if strings.HasSuffix(tt.name, "ses") {
-			end--
-		}
 		responses := make([]response, len(tt.listables))
 		for i := range tt.listables {
-			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.name[:end])}
+			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.fieldName)}
 		}
 		ts := newServer(responses...)
 
@@ -547,13 +582,18 @@ func TestClientPaginate(t *testing.T) {
 	}}`
 
 	for _, tt := range lsTests() {
-		end := len(tt.name) - 1
-		if strings.HasSuffix(tt.name, "ses") {
-			end--
+		end := len(tt.name)
+		switch {
+		case strings.HasSuffix(tt.name, "ses"):
+			end -= 2 // nolint: ineffassign
+		case strings.HasSuffix(tt.name, "jobs"):
+			break
+		default:
+			end-- // nolint: ineffassign
 		}
 		responses := make([]response, len(tt.listables))
 		for i := range tt.listables {
-			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.name[:end])}
+			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.fieldName)}
 		}
 		ts := newServer(responses...)
 
@@ -574,7 +614,7 @@ func TestClientPaginate(t *testing.T) {
 			})
 
 			if counter != 4 {
-				t.Errorf("Four zones were expected, got %d", counter)
+				t.Errorf("Four %s were expected, got %d", tt.name, counter)
 			}
 		}
 

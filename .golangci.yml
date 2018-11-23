@@ -2,7 +2,7 @@ linters-settings:
   golint:
     min-confidence: 0.3
   gocyclo:
-    min-complexity: 25
+    min-complexity: 28
   goimports:
     local-prefixes: github.com
 

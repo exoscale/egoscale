@@ -21,6 +21,16 @@ type AsyncJobResult struct {
 	UserID          *UUID            `json:"userid,omitempty" doc:"the user that executed the async command"`
 }
 
+// ListRequest buils the (empty) ListAsyncJobs request
+func (a AsyncJobResult) ListRequest() (ListCommand, error) {
+	req := &ListAsyncJobs{
+		StartDate: a.Created,
+	}
+
+	return req, nil
+}
+
+// Error builds an error message from the result
 func (a AsyncJobResult) Error() error {
 	r := new(ErrorResponse)
 	if e := json.Unmarshal(*a.JobResult, r); e != nil {

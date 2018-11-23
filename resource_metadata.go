@@ -1,5 +1,24 @@
 package egoscale
 
+import "fmt"
+
+// ResourceDetail represents extra details
+type ResourceDetail ResourceTag
+
+// ListRequest builds the ListResourceDetails request
+func (detail ResourceDetail) ListRequest() (ListCommand, error) {
+	if detail.ResourceType == "" {
+		return nil, fmt.Errorf("the resourcetype parameter is required")
+	}
+
+	req := &ListResourceDetails{
+		ResourceType: detail.ResourceType,
+		ResourceID:   detail.ResourceID,
+	}
+
+	return req, nil
+}
+
 //go:generate go run generate/main.go -interface=Listable ListResourceDetails
 
 // ListResourceDetails lists the resource tag(s) (but different from listTags...)

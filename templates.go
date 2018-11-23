@@ -86,8 +86,18 @@ type ListTemplatesResponse struct {
 
 // OSCategory represents an OS category
 type OSCategory struct {
-	ID   string `json:"id,omitempty" doc:"the ID of the OS category"`
+	ID   *UUID  `json:"id,omitempty" doc:"the ID of the OS category"`
 	Name string `json:"name,omitempty" doc:"the name of the OS category"`
+}
+
+// ListRequest builds the ListOSCategories request
+func (osCat OSCategory) ListRequest() (ListCommand, error) {
+	req := &ListOSCategories{
+		Name: osCat.Name,
+		ID:   osCat.ID,
+	}
+
+	return req, nil
 }
 
 //go:generate go run generate/main.go -interface=Listable ListOSCategories

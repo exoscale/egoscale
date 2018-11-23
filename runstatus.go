@@ -84,7 +84,6 @@ type RunstatusMaintenance struct {
 	StartDate   *time.Time       `json:"start_date"`
 	Status      string           `json:"status"`
 	Title       string           `json:"title"`
-	Text        string           `json:"text"`
 	URL         string           `json:"url,omitempty"`
 }
 

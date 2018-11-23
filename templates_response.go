@@ -27,8 +27,8 @@ func (ls *ListTemplates) SetPageSize(pageSize int) {
 	ls.PageSize = pageSize
 }
 
-// each triggers the callback for each, valid answer or any non 404 issue
-func (ListTemplates) each(resp interface{}, callback IterateItemFunc) {
+// Each triggers the callback for each, valid answer or any non 404 issue
+func (ListTemplates) Each(resp interface{}, callback IterateItemFunc) {
 	items, ok := resp.(*ListTemplatesResponse)
 	if !ok {
 		callback(nil, fmt.Errorf("wrong type, ListTemplatesResponse was expected, got %T", resp))

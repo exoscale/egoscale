@@ -27,8 +27,8 @@ func (ls *ListVirtualMachines) SetPageSize(pageSize int) {
 	ls.PageSize = pageSize
 }
 
-// each triggers the callback for each, valid answer or any non 404 issue
-func (ListVirtualMachines) each(resp interface{}, callback IterateItemFunc) {
+// Each triggers the callback for each, valid answer or any non 404 issue
+func (ListVirtualMachines) Each(resp interface{}, callback IterateItemFunc) {
 	items, ok := resp.(*ListVirtualMachinesResponse)
 	if !ok {
 		callback(nil, fmt.Errorf("wrong type, ListVirtualMachinesResponse was expected, got %T", resp))

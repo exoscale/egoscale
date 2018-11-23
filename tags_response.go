@@ -27,8 +27,8 @@ func (ls *ListTags) SetPageSize(pageSize int) {
 	ls.PageSize = pageSize
 }
 
-// each triggers the callback for each, valid answer or any non 404 issue
-func (ListTags) each(resp interface{}, callback IterateItemFunc) {
+// Each triggers the callback for each, valid answer or any non 404 issue
+func (ListTags) Each(resp interface{}, callback IterateItemFunc) {
 	items, ok := resp.(*ListTagsResponse)
 	if !ok {
 		callback(nil, fmt.Errorf("wrong type, ListTagsResponse was expected, got %T", resp))

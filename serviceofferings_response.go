@@ -27,8 +27,8 @@ func (ls *ListServiceOfferings) SetPageSize(pageSize int) {
 	ls.PageSize = pageSize
 }
 
-// each triggers the callback for each, valid answer or any non 404 issue
-func (ListServiceOfferings) each(resp interface{}, callback IterateItemFunc) {
+// Each triggers the callback for each, valid answer or any non 404 issue
+func (ListServiceOfferings) Each(resp interface{}, callback IterateItemFunc) {
 	items, ok := resp.(*ListServiceOfferingsResponse)
 	if !ok {
 		callback(nil, fmt.Errorf("wrong type, ListServiceOfferingsResponse was expected, got %T", resp))

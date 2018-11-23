@@ -619,8 +619,8 @@ func (ls *{{.Type}}) SetPageSize(pageSize int) {
 	ls.PageSize = pageSize
 }
 
-// each triggers the callback for each, valid answer or any non 404 issue
-func ({{.Type}}) each(resp interface{}, callback IterateItemFunc) {
+// Each triggers the callback for each, valid answer or any non 404 issue
+func ({{.Type}}) Each(resp interface{}, callback IterateItemFunc) {
 	items, ok := resp.(*{{.Type}}Response)
 	if !ok {
 		callback(nil, fmt.Errorf("wrong type, {{.Type}}Response was expected, got %T", resp))

@@ -289,7 +289,7 @@ func (client *Client) PaginateWithContext(ctx context.Context, g Listable, callb
 
 		size := 0
 		didErr := false
-		req.each(resp, func(element interface{}, err error) bool {
+		req.Each(resp, func(element interface{}, err error) bool {
 			// If the context was cancelled, kill it in flight
 			if e := ctx.Err(); e != nil {
 				element = nil

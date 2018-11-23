@@ -27,8 +27,8 @@ func (ls *ListEventTypes) SetPageSize(pageSize int) {
 	ls.PageSize = pageSize
 }
 
-// each triggers the callback for each, valid answer or any non 404 issue
-func (ListEventTypes) each(resp interface{}, callback IterateItemFunc) {
+// Each triggers the callback for each, valid answer or any non 404 issue
+func (ListEventTypes) Each(resp interface{}, callback IterateItemFunc) {
 	items, ok := resp.(*ListEventTypesResponse)
 	if !ok {
 		callback(nil, fmt.Errorf("wrong type, ListEventTypesResponse was expected, got %T", resp))

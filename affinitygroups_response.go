@@ -27,8 +27,8 @@ func (ls *ListAffinityGroups) SetPageSize(pageSize int) {
 	ls.PageSize = pageSize
 }
 
-// each triggers the callback for each, valid answer or any non 404 issue
-func (ListAffinityGroups) each(resp interface{}, callback IterateItemFunc) {
+// Each triggers the callback for each, valid answer or any non 404 issue
+func (ListAffinityGroups) Each(resp interface{}, callback IterateItemFunc) {
 	items, ok := resp.(*ListAffinityGroupsResponse)
 	if !ok {
 		callback(nil, fmt.Errorf("wrong type, ListAffinityGroupsResponse was expected, got %T", resp))

@@ -79,12 +79,14 @@ func prepareValues(prefix string, command interface{}) (url.Values, error) {
 
 		val := value.Field(i)
 		tag := field.Tag
+
+		var err error
+		var name string
+		var value interface{}
+
 		if json, ok := tag.Lookup("json"); ok {
 			n, required := ExtractJSONTag(field.Name, json)
-			name := prefix + n
-
-			var err error
-			var value interface{}
+			name = prefix + n
 
 			switch val.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -125,25 +127,30 @@ func prepareValues(prefix string, command interface{}) (url.Values, error) {
 					err = fmt.Errorf("unsupported type")
 				}
 			}
-
-			if err != nil {
-				return nil, fmt.Errorf("%s.%s (%v) %s", typeof.Name(), n, val.Kind(), err)
-			}
-
-			switch v := value.(type) {
-			case *string:
-				if v != nil {
-					params.Set(name, *v)
-				}
-			case url.Values:
-				for k, xs := range v {
-					for _, x := range xs {
-						params.Add(k, x)
-					}
-				}
-			}
 		} else {
-			log.Printf("[SKIP] %s.%s no json label found", typeof.Name(), field.Name)
+			switch val.Kind() {
+			case reflect.Struct:
+				value, err = prepareEmbedStruct(val.Interface())
+			default:
+				log.Printf("[SKIP] %s.%s no json label found", typeof.Name(), field.Name)
+			}
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("%s.%s (%v) %s", typeof.Name(), field.Name, val.Kind(), err)
+		}
+
+		switch v := value.(type) {
+		case *string:
+			if name != "" && v != nil {
+				params.Set(name, *v)
+			}
+		case url.Values:
+			for k, xs := range v {
+				for _, x := range xs {
+					params.Add(k, x)
+				}
+			}
 		}
 	}
 
@@ -371,6 +378,10 @@ func prepareStruct(i interface{}, required bool) (*string, error) {
 	}
 
 	return prepareString(s.String(), required)
+}
+
+func prepareEmbedStruct(i interface{}) (url.Values, error) {
+	return prepareValues("", i)
 }
 
 // ExtractJSONTag returns the variable name or defaultName as well as if the field is required (!omitempty)

@@ -6,6 +6,10 @@ import (
 	"testing"
 )
 
+type Embed struct {
+	Embed string `json:"embed"`
+}
+
 func TestPrepareValues(t *testing.T) {
 	type tag struct {
 		Name      string `json:"name"`
@@ -16,6 +20,7 @@ func TestPrepareValues(t *testing.T) {
 	f := false
 
 	profile := struct {
+		Embed
 		IgnoreMe    string
 		Zone        string            `json:"myzone,omitempty"`
 		Name        string            `json:"name"`
@@ -38,6 +43,7 @@ func TestPrepareValues(t *testing.T) {
 		CIDRList    []CIDR            `json:"cidrlist,omitempty"`
 		MAC         MACAddress        `json:"mac,omitempty"`
 	}{
+		Embed:    Embed{Embed: "embed"},
 		IgnoreMe: "bar",
 		Name:     "world",
 		NoName:   "foo",
@@ -158,6 +164,11 @@ func TestPrepareValues(t *testing.T) {
 	v = params.Get("mac")
 	if v != "01:23:45:67:89:ab" {
 		t.Errorf(`expected mac to be serialized as "01:23:45:67:89:ab", got %q`, v)
+	}
+
+	v = params.Get("embed")
+	if v != "embed" {
+		t.Errorf(`expected embed struct to be serialized as "embed", got %q`, v)
 	}
 }
 

@@ -14,30 +14,30 @@ func TestNetwork(t *testing.T) {
 
 func TestListNetworks(t *testing.T) {
 	req := &ListNetworks{}
-	_ = req.response().(*ListNetworksResponse)
+	_ = req.Response().(*ListNetworksResponse)
 }
 
 func TestCreateNetwork(t *testing.T) {
 	req := &CreateNetwork{}
-	_ = req.response().(*Network)
+	_ = req.Response().(*Network)
 }
 
 func TestRestartNetwork(t *testing.T) {
 	req := &RestartNetwork{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*Network)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*Network)
 }
 
 func TestUpdateNetwork(t *testing.T) {
 	req := &UpdateNetwork{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*Network)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*Network)
 }
 
 func TestDeleteNetwork(t *testing.T) {
 	req := &DeleteNetwork{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestCreateNetworkOnBeforeSend(t *testing.T) {

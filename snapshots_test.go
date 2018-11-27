@@ -13,23 +13,23 @@ func TestSnapshot(t *testing.T) {
 
 func TestCreateSnapshot(t *testing.T) {
 	req := &CreateSnapshot{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*Snapshot)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*Snapshot)
 }
 
 func TestListSnapshots(t *testing.T) {
 	req := &ListSnapshots{}
-	_ = req.response().(*ListSnapshotsResponse)
+	_ = req.Response().(*ListSnapshotsResponse)
 }
 
 func TestDeleteSnapshot(t *testing.T) {
 	req := &DeleteSnapshot{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestRevertSnapshot(t *testing.T) {
 	req := &RevertSnapshot{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }

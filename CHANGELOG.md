@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.13.0
+------
+
+- change: `Paginate` to accept `Listable`
+- change: `ListCommand` is also `Listable`
+- change: `client.Get` doesn't modify the given resource, returns a new one
+- remove: `Gettable`
+
 0.12.5
 ------
 

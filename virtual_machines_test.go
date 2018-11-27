@@ -15,110 +15,110 @@ func TestVirtualMachine(t *testing.T) {
 
 func TestDeployVirtualMachine(t *testing.T) {
 	req := &DeployVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestDestroyVirtualMachine(t *testing.T) {
 	req := &DestroyVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestRebootVirtualMachine(t *testing.T) {
 	req := &RebootVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestStartVirtualMachine(t *testing.T) {
 	req := &StartVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestStopVirtualMachine(t *testing.T) {
 	req := &StopVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestResetPasswordForVirtualMachine(t *testing.T) {
 	req := &ResetPasswordForVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestUpdateVirtualMachine(t *testing.T) {
 	req := &UpdateVirtualMachine{}
-	_ = req.response().(*VirtualMachine)
+	_ = req.Response().(*VirtualMachine)
 }
 
 func TestListVirtualMachines(t *testing.T) {
 	req := &ListVirtualMachines{}
-	_ = req.response().(*ListVirtualMachinesResponse)
+	_ = req.Response().(*ListVirtualMachinesResponse)
 }
 
 func TestGetVMPassword(t *testing.T) {
 	req := &GetVMPassword{}
-	_ = req.response().(*Password)
+	_ = req.Response().(*Password)
 }
 
 func TestRestoreVirtualMachine(t *testing.T) {
 	req := &RestoreVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestChangeServiceForVirtualMachine(t *testing.T) {
 	req := &ChangeServiceForVirtualMachine{}
-	_ = req.response().(*VirtualMachine)
+	_ = req.Response().(*VirtualMachine)
 }
 
 func TestScaleVirtualMachine(t *testing.T) {
 	req := &ScaleVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestRecoverVirtualMachine(t *testing.T) {
 	req := &RecoverVirtualMachine{}
-	_ = req.response().(*VirtualMachine)
+	_ = req.Response().(*VirtualMachine)
 }
 
 func TestExpungeVirtualMachine(t *testing.T) {
 	req := &ExpungeVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestGetVirtualMachineUserData(t *testing.T) {
 	req := &GetVirtualMachineUserData{}
-	_ = req.response().(*VirtualMachineUserData)
+	_ = req.Response().(*VirtualMachineUserData)
 }
 
 func TestAddNicToVirtualMachine(t *testing.T) {
 	req := &AddNicToVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestRemoveNicFromVirtualMachine(t *testing.T) {
 	req := &RemoveNicFromVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestUpdateDefaultNicForVirtualMachine(t *testing.T) {
 	req := &UpdateDefaultNicForVirtualMachine{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestUpdateVMNicIP(t *testing.T) {
 	req := &UpdateVMNicIP{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestDeployOnBeforeSend(t *testing.T) {
@@ -164,197 +164,6 @@ func TestDeployOnBeforeSendBothAG(t *testing.T) {
 	if err := req.onBeforeSend(params); err == nil {
 		t.Errorf("DeployVM should only accept SG ids or names")
 	}
-}
-
-func TestGetVirtualMachine(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
-{"listvirtualmachinesresponse": {
-	"count": 1,
-	"virtualmachine": [
-		{
-			"account": "yoan.blanc@exoscale.ch",
-			"affinitygroup": [],
-			"cpunumber": 1,
-			"cpuspeed": 2198,
-			"cpuused": "0%",
-			"created": "2018-01-19T14:37:08+0100",
-			"diskioread": 0,
-			"diskiowrite": 13734,
-			"diskkbsread": 0,
-			"diskkbswrite": 94342,
-			"displayname": "test",
-			"displayvm": true,
-			"domain": "ROOT",
-			"haenable": false,
-			"hostid": "70c12af4-b1cb-4133-97dd-3579bb88a8ce",
-			"hostname": "virt-hv-pp005.dk2.p.exoscale.net",
-			"hypervisor": "KVM",
-			"id": "69069d5e-1591-4214-937e-4c8cba63fcfb",
-			"instancename": "i-2-188150-VM",
-			"isdynamicallyscalable": false,
-			"keypair": "test-yoan",
-			"memory": 1024,
-			"name": "test",
-			"networkkbsread": 5542,
-			"networkkbswrite": 8813,
-			"nic": [
-				{
-					"broadcasturi": "vlan://untagged",
-					"gateway": "159.100.248.1",
-					"id": "75d1367c-319a-4658-b31d-1a26496061ff",
-					"ipaddress": "159.100.251.247",
-					"isdefault": true,
-					"macaddress": "06:6d:cc:00:00:3c",
-					"netmask": "255.255.252.0",
-					"networkid": "d48bfccc-c11f-438f-8177-9cf6a40dc4f8",
-					"networkname": "defaultGuestNetwork",
-					"traffictype": "Guest",
-					"type": "Shared"
-				}
-			],
-			"oscategoryid": "ca158095-a6d2-4b0c-95e3-9a2e5123cbfc",
-			"passwordenabled": true,
-			"securitygroup": [
-				{
-					"account": "default",
-					"description": "",
-					"id": "41471067-d3c2-41ef-ae45-f57e00078843",
-					"name": "default security group",
-					"tags": []
-				}
-			],
-			"serviceofferingid": "84925525-7825-418b-845b-1aed179bbc40",
-			"serviceofferingname": "Tiny",
-			"state": "Running",
-			"tags": [],
-			"templatedisplaytext": "Linux CentOS 7.4 64-bit 10G Disk (2018-01-08-d617dd)",
-			"templateid": "934b4d48-d82e-42f5-8f14-b34de3af9854",
-			"templatename": "Linux CentOS 7.4 64-bit",
-			"zoneid": "381d0a95-ed3a-4ad9-b41c-b97073c1a433",
-			"zonename": "ch-dk-2"
-		}
-	]
-}}`})
-	defer ts.Close()
-
-	cs := NewClient(ts.URL, "KEY", "SECRET")
-	vm := &VirtualMachine{
-		ID: MustParseUUID("69069d5e-1591-4214-937e-4c8cba63fcfb"),
-	}
-	if err := cs.Get(vm); err != nil {
-		t.Error(err)
-	}
-
-	if vm.Account != "yoan.blanc@exoscale.ch" {
-		t.Errorf("Account doesn't match, got %v", vm.Account)
-	}
-}
-
-func TestGetVirtualMachinePassword(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
-{"getvmpasswordresponse": {
-	"password": {
-		"encryptedpassword": "test"
-	}
-}}`})
-	defer ts.Close()
-
-	cs := NewClient(ts.URL, "KEY", "SECRET")
-	req := &GetVMPassword{
-		ID: MustParseUUID("69069d5e-1591-4214-937e-4c8cba63fcfb"),
-	}
-	resp, err := cs.Request(req)
-	if err != nil {
-		t.Error(err)
-	}
-	if resp.(*Password).EncryptedPassword != "test" {
-		t.Errorf("Encrypted password missing")
-	}
-}
-
-func TestListMachines(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
-{"listvirtualmachinesresponse": {
-	"count": 3,
-	"virtualmachine": [
-		{
-			"id": "84752707-a1d6-4e93-8207-bafeda83fe15"
-		},
-		{
-			"id": "f93238e1-cc6e-484b-9650-fe8921631b7b"
-		},
-		{
-			"id": "487eda20-eea1-43f7-9456-e870a359b173"
-		}
-	]
-}}`})
-	defer ts.Close()
-
-	cs := NewClient(ts.URL, "KEY", "SECRET")
-	req := &VirtualMachine{}
-	vms, err := cs.List(req)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if len(vms) != 3 {
-		t.Errorf("Expected three vms, got %d", len(vms))
-	}
-}
-
-func TestListMachinesFailure(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
-{"listvirtualmachinesresponse": {
-	"count": 3,
-	"virtualmachine": {}
-}}`})
-	defer ts.Close()
-
-	cs := NewClient(ts.URL, "KEY", "SECRET")
-	req := &VirtualMachine{}
-	vms, err := cs.List(req)
-	if err == nil {
-		t.Errorf("Expected an error got %v", err)
-	}
-
-	if len(vms) != 0 {
-		t.Errorf("Expected 0 vms, got %d", len(vms))
-	}
-}
-
-func TestListMachinesPaginate(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
-{"listvirtualmachinesresponse": {
-	"count": 3,
-	"virtualmachine": [
-		{
-			"id": "84752707-a1d6-4e93-8207-bafeda83fe15"
-		},
-		{
-			"id": "f93238e1-cc6e-484b-9650-fe8921631b7b"
-		},
-		{
-			"id": "487eda20-eea1-43f7-9456-e870a359b173"
-		}
-	]
-}}`})
-	defer ts.Close()
-
-	cs := NewClient(ts.URL, "KEY", "SECRET")
-	vm := &VirtualMachine{}
-	req, err := vm.ListRequest()
-	if err != nil {
-		t.Error(err)
-	}
-
-	id := MustParseUUID("84752707-a1d6-4e93-8207-bafeda83fe15")
-	cs.Paginate(req, func(i interface{}, err error) bool {
-		if !i.(*VirtualMachine).ID.Equal(*id) {
-			t.Errorf("Expected id %q, got %q", id, i.(*VirtualMachine).ID)
-		}
-		return false
-	})
-
 }
 
 func TestNicHelpers(t *testing.T) {
@@ -440,5 +249,20 @@ func TestNicNoDefault(t *testing.T) {
 	nic := vm.DefaultNic()
 	if nic != nil {
 		t.Errorf("Default NIC wasn't nil?")
+	}
+}
+
+func TestUserDataDecode(t *testing.T) {
+	userDatas := []VirtualMachineUserData{{
+		UserData: "aGVsbG8h",
+	}, {
+		UserData: "H4sIAEd08VsC/8tIzcnJVwQAYMmGmgYAAAA=",
+	}}
+
+	expected := "hello!"
+	for _, tt := range userDatas {
+		if output, _ := tt.Decode(); output != "hello!" {
+			t.Errorf("bad userdata decoding, want: %q, got: %q", expected, output)
+		}
 	}
 }

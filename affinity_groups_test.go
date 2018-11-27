@@ -7,30 +7,30 @@ import (
 
 func TestCreateAffinityGroup(t *testing.T) {
 	req := &CreateAffinityGroup{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*AffinityGroup)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*AffinityGroup)
 }
 
 func TestDeleteAffinityGroup(t *testing.T) {
 	req := &DeleteAffinityGroup{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestListAffinityGroups(t *testing.T) {
 	req := &ListAffinityGroups{}
-	_ = req.response().(*ListAffinityGroupsResponse)
+	_ = req.Response().(*ListAffinityGroupsResponse)
 }
 
 func TestListAffinityGroupTypes(t *testing.T) {
 	req := &ListAffinityGroupTypes{}
-	_ = req.response().(*ListAffinityGroupTypesResponse)
+	_ = req.Response().(*ListAffinityGroupTypesResponse)
 }
 
 func TestUpdateVMAffinityGroup(t *testing.T) {
 	req := &UpdateVMAffinityGroup{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*VirtualMachine)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
 func TestUpdateVMOnBeforeSend(t *testing.T) {

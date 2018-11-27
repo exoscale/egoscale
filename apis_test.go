@@ -6,5 +6,5 @@ import (
 
 func TestListAPIs(t *testing.T) {
 	req := &ListAPIs{}
-	_ = req.response().(*ListAPIsResponse)
+	_ = req.Response().(*ListAPIsResponse)
 }

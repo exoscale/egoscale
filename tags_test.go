@@ -6,17 +6,17 @@ import (
 
 func TestCreateTags(t *testing.T) {
 	req := &CreateTags{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestDeleteTags(t *testing.T) {
 	req := &DeleteTags{}
-	_ = req.response().(*AsyncJobResult)
-	_ = req.asyncResponse().(*booleanResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*booleanResponse)
 }
 
 func TestListTags(t *testing.T) {
 	req := &ListTags{}
-	_ = req.response().(*ListTagsResponse)
+	_ = req.Response().(*ListTagsResponse)
 }

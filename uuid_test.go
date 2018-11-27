@@ -5,15 +5,17 @@ import (
 	"testing"
 )
 
-func TestUUIDMustParse(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			_, ok := r.(error)
-			if !ok {
-				t.Error(r)
-			}
+func recoverFromPanicing(t *testing.T) {
+	if r := recover(); r != nil {
+		_, ok := r.(error)
+		if !ok {
+			t.Error(r)
 		}
-	}()
+	}
+}
+
+func TestUUIDMustParse(t *testing.T) {
+	defer recoverFromPanicing(t)
 	MustParseUUID("foo")
 	t.Error("invalid uuid should panic")
 }

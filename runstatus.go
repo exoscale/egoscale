@@ -116,7 +116,7 @@ type RunstatusServiceList struct {
 func (service *RunstatusService) ID() (int, error) {
 	url := strings.TrimRight(service.URL, "/")
 	urlSplited := strings.Split(url, "/")
-	id, err := strconv.ParseInt(urlSplited[len(urlSplited)-1], 10, 64)
+	id, err := strconv.ParseInt(urlSplited[len(urlSplited)-1], 10, 32)
 	if err != nil {
 		return 0, err
 	}

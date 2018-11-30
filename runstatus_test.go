@@ -266,7 +266,7 @@ func TestListRunstatusPage(t *testing.T) {
 	}
 
 	if len(pages) != 1 {
-		t.Errorf("1 page expected: got %q", len(pages))
+		t.Errorf("1 page expected: got %d", len(pages))
 	}
 
 	if pages[0].Subdomain != "testpage" {
@@ -279,7 +279,7 @@ func TestRunstatusListService(t *testing.T) {
 {
   "services": [
     {
-      "url": "https://example.org/pages/testpage/services/28",
+      "url": "https://example.org/pages/testpage/services/ERROR",
       "name": "API",
       "state": "operational"
     },
@@ -300,7 +300,21 @@ func TestRunstatusListService(t *testing.T) {
 	}
 
 	if len(services) != 2 {
-		t.Errorf("2 services expected: got %q", len(services))
+		t.Errorf("2 services expected: got %d", len(services))
+	}
+
+	_, err = services[0].ID()
+	if err == nil {
+		t.Errorf("service id error expected: got nil")
+	}
+
+	id, err := services[1].ID()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if id != 29 {
+		t.Errorf("service id 29 expected: got %d", id)
 	}
 
 	if services[1].URL != "https://example.org/pages/testpage/services/29" {
@@ -337,6 +351,32 @@ func TestRunstatusListMaintenance(t *testing.T) {
       "status":"scheduled",
       "events_url":"https://api.runstatus.com/pages/bauud/maintenances/598/events",
       "real_time":true
+    },
+    {
+      "url":"https://api.runstatus.com/pages/bauud/maintenances/ERROR",
+      "created":"2018-11-27T12:51:05.607060Z",
+      "services":["infra"],
+      "start_date":"2018-11-27T13:50:00Z",
+      "end_date":"2018-11-28T13:50:00Z",
+      "title":"hggfh",
+      "description":"hgfhgfgf",
+      "events": [
+        {
+          "created": "2018-11-14T15:38:19Z",
+          "text": "fini",
+          "status": "resolved",
+          "state": "operational"
+        },
+        {
+          "created": "2018-11-14T15:38:09Z",
+          "text": "c'est la vie!",
+          "status": "identified",
+          "state": "degraded_performance"
+        }
+      ],
+      "status":"scheduled",
+      "events_url":"https://api.runstatus.com/pages/bauud/maintenances/ERROR/events",
+      "real_time":true
     }
   ]
 }`})
@@ -349,12 +389,17 @@ func TestRunstatusListMaintenance(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(maintenances) != 1 {
-		t.Errorf("1 maintenance expected: got %q", len(maintenances))
+	if len(maintenances) != 2 {
+		t.Errorf("2 maintenance expected: got %d", len(maintenances))
 	}
 
 	if maintenances[0].Title != "hggfh" {
 		t.Errorf("title should be %q, got %q", "hggfh", maintenances[0].Title)
+	}
+
+	_, err = maintenances[1].ID()
+	if err == nil {
+		t.Errorf("maintenance id error expected: got nil")
 	}
 
 	id, err := maintenances[0].ID()
@@ -418,10 +463,118 @@ func TestRunstatusListIncident(t *testing.T) {
 	}
 
 	if len(incidents) != 1 {
-		t.Errorf("1 incident expected: got %q", len(incidents))
+		t.Errorf("1 incident expected: got %d", len(incidents))
 	}
 
 	if incidents[0].ID != 90 {
 		t.Errorf("id 90 expected: got %d", incidents[0].ID)
 	}
+}
+
+func TestRunstatusGenericError(t *testing.T) {
+	errorCode := 200
+
+	for errorCode <= 400 {
+		ts := newServer(response{errorCode, jsonContentType, `
+    {
+      ERROR
+    }
+    `})
+
+		cs := NewClient(ts.URL, "KEY", "SECRET")
+
+		i := 1
+		_, err := cs.ListRunstatusService(context.TODO(), "testpage")
+		if err == nil {
+			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
+		}
+		i++
+		_, err = cs.ListRunstatusMaintenance(context.TODO(), "testpage")
+		if err == nil {
+			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
+		}
+		i++
+		_, err = cs.ListRunstatusIncident(context.TODO(), "testpage")
+		if err == nil {
+			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
+		}
+		i++
+		_, err = cs.CreateRunstatusPage(context.TODO(), RunstatusPage{})
+		if err == nil {
+			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
+		}
+		i++
+		_, err = cs.GetRunstatusPage(context.TODO(), "testpage")
+		if err == nil {
+			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
+		}
+		i++
+		_, err = cs.ListRunstatusPage(context.TODO())
+		if err == nil {
+			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
+		}
+		i++
+
+		ts.Close()
+		errorCode += 200
+	}
+}
+
+func TestRunstatusGenericErrorWithoutResp(t *testing.T) {
+
+	ts := newServer(response{400, "ERROR", `
+    {
+      ERROR
+    }
+    `})
+	defer ts.Close()
+
+	cs := NewClient(ts.URL, "KEY", "SECRET")
+
+	i := 1
+	err := cs.DeleteRunstatusService(context.TODO(), "testpage", 0)
+	if err == nil {
+		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+	}
+	i++
+	err = cs.CreateRunstatusService(context.TODO(), "testpage", RunstatusService{})
+	if err == nil {
+		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+	}
+	i++
+	err = cs.CreateRunstatusEvent(context.TODO(), "testpage", 0, RunstatusEvent{})
+	if err == nil {
+		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+	}
+	i++
+	err = cs.CreateRunstatusMaintenance(context.TODO(), "", RunstatusMaintenance{})
+	if err == nil {
+		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+	}
+	i++
+	err = cs.DeleteRunstatusMaintenance(context.TODO(), "testpage", 0)
+	if err == nil {
+		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+	}
+	i++
+	err = cs.UpdateRunstatusMaintenance(context.TODO(), "", 0, RunstatusEvent{})
+	if err == nil {
+		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+	}
+	i++
+	err = cs.CreateRunstatusIncident(context.TODO(), "", RunstatusIncident{})
+	if err == nil {
+		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+	}
+	i++
+	err = cs.DeleteRunstatusIncident(context.TODO(), "", 0)
+	if err == nil {
+		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+	}
+	i++
+	err = cs.DeleteRunstatusPage(context.TODO(), "")
+	if err == nil {
+		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+	}
+	i++
 }

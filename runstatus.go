@@ -113,8 +113,8 @@ type RunstatusServiceList struct {
 }
 
 // ID give the service ID
-func (service *RunstatusService) ID() (int, error) {
-	url := strings.TrimRight(service.URL, "/")
+func (s *RunstatusService) ID() (int, error) {
+	url := strings.TrimRight(s.URL, "/")
 	urlSplited := strings.Split(url, "/")
 	id, err := strconv.ParseInt(urlSplited[len(urlSplited)-1], 10, 32)
 	if err != nil {
@@ -185,8 +185,8 @@ func (client *Client) DeleteRunstatusMaintenance(ctx context.Context, page strin
 }
 
 // ID give the maintenance ID
-func (service *RunstatusMaintenance) ID() (int, error) {
-	url := strings.TrimRight(service.URL, "/")
+func (m *RunstatusMaintenance) ID() (int, error) {
+	url := strings.TrimRight(m.URL, "/")
 	urlSplited := strings.Split(url, "/")
 	id, err := strconv.ParseInt(urlSplited[len(urlSplited)-1], 10, 64)
 	if err != nil {

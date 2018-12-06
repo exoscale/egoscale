@@ -513,7 +513,6 @@ func TestRunstatusGenericError(t *testing.T) {
 		if err == nil {
 			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
 		}
-		i++
 
 		ts.Close()
 		errorCode += 200
@@ -576,5 +575,4 @@ func TestRunstatusGenericErrorWithoutResp(t *testing.T) {
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
-	i++
 }

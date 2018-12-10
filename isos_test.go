@@ -4,26 +4,26 @@ import (
 	"testing"
 )
 
-func TestIsoResourceType(t *testing.T) {
-	instance := &Iso{}
+func TestISOResourceType(t *testing.T) {
+	instance := &ISO{}
 	if instance.ResourceType() != "ISO" {
 		t.Errorf("ResourceType doesn't match")
 	}
 }
 
-func TestListIsos(t *testing.T) {
-	req := &ListIsos{}
-	_ = req.Response().(*ListIsosResponse)
+func TestListISOs(t *testing.T) {
+	req := &ListISOs{}
+	_ = req.Response().(*ListISOsResponse)
 }
 
-func TestAttachIso(t *testing.T) {
-	req := &AttachIso{}
+func TestAttachISO(t *testing.T) {
+	req := &AttachISO{}
 	_ = req.Response().(*AsyncJobResult)
 	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
-func TestDetachIso(t *testing.T) {
-	req := &DetachIso{}
+func TestDetachISO(t *testing.T) {
+	req := &DetachISO{}
 	_ = req.Response().(*AsyncJobResult)
 	_ = req.AsyncResponse().(*VirtualMachine)
 }

@@ -200,8 +200,8 @@ func TestClientGetFailure(t *testing.T) {
 		(*ListVolumes)(nil),
 		&Zone{},
 		(*ListZones)(nil),
-		&Iso{},
-		(*ListIsos)(nil),
+		&ISO{},
+		(*ListISOs)(nil),
 	}
 
 	for _, thing := range things {
@@ -248,7 +248,7 @@ func TestClientGetNone(t *testing.T) {
 		{"networkofferings", &NetworkOffering{}},
 		{"nics", &Nic{}},
 		{"snapshots", &Snapshot{}},
-		{"isos", &Iso{}},
+		{"isos", &ISO{}},
 	}
 
 	for _, thing := range things {
@@ -309,7 +309,7 @@ func TestClientGetZero(t *testing.T) {
 		{"networkoffering", &NetworkOffering{ID: id}},
 		{"nic", &Nic{ID: id}},
 		{"snapshot", &Snapshot{ID: id}},
-		{"iso", &Iso{ID: id}},
+		{"iso", &ISO{ID: id}},
 	}
 
 	for _, thing := range things {
@@ -380,7 +380,7 @@ func TestClientGetTooMany(t *testing.T) {
 		{"accounts", &Account{}},
 		{"nics", &Nic{}},
 		{"snapshots", &Snapshot{}},
-		{"isos", &Iso{}},
+		{"isos", &ISO{}},
 	}
 
 	for _, thing := range things {
@@ -528,8 +528,8 @@ func lsTests() []lsTest {
 			&ListOSCategories{},
 		}},
 		{"isos", "", []Listable{
-			&Iso{},
-			&ListIsos{},
+			&ISO{},
+			&ListISOs{},
 		}},
 	}
 

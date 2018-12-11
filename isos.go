@@ -77,7 +77,7 @@ func (AttachISO) AsyncResponse() interface{} {
 	return new(VirtualMachine)
 }
 
-// DetachIso represents the request to detach an ISO to a virtual machine.
+// DetachISO represents the request to detach an ISO to a virtual machine.
 type DetachISO struct {
 	_                bool  `name:"detachIso" description:"Detaches any ISO file (if any) currently attached to a virtual machine."`
 	VirtualMachineID *UUID `json:"virtualmachineid" doc:"The ID of the virtual machine"`

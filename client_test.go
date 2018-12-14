@@ -200,6 +200,8 @@ func TestClientGetFailure(t *testing.T) {
 		(*ListVolumes)(nil),
 		&Zone{},
 		(*ListZones)(nil),
+		&ISO{},
+		(*ListISOs)(nil),
 	}
 
 	for _, thing := range things {
@@ -246,6 +248,7 @@ func TestClientGetNone(t *testing.T) {
 		{"networkofferings", &NetworkOffering{}},
 		{"nics", &Nic{}},
 		{"snapshots", &Snapshot{}},
+		{"isos", &ISO{}},
 	}
 
 	for _, thing := range things {
@@ -306,6 +309,7 @@ func TestClientGetZero(t *testing.T) {
 		{"networkoffering", &NetworkOffering{ID: id}},
 		{"nic", &Nic{ID: id}},
 		{"snapshot", &Snapshot{ID: id}},
+		{"iso", &ISO{ID: id}},
 	}
 
 	for _, thing := range things {
@@ -350,7 +354,8 @@ func TestClientGetTooMany(t *testing.T) {
 		"account": [{}, {}],
 		"networkoffering": [{}, {}],
 		"nic": [{}, {}],
-		"snapshot": [{}, {}]
+		"snapshot": [{}, {}],
+		"iso": [{}, {}]
 	}}`
 
 	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")
@@ -375,6 +380,7 @@ func TestClientGetTooMany(t *testing.T) {
 		{"accounts", &Account{}},
 		{"nics", &Nic{}},
 		{"snapshots", &Snapshot{}},
+		{"isos", &ISO{}},
 	}
 
 	for _, thing := range things {
@@ -520,6 +526,10 @@ func lsTests() []lsTest {
 		{"oscategories", "", []Listable{
 			&OSCategory{},
 			&ListOSCategories{},
+		}},
+		{"isos", "", []Listable{
+			&ISO{},
+			&ListISOs{},
 		}},
 	}
 

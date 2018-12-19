@@ -1,10 +1,14 @@
 Changelog
 =========
 
-0.13.0
+0.13.1
 ------
 
 - feat: `Iso` support `ListIsos`, `AttachIso`, and `DetachIso`
+
+0.13.0
+------
+
 - change: `Paginate` to accept `Listable`
 - change: `ListCommand` is also `Listable`
 - change: `client.Get` doesn't modify the given resource, returns a new one

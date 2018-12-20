@@ -316,7 +316,6 @@ func (client *Client) runstatusRequest(ctx context.Context, uri string, structPa
 
 	time := time.Now().Local().Format("2006-01-02T15:04:05-0700")
 
-	//XXX WIP for testing
 	payload := fmt.Sprintf("%s%s%s", req.URL.String(), time, params)
 
 	mac := hmac.New(sha256.New, []byte(client.apiSecret))

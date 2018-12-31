@@ -81,7 +81,7 @@ func TestRunstatusPage(t *testing.T) {
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
-	page, err := cs.GetRunstatusPage(context.TODO(), "testpage")
+	page, err := cs.GetRunstatusPage(context.TODO(), RunstatusPage{URL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -260,7 +260,7 @@ func TestListRunstatusPage(t *testing.T) {
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
-	pages, err := cs.ListRunstatusPage(context.TODO())
+	pages, err := cs.ListRunstatusPages(context.TODO())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -294,27 +294,13 @@ func TestRunstatusListService(t *testing.T) {
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
-	services, err := cs.ListRunstatusService(context.TODO(), "testpage")
+	services, err := cs.ListRunstatusService(context.TODO(), RunstatusPage{ServicesURL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if len(services) != 2 {
 		t.Errorf("2 services expected: got %d", len(services))
-	}
-
-	_, err = services[0].ID()
-	if err == nil {
-		t.Errorf("service id error expected: got nil")
-	}
-
-	id, err := services[1].ID()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if id != 29 {
-		t.Errorf("service id 29 expected: got %d", id)
 	}
 
 	if services[1].URL != "https://example.org/pages/testpage/services/29" {
@@ -457,7 +443,7 @@ func TestRunstatusListIncident(t *testing.T) {
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
-	incidents, err := cs.ListRunstatusIncident(context.TODO(), "testpage")
+	incidents, err := cs.ListRunstatusIncident(context.TODO(), RunstatusPage{IncidentsURL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -484,7 +470,7 @@ func TestRunstatusGenericError(t *testing.T) {
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
 		i := 1
-		_, err := cs.ListRunstatusService(context.TODO(), "testpage")
+		_, err := cs.ListRunstatusService(context.TODO(), RunstatusPage{ServicesURL: "testpage"})
 		if err == nil {
 			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
 		}
@@ -494,7 +480,7 @@ func TestRunstatusGenericError(t *testing.T) {
 			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
 		}
 		i++
-		_, err = cs.ListRunstatusIncident(context.TODO(), "testpage")
+		_, err = cs.ListRunstatusIncident(context.TODO(), RunstatusPage{IncidentsURL: "testpage"})
 		if err == nil {
 			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
 		}
@@ -504,12 +490,12 @@ func TestRunstatusGenericError(t *testing.T) {
 			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
 		}
 		i++
-		_, err = cs.GetRunstatusPage(context.TODO(), "testpage")
+		_, err = cs.GetRunstatusPage(context.TODO(), RunstatusPage{Subdomain: "testpage"})
 		if err == nil {
 			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
 		}
 		i++
-		_, err = cs.ListRunstatusPage(context.TODO())
+		_, err = cs.ListRunstatusPages(context.TODO())
 		if err == nil {
 			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
 		}
@@ -531,12 +517,12 @@ func TestRunstatusGenericErrorWithoutResp(t *testing.T) {
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
 	i := 1
-	err := cs.DeleteRunstatusService(context.TODO(), "testpage", 0)
+	err := cs.DeleteRunstatusService(context.TODO(), RunstatusService{URL: "foo"})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
 	i++
-	err = cs.CreateRunstatusService(context.TODO(), "testpage", RunstatusService{})
+	err = cs.CreateRunstatusService(context.TODO(), RunstatusPage{ServicesURL: "testpage"}, RunstatusService{})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
@@ -561,7 +547,7 @@ func TestRunstatusGenericErrorWithoutResp(t *testing.T) {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
 	i++
-	err = cs.CreateRunstatusIncident(context.TODO(), "", RunstatusIncident{})
+	err = cs.CreateRunstatusIncident(context.TODO(), RunstatusPage{}, RunstatusIncident{})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}

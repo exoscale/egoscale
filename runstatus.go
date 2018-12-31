@@ -15,31 +15,50 @@ import (
 	"time"
 )
 
+// runstatusPagesURL is the only URL that cannot be guessed
+const runstatusPagesURL = "/pages"
+
 //RunstatusPage runstatus page
 type RunstatusPage struct {
-	Name             string     `json:"name"`
-	Created          *time.Time `json:"created,omitempty"`
-	DarkTheme        bool       `json:"dark_theme,omitempty"`
-	Domain           string     `json:"domain,omitempty"`
-	GradientEnd      string     `json:"gradient_end,omitempty"`
-	GradientStart    string     `json:"gradient_start,omitempty"`
-	HeaderBackground string     `json:"header_background,omitempty"`
-	ID               int        `json:"id,omitempty"`
-	IncidentsURL     string     `json:"incidents_url,omitempty"`
-	Logo             string     `json:"logo,omitempty"`
-	MaintenancesURL  string     `json:"maintenances_url,omitempty"`
-	OkText           string     `json:"ok_text,omitempty"`
-	Plan             string     `json:"plan,omitempty"`
-	PublicURL        string     `json:"public_url,omitempty"`
-	ServicesURL      string     `json:"services_url,omitempty"`
-	State            string     `json:"state,omitempty"`
-	Subdomain        string     `json:"subdomain"`
-	SupportEmail     string     `json:"support_email,omitempty"`
-	TimeZone         string     `json:"time_zone,omitempty"`
-	Title            string     `json:"title,omitempty"`
-	TitleColor       string     `json:"title_color,omitempty"`
-	TwitterUsername  string     `json:"twitter_username,omitempty"`
-	URL              string     `json:"url,omitempty"`
+	Created          *time.Time             `json:"created,omitempty"`
+	DarkTheme        bool                   `json:"dark_theme,omitempty"`
+	Domain           string                 `json:"domain,omitempty"`
+	GradientEnd      string                 `json:"gradient_end,omitempty"`
+	GradientStart    string                 `json:"gradient_start,omitempty"`
+	HeaderBackground string                 `json:"header_background,omitempty"`
+	ID               int                    `json:"id,omitempty"`
+	Incidents        []RunstatusIncident    `json:"incidents,omitempty"`
+	IncidentsURL     string                 `json:"incidents_url,omitempty"`
+	Logo             string                 `json:"logo,omitempty"`
+	Maintenances     []RunstatusMaintenance `json:"maintenances,omitempty"`
+	MaintenancesURL  string                 `json:"maintenances_url,omitempty"`
+	Name             string                 `json:"name"`
+	OkText           string                 `json:"ok_text,omitempty"`
+	Plan             string                 `json:"plan,omitempty"`
+	PublicURL        string                 `json:"public_url,omitempty"`
+	Services         []RunstatusService     `json:"services,omitempty"`
+	ServicesURL      string                 `json:"services_url,omitempty"`
+	State            string                 `json:"state,omitempty"`
+	Subdomain        string                 `json:"subdomain"`
+	SupportEmail     string                 `json:"support_email,omitempty"`
+	TimeZone         string                 `json:"time_zone,omitempty"`
+	Title            string                 `json:"title,omitempty"`
+	TitleColor       string                 `json:"title_color,omitempty"`
+	TwitterUsername  string                 `json:"twitter_username,omitempty"`
+	URL              string                 `json:"url,omitempty"`
+}
+
+// Match returns true if the other page has similarities with itself
+func (page RunstatusPage) Match(other RunstatusPage) bool {
+	if other.Subdomain != "" && page.Subdomain == other.Subdomain {
+		return true
+	}
+
+	if other.ID > 0 && page.ID == other.ID {
+		return true
+	}
+
+	return false
 }
 
 //RunstatusPageList runstatus page list
@@ -112,37 +131,32 @@ type RunstatusServiceList struct {
 	Services []RunstatusService `json:"services"`
 }
 
-// ID give the service ID
-func (s *RunstatusService) ID() (int, error) {
-	url := strings.TrimRight(s.URL, "/")
-	urlSplited := strings.Split(url, "/")
-	id, err := strconv.ParseInt(urlSplited[len(urlSplited)-1], 10, 32)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(id), nil
-}
-
 // DeleteRunstatusService delete runstatus service
-func (client *Client) DeleteRunstatusService(ctx context.Context, page string, id int) error {
-	// XXX Pick this URL from the API
-	// GET /pages/$page | jq .services[name=$name|id=$id].url
-	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/services/%d", page, id), nil, "DELETE")
+func (client *Client) DeleteRunstatusService(ctx context.Context, service RunstatusService) error {
+	if service.URL == "" {
+		return fmt.Errorf("empty URL for %v", service)
+	}
+	_, err := client.runstatusRequest(ctx, service.URL, nil, "DELETE")
 	return err
 }
 
 // CreateRunstatusService create runstatus service
-func (client *Client) CreateRunstatusService(ctx context.Context, page string, service RunstatusService) error {
-	// XXX: GET /pages/$page | jq .services_url
-	_, err := client.runstatusRequest(ctx, "/pages/"+page+"/services", service, "POST")
+func (client *Client) CreateRunstatusService(ctx context.Context, page RunstatusPage, service RunstatusService) error {
+	if page.ServicesURL == "" {
+		return fmt.Errorf("empty Services URL for %v", page)
+	}
+
+	_, err := client.runstatusRequest(ctx, page.ServicesURL, service, "POST")
 	return err
 }
 
 // ListRunstatusService list runstatus service
-func (client *Client) ListRunstatusService(ctx context.Context, page string) ([]RunstatusService, error) {
-	// XXX: GET /pages/$page | jq .services_url
-	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/services", nil, "GET")
+func (client *Client) ListRunstatusService(ctx context.Context, page RunstatusPage) ([]RunstatusService, error) {
+	if page.ServicesURL == "" {
+		return nil, fmt.Errorf("empty Services URL for %v", page)
+	}
+
+	resp, err := client.runstatusRequest(ctx, page.ServicesURL, nil, "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +173,7 @@ func (client *Client) ListRunstatusService(ctx context.Context, page string) ([]
 func (client *Client) CreateRunstatusEvent(ctx context.Context, page string, incidentID int, event RunstatusEvent) error {
 	// XXX: GET /pages/$page | jq .incidents_url
 	//      GET incidents_url + "/$id" | jq .events_url
+
 	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/incidents/%d/events", page, incidentID), event, "POST")
 	return err
 }
@@ -214,8 +229,12 @@ func (client *Client) UpdateRunstatusMaintenance(ctx context.Context, page strin
 }
 
 // ListRunstatusIncident list runstatus incident
-func (client *Client) ListRunstatusIncident(ctx context.Context, page string) ([]RunstatusIncident, error) {
-	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/incidents", nil, "GET")
+func (client *Client) ListRunstatusIncident(ctx context.Context, page RunstatusPage) ([]RunstatusIncident, error) {
+	if page.IncidentsURL == "" {
+		return nil, fmt.Errorf("empty Incidents URL for %v", page)
+	}
+
+	resp, err := client.runstatusRequest(ctx, page.IncidentsURL, nil, "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -229,8 +248,12 @@ func (client *Client) ListRunstatusIncident(ctx context.Context, page string) ([
 }
 
 // CreateRunstatusIncident create runstatus incident
-func (client *Client) CreateRunstatusIncident(ctx context.Context, page string, incident RunstatusIncident) error {
-	_, err := client.runstatusRequest(ctx, "/pages/"+page+"/incidents", incident, "POST")
+func (client *Client) CreateRunstatusIncident(ctx context.Context, page RunstatusPage, incident RunstatusIncident) error {
+	if page.IncidentsURL == "" {
+		return fmt.Errorf("empty Incidents URL for %v", page)
+	}
+
+	_, err := client.runstatusRequest(ctx, page.IncidentsURL, incident, "POST")
 	return err
 }
 
@@ -244,7 +267,7 @@ func (client *Client) DeleteRunstatusIncident(ctx context.Context, page string, 
 
 // CreateRunstatusPage create runstatus page
 func (client *Client) CreateRunstatusPage(ctx context.Context, page RunstatusPage) (*RunstatusPage, error) {
-	resp, err := client.runstatusRequest(ctx, "/pages", page, "POST")
+	resp, err := client.runstatusRequest(ctx, runstatusPagesURL, page, "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -263,24 +286,38 @@ func (client *Client) DeleteRunstatusPage(ctx context.Context, pageName string) 
 	return err
 }
 
-// GetRunstatusPage delete runstatus page
-func (client *Client) GetRunstatusPage(ctx context.Context, pageName string) (*RunstatusPage, error) {
-	resp, err := client.runstatusRequest(ctx, "/pages/"+pageName, nil, "GET")
+// GetRunstatusPage fetches the runstatus page
+func (client *Client) GetRunstatusPage(ctx context.Context, page RunstatusPage) (*RunstatusPage, error) {
+	if page.URL != "" {
+		resp, err := client.runstatusRequest(ctx, page.URL, nil, "GET")
+		if err != nil {
+			return nil, err
+		}
+
+		p := new(RunstatusPage)
+		if err := json.Unmarshal(resp, p); err != nil {
+			return nil, err
+		}
+		return p, nil
+	}
+
+	ps, err := client.ListRunstatusPages(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var p *RunstatusPage
-	if err := json.Unmarshal(resp, &p); err != nil {
-		return nil, err
+	for i := range ps {
+		if ps[i].Match(page) {
+			return &ps[i], nil
+		}
 	}
 
-	return p, nil
+	return nil, fmt.Errorf("%#v not found", page)
 }
 
-// ListRunstatusPage delete runstatus page
-func (client *Client) ListRunstatusPage(ctx context.Context) ([]RunstatusPage, error) {
-	resp, err := client.runstatusRequest(ctx, "/pages", nil, "GET")
+// ListRunstatusPages list all the runstatus pages
+func (client *Client) ListRunstatusPages(ctx context.Context) ([]RunstatusPage, error) {
+	resp, err := client.runstatusRequest(ctx, runstatusPagesURL, nil, "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -294,10 +331,13 @@ func (client *Client) ListRunstatusPage(ctx context.Context) ([]RunstatusPage, e
 }
 
 func (client *Client) runstatusRequest(ctx context.Context, uri string, structParam interface{}, method string) (json.RawMessage, error) {
-	rawURL := client.Endpoint + uri
-	reqURL, err := url.Parse(rawURL)
-	if err != nil {
-		return nil, err
+	reqURL, err := url.Parse(uri)
+	if err != nil || reqURL.Scheme == "" {
+		// XXX this hack shall be removed once we're 100% hate-oas
+		reqURL, err = url.Parse(client.Endpoint + uri)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var params string

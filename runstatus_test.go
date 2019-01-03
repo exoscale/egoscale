@@ -294,7 +294,7 @@ func TestRunstatusListService(t *testing.T) {
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
-	services, err := cs.ListRunstatusService(context.TODO(), RunstatusPage{ServicesURL: ts.URL})
+	services, err := cs.ListRunstatusServices(context.TODO(), RunstatusPage{ServicesURL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -370,7 +370,7 @@ func TestRunstatusListMaintenance(t *testing.T) {
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
-	maintenances, err := cs.ListRunstatusMaintenance(context.TODO(), "testpage")
+	maintenances, err := cs.ListRunstatusMaintenances(context.TODO(), RunstatusPage{MaintenancesURL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -381,19 +381,6 @@ func TestRunstatusListMaintenance(t *testing.T) {
 
 	if maintenances[0].Title != "hggfh" {
 		t.Errorf("title should be %q, got %q", "hggfh", maintenances[0].Title)
-	}
-
-	_, err = maintenances[1].ID()
-	if err == nil {
-		t.Errorf("maintenance id error expected: got nil")
-	}
-
-	id, err := maintenances[0].ID()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if id != 598 {
-		t.Errorf("id 598 expected: got %d", id)
 	}
 }
 
@@ -443,7 +430,7 @@ func TestRunstatusListIncident(t *testing.T) {
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
-	incidents, err := cs.ListRunstatusIncident(context.TODO(), RunstatusPage{IncidentsURL: ts.URL})
+	incidents, err := cs.ListRunstatusIncidents(context.TODO(), RunstatusPage{IncidentsURL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -470,17 +457,17 @@ func TestRunstatusGenericError(t *testing.T) {
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
 		i := 1
-		_, err := cs.ListRunstatusService(context.TODO(), RunstatusPage{ServicesURL: "testpage"})
+		_, err := cs.ListRunstatusServices(context.TODO(), RunstatusPage{ServicesURL: "testpage"})
 		if err == nil {
 			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
 		}
 		i++
-		_, err = cs.ListRunstatusMaintenance(context.TODO(), "testpage")
+		_, err = cs.ListRunstatusMaintenances(context.TODO(), RunstatusPage{MaintenancesURL: "testpage"})
 		if err == nil {
 			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
 		}
 		i++
-		_, err = cs.ListRunstatusIncident(context.TODO(), RunstatusPage{IncidentsURL: "testpage"})
+		_, err = cs.ListRunstatusIncidents(context.TODO(), RunstatusPage{IncidentsURL: "testpage"})
 		if err == nil {
 			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
 		}
@@ -517,47 +504,47 @@ func TestRunstatusGenericErrorWithoutResp(t *testing.T) {
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
 	i := 1
-	err := cs.DeleteRunstatusService(context.TODO(), RunstatusService{URL: "foo"})
+	err := cs.DeleteRunstatusService(context.TODO(), RunstatusService{URL: ts.URL})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
 	i++
-	err = cs.CreateRunstatusService(context.TODO(), RunstatusPage{ServicesURL: "testpage"}, RunstatusService{})
+	err = cs.CreateRunstatusService(context.TODO(), RunstatusPage{ServicesURL: ts.URL}, RunstatusService{})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
 	i++
-	err = cs.CreateRunstatusEvent(context.TODO(), "testpage", 0, RunstatusEvent{})
+	err = cs.CreateRunstatusEvent(context.TODO(), RunstatusIncident{EventsURL: ts.URL}, RunstatusEvent{})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
 	i++
-	err = cs.CreateRunstatusMaintenance(context.TODO(), "", RunstatusMaintenance{})
+	err = cs.CreateRunstatusMaintenance(context.TODO(), RunstatusPage{MaintenancesURL: ts.URL}, RunstatusMaintenance{})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
 	i++
-	err = cs.DeleteRunstatusMaintenance(context.TODO(), "testpage", 0)
+	err = cs.DeleteRunstatusMaintenance(context.TODO(), RunstatusMaintenance{URL: ts.URL})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
 	i++
-	err = cs.UpdateRunstatusMaintenance(context.TODO(), "", 0, RunstatusEvent{})
+	err = cs.UpdateRunstatusMaintenance(context.TODO(), RunstatusMaintenance{EventsURL: ts.URL}, RunstatusEvent{})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
 	i++
-	err = cs.CreateRunstatusIncident(context.TODO(), RunstatusPage{}, RunstatusIncident{})
+	err = cs.CreateRunstatusIncident(context.TODO(), RunstatusPage{IncidentsURL: ts.URL}, RunstatusIncident{})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
 	i++
-	err = cs.DeleteRunstatusIncident(context.TODO(), "", 0)
+	err = cs.DeleteRunstatusIncident(context.TODO(), RunstatusIncident{URL: ts.URL})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}
 	i++
-	err = cs.DeleteRunstatusPage(context.TODO(), "")
+	err = cs.DeleteRunstatusPage(context.TODO(), RunstatusPage{URL: ts.URL})
 	if err == nil {
 		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
 	}

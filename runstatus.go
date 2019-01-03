@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -136,6 +135,7 @@ func (client *Client) DeleteRunstatusService(ctx context.Context, service Runsta
 	if service.URL == "" {
 		return fmt.Errorf("empty URL for %v", service)
 	}
+
 	_, err := client.runstatusRequest(ctx, service.URL, nil, "DELETE")
 	return err
 }
@@ -150,8 +150,8 @@ func (client *Client) CreateRunstatusService(ctx context.Context, page Runstatus
 	return err
 }
 
-// ListRunstatusService list runstatus service
-func (client *Client) ListRunstatusService(ctx context.Context, page RunstatusPage) ([]RunstatusService, error) {
+// ListRunstatusServices displays the list of services.
+func (client *Client) ListRunstatusServices(ctx context.Context, page RunstatusPage) ([]RunstatusService, error) {
 	if page.ServicesURL == "" {
 		return nil, fmt.Errorf("empty Services URL for %v", page)
 	}
@@ -166,21 +166,27 @@ func (client *Client) ListRunstatusService(ctx context.Context, page RunstatusPa
 		return nil, err
 	}
 
+	// NOTE: no pagination
 	return p.Services, nil
 }
 
 // CreateRunstatusEvent create runstatus incident event
-func (client *Client) CreateRunstatusEvent(ctx context.Context, page string, incidentID int, event RunstatusEvent) error {
-	// XXX: GET /pages/$page | jq .incidents_url
-	//      GET incidents_url + "/$id" | jq .events_url
+func (client *Client) CreateRunstatusEvent(ctx context.Context, incident RunstatusIncident, event RunstatusEvent) error {
+	if incident.EventsURL == "" {
+		return fmt.Errorf("empty Events URL for %v", incident)
+	}
 
-	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/incidents/%d/events", page, incidentID), event, "POST")
+	_, err := client.runstatusRequest(ctx, incident.EventsURL, event, "POST")
 	return err
 }
 
-// ListRunstatusMaintenance list runstatus Maintenance
-func (client *Client) ListRunstatusMaintenance(ctx context.Context, page string) ([]RunstatusMaintenance, error) {
-	resp, err := client.runstatusRequest(ctx, "/pages/"+page+"/maintenances", nil, "GET")
+// ListRunstatusMaintenances returns the list of maintenances for the page.
+func (client *Client) ListRunstatusMaintenances(ctx context.Context, page RunstatusPage) ([]RunstatusMaintenance, error) {
+	if page.MaintenancesURL == "" {
+		return nil, fmt.Errorf("empty Maintenances URL for %v", page)
+	}
+
+	resp, err := client.runstatusRequest(ctx, page.MaintenancesURL, nil, "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -190,46 +196,43 @@ func (client *Client) ListRunstatusMaintenance(ctx context.Context, page string)
 		return nil, err
 	}
 
+	// NOTE: the list of maintenances doesn't have any pagination
 	return p.Maintenances, nil
 }
 
 // CreateRunstatusMaintenance create runstatus Maintenance
-func (client *Client) CreateRunstatusMaintenance(ctx context.Context, page string, maintenance RunstatusMaintenance) error {
-	// XXX: GET /pages/$page | jq .maintenances_url
-	_, err := client.runstatusRequest(ctx, "/pages/"+page+"/maintenances", maintenance, "POST")
+func (client *Client) CreateRunstatusMaintenance(ctx context.Context, page RunstatusPage, maintenance RunstatusMaintenance) error {
+	if page.MaintenancesURL == "" {
+		return fmt.Errorf("empty Maintenances URL for %v", page)
+	}
+
+	_, err := client.runstatusRequest(ctx, page.MaintenancesURL, maintenance, "POST")
 	return err
 }
 
 // DeleteRunstatusMaintenance delete runstatus Maintenance
-func (client *Client) DeleteRunstatusMaintenance(ctx context.Context, page string, id int) error {
-	// XXX: GET /pages/$page | jq .maintenances_url
-	//      DELETE maintenances_url + "/$id"
-	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/maintenances/%d", page, id), nil, "DELETE")
-	return err
-}
-
-// ID give the maintenance ID
-func (m *RunstatusMaintenance) ID() (int, error) {
-	url := strings.TrimRight(m.URL, "/")
-	urlSplited := strings.Split(url, "/")
-	id, err := strconv.ParseInt(urlSplited[len(urlSplited)-1], 10, 64)
-	if err != nil {
-		return 0, err
+func (client *Client) DeleteRunstatusMaintenance(ctx context.Context, maintenance RunstatusMaintenance) error {
+	if maintenance.URL == "" {
+		return fmt.Errorf("empty URL for %v", maintenance)
 	}
 
-	return int(id), nil
-}
-
-// UpdateRunstatusMaintenance update runstatus Maintenance
-func (client *Client) UpdateRunstatusMaintenance(ctx context.Context, page string, id int, event RunstatusEvent) error {
-	// XXX: GET /pages/$page | jq .maintenances_url
-	//      GEt maintenances_url + "/$id" | jq .events_url
-	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/maintenances/%d/events", page, id), event, "POST")
+	_, err := client.runstatusRequest(ctx, maintenance.URL, nil, "DELETE")
 	return err
 }
 
-// ListRunstatusIncident list runstatus incident
-func (client *Client) ListRunstatusIncident(ctx context.Context, page RunstatusPage) ([]RunstatusIncident, error) {
+// UpdateRunstatusMaintenance adds a event to a maintenance.
+// Events can be updates or final message with status completed.
+func (client *Client) UpdateRunstatusMaintenance(ctx context.Context, maintenance RunstatusMaintenance, event RunstatusEvent) error {
+	if maintenance.EventsURL == "" {
+		return fmt.Errorf("empty Events URL for %v", maintenance)
+	}
+
+	_, err := client.runstatusRequest(ctx, maintenance.EventsURL, event, "POST")
+	return err
+}
+
+// ListRunstatusIncidents lists the incidents for a specific page.
+func (client *Client) ListRunstatusIncidents(ctx context.Context, page RunstatusPage) ([]RunstatusIncident, error) {
 	if page.IncidentsURL == "" {
 		return nil, fmt.Errorf("empty Incidents URL for %v", page)
 	}
@@ -244,6 +247,7 @@ func (client *Client) ListRunstatusIncident(ctx context.Context, page RunstatusP
 		return nil, err
 	}
 
+	// NOTE: no pagination
 	return p.Incidents, nil
 }
 
@@ -258,16 +262,18 @@ func (client *Client) CreateRunstatusIncident(ctx context.Context, page Runstatu
 }
 
 // DeleteRunstatusIncident delete runstatus incident
-func (client *Client) DeleteRunstatusIncident(ctx context.Context, page string, id int) error {
-	// XXX: GET /pages/$page | jq .incidents_url
-	//      DELETE incidents_url + "/$id"
-	_, err := client.runstatusRequest(ctx, fmt.Sprintf("/pages/%s/incidents/%d", page, id), nil, "DELETE")
+func (client *Client) DeleteRunstatusIncident(ctx context.Context, incident RunstatusIncident) error {
+	if incident.URL == "" {
+		return fmt.Errorf("empty URL for %v", incident)
+	}
+
+	_, err := client.runstatusRequest(ctx, incident.URL, nil, "DELETE")
 	return err
 }
 
 // CreateRunstatusPage create runstatus page
 func (client *Client) CreateRunstatusPage(ctx context.Context, page RunstatusPage) (*RunstatusPage, error) {
-	resp, err := client.runstatusRequest(ctx, runstatusPagesURL, page, "POST")
+	resp, err := client.runstatusRequest(ctx, client.Endpoint+runstatusPagesURL, page, "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -281,8 +287,11 @@ func (client *Client) CreateRunstatusPage(ctx context.Context, page RunstatusPag
 }
 
 // DeleteRunstatusPage delete runstatus page
-func (client *Client) DeleteRunstatusPage(ctx context.Context, pageName string) error {
-	_, err := client.runstatusRequest(ctx, "/pages/"+pageName, nil, "DELETE")
+func (client *Client) DeleteRunstatusPage(ctx context.Context, page RunstatusPage) error {
+	if page.URL != "" {
+		return fmt.Errorf("empty URL for %v", page)
+	}
+	_, err := client.runstatusRequest(ctx, page.URL, nil, "DELETE")
 	return err
 }
 
@@ -317,7 +326,7 @@ func (client *Client) GetRunstatusPage(ctx context.Context, page RunstatusPage) 
 
 // ListRunstatusPages list all the runstatus pages
 func (client *Client) ListRunstatusPages(ctx context.Context) ([]RunstatusPage, error) {
-	resp, err := client.runstatusRequest(ctx, runstatusPagesURL, nil, "GET")
+	resp, err := client.runstatusRequest(ctx, client.Endpoint+runstatusPagesURL, nil, "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -327,17 +336,17 @@ func (client *Client) ListRunstatusPages(ctx context.Context) ([]RunstatusPage, 
 		return nil, err
 	}
 
+	// XXX: handle pagination
 	return p.Results, nil
 }
 
 func (client *Client) runstatusRequest(ctx context.Context, uri string, structParam interface{}, method string) (json.RawMessage, error) {
 	reqURL, err := url.Parse(uri)
-	if err != nil || reqURL.Scheme == "" {
-		// XXX this hack shall be removed once we're 100% hate-oas
-		reqURL, err = url.Parse(client.Endpoint + uri)
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
+	}
+	if reqURL.Scheme == "" {
+		return nil, fmt.Errorf("only absolute URI are considered valid, got %q", uri)
 	}
 
 	var params string

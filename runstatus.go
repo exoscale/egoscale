@@ -47,7 +47,7 @@ type RunstatusPage struct {
 	URL              string                 `json:"url,omitempty"`
 }
 
-// Match returns true if the other page has similarities with itself
+// Match returns true if the other page has got similarities with itself
 func (page RunstatusPage) Match(other RunstatusPage) bool {
 	if other.Subdomain != "" && page.Subdomain == other.Subdomain {
 		return true
@@ -74,6 +74,7 @@ type RunstatusIncident struct {
 	Events     []RunstatusEvent `json:"events,omitempty"`
 	EventsURL  string           `json:"events_url,omitempty"`
 	ID         int              `json:"id,omitempty"`
+	PageURL    string           `json:"page_url,omitempty"` // fake field
 	PostMortem string           `json:"post_mortem,omitempty"`
 	RealTime   bool             `json:"real_time,omitempty"`
 	Services   []string         `json:"services"`
@@ -83,6 +84,19 @@ type RunstatusIncident struct {
 	StatusText string           `json:"status_text"`
 	Title      string           `json:"title"`
 	URL        string           `json:"url,omitempty"`
+}
+
+// Match returns true if the other incident has got similarities with itself
+func (incident RunstatusIncident) Match(other RunstatusIncident) bool {
+	if other.Title != "" && incident.Title == other.Title {
+		return true
+	}
+
+	if other.ID > 0 && incident.ID == other.ID {
+		return true
+	}
+
+	return false
 }
 
 //RunstatusIncidentList is a list of incident
@@ -231,6 +245,47 @@ func (client *Client) UpdateRunstatusMaintenance(ctx context.Context, maintenanc
 	return err
 }
 
+// GetRunstatusIncident retrieves the details of a specific incident.
+func (client *Client) GetRunstatusIncident(ctx context.Context, incident RunstatusIncident) (*RunstatusIncident, error) {
+	if incident.URL != "" {
+		return client.getRunstatusIncident(ctx, incident)
+	}
+
+	if incident.PageURL == "" {
+		return nil, fmt.Errorf("empty Page URL for %v", incident)
+	}
+
+	is, err := client.ListRunstatusIncidents(ctx, RunstatusPage{URL: incident.PageURL})
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range is {
+		if is[i].Match(incident) {
+			return &is[i], nil
+		}
+	}
+
+	return nil, fmt.Errorf("%#v not found", incident)
+}
+
+func (client *Client) getRunstatusIncident(ctx context.Context, incident RunstatusIncident) (*RunstatusIncident, error) {
+	if incident.URL == "" {
+		return nil, fmt.Errorf("empty URL for %v", incident)
+	}
+
+	resp, err := client.runstatusRequest(ctx, incident.URL, nil, "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	i := new(RunstatusIncident)
+	if err := json.Unmarshal(resp, i); err != nil {
+		return nil, err
+	}
+	return i, nil
+}
+
 // ListRunstatusIncidents lists the incidents for a specific page.
 func (client *Client) ListRunstatusIncidents(ctx context.Context, page RunstatusPage) ([]RunstatusIncident, error) {
 	if page.IncidentsURL == "" {
@@ -298,16 +353,7 @@ func (client *Client) DeleteRunstatusPage(ctx context.Context, page RunstatusPag
 // GetRunstatusPage fetches the runstatus page
 func (client *Client) GetRunstatusPage(ctx context.Context, page RunstatusPage) (*RunstatusPage, error) {
 	if page.URL != "" {
-		resp, err := client.runstatusRequest(ctx, page.URL, nil, "GET")
-		if err != nil {
-			return nil, err
-		}
-
-		p := new(RunstatusPage)
-		if err := json.Unmarshal(resp, p); err != nil {
-			return nil, err
-		}
-		return p, nil
+		return client.getRunstatusPage(ctx, page)
 	}
 
 	ps, err := client.ListRunstatusPages(ctx)
@@ -322,6 +368,23 @@ func (client *Client) GetRunstatusPage(ctx context.Context, page RunstatusPage) 
 	}
 
 	return nil, fmt.Errorf("%#v not found", page)
+}
+
+func (client *Client) getRunstatusPage(ctx context.Context, page RunstatusPage) (*RunstatusPage, error) {
+	if page.URL == "" {
+		return nil, fmt.Errorf("empty URL for %v", page)
+	}
+
+	resp, err := client.runstatusRequest(ctx, page.URL, nil, "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	p := new(RunstatusPage)
+	if err := json.Unmarshal(resp, p); err != nil {
+		return nil, err
+	}
+	return p, nil
 }
 
 // ListRunstatusPages list all the runstatus pages

@@ -8,8 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
+	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -111,12 +114,47 @@ type RunstatusMaintenance struct {
 	EndDate     *time.Time       `json:"end_date"`
 	Events      []RunstatusEvent `json:"events,omitempty"`
 	EventsURL   string           `json:"events_url,omitempty"`
+	ID          int              `json:"id,omitempty"`       // missing field
+	PageURL     string           `json:"page_url,omitempty"` // fake field
 	RealTime    bool             `json:"real_time,omitempty"`
 	Services    []string         `json:"services"`
 	StartDate   *time.Time       `json:"start_date"`
 	Status      string           `json:"status"`
 	Title       string           `json:"title"`
 	URL         string           `json:"url,omitempty"`
+}
+
+// Match returns true if the other maintenance has got similarities with itself
+func (maintenance RunstatusMaintenance) Match(other RunstatusMaintenance) bool {
+	if other.Title != "" && maintenance.Title == other.Title {
+		return true
+	}
+
+	if other.ID > 0 && maintenance.ID == other.ID {
+		return true
+	}
+
+	return false
+}
+
+// FakeID fills up the ID field as it's currently missing
+func (maintenance *RunstatusMaintenance) FakeID() error {
+	if maintenance.URL == "" {
+		return fmt.Errorf("empty URL for %#v", maintenance)
+	}
+
+	u, err := url.Parse(maintenance.URL)
+	if err != nil {
+		return err
+	}
+
+	s := path.Base(u.Path)
+	id, err := strconv.Atoi(s)
+	if err != nil {
+		return err
+	}
+	maintenance.ID = id
+	return nil
 }
 
 //RunstatusMaintenanceList is a list of incident
@@ -147,7 +185,7 @@ type RunstatusServiceList struct {
 // DeleteRunstatusService delete runstatus service
 func (client *Client) DeleteRunstatusService(ctx context.Context, service RunstatusService) error {
 	if service.URL == "" {
-		return fmt.Errorf("empty URL for %v", service)
+		return fmt.Errorf("empty URL for %#v", service)
 	}
 
 	_, err := client.runstatusRequest(ctx, service.URL, nil, "DELETE")
@@ -157,7 +195,7 @@ func (client *Client) DeleteRunstatusService(ctx context.Context, service Runsta
 // CreateRunstatusService create runstatus service
 func (client *Client) CreateRunstatusService(ctx context.Context, page RunstatusPage, service RunstatusService) error {
 	if page.ServicesURL == "" {
-		return fmt.Errorf("empty Services URL for %v", page)
+		return fmt.Errorf("empty Services URL for %#v", page)
 	}
 
 	_, err := client.runstatusRequest(ctx, page.ServicesURL, service, "POST")
@@ -167,7 +205,7 @@ func (client *Client) CreateRunstatusService(ctx context.Context, page Runstatus
 // ListRunstatusServices displays the list of services.
 func (client *Client) ListRunstatusServices(ctx context.Context, page RunstatusPage) ([]RunstatusService, error) {
 	if page.ServicesURL == "" {
-		return nil, fmt.Errorf("empty Services URL for %v", page)
+		return nil, fmt.Errorf("empty Services URL for %#v", page)
 	}
 
 	resp, err := client.runstatusRequest(ctx, page.ServicesURL, nil, "GET")
@@ -187,17 +225,58 @@ func (client *Client) ListRunstatusServices(ctx context.Context, page RunstatusP
 // CreateRunstatusEvent create runstatus incident event
 func (client *Client) CreateRunstatusEvent(ctx context.Context, incident RunstatusIncident, event RunstatusEvent) error {
 	if incident.EventsURL == "" {
-		return fmt.Errorf("empty Events URL for %v", incident)
+		return fmt.Errorf("empty Events URL for %#v", incident)
 	}
 
 	_, err := client.runstatusRequest(ctx, incident.EventsURL, event, "POST")
 	return err
 }
 
+// GetRunstatusMaintenance retrieves the details of a specific maintenance.
+func (client *Client) GetRunstatusMaintenance(ctx context.Context, maintenance RunstatusMaintenance) (*RunstatusMaintenance, error) {
+	if maintenance.URL != "" {
+		return client.getRunstatusMaintenance(ctx, maintenance)
+	}
+
+	if maintenance.PageURL == "" {
+		return nil, fmt.Errorf("empty Page URL for %#v", maintenance)
+	}
+
+	ms, err := client.ListRunstatusMaintenances(ctx, RunstatusPage{URL: maintenance.PageURL})
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range ms {
+		if ms[i].Match(maintenance) {
+			return &ms[i], nil
+		}
+	}
+
+	return nil, fmt.Errorf("%#v not found", maintenance)
+}
+
+func (client *Client) getRunstatusMaintenance(ctx context.Context, maintenance RunstatusMaintenance) (*RunstatusMaintenance, error) {
+	if maintenance.URL == "" {
+		return nil, fmt.Errorf("empty URL for %#v", maintenance)
+	}
+
+	resp, err := client.runstatusRequest(ctx, maintenance.URL, nil, "GET")
+	if err != nil {
+		return nil, err
+	}
+
+	m := new(RunstatusMaintenance)
+	if err := json.Unmarshal(resp, m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ListRunstatusMaintenances returns the list of maintenances for the page.
 func (client *Client) ListRunstatusMaintenances(ctx context.Context, page RunstatusPage) ([]RunstatusMaintenance, error) {
 	if page.MaintenancesURL == "" {
-		return nil, fmt.Errorf("empty Maintenances URL for %v", page)
+		return nil, fmt.Errorf("empty Maintenances URL for %#v", page)
 	}
 
 	resp, err := client.runstatusRequest(ctx, page.MaintenancesURL, nil, "GET")
@@ -210,6 +289,13 @@ func (client *Client) ListRunstatusMaintenances(ctx context.Context, page Runsta
 		return nil, err
 	}
 
+	// NOTE: fix the missing IDs
+	for i := range p.Maintenances {
+		if err := p.Maintenances[i].FakeID(); err != nil {
+			log.Printf("bad fake ID for %#v, %s", p.Maintenances[i], err)
+		}
+	}
+
 	// NOTE: the list of maintenances doesn't have any pagination
 	return p.Maintenances, nil
 }
@@ -217,7 +303,7 @@ func (client *Client) ListRunstatusMaintenances(ctx context.Context, page Runsta
 // CreateRunstatusMaintenance create runstatus Maintenance
 func (client *Client) CreateRunstatusMaintenance(ctx context.Context, page RunstatusPage, maintenance RunstatusMaintenance) error {
 	if page.MaintenancesURL == "" {
-		return fmt.Errorf("empty Maintenances URL for %v", page)
+		return fmt.Errorf("empty Maintenances URL for %#v", page)
 	}
 
 	_, err := client.runstatusRequest(ctx, page.MaintenancesURL, maintenance, "POST")
@@ -227,7 +313,7 @@ func (client *Client) CreateRunstatusMaintenance(ctx context.Context, page Runst
 // DeleteRunstatusMaintenance delete runstatus Maintenance
 func (client *Client) DeleteRunstatusMaintenance(ctx context.Context, maintenance RunstatusMaintenance) error {
 	if maintenance.URL == "" {
-		return fmt.Errorf("empty URL for %v", maintenance)
+		return fmt.Errorf("empty URL for %#v", maintenance)
 	}
 
 	_, err := client.runstatusRequest(ctx, maintenance.URL, nil, "DELETE")
@@ -238,7 +324,7 @@ func (client *Client) DeleteRunstatusMaintenance(ctx context.Context, maintenanc
 // Events can be updates or final message with status completed.
 func (client *Client) UpdateRunstatusMaintenance(ctx context.Context, maintenance RunstatusMaintenance, event RunstatusEvent) error {
 	if maintenance.EventsURL == "" {
-		return fmt.Errorf("empty Events URL for %v", maintenance)
+		return fmt.Errorf("empty Events URL for %#v", maintenance)
 	}
 
 	_, err := client.runstatusRequest(ctx, maintenance.EventsURL, event, "POST")
@@ -252,7 +338,7 @@ func (client *Client) GetRunstatusIncident(ctx context.Context, incident Runstat
 	}
 
 	if incident.PageURL == "" {
-		return nil, fmt.Errorf("empty Page URL for %v", incident)
+		return nil, fmt.Errorf("empty Page URL for %#v", incident)
 	}
 
 	is, err := client.ListRunstatusIncidents(ctx, RunstatusPage{URL: incident.PageURL})
@@ -271,7 +357,7 @@ func (client *Client) GetRunstatusIncident(ctx context.Context, incident Runstat
 
 func (client *Client) getRunstatusIncident(ctx context.Context, incident RunstatusIncident) (*RunstatusIncident, error) {
 	if incident.URL == "" {
-		return nil, fmt.Errorf("empty URL for %v", incident)
+		return nil, fmt.Errorf("empty URL for %#v", incident)
 	}
 
 	resp, err := client.runstatusRequest(ctx, incident.URL, nil, "GET")
@@ -289,7 +375,7 @@ func (client *Client) getRunstatusIncident(ctx context.Context, incident Runstat
 // ListRunstatusIncidents lists the incidents for a specific page.
 func (client *Client) ListRunstatusIncidents(ctx context.Context, page RunstatusPage) ([]RunstatusIncident, error) {
 	if page.IncidentsURL == "" {
-		return nil, fmt.Errorf("empty Incidents URL for %v", page)
+		return nil, fmt.Errorf("empty Incidents URL for %#v", page)
 	}
 
 	resp, err := client.runstatusRequest(ctx, page.IncidentsURL, nil, "GET")
@@ -309,7 +395,7 @@ func (client *Client) ListRunstatusIncidents(ctx context.Context, page Runstatus
 // CreateRunstatusIncident create runstatus incident
 func (client *Client) CreateRunstatusIncident(ctx context.Context, page RunstatusPage, incident RunstatusIncident) error {
 	if page.IncidentsURL == "" {
-		return fmt.Errorf("empty Incidents URL for %v", page)
+		return fmt.Errorf("empty Incidents URL for %#v", page)
 	}
 
 	_, err := client.runstatusRequest(ctx, page.IncidentsURL, incident, "POST")
@@ -319,7 +405,7 @@ func (client *Client) CreateRunstatusIncident(ctx context.Context, page Runstatu
 // DeleteRunstatusIncident delete runstatus incident
 func (client *Client) DeleteRunstatusIncident(ctx context.Context, incident RunstatusIncident) error {
 	if incident.URL == "" {
-		return fmt.Errorf("empty URL for %v", incident)
+		return fmt.Errorf("empty URL for %#v", incident)
 	}
 
 	_, err := client.runstatusRequest(ctx, incident.URL, nil, "DELETE")
@@ -344,7 +430,7 @@ func (client *Client) CreateRunstatusPage(ctx context.Context, page RunstatusPag
 // DeleteRunstatusPage delete runstatus page
 func (client *Client) DeleteRunstatusPage(ctx context.Context, page RunstatusPage) error {
 	if page.URL != "" {
-		return fmt.Errorf("empty URL for %v", page)
+		return fmt.Errorf("empty URL for %#v", page)
 	}
 	_, err := client.runstatusRequest(ctx, page.URL, nil, "DELETE")
 	return err
@@ -372,7 +458,7 @@ func (client *Client) GetRunstatusPage(ctx context.Context, page RunstatusPage) 
 
 func (client *Client) getRunstatusPage(ctx context.Context, page RunstatusPage) (*RunstatusPage, error) {
 	if page.URL == "" {
-		return nil, fmt.Errorf("empty URL for %v", page)
+		return nil, fmt.Errorf("empty URL for %#v", page)
 	}
 
 	resp, err := client.runstatusRequest(ctx, page.URL, nil, "GET")
@@ -384,6 +470,14 @@ func (client *Client) getRunstatusPage(ctx context.Context, page RunstatusPage) 
 	if err := json.Unmarshal(resp, p); err != nil {
 		return nil, err
 	}
+
+	// NOTE: fix the missing IDs
+	for i := range p.Maintenances {
+		if err := p.Maintenances[i].FakeID(); err != nil {
+			log.Printf("bad fake ID for %#v, %s", p.Maintenances[i], err)
+		}
+	}
+
 	return p, nil
 }
 

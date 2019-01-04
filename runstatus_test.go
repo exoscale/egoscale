@@ -382,6 +382,14 @@ func TestRunstatusListMaintenance(t *testing.T) {
 	if maintenances[0].Title != "hggfh" {
 		t.Errorf("title should be %q, got %q", "hggfh", maintenances[0].Title)
 	}
+
+	if maintenances[0].ID != 598 {
+		t.Errorf("maintenance ID should be 598, got %d", maintenances[0].ID)
+	}
+
+	if maintenances[1].ID != 0 {
+		t.Errorf("bad maintenance ID should be 0, got %d", maintenances[1].ID)
+	}
 }
 
 func TestRunstatusListIncident(t *testing.T) {

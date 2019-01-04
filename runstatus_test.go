@@ -393,14 +393,28 @@ func TestRunstatusListMaintenance(t *testing.T) {
 		t.Errorf("bad maintenance ID should be 0, got %d", maintenances[1].ID)
 	}
 
+	m := response{200, jsonContentType, fmt.Sprintf(`{
+  "url": "...",
+  "title": "hggfh",
+  "status": "scheduled"
+}`)}
 	p := response{200, jsonContentType, fmt.Sprintf(`{
   "url": "https://api.runstatus.com/pages/bauud",
   "maintenances_url": %q,
   "subdomain": "bauud"
 }`, ts.URL)}
 
+	ts.addResponse(m)
+	maintenance, err := cs.GetRunstatusMaintenance(context.TODO(), RunstatusMaintenance{URL: ts.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if maintenance.Title != "hggfh" {
+		t.Errorf("bad maintenance fetched, got %#v", maintenance)
+	}
+
 	ts.addResponse(p, ms)
-	maintenance, err := cs.GetRunstatusMaintenance(context.TODO(), RunstatusMaintenance{PageURL: ts.URL, ID: 598})
+	maintenance, err = cs.GetRunstatusMaintenance(context.TODO(), RunstatusMaintenance{PageURL: ts.URL, ID: 598})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -479,14 +493,28 @@ func TestRunstatusListIncident(t *testing.T) {
 		t.Errorf("id 90 expected: got %d", incidents[0].ID)
 	}
 
+	i := response{200, jsonContentType, `{
+  "id": 90,
+  "status": "degraded_performance"
+}`}
 	p := response{200, jsonContentType, fmt.Sprintf(`{
   "url": "https://api.runstatus.com/pages/testpage",
   "incidents_url": %q,
   "subdomain": "testpage"
 }`, ts.URL)}
 
+	ts.addResponse(i)
+	incident, err := cs.GetRunstatusIncident(context.TODO(), RunstatusIncident{URL: ts.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if incident.ID != 90 {
+		t.Errorf("bad incident, %#v", incident)
+	}
+
 	ts.addResponse(p, is)
-	incident, err := cs.GetRunstatusIncident(context.TODO(), RunstatusIncident{PageURL: ts.URL, Title: "AAAH"})
+	incident, err = cs.GetRunstatusIncident(context.TODO(), RunstatusIncident{PageURL: ts.URL, Title: "AAAH"})
 	if err != nil {
 		t.Fatal(err)
 	}

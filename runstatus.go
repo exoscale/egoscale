@@ -593,7 +593,7 @@ func (client *Client) runstatusRequest(ctx context.Context, uri string, structPa
 
 	if resp.StatusCode >= 400 {
 		if resp.StatusCode == 404 {
-			return nil, fmt.Errorf("Not found")
+			return nil, fmt.Errorf("not found")
 		}
 		e := new(RunstatusErrorResponse)
 		if err := json.Unmarshal(b, e); err != nil {

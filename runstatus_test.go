@@ -419,7 +419,7 @@ func TestRunstatusListMaintenance(t *testing.T) {
 }
 
 func TestRunstatusListIncident(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	is := response{200, jsonContentType, `
 {
   "incidents": [
     {
@@ -459,7 +459,9 @@ func TestRunstatusListIncident(t *testing.T) {
       "real_time": true
     }
   ]
-}`})
+}`}
+
+	ts := newServer(is)
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -475,6 +477,32 @@ func TestRunstatusListIncident(t *testing.T) {
 
 	if incidents[0].ID != 90 {
 		t.Errorf("id 90 expected: got %d", incidents[0].ID)
+	}
+
+	p := response{200, jsonContentType, fmt.Sprintf(`{
+  "url": "https://api.runstatus.com/pages/testpage",
+  "incidents_url": %q,
+  "subdomain": "testpage"
+}`, ts.URL)}
+
+	ts.addResponse(p, is)
+	incident, err := cs.GetRunstatusIncident(context.TODO(), RunstatusIncident{PageURL: ts.URL, Title: "AAAH"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if incident.ID != 90 {
+		t.Errorf("bad incident, %#v", incident)
+	}
+
+	ts.addResponse(p, is)
+	incident, err = cs.GetRunstatusIncident(context.TODO(), RunstatusIncident{PageURL: ts.URL, ID: 90})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if incident.Title != "AAAH" {
+		t.Errorf("bad incident, %#v", incident)
 	}
 }
 

@@ -2,6 +2,7 @@ package egoscale
 
 import (
 	"context"
+	"fmt"
 	"testing"
 )
 
@@ -309,7 +310,7 @@ func TestRunstatusListService(t *testing.T) {
 }
 
 func TestRunstatusListMaintenance(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ms := response{200, jsonContentType, `
 {
   "maintenances": [
     {
@@ -365,7 +366,8 @@ func TestRunstatusListMaintenance(t *testing.T) {
       "real_time":true
     }
   ]
-}`})
+}`}
+	ts := newServer(ms)
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -389,6 +391,30 @@ func TestRunstatusListMaintenance(t *testing.T) {
 
 	if maintenances[1].ID != 0 {
 		t.Errorf("bad maintenance ID should be 0, got %d", maintenances[1].ID)
+	}
+
+	p := response{200, jsonContentType, fmt.Sprintf(`{
+  "url": "https://api.runstatus.com/pages/bauud",
+  "maintenances_url": %q,
+  "subdomain": "bauud"
+}`, ts.URL)}
+
+	ts.addResponse(p, ms)
+	maintenance, err := cs.GetRunstatusMaintenance(context.TODO(), RunstatusMaintenance{PageURL: ts.URL, ID: 598})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if maintenance.Title != "hggfh" {
+		t.Errorf("bad maintenance fetched, got %#v", maintenance)
+	}
+
+	ts.addResponse(p, ms)
+	maintenance, err = cs.GetRunstatusMaintenance(context.TODO(), RunstatusMaintenance{PageURL: ts.URL, Title: "hggfh"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if maintenance.ID != 598 {
+		t.Errorf("bad maintenance fetched, got %#v", maintenance)
 	}
 }
 

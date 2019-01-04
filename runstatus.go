@@ -34,7 +34,7 @@ type RunstatusPage struct {
 	Logo             string                 `json:"logo,omitempty"`
 	Maintenances     []RunstatusMaintenance `json:"maintenances,omitempty"`
 	MaintenancesURL  string                 `json:"maintenances_url,omitempty"`
-	Name             string                 `json:"name"`
+	Name             string                 `json:"name"` //fake field (used to post a new runstatus page)
 	OkText           string                 `json:"ok_text,omitempty"`
 	Plan             string                 `json:"plan,omitempty"`
 	PublicURL        string                 `json:"public_url,omitempty"`

@@ -17,6 +17,9 @@ import (
 	"time"
 )
 
+// RunstatusErrorResponse represents an error in the API
+type RunstatusErrorResponse map[string][]string
+
 // runstatusPagesURL is the only URL that cannot be guessed
 const runstatusPagesURL = "/pages"
 
@@ -497,6 +500,20 @@ func (client *Client) ListRunstatusPages(ctx context.Context) ([]RunstatusPage, 
 	return p.Results, nil
 }
 
+// Error formats the DNSerror into a string
+func (req RunstatusErrorResponse) Error() string {
+	if len(req) > 0 {
+		errs := []string{}
+		for name, ss := range req {
+			if len(ss) > 0 {
+				errs = append(errs, fmt.Sprintf("%s: %s", name, strings.Join(ss, ", ")))
+			}
+		}
+		return fmt.Sprintf("Runstatus error: %s", strings.Join(errs, "; "))
+	}
+	return fmt.Sprintf("Runstatus error")
+}
+
 func (client *Client) runstatusRequest(ctx context.Context, uri string, structParam interface{}, method string) (json.RawMessage, error) {
 	reqURL, err := url.Parse(uri)
 	if err != nil {
@@ -564,8 +581,10 @@ func (client *Client) runstatusRequest(ctx context.Context, uri string, structPa
 	}
 
 	if resp.StatusCode >= 400 {
-		// FIXME...
-		e := new(DNSErrorResponse)
+		if resp.StatusCode == 404 {
+			return nil, fmt.Errorf("Not found")
+		}
+		e := new(RunstatusErrorResponse)
 		if err := json.Unmarshal(b, e); err != nil {
 			return nil, err
 		}

@@ -20,7 +20,7 @@ type ListVirtualMachines struct {
 }
 
 // ListVirtualMachinesResponse represents the list of VirtualMachine in the admin world
-type LisVirtualMachinesResponse struct {
+type ListVirtualMachinesResponse struct {
 	Count          int              `json:"count"`
 	VirtualMachine []VirtualMachine `json:"virtualmachine"`
 }

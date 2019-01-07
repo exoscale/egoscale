@@ -246,12 +246,12 @@ func (client *Client) CreateRunstatusService(ctx context.Context, service Runsta
 		return nil, err
 	}
 
-	s := RunstatusService{}
-	if err := json.Unmarshal(resp, &s); err != nil {
+	s := &RunstatusService{}
+	if err := json.Unmarshal(resp, s); err != nil {
 		return nil, err
 	}
 
-	return client.GetRunstatusService(ctx, s)
+	return s, nil
 }
 
 // GetRunstatusService displays service detail.
@@ -694,18 +694,6 @@ func (client *Client) runstatusRequest(ctx context.Context, uri string, structPa
 	contentType := resp.Header.Get("content-type")
 	if !strings.Contains(contentType, "application/json") {
 		return nil, fmt.Errorf(`response content-type expected to be "application/json", got %q`, contentType)
-	}
-
-	if resp.StatusCode == 201 {
-		if method != "POST" {
-			return nil, fmt.Errorf("only POST is expected to produce 201, was %q", method)
-		}
-
-		location := resp.Header.Get("Location")
-		if location == "" {
-			return nil, fmt.Errorf("missing Location header on the 201 response")
-		}
-		return json.RawMessage(fmt.Sprintf(`{"url": %q}`, location)), nil
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)

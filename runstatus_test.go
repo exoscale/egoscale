@@ -179,7 +179,7 @@ func TestCreateRunstatusPage(t *testing.T) {
 }
 
 func TestListRunstatusPage(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ps := response{200, jsonContentType, `
 {
   "count":9,
   "next":null,
@@ -256,11 +256,14 @@ func TestListRunstatusPage(t *testing.T) {
       ]
     }
   ]
-}`})
+}`}
+
+	ts := newServer()
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
+	ts.addResponse(ps)
 	pages, err := cs.ListRunstatusPages(context.TODO())
 	if err != nil {
 		t.Fatal(err)
@@ -273,24 +276,43 @@ func TestListRunstatusPage(t *testing.T) {
 	if pages[0].Subdomain != "testpage" {
 		t.Errorf("subpage should be %q, got %q", "testpage", pages[0].Subdomain)
 	}
+
+	ts.addResponse(ps)
+	page, err := cs.GetRunstatusPage(context.TODO(), RunstatusPage{Subdomain: "testpage"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if page.ID != 102 {
+		t.Errorf("bad page ID, got %d, wanted 102", page.ID)
+	}
+
+	ts.addResponse(ps)
+	page, err = cs.GetRunstatusPage(context.TODO(), RunstatusPage{ID: 102})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if page.Subdomain != "testpage" {
+		t.Errorf(`bad page ID, got %q, wanted "testpage"`, page.Subdomain)
+	}
 }
 
 func TestRunstatusListService(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ss := response{200, jsonContentType, `
 {
   "services": [
     {
-      "url": "https://example.org/pages/testpage/services/ERROR",
+      "url": "https://example.org/pages/testpage/services/28",
       "name": "API",
       "state": "operational"
     },
     {
       "url": "https://example.org/pages/testpage/services/29",
-      "name": "API",
-      "state": "operational"
+      "name": "ABI",
+      "state": "hold"
     }
   ]
-}`})
+}`}
+	ts := newServer(ss)
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
@@ -306,6 +328,47 @@ func TestRunstatusListService(t *testing.T) {
 
 	if services[1].URL != "https://example.org/pages/testpage/services/29" {
 		t.Errorf("url should be %q, got %q", "https://example.org/pages/testpage/services/29", services[1].URL)
+	}
+
+	p := response{200, jsonContentType, fmt.Sprintf(`{
+  "url": "https://api.runstatus.com/pages/testpage",
+  "services_url": %q,
+  "subdomain": "testpage"
+}`, ts.URL)}
+
+	ts.addResponse(p, ss)
+	service, err := cs.GetRunstatusService(context.TODO(), RunstatusService{PageURL: ts.URL, Name: "API"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if service.ID != 28 {
+		t.Errorf(`bad state, got %d, wanted %d`, service.ID, 28)
+	}
+
+	ts.addResponse(p, ss)
+	service, err = cs.GetRunstatusService(context.TODO(), RunstatusService{PageURL: ts.URL, ID: 29})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if service.State != "hold" {
+		t.Errorf(`bad state, got %q, wanted "hold"`, service.State)
+	}
+}
+
+func TestRunstatusDeleteService(t *testing.T) {
+	ts := newServer(response{204, jsonContentType, ""})
+	defer ts.Close()
+
+	cs := NewClient(ts.URL, "KEY", "SECRET")
+
+	if err := cs.DeleteRunstatusService(context.TODO(), RunstatusService{}); err == nil {
+		t.Error("service without a status should fail")
+	}
+
+	if err := cs.DeleteRunstatusService(context.TODO(), RunstatusService{URL: ts.URL}); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -340,7 +403,7 @@ func TestRunstatusListMaintenance(t *testing.T) {
       "real_time":true
     },
     {
-      "url":"https://api.runstatus.com/pages/bauud/maintenances/ERROR",
+      "url":"https://api.runstatus.com/pages/bauud/maintenances/600",
       "created":"2018-11-27T12:51:05.607060Z",
       "services":["infra"],
       "start_date":"2018-11-27T13:50:00Z",
@@ -362,7 +425,7 @@ func TestRunstatusListMaintenance(t *testing.T) {
         }
       ],
       "status":"scheduled",
-      "events_url":"https://api.runstatus.com/pages/bauud/maintenances/ERROR/events",
+      "events_url":"https://api.runstatus.com/pages/bauud/maintenances/600/events",
       "real_time":true
     }
   ]
@@ -387,10 +450,6 @@ func TestRunstatusListMaintenance(t *testing.T) {
 
 	if maintenances[0].ID != 598 {
 		t.Errorf("maintenance ID should be 598, got %d", maintenances[0].ID)
-	}
-
-	if maintenances[1].ID != 0 {
-		t.Errorf("bad maintenance ID should be 0, got %d", maintenances[1].ID)
 	}
 
 	m := response{200, jsonContentType, fmt.Sprintf(`{
@@ -535,107 +594,23 @@ func TestRunstatusListIncident(t *testing.T) {
 }
 
 func TestRunstatusGenericError(t *testing.T) {
-	errorCode := 200
-
-	for errorCode <= 400 {
-		ts := newServer(response{errorCode, jsonContentType, `
-    {
-      ERROR
-    }
-    `})
-
-		cs := NewClient(ts.URL, "KEY", "SECRET")
-
-		i := 1
-		_, err := cs.ListRunstatusServices(context.TODO(), RunstatusPage{ServicesURL: "testpage"})
-		if err == nil {
-			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
-		}
-		i++
-		_, err = cs.ListRunstatusMaintenances(context.TODO(), RunstatusPage{MaintenancesURL: "testpage"})
-		if err == nil {
-			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
-		}
-		i++
-		_, err = cs.ListRunstatusIncidents(context.TODO(), RunstatusPage{IncidentsURL: "testpage"})
-		if err == nil {
-			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
-		}
-		i++
-		_, err = cs.CreateRunstatusPage(context.TODO(), RunstatusPage{})
-		if err == nil {
-			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
-		}
-		i++
-		_, err = cs.GetRunstatusPage(context.TODO(), RunstatusPage{Subdomain: "testpage"})
-		if err == nil {
-			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
-		}
-		i++
-		_, err = cs.ListRunstatusPages(context.TODO())
-		if err == nil {
-			t.Errorf("TestRunstatusGenericError %d error expected: got nil", i)
-		}
-
-		ts.Close()
-		errorCode += 200
-	}
-}
-
-func TestRunstatusGenericErrorWithoutResp(t *testing.T) {
-
-	ts := newServer(response{400, "ERROR", `
-    {
-      ERROR
-    }
-    `})
+	ts := newServer(
+		response{200, jsonContentType, `ERROR`},
+		response{400, jsonContentType, `{"detail": "error"}`},
+	)
 	defer ts.Close()
 
 	cs := NewClient(ts.URL, "KEY", "SECRET")
 
-	i := 1
-	err := cs.DeleteRunstatusService(context.TODO(), RunstatusService{URL: ts.URL})
+	ts.addResponse()
+
+	_, err := cs.ListRunstatusServices(context.TODO(), RunstatusPage{ServicesURL: "testpage"})
 	if err == nil {
-		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+		t.Errorf("error expected on 200 bad json: got nil")
 	}
-	i++
-	err = cs.CreateRunstatusService(context.TODO(), RunstatusPage{ServicesURL: ts.URL}, RunstatusService{})
+
+	_, err = cs.ListRunstatusMaintenances(context.TODO(), RunstatusPage{MaintenancesURL: "testpage"})
 	if err == nil {
-		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
-	}
-	i++
-	err = cs.CreateRunstatusEvent(context.TODO(), RunstatusIncident{EventsURL: ts.URL}, RunstatusEvent{})
-	if err == nil {
-		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
-	}
-	i++
-	err = cs.CreateRunstatusMaintenance(context.TODO(), RunstatusPage{MaintenancesURL: ts.URL}, RunstatusMaintenance{})
-	if err == nil {
-		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
-	}
-	i++
-	err = cs.DeleteRunstatusMaintenance(context.TODO(), RunstatusMaintenance{URL: ts.URL})
-	if err == nil {
-		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
-	}
-	i++
-	err = cs.UpdateRunstatusMaintenance(context.TODO(), RunstatusMaintenance{EventsURL: ts.URL}, RunstatusEvent{})
-	if err == nil {
-		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
-	}
-	i++
-	err = cs.CreateRunstatusIncident(context.TODO(), RunstatusPage{IncidentsURL: ts.URL}, RunstatusIncident{})
-	if err == nil {
-		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
-	}
-	i++
-	err = cs.DeleteRunstatusIncident(context.TODO(), RunstatusIncident{URL: ts.URL})
-	if err == nil {
-		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
-	}
-	i++
-	err = cs.DeleteRunstatusPage(context.TODO(), RunstatusPage{URL: ts.URL})
-	if err == nil {
-		t.Errorf("TestRunstatusGenericErrorWithoutResp %d error expected: got nil", i)
+		t.Errorf("error expected on 400: got nil")
 	}
 }

@@ -336,8 +336,17 @@ func TestRunstatusListService(t *testing.T) {
   "subdomain": "testpage"
 }`, ts.URL)}
 
+	ts.addResponse(response{200, jsonContentType, fmt.Sprintf(`{"url": %q, "name": "API"}`, ts.URL)})
+	service, err := cs.GetRunstatusService(context.TODO(), RunstatusService{URL: ts.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if service.Name != "API" {
+		t.Errorf(`bad name, got %q, wanted "API"`, service.Name)
+	}
+
 	ts.addResponse(p, ss)
-	service, err := cs.GetRunstatusService(context.TODO(), RunstatusService{PageURL: ts.URL, Name: "API"})
+	service, err = cs.GetRunstatusService(context.TODO(), RunstatusService{PageURL: ts.URL, Name: "API"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -368,6 +377,25 @@ func TestRunstatusDeleteService(t *testing.T) {
 	}
 
 	if err := cs.DeleteRunstatusService(context.TODO(), RunstatusService{URL: ts.URL}); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestRunstatusServiceCreate(t *testing.T) {
+	ts := newServer()
+	defer ts.Close()
+	ts.addResponse(
+		response{200, jsonContentType, fmt.Sprintf(`{"services_url": %q, "subdomain": "d"}`, ts.URL)},
+		response{201, jsonContentType, `{"url": "...", "name": "hello"}`},
+	)
+
+	cs := NewClient(ts.URL, "KEY", "SECRET")
+
+	if _, err := cs.CreateRunstatusService(context.TODO(), RunstatusService{}); err == nil {
+		t.Error("service without a status should fail")
+	}
+
+	if _, err := cs.CreateRunstatusService(context.TODO(), RunstatusService{PageURL: ts.URL}); err != nil {
 		t.Error(err)
 	}
 }

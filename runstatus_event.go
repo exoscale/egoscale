@@ -14,7 +14,7 @@ type RunstatusEvent struct {
 	Text    string     `json:"text"`
 }
 
-// CreateRunstatusEvent create runstatus incident event
+// UpdateRunstatusIncident create runstatus incident event
 // Events can be updates or final message with status completed.
 func (client *Client) UpdateRunstatusIncident(ctx context.Context, incident RunstatusIncident, event RunstatusEvent) error {
 	if incident.EventsURL == "" {

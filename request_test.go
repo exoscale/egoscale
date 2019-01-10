@@ -692,28 +692,54 @@ func TestRequestNilCommand(t *testing.T) {
 
 // helpers
 
+type testServer struct {
+	*httptest.Server
+	lastResponse int
+	responses    []response
+}
+
 type response struct {
 	code        int
 	contentType string
 	body        string
 }
 
-func newServer(responses ...response) *httptest.Server {
-	i := 0
+func newServer(responses ...response) *testServer {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if i >= len(responses) {
-			w.Header().Set("Content-Type", jsonContentType)
-			w.WriteHeader(500)
-			w.Write([]byte("{}")) // nolint: errcheck
-			return
-		}
-		w.Header().Set("Content-Type", responses[i].contentType)
-		w.WriteHeader(responses[i].code)
-		w.Write([]byte(responses[i].body)) // nolint: errcheck
-		i++
-	})
-	return httptest.NewServer(mux)
+
+	ts := &testServer{
+		httptest.NewServer(mux),
+		0,
+		responses,
+	}
+
+	mux.Handle("/", ts)
+
+	return ts
+}
+
+// ServeHTTP handles a request and writes the answer
+func (ts *testServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	i := ts.lastResponse
+	if i >= len(ts.responses) {
+		w.Header().Set("Content-Type", jsonContentType)
+		w.WriteHeader(500)
+		w.Write([]byte("{}")) // nolint: errcheck
+		return
+	}
+	response := ts.responses[i]
+	ts.lastResponse++
+
+	w.Header().Set("Content-Type", response.contentType)
+	w.WriteHeader(response.code)
+	w.Write([]byte(response.body)) // nolint: errcheck
+}
+
+// addResponse appends new reponses to the end of the queue
+func (ts *testServer) addResponse(responses ...response) {
+	for i := range responses {
+		ts.responses = append(ts.responses, responses[i])
+	}
 }
 
 func newSleepyServer(response string) *httptest.Server {

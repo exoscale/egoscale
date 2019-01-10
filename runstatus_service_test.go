@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestRunstatusServiceGenericError(t *testing.T) {
+func TestRunstatusServiceGenericError(t *testing.T) { // nolint: dupl
 	ts := newServer()
 	defer ts.Close()
 

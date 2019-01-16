@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.14.1 (unreleased)
+-------------------
+
+- fix: `GetRunstatusPage` to always contain the subresources
+
 0.14.0
 ------
 

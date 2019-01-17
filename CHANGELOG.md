@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.13.3
+------
+
+- fix: runstatus unmarshalling errors
+
 0.13.2
 ------
 

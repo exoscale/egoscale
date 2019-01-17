@@ -5,6 +5,40 @@ import (
 	"testing"
 )
 
+func TestRunstatusError(t *testing.T) {
+	ts := newServer(
+		response{401, jsonContentType, `{"detail":"Invalid Authorization header"}`},
+	)
+	defer ts.Close()
+
+	cs := NewClient(ts.URL, "KEY", "SECRET")
+
+	_, err := cs.GetRunstatusPage(context.TODO(), RunstatusPage{URL: ts.URL})
+	if err == nil {
+		t.Errorf("An error was expected")
+	}
+	if err.Error() != "Runstatus error: Invalid Authorization header" {
+		t.Errorf("Bad error response, got %s", err)
+	}
+}
+
+func TestRunstatusValidationError(t *testing.T) {
+	ts := newServer(
+		response{401, jsonContentType, `{"foo":["bad mojo"]}`},
+	)
+	defer ts.Close()
+
+	cs := NewClient(ts.URL, "KEY", "SECRET")
+
+	_, err := cs.GetRunstatusPage(context.TODO(), RunstatusPage{URL: ts.URL})
+	if err == nil {
+		t.Errorf("An error was expected")
+	}
+	if err.Error() != "Runstatus error: foo: bad mojo" {
+		t.Errorf("Bad error response, got %s", err)
+	}
+}
+
 func TestRunstatusPage(t *testing.T) {
 	ts := newServer(response{200, jsonContentType, `
 {

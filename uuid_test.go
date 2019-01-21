@@ -32,7 +32,7 @@ func TestUUIDDeepCopyInto(t *testing.T) {
 	v := MustParseUUID("c39c7da0-b879-4a71-a21c-d78b83682e65")
 
 	if u.Equal(*v) {
-		t.Errorf("u and v should be identical")
+		t.Errorf("u and v should be different")
 	}
 
 	u.DeepCopyInto(v)

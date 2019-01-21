@@ -14,6 +14,38 @@ func recoverFromPanicing(t *testing.T) {
 	}
 }
 
+func TestUUIDDeepCopy(t *testing.T) {
+	u := MustParseUUID("5361a11b-615c-42bf-9bdb-e2c3790ada14")
+	v := u.DeepCopy()
+
+	if !u.Equal(*v) {
+		t.Errorf("copies should be identical")
+	}
+
+	if u == v {
+		t.Errorf("copies shouldn't be the same")
+	}
+}
+
+func TestUUIDDeepCopyInto(t *testing.T) {
+	u := MustParseUUID("5361a11b-615c-42bf-9bdb-e2c3790ada14")
+	v := MustParseUUID("c39c7da0-b879-4a71-a21c-d78b83682e65")
+
+	if u.Equal(*v) {
+		t.Errorf("u and v should be identical")
+	}
+
+	u.DeepCopyInto(v)
+
+	if !u.Equal(*v) {
+		t.Errorf("copies should be identical")
+	}
+
+	if u == v {
+		t.Errorf("copies shouldn't be the same")
+	}
+}
+
 func TestUUIDMustParse(t *testing.T) {
 	defer recoverFromPanicing(t)
 	MustParseUUID("foo")

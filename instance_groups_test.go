@@ -21,5 +21,5 @@ func TestUpdateInstanceGroup(t *testing.T) {
 
 func TestDeleteInstanceGroup(t *testing.T) {
 	req := &DeleteInstanceGroup{}
-	_ = req.Response().(*booleanResponse)
+	_ = req.Response().(*BooleanResponse)
 }

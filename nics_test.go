@@ -13,7 +13,7 @@ func TestAddIPToNic(t *testing.T) {
 func TestRemoveIPFromNic(t *testing.T) {
 	req := &RemoveIPFromNic{}
 	_ = req.Response().(*AsyncJobResult)
-	_ = req.AsyncResponse().(*booleanResponse)
+	_ = req.AsyncResponse().(*BooleanResponse)
 }
 
 func TestListNicsAPIName(t *testing.T) {

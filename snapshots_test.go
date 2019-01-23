@@ -25,11 +25,11 @@ func TestListSnapshots(t *testing.T) {
 func TestDeleteSnapshot(t *testing.T) {
 	req := &DeleteSnapshot{}
 	_ = req.Response().(*AsyncJobResult)
-	_ = req.AsyncResponse().(*booleanResponse)
+	_ = req.AsyncResponse().(*BooleanResponse)
 }
 
 func TestRevertSnapshot(t *testing.T) {
 	req := &RevertSnapshot{}
 	_ = req.Response().(*AsyncJobResult)
-	_ = req.AsyncResponse().(*booleanResponse)
+	_ = req.AsyncResponse().(*BooleanResponse)
 }

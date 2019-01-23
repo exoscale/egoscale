@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.13.4 (unreleased)
+------
+
+- change: export `BooleanResponse`
+
 0.13.3
 ------
 

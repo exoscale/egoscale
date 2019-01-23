@@ -20,7 +20,7 @@ func TestAssociateIPAddress(t *testing.T) {
 func TestDisassociateIPAddress(t *testing.T) {
 	req := &DisassociateIPAddress{}
 	_ = req.Response().(*AsyncJobResult)
-	_ = req.AsyncResponse().(*booleanResponse)
+	_ = req.AsyncResponse().(*BooleanResponse)
 }
 
 func TestListPublicIPAddresses(t *testing.T) {

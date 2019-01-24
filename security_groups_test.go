@@ -35,7 +35,7 @@ func TestCreateSecurityGroup(t *testing.T) {
 
 func TestDeleteSecurityGroup(t *testing.T) {
 	req := &DeleteSecurityGroup{}
-	_ = req.Response().(*booleanResponse)
+	_ = req.Response().(*BooleanResponse)
 }
 
 func TestListSecurityGroupsApiName(t *testing.T) {
@@ -46,13 +46,13 @@ func TestListSecurityGroupsApiName(t *testing.T) {
 func TestRevokeSecurityGroupEgress(t *testing.T) {
 	req := &RevokeSecurityGroupEgress{}
 	_ = req.Response().(*AsyncJobResult)
-	_ = req.AsyncResponse().(*booleanResponse)
+	_ = req.AsyncResponse().(*BooleanResponse)
 }
 
 func TestRevokeSecurityGroupIngress(t *testing.T) {
 	req := &RevokeSecurityGroupIngress{}
 	_ = req.Response().(*AsyncJobResult)
-	_ = req.AsyncResponse().(*booleanResponse)
+	_ = req.AsyncResponse().(*BooleanResponse)
 }
 
 func TestAuthorizeSecurityGroupEgressOnBeforeSendICMP(t *testing.T) {

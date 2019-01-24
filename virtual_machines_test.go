@@ -78,7 +78,7 @@ func TestChangeServiceForVirtualMachine(t *testing.T) {
 func TestScaleVirtualMachine(t *testing.T) {
 	req := &ScaleVirtualMachine{}
 	_ = req.Response().(*AsyncJobResult)
-	_ = req.AsyncResponse().(*booleanResponse)
+	_ = req.AsyncResponse().(*BooleanResponse)
 }
 
 func TestRecoverVirtualMachine(t *testing.T) {
@@ -89,7 +89,7 @@ func TestRecoverVirtualMachine(t *testing.T) {
 func TestExpungeVirtualMachine(t *testing.T) {
 	req := &ExpungeVirtualMachine{}
 	_ = req.Response().(*AsyncJobResult)
-	_ = req.AsyncResponse().(*booleanResponse)
+	_ = req.AsyncResponse().(*BooleanResponse)
 }
 
 func TestGetVirtualMachineUserData(t *testing.T) {

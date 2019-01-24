@@ -22,7 +22,7 @@ func TestCreateSSHKeyPair(t *testing.T) {
 
 func TestDeleteSSHKeyPair(t *testing.T) {
 	req := &DeleteSSHKeyPair{}
-	_ = req.Response().(*booleanResponse)
+	_ = req.Response().(*BooleanResponse)
 }
 
 func TestListSSHKeyPairsResponse(t *testing.T) {

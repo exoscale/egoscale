@@ -6,12 +6,12 @@ import (
 
 func TestDeleteReverseDNSFromVirtualMachine(t *testing.T) {
 	req := &DeleteReverseDNSFromVirtualMachine{}
-	_ = req.Response().(*booleanResponse)
+	_ = req.Response().(*BooleanResponse)
 }
 
 func TestDeleteReverseDNSFromPublicIPAddress(t *testing.T) {
 	req := &DeleteReverseDNSFromPublicIPAddress{}
-	_ = req.Response().(*booleanResponse)
+	_ = req.Response().(*BooleanResponse)
 }
 
 func TestQueryReverseDNSForVirtualMachine(t *testing.T) {

@@ -37,7 +37,7 @@ func TestUpdateNetwork(t *testing.T) {
 func TestDeleteNetwork(t *testing.T) {
 	req := &DeleteNetwork{}
 	_ = req.Response().(*AsyncJobResult)
-	_ = req.AsyncResponse().(*booleanResponse)
+	_ = req.AsyncResponse().(*BooleanResponse)
 }
 
 func TestCreateNetworkOnBeforeSend(t *testing.T) {

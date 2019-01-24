@@ -14,7 +14,7 @@ func TestCreateAffinityGroup(t *testing.T) {
 func TestDeleteAffinityGroup(t *testing.T) {
 	req := &DeleteAffinityGroup{}
 	_ = req.Response().(*AsyncJobResult)
-	_ = req.AsyncResponse().(*booleanResponse)
+	_ = req.AsyncResponse().(*BooleanResponse)
 }
 
 func TestListAffinityGroups(t *testing.T) {

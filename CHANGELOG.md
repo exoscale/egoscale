@@ -1,16 +1,12 @@
 Changelog
 =========
 
-0.13.4 (unreleased)
-------
-
-- change: export `BooleanResponse`
-
 0.13.3
 ------
 
 - fix: runstatus unmarshalling errors
 - feature: `UUID` implements DeepCopy, DeepCopyInto
+- change: export `BooleanResponse`
 
 0.13.2
 ------

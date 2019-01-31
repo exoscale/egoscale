@@ -418,7 +418,7 @@ func loadGoSources() (*types.Info, *token.FileSet) {
 
 	_, err = config.Check("egoscale", fset, astFiles, info)
 	if err != nil {
-		_, e := fmt.Fprintf(os.Stderr, err.Error())
+		_, e := fmt.Fprint(os.Stderr, err.Error())
 		if e != nil {
 			panic(e)
 		}

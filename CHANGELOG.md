@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.13.4 (unreleased)
+-------------------
+
+- fix: `CreateAffinityGroup` allows empty `name`
+
 0.13.3
 ------
 

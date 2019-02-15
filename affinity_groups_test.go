@@ -33,6 +33,19 @@ func TestUpdateVMAffinityGroup(t *testing.T) {
 	_ = req.AsyncResponse().(*VirtualMachine)
 }
 
+func TestCreateAffinityGroupOnBeforeSend(t *testing.T) {
+	req := &CreateAffinityGroup{}
+	params := url.Values{}
+
+	if err := req.onBeforeSend(params); err != nil {
+		t.Error(err)
+	}
+
+	if _, ok := params["name"]; !ok {
+		t.Errorf("name should have been set")
+	}
+}
+
 func TestUpdateVMOnBeforeSend(t *testing.T) {
 	req := &UpdateVMAffinityGroup{}
 	params := url.Values{}

@@ -1,14 +1,10 @@
 Changelog
 =========
 
-0.14.0 (Unreleased)
+0.14.0
 ------
 
 - change: all DNS calls require a context
-
-0.13.4 (unreleased)
--------------------
-
 - fix: `CreateAffinityGroup` allows empty `name`
 
 0.13.3

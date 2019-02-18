@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.14.0 (Unreleased)
+------
+
+- change: all DNS calls require a context
+
 0.13.4 (unreleased)
 -------------------
 

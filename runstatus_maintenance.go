@@ -160,7 +160,7 @@ func (client *Client) PaginateRunstatusMaintenances(ctx context.Context, page Ru
 			if err := ms.Maintenances[i].FakeID(); err != nil {
 				log.Printf("bad fake ID for %#v, %s", ms.Maintenances[i], err)
 			}
-			if ok := callback(&ms.Maintenances[i], nil); !ok {
+			if cont := callback(&ms.Maintenances[i], nil); !cont {
 				return
 			}
 		}

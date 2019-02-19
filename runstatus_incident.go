@@ -127,7 +127,7 @@ func (client *Client) PaginateRunstatusIncidents(ctx context.Context, page Runst
 		}
 
 		for i := range is.Incidents {
-			if ok := callback(&is.Incidents[i], nil); ok {
+			if cont := callback(&is.Incidents[i], nil); !cont {
 				return
 			}
 		}

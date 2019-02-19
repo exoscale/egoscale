@@ -128,7 +128,6 @@ func (client *Client) ListRunstatusMaintenances(ctx context.Context, page Runsta
 			return false
 		}
 
-		log.Printf("maintenance.... %#v", maintenance)
 		results = append(results, *maintenance)
 		return true
 	})
@@ -159,13 +158,10 @@ func (client *Client) PaginateRunstatusMaintenances(ctx context.Context, page Ru
 
 		for i := range ms.Maintenances {
 			if err := ms.Maintenances[i].FakeID(); err != nil {
-				if ok := callback(nil, err); !ok {
-					return
-				}
-			} else {
-				if ok := callback(&ms.Maintenances[i], nil); !ok {
-					return
-				}
+				log.Printf("bad fake ID for %#v, %s", ms.Maintenances[i], err)
+			}
+			if ok := callback(&ms.Maintenances[i], nil); !ok {
+				return
 			}
 		}
 

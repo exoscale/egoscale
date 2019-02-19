@@ -112,9 +112,9 @@ func (client *Client) PaginateRunstatusIncidents(ctx context.Context, page Runst
 		return
 	}
 
-	IncidentsURL := page.IncidentsURL
-	for IncidentsURL != "" {
-		resp, err := client.runstatusRequest(ctx, IncidentsURL, nil, "GET")
+	incidentsURL := page.IncidentsURL
+	for incidentsURL != "" {
+		resp, err := client.runstatusRequest(ctx, incidentsURL, nil, "GET")
 		if err != nil {
 			callback(nil, err)
 			return
@@ -132,7 +132,7 @@ func (client *Client) PaginateRunstatusIncidents(ctx context.Context, page Runst
 			}
 		}
 
-		IncidentsURL = is.Next
+		incidentsURL = is.Next
 	}
 }
 

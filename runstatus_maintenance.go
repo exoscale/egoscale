@@ -142,9 +142,9 @@ func (client *Client) PaginateRunstatusMaintenances(ctx context.Context, page Ru
 		return
 	}
 
-	MaintenancesURL := page.MaintenancesURL
-	for MaintenancesURL != "" {
-		resp, err := client.runstatusRequest(ctx, MaintenancesURL, nil, "GET")
+	maintenancesURL := page.MaintenancesURL
+	for maintenancesURL != "" {
+		resp, err := client.runstatusRequest(ctx, maintenancesURL, nil, "GET")
 		if err != nil {
 			callback(nil, err)
 			return
@@ -165,7 +165,7 @@ func (client *Client) PaginateRunstatusMaintenances(ctx context.Context, page Ru
 			}
 		}
 
-		MaintenancesURL = ms.Next
+		maintenancesURL = ms.Next
 	}
 }
 

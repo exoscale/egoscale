@@ -89,17 +89,20 @@ func (client *Client) ListRunstatusIncidents(ctx context.Context, page Runstatus
 		return nil, fmt.Errorf("empty Incidents URL for %#v", page)
 	}
 
-	resp, err := client.runstatusRequest(ctx, page.IncidentsURL, nil, "GET")
-	if err != nil {
-		return nil, err
-	}
+	results := make([]RunstatusIncident, 0)
 
-	var p *RunstatusIncidentList
-	if err := json.Unmarshal(resp, &p); err != nil {
-		return nil, err
-	}
+	var err error
+	client.PaginateRunstatusIncidents(ctx, page, func(incident *RunstatusIncident, e error) bool {
+		if e != nil {
+			err = e
+			return false
+		}
 
-	return p.Incidents, nil
+		results = append(results, *incident)
+		return true
+	})
+
+	return results, err
 }
 
 // PaginateRunstatusIncidents paginate Incidents

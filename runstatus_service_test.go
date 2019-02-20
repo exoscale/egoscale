@@ -61,9 +61,16 @@ func TestRunstatusServiceGenericError(t *testing.T) { // nolint: dupl
 }
 
 func TestRunstatusListServices(t *testing.T) {
+	ts := newServer()
+	defer ts.Close()
+
+	cs := NewClient(ts.URL, "KEY", "SECRET")
+
 	ss := response{200, jsonContentType, `
 {
-  "services": [
+  "next": null,
+  "previous": null,
+  "results": [
     {
       "url": "https://example.org/pages/testpage/services/28",
       "name": "API",
@@ -76,11 +83,26 @@ func TestRunstatusListServices(t *testing.T) {
     }
   ]
 }`}
-	ts := newServer(ss)
-	defer ts.Close()
+	s := response{200, jsonContentType, fmt.Sprintf(`{"id": 1, "url": %q, "name": "API"}`, ts.URL)}
+	p := response{200, jsonContentType, fmt.Sprintf(`{
+  "url": "https://api.runstatus.com/pages/testpage",
+  "services_url": %q,
+  "services": [
+    {
+      "url": "https://example.org/pages/testpage/services/28",
+      "name": "API",
+      "state": "operational"
+    },
+    {
+      "url": "https://example.org/pages/testpage/services/29",
+      "name": "ABI",
+      "state": "hold"
+    }
+  ],
+  "subdomain": "testpage"
+}`, ts.URL)}
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
-
+	ts.addResponse(ss)
 	services, err := cs.ListRunstatusServices(context.TODO(), RunstatusPage{ServicesURL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
@@ -94,13 +116,7 @@ func TestRunstatusListServices(t *testing.T) {
 		t.Errorf("url should be %q, got %q", "https://example.org/pages/testpage/services/29", services[1].URL)
 	}
 
-	p := response{200, jsonContentType, fmt.Sprintf(`{
-  "url": "https://api.runstatus.com/pages/testpage",
-  "services_url": %q,
-  "subdomain": "testpage"
-}`, ts.URL)}
-
-	ts.addResponse(response{200, jsonContentType, fmt.Sprintf(`{"id": 1, "url": %q, "name": "API"}`, ts.URL)})
+	ts.addResponse(s)
 	service, err := cs.GetRunstatusService(context.TODO(), RunstatusService{URL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
@@ -109,7 +125,7 @@ func TestRunstatusListServices(t *testing.T) {
 		t.Errorf(`bad name, got %q, wanted "API"`, service.Name)
 	}
 
-	ts.addResponse(p, ss)
+	ts.addResponse(p)
 	service, err = cs.GetRunstatusService(context.TODO(), RunstatusService{PageURL: ts.URL, Name: "API"})
 	if err != nil {
 		t.Fatal(err)
@@ -119,7 +135,7 @@ func TestRunstatusListServices(t *testing.T) {
 		t.Errorf(`bad state, got %d, wanted %d`, service.ID, 28)
 	}
 
-	ts.addResponse(p, ss)
+	ts.addResponse(p)
 	service, err = cs.GetRunstatusService(context.TODO(), RunstatusService{PageURL: ts.URL, ID: 29})
 	if err != nil {
 		t.Fatal(err)

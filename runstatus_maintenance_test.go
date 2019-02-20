@@ -60,10 +60,17 @@ func TestRunstatusMaintenanceGenericError(t *testing.T) { // nolint: dupl
 	}
 }
 
-func TestRunstatusListMaintenance(t *testing.T) {
+func TestRunstatusListMaintenances(t *testing.T) {
+	ts := newServer()
+	defer ts.Close()
+
+	cs := NewClient(ts.URL, "KEY", "SECRET")
+
 	ms := response{200, jsonContentType, `
 {
-  "maintenances": [
+  "next": null,
+  "previous": null,
+  "results": [
     {
       "url":"https://api.runstatus.com/pages/bauud/maintenances/598",
       "created":"2018-11-27T12:51:05.607060Z",
@@ -118,11 +125,73 @@ func TestRunstatusListMaintenance(t *testing.T) {
     }
   ]
 }`}
-	ts := newServer(ms)
-	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	m := response{200, jsonContentType, fmt.Sprintf(`{
+  "url": "...",
+  "title": "hggfh",
+  "status": "scheduled"
+}`)}
+	p := response{200, jsonContentType, fmt.Sprintf(`{
+  "url": "https://api.runstatus.com/pages/bauud",
+  "maintenances_url": %q,
+  "maintenances": [
+    {
+      "url":"https://api.runstatus.com/pages/bauud/maintenances/598",
+      "created":"2018-11-27T12:51:05.607060Z",
+      "services":["infra"],
+      "start_date":"2018-11-27T13:50:00Z",
+      "end_date":"2018-11-28T13:50:00Z",
+      "title":"hggfh",
+      "description":"hgfhgfgf",
+      "events": [
+        {
+          "created": "2018-11-14T15:38:19Z",
+          "text": "fini",
+          "status": "resolved",
+          "state": "operational"
+        },
+        {
+          "created": "2018-11-14T15:38:09Z",
+          "text": "c'est la vie!",
+          "status": "identified",
+          "state": "degraded_performance"
+        }
+      ],
+      "status":"scheduled",
+      "events_url":"https://api.runstatus.com/pages/bauud/maintenances/598/events",
+      "real_time":true
+    },
+    {
+      "url":"https://api.runstatus.com/pages/bauud/maintenances/600",
+      "created":"2018-11-27T12:51:05.607060Z",
+      "services":["infra"],
+      "start_date":"2018-11-27T13:50:00Z",
+      "end_date":"2018-11-28T13:50:00Z",
+      "title":"hggfh",
+      "description":"hgfhgfgf",
+      "events": [
+        {
+          "created": "2018-11-14T15:38:19Z",
+          "text": "fini",
+          "status": "resolved",
+          "state": "operational"
+        },
+        {
+          "created": "2018-11-14T15:38:09Z",
+          "text": "c'est la vie!",
+          "status": "identified",
+          "state": "degraded_performance"
+        }
+      ],
+      "status":"scheduled",
+      "events_url":"https://api.runstatus.com/pages/bauud/maintenances/600/events",
+      "real_time":true
+    }
+  ],
+  "subdomain": "bauud"
+}`, ts.URL)}
 
+	ts.addResponse(ms)
 	maintenances, err := cs.ListRunstatusMaintenances(context.TODO(), RunstatusPage{MaintenancesURL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
@@ -140,17 +209,6 @@ func TestRunstatusListMaintenance(t *testing.T) {
 		t.Errorf("maintenance ID should be 598, got %d", maintenances[0].ID)
 	}
 
-	m := response{200, jsonContentType, fmt.Sprintf(`{
-  "url": "...",
-  "title": "hggfh",
-  "status": "scheduled"
-}`)}
-	p := response{200, jsonContentType, fmt.Sprintf(`{
-  "url": "https://api.runstatus.com/pages/bauud",
-  "maintenances_url": %q,
-  "subdomain": "bauud"
-}`, ts.URL)}
-
 	ts.addResponse(m)
 	maintenance, err := cs.GetRunstatusMaintenance(context.TODO(), RunstatusMaintenance{URL: ts.URL})
 	if err != nil {
@@ -160,7 +218,7 @@ func TestRunstatusListMaintenance(t *testing.T) {
 		t.Errorf("bad maintenance fetched, got %#v", maintenance)
 	}
 
-	ts.addResponse(p, ms)
+	ts.addResponse(p)
 	maintenance, err = cs.GetRunstatusMaintenance(context.TODO(), RunstatusMaintenance{PageURL: ts.URL, ID: 598})
 	if err != nil {
 		t.Fatal(err)
@@ -169,7 +227,7 @@ func TestRunstatusListMaintenance(t *testing.T) {
 		t.Errorf("bad maintenance fetched, got %#v", maintenance)
 	}
 
-	ts.addResponse(p, ms)
+	ts.addResponse(p)
 	maintenance, err = cs.GetRunstatusMaintenance(context.TODO(), RunstatusMaintenance{PageURL: ts.URL, Title: "hggfh"})
 	if err != nil {
 		t.Fatal(err)
@@ -177,6 +235,145 @@ func TestRunstatusListMaintenance(t *testing.T) {
 	if maintenance.ID != 598 {
 		t.Errorf("bad maintenance fetched, got %#v", maintenance)
 	}
+}
+
+func TestRunstatusPaginateMaintenances(t *testing.T) {
+	ts := newServer()
+	defer ts.Close()
+
+	cs := NewClient(ts.URL, "KEY", "SECRET")
+
+	ps := response{200, jsonContentType, fmt.Sprintf(`{
+    "next": %q,
+    "previous":null,
+    "results": [
+      {
+        "url":"https://api.runstatus.com/pages/bauud/maintenances/598",
+        "created":"2018-11-27T12:51:05.607060Z",
+        "services":["infra"],
+        "start_date":"2018-11-27T13:50:00Z",
+        "end_date":"2018-11-28T13:50:00Z",
+        "title":"hggfh",
+        "description":"hgfhgfgf",
+        "events": [
+          {
+            "created": "2018-11-14T15:38:19Z",
+            "text": "fini",
+            "status": "resolved",
+            "state": "operational"
+          },
+          {
+            "created": "2018-11-14T15:38:09Z",
+            "text": "c'est la vie!",
+            "status": "identified",
+            "state": "degraded_performance"
+          }
+        ],
+        "status":"scheduled",
+        "events_url":"https://api.runstatus.com/pages/bauud/maintenances/598/events",
+        "real_time":true
+      },
+      {
+        "url":"https://api.runstatus.com/pages/bauud/maintenances/600",
+        "created":"2018-11-27T12:51:05.607060Z",
+        "services":["infra"],
+        "start_date":"2018-11-27T13:50:00Z",
+        "end_date":"2018-11-28T13:50:00Z",
+        "title":"hggfh",
+        "description":"hgfhgfgf",
+        "events": [
+          {
+            "created": "2018-11-14T15:38:19Z",
+            "text": "fini",
+            "status": "resolved",
+            "state": "operational"
+          },
+          {
+            "created": "2018-11-14T15:38:09Z",
+            "text": "c'est la vie!",
+            "status": "identified",
+            "state": "degraded_performance"
+          }
+        ],
+        "status":"scheduled",
+        "events_url":"https://api.runstatus.com/pages/bauud/maintenances/600/events",
+        "real_time":true
+      }
+    ]
+  }`, ts.URL)}
+
+	ms := response{200, jsonContentType, `
+{
+  "next": null,
+  "previous":null,
+  "results": [
+    {
+      "url":"https://api.runstatus.com/pages/bauud/maintenances/598",
+      "created":"2018-11-27T12:51:05.607060Z",
+      "services":["infra"],
+      "start_date":"2018-11-27T13:50:00Z",
+      "end_date":"2018-11-28T13:50:00Z",
+      "title":"hggfh",
+      "description":"hgfhgfgf",
+      "events": [
+        {
+          "created": "2018-11-14T15:38:19Z",
+          "text": "fini",
+          "status": "resolved",
+          "state": "operational"
+        },
+        {
+          "created": "2018-11-14T15:38:09Z",
+          "text": "c'est la vie!",
+          "status": "identified",
+          "state": "degraded_performance"
+        }
+      ],
+      "status":"scheduled",
+      "events_url":"https://api.runstatus.com/pages/bauud/maintenances/598/events",
+      "real_time":true
+    },
+    {
+      "url":"https://api.runstatus.com/pages/bauud/maintenances/600",
+      "created":"2018-11-27T12:51:05.607060Z",
+      "services":["infra"],
+      "start_date":"2018-11-27T13:50:00Z",
+      "end_date":"2018-11-28T13:50:00Z",
+      "title":"hggfh",
+      "description":"hgfhgfgf",
+      "events": [
+        {
+          "created": "2018-11-14T15:38:19Z",
+          "text": "fini",
+          "status": "resolved",
+          "state": "operational"
+        },
+        {
+          "created": "2018-11-14T15:38:09Z",
+          "text": "c'est la vie!",
+          "status": "identified",
+          "state": "degraded_performance"
+        }
+      ],
+      "status":"scheduled",
+      "events_url":"https://api.runstatus.com/pages/bauud/maintenances/600/events",
+      "real_time":true
+    }
+  ]
+}`}
+
+	ts.addResponse(ps, ms)
+	cs.PaginateRunstatusMaintenances(context.TODO(), RunstatusPage{MaintenancesURL: ts.URL}, func(maintenance *RunstatusMaintenance, e error) bool {
+		if e != nil {
+			t.Errorf(`reply error not expected: %v`, e)
+		}
+
+		if maintenance.Title != "hggfh" {
+			t.Errorf(`hggfh was expected but got %q`, maintenance.Title)
+		}
+
+		return false
+	})
 }
 
 func TestRunstatusMaintenanceDelete(t *testing.T) {

@@ -24,7 +24,7 @@ type IPAddress struct {
 	AssociatedNetworkID       *UUID         `json:"associatednetworkid,omitempty" doc:"the ID of the Network associated with the IP address"`
 	AssociatedNetworkName     string        `json:"associatednetworkname,omitempty" doc:"the name of the Network associated with the IP address"`
 	ForVirtualNetwork         bool          `json:"forvirtualnetwork,omitempty" doc:"the virtual network for the IP address"`
-	Healthcheck               Healthcheck   `json:"healthcheck,omitempty" doc:"The IP healthcheck configuration"`
+	Healthcheck               *Healthcheck  `json:"healthcheck,omitempty" doc:"The IP healthcheck configuration"`
 	ID                        *UUID         `json:"id,omitempty" doc:"public IP address id"`
 	IPAddress                 net.IP        `json:"ipaddress,omitempty" doc:"public IP address"`
 	IsElastic                 bool          `json:"iselastic,omitempty" doc:"is an elastic ip"`

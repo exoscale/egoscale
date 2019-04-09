@@ -33,3 +33,9 @@ func TestDeleteTemplate(t *testing.T) {
 	_ = req.Response().(*AsyncJobResult)
 	_ = req.AsyncResponse().(*BooleanResponse)
 }
+
+func TestRegisterCustomTemplate(t *testing.T) {
+	req := &RegisterCustomTemplate{}
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*[]Template)
+}

@@ -118,3 +118,19 @@ type ListOSCategoriesResponse struct {
 	Count      int          `json:"count"`
 	OSCategory []OSCategory `json:"oscategory"`
 }
+
+// DeleteTemplate deletes a template by ID
+type DeleteTemplate struct {
+	_  bool  `name:"deleteTemplate" description:"Deletes a template"`
+	ID *UUID `json:"id" doc:"the ID of the template"`
+}
+
+// Response returns the struct to unmarshal
+func (DeleteTemplate) Response() interface{} {
+	return new(AsyncJobResult)
+}
+
+// AsyncResponse returns the struct to unmarshal the async job
+func (DeleteTemplate) AsyncResponse() interface{} {
+	return new(BooleanResponse)
+}

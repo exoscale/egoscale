@@ -27,3 +27,9 @@ func TestTemplate(t *testing.T) {
 		t.Errorf("ResourceType doesn't match")
 	}
 }
+
+func TestDeleteTemplate(t *testing.T) {
+	req := &DeleteTemplate{}
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*BooleanResponse)
+}

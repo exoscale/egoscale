@@ -21,6 +21,52 @@ type AsyncJobResult struct {
 	UserID          *UUID            `json:"userid,omitempty" doc:"the user that executed the async command"`
 }
 
+// DeepCopy create a true copy of the receiver.
+func (a *AsyncJobResult) DeepCopy() *AsyncJobResult {
+	if a == nil {
+		return nil
+	}
+
+	return &AsyncJobResult{
+		AccountID:       a.AccountID,
+		Cmd:             a.Cmd,
+		Created:         a.Created,
+		JobID:           a.JobID,
+		JobInstanceID:   a.JobInstanceID,
+		JobInstanceType: a.JobInstanceType,
+		JobProcStatus:   a.JobProcStatus,
+		JobResult:       a.JobResult,
+		JobResultCode:   a.JobResultCode,
+		JobResultType:   a.JobResultType,
+		JobStatus:       a.JobStatus,
+		UserID:          a.UserID,
+	}
+}
+
+// DeepCopyInto copies the receiver into out.
+//
+// In must be non nil.
+func (a *AsyncJobResult) DeepCopyInto(out *AsyncJobResult) {
+	if a == nil {
+		out = &AsyncJobResult{}
+		return
+	}
+	out = &AsyncJobResult{
+		AccountID:       a.AccountID,
+		Cmd:             a.Cmd,
+		Created:         a.Created,
+		JobID:           a.JobID,
+		JobInstanceID:   a.JobInstanceID,
+		JobInstanceType: a.JobInstanceType,
+		JobProcStatus:   a.JobProcStatus,
+		JobResult:       a.JobResult,
+		JobResultCode:   a.JobResultCode,
+		JobResultType:   a.JobResultType,
+		JobStatus:       a.JobStatus,
+		UserID:          a.UserID,
+	}
+}
+
 // ListRequest buils the (empty) ListAsyncJobs request
 func (a AsyncJobResult) ListRequest() (ListCommand, error) {
 	req := &ListAsyncJobs{

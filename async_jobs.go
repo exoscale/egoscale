@@ -45,13 +45,9 @@ func (a *AsyncJobResult) DeepCopy() *AsyncJobResult {
 
 // DeepCopyInto copies the receiver into out.
 //
-// In must be non nil.
+// In (a) must be non nil. out must be non nil
 func (a *AsyncJobResult) DeepCopyInto(out *AsyncJobResult) {
-	if a == nil {
-		out = &AsyncJobResult{}
-		return
-	}
-	out = &AsyncJobResult{
+	*out = AsyncJobResult{
 		AccountID:       a.AccountID,
 		Cmd:             a.Cmd,
 		Created:         a.Created,

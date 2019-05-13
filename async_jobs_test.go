@@ -27,6 +27,13 @@ func TestAsyncJobsResultDeepCopy(t *testing.T) {
 	if !copy.JobID.Equal(*MustParseUUID("5d99e658-d0d4-4a91-b194-fc8bb44c272e")) {
 		t.Errorf(`uuid is not equal to "5d99e658-d0d4-4a91-b194-fc8bb44c272e": got %q`, copy.JobID.String())
 	}
+
+	req = new(AsyncJobResult)
+	copy = req.DeepCopy()
+
+	if copy.JobID != nil {
+		t.Errorf("JobID nil is expected")
+	}
 }
 
 func TestAsyncJobsResultDeepCopyInto(t *testing.T) {
@@ -42,5 +49,13 @@ func TestAsyncJobsResultDeepCopyInto(t *testing.T) {
 
 	if !copy.JobID.Equal(*MustParseUUID("5d99e658-d0d4-4a91-b194-fc8bb44c272e")) {
 		t.Errorf(`uuid is not equal to "5d99e658-d0d4-4a91-b194-fc8bb44c272e": got %q`, copy.JobID.String())
+	}
+
+	req = new(AsyncJobResult)
+	copy = new(AsyncJobResult)
+	req.DeepCopyInto(copy)
+
+	if copy.JobID != nil {
+		t.Errorf("JobID nil is expected")
 	}
 }

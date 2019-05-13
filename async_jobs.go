@@ -28,18 +28,18 @@ func (a *AsyncJobResult) DeepCopy() *AsyncJobResult {
 	}
 
 	return &AsyncJobResult{
-		AccountID:       a.AccountID,
+		AccountID:       a.AccountID.DeepCopy(),
 		Cmd:             a.Cmd,
 		Created:         a.Created,
-		JobID:           a.JobID,
-		JobInstanceID:   a.JobInstanceID,
+		JobID:           a.JobID.DeepCopy(),
+		JobInstanceID:   a.JobInstanceID.DeepCopy(),
 		JobInstanceType: a.JobInstanceType,
 		JobProcStatus:   a.JobProcStatus,
 		JobResult:       a.JobResult,
 		JobResultCode:   a.JobResultCode,
 		JobResultType:   a.JobResultType,
 		JobStatus:       a.JobStatus,
-		UserID:          a.UserID,
+		UserID:          a.UserID.DeepCopy(),
 	}
 }
 
@@ -48,18 +48,18 @@ func (a *AsyncJobResult) DeepCopy() *AsyncJobResult {
 // In (a) must be non nil. out must be non nil
 func (a *AsyncJobResult) DeepCopyInto(out *AsyncJobResult) {
 	*out = AsyncJobResult{
-		AccountID:       a.AccountID,
+		AccountID:       a.AccountID.DeepCopy(),
 		Cmd:             a.Cmd,
 		Created:         a.Created,
-		JobID:           a.JobID,
-		JobInstanceID:   a.JobInstanceID,
+		JobID:           a.JobID.DeepCopy(),
+		JobInstanceID:   a.JobInstanceID.DeepCopy(),
 		JobInstanceType: a.JobInstanceType,
 		JobProcStatus:   a.JobProcStatus,
 		JobResult:       a.JobResult,
 		JobResultCode:   a.JobResultCode,
 		JobResultType:   a.JobResultType,
 		JobStatus:       a.JobStatus,
-		UserID:          a.UserID,
+		UserID:          a.UserID.DeepCopy(),
 	}
 }
 

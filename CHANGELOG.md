@@ -1,8 +1,8 @@
 Changelog
 =========
 
-UNRELEASED
-----------
+0.18.1
+------
 
 - change: make the "User-Agent" HTTP request header more informative and exposed
 

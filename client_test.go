@@ -2,662 +2,176 @@ package egoscale
 
 import (
 	"fmt"
-	"net"
-	"strings"
+	"os"
+	"path"
 	"testing"
+
+	egoerr "github.com/exoscale/egoscale/error"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestClientAPIName(t *testing.T) {
-	cs := NewClient("ENDPOINT", "KEY", "SECRET")
-	req := &ListAPIs{}
-	if cs.APIName(req) != "listApis" {
-		t.Errorf("APIName is wrong, wanted listApis")
-	}
-	if cs.APIName(&AuthorizeSecurityGroupIngress{}) != "authorizeSecurityGroupIngress" {
-		t.Errorf("APIName is wrong, wanted Ingress")
-	}
-	if cs.APIName(&AuthorizeSecurityGroupEgress{}) != "authorizeSecurityGroupEgress" {
-		t.Errorf("APIName is wrong, wanted Egress")
-	}
-	if cs.APIName(AuthorizeSecurityGroupEgress{}) != "authorizeSecurityGroupEgress" {
-		t.Errorf("APIName is wrong, wanted Egress")
-	}
+type clientTestSuite struct {
+	suite.Suite
+	dir string
 }
 
-func TestClientAPIDescription(t *testing.T) {
-	cs := NewClient("ENDPOINT", "KEY", "SECRET")
-	req := &ListAPIs{}
-	desc := cs.APIDescription(req)
-	if desc != "lists all available apis on the server" {
-		t.Errorf("APIDescription of listApis is wrong, got %q", desc)
-	}
-}
-func TestClientResponse(t *testing.T) {
-	cs := NewClient("ENDPOINT", "KEY", "SECRET")
-
-	r := cs.Response(&ListAPIs{})
-	switch r.(type) {
-	case *ListAPIsResponse:
-		// do nothing
-	default:
-		t.Errorf("request is wrong, got %t", r)
-	}
-
-	ar := cs.Response(&DeployVirtualMachine{})
-	switch ar.(type) {
-	case *VirtualMachine:
-		// do nothing
-	default:
-		t.Errorf("asyncRequest is wrong, got %t", ar)
-	}
+func (t *clientTestSuite) SetupTest() {
+	t.dir = os.TempDir()
 }
 
-func TestClientSyncDelete(t *testing.T) {
-	bodySuccessString := `
-{"delete%sresponse": {
-	"success": "true"
-}}`
-	bodySuccessBool := `
-{"delete%sresponse": {
-	"success": true
-}}`
-
-	bodyError := `
-{"delete%sresponse": {
-	"errorcode": 431,
-	"cserrorcode": 9999,
-	"errortext": "This is a dummy error",
-	"uuidList": []
-}}`
-
-	things := []struct {
-		name      string
-		deletable Deletable
-	}{
-		{"securitygroup", &SecurityGroup{ID: MustParseUUID("09ae3132-3a35-458c-9607-e3c77dd0465b")}},
-		{"securitygroup", &SecurityGroup{Name: "test"}},
-		{"sshkeypair", &SSHKeyPair{Name: "test"}},
-	}
-
-	for _, thing := range things {
-		ts := newServer(
-			response{200, jsonContentType, fmt.Sprintf(bodySuccessString, thing.name)},
-			response{200, jsonContentType, fmt.Sprintf(bodySuccessBool, thing.name)},
-			response{431, jsonContentType, fmt.Sprintf(bodyError, thing.name)},
-		)
-
-		cs := NewClient(ts.URL, "KEY", "SECRET")
-
-		for i := 0; i < 2; i++ {
-			if err := cs.Delete(thing.deletable); err != nil {
-				t.Errorf("Deletion of %#v. Err: %s", thing.deletable, err)
-			}
-		}
-
-		if err := cs.Delete(thing.deletable); err == nil {
-			t.Errorf("Deletion of %v an error was expected", thing.deletable)
-		}
-
-		ts.Close()
-	}
+func (t *clientTestSuite) TearDownSuite() {
+	os.RemoveAll(t.dir)
 }
 
-func TestClientAsyncDelete(t *testing.T) {
-	body := `
-{"%sresponse": {
-	"jobid": "01ed7adc-8b81-4e33-a0f2-4f55a3b880cd",
-	"jobresult": {
-		"success": true
-	},
-	"jobstatus": 1
-}}`
-	bodyError := `
-{"%sresponse": {
-	"jobid": "01ed7adc-8b81-4e33-a0f2-4f55a3b880cd",
-	"jobresult": {
-		"success": false,
-		"displaytext": "herp derp",
-	},
-	"jobstatus": 2
-}}`
-
-	id := MustParseUUID("96816f59-9986-499c-91c5-f47bd1122c4b")
-	things := []struct {
-		name      string
-		deletable Deletable
-	}{
-		{"deleteaffinitygroup", &AffinityGroup{ID: id}},
-		{"deleteaffinitygroup", &AffinityGroup{Name: "affinity group name"}},
-		{"disassociateipaddress", &IPAddress{ID: id}},
-		{"destroyvirtualmachine", &VirtualMachine{ID: id}},
-	}
-
-	for _, thing := range things {
-		ts := newServer(
-			response{200, jsonContentType, fmt.Sprintf(body, thing.name)},
-			response{400, jsonContentType, fmt.Sprintf(bodyError, thing.name)},
-		)
-
-		cs := NewClient(ts.URL, "KEY", "SECRET")
-
-		if err := cs.Delete(thing.deletable); err != nil {
-			t.Errorf("Deletion of %#v. Err: %s", thing, err)
-		}
-		if err := cs.Delete(thing.deletable); err == nil {
-			t.Errorf("Deletion of %#v. An error was expected", thing)
-		}
-
-		ts.Close()
-	}
+func (t *clientTestSuite) TestConfigFromProfile() {
+	cf := ConfigFromProfile(ConfigProfile{Name: "alice"})
+	profile, err := cf()
+	assert.Empty(t.T(), err)
+	assert.Equal(t.T(), &ConfigProfile{Name: "alice"}, profile)
 }
 
-func TestClientDeleteFailure(t *testing.T) {
-	things := []Deletable{
-		&AffinityGroup{},
-		&SecurityGroup{},
-		&SSHKeyPair{},
-		&VirtualMachine{},
-		&IPAddress{},
-	}
+func (t *clientTestSuite) TestConfigFromFile() {
+	var file = path.Join(t.dir, "config.toml")
 
-	for _, thing := range things {
-		ts := newServer()
+	assert.Empty(t.T(), configFileFixture(file, fmt.Sprintf(`
+default_profile = "bob"
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+[[profiles]]
+name = "alice"
+api_key = "%s"
+api_secret = "%s"
 
-		if err := cs.Delete(thing); err == nil {
-			t.Errorf("Deletion of %#v. Should have failed", thing)
-		}
+[[profiles]]
+name = "bob"
+api_key = "%s"
+api_secret = "%s"
+`,
+		testAliceAPIKey,
+		testAliceAPISecret,
+		testBobAPIKey,
+		testBobAPISecret)))
 
-		ts.Close()
-	}
+	cf := ConfigFromFile(file)
+	profile, err := cf()
+	assert.Empty(t.T(), err)
+	assert.Equal(t.T(), &ConfigProfile{
+		Name:      "bob",
+		APIKey:    testBobAPIKey,
+		APISecret: testBobAPISecret,
+	}, profile)
 }
 
-func TestClientGetFailure(t *testing.T) {
-	things := []Listable{
-		nil,
-		&Account{},
-		(*ListAccounts)(nil),
-		&AffinityGroup{},
-		(*ListAffinityGroups)(nil),
-		&IPAddress{},
-		(*ListPublicIPAddresses)(nil),
-		&NetworkOffering{},
-		(*ListNetworkOfferings)(nil),
-		&Nic{},
-		(*ListNics)(nil),
-		&SSHKeyPair{},
-		(*ListSSHKeyPairs)(nil),
-		&SecurityGroup{},
-		(*ListSecurityGroups)(nil),
-		&ServiceOffering{},
-		(*ListServiceOfferings)(nil),
-		&Snapshot{},
-		(*ListSnapshots)(nil),
-		&VirtualMachine{},
-		(*ListVirtualMachines)(nil),
-		&Volume{},
-		(*ListVolumes)(nil),
-		&Zone{},
-		(*ListZones)(nil),
-		&ISO{},
-		(*ListISOs)(nil),
-	}
+func (t *clientTestSuite) TestConfigFromEnv() {
+	var (
+		apiKey               = "apiKey"
+		apiSecret            = "apiSecret"
+		computeAPIEndpoint   = "computeAPIEndpoint"
+		dnsAPIEndpoint       = "dnsAPIEndpoint"
+		runstatusAPIEndpoint = "runstatusAPIEndpoint"
+		storageAPIEndpoint   = "storageAPIEndpoint"
+		storageZone          = "storageZone"
+	)
 
-	for _, thing := range things {
-		ts := newServer()
+	os.Setenv(APIKeyEnvvar, apiKey)
+	os.Setenv(APISecretEnvvar, apiSecret)
+	os.Setenv(ComputeAPIEndpointEnvvar, computeAPIEndpoint)
+	os.Setenv(DNSAPIEndpointEnvvar, dnsAPIEndpoint)
+	os.Setenv(RunstatusAPIEndpointEnvvar, runstatusAPIEndpoint)
+	os.Setenv(StorageAPIEndpointEnvvar, storageAPIEndpoint)
+	os.Setenv(StorageZoneEnvvar, storageZone)
+	defer func() {
+		os.Unsetenv(APIKeyEnvvar)
+		os.Unsetenv(APISecretEnvvar)
+		os.Unsetenv(ComputeAPIEndpointEnvvar)
+		os.Unsetenv(DNSAPIEndpointEnvvar)
+		os.Unsetenv(RunstatusAPIEndpointEnvvar)
+		os.Unsetenv(StorageAPIEndpointEnvvar)
+		os.Unsetenv(StorageZoneEnvvar)
+	}()
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
-
-		if _, err := cs.Get(thing); err == nil {
-			t.Errorf("Get of %#v. Should have failed", thing)
-		}
-
-		ts.Close()
-	}
+	cf := ConfigFromEnv()
+	profile, err := cf()
+	assert.Empty(t.T(), err)
+	assert.Equal(t.T(), &ConfigProfile{
+		APIKey:               apiKey,
+		APISecret:            apiSecret,
+		ComputeAPIEndpoint:   computeAPIEndpoint,
+		DNSAPIEndpoint:       dnsAPIEndpoint,
+		RunstatusAPIEndpoint: runstatusAPIEndpoint,
+		StorageAPIEndpoint:   storageAPIEndpoint,
+		StorageZone:          storageZone,
+	}, profile)
 }
 
-func TestClientGetNone(t *testing.T) {
-	body := `{"list%sresponse": {}}`
-	bodyError := `{"errorresponse": {
-		"cserrorcode": 9999,
-		"errorcode": 431,
-		"errortext": "Unable to execute API command due to invalid value.",
-		"uuidList": []
-	}}`
-	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")
-	things := []struct {
-		name     string
-		listable Listable
-	}{
-		{"zones", &Zone{ID: id}},
-		{"zones", &Zone{Name: "test zone"}},
-		{"publicipaddresses", &IPAddress{ID: id, IsElastic: true, ForVirtualNetwork: true}},
-		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1"), IsSourceNat: true}},
-		{"sshkeypairs", &SSHKeyPair{Name: "1"}},
-		{"sshkeypairs", &SSHKeyPair{Fingerprint: "test ssh keypair"}},
-		{"affinitygroups", &AffinityGroup{ID: id}},
-		{"affinitygroups", &AffinityGroup{Name: "test affinity group"}},
-		{"securitygroups", &SecurityGroup{ID: id}},
-		{"securitygroups", &SecurityGroup{Name: "test affinity group"}},
-		{"virtualmachines", &VirtualMachine{ID: id}},
-		{"volumes", &Volume{ID: id}},
-		{"templates", &Template{ID: id, IsFeatured: true}},
-		{"serviceofferings", &ServiceOffering{ID: id}},
-		{"accounts", &Account{}},
-		{"networkofferings", &NetworkOffering{}},
-		{"nics", &Nic{}},
-		{"snapshots", &Snapshot{}},
-		{"isos", &ISO{}},
-	}
-
-	for _, thing := range things {
-		ts := newServer(
-			response{200, jsonContentType, fmt.Sprintf(body, thing.name)},
-			response{431, jsonContentType, bodyError},
-		)
-
-		cs := NewClient(ts.URL, "KEY", "SECRET")
-
-		errText := "not found"
-		_, err := cs.Get(thing.listable)
-		if err == nil {
-			t.Error("an error was expected")
-			continue
-		}
-
-		e, ok := err.(*ErrorResponse)
-		if !ok {
-			t.Errorf("an ErrorResponse was expected, got %T", err)
-			continue
-		}
-
-		if !strings.Contains(e.ErrorText, errText) {
-			t.Errorf("bad error test, got %q", e.ErrorText)
-		}
-
-		ts.Close()
-	}
+func (t *clientTestSuite) TestNewClientNoConfig() {
+	client, err := NewClient()
+	assert.Empty(t.T(), client)
+	assert.EqualError(t.T(), err, egoerr.ErrMissingAPICredentials.Error())
 }
 
-func TestClientGetZero(t *testing.T) {
-	body := `
-	{"list%sresponse": {
-		"%s": []
-	}}`
+func (t *clientTestSuite) TestNewClientNoConfigWithEnv() {
+	var (
+		apiKey               = "apiKey"
+		apiSecret            = "apiSecret"
+		computeAPIEndpoint   = "computeAPIEndpoint"
+		dnsAPIEndpoint       = "dnsAPIEndpoint"
+		runstatusAPIEndpoint = "runstatusAPIEndpoint"
+		storageAPIEndpoint   = "storageAPIEndpoint"
+		storageZone          = "storageZone"
+	)
 
-	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")
-	things := []struct {
-		name     string
-		listable Listable
-	}{
-		{"zone", &Zone{ID: id}},
-		{"zone", &Zone{Name: "test zone"}},
-		{"publicipaddress", &IPAddress{ID: id}},
-		{"publicipaddress", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},
-		{"sshkeypair", &SSHKeyPair{Name: "1"}},
-		{"sshkeypair", &SSHKeyPair{Fingerprint: "test ssh keypair"}},
-		{"affinitygroup", &AffinityGroup{ID: id}},
-		{"affinitygroup", &AffinityGroup{Name: "test affinity group"}},
-		{"securitygroup", &SecurityGroup{ID: id}},
-		{"securitygroup", &SecurityGroup{Name: "test affinity group"}},
-		{"virtualmachine", &VirtualMachine{ID: id}},
-		{"volume", &Volume{ID: id}},
-		{"template", &Template{ID: id, IsFeatured: true}},
-		{"serviceoffering", &ServiceOffering{ID: id}},
-		{"account", &Account{}},
-		{"networkoffering", &NetworkOffering{ID: id}},
-		{"nic", &Nic{ID: id}},
-		{"snapshot", &Snapshot{ID: id}},
-		{"iso", &ISO{ID: id}},
-	}
+	os.Setenv(APIKeyEnvvar, apiKey)
+	os.Setenv(APISecretEnvvar, apiSecret)
+	os.Setenv(ComputeAPIEndpointEnvvar, computeAPIEndpoint)
+	os.Setenv(DNSAPIEndpointEnvvar, dnsAPIEndpoint)
+	os.Setenv(RunstatusAPIEndpointEnvvar, runstatusAPIEndpoint)
+	os.Setenv(StorageAPIEndpointEnvvar, storageAPIEndpoint)
+	os.Setenv(StorageZoneEnvvar, storageZone)
+	defer func() {
+		os.Unsetenv(APIKeyEnvvar)
+		os.Unsetenv(APISecretEnvvar)
+		os.Unsetenv(ComputeAPIEndpointEnvvar)
+		os.Unsetenv(DNSAPIEndpointEnvvar)
+		os.Unsetenv(RunstatusAPIEndpointEnvvar)
+		os.Unsetenv(StorageAPIEndpointEnvvar)
+		os.Unsetenv(StorageZoneEnvvar)
+	}()
 
-	for _, thing := range things {
-		plural := thing.name
-		if strings.HasSuffix(plural, "s") {
-			plural += "es"
-		} else {
-			plural += "s"
-		}
-		resp := response{200, jsonContentType, fmt.Sprintf(body, plural, thing.name)}
-		ts := newServer(resp)
-
-		cs := NewClient(ts.URL, "KEY", "SECRET")
-
-		// fake 431
-		_, err := cs.Get(thing.listable)
-		if err == nil {
-			t.Errorf("an error was expected")
-		}
-
-		if !strings.HasPrefix(err.Error(), "API error ParamError 431") {
-			t.Errorf("bad error %q", err)
-		}
-
-		ts.Close()
-	}
+	client, err := NewClient()
+	assert.Empty(t.T(), err)
+	assert.NotEmpty(t.T(), client)
 }
 
-func TestClientGetTooMany(t *testing.T) {
-	body := `
-	{"list%sresponse": {
-		"count": 2,
-		"affinitygroup": [{}, {}],
-		"publicipaddress": [{}, {}],
-		"securitygroup": [{}, {}],
-		"sshkeypair": [{}, {}],
-		"virtualmachine": [{}, {}],
-		"volume": [{}, {}],
-		"zone": [{}, {}],
-		"template": [{}, {}],
-		"serviceoffering": [{}, {}],
-		"account": [{}, {}],
-		"networkoffering": [{}, {}],
-		"nic": [{}, {}],
-		"snapshot": [{}, {}],
-		"iso": [{}, {}]
-	}}`
+func (t *clientTestSuite) TestNewClientNoConfigWithConfigFileEnv() {
+	var file = path.Join(t.dir, "config.toml")
 
-	id := MustParseUUID("4557261a-c4b9-45a3-91b3-e48ef55857ed")
-	things := []struct {
-		name     string
-		listable Listable
-	}{
-		{"zones", &Zone{ID: id}},
-		{"zones", &Zone{Name: "test zone"}},
-		{"publicipaddresses", &IPAddress{ID: id}},
-		{"publicipaddresses", &IPAddress{IPAddress: net.ParseIP("127.0.0.1")}},
-		{"sshkeypairs", &SSHKeyPair{Name: "1"}},
-		{"sshkeypairs", &SSHKeyPair{Fingerprint: "test ssh keypair"}},
-		{"affinitygroups", &AffinityGroup{ID: id}},
-		{"affinitygroups", &AffinityGroup{Name: "test affinity group"}},
-		{"securitygroups", &SecurityGroup{ID: id}},
-		{"securitygroups", &SecurityGroup{Name: "test affinity group"}},
-		{"virtualmachines", &VirtualMachine{ID: id}},
-		{"volumes", &Volume{ID: id}},
-		{"templates", &Template{ID: id, IsFeatured: true}},
-		{"serviceofferings", &ServiceOffering{ID: id}},
-		{"accounts", &Account{}},
-		{"nics", &Nic{}},
-		{"snapshots", &Snapshot{}},
-		{"isos", &ISO{}},
-	}
+	assert.Empty(t.T(), configFileFixture(file, fmt.Sprintf(`
+[[profiles]]
+name = "alice"
+api_key = "%s"
+api_secret = "%s"
+`,
+		testAliceAPIKey,
+		testAliceAPISecret)))
 
-	for _, thing := range things {
-		resp := response{200, jsonContentType, fmt.Sprintf(body, thing.name)}
-		ts := newServer(resp)
+	os.Setenv(ConfigFileEnvvar, file)
+	defer os.Unsetenv(ConfigFileEnvvar)
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
-
-		// Too many
-		_, err := cs.Get(thing.listable)
-		if err == nil {
-			t.Errorf("an error was expected")
-		}
-
-		if !strings.HasPrefix(err.Error(), "more than one") {
-			t.Errorf("bad error %s", err)
-		}
-
-		ts.Close()
-	}
+	client, err := NewClient()
+	assert.Empty(t.T(), err)
+	assert.NotEmpty(t.T(), client)
 }
 
-func TestClientTrace(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `{"listzonesresponse":{ "count": 0, "zone": []}}`})
-	defer ts.Close()
-
-	cs := NewClient(ts.URL, "KEY", "SECRET")
-
-	// XXX test something... this only increases the coverage
-	cs.TraceOn()
-
-	_, err := cs.Request(&ListZones{})
-
-	cs.TraceOff()
-
-	if err != nil {
-		t.Error(err)
-	}
+func (t *clientTestSuite) TestNewClientFromProfile() {
+	client, err := NewClient(ConfigFromProfile(ConfigProfile{
+		APIKey:    "apiKey",
+		APISecret: "apiSecret",
+	}))
+	assert.Empty(t.T(), err)
+	assert.NotEmpty(t.T(), client)
 }
 
-// Things that can be listed, paginated
-
-type lsTest struct {
-	name      string
-	fieldName string
-	listables []Listable
-}
-
-func lsTests() []lsTest {
-	ts := []lsTest{
-		{"zones", "", []Listable{
-			&Zone{},
-			&ListZones{},
-		}},
-		{"publicipaddresses", "", []Listable{
-			&IPAddress{},
-			&ListPublicIPAddresses{},
-		}},
-		{"sshkeypairs", "", []Listable{
-			&SSHKeyPair{},
-			&ListSSHKeyPairs{},
-		}},
-		{"affinitygroups", "", []Listable{
-			&AffinityGroup{},
-			&ListAffinityGroups{},
-		}},
-		{"securitygroups", "", []Listable{
-			&SecurityGroup{},
-			&ListSecurityGroups{},
-		}},
-		{"virtualmachines", "", []Listable{
-			&VirtualMachine{},
-			&ListVirtualMachines{},
-		}},
-		{"volumes", "", []Listable{
-			&Volume{},
-			&ListVolumes{},
-		}},
-		{"templates", "", []Listable{
-			&Template{IsFeatured: true},
-			&ListTemplates{TemplateFilter: "featured"},
-		}},
-		{"serviceofferings", "", []Listable{
-			&ServiceOffering{},
-			&ListServiceOfferings{},
-		}},
-		{"networks", "", []Listable{
-			&Network{},
-			&ListNetworks{},
-		}},
-		{"networkofferings", "", []Listable{
-			&NetworkOffering{},
-			&ListNetworkOfferings{},
-		}},
-		{"accounts", "", []Listable{
-			&Account{},
-			&ListAccounts{},
-		}},
-		{"nics", "", []Listable{
-			&Nic{},
-			&ListNics{},
-		}},
-		{"snapshots", "", []Listable{
-			&Snapshot{},
-			&ListSnapshots{},
-		}},
-		{"events", "", []Listable{
-			&Event{},
-			&ListEvents{},
-		}},
-		{"eventtypes", "", []Listable{
-			&EventType{},
-			&ListEventTypes{},
-		}},
-		{"resourcelimits", "", []Listable{
-			&ResourceLimit{},
-			&ListResourceLimits{},
-		}},
-		{"resourcedetails", "", []Listable{
-			&ResourceDetail{
-				ResourceType: "UserVM",
-			},
-			&ListResourceDetails{
-				ResourceType: "UserVM",
-			},
-		}},
-		{"tags", "", []Listable{
-			&ResourceTag{},
-			&ListTags{},
-		}},
-		{"users", "", []Listable{
-			&User{},
-			&ListUsers{},
-		}},
-		{"instancegroups", "", []Listable{
-			&InstanceGroup{},
-			&ListInstanceGroups{},
-		}},
-		{"asyncjobs", "", []Listable{
-			&AsyncJobResult{},
-			&ListAsyncJobs{},
-		}},
-		{"oscategories", "", []Listable{
-			&OSCategory{},
-			&ListOSCategories{},
-		}},
-		{"isos", "", []Listable{
-			&ISO{},
-			&ListISOs{},
-		}},
-	}
-
-	for i, t := range ts {
-		end := len(t.name) - 1
-		if strings.HasSuffix(t.name, "ses") {
-			end--
-		}
-		if strings.HasSuffix(t.name, "jobs") {
-			end++
-		}
-		fieldName := t.name[:end]
-		if strings.HasSuffix(fieldName, "ie") {
-			fieldName = t.name[:end-2] + "y"
-		}
-
-		ts[i].fieldName = fieldName
-	}
-
-	return ts
-}
-
-func TestClientList(t *testing.T) {
-	body := `
-	{"list%sresponse": {
-		"count": 4,
-		"%s": [{}, {}, {}, {}]
-	}}`
-
-	for _, tt := range lsTests() {
-		responses := make([]response, len(tt.listables))
-		for i := range tt.listables {
-			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.fieldName)}
-		}
-		ts := newServer(responses...)
-
-		cs := NewClient(ts.URL, "KEY", "SECRET")
-
-		for _, ls := range tt.listables {
-			things, err := cs.List(ls)
-			if err != nil {
-				t.Error(err)
-			}
-
-			if len(things) != 4 {
-				t.Errorf("four %T were expected, got %d", ls, len(things))
-			}
-
-		}
-
-		ts.Close()
-	}
-}
-
-func TestClientPaginate(t *testing.T) {
-	body := `
-	{"list%sresponse": {
-		"count": 4,
-		"%s": [{}, {}, {}, {}]
-	}}`
-
-	for _, tt := range lsTests() {
-		end := len(tt.name)
-		switch {
-		case strings.HasSuffix(tt.name, "ses"):
-			end -= 2 // nolint: ineffassign
-		case strings.HasSuffix(tt.name, "jobs"):
-			break
-		default:
-			end-- // nolint: ineffassign
-		}
-		responses := make([]response, len(tt.listables))
-		for i := range tt.listables {
-			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.fieldName)}
-		}
-		ts := newServer(responses...)
-
-		cs := NewClient(ts.URL, "KEY", "SECRET")
-
-		for _, ls := range tt.listables {
-			req, _ := ls.ListRequest()
-			counter := 0
-
-			cs.Paginate(req, func(i interface{}, e error) bool {
-				if e != nil {
-					t.Error(e)
-					return false
-				}
-
-				counter++
-				return true
-			})
-
-			if counter != 4 {
-				t.Errorf("Four %s were expected, got %d", tt.name, counter)
-			}
-		}
-
-		ts.Close()
-	}
-}
-
-func TestClientPaginateError(t *testing.T) {
-	body := `
-	{"list%sresponse": {
-		"cserrorcode": 9999,
-		"errorcode": 431,
-		"errortext": "Unable to execute API command listzones due to invalid value. Invalid parameter id value=1747ef5e-5451-41fd-9f1a-58913bae9701 due to incorrect long value format, or entity does not exist or due to incorrect parameter annotation for the field in api cmd class.",
-		"uuidList": []
-	}}
-`
-	for _, tt := range lsTests() {
-		responses := make([]response, len(tt.listables))
-		for i := range tt.listables {
-			responses[i] = response{431, jsonContentType, fmt.Sprintf(body, tt.name)}
-		}
-		ts := newServer(responses...)
-
-		cs := NewClient(ts.URL, "KEY", "SECRET")
-
-		for i := range tt.listables {
-			listable := tt.listables[i]
-			cs.Paginate(listable, func(i interface{}, e error) bool {
-				t.Errorf("no %T were expected %v %s", listable, i, e)
-				return false
-			})
-		}
-
-		ts.Close()
-	}
+func TestClientTestSuite(t *testing.T) {
+	suite.Run(t, new(clientTestSuite))
 }

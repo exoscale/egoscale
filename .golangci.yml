@@ -9,8 +9,8 @@ linters-settings:
 linters:
   enable:
     - deadcode
-    - dupl
     - errcheck
+    - gocritic
     - gocyclo
     - goimports
     - golint

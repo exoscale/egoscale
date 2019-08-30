@@ -45,8 +45,8 @@ func TestCIDREqual(t *testing.T) {
 	ip4CIDR := MustParseCIDR("10.0.0.0/24")
 	expected := CIDR{
 		net.IPNet{
-			net.IPv4(10, 0, 0, 0),
-			net.IPv4Mask(255, 255, 255, 0),
+			IP:   net.IPv4(10, 0, 0, 0),
+			Mask: net.IPv4Mask(255, 255, 255, 0),
 		},
 	}
 

@@ -118,8 +118,10 @@ func TestRequestSignatureFailure(t *testing.T) {
 		Name: "123",
 	}
 
-	if _, err := cs.Request(req); err == nil {
+	_, err := cs.Request(req)
+	if err == nil {
 		t.Errorf("This should have failed?")
+	} else {
 		r, ok := err.(*ErrorResponse)
 		if !ok {
 			t.Errorf("A CloudStack error was expected, got %v", err)

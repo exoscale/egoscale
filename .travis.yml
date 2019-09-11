@@ -10,6 +10,7 @@ go:
 - "1.10.x"
 - "1.11.x"
 - "1.12.x"
+- "1.13.x"
 - tip
 
 env:
@@ -26,7 +27,8 @@ addons:
 install:
   - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $GOPATH/bin v${GOLANGCI_LINT_VERSION}
   - npm i codeclimate-test-reporter
-  - '[ "$(echo "$TRAVIS_GO_VERSION" | perl -pe "s/\\.[x\\d]+$//")" = "1.11" ] && go mod vendor || go get -u github.com/gofrs/uuid'
+  - |
+    [ "$(echo "$TRAVIS_GO_VERSION" | awk -F. '{print $2}')" -ge "11" ] && go mod vendor || go get -u github.com/gofrs/uuid
 
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter

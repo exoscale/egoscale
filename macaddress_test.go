@@ -38,10 +38,8 @@ func TestMACAddressUnmarshalJSON(t *testing.T) {
 	nic := &Nic{}
 	if err := json.Unmarshal([]byte(s), nic); err != nil {
 		t.Errorf("no errors were expected, %s", err)
-	} else {
-		if nic.MACAddress == nil {
-			t.Errorf("a macaddress was expected, got %+v", nic)
-		}
+	} else if nic.MACAddress == nil {
+		t.Errorf("a macaddress was expected, got %+v", nic)
 	}
 }
 

@@ -13,7 +13,7 @@ go:
 - tip
 
 env:
-  - GOLANGCI_LINT_VERSION=1.15.0 GO111MODULES=on
+  - GOLANGCI_LINT_VERSION=1.17.1 GO111MODULES=on
 
 cache: apt
 
@@ -42,7 +42,7 @@ after_script:
 jobs:
   include:
   - stage: golangci-lint
-    go: 1.10.x
+    go: 1.12.x
     if: type = pull_request
     script:
       - go get -u github.com/gofrs/uuid

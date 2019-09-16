@@ -4,6 +4,26 @@ package egoscale
 
 import "strconv"
 
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[Unauthorized-401]
+	_ = x[MethodNotAllowed-405]
+	_ = x[UnsupportedActionError-422]
+	_ = x[APILimitExceeded-429]
+	_ = x[MalformedParameterError-430]
+	_ = x[ParamError-431]
+	_ = x[InternalError-530]
+	_ = x[AccountError-531]
+	_ = x[AccountResourceLimitError-532]
+	_ = x[InsufficientCapacityError-533]
+	_ = x[ResourceUnavailableError-534]
+	_ = x[ResourceAllocationError-535]
+	_ = x[ResourceInUseError-536]
+	_ = x[NetworkRuleConflictError-537]
+}
+
 const (
 	_ErrorCode_name_0 = "Unauthorized"
 	_ErrorCode_name_1 = "MethodNotAllowed"

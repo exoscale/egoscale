@@ -16,8 +16,8 @@ type ReverseDNS struct {
 
 // DeleteReverseDNSFromPublicIPAddress is a command to create/delete the PTR record of a public IP address
 type DeleteReverseDNSFromPublicIPAddress struct {
-	ID *UUID `json:"id,omitempty" doc:"the ID of the public IP address"`
-	_  bool  `name:"deleteReverseDnsFromPublicIpAddress" description:"delete the PTR DNS record from the public IP address"`
+	ID *UUID `json:"id" doc:"the ID of the public IP address."`
+	_  bool  `name:"deleteReverseDnsFromPublicIpAddress" description:"delete the PTR DNS record from the public IP address."`
 }
 
 // Response returns the struct to unmarshal
@@ -27,8 +27,8 @@ func (*DeleteReverseDNSFromPublicIPAddress) Response() interface{} {
 
 // DeleteReverseDNSFromVirtualMachine is a command to create/delete the PTR record(s) of a virtual machine
 type DeleteReverseDNSFromVirtualMachine struct {
-	ID *UUID `json:"id,omitempty" doc:"the ID of the virtual machine"`
-	_  bool  `name:"deleteReverseDnsFromVirtualMachine" description:"Delete the PTR DNS record(s) from the virtual machine"`
+	ID *UUID `json:"id" doc:"the ID of the virtual machine."`
+	_  bool  `name:"deleteReverseDnsFromVirtualMachine" description:"Delete the PTR DNS record(s) from the virtual machine."`
 }
 
 // Response returns the struct to unmarshal
@@ -38,8 +38,8 @@ func (*DeleteReverseDNSFromVirtualMachine) Response() interface{} {
 
 // QueryReverseDNSForPublicIPAddress is a command to create/query the PTR record of a public IP address
 type QueryReverseDNSForPublicIPAddress struct {
-	ID *UUID `json:"id,omitempty" doc:"the ID of the public IP address"`
-	_  bool  `name:"queryReverseDnsForPublicIpAddress" description:"Query the PTR DNS record for the public IP address"`
+	ID *UUID `json:"id" doc:"the ID of the public IP address."`
+	_  bool  `name:"queryReverseDnsForPublicIpAddress" description:"Query the PTR DNS record for the public IP address."`
 }
 
 // Response returns the struct to unmarshal
@@ -49,8 +49,8 @@ func (*QueryReverseDNSForPublicIPAddress) Response() interface{} {
 
 // QueryReverseDNSForVirtualMachine is a command to create/query the PTR record(s) of a virtual machine
 type QueryReverseDNSForVirtualMachine struct {
-	ID *UUID `json:"id,omitempty" doc:"the ID of the virtual machine"`
-	_  bool  `name:"queryReverseDnsForVirtualMachine" description:"Query the PTR DNS record(s) for the virtual machine"`
+	ID *UUID `json:"id" doc:"the ID of the virtual machine."`
+	_  bool  `name:"queryReverseDnsForVirtualMachine" description:"Query the PTR DNS record(s) for the public virtual machine."`
 }
 
 // Response returns the struct to unmarshal
@@ -61,8 +61,8 @@ func (*QueryReverseDNSForVirtualMachine) Response() interface{} {
 // UpdateReverseDNSForPublicIPAddress is a command to create/update the PTR record of a public IP address
 type UpdateReverseDNSForPublicIPAddress struct {
 	DomainName string `json:"domainname,omitempty" doc:"the domain name for the PTR record. It must have a valid TLD"`
-	ID         *UUID  `json:"id,omitempty" doc:"the ID of the public IP address"`
-	_          bool   `name:"updateReverseDnsForPublicIpAddress" description:"Update/create the PTR DNS record for the public IP address"`
+	ID         *UUID  `json:"id,omitempty" doc:"the ID of the public IP address."`
+	_          bool   `name:"updateReverseDnsForPublicIpAddress" description:"Update/create the PTR DNS record for the public IP address."`
 }
 
 // Response returns the struct to unmarshal
@@ -73,8 +73,8 @@ func (*UpdateReverseDNSForPublicIPAddress) Response() interface{} {
 // UpdateReverseDNSForVirtualMachine is a command to create/update the PTR record(s) of a virtual machine
 type UpdateReverseDNSForVirtualMachine struct {
 	DomainName string `json:"domainname,omitempty" doc:"the domain name for the PTR record(s). It must have a valid TLD"`
-	ID         *UUID  `json:"id,omitempty" doc:"the ID of the virtual machine"`
-	_          bool   `name:"updateReverseDnsForVirtualMachine" description:"Update/create the PTR DNS record(s) for the virtual machine"`
+	ID         *UUID  `json:"id,omitempty" doc:"the ID of the virtual machine."`
+	_          bool   `name:"updateReverseDnsForVirtualMachine" description:"Update/create the PTR DNS record(s) for the virtual machine."`
 }
 
 // Response returns the struct to unmarshal

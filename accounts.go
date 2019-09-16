@@ -63,7 +63,7 @@ func (a Account) ListRequest() (ListCommand, error) {
 
 // ListAccounts represents a query to display the accounts
 type ListAccounts struct {
-	ID                *UUID  `json:"id,omitempty" doc:"List account by account ID"`
+	ID                *UUID  `json:"id,omitempty" doc:"list account by account ID"`
 	IsCleanUpRequired *bool  `json:"iscleanuprequired,omitempty" doc:"list accounts by cleanuprequired attribute (values are true or false)"`
 	Keyword           string `json:"keyword,omitempty" doc:"List by keyword"`
 	Name              string `json:"name,omitempty" doc:"List account by account name"`

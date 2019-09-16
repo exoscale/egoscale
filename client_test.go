@@ -28,7 +28,7 @@ func TestClientAPIDescription(t *testing.T) {
 	cs := NewClient("ENDPOINT", "KEY", "SECRET")
 	req := &ListAPIs{}
 	desc := cs.APIDescription(req)
-	if desc != "lists all available apis on the server" {
+	if desc != "lists all available apis on the server." {
 		t.Errorf("APIDescription of listApis is wrong, got %q", desc)
 	}
 }

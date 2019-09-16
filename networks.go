@@ -109,19 +109,10 @@ type ServiceProvider struct {
 type CreateNetwork struct {
 	DisplayText       string `json:"displaytext,omitempty" doc:"the display text of the network"` // This field is required but might be empty
 	EndIP             net.IP `json:"endip,omitempty" doc:"the ending IP address in the network IP range. Required for managed networks."`
-	EndIpv6           net.IP `json:"endipv6,omitempty" doc:"the ending IPv6 address in the IPv6 network range"`
-	Gateway           net.IP `json:"gateway,omitempty" doc:"the gateway of the network. Required for Shared networks and Isolated networks when it belongs to VPC"`
-	IP6CIDR           *CIDR  `json:"ip6cidr,omitempty" doc:"the CIDR of IPv6 network, must be at least /64"`
-	IP6Gateway        net.IP `json:"ip6gateway,omitempty" doc:"the gateway of the IPv6 network. Required for Shared networks and Isolated networks when it belongs to VPC"`
-	IsolatedPVlan     string `json:"isolatedpvlan,omitempty" doc:"the isolated private vlan for this network"`
 	Name              string `json:"name,omitempty" doc:"the name of the network"` // This field is required but might be empty
 	Netmask           net.IP `json:"netmask,omitempty" doc:"the netmask of the network. Required for managed networks."`
-	NetworkDomain     string `json:"networkdomain,omitempty" doc:"network domain"`
 	NetworkOfferingID *UUID  `json:"networkofferingid" doc:"the network offering id"`
-	PhysicalNetworkID *UUID  `json:"physicalnetworkid,omitempty" doc:"the Physical Network ID the network belongs to"`
 	StartIP           net.IP `json:"startip,omitempty" doc:"the beginning IP address in the network IP range. Required for managed networks."`
-	StartIpv6         net.IP `json:"startipv6,omitempty" doc:"the beginning IPv6 address in the IPv6 network range"`
-	Vlan              string `json:"vlan,omitempty" doc:"the ID or VID of the network"`
 	ZoneID            *UUID  `json:"zoneid" doc:"the Zone ID for the network"`
 	_                 bool   `name:"createNetwork" description:"Creates a network"`
 }
@@ -207,7 +198,7 @@ func (DeleteNetwork) AsyncResponse() interface{} {
 type ListNetworks struct {
 	CanUseForDeploy   *bool         `json:"canusefordeploy,omitempty" doc:"List networks available for vm deployment"`
 	ID                *UUID         `json:"id,omitempty" doc:"List networks by id"`
-	IsSystem          *bool         `json:"issystem,omitempty" doc:"true If network is system, false otherwise"`
+	IsSystem          *bool         `json:"issystem,omitempty" doc:"True if network is system, false otherwise"`
 	Keyword           string        `json:"keyword,omitempty" doc:"List by keyword"`
 	Page              int           `json:"page,omitempty"`
 	PageSize          int           `json:"pagesize,omitempty"`

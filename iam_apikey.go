@@ -10,15 +10,25 @@ import (
 	"strings"
 )
 
+// APIKeyType holds the type of the apikey
+type APIKeyType string
+
+const (
+	// APIKeyUnrestricted is unrestricted
+	APIKeyUnrestricted APIKeyType = "restricted"
+	// APIKeyRestricted is restricted
+	APIKeyRestricted APIKeyType = "unrestricted"
+)
+
 // APIKey represents an apikey
 type APIKey struct {
-	ID          int64    `json:"id"`
 	CreatedAt   string   `json:"created_at"`
 	UpdatedAt   string   `json:"updated_at"`
 	Description string   `json:"description"`
 	Key         string   `json:"key"`
 	Secret      string   `json:"secret"`
 	Operations  []string `json:"operations"`
+	Type        string   `json:"type"`
 }
 
 // APIKeyErrorResponse represents an error in the API
@@ -58,7 +68,7 @@ func (client *Client) CreateAPIKey(ctx context.Context, description string, oper
 		return nil, err
 	}
 
-	req, err := client.request(ctx, "/v1/", nil, string(m), "POST")
+	req, err := client.iamRequest(ctx, "/v1/", nil, string(m), "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -73,12 +83,12 @@ func (client *Client) CreateAPIKey(ctx context.Context, description string, oper
 
 // ListAPIKeys represents a list of apikeys
 type ListAPIKeys struct {
-	ID          int64    `json:"id"`
 	CreatedAt   string   `json:"created_at"`
 	UpdatedAt   string   `json:"updated_at"`
 	Description string   `json:"description"`
 	Key         string   `json:"key"`
 	Operations  []string `json:"operations"`
+	Type        string   `json:"type"`
 }
 
 // ListAPIKeysResponse represents a list of apikeys response
@@ -88,8 +98,8 @@ type ListAPIKeysResponse struct {
 }
 
 // ListAPIKeys list the apikeys
-func (client *Client) ListAPIKeys(ctx context.Context) ([]ListAPIKeyResponse, error) {
-	req, err := client.request(ctx, "/v1/", nil, "", "GET")
+func (client *Client) ListAPIKeys(ctx context.Context) ([]ListAPIKeysResponse, error) {
+	req, err := client.iamRequest(ctx, "/v1/", nil, "", "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -104,11 +114,11 @@ func (client *Client) ListAPIKeys(ctx context.Context) ([]ListAPIKeyResponse, er
 
 // DeleteAPIKey delete an apikey
 func (client *Client) DeleteAPIKey(ctx context.Context, key string) error {
-	_, err := client.request(ctx, "/v1/"+key, nil, "", "DELETE")
+	_, err := client.iamRequest(ctx, "/v1/"+key, nil, "", "DELETE")
 	return err
 }
 
-func (client *Client) request(ctx context.Context, uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
+func (client *Client) iamRequest(ctx context.Context, uri string, urlValues url.Values, params, method string) (json.RawMessage, error) {
 	rawURL := client.Endpoint + uri
 	url, err := url.Parse(rawURL)
 	if err != nil {

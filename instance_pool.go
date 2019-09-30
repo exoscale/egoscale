@@ -11,22 +11,20 @@ const (
 )
 
 type InstancePool struct {
-	ID                string `json:"id"`
-	Name              string `json:"name"`
-	Description       string `json:"description"`
-	ServiceofferingID *UUID  `json:"serviceofferingid"`
-	TemplateID        *UUID  `json:"templateid"`
-	ZoneID            *UUID  `json:"zoneid"`
-	AffinitygroupIDs  []UUID `json:"affinitygroupids"`
-	SecuritygroupIDs  []UUID `json:"securitygroupids"`
-	NetworkIDs        []UUID `json:"networkids"`
-	Keypair           string `json:"keypair"`
-	Userdata          string `json:"userdata"`
-	Size              int    `json:"size"`
-	State             string `json:"state"`
-	Virtualmachines   []struct {
-		ID *UUID `json:"id"`
-	} `json:"virtualmachines"`
+	ID                *UUID            `json:"id"`
+	Name              string           `json:"name"`
+	Description       string           `json:"description"`
+	ServiceofferingID *UUID            `json:"serviceofferingid"`
+	TemplateID        *UUID            `json:"templateid"`
+	ZoneID            *UUID            `json:"zoneid"`
+	AffinitygroupIDs  []UUID           `json:"affinitygroupids"`
+	SecuritygroupIDs  []UUID           `json:"securitygroupids"`
+	NetworkIDs        []UUID           `json:"networkids"`
+	Keypair           string           `json:"keypair"`
+	Userdata          string           `json:"userdata"`
+	Size              int              `json:"size"`
+	State             string           `json:"state"`
+	Virtualmachines   []VirtualMachine `json:"virtualmachines"`
 }
 
 type CreateInstancePool struct {
@@ -83,7 +81,7 @@ func (UpdateInstancePool) Response() interface{} {
 
 type ScaleInstancePool struct {
 	ID     *UUID `json:"id"`
-	Zoneid *UUID `json:"zoneid"`
+	ZoneID *UUID `json:"zoneid"`
 	Size   int   `json:"size"`
 	_      bool  `name:"scaleInstancePool" description:""`
 }
@@ -118,9 +116,14 @@ type GetInstancePool struct {
 	_      bool  `name:"getInstancePool" description:""`
 }
 
+type GetInstancePoolsResponse struct {
+	Count                     int
+	ListInstancePoolsResponse []InstancePool `json:"instancepool"`
+}
+
 // Response returns the struct to unmarshal
 func (GetInstancePool) Response() interface{} {
-	return new(InstancePool)
+	return new(GetInstancePoolsResponse)
 }
 
 type ListInstancePool struct {

@@ -29,14 +29,14 @@ type InstancePool struct {
 
 type CreateInstancePool struct {
 	Name              string `json:"name"`
-	Description       string `json:"description"`
+	Description       string `json:"description,omitempty"`
 	ServiceofferingID *UUID  `json:"serviceofferingid"`
 	TemplateID        *UUID  `json:"templateid"`
 	ZoneID            *UUID  `json:"zoneid"`
-	AffinitygroupIDs  []UUID `json:"affinitygroupids"`
-	SecuritygroupIDs  []UUID `json:"securitygroupids"`
-	NetworkIDs        []UUID `json:"networkids"`
-	Keypair           string `json:"keypair"`
+	AffinitygroupIDs  []UUID `json:"affinitygroupids,omitempty"`
+	SecuritygroupIDs  []UUID `json:"securitygroupids,omitempty"`
+	NetworkIDs        []UUID `json:"networkids,omitempty"`
+	Keypair           string `json:"keypair,omitempty"`
 	Userdata          string `json:"userdata,omitempty"`
 	Size              int    `json:"size"`
 	_                 bool   `name:"createInstancePool" description:"Creates an Instance Pool with the provided parameters"`
@@ -65,8 +65,8 @@ func (CreateInstancePool) Response() interface{} {
 type UpdateInstancePool struct {
 	ID          *UUID  `json:"id"`
 	ZoneID      *UUID  `json:"zoneid"`
-	Description string `json:"description"`
-	Userdata    string `json:"userdata"`
+	Description string `json:"description,omitempty"`
+	Userdata    string `json:"userdata,omitempty"`
 	_           bool   `name:"updateInstancePool" description:""`
 }
 

@@ -3,9 +3,11 @@ package egoscale
 type InstancePoolState string
 
 const (
-	InstancePoolCreating  InstancePoolState = "creating"
-	InstancePoolRunning   InstancePoolState = "running"
-	InstancePoolScalingUP InstancePoolState = "scaling-up"
+	InstancePoolCreating    InstancePoolState = "creating"
+	InstancePoolRunning     InstancePoolState = "running"
+	InstancePoolDestroying  InstancePoolState = "destroying"
+	InstancePoolScalingUP   InstancePoolState = "scaling-up"
+	InstancePoolScalingDown InstancePoolState = "scaling-down"
 )
 
 type InstancePool struct {

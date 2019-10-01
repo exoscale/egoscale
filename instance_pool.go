@@ -11,20 +11,20 @@ const (
 )
 
 type InstancePool struct {
-	ID                *UUID            `json:"id"`
-	Name              string           `json:"name"`
-	Description       string           `json:"description"`
-	ServiceofferingID *UUID            `json:"serviceofferingid"`
-	TemplateID        *UUID            `json:"templateid"`
-	ZoneID            *UUID            `json:"zoneid"`
-	AffinitygroupIDs  []UUID           `json:"affinitygroupids"`
-	SecuritygroupIDs  []UUID           `json:"securitygroupids"`
-	NetworkIDs        []UUID           `json:"networkids"`
-	Keypair           string           `json:"keypair"`
-	Userdata          string           `json:"userdata"`
-	Size              int              `json:"size"`
-	State             string           `json:"state"`
-	Virtualmachines   []VirtualMachine `json:"virtualmachines"`
+	ID                *UUID             `json:"id"`
+	Name              string            `json:"name"`
+	Description       string            `json:"description"`
+	ServiceofferingID *UUID             `json:"serviceofferingid"`
+	TemplateID        *UUID             `json:"templateid"`
+	ZoneID            *UUID             `json:"zoneid"`
+	AffinitygroupIDs  []UUID            `json:"affinitygroupids"`
+	SecuritygroupIDs  []UUID            `json:"securitygroupids"`
+	NetworkIDs        []UUID            `json:"networkids"`
+	Keypair           string            `json:"keypair"`
+	Userdata          string            `json:"userdata"`
+	Size              int               `json:"size"`
+	State             InstancePoolState `json:"state"`
+	Virtualmachines   []VirtualMachine  `json:"virtualmachines"`
 }
 
 type CreateInstancePool struct {

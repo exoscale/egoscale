@@ -6,7 +6,7 @@ const (
 	InstancePoolCreating    InstancePoolState = "creating"
 	InstancePoolRunning     InstancePoolState = "running"
 	InstancePoolDestroying  InstancePoolState = "destroying"
-	InstancePoolScalingUP   InstancePoolState = "scaling-up"
+	InstancePoolScalingUp   InstancePoolState = "scaling-up"
 	InstancePoolScalingDown InstancePoolState = "scaling-down"
 )
 

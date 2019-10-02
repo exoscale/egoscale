@@ -54,6 +54,7 @@ type CreateInstancePool struct {
 type CreateInstancePoolResponse struct {
 	ID                *UUID             `json:"id"`
 	Name              string            `json:"name"`
+	Description       string            `json:"description"`
 	ServiceofferingID *UUID             `json:"serviceofferingid"`
 	TemplateID        *UUID             `json:"templateid"`
 	ZoneID            *UUID             `json:"zoneid"`

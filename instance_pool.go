@@ -24,7 +24,6 @@ type InstancePool struct {
 	ServiceOfferingID *UUID             `json:"serviceofferingid"`
 	TemplateID        *UUID             `json:"templateid"`
 	ZoneID            *UUID             `json:"zoneid"`
-	AffinityGroupIDs  []UUID            `json:"affinitygroupids"`
 	SecurityGroupIDs  []UUID            `json:"securitygroupids"`
 	NetworkIDs        []UUID            `json:"networkids"`
 	KeyPair           string            `json:"keypair"`
@@ -41,7 +40,6 @@ type CreateInstancePool struct {
 	ServiceOfferingID *UUID  `json:"serviceofferingid"`
 	TemplateID        *UUID  `json:"templateid"`
 	ZoneID            *UUID  `json:"zoneid"`
-	AffinityGroupIDs  []UUID `json:"affinitygroupids,omitempty"`
 	SecurityGroupIDs  []UUID `json:"securitygroupids,omitempty"`
 	NetworkIDs        []UUID `json:"networkids,omitempty"`
 	KeyPair           string `json:"keypair,omitempty"`
@@ -58,7 +56,6 @@ type CreateInstancePoolResponse struct {
 	ServiceOfferingID *UUID             `json:"serviceofferingid"`
 	TemplateID        *UUID             `json:"templateid"`
 	ZoneID            *UUID             `json:"zoneid"`
-	AffinityGroupIDs  []UUID            `json:"affinitygroupids"`
 	SecurityGroupIDs  []UUID            `json:"securitygroupids"`
 	NetworkIDs        []UUID            `json:"networkids"`
 	KeyPair           string            `json:"keypair"`

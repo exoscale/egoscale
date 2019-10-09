@@ -1,16 +1,16 @@
 package egoscale
 
-// APIKeyType holds the type of the apikey
+// APIKeyType holds the type of the API key
 type APIKeyType string
 
 const (
-	// APIKeyUnrestricted is unrestricted
-	APIKeyUnrestricted APIKeyType = "restricted"
-	// APIKeyRestricted is restricted
-	APIKeyRestricted APIKeyType = "unrestricted"
+	// APIKeyTypeUnrestricted is unrestricted
+	APIKeyTypeUnrestricted APIKeyType = "unrestricted"
+	// APIKeyTypeRestricted is restricted
+	APIKeyTypeRestricted APIKeyType = "restricted"
 )
 
-// APIKey represents an apikey
+// APIKey represents an API key
 type APIKey struct {
 	Description string     `json:"description"`
 	Key         string     `json:"key"`
@@ -19,7 +19,7 @@ type APIKey struct {
 	Type        APIKeyType `json:"type"`
 }
 
-// CreateAPIKey represents the apikey creation
+// CreateAPIKey represents an API key creation
 type CreateAPIKey struct {
 	Description string `json:"description"`
 	Operations  string `json:"operations,omitempty"`
@@ -31,12 +31,12 @@ func (CreateAPIKey) Response() interface{} {
 	return new(APIKey)
 }
 
-// ListAPIKeys represents a search for an apikeys
+// ListAPIKeys represents a search for API keys
 type ListAPIKeys struct {
 	_ bool `name:"listApiKeys" description:"List apikeys."`
 }
 
-// ListAPIKeysResponse represents a list of apikeys
+// ListAPIKeysResponse represents a list of API keys
 type ListAPIKeysResponse struct {
 	Count   int      `json:"count"`
 	APIKeys []APIKey `json:"apikeys"`
@@ -47,13 +47,13 @@ func (ListAPIKeys) Response() interface{} {
 	return new(ListAPIKeysResponse)
 }
 
-// RevokeAPIKey represents a revoke of apikey
+// RevokeAPIKey represents a revocation of an API key
 type RevokeAPIKey struct {
 	Key string `json:"key"`
 	_   bool   `name:"revokeApiKey" description:"Revoke an apikey."`
 }
 
-// RevokeAPIKeyResponse represents a revoke of apikey
+// RevokeAPIKeyResponse represents the response to an API key revocation
 type RevokeAPIKeyResponse struct {
 	Success bool `json:"success"`
 }

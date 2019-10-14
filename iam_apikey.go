@@ -12,18 +12,18 @@ const (
 
 // APIKey represents an API key
 type APIKey struct {
-	Description string     `json:"description"`
-	Key         string     `json:"key"`
-	Secret      string     `json:"secret,omitempty"`
-	Operations  []string   `json:"operations,omitempty"`
-	Type        APIKeyType `json:"type"`
+	Name       string     `json:"name"`
+	Key        string     `json:"key"`
+	Secret     string     `json:"secret,omitempty"`
+	Operations []string   `json:"operations,omitempty"`
+	Type       APIKeyType `json:"type"`
 }
 
 // CreateAPIKey represents an API key creation
 type CreateAPIKey struct {
-	Description string `json:"description"`
-	Operations  string `json:"operations,omitempty"`
-	_           bool   `name:"createApiKey" description:"Create an apikey."`
+	Name       string `json:"name"`
+	Operations string `json:"operations,omitempty"`
+	_          bool   `name:"createApiKey" description:"Create an apikey."`
 }
 
 // Response returns the struct to unmarshal

@@ -130,15 +130,15 @@ type GetInstancePool struct {
 	_      bool  `name:"getInstancePool" description:""`
 }
 
-// GetInstancePoolsResponse get instance pool response
-type GetInstancePoolsResponse struct {
+// GetInstancePoolResponse get instance pool response
+type GetInstancePoolResponse struct {
 	Count         int
 	InstancePools []InstancePool `json:"instancepool"`
 }
 
 // Response returns the struct to unmarshal
 func (GetInstancePool) Response() interface{} {
-	return new(GetInstancePoolsResponse)
+	return new(GetInstancePoolResponse)
 }
 
 // ListInstancePools list instance pool

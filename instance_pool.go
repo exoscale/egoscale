@@ -132,8 +132,8 @@ type GetInstancePool struct {
 
 // GetInstancePoolsResponse get instance pool response
 type GetInstancePoolsResponse struct {
-	Count                     int
-	ListInstancePoolsResponse []InstancePool `json:"instancepool"`
+	Count         int
+	InstancePools []InstancePool `json:"instancepool"`
 }
 
 // Response returns the struct to unmarshal
@@ -141,19 +141,19 @@ func (GetInstancePool) Response() interface{} {
 	return new(GetInstancePoolsResponse)
 }
 
-// ListInstancePool list instance pool
-type ListInstancePool struct {
+// ListInstancePools list instance pool
+type ListInstancePools struct {
 	ZoneID *UUID `json:"zoneid"`
 	_      bool  `name:"listInstancePools" description:""`
 }
 
 // ListInstancePoolsResponse list instance pool response
 type ListInstancePoolsResponse struct {
-	Count                     int
-	ListInstancePoolsResponse []InstancePool `json:"instancepool"`
+	Count         int
+	InstancePools []InstancePool `json:"instancepool"`
 }
 
 // Response returns the struct to unmarshal
-func (ListInstancePool) Response() interface{} {
+func (ListInstancePools) Response() interface{} {
 	return new(ListInstancePoolsResponse)
 }

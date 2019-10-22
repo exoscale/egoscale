@@ -73,7 +73,9 @@ func (CreateInstancePool) Response() interface{} {
 type UpdateInstancePool struct {
 	ID          *UUID  `json:"id"`
 	ZoneID      *UUID  `json:"zoneid"`
+	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
+	TemplateID  *UUID  `json:"templateid,omitempty"`
 	UserData    string `json:"userdata,omitempty"`
 	_           bool   `name:"updateInstancePool" description:""`
 }

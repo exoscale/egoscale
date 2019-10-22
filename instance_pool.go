@@ -46,7 +46,7 @@ type CreateInstancePool struct {
 	KeyPair           string `json:"keypair,omitempty"`
 	UserData          string `json:"userdata,omitempty"`
 	Size              int    `json:"size"`
-	RootDiskSize      int    `json:"rootdisksize"`
+	RootDiskSize      int    `json:"rootdisksize,omitempty"`
 	_                 bool   `name:"createInstancePool" description:"Creates an Instance Pool with the provided parameters"`
 }
 

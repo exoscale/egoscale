@@ -47,7 +47,7 @@ type CreateInstancePool struct {
 	UserData          string `json:"userdata,omitempty"`
 	Size              int    `json:"size"`
 	RootDiskSize      int    `json:"rootdisksize,omitempty"`
-	_                 bool   `name:"createInstancePool" description:"Creates an Instance Pool with the provided parameters"`
+	_                 bool   `name:"createInstancePool" description:"Create an Instance Pool with the provided parameters"`
 }
 
 // CreateInstancePoolResponse instance pool create response

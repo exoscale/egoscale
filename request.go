@@ -281,6 +281,9 @@ func (client *Client) AsyncRequestWithContext(ctx context.Context, asyncCommand 
 
 // Payload builds the HTTP request params from the given command
 func (client *Client) Payload(command Command) (url.Values, error) {
+	// Note: the Exoscale API request parameters must be written in camelCase
+	// (except for the initial character): apiKey, signatureVersion...
+
 	params, err := prepareValues("", command)
 	if err != nil {
 		return nil, err
@@ -290,12 +293,12 @@ func (client *Client) Payload(command Command) (url.Values, error) {
 			return params, err
 		}
 	}
-	params.Set("apikey", client.APIKey)
+	params.Set("apiKey", client.APIKey)
 	params.Set("command", client.APIName(command))
 	params.Set("response", "json")
 
 	if params.Get("expires") == "" && client.Expiration >= 0 {
-		params.Set("signatureversion", "3")
+		params.Set("signatureVersion", "3")
 		params.Set("expires", time.Now().Add(client.Expiration).Local().Format("2006-01-02T15:04:05-0700"))
 	}
 

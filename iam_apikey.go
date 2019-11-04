@@ -23,7 +23,7 @@ type APIKey struct {
 type CreateAPIKey struct {
 	Name       string `json:"name"`
 	Operations string `json:"operations,omitempty"`
-	_          bool   `name:"createApiKey" description:"Create an apikey."`
+	_          bool   `name:"createApiKey" description:"Create an API key."`
 }
 
 // Response returns the struct to unmarshal
@@ -33,7 +33,7 @@ func (CreateAPIKey) Response() interface{} {
 
 // ListAPIKeys represents a search for API keys
 type ListAPIKeys struct {
-	_ bool `name:"listApiKeys" description:"List apikeys."`
+	_ bool `name:"listApiKeys" description:"List API keys."`
 }
 
 // ListAPIKeysResponse represents a list of API keys
@@ -47,10 +47,25 @@ func (ListAPIKeys) Response() interface{} {
 	return new(ListAPIKeysResponse)
 }
 
+// ListAPIKeyOperations represents a search for operations for the current API key
+type ListAPIKeyOperations struct {
+	_ bool `name:"listApiKeyOperations" description:"List operations allowed for the current API key."`
+}
+
+// ListAPIKeyOperationsResponse represents a list of operations for the current API key
+type ListAPIKeyOperationsResponse struct {
+	Operations []string `json:"operations"`
+}
+
+// Response returns the struct to unmarshal
+func (ListAPIKeyOperations) Response() interface{} {
+	return new(ListAPIKeyOperationsResponse)
+}
+
 // RevokeAPIKey represents a revocation of an API key
 type RevokeAPIKey struct {
 	Key string `json:"key"`
-	_   bool   `name:"revokeApiKey" description:"Revoke an apikey."`
+	_   bool   `name:"revokeApiKey" description:"Revoke an API key."`
 }
 
 // RevokeAPIKeyResponse represents the response to an API key revocation

@@ -62,6 +62,17 @@ func (ListAPIKeyOperations) Response() interface{} {
 	return new(ListAPIKeyOperationsResponse)
 }
 
+// GetAPIKey get an API key
+type GetAPIKey struct {
+	Key string `json:"key"`
+	_   bool   `name:"getApiKey" description:"Get an API key."`
+}
+
+// Response returns the struct to unmarshal
+func (GetAPIKey) Response() interface{} {
+	return new(APIKey)
+}
+
 // RevokeAPIKey represents a revocation of an API key
 type RevokeAPIKey struct {
 	Key string `json:"key"`

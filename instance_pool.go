@@ -67,7 +67,6 @@ type CreateInstancePoolResponse struct {
 	State             InstancePoolState `json:"state"`
 }
 
-// Response returns the struct to unmarshal.
 func (CreateInstancePool) Response() interface{} {
 	return new(CreateInstancePoolResponse)
 }

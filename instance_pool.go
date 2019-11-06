@@ -108,14 +108,14 @@ func (ScaleInstancePool) Response() interface{} {
 	return new(ScaleInstancePoolResponse)
 }
 
-// DestroyInstancePool represents an instance pool destroying API request.
+// DestroyInstancePool represents an instance pool destruction API request.
 type DestroyInstancePool struct {
 	ID     *UUID `json:"id"`
 	ZoneID *UUID `json:"zoneid"`
 	_      bool  `name:"destroyInstancePool" description:"Destroy an Instance Pool"`
 }
 
-// DestroyInstancePoolResponse represents an instance pool destroying API response.
+// DestroyInstancePoolResponse represents an instance pool destruction API response.
 type DestroyInstancePoolResponse struct {
 	Success bool `json:"success"`
 }

@@ -34,7 +34,7 @@ type InstancePool struct {
 	VirtualMachines   []VirtualMachine  `json:"virtualmachines"`
 }
 
-// CreateInstancePool creates an instance pool.
+// CreateInstancePool represents an instance pool creation API request.
 type CreateInstancePool struct {
 	Name              string `json:"name"`
 	Description       string `json:"description,omitempty"`
@@ -71,7 +71,7 @@ func (CreateInstancePool) Response() interface{} {
 	return new(CreateInstancePoolResponse)
 }
 
-// UpdateInstancePool updates an instance pool.
+// UpdateInstancePool represents an instance pool update API request.
 type UpdateInstancePool struct {
 	ID          *UUID  `json:"id"`
 	ZoneID      *UUID  `json:"zoneid"`
@@ -82,7 +82,7 @@ type UpdateInstancePool struct {
 	_           bool   `name:"updateInstancePool" description:"Update an Instance Pool"`
 }
 
-// UpdateInstancePoolResponse update instance pool response.
+// UpdateInstancePoolResponse represents an instance pool update API response.
 type UpdateInstancePoolResponse struct {
 	Success bool `json:"success"`
 }
@@ -91,7 +91,7 @@ func (UpdateInstancePool) Response() interface{} {
 	return new(UpdateInstancePoolResponse)
 }
 
-// ScaleInstancePool scales an instance pool.
+// ScaleInstancePool represents an instance pool scaling API request.
 type ScaleInstancePool struct {
 	ID     *UUID `json:"id"`
 	ZoneID *UUID `json:"zoneid"`
@@ -99,7 +99,7 @@ type ScaleInstancePool struct {
 	_      bool  `name:"scaleInstancePool" description:"Scale an Instance Pool"`
 }
 
-// ScaleInstancePoolResponse scale instance pool response.
+// ScaleInstancePoolResponse represents an instance pool scaling API response.
 type ScaleInstancePoolResponse struct {
 	Success bool `json:"success"`
 }
@@ -108,14 +108,14 @@ func (ScaleInstancePool) Response() interface{} {
 	return new(ScaleInstancePoolResponse)
 }
 
-// DestroyInstancePool destroys an instance pool.
+// DestroyInstancePool represents an instance pool destroying API request.
 type DestroyInstancePool struct {
 	ID     *UUID `json:"id"`
 	ZoneID *UUID `json:"zoneid"`
 	_      bool  `name:"destroyInstancePool" description:"Destroy an Instance Pool"`
 }
 
-// DestroyInstancePoolResponse destroy instance pool response.
+// DestroyInstancePoolResponse represents an instance pool destroying API response.
 type DestroyInstancePoolResponse struct {
 	Success bool `json:"success"`
 }
@@ -131,7 +131,7 @@ type GetInstancePool struct {
 	_      bool  `name:"getInstancePool" description:"Get an Instance Pool"`
 }
 
-// GetInstancePoolResponse get instance pool response.
+// GetInstancePoolResponse get instance pool API response.
 type GetInstancePoolResponse struct {
 	Count         int
 	InstancePools []InstancePool `json:"instancepool"`
@@ -141,13 +141,13 @@ func (GetInstancePool) Response() interface{} {
 	return new(GetInstancePoolResponse)
 }
 
-// ListInstancePools lists instance pools.
+// ListInstancePools represents a list instance pool API request.
 type ListInstancePools struct {
 	ZoneID *UUID `json:"zoneid"`
 	_      bool  `name:"listInstancePools" description:"List Instance Pools"`
 }
 
-// ListInstancePoolsResponse list instance pool response.
+// ListInstancePoolsResponse represents a list instance pool API response.
 type ListInstancePoolsResponse struct {
 	Count         int
 	InstancePools []InstancePool `json:"instancepool"`

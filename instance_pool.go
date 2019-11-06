@@ -67,7 +67,7 @@ type CreateInstancePoolResponse struct {
 	State             InstancePoolState `json:"state"`
 }
 
-// Response returns an empty structure to unmarshal an instance pool creation API response into
+// Response returns an empty structure to unmarshal an instance pool creation API response into.
 func (CreateInstancePool) Response() interface{} {
 	return new(CreateInstancePoolResponse)
 }
@@ -88,7 +88,7 @@ type UpdateInstancePoolResponse struct {
 	Success bool `json:"success"`
 }
 
-// Response returns an empty structure to unmarshal an instance pool update API response into
+// Response returns an empty structure to unmarshal an instance pool update API response into.
 func (UpdateInstancePool) Response() interface{} {
 	return new(UpdateInstancePoolResponse)
 }
@@ -106,7 +106,7 @@ type ScaleInstancePoolResponse struct {
 	Success bool `json:"success"`
 }
 
-// Response returns an empty structure to unmarshal an instance pool scaling API response into
+// Response returns an empty structure to unmarshal an instance pool scaling API response into.
 func (ScaleInstancePool) Response() interface{} {
 	return new(ScaleInstancePoolResponse)
 }
@@ -123,7 +123,7 @@ type DestroyInstancePoolResponse struct {
 	Success bool `json:"success"`
 }
 
-// Response returns an empty structure to unmarshal an instance pool destruction API response into
+// Response returns an empty structure to unmarshal an instance pool destruction API response into.
 func (DestroyInstancePool) Response() interface{} {
 	return new(DestroyInstancePoolResponse)
 }
@@ -141,7 +141,7 @@ type GetInstancePoolResponse struct {
 	InstancePools []InstancePool `json:"instancepool"`
 }
 
-// Response returns an empty structure to unmarshal an instance pool get API response into
+// Response returns an empty structure to unmarshal an instance pool get API response into.
 func (GetInstancePool) Response() interface{} {
 	return new(GetInstancePoolResponse)
 }
@@ -158,7 +158,7 @@ type ListInstancePoolsResponse struct {
 	InstancePools []InstancePool `json:"instancepool"`
 }
 
-// Response returns an empty structure to unmarshal an instance pool list API response into
+// Response returns an empty structure to unmarshal an instance pool list API response into.
 func (ListInstancePools) Response() interface{} {
 	return new(ListInstancePoolsResponse)
 }

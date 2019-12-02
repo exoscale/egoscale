@@ -182,8 +182,6 @@ func TestClientGetFailure(t *testing.T) {
 		(*ListAffinityGroups)(nil),
 		&IPAddress{},
 		(*ListPublicIPAddresses)(nil),
-		&NetworkOffering{},
-		(*ListNetworkOfferings)(nil),
 		&Nic{},
 		(*ListNics)(nil),
 		&SSHKeyPair{},
@@ -245,7 +243,6 @@ func TestClientGetNone(t *testing.T) {
 		{"templates", &Template{ID: id, IsFeatured: true}},
 		{"serviceofferings", &ServiceOffering{ID: id}},
 		{"accounts", &Account{}},
-		{"networkofferings", &NetworkOffering{}},
 		{"nics", &Nic{}},
 		{"snapshots", &Snapshot{}},
 		{"isos", &ISO{}},
@@ -306,7 +303,6 @@ func TestClientGetZero(t *testing.T) {
 		{"template", &Template{ID: id, IsFeatured: true}},
 		{"serviceoffering", &ServiceOffering{ID: id}},
 		{"account", &Account{}},
-		{"networkoffering", &NetworkOffering{ID: id}},
 		{"nic", &Nic{ID: id}},
 		{"snapshot", &Snapshot{ID: id}},
 		{"iso", &ISO{ID: id}},
@@ -352,7 +348,6 @@ func TestClientGetTooMany(t *testing.T) {
 		"template": [{}, {}],
 		"serviceoffering": [{}, {}],
 		"account": [{}, {}],
-		"networkoffering": [{}, {}],
 		"nic": [{}, {}],
 		"snapshot": [{}, {}],
 		"iso": [{}, {}]
@@ -470,10 +465,6 @@ func lsTests() []lsTest {
 		{"networks", "", []Listable{
 			&Network{},
 			&ListNetworks{},
-		}},
-		{"networkofferings", "", []Listable{
-			&NetworkOffering{},
-			&ListNetworkOfferings{},
 		}},
 		{"accounts", "", []Listable{
 			&Account{},

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.21.0
+------
+
+- feature: add const `NotFound` 404 on type `ErrorCode` (#417)
+
 0.20.1
 ------
 

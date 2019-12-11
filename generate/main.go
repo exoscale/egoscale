@@ -596,12 +596,12 @@ package {{.Package}}
 
 import "fmt"
 
-// Response returns the struct to unmarshal
+// Response returns the struct to unmarshal.
 func ({{.Type}}) Response() interface{} {
 	return new({{.Type}}Response)
 }
 
-// ListRequest returns itself
+// ListRequest returns itself.
 func (ls *{{.Type}}) ListRequest() (ListCommand, error) {
 	if ls == nil {
 		return nil, fmt.Errorf("%T cannot be nil", ls)
@@ -609,17 +609,17 @@ func (ls *{{.Type}}) ListRequest() (ListCommand, error) {
 	return ls, nil
 }
 
-// SetPage sets the current apge
+// SetPage sets the current page.
 func (ls *{{.Type}}) SetPage(page int) {
 	ls.Page = page
 }
 
-// SetPageSize sets the page size
+// SetPageSize sets the page size.
 func (ls *{{.Type}}) SetPageSize(pageSize int) {
 	ls.PageSize = pageSize
 }
 
-// Each triggers the callback for each, valid answer or any non 404 issue
+// Each triggers the callback for each, valid answer or any non 404 issue.
 func ({{.Type}}) Each(resp interface{}, callback IterateItemFunc) {
 	items, ok := resp.(*{{.Type}}Response)
 	if !ok {

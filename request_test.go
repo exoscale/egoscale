@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -279,8 +280,7 @@ func TestBooleanRequestTimeout(t *testing.T) {
 		}
 
 		// We expect the HTTP Client to timeout
-		msg := err.Error()
-		if !strings.HasPrefix(msg, "Get") {
+		if netErr, ok := err.(net.Error); ok && !netErr.Timeout() {
 			t.Errorf("Unexpected error message: %s", err.Error())
 		}
 
@@ -553,8 +553,7 @@ func TestBooleanRequestWithContext(t *testing.T) {
 		}
 
 		// We expect the context to timeout
-		msg := err.Error()
-		if !strings.HasPrefix(msg, "Get") {
+		if netErr, ok := err.(net.Error); ok && !netErr.Timeout() {
 			t.Errorf("Unexpected error message: %s", err.Error())
 		}
 
@@ -605,8 +604,7 @@ func TestRequestWithContextTimeoutPost(t *testing.T) {
 		}
 
 		// We expect the context to timeout
-		msg := err.Error()
-		if !strings.HasPrefix(msg, "Post") {
+		if netErr, ok := err.(net.Error); ok && !netErr.Timeout() {
 			t.Errorf("Unexpected error message: %s", err.Error())
 		}
 
@@ -649,8 +647,7 @@ func TestBooleanRequestWithContextAndTimeout(t *testing.T) {
 		}
 
 		// We expect the client to timeout
-		msg := err.Error()
-		if !strings.HasPrefix(msg, "Get") || !strings.Contains(msg, "net/http: request canceled") {
+		if netErr, ok := err.(net.Error); ok && !netErr.Timeout() {
 			t.Errorf("Unexpected error message: %s", err.Error())
 		}
 

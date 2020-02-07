@@ -43,7 +43,7 @@ type Network struct {
 	Tags                []ResourceTag `json:"tags,omitempty" doc:"the list of resource tags associated with network"`
 	TrafficType         string        `json:"traffictype,omitempty" doc:"the traffic type of the network"`
 	Type                string        `json:"type,omitempty" doc:"the type of the network"`
-	Vlan                string        `json:"vlan,omitemtpy" doc:"The vlan of the network. This parameter is visible to ROOT admins only"`
+	Vlan                string        `json:"vlan,omitempty" doc:"The vlan of the network. This parameter is visible to ROOT admins only"`
 	ZoneID              *UUID         `json:"zoneid,omitempty" doc:"zone id of the network"`
 	ZoneName            string        `json:"zonename,omitempty" doc:"the name of the zone the network belongs to"`
 	ZonesNetworkSpans   []Zone        `json:"zonesnetworkspans,omitempty" doc:"If a network is enabled for 'streched l2 subnet' then represents zones on which network currently spans"`

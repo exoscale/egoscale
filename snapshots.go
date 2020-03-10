@@ -94,7 +94,7 @@ type ListSnapshots struct {
 	Page         int           `json:"page,omitempty"`
 	PageSize     int           `json:"pagesize,omitempty"`
 	SnapshotType string        `json:"snapshottype,omitempty" doc:"valid values are MANUAL or RECURRING."`
-	Tags         []ResourceTag `json:"tags,omitempty" doc:"List resources by tags (key/value pairs)"`
+	Tags         []ResourceTag `json:"tags,omitempty" doc:"List resources by tags (key/value pairs). Note: multiple tags are OR'ed, not AND'ed."`
 	VolumeID     *UUID         `json:"volumeid,omitempty" doc:"the ID of the disk volume"`
 	ZoneID       *UUID         `json:"zoneid,omitempty" doc:"list snapshots by zone id"`
 	_            bool          `name:"listSnapshots" description:"Lists all available snapshots for the account."`

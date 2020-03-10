@@ -208,7 +208,7 @@ type ListNetworks struct {
 	RestartRequired   *bool         `json:"restartrequired,omitempty" doc:"List networks by restartRequired"`
 	SpecifyIPRanges   *bool         `json:"specifyipranges,omitempty" doc:"True if need to list only networks which support specifying ip ranges"`
 	SupportedServices []Service     `json:"supportedservices,omitempty" doc:"List networks supporting certain services"`
-	Tags              []ResourceTag `json:"tags,omitempty" doc:"List resources by tags (key/value pairs)"`
+	Tags              []ResourceTag `json:"tags,omitempty" doc:"List resources by tags (key/value pairs). Note: multiple tags are OR'ed, not AND'ed."`
 	TrafficType       string        `json:"traffictype,omitempty" doc:"Type of the traffic"`
 	Type              string        `json:"type,omitempty" doc:"The type of the network. Supported values are: Isolated and Shared"`
 	ZoneID            *UUID         `json:"zoneid,omitempty" doc:"The Zone ID of the network"`

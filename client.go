@@ -105,7 +105,7 @@ func NewClient(endpoint, apiKey, apiSecret string) *Client {
 	return client
 }
 
-// SetTLSAuthentication update the HTTP client with the provided user certificate/key
+// SetTLSAuthentication updates the HTTP client with the provided user TLS certificate/key.
 func (client *Client) SetTLSAuthentication(caCertFile, certFile, keyFile string) error {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
@@ -126,11 +126,9 @@ func (client *Client) SetTLSAuthentication(caCertFile, certFile, keyFile string)
 	}
 	tlsConfig.BuildNameToCertificate()
 
-	httpClient := &http.Client{
-		Transport: &http.Transport{TLSClientConfig: tlsConfig},
-	}
-
-	client.HTTPClient = httpClient
+	tlsTransport := client.HTTPClient.Transport.(*http.Transport).Clone()
+	tlsTransport.TLSClientConfig = tlsConfig
+	client.HTTPClient.Transport = tlsTransport
 
 	return nil
 }

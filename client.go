@@ -2,6 +2,8 @@ package egoscale
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -101,6 +103,36 @@ func NewClient(endpoint, apiKey, apiSecret string) *Client {
 	}
 
 	return client
+}
+
+// SetTLSAuthentication update the HTTP client with the provided user certificate/key
+func (client *Client) SetTLSAuthentication(caCertFile, certFile, keyFile string) error {
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return err
+	}
+
+	caCert, err := ioutil.ReadFile(caCertFile)
+	if err != nil {
+		return err
+	}
+
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		RootCAs:      caCertPool,
+	}
+	tlsConfig.BuildNameToCertificate()
+
+	httpClient := &http.Client{
+		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+	}
+
+	client.HTTPClient = httpClient
+
+	return nil
 }
 
 // Get populates the given resource or fails

@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -57,14 +58,19 @@ func (s *SecurityProviderExoscaleV2) signRequest(req *http.Request, expiration t
 	sigParts = append(sigParts, fmt.Sprintf("%s %s", req.Method, req.URL.Path))
 	headerParts = append(headerParts, "EXO2-HMAC-SHA256 credential="+s.apiKey)
 
-	// Request body
+	// Request body if present
 	body := ""
 	if req.Body != nil {
 		data, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			return err
 		}
+		err = req.Body.Close()
+		if err != nil {
+			return err
+		}
 		body = string(data)
+		req.Body = ioutil.NopCloser(bytes.NewReader(data))
 	}
 	sigParts = append(sigParts, body)
 

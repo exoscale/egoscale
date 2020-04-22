@@ -138,9 +138,9 @@ func (RevertSnapshot) AsyncResponse() interface{} {
 	return new(BooleanResponse)
 }
 
-// ExportSnapshot exports a volume snapshot
+// ExportSnapshot (Async) exports a volume snapshot
 type ExportSnapshot struct {
-	ID *UUID `json:"id"`
+	ID *UUID `json:"id" doc:"The ID of the snapshot"`
 	_  bool  `name:"exportSnapshot" description:"Exports an instant snapshot of a volume."`
 }
 
@@ -151,5 +151,10 @@ type ExportSnapshotResponse struct {
 
 // Response returns the struct to unmarshal
 func (ExportSnapshot) Response() interface{} {
+	return new(AsyncJobResult)
+}
+
+// AsyncResponse returns the struct to unmarshal the async job
+func (ExportSnapshot) AsyncResponse() interface{} {
 	return new(ExportSnapshotResponse)
 }

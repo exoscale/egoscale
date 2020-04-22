@@ -36,5 +36,6 @@ func TestRevertSnapshot(t *testing.T) {
 
 func TestExportSnapshot(t *testing.T) {
 	req := &ExportSnapshot{}
-	_ = req.Response().(*ExportSnapshotResponse)
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*ExportSnapshotResponse)
 }

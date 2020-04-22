@@ -137,3 +137,19 @@ func (RevertSnapshot) Response() interface{} {
 func (RevertSnapshot) AsyncResponse() interface{} {
 	return new(BooleanResponse)
 }
+
+// ExportSnapshot exports an instant snapshot of a volume to SOS
+type ExportSnapshot struct {
+	ID *UUID `json:"id"`
+	_  bool  `name:"exportSnapshot" description:"Exports an instant snapshot of a volume."`
+}
+
+// ExportSnapshotResponse represents the presigned URL to access the exported snapshot
+type ExportSnapshotResponse struct {
+	PresignedURL string `json:"presignedurl"`
+}
+
+// Response returns the struct to unmarshal
+func (ExportSnapshot) Response() interface{} {
+	return new(ExportSnapshotResponse)
+}

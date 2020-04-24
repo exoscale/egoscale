@@ -33,3 +33,9 @@ func TestRevertSnapshot(t *testing.T) {
 	_ = req.Response().(*AsyncJobResult)
 	_ = req.AsyncResponse().(*BooleanResponse)
 }
+
+func TestExportSnapshot(t *testing.T) {
+	req := &ExportSnapshot{}
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*ExportSnapshotResponse)
+}

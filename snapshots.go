@@ -147,6 +147,7 @@ type ExportSnapshot struct {
 // ExportSnapshotResponse represents the response of a snapshot export operation
 type ExportSnapshotResponse struct {
 	PresignedURL string `json:"presignedurl"`
+	MD5sum       string `json:"md5sum"`
 }
 
 // Response returns the struct to unmarshal

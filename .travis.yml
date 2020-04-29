@@ -31,7 +31,7 @@ before_script:
   - ./cc-test-reporter before-build
 
 script:
-  - go test -race -timeout=10m -coverprofile=c.out -covermode=atomic .
+  - go test -race -coverprofile=c.out -covermode=atomic .
 
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT

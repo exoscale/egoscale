@@ -9,7 +9,7 @@ go:
 - tip
 
 env:
-  - GOLANGCI_LINT_VERSION=v1.25.1 GO111MODULES=on
+  - GOLANGCI_LINT_VERSION=1.25.1 GO111MODULES=on
 
 cache: apt
 

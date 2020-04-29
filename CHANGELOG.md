@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.24.0
+------
+
+- feature: Add export snapshot implementation (#427)
+- feature: Add support for public API V2 (#425)
+
 0.23.0
 ------
 

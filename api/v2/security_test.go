@@ -9,21 +9,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewSecurityProviderExoscaleV2(t *testing.T) {
+func TestNewSecurityProviderExoscale(t *testing.T) {
 	var (
-		provider *SecurityProviderExoscaleV2
+		provider *SecurityProviderExoscale
 		err      error
 	)
 
-	provider, err = NewSecurityProviderExoscaleV2("key", "")
+	provider, err = NewSecurityProviderExoscale("key", "")
 	require.NotNil(t, err, "expected an error")
 	require.Nil(t, provider)
 
-	provider, err = NewSecurityProviderExoscaleV2("", "secret")
+	provider, err = NewSecurityProviderExoscale("", "secret")
 	require.NotNil(t, err, "expected an error")
 	require.Nil(t, provider)
 
-	provider, err = NewSecurityProviderExoscaleV2("key", "secret")
+	provider, err = NewSecurityProviderExoscale("key", "secret")
 	require.Nil(t, err)
 	require.NotNil(t, provider)
 	require.Equal(t, "key", provider.apiKey)
@@ -41,7 +41,7 @@ func TestSecurityProviderExoscaleV2SignRequest(t *testing.T) {
 		testExpireDate = time.Date(2077, 1, 1, 0, 0, 0, 0, time.UTC)
 	)
 
-	provider := &SecurityProviderExoscaleV2{
+	provider := &SecurityProviderExoscale{
 		apiKey:    testAPIKey,
 		apiSecret: testAPISecret,
 	}

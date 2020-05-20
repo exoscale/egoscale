@@ -119,7 +119,7 @@ func (c *command) Check(api egoscale.API) {
 	}
 }
 
-func (c *command) CheckResponse(response []egoscale.APIField) {
+func (c *command) CheckResponse(response []egoscale.APIField) { // nolint: gocyclo
 	errs := c.response.errors
 	for i := 0; i < c.response.s.NumFields(); i++ {
 		f := c.response.s.Field(i)
@@ -255,10 +255,8 @@ func (c *command) CheckFields(api egoscale.API) {
 			description, descriptionOK := tag.Lookup("description")
 			if !nameOK || !descriptionOK {
 				c.errors["_"] = append(c.errors["_"], fmt.Errorf("meta field incomplete, wanted\n\t_ bool `name:%q description:%q`", api.Name, c.description))
-			} else {
-				if name != api.Name || description != c.description {
-					c.errors["_"] = append(c.errors["_"], fmt.Errorf("meta field incorrect, got name:%q description:%q, wanted\n\t_ bool `name:%q description:%q`", name, description, api.Name, c.description))
-				}
+			} else if name != api.Name || description != c.description {
+				c.errors["_"] = append(c.errors["_"], fmt.Errorf("meta field incorrect, got name:%q description:%q, wanted\n\t_ bool `name:%q description:%q`", name, description, api.Name, c.description))
 			}
 
 			hasMeta = true
@@ -292,7 +290,7 @@ func (c *command) CheckFields(api egoscale.API) {
 	}
 }
 
-func (c *command) CheckParams(params []egoscale.APIParam) {
+func (c *command) CheckParams(params []egoscale.APIParam) { // nolint: gocyclo
 	for _, p := range params {
 		n := p.Name
 		index := sort.SearchStrings(ignoredFields, p.Name)
@@ -409,7 +407,7 @@ func loadGoSources() (*types.Info, *token.FileSet) {
 	}
 
 	config := types.Config{
-		Importer: importer.For("source", nil),
+		Importer: importer.ForCompiler(fset, "source", nil),
 	}
 
 	info := &types.Info{
@@ -440,7 +438,7 @@ func checkSource(source, cmd, rtype string) {
 
 		typ := obj.Type().Underlying()
 
-		switch typ.(type) {
+		switch typ.(type) { // nolint: gocritic
 		case *types.Struct:
 			c := newCommand(obj)
 			commands[strings.ToLower(c.name)] = c

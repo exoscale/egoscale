@@ -126,11 +126,11 @@ func TestRunstatusListMaintenances(t *testing.T) {
   ]
 }`}
 
-	m := response{200, jsonContentType, fmt.Sprintf(`{
+	m := response{200, jsonContentType, `{
   "url": "...",
   "title": "hggfh",
   "status": "scheduled"
-}`)}
+}`}
 	p := response{200, jsonContentType, fmt.Sprintf(`{
   "url": "https://api.runstatus.com/pages/bauud",
   "maintenances_url": %q,

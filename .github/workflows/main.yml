@@ -1,0 +1,24 @@
+name: CI
+
+on: [push]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v1
+      with:
+        version: v1.27
+    - name: Run tests and attempt building
+      run: |
+        export PATH=$(go env GOPATH)/bin:$PATH
+        go test -race -coverprofile=c.out -covermode=atomic ./...
+        go build
+    - name: Test & publish code coverage
+      uses: paambaati/codeclimate-action@v2.6.0
+      env:
+        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+      with:
+        coverageCommand: go test -race -coverprofile=c.out -covermode=atomic ./...

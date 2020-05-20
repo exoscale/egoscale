@@ -11,14 +11,11 @@ jobs:
       uses: golangci/golangci-lint-action@v1
       with:
         version: v1.27
-    - name: Run tests and attempt building
+    - name: Test & publish code coverage
       run: |
+        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+        chmod +x ./cc-test-reporter
         export PATH=$(go env GOPATH)/bin:$PATH
         go test -race -coverprofile=c.out -covermode=atomic ./...
         go build
-    - name: Test & publish code coverage
-      uses: paambaati/codeclimate-action@v2.6.0
-      env:
-        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-      with:
-        coverageCommand: go test -race -coverprofile=c.out -covermode=atomic ./...
+        CC_TEST_REPORTER_ID=${{ secrets.CC_TEST_REPORTER_ID }} ./cc-test-reporter after-build

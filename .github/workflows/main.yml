@@ -11,12 +11,8 @@ jobs:
       uses: golangci/golangci-lint-action@v1
       with:
         version: v1.27
-    - name: Test & publish code coverage
+    - name: Run tests and attempt building
       run: |
-        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-        chmod +x ./cc-test-reporter
-        ./cc-test-reporter before-build
         export PATH=$(go env GOPATH)/bin:$PATH
-        go test -race -coverprofile=c.out -covermode=atomic .
+        go test -race ./...
         go build
-        CC_TEST_REPORTER_ID=${{ secrets.CC_TEST_REPORTER_ID }} ./cc-test-reporter after-build

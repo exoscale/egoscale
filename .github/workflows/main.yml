@@ -17,6 +17,6 @@ jobs:
         chmod +x ./cc-test-reporter
         ./cc-test-reporter before-build
         export PATH=$(go env GOPATH)/bin:$PATH
-        go test -race -coverprofile=c.out -covermode=atomic ./...
+        go test -race -coverprofile=c.out -covermode=atomic .
         go build
         CC_TEST_REPORTER_ID=${{ secrets.CC_TEST_REPORTER_ID }} ./cc-test-reporter after-build

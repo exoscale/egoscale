@@ -1,6 +1,6 @@
 package egoscale
 
-// BucketUsage represents the usage (in byte) for a bucket
+// BucketUsage represents the usage (in bytes) for a bucket
 type BucketUsage struct {
 	Created string `json:"created"`
 	Name    string `json:"name"`
@@ -8,12 +8,12 @@ type BucketUsage struct {
 	Usage   int    `json:"usage"`
 }
 
-// ListBucketsUsage represents a list buckets usage API request
+// ListBucketsUsage represents a listBucketsUsage API request
 type ListBucketsUsage struct {
 	_ bool `name:"listBucketsUsage" description:"List"`
 }
 
-// ListBucketsUsageResponse represents a list buckets usage API response
+// ListBucketsUsageResponse represents a listBucketsUsage API response
 type ListBucketsUsageResponse struct {
 	Count        int           `json:"count"`
 	BucketsUsage []BucketUsage `json:"bucketsusage"`

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.26.0
+------
+
+- feature: Add support for Network Load Balancer resources (#432)
+
 0.25.0
 ------
 

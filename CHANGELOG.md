@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.26.1
+------
+
+- change: the `DisplayText` property of `RegisterCustomTemplate` is now optional (#433)
+
 0.26.0
 ------
 

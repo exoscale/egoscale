@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.26.2
+------
+
+- change: updated OpenAPI code-generated API V2 bindings
+
 0.26.1
 ------
 

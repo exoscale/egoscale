@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.26.4
+------
+
+- Fixing typo in previous release
+
 0.26.3
 ------
 

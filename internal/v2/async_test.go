@@ -97,15 +97,15 @@ func newTestMockPollFunc(duration time.Duration, done bool, res interface{}, err
 	}
 }
 
-func TestClientWithResponses_JobResultPoller(t *testing.T) {
+func TestClientWithResponses_JobOperationPoller(t *testing.T) {
 	// A pending job must return done=false and no error
 	{
-		mockAPIResultPending := newTestMockAPIResultServer(resultStatePending)
-		defer mockAPIResultPending.Close()
+		mockAPIOperationPending := newTestMockAPIOperationServer(operationStatePending)
+		defer mockAPIOperationPending.Close()
 
-		c, err := NewClientWithResponses(mockAPIResultPending.URL)
+		c, err := NewClientWithResponses(mockAPIOperationPending.URL)
 		require.NoError(t, err)
-		pf := c.JobResultPoller("", "")
+		pf := c.OperationPoller("", "")
 		done, _, err := pf(context.Background())
 		require.NoError(t, err)
 		require.False(t, done)
@@ -113,12 +113,12 @@ func TestClientWithResponses_JobResultPoller(t *testing.T) {
 
 	// A successful job must return done=true and no error
 	{
-		mockAPIResultSuccess := newTestMockAPIResultServer(resultStateSuccess)
-		defer mockAPIResultSuccess.Close()
+		mockAPIOperationSuccess := newTestMockAPIOperationServer(operationStateSuccess)
+		defer mockAPIOperationSuccess.Close()
 
-		c, err := NewClientWithResponses(mockAPIResultSuccess.URL)
+		c, err := NewClientWithResponses(mockAPIOperationSuccess.URL)
 		require.NoError(t, err)
-		pf := c.JobResultPoller("", "")
+		pf := c.OperationPoller("", "")
 		done, _, err := pf(context.Background())
 		require.NoError(t, err)
 		require.True(t, done)
@@ -126,12 +126,12 @@ func TestClientWithResponses_JobResultPoller(t *testing.T) {
 
 	// A failed job must return done=true and and an error
 	{
-		mockAPIResultFail := newTestMockAPIResultServer(resultStateFailure)
-		defer mockAPIResultFail.Close()
+		mockAPIOperationFail := newTestMockAPIOperationServer(operationStateFailure)
+		defer mockAPIOperationFail.Close()
 
-		c, err := NewClientWithResponses(mockAPIResultFail.URL)
+		c, err := NewClientWithResponses(mockAPIOperationFail.URL)
 		require.NoError(t, err)
-		pf := c.JobResultPoller("", "")
+		pf := c.OperationPoller("", "")
 		done, _, err := pf(context.Background())
 		require.Error(t, err)
 		require.True(t, done)
@@ -139,27 +139,27 @@ func TestClientWithResponses_JobResultPoller(t *testing.T) {
 
 	// A timed-out job must return done=true and and an error
 	{
-		mockAPIResultTimeout := newTestMockAPIResultServer(resultStateTimeout)
-		defer mockAPIResultTimeout.Close()
+		mockAPIOperationTimeout := newTestMockAPIOperationServer(operationStateTimeout)
+		defer mockAPIOperationTimeout.Close()
 
-		c, err := NewClientWithResponses(mockAPIResultTimeout.URL)
+		c, err := NewClientWithResponses(mockAPIOperationTimeout.URL)
 		require.NoError(t, err)
-		pf := c.JobResultPoller("", "")
+		pf := c.OperationPoller("", "")
 		done, _, err := pf(context.Background())
 		require.Error(t, err)
 		require.True(t, done)
 	}
 }
 
-type testMockAPIResult struct {
+type testMockAPIOperation struct {
 	state string
 }
 
-func newTestMockAPIResultServer(state string) *httptest.Server {
-	return httptest.NewServer(&testMockAPIResult{state: state})
+func newTestMockAPIOperationServer(state string) *httptest.Server {
+	return httptest.NewServer(&testMockAPIOperation{state: state})
 }
 
-func (t *testMockAPIResult) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (t *testMockAPIOperation) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(`{` +

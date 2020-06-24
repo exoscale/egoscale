@@ -312,10 +312,8 @@ func (c *Client) ListNetworkLoadBalancers(ctx context.Context, zone string) ([]*
 	}
 
 	if resp.JSON200.LoadBalancers != nil {
-		for _, n := range *resp.JSON200.LoadBalancers {
-			n := n
-
-			nlb := nlbFromAPI(&n)
+		for i := range *resp.JSON200.LoadBalancers {
+			nlb := nlbFromAPI(&(*resp.JSON200.LoadBalancers)[i])
 			nlb.c = c
 			nlb.zone = zone
 

@@ -40,6 +40,14 @@ var (
 	testNLBServiceHealthcheckStatus2Status           = "success"
 )
 
+func TestNetworkLoadBalancer_AddService(t *testing.T) { t.Skip() }
+
+func TestNetworkLoadBalancer_UpdateService(t *testing.T) { t.Skip() }
+
+func TestNetworkLoadBalancer_DeleteService(t *testing.T) { t.Skip() }
+
+func TestClient_CreateNetworkLoadBalancer(t *testing.T) { t.Skip() }
+
 func TestClient_ListNetworkLoadBalancers(t *testing.T) {
 	v2MockClient := new(v2.MockClient)
 	client := NewClient("x", "x", "x")
@@ -223,3 +231,7 @@ func TestClient_GetNetworkLoadBalancer(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expected, nlb)
 }
+
+func TestClient_UpdateNetworkLoadBalancer(t *testing.T) { t.Skip() }
+
+func TestClient_DeleteNetworkLoadBalancer(t *testing.T) { t.Skip() }

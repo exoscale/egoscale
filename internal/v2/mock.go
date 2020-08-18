@@ -1,26 +1,28 @@
 package v2
 
 import (
-	"context"
+	"net/http"
 
+	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/mock"
 )
 
 type MockClient struct {
 	mock.Mock
+	*httpmock.MockTransport
 	ClientWithResponsesInterface
 }
 
-func (c *MockClient) ListLoadBalancersWithResponse(ctx context.Context) (*ListLoadBalancersResponse, error) {
-	args := c.Called(ctx)
-	return args.Get(0).(*ListLoadBalancersResponse), args.Error(1)
+func NewMockClient() *MockClient {
+	var client MockClient
+
+	client.MockTransport = httpmock.NewMockTransport()
+
+	return &client
 }
 
-func (c *MockClient) GetLoadBalancerWithResponse(ctx context.Context, id string) (*GetLoadBalancerResponse, error) {
-	args := c.Called(ctx, id)
-	return args.Get(0).(*GetLoadBalancerResponse), args.Error(1)
-}
+func (c *MockClient) Do(req *http.Request) (*http.Response, error) {
+	var hc = http.Client{Transport: c.MockTransport}
 
-func (c *MockClient) OperationPoller(_, _ string) PollFunc {
-	panic("not implemented")
+	return hc.Do(req)
 }

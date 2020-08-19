@@ -7,12 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: Run golangci-lint
+    - name: lint
       uses: golangci/golangci-lint-action@v1
       with:
         version: v1.27
-    - name: Run tests and attempt building
+    - name: tests
       run: |
         export PATH=$(go env GOPATH)/bin:$PATH
-        go test -race ./...
-        go build
+        go test -v -race ./...

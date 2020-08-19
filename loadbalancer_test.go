@@ -13,12 +13,14 @@ import (
 	v2 "github.com/exoscale/egoscale/internal/v2"
 )
 
+const iso8601Format = "2006-01-02T15:04:05Z"
+
 var (
 	testZone                                         = "ch-gva-2"
 	testNLBID                                        = "9381ab81-59ea-4215-a5a5-781db2fabfe9"
 	testNLBName                                      = "test-nlb-name"
 	testNLBDescription                               = "test-nlb-description"
-	testNLBCreatedAt                                 = time.Now().UTC()
+	testNLBCreatedAt, _                              = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
 	testNLBIPAddress                                 = "101.102.103.104"
 	testNLBState                                     = "running"
 	testNLBServiceID                                 = "22d8118c-6585-4dbd-bc67-491256da4e9a"

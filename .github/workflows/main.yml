@@ -16,5 +16,4 @@ jobs:
         version: v1.30
     - name: Tests
       run: |
-        export PATH=$(go env GOPATH)/bin:$PATH
-        go test -v -race ./...
+        go test -v ./...

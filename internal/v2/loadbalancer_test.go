@@ -11,29 +11,31 @@ import (
 
 func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 	var (
-		testID                               = "c0f306e7-21aa-4b0b-bafd-b86ed31bc2b8"
-		testIP                               = "1.2.3.4"
-		testName                             = "test-lb"
-		testCreatedAt, _                     = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
-		testDescription                      = "Test NLB description"
-		testState                            = "running"
-		testServiceID                        = "8ec00b67-e7ff-4ce5-b6b9-85fc1e24d878"
-		testServiceName                      = "test-service"
-		testServiceDescription               = "Test service description"
-		testServiceInstancePoolID            = "0b7955e0-7beb-4d3a-dd23-7fe97aa2669f"
-		testServiceProtocol                  = "tcp"
-		testServicePort                int64 = 1234
-		testServiceTargetPort          int64 = 5678
-		testServiceStrategy                  = "round-robin"
-		testServiceState                     = "running"
-		testServiceHealthcheckMode           = "http"
-		testServiceHealthcheckPort           = testServiceTargetPort
-		testServiceHealthcheckInterval int64 = 10
-		testServiceHealthcheckTimeout  int64 = 3
-		testServiceHealthcheckRetries  int64 = 1
-		testServiceHealthcheckURI            = "/health"
+		testID                                       = "c0f306e7-21aa-4b0b-bafd-b86ed31bc2b8"
+		testIP                                       = "1.2.3.4"
+		testName                                     = "test-lb"
+		testCreatedAt, _                             = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
+		testDescription                              = "Test NLB description"
+		testState                                    = "running"
+		testServiceID                                = "8ec00b67-e7ff-4ce5-b6b9-85fc1e24d878"
+		testServiceName                              = "test-service"
+		testServiceDescription                       = "Test service description"
+		testServiceInstancePoolID                    = "0b7955e0-7beb-4d3a-dd23-7fe97aa2669f"
+		testServiceProtocol                          = "tcp"
+		testServicePort                        int64 = 1234
+		testServiceTargetPort                  int64 = 5678
+		testServiceStrategy                          = "round-robin"
+		testServiceState                             = "running"
+		testServiceHealthcheckMode                   = "http"
+		testServiceHealthcheckPort                   = testServiceTargetPort
+		testServiceHealthcheckInterval         int64 = 10
+		testServiceHealthcheckTimeout          int64 = 3
+		testServiceHealthcheckRetries          int64 = 1
+		testServiceHealthcheckURI                    = "/health"
+		testServiceHealthcheckStatusInstanceIP       = "5.6.7.8"
+		testServiceHealthcheckStatusStatus           = "success"
 
-		expectedLoadBalancer = LoadBalancer{
+		expected = LoadBalancer{
 			CreatedAt:   &testCreatedAt,
 			Description: &testDescription,
 			Id:          &testID,
@@ -58,11 +60,14 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 					Timeout:  &testServiceHealthcheckTimeout,
 					Uri:      &testServiceHealthcheckURI,
 				},
-				// HealthcheckStatus // FIXME: the API doesn't return this information ATM
+				HealthcheckStatus: &[]LoadBalancerServerStatus{{
+					PublicIp: &testServiceHealthcheckStatusInstanceIP,
+					Status:   &testServiceHealthcheckStatusStatus,
+				}},
 			}},
 		}
 
-		actualLoadBalancer LoadBalancer
+		actual LoadBalancer
 
 		jsonNLB = `{
   "id": "` + testID + `",
@@ -90,12 +95,116 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 		"port": ` + fmt.Sprint(testServiceHealthcheckPort) + `,
 		"retries": ` + fmt.Sprint(testServiceHealthcheckRetries) + `
 	  },
-	  "healthcheck-status": null
+	  "healthcheck-status": [
+        {
+          "public-ip": "` + testServiceHealthcheckStatusInstanceIP + `",
+          "status": "` + testServiceHealthcheckStatusStatus + `"
+        }
+      ]
 	}
   ]
 }`
 	)
 
-	require.NoError(t, json.Unmarshal([]byte(jsonNLB), &actualLoadBalancer))
-	require.Equal(t, expectedLoadBalancer, actualLoadBalancer)
+	require.NoError(t, json.Unmarshal([]byte(jsonNLB), &actual))
+	require.Equal(t, expected, actual)
+}
+
+func TestLoadBalancer_MarshalJSON(t *testing.T) {
+	var (
+		testID                                       = "c0f306e7-21aa-4b0b-bafd-b86ed31bc2b8"
+		testIP                                       = "1.2.3.4"
+		testName                                     = "test-lb"
+		testCreatedAt, _                             = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
+		testDescription                              = "Test NLB description"
+		testState                                    = "running"
+		testServiceID                                = "8ec00b67-e7ff-4ce5-b6b9-85fc1e24d878"
+		testServiceName                              = "test-service"
+		testServiceDescription                       = "Test service description"
+		testServiceInstancePoolID                    = "0b7955e0-7beb-4d3a-dd23-7fe97aa2669f"
+		testServiceProtocol                          = "tcp"
+		testServicePort                        int64 = 1234
+		testServiceTargetPort                  int64 = 5678
+		testServiceStrategy                          = "round-robin"
+		testServiceState                             = "running"
+		testServiceHealthcheckMode                   = "http"
+		testServiceHealthcheckPort                   = testServiceTargetPort
+		testServiceHealthcheckInterval         int64 = 10
+		testServiceHealthcheckTimeout          int64 = 3
+		testServiceHealthcheckRetries          int64 = 1
+		testServiceHealthcheckURI                    = "/health"
+		testServiceHealthcheckStatusInstanceIP       = "5.6.7.8"
+		testServiceHealthcheckStatusStatus           = "success"
+
+		expected = []byte(`{` +
+			`"created-at":"` + testCreatedAt.Format(iso8601Format) + `",` +
+			`"description":"` + testDescription + `",` +
+			`"id":"` + testID + `",` +
+			`"ip":"` + testIP + `",` +
+			`"name":"` + testName + `",` +
+			`"services":[{` +
+			`"description":"` + testServiceDescription + `",` +
+			`"healthcheck":` +
+			`{` +
+			`"interval":` + fmt.Sprint(testServiceHealthcheckInterval) + `,` +
+			`"mode":"` + testServiceHealthcheckMode + `",` +
+			`"port":` + fmt.Sprint(testServiceHealthcheckPort) + `,` +
+			`"retries":` + fmt.Sprint(testServiceHealthcheckRetries) + `,` +
+			`"timeout":` + fmt.Sprint(testServiceHealthcheckTimeout) + `,` +
+			`"uri":"` + testServiceHealthcheckURI + `"` +
+			`},` +
+			`"healthcheck-status":[` +
+			`{` +
+			`"public-ip":"` + testServiceHealthcheckStatusInstanceIP + `",` +
+			`"status":"` + testServiceHealthcheckStatusStatus + `"` +
+			`}` +
+			`],` +
+			`"id":"` + testServiceID + `",` +
+			`"instance-pool":{"id":"` + testServiceInstancePoolID + `"},` +
+			`"name":"` + testServiceName + `",` +
+			`"port":` + fmt.Sprint(testServicePort) + `,` +
+			`"protocol":"` + testServiceProtocol + `",` +
+			`"state":"` + testServiceState + `",` +
+			`"strategy":"` + testServiceStrategy + `",` +
+			`"target-port":` + fmt.Sprint(testServiceTargetPort) +
+			`}` +
+			`],` +
+			`"state":"` + testState + `"` +
+			`}`)
+	)
+
+	lb := LoadBalancer{
+		CreatedAt:   &testCreatedAt,
+		Description: &testDescription,
+		Id:          &testID,
+		Ip:          &testIP,
+		Name:        &testName,
+		State:       &testState,
+		Services: &[]LoadBalancerService{{
+			Description:  &testServiceDescription,
+			Id:           &testServiceID,
+			InstancePool: &Resource{Id: &testServiceInstancePoolID},
+			Name:         &testServiceName,
+			Port:         &testServicePort,
+			Protocol:     &testServiceProtocol,
+			State:        &testServiceState,
+			Strategy:     &testServiceStrategy,
+			TargetPort:   &testServiceTargetPort,
+			Healthcheck: &Healthcheck{
+				Interval: &testServiceHealthcheckInterval,
+				Mode:     &testServiceHealthcheckMode,
+				Port:     &testServiceHealthcheckPort,
+				Retries:  &testServiceHealthcheckRetries,
+				Timeout:  &testServiceHealthcheckTimeout,
+				Uri:      &testServiceHealthcheckURI,
+			},
+			HealthcheckStatus: &[]LoadBalancerServerStatus{{
+				PublicIp: &testServiceHealthcheckStatusInstanceIP,
+				Status:   &testServiceHealthcheckStatusStatus,
+			}},
+		}},
+	}
+	actual, err := json.Marshal(lb)
+	require.NoError(t, err)
+	require.Equal(t, expected, actual)
 }

@@ -2,7 +2,6 @@ package egoscale
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"testing"
@@ -277,11 +276,6 @@ func TestClient_ListNetworkLoadBalancers(t *testing.T) {
 	}}
 
 	actual, err := client.ListNetworkLoadBalancers(context.Background(), testZone)
-	fmt.Printf("expected.CreatedAt=%#v (%s)\nactual.CreatedAt=%#v (%s)\n",
-		expected[0].CreatedAt,
-		expected[0].CreatedAt,
-		actual[0].CreatedAt,
-		actual[0].CreatedAt)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }

@@ -3,15 +3,18 @@ name: CI
 on: [push]
 
 jobs:
-  ci:
+  CI:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: lint
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '^1.15.0'
+    - name: Lint
       uses: golangci/golangci-lint-action@v1
       with:
-        version: v1.27
-    - name: tests
+        version: v1.30
+    - name: Tests
       run: |
         export PATH=$(go env GOPATH)/bin:$PATH
         go test -v -race ./...

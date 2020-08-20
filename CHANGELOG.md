@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.29.0
+------
+
+- feature: `ListVirtualMachines` call to allow searching by `ManagerID` (#442)
+- fix: remove duplicate `User-Agent` HTTP header in Runstatus calls
+- tests: `*NetworkLoadBalancer*` calls are now tested using HTTP mocks
+- codegen: `internal/v2` updated
+
 0.28.1
 ------
 

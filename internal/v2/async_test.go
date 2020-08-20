@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -98,76 +98,63 @@ func newTestMockPollFunc(duration time.Duration, done bool, res interface{}, err
 }
 
 func TestClientWithResponses_JobOperationPoller(t *testing.T) {
+	var (
+		operationID              = "021ee8b0-a1a4-11ea-aed0-6329b72edcc5"
+		mockOperationReferenceID = "31161e61-2354-47e6-9df0-36c855ef2a10"
+
+		newTestClient = func(state string) (*ClientWithResponses, error) {
+			mockClient := NewMockClient()
+			mockClient.RegisterResponder("GET", "/operation/"+operationID,
+				func(req *http.Request) (*http.Response, error) {
+					resp, err := httpmock.NewJsonResponse(http.StatusOK, Operation{
+						Id:        &operationID,
+						State:     &state,
+						Reference: &Resource{Id: &mockOperationReferenceID},
+					})
+					if err != nil {
+						t.Fatalf("error initializing mock HTTP responder: %s", err)
+					}
+					return resp, nil
+				})
+
+			return NewClientWithResponses("", WithHTTPClient(mockClient))
+		}
+	)
+
 	// A pending job must return done=false and no error
 	{
-		mockAPIOperationPending := newTestMockAPIOperationServer(operationStatePending)
-		defer mockAPIOperationPending.Close()
-
-		c, err := NewClientWithResponses(mockAPIOperationPending.URL)
+		c, err := newTestClient(operationStatePending)
 		require.NoError(t, err)
-		pf := c.OperationPoller("", "")
-		done, _, err := pf(context.Background())
+		done, _, err := c.OperationPoller("", operationID)(context.Background())
 		require.NoError(t, err)
 		require.False(t, done)
 	}
 
 	// A successful job must return done=true and no error
 	{
-		mockAPIOperationSuccess := newTestMockAPIOperationServer(operationStateSuccess)
-		defer mockAPIOperationSuccess.Close()
-
-		c, err := NewClientWithResponses(mockAPIOperationSuccess.URL)
+		c, err := newTestClient(operationStateSuccess)
 		require.NoError(t, err)
-		pf := c.OperationPoller("", "")
-		done, _, err := pf(context.Background())
+		done, res, err := c.OperationPoller("", operationID)(context.Background())
 		require.NoError(t, err)
+		require.Equal(t, &Resource{Id: &mockOperationReferenceID}, res)
 		require.True(t, done)
 	}
 
 	// A failed job must return done=true and and an error
 	{
-		mockAPIOperationFail := newTestMockAPIOperationServer(operationStateFailure)
-		defer mockAPIOperationFail.Close()
-
-		c, err := NewClientWithResponses(mockAPIOperationFail.URL)
+		c, err := newTestClient(operationStateFailure)
 		require.NoError(t, err)
-		pf := c.OperationPoller("", "")
-		done, _, err := pf(context.Background())
+		done, _, err := c.OperationPoller("", operationID)(context.Background())
 		require.Error(t, err)
 		require.True(t, done)
 	}
 
 	// A timed-out job must return done=true and and an error
 	{
-		mockAPIOperationTimeout := newTestMockAPIOperationServer(operationStateTimeout)
-		defer mockAPIOperationTimeout.Close()
-
-		c, err := NewClientWithResponses(mockAPIOperationTimeout.URL)
+		c, err := newTestClient(operationStateTimeout)
 		require.NoError(t, err)
-		pf := c.OperationPoller("", "")
-		done, _, err := pf(context.Background())
+		done, _, err := c.OperationPoller("", operationID)(context.Background())
 		require.Error(t, err)
 		require.True(t, done)
 	}
-}
-
-type testMockAPIOperation struct {
-	state string
-}
-
-func newTestMockAPIOperationServer(state string) *httptest.Server {
-	return httptest.NewServer(&testMockAPIOperation{state: state})
-}
-
-func (t *testMockAPIOperation) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(`{` +
-		`"id":"021ee8b0-a1a4-11ea-aed0-6329b72edcc5",` +
-		`"state":"` + t.state + `",` +
-		`"reference":{` +
-		`"id":"31161e61-2354-47e6-9df0-36c855ef2a10",` +
-		`"command":"some-command",` +
-		`"link":"/v2.alpha/some-resource/31161e61-2354-47e6-9df0-36c855ef2a10"` +
-		`}}`))
 }

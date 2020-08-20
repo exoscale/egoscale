@@ -69,7 +69,7 @@ type Client struct {
 	Logger *log.Logger
 
 	// API V2 secondary client
-	v2 v2.ClientPoller
+	v2 *v2.ClientWithResponses
 }
 
 // RetryStrategyFunc represents a how much time to wait between two calls to the API

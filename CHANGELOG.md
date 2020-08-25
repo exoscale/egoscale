@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.30.0
+------
+
+- feature: add new TLS-specific parameters to managed EIP
+
 0.29.0
 ------
 

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.31.0
+------
+
+- feature: add support for IPv6 in Instance Pools (#446)
+
 0.30.0
 ------
 

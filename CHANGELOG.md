@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.31.1
+------
+
+- fix: Instance Pool IPv6 flag handling
+
 0.31.0
 ------
 

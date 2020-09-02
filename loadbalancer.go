@@ -184,7 +184,7 @@ func (nlb *NetworkLoadBalancer) AddService(ctx context.Context,
 		return nil, err
 	}
 
-	nlbUpdated, err := nlb.c.GetNetworkLoadBalancer(ctx, nlb.zone, *res.(*v2.Resource).Id)
+	nlbUpdated, err := nlb.c.GetNetworkLoadBalancer(ctx, nlb.zone, *res.(*v2.Reference).Id)
 	if err != nil {
 		return nil, err
 	}

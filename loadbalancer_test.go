@@ -61,7 +61,7 @@ func TestNetworkLoadBalancer_AddService(t *testing.T) {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &v2.Resource{Id: &testNLBID},
+				Reference: &v2.Reference{Id: &testNLBID},
 			})
 			if err != nil {
 				t.Fatalf("error initializing mock HTTP responder: %s", err)
@@ -74,7 +74,7 @@ func TestNetworkLoadBalancer_AddService(t *testing.T) {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &v2.Resource{Id: &testNLBID},
+				Reference: &v2.Reference{Id: &testNLBID},
 			})
 			if err != nil {
 				t.Fatalf("error initializing mock HTTP responder: %s", err)

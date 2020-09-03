@@ -109,7 +109,7 @@ func TestClientWithResponses_JobOperationPoller(t *testing.T) {
 					resp, err := httpmock.NewJsonResponse(http.StatusOK, Operation{
 						Id:        &operationID,
 						State:     &state,
-						Reference: &Resource{Id: &mockOperationReferenceID},
+						Reference: &Reference{Id: &mockOperationReferenceID},
 					})
 					if err != nil {
 						t.Fatalf("error initializing mock HTTP responder: %s", err)
@@ -136,7 +136,7 @@ func TestClientWithResponses_JobOperationPoller(t *testing.T) {
 		require.NoError(t, err)
 		done, res, err := c.OperationPoller("", operationID)(context.Background())
 		require.NoError(t, err)
-		require.Equal(t, &Resource{Id: &mockOperationReferenceID}, res)
+		require.Equal(t, &Reference{Id: &mockOperationReferenceID}, res)
 		require.True(t, done)
 	}
 

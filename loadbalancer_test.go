@@ -38,6 +38,7 @@ var (
 	testNLBServiceHealthcheckTimeout           int64 = 3
 	testNLBServiceHealthcheckRetries           int64 = 1
 	testNLBServiceHealthcheckURI                     = "/health"
+	testNLBServiceHealthcheckTLSSNI                  = "example.net"
 	testNLBServiceHealthcheckStatus1InstanceIP       = "1.2.3.4"
 	testNLBServiceHealthcheckStatus1Status           = "success"
 	testNLBServiceHealthcheckStatus2InstanceIP       = "5.6.7.8"
@@ -61,7 +62,7 @@ func TestNetworkLoadBalancer_AddService(t *testing.T) {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &v2.Resource{Id: &testNLBID},
+				Reference: &v2.Reference{Id: &testNLBID},
 			})
 			if err != nil {
 				t.Fatalf("error initializing mock HTTP responder: %s", err)
@@ -74,7 +75,7 @@ func TestNetworkLoadBalancer_AddService(t *testing.T) {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &v2.Resource{Id: &testNLBID},
+				Reference: &v2.Reference{Id: &testNLBID},
 			})
 			if err != nil {
 				t.Fatalf("error initializing mock HTTP responder: %s", err)
@@ -104,6 +105,7 @@ func TestNetworkLoadBalancer_AddService(t *testing.T) {
 						Interval: &testNLBServiceHealthcheckInterval,
 						Port:     &testNLBServiceHealthcheckPort,
 						Uri:      &testNLBServiceHealthcheckURI,
+						TlsSni:   &testNLBServiceHealthcheckTLSSNI,
 						Timeout:  &testNLBServiceHealthcheckTimeout,
 						Retries:  &testNLBServiceHealthcheckRetries,
 					},
@@ -154,6 +156,7 @@ func TestNetworkLoadBalancer_AddService(t *testing.T) {
 			Timeout:  time.Duration(testNLBServiceHealthcheckTimeout) * time.Second,
 			Retries:  testNLBServiceHealthcheckRetries,
 			URI:      testNLBServiceHealthcheckURI,
+			TLSSNI:   testNLBServiceHealthcheckTLSSNI,
 		},
 		HealthcheckStatus: []*NetworkLoadBalancerServerStatus{
 			{

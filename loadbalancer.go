@@ -310,7 +310,7 @@ func (c *Client) CreateNetworkLoadBalancer(ctx context.Context, zone string,
 		return nil, err
 	}
 
-	return c.GetNetworkLoadBalancer(ctx, zone, *res.(*v2.Resource).Id)
+	return c.GetNetworkLoadBalancer(ctx, zone, *res.(*v2.Reference).Id)
 }
 
 // ListNetworkLoadBalancers returns the list of existing Network Load Balancers in the

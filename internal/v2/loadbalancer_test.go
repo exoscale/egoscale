@@ -26,12 +26,13 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 		testServiceTargetPort                  int64 = 5678
 		testServiceStrategy                          = "round-robin"
 		testServiceState                             = "running"
-		testServiceHealthcheckMode                   = "http"
+		testServiceHealthcheckMode                   = "https"
 		testServiceHealthcheckPort                   = testServiceTargetPort
 		testServiceHealthcheckInterval         int64 = 10
 		testServiceHealthcheckTimeout          int64 = 3
 		testServiceHealthcheckRetries          int64 = 1
 		testServiceHealthcheckURI                    = "/health"
+		testServiceHealthcheckTLSSNI                 = "example.net"
 		testServiceHealthcheckStatusInstanceIP       = "5.6.7.8"
 		testServiceHealthcheckStatusStatus           = "success"
 
@@ -59,6 +60,7 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 					Retries:  &testServiceHealthcheckRetries,
 					Timeout:  &testServiceHealthcheckTimeout,
 					Uri:      &testServiceHealthcheckURI,
+					TlsSni:   &testServiceHealthcheckTLSSNI,
 				},
 				HealthcheckStatus: &[]LoadBalancerServerStatus{{
 					PublicIp: &testServiceHealthcheckStatusInstanceIP,
@@ -93,7 +95,8 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 		"interval": ` + fmt.Sprint(testServiceHealthcheckInterval) + `,
 		"timeout": ` + fmt.Sprint(testServiceHealthcheckTimeout) + `,
 		"port": ` + fmt.Sprint(testServiceHealthcheckPort) + `,
-		"retries": ` + fmt.Sprint(testServiceHealthcheckRetries) + `
+		"retries": ` + fmt.Sprint(testServiceHealthcheckRetries) + `,
+		"tls-sni": "` + fmt.Sprint(testServiceHealthcheckTLSSNI) + `"
 	  },
 	  "healthcheck-status": [
         {
@@ -127,12 +130,13 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 		testServiceTargetPort                  int64 = 5678
 		testServiceStrategy                          = "round-robin"
 		testServiceState                             = "running"
-		testServiceHealthcheckMode                   = "http"
+		testServiceHealthcheckMode                   = "https"
 		testServiceHealthcheckPort                   = testServiceTargetPort
 		testServiceHealthcheckInterval         int64 = 10
 		testServiceHealthcheckTimeout          int64 = 3
 		testServiceHealthcheckRetries          int64 = 1
 		testServiceHealthcheckURI                    = "/health"
+		testServiceHealthcheckTLSSNI                 = "example.net"
 		testServiceHealthcheckStatusInstanceIP       = "5.6.7.8"
 		testServiceHealthcheckStatusStatus           = "success"
 
@@ -151,6 +155,7 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 			`"port":` + fmt.Sprint(testServiceHealthcheckPort) + `,` +
 			`"retries":` + fmt.Sprint(testServiceHealthcheckRetries) + `,` +
 			`"timeout":` + fmt.Sprint(testServiceHealthcheckTimeout) + `,` +
+			`"tls-sni":"` + testServiceHealthcheckTLSSNI + `",` +
 			`"uri":"` + testServiceHealthcheckURI + `"` +
 			`},` +
 			`"healthcheck-status":[` +
@@ -197,6 +202,7 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 				Retries:  &testServiceHealthcheckRetries,
 				Timeout:  &testServiceHealthcheckTimeout,
 				Uri:      &testServiceHealthcheckURI,
+				TlsSni:   &testServiceHealthcheckTLSSNI,
 			},
 			HealthcheckStatus: &[]LoadBalancerServerStatus{{
 				PublicIp: &testServiceHealthcheckStatusInstanceIP,

@@ -256,21 +256,14 @@ func TestClientGetNone(t *testing.T) {
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
-		errText := "not found"
 		_, err := cs.Get(thing.listable)
 		if err == nil {
 			t.Error("an error was expected")
 			continue
 		}
 
-		e, ok := err.(*ErrorResponse)
-		if !ok {
-			t.Errorf("an ErrorResponse was expected, got %T", err)
-			continue
-		}
-
-		if !strings.Contains(e.ErrorText, errText) {
-			t.Errorf("bad error test, got %q", e.ErrorText)
+		if err != ErrNotFound {
+			t.Fatalf("expected ErrNotFound, got %v", err)
 		}
 
 		ts.Close()

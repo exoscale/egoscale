@@ -150,8 +150,11 @@ func (client *Client) GetWithContext(ctx context.Context, ls Listable) (interfac
 		return nil, err
 	}
 
-	count := len(gs)
-	if count != 1 {
+	switch len(gs) {
+	case 0:
+		return nil, ErrNotFound
+
+	case 1:
 		req, err := ls.ListRequest()
 		if err != nil {
 			return nil, err
@@ -171,17 +174,11 @@ func (client *Client) GetWithContext(ctx context.Context, ls Listable) (interfac
 		payload := params.Encode()
 		payload = strings.Replace(payload, "&", ", ", -1)
 
-		if count == 0 {
-			return nil, &ErrorResponse{
-				CSErrorCode: ServerAPIException,
-				ErrorCode:   ParamError,
-				ErrorText:   fmt.Sprintf("not found, query: %s", payload),
-			}
-		}
-		return nil, fmt.Errorf("more than one element found: %s", payload)
-	}
+		return gs[0], nil
 
-	return gs[0], nil
+	default:
+		return nil, fmt.Errorf("multiple resources found")
+	}
 }
 
 // Delete removes the given resource of fails

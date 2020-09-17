@@ -157,7 +157,7 @@ func (client *Client) GetWithContext(ctx context.Context, ls Listable) (interfac
 		return gs[0], nil
 
 	default:
-		return nil, fmt.Errorf("multiple resources found")
+		return nil, ErrTooManyFound
 	}
 }
 

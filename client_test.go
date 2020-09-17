@@ -319,8 +319,8 @@ func TestClientGetZero(t *testing.T) {
 			t.Errorf("an error was expected")
 		}
 
-		if !strings.HasPrefix(err.Error(), "API error ParamError 431") {
-			t.Errorf("bad error %q", err)
+		if err != ErrNotFound {
+			t.Fatalf("expected ErrNotFound, got %v", err)
 		}
 
 		ts.Close()
@@ -383,8 +383,8 @@ func TestClientGetTooMany(t *testing.T) {
 			t.Errorf("an error was expected")
 		}
 
-		if !strings.HasPrefix(err.Error(), "more than one") {
-			t.Errorf("bad error %s", err)
+		if err != ErrTooManyFound {
+			t.Fatalf("expected ErrTooManyFound, got %v", err)
 		}
 
 		ts.Close()

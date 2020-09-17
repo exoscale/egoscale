@@ -11,7 +11,6 @@ import (
 	"os"
 	"reflect"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -155,25 +154,6 @@ func (client *Client) GetWithContext(ctx context.Context, ls Listable) (interfac
 		return nil, ErrNotFound
 
 	case 1:
-		req, err := ls.ListRequest()
-		if err != nil {
-			return nil, err
-		}
-		params, err := client.Payload(req)
-		if err != nil {
-			return nil, err
-		}
-
-		// removing sensitive/useless informations
-		params.Del("expires")
-		params.Del("response")
-		params.Del("signature")
-		params.Del("signatureversion")
-
-		// formatting the query string nicely
-		payload := params.Encode()
-		payload = strings.Replace(payload, "&", ", ", -1)
-
 		return gs[0], nil
 
 	default:

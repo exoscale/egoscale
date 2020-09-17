@@ -256,21 +256,14 @@ func TestClientGetNone(t *testing.T) {
 
 		cs := NewClient(ts.URL, "KEY", "SECRET")
 
-		errText := "not found"
 		_, err := cs.Get(thing.listable)
 		if err == nil {
 			t.Error("an error was expected")
 			continue
 		}
 
-		e, ok := err.(*ErrorResponse)
-		if !ok {
-			t.Errorf("an ErrorResponse was expected, got %T", err)
-			continue
-		}
-
-		if !strings.Contains(e.ErrorText, errText) {
-			t.Errorf("bad error test, got %q", e.ErrorText)
+		if err != ErrNotFound {
+			t.Fatalf("expected ErrNotFound, got %v", err)
 		}
 
 		ts.Close()
@@ -326,8 +319,8 @@ func TestClientGetZero(t *testing.T) {
 			t.Errorf("an error was expected")
 		}
 
-		if !strings.HasPrefix(err.Error(), "API error ParamError 431") {
-			t.Errorf("bad error %q", err)
+		if err != ErrNotFound {
+			t.Fatalf("expected ErrNotFound, got %v", err)
 		}
 
 		ts.Close()
@@ -390,8 +383,8 @@ func TestClientGetTooMany(t *testing.T) {
 			t.Errorf("an error was expected")
 		}
 
-		if !strings.HasPrefix(err.Error(), "more than one") {
-			t.Errorf("bad error %s", err)
+		if err != ErrTooManyFound {
+			t.Fatalf("expected ErrTooManyFound, got %v", err)
 		}
 
 		ts.Close()

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.34.0
+------
+
+- change: `BucketUsage.Usage` is now an `int64` (#451)
+
 0.33.2
 ------
 

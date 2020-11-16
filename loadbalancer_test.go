@@ -87,23 +87,23 @@ func TestNetworkLoadBalancer_AddService(t *testing.T) {
 		func(req *http.Request) (*http.Response, error) {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.LoadBalancer{
 				Id:          &testNLBID,
-				Name:        &testNLBName,
+				Name:        testNLBName,
 				Description: &testNLBDescription,
 				CreatedAt:   &testNLBCreatedAt,
 				Ip:          &testNLBIPAddress,
 				Services: &[]v2.LoadBalancerService{{
 					Id:           &testNLBServiceID,
-					Name:         &testNLBServiceName,
+					Name:         testNLBServiceName,
 					Description:  &testNLBServiceDescription,
-					InstancePool: &v2.Resource{Id: &testNLBServiceInstancePoolID},
-					Protocol:     &testNLBServiceProtocol,
-					Port:         &testNLBServicePort,
-					TargetPort:   &testNLBServiceTargetPort,
-					Strategy:     &testNLBServiceStrategy,
-					Healthcheck: &v2.Healthcheck{
-						Mode:     &testNLServiceHealthcheckMode,
+					InstancePool: v2.Resource{Id: &testNLBServiceInstancePoolID},
+					Protocol:     testNLBServiceProtocol,
+					Port:         testNLBServicePort,
+					TargetPort:   testNLBServiceTargetPort,
+					Strategy:     testNLBServiceStrategy,
+					Healthcheck: v2.Healthcheck{
+						Mode:     testNLServiceHealthcheckMode,
 						Interval: &testNLBServiceHealthcheckInterval,
-						Port:     &testNLBServiceHealthcheckPort,
+						Port:     testNLBServiceHealthcheckPort,
 						Uri:      &testNLBServiceHealthcheckURI,
 						TlsSni:   &testNLBServiceHealthcheckTLSSNI,
 						Timeout:  &testNLBServiceHealthcheckTimeout,
@@ -174,7 +174,6 @@ func TestNetworkLoadBalancer_AddService(t *testing.T) {
 	actual, err := nlb.AddService(context.Background(), expected)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
-
 }
 
 // UpdateService is not tested as it essentially relies on the already tested GetNetworkLoadBalancer.
@@ -201,22 +200,22 @@ func TestClient_ListNetworkLoadBalancers(t *testing.T) {
 			}{
 				LoadBalancers: &[]v2.LoadBalancer{{
 					Id:          &testNLBID,
-					Name:        &testNLBName,
+					Name:        testNLBName,
 					Description: &testNLBDescription,
 					CreatedAt:   &testNLBCreatedAt,
 					Services: &[]v2.LoadBalancerService{{
 						Id:           &testNLBServiceID,
-						Name:         &testNLBServiceName,
+						Name:         testNLBServiceName,
 						Description:  &testNLBServiceDescription,
-						InstancePool: &v2.Resource{Id: &testNLBServiceInstancePoolID},
-						Protocol:     &testNLBServiceProtocol,
-						Port:         &testNLBServicePort,
-						TargetPort:   &testNLBServiceTargetPort,
-						Strategy:     &testNLBServiceStrategy,
-						Healthcheck: &v2.Healthcheck{
-							Mode:     &testNLServiceHealthcheckMode,
+						InstancePool: v2.Resource{Id: &testNLBServiceInstancePoolID},
+						Protocol:     testNLBServiceProtocol,
+						Port:         testNLBServicePort,
+						TargetPort:   testNLBServiceTargetPort,
+						Strategy:     testNLBServiceStrategy,
+						Healthcheck: v2.Healthcheck{
+							Mode:     testNLServiceHealthcheckMode,
 							Interval: &testNLBServiceHealthcheckInterval,
-							Port:     &testNLBServiceHealthcheckPort,
+							Port:     testNLBServiceHealthcheckPort,
 							Uri:      &testNLBServiceHealthcheckURI,
 							Timeout:  &testNLBServiceHealthcheckTimeout,
 							Retries:  &testNLBServiceHealthcheckRetries,
@@ -297,23 +296,23 @@ func TestClient_GetNetworkLoadBalancer(t *testing.T) {
 		func(req *http.Request) (*http.Response, error) {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.LoadBalancer{
 				Id:          &testNLBID,
-				Name:        &testNLBName,
+				Name:        testNLBName,
 				Description: &testNLBDescription,
 				CreatedAt:   &testNLBCreatedAt,
 				Ip:          &testNLBIPAddress,
 				Services: &[]v2.LoadBalancerService{{
 					Id:           &testNLBServiceID,
-					Name:         &testNLBServiceName,
+					Name:         testNLBServiceName,
 					Description:  &testNLBServiceDescription,
-					InstancePool: &v2.Resource{Id: &testNLBServiceInstancePoolID},
-					Protocol:     &testNLBServiceProtocol,
-					Port:         &testNLBServicePort,
-					TargetPort:   &testNLBServiceTargetPort,
-					Strategy:     &testNLBServiceStrategy,
-					Healthcheck: &v2.Healthcheck{
-						Mode:     &testNLServiceHealthcheckMode,
+					InstancePool: v2.Resource{Id: &testNLBServiceInstancePoolID},
+					Protocol:     testNLBServiceProtocol,
+					Port:         testNLBServicePort,
+					TargetPort:   testNLBServiceTargetPort,
+					Strategy:     testNLBServiceStrategy,
+					Healthcheck: v2.Healthcheck{
+						Mode:     testNLServiceHealthcheckMode,
 						Interval: &testNLBServiceHealthcheckInterval,
-						Port:     &testNLBServiceHealthcheckPort,
+						Port:     testNLBServiceHealthcheckPort,
 						Uri:      &testNLBServiceHealthcheckURI,
 						Timeout:  &testNLBServiceHealthcheckTimeout,
 						Retries:  &testNLBServiceHealthcheckRetries,

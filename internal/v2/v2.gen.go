@@ -562,9 +562,6 @@ type ClientInterface interface {
 
 	UpdateSksCluster(ctx context.Context, id string, body UpdateSksClusterJSONRequestBody) (*http.Response, error)
 
-	// ListSksClusterNodepools request
-	ListSksClusterNodepools(ctx context.Context, id string) (*http.Response, error)
-
 	// CreateSksNodepool request  with any body
 	CreateSksNodepoolWithBody(ctx context.Context, id string, contentType string, body io.Reader) (*http.Response, error)
 
@@ -573,8 +570,8 @@ type ClientInterface interface {
 	// DeleteSksNodepool request
 	DeleteSksNodepool(ctx context.Context, id string, sksNodepoolId string) (*http.Response, error)
 
-	// GetSksClusterNodepool request
-	GetSksClusterNodepool(ctx context.Context, id string, sksNodepoolId string) (*http.Response, error)
+	// GetSksNodepool request
+	GetSksNodepool(ctx context.Context, id string, sksNodepoolId string) (*http.Response, error)
 
 	// UpdateSksNodepool request  with any body
 	UpdateSksNodepoolWithBody(ctx context.Context, id string, sksNodepoolId string, contentType string, body io.Reader) (*http.Response, error)
@@ -1201,21 +1198,6 @@ func (c *Client) UpdateSksCluster(ctx context.Context, id string, body UpdateSks
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListSksClusterNodepools(ctx context.Context, id string) (*http.Response, error) {
-	req, err := NewListSksClusterNodepoolsRequest(c.Server, id)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) CreateSksNodepoolWithBody(ctx context.Context, id string, contentType string, body io.Reader) (*http.Response, error) {
 	req, err := NewCreateSksNodepoolRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
@@ -1261,8 +1243,8 @@ func (c *Client) DeleteSksNodepool(ctx context.Context, id string, sksNodepoolId
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSksClusterNodepool(ctx context.Context, id string, sksNodepoolId string) (*http.Response, error) {
-	req, err := NewGetSksClusterNodepoolRequest(c.Server, id, sksNodepoolId)
+func (c *Client) GetSksNodepool(ctx context.Context, id string, sksNodepoolId string) (*http.Response, error) {
+	req, err := NewGetSksNodepoolRequest(c.Server, id, sksNodepoolId)
 	if err != nil {
 		return nil, err
 	}
@@ -2591,40 +2573,6 @@ func NewUpdateSksClusterRequestWithBody(server string, id string, contentType st
 	return req, nil
 }
 
-// NewListSksClusterNodepoolsRequest generates requests for ListSksClusterNodepools
-func NewListSksClusterNodepoolsRequest(server string, id string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
-	if err != nil {
-		return nil, err
-	}
-
-	queryUrl, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	basePath := fmt.Sprintf("/sks-cluster/%s/nodepool", pathParam0)
-	if basePath[0] == '/' {
-		basePath = basePath[1:]
-	}
-
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryUrl.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewCreateSksNodepoolRequest calls the generic CreateSksNodepool builder with application/json body
 func NewCreateSksNodepoolRequest(server string, id string, body CreateSksNodepoolJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -2712,8 +2660,8 @@ func NewDeleteSksNodepoolRequest(server string, id string, sksNodepoolId string)
 	return req, nil
 }
 
-// NewGetSksClusterNodepoolRequest generates requests for GetSksClusterNodepool
-func NewGetSksClusterNodepoolRequest(server string, id string, sksNodepoolId string) (*http.Request, error) {
+// NewGetSksNodepoolRequest generates requests for GetSksNodepool
+func NewGetSksNodepoolRequest(server string, id string, sksNodepoolId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -3320,9 +3268,6 @@ type ClientWithResponsesInterface interface {
 
 	UpdateSksClusterWithResponse(ctx context.Context, id string, body UpdateSksClusterJSONRequestBody) (*UpdateSksClusterResponse, error)
 
-	// ListSksClusterNodepools request
-	ListSksClusterNodepoolsWithResponse(ctx context.Context, id string) (*ListSksClusterNodepoolsResponse, error)
-
 	// CreateSksNodepool request  with any body
 	CreateSksNodepoolWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*CreateSksNodepoolResponse, error)
 
@@ -3331,8 +3276,8 @@ type ClientWithResponsesInterface interface {
 	// DeleteSksNodepool request
 	DeleteSksNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string) (*DeleteSksNodepoolResponse, error)
 
-	// GetSksClusterNodepool request
-	GetSksClusterNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string) (*GetSksClusterNodepoolResponse, error)
+	// GetSksNodepool request
+	GetSksNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string) (*GetSksNodepoolResponse, error)
 
 	// UpdateSksNodepool request  with any body
 	UpdateSksNodepoolWithBodyWithResponse(ctx context.Context, id string, sksNodepoolId string, contentType string, body io.Reader) (*UpdateSksNodepoolResponse, error)
@@ -4000,30 +3945,6 @@ func (r UpdateSksClusterResponse) StatusCode() int {
 	return 0
 }
 
-type ListSksClusterNodepoolsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *struct {
-		SksNodepools *[]SksNodepool `json:"sks-nodepools,omitempty"`
-	}
-}
-
-// Status returns HTTPResponse.Status
-func (r ListSksClusterNodepoolsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ListSksClusterNodepoolsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type CreateSksNodepoolResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4068,14 +3989,14 @@ func (r DeleteSksNodepoolResponse) StatusCode() int {
 	return 0
 }
 
-type GetSksClusterNodepoolResponse struct {
+type GetSksNodepoolResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SksNodepool
 }
 
 // Status returns HTTPResponse.Status
-func (r GetSksClusterNodepoolResponse) Status() string {
+func (r GetSksNodepoolResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -4083,7 +4004,7 @@ func (r GetSksClusterNodepoolResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetSksClusterNodepoolResponse) StatusCode() int {
+func (r GetSksNodepoolResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4678,15 +4599,6 @@ func (c *ClientWithResponses) UpdateSksClusterWithResponse(ctx context.Context, 
 	return ParseUpdateSksClusterResponse(rsp)
 }
 
-// ListSksClusterNodepoolsWithResponse request returning *ListSksClusterNodepoolsResponse
-func (c *ClientWithResponses) ListSksClusterNodepoolsWithResponse(ctx context.Context, id string) (*ListSksClusterNodepoolsResponse, error) {
-	rsp, err := c.ListSksClusterNodepools(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return ParseListSksClusterNodepoolsResponse(rsp)
-}
-
 // CreateSksNodepoolWithBodyWithResponse request with arbitrary body returning *CreateSksNodepoolResponse
 func (c *ClientWithResponses) CreateSksNodepoolWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*CreateSksNodepoolResponse, error) {
 	rsp, err := c.CreateSksNodepoolWithBody(ctx, id, contentType, body)
@@ -4713,13 +4625,13 @@ func (c *ClientWithResponses) DeleteSksNodepoolWithResponse(ctx context.Context,
 	return ParseDeleteSksNodepoolResponse(rsp)
 }
 
-// GetSksClusterNodepoolWithResponse request returning *GetSksClusterNodepoolResponse
-func (c *ClientWithResponses) GetSksClusterNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string) (*GetSksClusterNodepoolResponse, error) {
-	rsp, err := c.GetSksClusterNodepool(ctx, id, sksNodepoolId)
+// GetSksNodepoolWithResponse request returning *GetSksNodepoolResponse
+func (c *ClientWithResponses) GetSksNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string) (*GetSksNodepoolResponse, error) {
+	rsp, err := c.GetSksNodepool(ctx, id, sksNodepoolId)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetSksClusterNodepoolResponse(rsp)
+	return ParseGetSksNodepoolResponse(rsp)
 }
 
 // UpdateSksNodepoolWithBodyWithResponse request with arbitrary body returning *UpdateSksNodepoolResponse
@@ -5583,34 +5495,6 @@ func ParseUpdateSksClusterResponse(rsp *http.Response) (*UpdateSksClusterRespons
 	return response, nil
 }
 
-// ParseListSksClusterNodepoolsResponse parses an HTTP response from a ListSksClusterNodepoolsWithResponse call
-func ParseListSksClusterNodepoolsResponse(rsp *http.Response) (*ListSksClusterNodepoolsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ListSksClusterNodepoolsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			SksNodepools *[]SksNodepool `json:"sks-nodepools,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseCreateSksNodepoolResponse parses an HTTP response from a CreateSksNodepoolWithResponse call
 func ParseCreateSksNodepoolResponse(rsp *http.Response) (*CreateSksNodepoolResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -5663,15 +5547,15 @@ func ParseDeleteSksNodepoolResponse(rsp *http.Response) (*DeleteSksNodepoolRespo
 	return response, nil
 }
 
-// ParseGetSksClusterNodepoolResponse parses an HTTP response from a GetSksClusterNodepoolWithResponse call
-func ParseGetSksClusterNodepoolResponse(rsp *http.Response) (*GetSksClusterNodepoolResponse, error) {
+// ParseGetSksNodepoolResponse parses an HTTP response from a GetSksNodepoolWithResponse call
+func ParseGetSksNodepoolResponse(rsp *http.Response) (*GetSksNodepoolResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSksClusterNodepoolResponse{
+	response := &GetSksNodepoolResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

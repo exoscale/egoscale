@@ -364,7 +364,7 @@ func (c *Client) GetNetworkLoadBalancer(ctx context.Context, zone, id string) (*
 }
 
 // UpdateNetworkLoadBalancer updates the specified Network Load Balancer instance in the specified zone.
-func (c *Client) UpdateNetworkLoadBalancer(ctx context.Context, zone string,
+func (c *Client) UpdateNetworkLoadBalancer(ctx context.Context, zone string, // nolint:dupl
 	nlb *NetworkLoadBalancer) (*NetworkLoadBalancer, error) {
 	resp, err := c.v2.UpdateLoadBalancerWithResponse(
 		apiv2.WithZone(ctx, zone),

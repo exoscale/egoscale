@@ -16,7 +16,6 @@ import (
 const iso8601Format = "2006-01-02T15:04:05Z"
 
 var (
-	testZone                                         = "ch-gva-2"
 	testNLBID                                        = "9381ab81-59ea-4215-a5a5-781db2fabfe9"
 	testNLBName                                      = "test-nlb-name"
 	testNLBDescription                               = "test-nlb-description"

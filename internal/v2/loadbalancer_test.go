@@ -140,6 +140,39 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 		testServiceHealthcheckStatusInstanceIP       = "5.6.7.8"
 		testServiceHealthcheckStatusStatus           = "success"
 
+		lb = LoadBalancer{
+			CreatedAt:   &testCreatedAt,
+			Description: &testDescription,
+			Id:          &testID,
+			Ip:          &testIP,
+			Name:        testName,
+			State:       &testState,
+			Services: &[]LoadBalancerService{{
+				Description:  &testServiceDescription,
+				Id:           &testServiceID,
+				InstancePool: Resource{Id: &testServiceInstancePoolID},
+				Name:         testServiceName,
+				Port:         testServicePort,
+				Protocol:     testServiceProtocol,
+				State:        &testServiceState,
+				Strategy:     testServiceStrategy,
+				TargetPort:   testServiceTargetPort,
+				Healthcheck: Healthcheck{
+					Interval: &testServiceHealthcheckInterval,
+					Mode:     testServiceHealthcheckMode,
+					Port:     testServiceHealthcheckPort,
+					Retries:  &testServiceHealthcheckRetries,
+					Timeout:  &testServiceHealthcheckTimeout,
+					Uri:      &testServiceHealthcheckURI,
+					TlsSni:   &testServiceHealthcheckTLSSNI,
+				},
+				HealthcheckStatus: &[]LoadBalancerServerStatus{{
+					PublicIp: &testServiceHealthcheckStatusInstanceIP,
+					Status:   &testServiceHealthcheckStatusStatus,
+				}},
+			}},
+		}
+
 		expected = []byte(`{` +
 			`"created-at":"` + testCreatedAt.Format(iso8601Format) + `",` +
 			`"description":"` + testDescription + `",` +
@@ -178,38 +211,6 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 			`}`)
 	)
 
-	lb := LoadBalancer{
-		CreatedAt:   &testCreatedAt,
-		Description: &testDescription,
-		Id:          &testID,
-		Ip:          &testIP,
-		Name:        testName,
-		State:       &testState,
-		Services: &[]LoadBalancerService{{
-			Description:  &testServiceDescription,
-			Id:           &testServiceID,
-			InstancePool: Resource{Id: &testServiceInstancePoolID},
-			Name:         testServiceName,
-			Port:         testServicePort,
-			Protocol:     testServiceProtocol,
-			State:        &testServiceState,
-			Strategy:     testServiceStrategy,
-			TargetPort:   testServiceTargetPort,
-			Healthcheck: Healthcheck{
-				Interval: &testServiceHealthcheckInterval,
-				Mode:     testServiceHealthcheckMode,
-				Port:     testServiceHealthcheckPort,
-				Retries:  &testServiceHealthcheckRetries,
-				Timeout:  &testServiceHealthcheckTimeout,
-				Uri:      &testServiceHealthcheckURI,
-				TlsSni:   &testServiceHealthcheckTLSSNI,
-			},
-			HealthcheckStatus: &[]LoadBalancerServerStatus{{
-				PublicIp: &testServiceHealthcheckStatusInstanceIP,
-				Status:   &testServiceHealthcheckStatusStatus,
-			}},
-		}},
-	}
 	actual, err := json.Marshal(lb)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)

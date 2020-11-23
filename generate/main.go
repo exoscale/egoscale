@@ -39,10 +39,12 @@ var ignoredFields = []string{
 	"policyid",
 }
 
-var source = flag.String("apis", "listApis.json", "listApis response in JSON")
-var cmd = flag.String("cmd", "", "command name (e.g. listZones)")
-var rtype = flag.String("type", "", "command return type name (e.g. Zone)")
-var interfaces = flag.String("interface", "", "interface(s) to be filled")
+var (
+	source     = flag.String("apis", "listApis.json", "listApis response in JSON")
+	cmd        = flag.String("cmd", "", "command name (e.g. listZones)")
+	rtype      = flag.String("type", "", "command return type name (e.g. Zone)")
+	interfaces = flag.String("interface", "", "interface(s) to be filled")
+)
 
 var apiTypes = map[string]string{
 	"short":   "int16",
@@ -464,9 +466,6 @@ func checkSource(source, cmd, rtype string) {
 					}
 				}
 				command.Check(a)
-				// too much information
-				//} else {
-				//fmt.Fprintf(os.Stderr, "command %q is missing\n", name)
 			}
 		}
 	}
@@ -564,7 +563,6 @@ func generateInterface(interfaces, typeName string) {
 			Type:    typeName,
 			Key:     keyName,
 		})
-
 		if err != nil {
 			fmt.Printf("Error: %s\n", err)
 		}

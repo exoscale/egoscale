@@ -305,35 +305,35 @@ func (c *Client) GetSKSCluster(ctx context.Context, zone, id string) (*SKSCluste
 }
 
 // UpdateSKSCluster updates the specified SKS cluster in the specified zone.
-func (c *Client) UpdateSKSCluster(ctx context.Context, zone string, nlb *SKSCluster) (*SKSCluster, error) { // nolint:dupl
+func (c *Client) UpdateSKSCluster(ctx context.Context, zone string, cluster *SKSCluster) error {
 	resp, err := c.v2.UpdateSksClusterWithResponse(
 		apiv2.WithZone(ctx, zone),
-		nlb.ID,
+		cluster.ID,
 		v2.UpdateSksClusterJSONRequestBody{
-			Name:        &nlb.Name,
-			Description: &nlb.Description,
+			Name:        &cluster.Name,
+			Description: &cluster.Description,
 		})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if resp.StatusCode() != http.StatusOK {
 		switch resp.StatusCode() {
 		case http.StatusNotFound:
-			return nil, ErrNotFound
+			return ErrNotFound
 
 		default:
-			return nil, fmt.Errorf("unexpected response from API: %s", resp.Status())
+			return fmt.Errorf("unexpected response from API: %s", resp.Status())
 		}
 	}
 
-	res, err := v2.NewPoller().
+	_, err = v2.NewPoller().
 		WithTimeout(c.Timeout).
 		Poll(ctx, c.v2.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return c.GetSKSCluster(ctx, zone, *res.(*v2.Reference).Id)
+	return nil
 }
 
 // DeleteSKSCluster deletes the specified SKS cluster in the specified zone.

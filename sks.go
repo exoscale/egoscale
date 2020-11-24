@@ -68,8 +68,8 @@ func sksClusterFromAPI(c *v2.SksCluster) *SKSCluster {
 		Nodepools: func() []*SKSNodepool {
 			nodepools := make([]*SKSNodepool, 0)
 
-			if c.SksNodepools != nil {
-				for _, n := range *c.SksNodepools {
+			if c.Nodepools != nil {
+				for _, n := range *c.Nodepools {
 					n := n
 					nodepools = append(nodepools, sksNodepoolFromAPI(&n))
 				}
@@ -95,9 +95,9 @@ func (c *SKSCluster) RequestKubeconfig(user string, groups []string, d time.Dura
 		apiv2.WithZone(context.Background(), c.zone),
 		c.ID,
 		v2.GenerateSksClusterKubeconfigJSONRequestBody{
-			User:  &user,
-			Roles: &groups,
-			Ttl:   &ttl,
+			User:   &user,
+			Groups: &groups,
+			Ttl:    &ttl,
 		})
 	if err != nil {
 		return "", err

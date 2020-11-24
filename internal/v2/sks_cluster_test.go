@@ -37,7 +37,7 @@ func TestSksCluster_UnmarshalJSON(t *testing.T) {
 			Endpoint:    &testEndpoint,
 			Id:          &testID,
 			Name:        &testName,
-			SksNodepools: &[]SksNodepool{{
+			Nodepools: &[]SksNodepool{{
 				CreatedAt:    &testNodepoolCreatedAt,
 				Description:  &testNodepoolDescription,
 				DiskSize:     &testNodepoolDiskSize,
@@ -63,7 +63,7 @@ func TestSksCluster_UnmarshalJSON(t *testing.T) {
   "endpoint": "` + testEndpoint + `",
   "id": "` + testID + `",
   "name": "` + testName + `",
-  "sks-nodepools": [{
+  "nodepools": [{
     "created-at": "` + testNodepoolCreatedAt.Format(iso8601Format) + `",
     "description": "` + testNodepoolDescription + `",
     "disk-size": ` + fmt.Sprint(testNodepoolDiskSize) + `,
@@ -113,7 +113,7 @@ func TestSksCluster_MarshalJSON(t *testing.T) {
 			Endpoint:    &testEndpoint,
 			Id:          &testID,
 			Name:        &testName,
-			SksNodepools: &[]SksNodepool{{
+			Nodepools: &[]SksNodepool{{
 				CreatedAt:    &testNodepoolCreatedAt,
 				Description:  &testNodepoolDescription,
 				DiskSize:     &testNodepoolDiskSize,
@@ -137,7 +137,7 @@ func TestSksCluster_MarshalJSON(t *testing.T) {
 			`"endpoint":"` + testEndpoint + `",` +
 			`"id":"` + testID + `",` +
 			`"name":"` + testName + `",` +
-			`"sks-nodepools":[{` +
+			`"nodepools":[{` +
 			`"created-at":"` + testNodepoolCreatedAt.Format(iso8601Format) + `",` +
 			`"description":"` + testNodepoolDescription + `",` +
 			`"disk-size":` + fmt.Sprint(testNodepoolDiskSize) + `,` +

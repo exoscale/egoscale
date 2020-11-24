@@ -192,7 +192,7 @@ func TestClient_ListSKSClusters(t *testing.T) {
 					Endpoint:    &testSKSClusterEndpoint,
 					Id:          &testSKSClusterID,
 					Name:        &testSKSClusterName,
-					SksNodepools: &[]v2.SksNodepool{{
+					Nodepools: &[]v2.SksNodepool{{
 						CreatedAt:    &testSKSNodepoolCreatedAt,
 						Description:  &testSKSNodepoolDescription,
 						DiskSize:     &testSKSNodepoolDiskSize,

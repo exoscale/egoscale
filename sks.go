@@ -103,13 +103,7 @@ func (c *SKSCluster) RequestKubeconfig(user string, groups []string, d time.Dura
 		return "", err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		switch resp.StatusCode() {
-		case http.StatusNotFound:
-			return "", ErrNotFound
-
-		default:
-			return "", fmt.Errorf("unexpected response from API: %s", resp.Status())
-		}
+		return "", fmt.Errorf("unexpected response from API: %s", resp.Status())
 	}
 
 	return optionalString(resp.JSON200.Kubeconfig), nil
@@ -198,6 +192,9 @@ func (c *SKSCluster) ScaleNodepool(ctx context.Context, np *SKSNodepool, nodes i
 	if err != nil {
 		return err
 	}
+	if resp.StatusCode() != http.StatusOK {
+		return fmt.Errorf("unexpected response from API: %s", resp.Status())
+	}
 
 	_, err = v2.NewPoller().
 		WithTimeout(c.c.Timeout).
@@ -228,6 +225,9 @@ func (c *SKSCluster) EvictNodepoolMembers(ctx context.Context, np *SKSNodepool, 
 	if err != nil {
 		return err
 	}
+	if resp.StatusCode() != http.StatusOK {
+		return fmt.Errorf("unexpected response from API: %s", resp.Status())
+	}
 
 	_, err = v2.NewPoller().
 		WithTimeout(c.c.Timeout).
@@ -248,6 +248,9 @@ func (c *SKSCluster) DeleteNodepool(ctx context.Context, np *SKSNodepool) error 
 	)
 	if err != nil {
 		return err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return fmt.Errorf("unexpected response from API: %s", resp.Status())
 	}
 
 	_, err = v2.NewPoller().

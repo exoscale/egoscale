@@ -89,7 +89,6 @@ func (c *SKSCluster) RequestKubeconfig(user string, groups []string, d time.Dura
 	if user == "" {
 		return "", errors.New("user not specified")
 	}
-	ttl := int64(d.Seconds())
 
 	resp, err := c.c.v2.GenerateSksClusterKubeconfigWithResponse(
 		apiv2.WithZone(context.Background(), c.zone),
@@ -97,7 +96,13 @@ func (c *SKSCluster) RequestKubeconfig(user string, groups []string, d time.Dura
 		v2.GenerateSksClusterKubeconfigJSONRequestBody{
 			User:   &user,
 			Groups: &groups,
-			Ttl:    &ttl,
+			Ttl: func() *int64 {
+				ttl := int64(d.Seconds())
+				if ttl > 0 {
+					return &ttl
+				}
+				return nil
+			}(),
 		})
 	if err != nil {
 		return "", err

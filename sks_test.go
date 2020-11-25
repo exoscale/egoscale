@@ -68,7 +68,7 @@ func TestSKSCluster_RequestKubeconfig(t *testing.T) {
 			return resp, nil
 		})
 
-	actual, err := cluster.RequestKubeconfig(testRequestUser, testRequestGroups, time.Hour)
+	actual, err := cluster.RequestKubeconfig(context.Background(), testRequestUser, testRequestGroups, time.Hour)
 	require.NoError(t, err)
 	require.Equal(t, testKubeconfig, actual)
 }

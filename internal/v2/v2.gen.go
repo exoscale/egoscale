@@ -98,6 +98,16 @@ type Operation struct {
 	State     *string    `json:"state,omitempty"`
 }
 
+// PrivateNetwork defines model for private-network.
+type PrivateNetwork struct {
+	Description *string `json:"description,omitempty"`
+	EndIp       *string `json:"end-ip,omitempty"`
+	Id          *string `json:"id,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Netmask     *string `json:"netmask,omitempty"`
+	StartIp     *string `json:"start-ip,omitempty"`
+}
+
 // Reference defines model for reference.
 type Reference struct {
 	Command *string `json:"command,omitempty"`
@@ -143,21 +153,21 @@ type SecurityGroupRule struct {
 
 // SksCluster defines model for sks-cluster.
 type SksCluster struct {
-	CreatedAt    *time.Time     `json:"created-at,omitempty"`
-	Description  *string        `json:"description,omitempty"`
-	Endpoint     *string        `json:"endpoint,omitempty"`
-	Id           *string        `json:"id,omitempty"`
-	Name         *string        `json:"name,omitempty"`
-	SksNodepools *[]SksNodepool `json:"sks-nodepools,omitempty"`
-	State        *string        `json:"state,omitempty"`
-	Version      *string        `json:"version,omitempty"`
+	CreatedAt   *time.Time     `json:"created-at,omitempty"`
+	Description *string        `json:"description,omitempty"`
+	Endpoint    *string        `json:"endpoint,omitempty"`
+	Id          *string        `json:"id,omitempty"`
+	Name        *string        `json:"name,omitempty"`
+	Nodepools   *[]SksNodepool `json:"nodepools,omitempty"`
+	State       *string        `json:"state,omitempty"`
+	Version     *string        `json:"version,omitempty"`
 }
 
 // SksKubeconfigRequest defines model for sks-kubeconfig-request.
 type SksKubeconfigRequest struct {
-	Roles *[]string `json:"roles,omitempty"`
-	Ttl   *int64    `json:"ttl,omitempty"`
-	User  *string   `json:"user,omitempty"`
+	Groups *[]string `json:"groups,omitempty"`
+	Ttl    *int64    `json:"ttl,omitempty"`
+	User   *string   `json:"user,omitempty"`
 }
 
 // SksNodepool defines model for sks-nodepool.
@@ -254,6 +264,12 @@ type UpdateLoadBalancerServiceJSONBody struct {
 	TargetPort  *int64       `json:"target-port,omitempty"`
 }
 
+// CreatePrivateNetworkJSONBody defines parameters for CreatePrivateNetwork.
+type CreatePrivateNetworkJSONBody PrivateNetwork
+
+// UpdatePrivateNetworkJSONBody defines parameters for UpdatePrivateNetwork.
+type UpdatePrivateNetworkJSONBody PrivateNetwork
+
 // CreateSecurityGroupJSONBody defines parameters for CreateSecurityGroup.
 type CreateSecurityGroupJSONBody SecurityGroup
 
@@ -274,6 +290,9 @@ type CreateSksNodepoolJSONBody SksNodepool
 
 // UpdateSksNodepoolJSONBody defines parameters for UpdateSksNodepool.
 type UpdateSksNodepoolJSONBody SksNodepool
+
+// EvictSksNodepoolMembersJSONBody defines parameters for EvictSksNodepoolMembers.
+type EvictSksNodepoolMembersJSONBody []Instance
 
 // ScaleSksNodepoolJSONBody defines parameters for ScaleSksNodepool.
 type ScaleSksNodepoolJSONBody SksNodepool
@@ -305,6 +324,12 @@ type AddServiceToLoadBalancerJSONRequestBody AddServiceToLoadBalancerJSONBody
 // UpdateLoadBalancerServiceRequestBody defines body for UpdateLoadBalancerService for application/json ContentType.
 type UpdateLoadBalancerServiceJSONRequestBody UpdateLoadBalancerServiceJSONBody
 
+// CreatePrivateNetworkRequestBody defines body for CreatePrivateNetwork for application/json ContentType.
+type CreatePrivateNetworkJSONRequestBody CreatePrivateNetworkJSONBody
+
+// UpdatePrivateNetworkRequestBody defines body for UpdatePrivateNetwork for application/json ContentType.
+type UpdatePrivateNetworkJSONRequestBody UpdatePrivateNetworkJSONBody
+
 // CreateSecurityGroupRequestBody defines body for CreateSecurityGroup for application/json ContentType.
 type CreateSecurityGroupJSONRequestBody CreateSecurityGroupJSONBody
 
@@ -325,6 +350,9 @@ type CreateSksNodepoolJSONRequestBody CreateSksNodepoolJSONBody
 
 // UpdateSksNodepoolRequestBody defines body for UpdateSksNodepool for application/json ContentType.
 type UpdateSksNodepoolJSONRequestBody UpdateSksNodepoolJSONBody
+
+// EvictSksNodepoolMembersRequestBody defines body for EvictSksNodepoolMembers for application/json ContentType.
+type EvictSksNodepoolMembersJSONRequestBody EvictSksNodepoolMembersJSONBody
 
 // ScaleSksNodepoolRequestBody defines body for ScaleSksNodepool for application/json ContentType.
 type ScaleSksNodepoolJSONRequestBody ScaleSksNodepoolJSONBody
@@ -516,6 +544,25 @@ type ClientInterface interface {
 	// GetOperation request
 	GetOperation(ctx context.Context, id string) (*http.Response, error)
 
+	// ListPrivateNetworks request
+	ListPrivateNetworks(ctx context.Context) (*http.Response, error)
+
+	// CreatePrivateNetwork request  with any body
+	CreatePrivateNetworkWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	CreatePrivateNetwork(ctx context.Context, body CreatePrivateNetworkJSONRequestBody) (*http.Response, error)
+
+	// DeletePrivateNetwork request
+	DeletePrivateNetwork(ctx context.Context, id string) (*http.Response, error)
+
+	// GetPrivateNetwork request
+	GetPrivateNetwork(ctx context.Context, id string) (*http.Response, error)
+
+	// UpdatePrivateNetwork request  with any body
+	UpdatePrivateNetworkWithBody(ctx context.Context, id string, contentType string, body io.Reader) (*http.Response, error)
+
+	UpdatePrivateNetwork(ctx context.Context, id string, body UpdatePrivateNetworkJSONRequestBody) (*http.Response, error)
+
 	// ListSecurityGroups request
 	ListSecurityGroups(ctx context.Context) (*http.Response, error)
 
@@ -562,9 +609,6 @@ type ClientInterface interface {
 
 	UpdateSksCluster(ctx context.Context, id string, body UpdateSksClusterJSONRequestBody) (*http.Response, error)
 
-	// ListSksClusterNodepools request
-	ListSksClusterNodepools(ctx context.Context, id string) (*http.Response, error)
-
 	// CreateSksNodepool request  with any body
 	CreateSksNodepoolWithBody(ctx context.Context, id string, contentType string, body io.Reader) (*http.Response, error)
 
@@ -573,13 +617,18 @@ type ClientInterface interface {
 	// DeleteSksNodepool request
 	DeleteSksNodepool(ctx context.Context, id string, sksNodepoolId string) (*http.Response, error)
 
-	// GetSksClusterNodepool request
-	GetSksClusterNodepool(ctx context.Context, id string, sksNodepoolId string) (*http.Response, error)
+	// GetSksNodepool request
+	GetSksNodepool(ctx context.Context, id string, sksNodepoolId string) (*http.Response, error)
 
 	// UpdateSksNodepool request  with any body
 	UpdateSksNodepoolWithBody(ctx context.Context, id string, sksNodepoolId string, contentType string, body io.Reader) (*http.Response, error)
 
 	UpdateSksNodepool(ctx context.Context, id string, sksNodepoolId string, body UpdateSksNodepoolJSONRequestBody) (*http.Response, error)
+
+	// EvictSksNodepoolMembers request  with any body
+	EvictSksNodepoolMembersWithBody(ctx context.Context, id string, sksNodepoolId string, contentType string, body io.Reader) (*http.Response, error)
+
+	EvictSksNodepoolMembers(ctx context.Context, id string, sksNodepoolId string, body EvictSksNodepoolMembersJSONRequestBody) (*http.Response, error)
 
 	// ScaleSksNodepool request  with any body
 	ScaleSksNodepoolWithBody(ctx context.Context, id string, sksNodepoolId string, contentType string, body io.Reader) (*http.Response, error)
@@ -946,6 +995,111 @@ func (c *Client) GetOperation(ctx context.Context, id string) (*http.Response, e
 	return c.Client.Do(req)
 }
 
+func (c *Client) ListPrivateNetworks(ctx context.Context) (*http.Response, error) {
+	req, err := NewListPrivateNetworksRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePrivateNetworkWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewCreatePrivateNetworkRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePrivateNetwork(ctx context.Context, body CreatePrivateNetworkJSONRequestBody) (*http.Response, error) {
+	req, err := NewCreatePrivateNetworkRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeletePrivateNetwork(ctx context.Context, id string) (*http.Response, error) {
+	req, err := NewDeletePrivateNetworkRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetPrivateNetwork(ctx context.Context, id string) (*http.Response, error) {
+	req, err := NewGetPrivateNetworkRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdatePrivateNetworkWithBody(ctx context.Context, id string, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewUpdatePrivateNetworkRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdatePrivateNetwork(ctx context.Context, id string, body UpdatePrivateNetworkJSONRequestBody) (*http.Response, error) {
+	req, err := NewUpdatePrivateNetworkRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) ListSecurityGroups(ctx context.Context) (*http.Response, error) {
 	req, err := NewListSecurityGroupsRequest(c.Server)
 	if err != nil {
@@ -1201,21 +1355,6 @@ func (c *Client) UpdateSksCluster(ctx context.Context, id string, body UpdateSks
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListSksClusterNodepools(ctx context.Context, id string) (*http.Response, error) {
-	req, err := NewListSksClusterNodepoolsRequest(c.Server, id)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) CreateSksNodepoolWithBody(ctx context.Context, id string, contentType string, body io.Reader) (*http.Response, error) {
 	req, err := NewCreateSksNodepoolRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
@@ -1261,8 +1400,8 @@ func (c *Client) DeleteSksNodepool(ctx context.Context, id string, sksNodepoolId
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSksClusterNodepool(ctx context.Context, id string, sksNodepoolId string) (*http.Response, error) {
-	req, err := NewGetSksClusterNodepoolRequest(c.Server, id, sksNodepoolId)
+func (c *Client) GetSksNodepool(ctx context.Context, id string, sksNodepoolId string) (*http.Response, error) {
+	req, err := NewGetSksNodepoolRequest(c.Server, id, sksNodepoolId)
 	if err != nil {
 		return nil, err
 	}
@@ -1293,6 +1432,36 @@ func (c *Client) UpdateSksNodepoolWithBody(ctx context.Context, id string, sksNo
 
 func (c *Client) UpdateSksNodepool(ctx context.Context, id string, sksNodepoolId string, body UpdateSksNodepoolJSONRequestBody) (*http.Response, error) {
 	req, err := NewUpdateSksNodepoolRequest(c.Server, id, sksNodepoolId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) EvictSksNodepoolMembersWithBody(ctx context.Context, id string, sksNodepoolId string, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewEvictSksNodepoolMembersRequestWithBody(c.Server, id, sksNodepoolId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) EvictSksNodepoolMembers(ctx context.Context, id string, sksNodepoolId string, body EvictSksNodepoolMembersJSONRequestBody) (*http.Response, error) {
+	req, err := NewEvictSksNodepoolMembersRequest(c.Server, id, sksNodepoolId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2144,6 +2313,186 @@ func NewGetOperationRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewListPrivateNetworksRequest generates requests for ListPrivateNetworks
+func NewListPrivateNetworksRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/private-network")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreatePrivateNetworkRequest calls the generic CreatePrivateNetwork builder with application/json body
+func NewCreatePrivateNetworkRequest(server string, body CreatePrivateNetworkJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreatePrivateNetworkRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreatePrivateNetworkRequestWithBody generates requests for CreatePrivateNetwork with any type of body
+func NewCreatePrivateNetworkRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/private-network")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// NewDeletePrivateNetworkRequest generates requests for DeletePrivateNetwork
+func NewDeletePrivateNetworkRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/private-network/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetPrivateNetworkRequest generates requests for GetPrivateNetwork
+func NewGetPrivateNetworkRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/private-network/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdatePrivateNetworkRequest calls the generic UpdatePrivateNetwork builder with application/json body
+func NewUpdatePrivateNetworkRequest(server string, id string, body UpdatePrivateNetworkJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdatePrivateNetworkRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdatePrivateNetworkRequestWithBody generates requests for UpdatePrivateNetwork with any type of body
+func NewUpdatePrivateNetworkRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/private-network/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
 // NewListSecurityGroupsRequest generates requests for ListSecurityGroups
 func NewListSecurityGroupsRequest(server string) (*http.Request, error) {
 	var err error
@@ -2591,40 +2940,6 @@ func NewUpdateSksClusterRequestWithBody(server string, id string, contentType st
 	return req, nil
 }
 
-// NewListSksClusterNodepoolsRequest generates requests for ListSksClusterNodepools
-func NewListSksClusterNodepoolsRequest(server string, id string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
-	if err != nil {
-		return nil, err
-	}
-
-	queryUrl, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	basePath := fmt.Sprintf("/sks-cluster/%s/nodepool", pathParam0)
-	if basePath[0] == '/' {
-		basePath = basePath[1:]
-	}
-
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryUrl.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewCreateSksNodepoolRequest calls the generic CreateSksNodepool builder with application/json body
 func NewCreateSksNodepoolRequest(server string, id string, body CreateSksNodepoolJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -2712,8 +3027,8 @@ func NewDeleteSksNodepoolRequest(server string, id string, sksNodepoolId string)
 	return req, nil
 }
 
-// NewGetSksClusterNodepoolRequest generates requests for GetSksClusterNodepool
-func NewGetSksClusterNodepoolRequest(server string, id string, sksNodepoolId string) (*http.Request, error) {
+// NewGetSksNodepoolRequest generates requests for GetSksNodepool
+func NewGetSksNodepoolRequest(server string, id string, sksNodepoolId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -2788,6 +3103,59 @@ func NewUpdateSksNodepoolRequestWithBody(server string, id string, sksNodepoolId
 	}
 
 	basePath := fmt.Sprintf("/sks-cluster/%s/nodepool/%s", pathParam0, pathParam1)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// NewEvictSksNodepoolMembersRequest calls the generic EvictSksNodepoolMembers builder with application/json body
+func NewEvictSksNodepoolMembersRequest(server string, id string, sksNodepoolId string, body EvictSksNodepoolMembersJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewEvictSksNodepoolMembersRequestWithBody(server, id, sksNodepoolId, "application/json", bodyReader)
+}
+
+// NewEvictSksNodepoolMembersRequestWithBody generates requests for EvictSksNodepoolMembers with any type of body
+func NewEvictSksNodepoolMembersRequestWithBody(server string, id string, sksNodepoolId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParam("simple", false, "sks-nodepool-id", sksNodepoolId)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/sks-cluster/%s/nodepool/%s:evict", pathParam0, pathParam1)
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -3274,6 +3642,25 @@ type ClientWithResponsesInterface interface {
 	// GetOperation request
 	GetOperationWithResponse(ctx context.Context, id string) (*GetOperationResponse, error)
 
+	// ListPrivateNetworks request
+	ListPrivateNetworksWithResponse(ctx context.Context) (*ListPrivateNetworksResponse, error)
+
+	// CreatePrivateNetwork request  with any body
+	CreatePrivateNetworkWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*CreatePrivateNetworkResponse, error)
+
+	CreatePrivateNetworkWithResponse(ctx context.Context, body CreatePrivateNetworkJSONRequestBody) (*CreatePrivateNetworkResponse, error)
+
+	// DeletePrivateNetwork request
+	DeletePrivateNetworkWithResponse(ctx context.Context, id string) (*DeletePrivateNetworkResponse, error)
+
+	// GetPrivateNetwork request
+	GetPrivateNetworkWithResponse(ctx context.Context, id string) (*GetPrivateNetworkResponse, error)
+
+	// UpdatePrivateNetwork request  with any body
+	UpdatePrivateNetworkWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*UpdatePrivateNetworkResponse, error)
+
+	UpdatePrivateNetworkWithResponse(ctx context.Context, id string, body UpdatePrivateNetworkJSONRequestBody) (*UpdatePrivateNetworkResponse, error)
+
 	// ListSecurityGroups request
 	ListSecurityGroupsWithResponse(ctx context.Context) (*ListSecurityGroupsResponse, error)
 
@@ -3320,9 +3707,6 @@ type ClientWithResponsesInterface interface {
 
 	UpdateSksClusterWithResponse(ctx context.Context, id string, body UpdateSksClusterJSONRequestBody) (*UpdateSksClusterResponse, error)
 
-	// ListSksClusterNodepools request
-	ListSksClusterNodepoolsWithResponse(ctx context.Context, id string) (*ListSksClusterNodepoolsResponse, error)
-
 	// CreateSksNodepool request  with any body
 	CreateSksNodepoolWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*CreateSksNodepoolResponse, error)
 
@@ -3331,13 +3715,18 @@ type ClientWithResponsesInterface interface {
 	// DeleteSksNodepool request
 	DeleteSksNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string) (*DeleteSksNodepoolResponse, error)
 
-	// GetSksClusterNodepool request
-	GetSksClusterNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string) (*GetSksClusterNodepoolResponse, error)
+	// GetSksNodepool request
+	GetSksNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string) (*GetSksNodepoolResponse, error)
 
 	// UpdateSksNodepool request  with any body
 	UpdateSksNodepoolWithBodyWithResponse(ctx context.Context, id string, sksNodepoolId string, contentType string, body io.Reader) (*UpdateSksNodepoolResponse, error)
 
 	UpdateSksNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string, body UpdateSksNodepoolJSONRequestBody) (*UpdateSksNodepoolResponse, error)
+
+	// EvictSksNodepoolMembers request  with any body
+	EvictSksNodepoolMembersWithBodyWithResponse(ctx context.Context, id string, sksNodepoolId string, contentType string, body io.Reader) (*EvictSksNodepoolMembersResponse, error)
+
+	EvictSksNodepoolMembersWithResponse(ctx context.Context, id string, sksNodepoolId string, body EvictSksNodepoolMembersJSONRequestBody) (*EvictSksNodepoolMembersResponse, error)
 
 	// ScaleSksNodepool request  with any body
 	ScaleSksNodepoolWithBodyWithResponse(ctx context.Context, id string, sksNodepoolId string, contentType string, body io.Reader) (*ScaleSksNodepoolResponse, error)
@@ -3730,6 +4119,118 @@ func (r GetOperationResponse) StatusCode() int {
 	return 0
 }
 
+type ListPrivateNetworksResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		PrivateNetworks *[]PrivateNetwork `json:"private-networks,omitempty"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPrivateNetworksResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPrivateNetworksResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreatePrivateNetworkResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePrivateNetworkResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePrivateNetworkResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeletePrivateNetworkResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r DeletePrivateNetworkResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeletePrivateNetworkResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetPrivateNetworkResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PrivateNetwork
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPrivateNetworkResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPrivateNetworkResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdatePrivateNetworkResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdatePrivateNetworkResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdatePrivateNetworkResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListSecurityGroupsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4000,30 +4501,6 @@ func (r UpdateSksClusterResponse) StatusCode() int {
 	return 0
 }
 
-type ListSksClusterNodepoolsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *struct {
-		SksNodepools *[]SksNodepool `json:"sks-nodepools,omitempty"`
-	}
-}
-
-// Status returns HTTPResponse.Status
-func (r ListSksClusterNodepoolsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ListSksClusterNodepoolsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type CreateSksNodepoolResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4068,14 +4545,14 @@ func (r DeleteSksNodepoolResponse) StatusCode() int {
 	return 0
 }
 
-type GetSksClusterNodepoolResponse struct {
+type GetSksNodepoolResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SksNodepool
 }
 
 // Status returns HTTPResponse.Status
-func (r GetSksClusterNodepoolResponse) Status() string {
+func (r GetSksNodepoolResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -4083,7 +4560,7 @@ func (r GetSksClusterNodepoolResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetSksClusterNodepoolResponse) StatusCode() int {
+func (r GetSksNodepoolResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4106,6 +4583,28 @@ func (r UpdateSksNodepoolResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateSksNodepoolResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type EvictSksNodepoolMembersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r EvictSksNodepoolMembersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r EvictSksNodepoolMembersResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4530,6 +5029,67 @@ func (c *ClientWithResponses) GetOperationWithResponse(ctx context.Context, id s
 	return ParseGetOperationResponse(rsp)
 }
 
+// ListPrivateNetworksWithResponse request returning *ListPrivateNetworksResponse
+func (c *ClientWithResponses) ListPrivateNetworksWithResponse(ctx context.Context) (*ListPrivateNetworksResponse, error) {
+	rsp, err := c.ListPrivateNetworks(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPrivateNetworksResponse(rsp)
+}
+
+// CreatePrivateNetworkWithBodyWithResponse request with arbitrary body returning *CreatePrivateNetworkResponse
+func (c *ClientWithResponses) CreatePrivateNetworkWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*CreatePrivateNetworkResponse, error) {
+	rsp, err := c.CreatePrivateNetworkWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePrivateNetworkResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreatePrivateNetworkWithResponse(ctx context.Context, body CreatePrivateNetworkJSONRequestBody) (*CreatePrivateNetworkResponse, error) {
+	rsp, err := c.CreatePrivateNetwork(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePrivateNetworkResponse(rsp)
+}
+
+// DeletePrivateNetworkWithResponse request returning *DeletePrivateNetworkResponse
+func (c *ClientWithResponses) DeletePrivateNetworkWithResponse(ctx context.Context, id string) (*DeletePrivateNetworkResponse, error) {
+	rsp, err := c.DeletePrivateNetwork(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeletePrivateNetworkResponse(rsp)
+}
+
+// GetPrivateNetworkWithResponse request returning *GetPrivateNetworkResponse
+func (c *ClientWithResponses) GetPrivateNetworkWithResponse(ctx context.Context, id string) (*GetPrivateNetworkResponse, error) {
+	rsp, err := c.GetPrivateNetwork(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPrivateNetworkResponse(rsp)
+}
+
+// UpdatePrivateNetworkWithBodyWithResponse request with arbitrary body returning *UpdatePrivateNetworkResponse
+func (c *ClientWithResponses) UpdatePrivateNetworkWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*UpdatePrivateNetworkResponse, error) {
+	rsp, err := c.UpdatePrivateNetworkWithBody(ctx, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdatePrivateNetworkResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdatePrivateNetworkWithResponse(ctx context.Context, id string, body UpdatePrivateNetworkJSONRequestBody) (*UpdatePrivateNetworkResponse, error) {
+	rsp, err := c.UpdatePrivateNetwork(ctx, id, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdatePrivateNetworkResponse(rsp)
+}
+
 // ListSecurityGroupsWithResponse request returning *ListSecurityGroupsResponse
 func (c *ClientWithResponses) ListSecurityGroupsWithResponse(ctx context.Context) (*ListSecurityGroupsResponse, error) {
 	rsp, err := c.ListSecurityGroups(ctx)
@@ -4678,15 +5238,6 @@ func (c *ClientWithResponses) UpdateSksClusterWithResponse(ctx context.Context, 
 	return ParseUpdateSksClusterResponse(rsp)
 }
 
-// ListSksClusterNodepoolsWithResponse request returning *ListSksClusterNodepoolsResponse
-func (c *ClientWithResponses) ListSksClusterNodepoolsWithResponse(ctx context.Context, id string) (*ListSksClusterNodepoolsResponse, error) {
-	rsp, err := c.ListSksClusterNodepools(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return ParseListSksClusterNodepoolsResponse(rsp)
-}
-
 // CreateSksNodepoolWithBodyWithResponse request with arbitrary body returning *CreateSksNodepoolResponse
 func (c *ClientWithResponses) CreateSksNodepoolWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader) (*CreateSksNodepoolResponse, error) {
 	rsp, err := c.CreateSksNodepoolWithBody(ctx, id, contentType, body)
@@ -4713,13 +5264,13 @@ func (c *ClientWithResponses) DeleteSksNodepoolWithResponse(ctx context.Context,
 	return ParseDeleteSksNodepoolResponse(rsp)
 }
 
-// GetSksClusterNodepoolWithResponse request returning *GetSksClusterNodepoolResponse
-func (c *ClientWithResponses) GetSksClusterNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string) (*GetSksClusterNodepoolResponse, error) {
-	rsp, err := c.GetSksClusterNodepool(ctx, id, sksNodepoolId)
+// GetSksNodepoolWithResponse request returning *GetSksNodepoolResponse
+func (c *ClientWithResponses) GetSksNodepoolWithResponse(ctx context.Context, id string, sksNodepoolId string) (*GetSksNodepoolResponse, error) {
+	rsp, err := c.GetSksNodepool(ctx, id, sksNodepoolId)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetSksClusterNodepoolResponse(rsp)
+	return ParseGetSksNodepoolResponse(rsp)
 }
 
 // UpdateSksNodepoolWithBodyWithResponse request with arbitrary body returning *UpdateSksNodepoolResponse
@@ -4737,6 +5288,23 @@ func (c *ClientWithResponses) UpdateSksNodepoolWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseUpdateSksNodepoolResponse(rsp)
+}
+
+// EvictSksNodepoolMembersWithBodyWithResponse request with arbitrary body returning *EvictSksNodepoolMembersResponse
+func (c *ClientWithResponses) EvictSksNodepoolMembersWithBodyWithResponse(ctx context.Context, id string, sksNodepoolId string, contentType string, body io.Reader) (*EvictSksNodepoolMembersResponse, error) {
+	rsp, err := c.EvictSksNodepoolMembersWithBody(ctx, id, sksNodepoolId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEvictSksNodepoolMembersResponse(rsp)
+}
+
+func (c *ClientWithResponses) EvictSksNodepoolMembersWithResponse(ctx context.Context, id string, sksNodepoolId string, body EvictSksNodepoolMembersJSONRequestBody) (*EvictSksNodepoolMembersResponse, error) {
+	rsp, err := c.EvictSksNodepoolMembers(ctx, id, sksNodepoolId, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEvictSksNodepoolMembersResponse(rsp)
 }
 
 // ScaleSksNodepoolWithBodyWithResponse request with arbitrary body returning *ScaleSksNodepoolResponse
@@ -5265,6 +5833,138 @@ func ParseGetOperationResponse(rsp *http.Response) (*GetOperationResponse, error
 	return response, nil
 }
 
+// ParseListPrivateNetworksResponse parses an HTTP response from a ListPrivateNetworksWithResponse call
+func ParseListPrivateNetworksResponse(rsp *http.Response) (*ListPrivateNetworksResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPrivateNetworksResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			PrivateNetworks *[]PrivateNetwork `json:"private-networks,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreatePrivateNetworkResponse parses an HTTP response from a CreatePrivateNetworkWithResponse call
+func ParseCreatePrivateNetworkResponse(rsp *http.Response) (*CreatePrivateNetworkResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePrivateNetworkResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeletePrivateNetworkResponse parses an HTTP response from a DeletePrivateNetworkWithResponse call
+func ParseDeletePrivateNetworkResponse(rsp *http.Response) (*DeletePrivateNetworkResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeletePrivateNetworkResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetPrivateNetworkResponse parses an HTTP response from a GetPrivateNetworkWithResponse call
+func ParseGetPrivateNetworkResponse(rsp *http.Response) (*GetPrivateNetworkResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPrivateNetworkResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivateNetwork
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdatePrivateNetworkResponse parses an HTTP response from a UpdatePrivateNetworkWithResponse call
+func ParseUpdatePrivateNetworkResponse(rsp *http.Response) (*UpdatePrivateNetworkResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdatePrivateNetworkResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListSecurityGroupsResponse parses an HTTP response from a ListSecurityGroupsWithResponse call
 func ParseListSecurityGroupsResponse(rsp *http.Response) (*ListSecurityGroupsResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -5583,34 +6283,6 @@ func ParseUpdateSksClusterResponse(rsp *http.Response) (*UpdateSksClusterRespons
 	return response, nil
 }
 
-// ParseListSksClusterNodepoolsResponse parses an HTTP response from a ListSksClusterNodepoolsWithResponse call
-func ParseListSksClusterNodepoolsResponse(rsp *http.Response) (*ListSksClusterNodepoolsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ListSksClusterNodepoolsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			SksNodepools *[]SksNodepool `json:"sks-nodepools,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseCreateSksNodepoolResponse parses an HTTP response from a CreateSksNodepoolWithResponse call
 func ParseCreateSksNodepoolResponse(rsp *http.Response) (*CreateSksNodepoolResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -5663,15 +6335,15 @@ func ParseDeleteSksNodepoolResponse(rsp *http.Response) (*DeleteSksNodepoolRespo
 	return response, nil
 }
 
-// ParseGetSksClusterNodepoolResponse parses an HTTP response from a GetSksClusterNodepoolWithResponse call
-func ParseGetSksClusterNodepoolResponse(rsp *http.Response) (*GetSksClusterNodepoolResponse, error) {
+// ParseGetSksNodepoolResponse parses an HTTP response from a GetSksNodepoolWithResponse call
+func ParseGetSksNodepoolResponse(rsp *http.Response) (*GetSksNodepoolResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSksClusterNodepoolResponse{
+	response := &GetSksNodepoolResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -5698,6 +6370,32 @@ func ParseUpdateSksNodepoolResponse(rsp *http.Response) (*UpdateSksNodepoolRespo
 	}
 
 	response := &UpdateSksNodepoolResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseEvictSksNodepoolMembersResponse parses an HTTP response from a EvictSksNodepoolMembersWithResponse call
+func ParseEvictSksNodepoolMembersResponse(rsp *http.Response) (*EvictSksNodepoolMembersResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &EvictSksNodepoolMembersResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

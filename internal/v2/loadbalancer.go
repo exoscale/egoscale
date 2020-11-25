@@ -10,7 +10,7 @@ import (
 // only supports RFC 3339 format.
 func (lb *LoadBalancer) UnmarshalJSON(data []byte) error {
 	raw := struct {
-		CreatedAt   string                 `json:"created-at,omitempty"`
+		CreatedAt   *string                `json:"created-at,omitempty"`
 		Description *string                `json:"description,omitempty"`
 		Id          *string                `json:"id,omitempty"` // nolint:golint
 		Ip          *string                `json:"ip,omitempty"` // nolint:golint
@@ -23,12 +23,14 @@ func (lb *LoadBalancer) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	createdAt, err := time.Parse(iso8601Format, raw.CreatedAt)
-	if err != nil {
-		return err
+	if raw.CreatedAt != nil {
+		createdAt, err := time.Parse(iso8601Format, *raw.CreatedAt)
+		if err != nil {
+			return err
+		}
+		lb.CreatedAt = &createdAt
 	}
 
-	lb.CreatedAt = &createdAt
 	lb.Description = raw.Description
 	lb.Id = raw.Id
 	lb.Ip = raw.Ip
@@ -43,7 +45,7 @@ func (lb *LoadBalancer) UnmarshalJSON(data []byte) error {
 // in the original timestamp (ISO 8601), since time.MarshalJSON() only supports RFC 3339 format.
 func (lb *LoadBalancer) MarshalJSON() ([]byte, error) {
 	raw := struct {
-		CreatedAt   string                 `json:"created-at,omitempty"`
+		CreatedAt   *string                `json:"created-at,omitempty"`
 		Description *string                `json:"description,omitempty"`
 		Id          *string                `json:"id,omitempty"` // nolint:golint
 		Ip          *string                `json:"ip,omitempty"` // nolint:golint
@@ -52,7 +54,11 @@ func (lb *LoadBalancer) MarshalJSON() ([]byte, error) {
 		State       *string                `json:"state,omitempty"`
 	}{}
 
-	raw.CreatedAt = lb.CreatedAt.Format(iso8601Format)
+	if lb.CreatedAt != nil {
+		createdAt := lb.CreatedAt.Format(iso8601Format)
+		raw.CreatedAt = &createdAt
+	}
+
 	raw.Description = lb.Description
 	raw.Id = lb.Id
 	raw.Ip = lb.Ip

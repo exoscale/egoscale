@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.35.0
+------
+
+- feature: add support for SKS resources (#453)
+
 0.34.0
 ------
 

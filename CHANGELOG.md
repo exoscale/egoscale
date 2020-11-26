@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.35.2
+------
+
+- Improve API v2 errors handling (#455)
+
 0.35.1
 ------
 

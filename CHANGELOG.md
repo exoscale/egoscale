@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.35.3
+------
+
+- Fix typo in version.go
+
 0.35.2
 ------
 

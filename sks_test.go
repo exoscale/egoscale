@@ -15,25 +15,25 @@ import (
 )
 
 var (
-	testSKSClusterCreatedAt, _          = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
-	testSKSClusterDescription           = "Test Cluster description"
-	testSKSClusterEndpoint              = "df421958-3679-4e9c-afb9-02fb6f331301.sks-ch-gva-2.exo.io"
-	testSKSClusterID                    = "df421958-3679-4e9c-afb9-02fb6f331301"
-	testSKSClusterName                  = "test-cluster"
-	testSKSClusterState                 = "running"
-	testSKSClusterVersion               = "1.18.6"
-	testSKSNodepoolCreatedAt, _         = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
-	testSKSNodepoolDescription          = "Test Nodepool description"
-	testSKSNodepoolDiskSize       int64 = 15
-	testSKSNodepoolID                   = "6d1eecee-397c-4e16-b103-2d1353bf4ecc"
-	testSKSNodepoolInstancePoolID       = "f1f67118-43b6-4632-a709-d55fada62f21"
-	testSKSNodepoolInstanceTypeID       = "21624abb-764e-4def-81d7-9fc54b5957fb"
-	testSKSNodepoolName                 = "test-nodepool"
-	testSKSNodepoolSize           int64 = 3
-	// testSKSNodepoolSecurityGroupID       = "efb4f4df-87ce-44e9-b5ee-59a9c1628edf" // TODO: the API doesn't return this field ATM
-	testSKSNodepoolState      = "running"
-	testSKSNodepoolTemplateID = "f270d9a2-db64-4e8e-9cd3-5125887e91aa"
-	testSKSNodepoolVersion    = "1.18.6"
+	testSKSClusterCreatedAt, _           = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
+	testSKSClusterDescription            = "Test Cluster description"
+	testSKSClusterEndpoint               = "df421958-3679-4e9c-afb9-02fb6f331301.sks-ch-gva-2.exo.io"
+	testSKSClusterID                     = "df421958-3679-4e9c-afb9-02fb6f331301"
+	testSKSClusterName                   = "test-cluster"
+	testSKSClusterState                  = "running"
+	testSKSClusterVersion                = "1.18.6"
+	testSKSNodepoolCreatedAt, _          = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
+	testSKSNodepoolDescription           = "Test Nodepool description"
+	testSKSNodepoolDiskSize        int64 = 15
+	testSKSNodepoolID                    = "6d1eecee-397c-4e16-b103-2d1353bf4ecc"
+	testSKSNodepoolInstancePoolID        = "f1f67118-43b6-4632-a709-d55fada62f21"
+	testSKSNodepoolInstanceTypeID        = "21624abb-764e-4def-81d7-9fc54b5957fb"
+	testSKSNodepoolName                  = "test-nodepool"
+	testSKSNodepoolSize            int64 = 3
+	testSKSNodepoolSecurityGroupID       = "efb4f4df-87ce-44e9-b5ee-59a9c1628edf"
+	testSKSNodepoolState                 = "running"
+	testSKSNodepoolTemplateID            = "f270d9a2-db64-4e8e-9cd3-5125887e91aa"
+	testSKSNodepoolVersion               = "1.18.6"
 )
 
 func TestSKSCluster_RequestKubeconfig(t *testing.T) {
@@ -115,18 +115,18 @@ func TestSKSCluster_AddNodepool(t *testing.T) {
 		testSKSClusterID, testSKSNodepoolID),
 		func(_ *http.Request) (*http.Response, error) {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.SksNodepool{
-				CreatedAt:    &testSKSNodepoolCreatedAt,
-				Description:  &testSKSNodepoolDescription,
-				DiskSize:     &testSKSNodepoolDiskSize,
-				Id:           &testSKSNodepoolID,
-				InstancePool: &v2.Resource{Id: &testSKSNodepoolInstancePoolID},
-				InstanceType: &v2.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
-				Name:         &testSKSNodepoolName,
-				// SecurityGroups: nil, // TODO: the API doesn't return this field ATM
-				Size:     &testSKSNodepoolSize,
-				State:    &testSKSNodepoolState,
-				Template: &v2.Template{Id: &testSKSNodepoolTemplateID},
-				Version:  &testSKSNodepoolVersion,
+				CreatedAt:      &testSKSNodepoolCreatedAt,
+				Description:    &testSKSNodepoolDescription,
+				DiskSize:       &testSKSNodepoolDiskSize,
+				Id:             &testSKSNodepoolID,
+				InstancePool:   &v2.Resource{Id: &testSKSNodepoolInstancePoolID},
+				InstanceType:   &v2.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
+				Name:           &testSKSNodepoolName,
+				SecurityGroups: &[]v2.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
+				Size:           &testSKSNodepoolSize,
+				State:          &testSKSNodepoolState,
+				Template:       &v2.Template{Id: &testSKSNodepoolTemplateID},
+				Version:        &testSKSNodepoolVersion,
 			})
 			if err != nil {
 				t.Fatalf("error initializing mock HTTP responder: %s", err)
@@ -142,18 +142,18 @@ func TestSKSCluster_AddNodepool(t *testing.T) {
 	}
 
 	expected := &SKSNodepool{
-		ID:             testSKSNodepoolID,
-		Name:           testSKSNodepoolName,
-		Description:    testSKSNodepoolDescription,
-		CreatedAt:      testSKSNodepoolCreatedAt,
-		InstancePoolID: testSKSNodepoolInstancePoolID,
-		InstanceTypeID: testSKSNodepoolInstanceTypeID,
-		TemplateID:     testSKSNodepoolTemplateID,
-		DiskSize:       testSKSNodepoolDiskSize,
-		// SecurityGroupIDs: nil, // TODO: the API doesn't return this field ATM
-		Version: testSKSNodepoolVersion,
-		Size:    testSKSNodepoolSize,
-		State:   testSKSNodepoolState,
+		ID:               testSKSNodepoolID,
+		Name:             testSKSNodepoolName,
+		Description:      testSKSNodepoolDescription,
+		CreatedAt:        testSKSNodepoolCreatedAt,
+		InstancePoolID:   testSKSNodepoolInstancePoolID,
+		InstanceTypeID:   testSKSNodepoolInstanceTypeID,
+		TemplateID:       testSKSNodepoolTemplateID,
+		DiskSize:         testSKSNodepoolDiskSize,
+		SecurityGroupIDs: []string{testSKSNodepoolSecurityGroupID},
+		Version:          testSKSNodepoolVersion,
+		Size:             testSKSNodepoolSize,
+		State:            testSKSNodepoolState,
 	}
 
 	actual, err := cluster.AddNodepool(context.Background(), expected)
@@ -511,18 +511,18 @@ func TestClient_ListSKSClusters(t *testing.T) {
 					Id:          &testSKSClusterID,
 					Name:        &testSKSClusterName,
 					Nodepools: &[]v2.SksNodepool{{
-						CreatedAt:    &testSKSNodepoolCreatedAt,
-						Description:  &testSKSNodepoolDescription,
-						DiskSize:     &testSKSNodepoolDiskSize,
-						Id:           &testSKSNodepoolID,
-						InstancePool: &v2.Resource{Id: &testSKSNodepoolInstancePoolID},
-						InstanceType: &v2.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
-						Name:         &testSKSNodepoolName,
-						// SecurityGroups: nil, // TODO: the API doesn't return this field ATM
-						Size:     &testSKSNodepoolSize,
-						State:    &testSKSNodepoolState,
-						Template: &v2.Template{Id: &testSKSNodepoolTemplateID},
-						Version:  &testSKSNodepoolVersion,
+						CreatedAt:      &testSKSNodepoolCreatedAt,
+						Description:    &testSKSNodepoolDescription,
+						DiskSize:       &testSKSNodepoolDiskSize,
+						Id:             &testSKSNodepoolID,
+						InstancePool:   &v2.Resource{Id: &testSKSNodepoolInstancePoolID},
+						InstanceType:   &v2.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
+						Name:           &testSKSNodepoolName,
+						SecurityGroups: &[]v2.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
+						Size:           &testSKSNodepoolSize,
+						State:          &testSKSNodepoolState,
+						Template:       &v2.Template{Id: &testSKSNodepoolTemplateID},
+						Version:        &testSKSNodepoolVersion,
 					}},
 					State:   &testSKSClusterState,
 					Version: &testSKSClusterVersion,
@@ -541,18 +541,18 @@ func TestClient_ListSKSClusters(t *testing.T) {
 		ID:          testSKSClusterID,
 		Name:        testSKSClusterName,
 		Nodepools: []*SKSNodepool{{
-			CreatedAt:      testSKSNodepoolCreatedAt,
-			Description:    testSKSNodepoolDescription,
-			DiskSize:       testSKSNodepoolDiskSize,
-			ID:             testSKSNodepoolID,
-			InstancePoolID: testSKSNodepoolInstancePoolID,
-			InstanceTypeID: testSKSNodepoolInstanceTypeID,
-			Name:           testSKSNodepoolName,
-			// SecurityGroups: nil, // TODO: the API doesn't return this field ATM
-			Size:       testSKSNodepoolSize,
-			State:      testSKSClusterState,
-			TemplateID: testSKSNodepoolTemplateID,
-			Version:    testSKSNodepoolVersion,
+			CreatedAt:        testSKSNodepoolCreatedAt,
+			Description:      testSKSNodepoolDescription,
+			DiskSize:         testSKSNodepoolDiskSize,
+			ID:               testSKSNodepoolID,
+			InstancePoolID:   testSKSNodepoolInstancePoolID,
+			InstanceTypeID:   testSKSNodepoolInstanceTypeID,
+			Name:             testSKSNodepoolName,
+			SecurityGroupIDs: []string{testSKSNodepoolSecurityGroupID},
+			Size:             testSKSNodepoolSize,
+			State:            testSKSClusterState,
+			TemplateID:       testSKSNodepoolTemplateID,
+			Version:          testSKSNodepoolVersion,
 		}},
 		State:   testSKSClusterState,
 		Version: testSKSClusterVersion,

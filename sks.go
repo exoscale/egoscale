@@ -90,7 +90,7 @@ func sksClusterFromAPI(c *v2.SksCluster) *SKSCluster {
 			return nodepools
 		}(),
 		Version:                        optionalString(c.Version),
-		ExoscaleCloudControllerEnabled: *c.EnableExoscaleCloudController,
+		ExoscaleCloudControllerEnabled: optionalBool(c.EnableExoscaleCloudController),
 		State:                          optionalString(c.State),
 	}
 }

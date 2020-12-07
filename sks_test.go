@@ -15,25 +15,26 @@ import (
 )
 
 var (
-	testSKSClusterCreatedAt, _           = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
-	testSKSClusterDescription            = "Test Cluster description"
-	testSKSClusterEndpoint               = "df421958-3679-4e9c-afb9-02fb6f331301.sks-ch-gva-2.exo.io"
-	testSKSClusterID                     = "df421958-3679-4e9c-afb9-02fb6f331301"
-	testSKSClusterName                   = "test-cluster"
-	testSKSClusterState                  = "running"
-	testSKSClusterVersion                = "1.18.6"
-	testSKSNodepoolCreatedAt, _          = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
-	testSKSNodepoolDescription           = "Test Nodepool description"
-	testSKSNodepoolDiskSize        int64 = 15
-	testSKSNodepoolID                    = "6d1eecee-397c-4e16-b103-2d1353bf4ecc"
-	testSKSNodepoolInstancePoolID        = "f1f67118-43b6-4632-a709-d55fada62f21"
-	testSKSNodepoolInstanceTypeID        = "21624abb-764e-4def-81d7-9fc54b5957fb"
-	testSKSNodepoolName                  = "test-nodepool"
-	testSKSNodepoolSize            int64 = 3
-	testSKSNodepoolSecurityGroupID       = "efb4f4df-87ce-44e9-b5ee-59a9c1628edf"
-	testSKSNodepoolState                 = "running"
-	testSKSNodepoolTemplateID            = "f270d9a2-db64-4e8e-9cd3-5125887e91aa"
-	testSKSNodepoolVersion               = "1.18.6"
+	testSKSClusterCreatedAt, _                        = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
+	testSKSClusterDescription                         = "Test Cluster description"
+	testSKSClusterEndpoint                            = "df421958-3679-4e9c-afb9-02fb6f331301.sks-ch-gva-2.exo.io"
+	testSKSClusterID                                  = "df421958-3679-4e9c-afb9-02fb6f331301"
+	testSKSClusterName                                = "test-cluster"
+	testSKSClusterState                               = "running"
+	testSKSClusterVersion                             = "1.18.6"
+	testSKSClusterEnableExoscaleCloudController       = true
+	testSKSNodepoolCreatedAt, _                       = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
+	testSKSNodepoolDescription                        = "Test Nodepool description"
+	testSKSNodepoolDiskSize                     int64 = 15
+	testSKSNodepoolID                                 = "6d1eecee-397c-4e16-b103-2d1353bf4ecc"
+	testSKSNodepoolInstancePoolID                     = "f1f67118-43b6-4632-a709-d55fada62f21"
+	testSKSNodepoolInstanceTypeID                     = "21624abb-764e-4def-81d7-9fc54b5957fb"
+	testSKSNodepoolName                               = "test-nodepool"
+	testSKSNodepoolSize                         int64 = 3
+	testSKSNodepoolSecurityGroupID                    = "efb4f4df-87ce-44e9-b5ee-59a9c1628edf"
+	testSKSNodepoolState                              = "running"
+	testSKSNodepoolTemplateID                         = "f270d9a2-db64-4e8e-9cd3-5125887e91aa"
+	testSKSNodepoolVersion                            = "1.18.6"
 )
 
 func TestSKSCluster_RequestKubeconfig(t *testing.T) {
@@ -395,12 +396,13 @@ func TestClient_CreateSKSCluster(t *testing.T) {
 	mockClient.RegisterResponder("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID),
 		func(_ *http.Request) (*http.Response, error) {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.SksCluster{
-				CreatedAt:   &testSKSClusterCreatedAt,
-				Description: &testSKSClusterDescription,
-				Id:          &testSKSClusterID,
-				Name:        &testSKSClusterName,
-				State:       &testSKSClusterState,
-				Version:     &testSKSClusterVersion,
+				CreatedAt:                     &testSKSClusterCreatedAt,
+				Description:                   &testSKSClusterDescription,
+				Id:                            &testSKSClusterID,
+				Name:                          &testSKSClusterName,
+				State:                         &testSKSClusterState,
+				Version:                       &testSKSClusterVersion,
+				EnableExoscaleCloudController: &testSKSClusterEnableExoscaleCloudController,
 			})
 			if err != nil {
 				t.Fatalf("error initializing mock HTTP responder: %s", err)
@@ -409,22 +411,24 @@ func TestClient_CreateSKSCluster(t *testing.T) {
 		})
 
 	expected := &SKSCluster{
-		ID:          testSKSClusterID,
-		Name:        testSKSClusterName,
-		Description: testSKSClusterDescription,
-		CreatedAt:   testSKSClusterCreatedAt,
-		Version:     testSKSClusterVersion,
-		Nodepools:   []*SKSNodepool{},
-		State:       testSKSClusterState,
+		ID:                             testSKSClusterID,
+		Name:                           testSKSClusterName,
+		Description:                    testSKSClusterDescription,
+		CreatedAt:                      testSKSClusterCreatedAt,
+		Version:                        testSKSClusterVersion,
+		ExoscaleCloudControllerEnabled: testSKSClusterEnableExoscaleCloudController,
+		Nodepools:                      []*SKSNodepool{},
+		State:                          testSKSClusterState,
 
 		c:    client,
 		zone: testZone,
 	}
 
 	actual, err := client.CreateSKSCluster(context.Background(), testZone, &SKSCluster{
-		Name:        testSKSClusterName,
-		Description: testSKSClusterDescription,
-		Version:     testSKSClusterVersion,
+		Name:                           testSKSClusterName,
+		Description:                    testSKSClusterDescription,
+		Version:                        testSKSClusterVersion,
+		ExoscaleCloudControllerEnabled: testSKSClusterEnableExoscaleCloudController,
 	})
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
@@ -463,8 +467,9 @@ func TestClient_ListSKSClusters(t *testing.T) {
 						Template:       &v2.Template{Id: &testSKSNodepoolTemplateID},
 						Version:        &testSKSNodepoolVersion,
 					}},
-					State:   &testSKSClusterState,
-					Version: &testSKSClusterVersion,
+					State:                         &testSKSClusterState,
+					Version:                       &testSKSClusterVersion,
+					EnableExoscaleCloudController: &testSKSClusterEnableExoscaleCloudController,
 				}},
 			})
 			if err != nil {
@@ -493,8 +498,9 @@ func TestClient_ListSKSClusters(t *testing.T) {
 			TemplateID:       testSKSNodepoolTemplateID,
 			Version:          testSKSNodepoolVersion,
 		}},
-		State:   testSKSClusterState,
-		Version: testSKSClusterVersion,
+		State:                          testSKSClusterState,
+		Version:                        testSKSClusterVersion,
+		ExoscaleCloudControllerEnabled: testSKSClusterEnableExoscaleCloudController,
 
 		c:    client,
 		zone: testZone,

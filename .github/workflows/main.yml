@@ -1,6 +1,11 @@
 name: CI
 
-on: [push]
+on:
+  push:
+    paths-ignore:
+    - '**.md'
+    tags-ignore:
+    - '^v.*' # Don't run CI tests on release tags
 
 jobs:
   CI:

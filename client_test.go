@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/require"
@@ -708,4 +709,22 @@ func TestClient_Do(t *testing.T) {
 	require.NoError(t, err)
 	actual, _ := ioutil.ReadAll(resp.Body)
 	require.Equal(t, []byte("test"), actual)
+}
+
+func TestNewClient(t *testing.T) {
+	var (
+		testHTTPTransport = http.Transport{}
+		testHTTPClient    = &http.Client{Transport: &testHTTPTransport}
+		testTimeout       = 5 * time.Second
+	)
+
+	client := NewClient("x", "x", "x",
+		WithHTTPClient(testHTTPClient),
+		WithTimeout(testTimeout),
+		WithTrace(),
+	)
+
+	require.Equal(t, testHTTPClient, client.HTTPClient)
+	require.Equal(t, testTimeout, client.Timeout)
+	require.IsType(t, &traceTransport{}, client.HTTPClient.Transport)
 }

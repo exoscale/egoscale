@@ -301,6 +301,67 @@ func TestSKSCluster_ScaleNodepool(t *testing.T) {
 	require.NoError(t, cluster.ScaleNodepool(context.Background(), cluster.Nodepools[0], testScaleSize))
 }
 
+func TestSKSCluster_EvictNodepoolMembers(t *testing.T) {
+	var (
+		testOperationID    = "08302193-c7e3-42a6-9b3d-da0b2a536577"
+		testOperationState = "success"
+		testMemberID       = "8f288e8d-348f-4361-9994-54d9664019c9"
+		err                error
+	)
+
+	mockClient := v2.NewMockClient()
+	client := NewClient("x", "x", "x")
+	client.v2, err = v2.NewClientWithResponses("", v2.WithHTTPClient(mockClient))
+	require.NoError(t, err)
+
+	cluster := &SKSCluster{
+		ID:   testSKSClusterID,
+		c:    client,
+		zone: testZone,
+
+		Nodepools: []*SKSNodepool{{ID: testSKSNodepoolID}},
+	}
+
+	mockClient.RegisterResponder("PUT", fmt.Sprintf("/sks-cluster/%s/nodepool/%s:evict",
+		cluster.ID,
+		cluster.Nodepools[0].ID),
+		func(req *http.Request) (*http.Response, error) {
+			var actual v2.EvictSksNodepoolMembersJSONRequestBody
+			testUnmarshalJSONRequestBody(t, req, &actual)
+			expected := v2.EvictSksNodepoolMembersJSONRequestBody{Instances: &[]string{testMemberID}}
+			require.Equal(t, expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &v2.Reference{Id: &testSKSNodepoolID},
+			})
+			if err != nil {
+				t.Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	mockClient.RegisterResponder("GET", "/operation/"+testOperationID,
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &v2.Reference{Id: &testSKSNodepoolID},
+			})
+			if err != nil {
+				t.Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+			return resp, nil
+		})
+
+	require.NoError(t, cluster.EvictNodepoolMembers(
+		context.Background(),
+		cluster.Nodepools[0],
+		[]string{testMemberID}))
+}
+
 func TestSKSCluster_DeleteNodepool(t *testing.T) {
 	var (
 		testOperationID    = "08302193-c7e3-42a6-9b3d-da0b2a536577"

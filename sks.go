@@ -212,6 +212,29 @@ func (c *SKSCluster) ScaleNodepool(ctx context.Context, np *SKSNodepool, nodes i
 	return nil
 }
 
+// EvictNodepoolMembers evicts the specified members (identified by their Compute instance ID) from the
+// SKS cluster Nodepool.
+func (c *SKSCluster) EvictNodepoolMembers(ctx context.Context, np *SKSNodepool, members []string) error {
+	resp, err := c.c.v2.EvictSksNodepoolMembersWithResponse(
+		apiv2.WithZone(ctx, c.zone),
+		c.ID,
+		np.ID,
+		v2.EvictSksNodepoolMembersJSONRequestBody{Instances: &members},
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = v2.NewPoller().
+		WithTimeout(c.c.Timeout).
+		Poll(ctx, c.c.v2.OperationPoller(c.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // DeleteNodepool deletes the specified Nodepool from the SKS cluster.
 func (c *SKSCluster) DeleteNodepool(ctx context.Context, np *SKSNodepool) error {
 	resp, err := c.c.v2.DeleteSksNodepoolWithResponse(

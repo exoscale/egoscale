@@ -511,6 +511,39 @@ func TestClient_ListSKSClusters(t *testing.T) {
 	require.Equal(t, expected, actual)
 }
 
+func TestClient_ListSKSClusterVersions(t *testing.T) {
+	var (
+		testSKSClusterVersions = []string{
+			"1.20.0",
+			"1.18.6",
+		}
+		err error
+	)
+
+	mockClient := v2.NewMockClient()
+	client := NewClient("x", "x", "x")
+	client.v2, err = v2.NewClientWithResponses("", v2.WithHTTPClient(mockClient))
+	require.NoError(t, err)
+
+	mockClient.RegisterResponder("GET", "/sks-cluster-version",
+		func(_ *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, struct {
+				SksClusterVersions *[]string `json:"sks-cluster-versions,omitempty"`
+			}{
+				SksClusterVersions: &testSKSClusterVersions,
+			})
+			if err != nil {
+				t.Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+			return resp, nil
+		})
+
+	expected := testSKSClusterVersions
+	actual, err := client.ListSKSClusterVersions(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, expected, actual)
+}
+
 func TestClient_UpdateSKSCluster(t *testing.T) {
 	var (
 		testSKSClusterNameUpdated        = testSKSClusterName + "-updated"

@@ -279,6 +279,25 @@ func (c *Client) ListSKSClusters(ctx context.Context, zone string) ([]*SKSCluste
 	return list, nil
 }
 
+// ListSKSClusterVersions returns the list of Kubernetes versions supported during SKS cluster creation.
+func (c *Client) ListSKSClusterVersions(ctx context.Context) ([]string, error) {
+	list := make([]string, 0)
+
+	resp, err := c.v2.ListSksClusterVersionsWithResponse(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.JSON200.SksClusterVersions != nil {
+		for i := range *resp.JSON200.SksClusterVersions {
+			version := &(*resp.JSON200.SksClusterVersions)[i]
+			list = append(list, *version)
+		}
+	}
+
+	return list, nil
+}
+
 // GetSKSCluster returns the SKS cluster corresponding to the specified ID in the specified zone.
 func (c *Client) GetSKSCluster(ctx context.Context, zone, id string) (*SKSCluster, error) {
 	resp, err := c.v2.GetSksClusterWithResponse(apiv2.WithZone(ctx, zone), id)

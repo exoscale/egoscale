@@ -54,6 +54,12 @@ func TestUpdateVirtualMachine(t *testing.T) {
 	_ = req.Response().(*VirtualMachine)
 }
 
+func TestUpdateVirtualMachineSecurityGroups(t *testing.T) {
+	req := &UpdateVirtualMachineSecurityGroups{}
+	_ = req.Response().(*AsyncJobResult)
+	_ = req.AsyncResponse().(*VirtualMachine)
+}
+
 func TestListVirtualMachines(t *testing.T) {
 	req := &ListVirtualMachines{}
 	_ = req.Response().(*ListVirtualMachinesResponse)

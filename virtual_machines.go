@@ -431,6 +431,7 @@ func (UpdateVirtualMachine) Response() interface{} {
 type UpdateVirtualMachineSecurityGroups struct {
 	ID               *UUID  `json:"id" doc:"The ID of the virtual machine"`
 	SecurityGroupIDs []UUID `json:"securitygroupids,omitempty" doc:"list of security group ids to be applied on the virtual machine."`
+	_                bool   `name:"updateVirtualMachineSecurityGroups" description:"Updates a virtual machine Security Group membership'."`
 }
 
 // Response returns the struct to unmarshal

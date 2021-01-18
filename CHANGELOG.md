@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.39.0
+------
+
+- feature: add `UpdateVirtualMachineSecurityGroups` operation (#464)
+
 0.38.0
 ------
 

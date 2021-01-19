@@ -46,7 +46,7 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 			Services: &[]LoadBalancerService{{
 				Description:  &testServiceDescription,
 				Id:           &testServiceID,
-				InstancePool: Resource{Id: &testServiceInstancePoolID},
+				InstancePool: InstancePool{Id: &testServiceInstancePoolID},
 				Name:         testServiceName,
 				Port:         testServicePort,
 				Protocol:     testServiceProtocol,
@@ -150,7 +150,7 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 			Services: &[]LoadBalancerService{{
 				Description:  &testServiceDescription,
 				Id:           &testServiceID,
-				InstancePool: Resource{Id: &testServiceInstancePoolID},
+				InstancePool: InstancePool{Id: &testServiceInstancePoolID},
 				Name:         testServiceName,
 				Port:         testServicePort,
 				Protocol:     testServiceProtocol,

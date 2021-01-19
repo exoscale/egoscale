@@ -15,26 +15,28 @@ import (
 )
 
 var (
-	testSKSClusterCreatedAt, _                        = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
-	testSKSClusterDescription                         = "Test Cluster description"
-	testSKSClusterEndpoint                            = "df421958-3679-4e9c-afb9-02fb6f331301.sks-ch-gva-2.exo.io"
-	testSKSClusterID                                  = "df421958-3679-4e9c-afb9-02fb6f331301"
-	testSKSClusterName                                = "test-cluster"
-	testSKSClusterState                               = "running"
-	testSKSClusterVersion                             = "1.18.6"
-	testSKSClusterEnableExoscaleCloudController       = true
-	testSKSNodepoolCreatedAt, _                       = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
-	testSKSNodepoolDescription                        = "Test Nodepool description"
-	testSKSNodepoolDiskSize                     int64 = 15
-	testSKSNodepoolID                                 = "6d1eecee-397c-4e16-b103-2d1353bf4ecc"
-	testSKSNodepoolInstancePoolID                     = "f1f67118-43b6-4632-a709-d55fada62f21"
-	testSKSNodepoolInstanceTypeID                     = "21624abb-764e-4def-81d7-9fc54b5957fb"
-	testSKSNodepoolName                               = "test-nodepool"
-	testSKSNodepoolSize                         int64 = 3
-	testSKSNodepoolSecurityGroupID                    = "efb4f4df-87ce-44e9-b5ee-59a9c1628edf"
-	testSKSNodepoolState                              = "running"
-	testSKSNodepoolTemplateID                         = "f270d9a2-db64-4e8e-9cd3-5125887e91aa"
-	testSKSNodepoolVersion                            = "1.18.6"
+	testSKSClusterID                     = "df421958-3679-4e9c-afb9-02fb6f331301"
+	testSKSClusterEndpoint               = fmt.Sprintf("%s.sks-%s.exo.io", testSKSClusterID, testZone)
+	testSKSClusterName                   = "test-cluster"
+	testSKSClusterDescription            = "Test Cluster description"
+	testSKSClusterCreatedAt, _           = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
+	testSKSClusterState                  = "running"
+	testSKSClusterVersion                = "1.18.6"
+	testSKSClusterLevel                  = "pro"
+	testSKSClusterCNI                    = "calico"
+	testSKSClusterAddons                 = []string{"exoscale-cloud-controller"}
+	testSKSNodepoolCreatedAt, _          = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
+	testSKSNodepoolDescription           = "Test Nodepool description"
+	testSKSNodepoolDiskSize        int64 = 15
+	testSKSNodepoolID                    = "6d1eecee-397c-4e16-b103-2d1353bf4ecc"
+	testSKSNodepoolInstancePoolID        = "f1f67118-43b6-4632-a709-d55fada62f21"
+	testSKSNodepoolInstanceTypeID        = "21624abb-764e-4def-81d7-9fc54b5957fb"
+	testSKSNodepoolName                  = "test-nodepool"
+	testSKSNodepoolSize            int64 = 3
+	testSKSNodepoolSecurityGroupID       = "efb4f4df-87ce-44e9-b5ee-59a9c1628edf"
+	testSKSNodepoolState                 = "running"
+	testSKSNodepoolTemplateID            = "f270d9a2-db64-4e8e-9cd3-5125887e91aa"
+	testSKSNodepoolVersion               = "1.18.6"
 )
 
 func TestSKSCluster_RequestKubeconfig(t *testing.T) {
@@ -120,7 +122,7 @@ func TestSKSCluster_AddNodepool(t *testing.T) {
 				Description:    &testSKSNodepoolDescription,
 				DiskSize:       &testSKSNodepoolDiskSize,
 				Id:             &testSKSNodepoolID,
-				InstancePool:   &v2.Resource{Id: &testSKSNodepoolInstancePoolID},
+				InstancePool:   &v2.InstancePool{Id: &testSKSNodepoolInstancePoolID},
 				InstanceType:   &v2.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
 				Name:           &testSKSNodepoolName,
 				SecurityGroups: &[]v2.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
@@ -457,13 +459,15 @@ func TestClient_CreateSKSCluster(t *testing.T) {
 	mockClient.RegisterResponder("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID),
 		func(_ *http.Request) (*http.Response, error) {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.SksCluster{
-				CreatedAt:                     &testSKSClusterCreatedAt,
-				Description:                   &testSKSClusterDescription,
-				Id:                            &testSKSClusterID,
-				Name:                          &testSKSClusterName,
-				State:                         &testSKSClusterState,
-				Version:                       &testSKSClusterVersion,
-				EnableExoscaleCloudController: &testSKSClusterEnableExoscaleCloudController,
+				Addons:      &testSKSClusterAddons,
+				Cni:         &testSKSClusterCNI,
+				CreatedAt:   &testSKSClusterCreatedAt,
+				Description: &testSKSClusterDescription,
+				Id:          &testSKSClusterID,
+				Level:       &testSKSClusterLevel,
+				Name:        &testSKSClusterName,
+				State:       &testSKSClusterState,
+				Version:     &testSKSClusterVersion,
 			})
 			if err != nil {
 				t.Fatalf("error initializing mock HTTP responder: %s", err)
@@ -472,24 +476,28 @@ func TestClient_CreateSKSCluster(t *testing.T) {
 		})
 
 	expected := &SKSCluster{
-		ID:                             testSKSClusterID,
-		Name:                           testSKSClusterName,
-		Description:                    testSKSClusterDescription,
-		CreatedAt:                      testSKSClusterCreatedAt,
-		Version:                        testSKSClusterVersion,
-		ExoscaleCloudControllerEnabled: testSKSClusterEnableExoscaleCloudController,
-		Nodepools:                      []*SKSNodepool{},
-		State:                          testSKSClusterState,
+		AddOns:      testSKSClusterAddons,
+		CNI:         testSKSClusterCNI,
+		CreatedAt:   testSKSClusterCreatedAt,
+		Description: testSKSClusterDescription,
+		ID:          testSKSClusterID,
+		Level:       testSKSClusterLevel,
+		Name:        testSKSClusterName,
+		Nodepools:   []*SKSNodepool{},
+		State:       testSKSClusterState,
+		Version:     testSKSClusterVersion,
 
 		c:    client,
 		zone: testZone,
 	}
 
 	actual, err := client.CreateSKSCluster(context.Background(), testZone, &SKSCluster{
-		Name:                           testSKSClusterName,
-		Description:                    testSKSClusterDescription,
-		Version:                        testSKSClusterVersion,
-		ExoscaleCloudControllerEnabled: testSKSClusterEnableExoscaleCloudController,
+		Name:        testSKSClusterName,
+		Description: testSKSClusterDescription,
+		Version:     testSKSClusterVersion,
+		Level:       testSKSClusterLevel,
+		CNI:         testSKSClusterCNI,
+		AddOns:      testSKSClusterAddons,
 	})
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
@@ -509,17 +517,20 @@ func TestClient_ListSKSClusters(t *testing.T) {
 				SksClusters *[]v2.SksCluster `json:"sks-clusters,omitempty"`
 			}{
 				SksClusters: &[]v2.SksCluster{{
+					Addons:      &testSKSClusterAddons,
+					Cni:         &testSKSClusterCNI,
 					CreatedAt:   &testSKSClusterCreatedAt,
 					Description: &testSKSClusterDescription,
 					Endpoint:    &testSKSClusterEndpoint,
 					Id:          &testSKSClusterID,
+					Level:       &testSKSClusterLevel,
 					Name:        &testSKSClusterName,
 					Nodepools: &[]v2.SksNodepool{{
 						CreatedAt:      &testSKSNodepoolCreatedAt,
 						Description:    &testSKSNodepoolDescription,
 						DiskSize:       &testSKSNodepoolDiskSize,
 						Id:             &testSKSNodepoolID,
-						InstancePool:   &v2.Resource{Id: &testSKSNodepoolInstancePoolID},
+						InstancePool:   &v2.InstancePool{Id: &testSKSNodepoolInstancePoolID},
 						InstanceType:   &v2.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
 						Name:           &testSKSNodepoolName,
 						SecurityGroups: &[]v2.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
@@ -528,9 +539,8 @@ func TestClient_ListSKSClusters(t *testing.T) {
 						Template:       &v2.Template{Id: &testSKSNodepoolTemplateID},
 						Version:        &testSKSNodepoolVersion,
 					}},
-					State:                         &testSKSClusterState,
-					Version:                       &testSKSClusterVersion,
-					EnableExoscaleCloudController: &testSKSClusterEnableExoscaleCloudController,
+					State:   &testSKSClusterState,
+					Version: &testSKSClusterVersion,
 				}},
 			})
 			if err != nil {
@@ -559,9 +569,11 @@ func TestClient_ListSKSClusters(t *testing.T) {
 			TemplateID:       testSKSNodepoolTemplateID,
 			Version:          testSKSNodepoolVersion,
 		}},
-		State:                          testSKSClusterState,
-		Version:                        testSKSClusterVersion,
-		ExoscaleCloudControllerEnabled: testSKSClusterEnableExoscaleCloudController,
+		Version: testSKSClusterVersion,
+		Level:   testSKSClusterLevel,
+		CNI:     testSKSClusterCNI,
+		AddOns:  testSKSClusterAddons,
+		State:   testSKSClusterState,
 
 		c:    client,
 		zone: testZone,
@@ -660,6 +672,58 @@ func TestClient_UpdateSKSCluster(t *testing.T) {
 		Description: testSKSClusterDescriptionUpdated,
 	}
 	require.NoError(t, client.UpdateSKSCluster(context.Background(), testZone, &clusterUpdated))
+}
+
+func TestClient_UgradeSKSCluster(t *testing.T) {
+	var (
+		testOperationID    = "08302193-c7e3-42a6-9b3d-da0b2a536577"
+		testOperationState = "success"
+		err                error
+	)
+
+	mockClient := v2.NewMockClient()
+	client := NewClient("x", "x", "x")
+	client.v2, err = v2.NewClientWithResponses("", v2.WithHTTPClient(mockClient))
+	require.NoError(t, err)
+
+	mockClient.RegisterResponder("PUT",
+		fmt.Sprintf("/sks-cluster/%s/upgrade", testSKSClusterID),
+		func(req *http.Request) (*http.Response, error) {
+			var actual v2.UpgradeSksClusterJSONRequestBody
+			testUnmarshalJSONRequestBody(t, req, &actual)
+			expected := v2.UpgradeSksClusterJSONRequestBody{Version: &testSKSClusterVersion}
+			require.Equal(t, expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &v2.Reference{Id: &testSKSNodepoolID},
+			})
+			if err != nil {
+				t.Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	mockClient.RegisterResponder("GET", "/operation/"+testOperationID,
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, v2.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &v2.Reference{Id: &testSKSNodepoolID},
+			})
+			if err != nil {
+				t.Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+			return resp, nil
+		})
+
+	require.NoError(t, client.UpgradeSKSCluster(
+		context.Background(),
+		testZone,
+		testSKSClusterID,
+		testSKSClusterVersion))
 }
 
 func TestClient_DeleteSKSCluster(t *testing.T) {

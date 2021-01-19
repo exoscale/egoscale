@@ -34,62 +34,50 @@ func TestPoller_WithTimeout(t *testing.T) {
 		testPoller.WithTimeout(time.Second))
 }
 
-func TestPoller_Poll(t *testing.T) {
-	{
-		poller := NewPoller().WithInterval(time.Second)
-		require.Eventually(t,
-			func() bool {
-				res, err := poller.Poll(context.Background(),
-					newTestMockPollFunc(time.Second, true, "yay", nil))
-				return res.(string) == "yay" && err == nil
-			},
-			5*time.Second,
-			time.Second,
-			"polling must complete successfully before the timeout")
-	}
-
-	{
-		poller := NewPoller().WithInterval(time.Second)
-		require.Eventually(t,
-			func() bool {
-				_, err := poller.Poll(context.Background(),
-					newTestMockPollFunc(time.Second, true, nil, errors.New("o noes")))
-				return err != nil
-			},
-			5*time.Second,
-			time.Second,
-			"polling must complete with error before the timeout")
-	}
-
-	{
-		poller := NewPoller().WithInterval(time.Second)
-		require.Never(t,
-			func() bool {
-				_, err := poller.Poll(context.Background(),
-					newTestMockPollFunc(10*time.Second, true, nil, nil))
-				return err == nil
-			},
-			5*time.Second,
-			time.Second,
-			"polling must NOT complete before the timeout")
-	}
-
-	{
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		poller := NewPoller()
-		require.Eventually(t,
-			func() bool {
-				_, err := poller.Poll(ctx,
-					newTestMockPollFunc(10*time.Second, true, nil, nil))
-				return err != nil
-			},
-			5*time.Second,
-			time.Second,
-			"polling must abort on context cancellation")
-	}
+func TestPoller_Poll_FailWithTimeout(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	poller := NewPoller()
+	require.Eventually(t,
+		func() bool {
+			_, err := poller.Poll(ctx,
+				newTestMockPollFunc(10*time.Second, true, nil, nil))
+			require.ErrorIs(t, err, context.DeadlineExceeded)
+			return true
+		},
+		5*time.Second,
+		time.Second,
+		"polling must fail on context timeout")
 }
 
+func TestPoller_Poll_FinishWithError(t *testing.T) {
+	poller := NewPoller().WithInterval(time.Second)
+	require.Eventually(t,
+		func() bool {
+			_, err := poller.Poll(context.Background(),
+				newTestMockPollFunc(time.Second, true, nil, errors.New("o noes")))
+			return err != nil
+		},
+		5*time.Second,
+		time.Second,
+		"polling must complete with error before the timeout")
+}
+
+func TestPoller_Poll_FinishOK(t *testing.T) {
+	poller := NewPoller().WithInterval(time.Second)
+	require.Eventually(t,
+		func() bool {
+			res, err := poller.Poll(context.Background(),
+				newTestMockPollFunc(time.Second, true, "yay", nil))
+			return res.(string) == "yay" && err == nil
+		},
+		5*time.Second,
+		time.Second,
+		"polling must complete successfully before the timeout")
+}
+
+// newTestMockPollFunc returns a mocked polling function that sleeps for a specified duration,
+// then returns the provided completion flag, resource and error.
 func newTestMockPollFunc(duration time.Duration, done bool, res interface{}, err error) PollFunc {
 	return func(_ context.Context) (bool, interface{}, error) {
 		time.Sleep(duration)

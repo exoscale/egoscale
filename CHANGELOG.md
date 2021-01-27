@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.40.1
+------
+
+- Improve API v2 async job tests and error reporting (#466)
+
 0.40.0
 ------
 

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.41.0
+------
+
+- feature: new method `ListZones()`
+
 0.40.1
 ------
 

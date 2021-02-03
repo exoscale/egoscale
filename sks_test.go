@@ -22,7 +22,7 @@ var (
 	testSKSClusterCreatedAt, _           = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
 	testSKSClusterState                  = "running"
 	testSKSClusterVersion                = "1.18.6"
-	testSKSClusterLevel                  = "pro"
+	testSKSClusterServiceLevel           = "pro"
 	testSKSClusterCNI                    = "calico"
 	testSKSClusterAddons                 = []string{"exoscale-cloud-controller"}
 	testSKSNodepoolCreatedAt, _          = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
@@ -464,7 +464,7 @@ func TestClient_CreateSKSCluster(t *testing.T) {
 				CreatedAt:   &testSKSClusterCreatedAt,
 				Description: &testSKSClusterDescription,
 				Id:          &testSKSClusterID,
-				Level:       &testSKSClusterLevel,
+				Level:       &testSKSClusterServiceLevel,
 				Name:        &testSKSClusterName,
 				State:       &testSKSClusterState,
 				Version:     &testSKSClusterVersion,
@@ -476,28 +476,28 @@ func TestClient_CreateSKSCluster(t *testing.T) {
 		})
 
 	expected := &SKSCluster{
-		AddOns:      testSKSClusterAddons,
-		CNI:         testSKSClusterCNI,
-		CreatedAt:   testSKSClusterCreatedAt,
-		Description: testSKSClusterDescription,
-		ID:          testSKSClusterID,
-		Level:       testSKSClusterLevel,
-		Name:        testSKSClusterName,
-		Nodepools:   []*SKSNodepool{},
-		State:       testSKSClusterState,
-		Version:     testSKSClusterVersion,
+		AddOns:       testSKSClusterAddons,
+		CNI:          testSKSClusterCNI,
+		CreatedAt:    testSKSClusterCreatedAt,
+		Description:  testSKSClusterDescription,
+		ID:           testSKSClusterID,
+		Name:         testSKSClusterName,
+		Nodepools:    []*SKSNodepool{},
+		ServiceLevel: testSKSClusterServiceLevel,
+		State:        testSKSClusterState,
+		Version:      testSKSClusterVersion,
 
 		c:    client,
 		zone: testZone,
 	}
 
 	actual, err := client.CreateSKSCluster(context.Background(), testZone, &SKSCluster{
-		Name:        testSKSClusterName,
-		Description: testSKSClusterDescription,
-		Version:     testSKSClusterVersion,
-		Level:       testSKSClusterLevel,
-		CNI:         testSKSClusterCNI,
-		AddOns:      testSKSClusterAddons,
+		AddOns:       testSKSClusterAddons,
+		CNI:          testSKSClusterCNI,
+		Description:  testSKSClusterDescription,
+		Name:         testSKSClusterName,
+		ServiceLevel: testSKSClusterServiceLevel,
+		Version:      testSKSClusterVersion,
 	})
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
@@ -523,7 +523,7 @@ func TestClient_ListSKSClusters(t *testing.T) {
 					Description: &testSKSClusterDescription,
 					Endpoint:    &testSKSClusterEndpoint,
 					Id:          &testSKSClusterID,
-					Level:       &testSKSClusterLevel,
+					Level:       &testSKSClusterServiceLevel,
 					Name:        &testSKSClusterName,
 					Nodepools: &[]v2.SksNodepool{{
 						CreatedAt:      &testSKSNodepoolCreatedAt,
@@ -569,11 +569,11 @@ func TestClient_ListSKSClusters(t *testing.T) {
 			TemplateID:       testSKSNodepoolTemplateID,
 			Version:          testSKSNodepoolVersion,
 		}},
-		Version: testSKSClusterVersion,
-		Level:   testSKSClusterLevel,
-		CNI:     testSKSClusterCNI,
-		AddOns:  testSKSClusterAddons,
-		State:   testSKSClusterState,
+		Version:      testSKSClusterVersion,
+		ServiceLevel: testSKSClusterServiceLevel,
+		CNI:          testSKSClusterCNI,
+		AddOns:       testSKSClusterAddons,
+		State:        testSKSClusterState,
 
 		c:    client,
 		zone: testZone,

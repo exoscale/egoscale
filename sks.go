@@ -56,17 +56,17 @@ func sksNodepoolFromAPI(n *v2.SksNodepool) *SKSNodepool {
 
 // SKSCluster represents a SKS cluster.
 type SKSCluster struct {
-	ID          string
-	Name        string
-	Description string
-	CreatedAt   time.Time
-	Endpoint    string
-	Nodepools   []*SKSNodepool
-	Version     string
-	Level       string
-	CNI         string
-	AddOns      []string
-	State       string
+	ID           string
+	Name         string
+	Description  string
+	CreatedAt    time.Time
+	Endpoint     string
+	Nodepools    []*SKSNodepool
+	Version      string
+	ServiceLevel string
+	CNI          string
+	AddOns       []string
+	State        string
 
 	c    *Client
 	zone string
@@ -91,9 +91,9 @@ func sksClusterFromAPI(c *v2.SksCluster) *SKSCluster {
 
 			return nodepools
 		}(),
-		Version: optionalString(c.Version),
-		Level:   optionalString(c.Level),
-		CNI:     optionalString(c.Cni),
+		Version:      optionalString(c.Version),
+		ServiceLevel: optionalString(c.Level),
+		CNI:          optionalString(c.Cni),
 		AddOns: func() []string {
 			addOns := make([]string, 0)
 			if c.Addons != nil {
@@ -274,7 +274,7 @@ func (c *Client) CreateSKSCluster(ctx context.Context, zone string, cluster *SKS
 			Name:        &cluster.Name,
 			Description: &cluster.Description,
 			Version:     &cluster.Version,
-			Level:       &cluster.Level,
+			Level:       &cluster.ServiceLevel,
 			Cni: func() *string {
 				var cni *string
 				if cluster.CNI != "" {

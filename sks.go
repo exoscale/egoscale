@@ -12,18 +12,19 @@ import (
 
 // SKSNodepool represents a SKS Nodepool.
 type SKSNodepool struct {
-	ID               string
-	Name             string
-	Description      string
-	CreatedAt        time.Time
-	InstancePoolID   string
-	InstanceTypeID   string
-	TemplateID       string
-	DiskSize         int64
-	SecurityGroupIDs []string
-	Version          string
-	Size             int64
-	State            string
+	ID                   string
+	Name                 string
+	Description          string
+	CreatedAt            time.Time
+	InstancePoolID       string
+	InstanceTypeID       string
+	TemplateID           string
+	DiskSize             int64
+	AntiAffinityGroupIDs []string
+	SecurityGroupIDs     []string
+	Version              string
+	Size                 int64
+	State                string
 }
 
 func sksNodepoolFromAPI(n *v2.SksNodepool) *SKSNodepool {
@@ -36,6 +37,18 @@ func sksNodepoolFromAPI(n *v2.SksNodepool) *SKSNodepool {
 		InstanceTypeID: optionalString(n.InstanceType.Id),
 		TemplateID:     optionalString(n.Template.Id),
 		DiskSize:       optionalInt64(n.DiskSize),
+		AntiAffinityGroupIDs: func() []string {
+			aags := make([]string, 0)
+
+			if n.AntiAffinityGroups != nil {
+				for _, aag := range *n.AntiAffinityGroups {
+					aag := aag
+					aags = append(aags, *aag.Id)
+				}
+			}
+
+			return aags
+		}(),
 		SecurityGroupIDs: func() []string {
 			sgs := make([]string, 0)
 
@@ -145,6 +158,14 @@ func (c *SKSCluster) AddNodepool(ctx context.Context, np *SKSNodepool) (*SKSNode
 			DiskSize:     &np.DiskSize,
 			InstanceType: &v2.InstanceType{Id: &np.InstanceTypeID},
 			Name:         &np.Name,
+			AntiAffinityGroups: func() *[]v2.AntiAffinityGroup {
+				aags := make([]v2.AntiAffinityGroup, len(np.AntiAffinityGroupIDs))
+				for i, aagID := range np.AntiAffinityGroupIDs {
+					aagID := aagID
+					aags[i] = v2.AntiAffinityGroup{Id: &aagID}
+				}
+				return &aags
+			}(),
 			SecurityGroups: func() *[]v2.SecurityGroup {
 				sgs := make([]v2.SecurityGroup, len(np.SecurityGroupIDs))
 				for i, sgID := range np.SecurityGroupIDs {

@@ -4,6 +4,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.3.11
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/jarcoal/httpmock v1.0.6
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0

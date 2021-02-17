@@ -2,14 +2,8 @@ package egoscale
 
 import (
 	"context"
-	"net/http"
 	"testing"
 	"time"
-
-	"github.com/jarcoal/httpmock"
-	"github.com/stretchr/testify/require"
-
-	v2 "github.com/exoscale/egoscale/internal/v2"
 )
 
 func TestListZonesAPIName(t *testing.T) {
@@ -282,48 +276,4 @@ func TestListZonesTimeout(t *testing.T) {
 	if err == nil {
 		t.Errorf("An error was expected")
 	}
-}
-
-func TestClient_ListZones(t *testing.T) {
-	var (
-		testZones = []string{
-			"at-vie-1",
-			"bg-sof-1",
-			"ch-dk-2",
-			"ch-gva-2",
-			"de-fra-1",
-			"de-muc-1",
-		}
-		err error
-	)
-
-	mockClient := v2.NewMockClient()
-	client := NewClient("x", "x", "x")
-	client.v2, err = v2.NewClientWithResponses("", v2.WithHTTPClient(mockClient))
-	require.NoError(t, err)
-
-	mockClient.RegisterResponder("GET", "/zone",
-		func(_ *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, struct {
-				Zones *[]v2.Zone `json:"zones,omitempty"`
-			}{
-				Zones: func() *[]v2.Zone {
-					zones := make([]v2.Zone, len(testZones))
-					for i := range testZones {
-						name := testZones[i]
-						zones[i] = v2.Zone{Name: &name}
-					}
-					return &zones
-				}(),
-			})
-			if err != nil {
-				t.Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-			return resp, nil
-		})
-
-	expected := testZones
-	actual, err := client.ListZones(context.Background())
-	require.NoError(t, err)
-	require.Equal(t, expected, actual)
 }

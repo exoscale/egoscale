@@ -727,4 +727,9 @@ func TestNewClient(t *testing.T) {
 	require.Equal(t, testHTTPClient, client.HTTPClient)
 	require.Equal(t, testTimeout, client.Timeout)
 	require.IsType(t, &traceTransport{}, client.HTTPClient.Transport)
+	require.NotNil(t, client.Client)
+
+	// Test embeded v2.Client disabling
+	client = NewClient("x", "x", "x", WithoutV2Client())
+	require.Nil(t, client.Client)
 }

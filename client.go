@@ -8,16 +8,14 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"os"
 	"reflect"
 	"runtime"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/mohae/deepcopy"
 
-	apiv2 "github.com/exoscale/egoscale/api/v2"
-	v2 "github.com/exoscale/egoscale/internal/v2"
+	v2 "github.com/exoscale/egoscale/v2"
 )
 
 const (
@@ -73,8 +71,11 @@ type Client struct {
 	// Logger contains any log, plug your own
 	Logger *log.Logger
 
-	// API V2 secondary client
-	v2 *v2.ClientWithResponses
+	// noV2 represents a flag disabling v2.Client embedding.
+	noV2 bool
+
+	// Public API secondary client
+	*v2.Client
 }
 
 // RetryStrategyFunc represents a how much time to wait between two calls to the API
@@ -104,6 +105,11 @@ func WithTrace() ClientOpt {
 	return func(c *Client) { c.TraceOn() }
 }
 
+// WithoutV2Client disables implicit v2.Client embedding.
+func WithoutV2Client() ClientOpt {
+	return func(c *Client) { c.noV2 = true }
+}
+
 // NewClient creates an Exoscale API client.
 func NewClient(endpoint, apiKey, apiSecret string, opts ...ClientOpt) *Client {
 	client := &Client{
@@ -129,29 +135,21 @@ func NewClient(endpoint, apiKey, apiSecret string, opts ...ClientOpt) *Client {
 		client.TraceOn()
 	}
 
-	// Infer API V2 endpoint from V1 endpoint
-	endpointURL, err := url.Parse(client.Endpoint)
-	if err != nil {
-		panic(errors.Wrap(err, "unable to initialize API client"))
-	}
-	endpointURL = endpointURL.ResolveReference(&url.URL{Path: apiv2.APIPrefix})
+	if !client.noV2 {
+		v2Client, err := v2.NewClient(
+			client.APIKey,
+			client.apiSecret,
+			v2.ClientOptWithAPIEndpoint(client.Endpoint),
+			v2.ClientOptWithTimeout(client.Timeout),
 
-	exoSecurityProvider, err := apiv2.NewSecurityProviderExoscale(client.APIKey, client.apiSecret)
-	if err != nil {
-		panic(errors.Wrap(err, "unable to initialize security provider"))
-	}
-	exoSecurityProvider.ReqExpire = client.Expiration
-
-	v2Opts := []v2.ClientOption{
-		v2.WithHTTPClient(client),
-		v2.WithRequestEditorFn(v2.MultiRequestsEditor(
-			exoSecurityProvider.Intercept,
-			apiv2.SetEndpointFromContext),
-		),
-	}
-
-	if client.v2, err = v2.NewClientWithResponses(endpointURL.String(), v2Opts...); err != nil {
-		panic(errors.Wrap(err, "unable to initialize API client"))
+			// We deep-copy the root client's http.Client to avoid side-effects
+			// introduced by later modification happening in the v2.Client.
+			v2.ClientOptWithHTTPClient(deepcopy.Copy(client.HTTPClient).(*http.Client)),
+		)
+		if err != nil {
+			panic(fmt.Sprintf("unable to initialize API V2 client: %s", err))
+		}
+		client.Client = v2Client
 	}
 
 	return client

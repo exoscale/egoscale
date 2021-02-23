@@ -7,10 +7,10 @@ import (
 )
 
 func TestRunstatusServiceGenericError(t *testing.T) { // nolint: dupl
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	p := response{200, jsonContentType, fmt.Sprintf(`{"subdomain": "testpage", "services_url": %q}`, ts.URL)}
 	r200 := response{200, jsonContentType, `ERROR`}
@@ -61,10 +61,10 @@ func TestRunstatusServiceGenericError(t *testing.T) { // nolint: dupl
 }
 
 func TestRunstatusListServices(t *testing.T) {
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	ss := response{200, jsonContentType, `
 {
@@ -147,10 +147,10 @@ func TestRunstatusListServices(t *testing.T) {
 }
 
 func TestRunstatusServiceDelete(t *testing.T) {
-	ts := newServer(response{204, jsonContentType, ""})
+	ts := newTestServer(response{204, jsonContentType, ""})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	if err := cs.DeleteRunstatusService(context.TODO(), RunstatusService{}); err == nil {
 		t.Error("service without a status should fail")
@@ -162,14 +162,14 @@ func TestRunstatusServiceDelete(t *testing.T) {
 }
 
 func TestRunstatusServiceCreate(t *testing.T) {
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 	ts.addResponse(
 		response{200, jsonContentType, fmt.Sprintf(`{"services_url": %q, "subdomain": "d"}`, ts.URL)},
 		response{201, jsonContentType, `{"url": "...", "name": "hello"}`},
 	)
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	if _, err := cs.CreateRunstatusService(context.TODO(), RunstatusService{}); err == nil {
 		t.Error("service without a status should fail")

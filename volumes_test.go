@@ -23,14 +23,14 @@ func TestResizeVolume(t *testing.T) {
 }
 
 func TestListVolumeFailure(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listvolumesresponse": {
 	"count": 1,
 	"volume": {}
 }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	volume := &Volume{
 		VirtualMachineID: MustParseUUID("9ccc3d5b-9dce-4302-a955-24b80b402f88"),
@@ -43,7 +43,7 @@ func TestListVolumeFailure(t *testing.T) {
 }
 
 func TestListVolumePaginate(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listvolumesresponse": {
 	"count": 1,
 	"volume": [
@@ -109,7 +109,7 @@ func TestListVolumePaginate(t *testing.T) {
 }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	volume := &Volume{
 		VirtualMachineID: MustParseUUID("9ccc3d5b-9dce-4302-a955-24b80b402f88"),
@@ -136,7 +136,7 @@ func TestListVolumePaginate(t *testing.T) {
 }
 
 func TestListVolumeError(t *testing.T) {
-	ts := newServer(response{431, jsonContentType, `
+	ts := newTestServer(response{431, jsonContentType, `
 {"listvolumeresponse": {
 	"cserrorcode": 9999,
 	"errorcode": 431,
@@ -145,7 +145,7 @@ func TestListVolumeError(t *testing.T) {
 }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	volume := new(Volume)
 	_, err := cs.List(volume)

@@ -18,6 +18,10 @@ type ErrorHandlerMiddleware struct {
 }
 
 func NewAPIErrorHandlerMiddleware(next http.RoundTripper) Middleware {
+	if next == nil {
+		next = http.DefaultTransport
+	}
+
 	return &ErrorHandlerMiddleware{next: next}
 }
 

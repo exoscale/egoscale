@@ -57,14 +57,14 @@ func TestCreateNetworkOnBeforeSend(t *testing.T) {
 }
 
 func TestListNetworkEmpty(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listnetworksresponse": {
 	"count": 0,
 	"network": []
   }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	network := new(Network)
 	networks, err := cs.List(network)
@@ -78,14 +78,14 @@ func TestListNetworkEmpty(t *testing.T) {
 }
 
 func TestListNetworkFailure(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listnetworksresponse": {
 	"count": 3456,
 	"network": {}
   }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	network := new(Network)
 	networks, err := cs.List(network)
@@ -99,7 +99,7 @@ func TestListNetworkFailure(t *testing.T) {
 }
 
 func TestFindNetwork(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listnetworksresponse": {
 	"count": 1,
 	"network": [
@@ -135,7 +135,7 @@ func TestFindNetwork(t *testing.T) {
   }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	networks, err := cs.List(&Network{Name: "klmfsdvds", CanUseForDeploy: true, Type: "Isolated"})
 	if err != nil {
@@ -154,5 +154,4 @@ func TestFindNetwork(t *testing.T) {
 	if networks[0].(*Network).Name != "klmfsdvds" {
 		t.Errorf("klmfsdvds network name was expected, got %s", networks[0].(*Network).Name)
 	}
-
 }

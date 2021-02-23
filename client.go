@@ -13,8 +13,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/mohae/deepcopy"
-
 	v2 "github.com/exoscale/egoscale/v2"
 )
 
@@ -111,10 +109,15 @@ func WithoutV2Client() ClientOpt {
 }
 
 // NewClient creates an Exoscale API client.
+// Note: unless the WithoutV2Client() ClientOpt is passed, this function
+// initializes a v2.Client embedded into the returned *Client struct
+// inheriting the Exoscale API credentials, endpoint and timeout value, but
+// not the custom http.Client. The 2 clients must not share the same
+// *http.Client, as it can cause middleware clashes.
 func NewClient(endpoint, apiKey, apiSecret string, opts ...ClientOpt) *Client {
 	client := &Client{
 		HTTPClient: &http.Client{
-			Transport: &defaultTransport{transport: http.DefaultTransport},
+			Transport: &defaultTransport{next: http.DefaultTransport},
 		},
 		Endpoint:      endpoint,
 		APIKey:        apiKey,
@@ -142,9 +145,9 @@ func NewClient(endpoint, apiKey, apiSecret string, opts ...ClientOpt) *Client {
 			v2.ClientOptWithAPIEndpoint(client.Endpoint),
 			v2.ClientOptWithTimeout(client.Timeout),
 
-			// We deep-copy the root client's http.Client to avoid side-effects
-			// introduced by later modification happening in the v2.Client.
-			v2.ClientOptWithHTTPClient(deepcopy.Copy(client.HTTPClient).(*http.Client)),
+			// Don't use v2.ClientOptWithHTTPClient() with the root API client's http.Client, as the
+			// v2.Client uses HTTP middleware that can break callers that expect CS-compatible error
+			// responses.
 		)
 		if err != nil {
 			panic(fmt.Sprintf("unable to initialize API V2 client: %s", err))
@@ -279,36 +282,6 @@ func (c *Client) ListWithContext(ctx context.Context, g Listable) (s []interface
 	return
 }
 
-// AsyncListWithContext lists the given resources (and paginate till the end)
-//
-//
-//	// NB: goroutine may leak if not read until the end. Create a proper context!
-//	ctx, cancel := context.WithCancel(context.Background())
-//	defer cancel()
-//
-//	outChan, errChan := client.AsyncListWithContext(ctx, new(egoscale.VirtualMachine))
-//
-//	for {
-//		select {
-//		case i, ok := <- outChan:
-//			if ok {
-//				vm := i.(egoscale.VirtualMachine)
-//				// ...
-//			} else {
-//				outChan = nil
-//			}
-//		case err, ok := <- errChan:
-//			if ok {
-//				// do something
-//			}
-//			// Once an error has been received, you can expect the channels to be closed.
-//			errChan = nil
-//		}
-//		if errChan == nil && outChan == nil {
-//			break
-//		}
-//	}
-//
 func (c *Client) AsyncListWithContext(ctx context.Context, g Listable) (<-chan interface{}, <-chan error) {
 	outChan := make(chan interface{}, c.PageSize)
 	errChan := make(chan error)
@@ -434,8 +407,8 @@ func (c *Client) Response(command Command) interface{} {
 func (c *Client) TraceOn() {
 	if _, ok := c.HTTPClient.Transport.(*traceTransport); !ok {
 		c.HTTPClient.Transport = &traceTransport{
-			transport: c.HTTPClient.Transport,
-			logger:    c.Logger,
+			next:   c.HTTPClient.Transport,
+			logger: c.Logger,
 		}
 	}
 }
@@ -443,20 +416,20 @@ func (c *Client) TraceOn() {
 // TraceOff deactivates the HTTP tracer
 func (c *Client) TraceOff() {
 	if rt, ok := c.HTTPClient.Transport.(*traceTransport); ok {
-		c.HTTPClient.Transport = rt.transport
+		c.HTTPClient.Transport = rt.next
 	}
 }
 
 // defaultTransport is the default HTTP client transport.
 type defaultTransport struct {
-	transport http.RoundTripper
+	next http.RoundTripper
 }
 
 // RoundTrip executes a single HTTP transaction while augmenting requests with custom headers.
 func (t *defaultTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Add("User-Agent", UserAgent)
 
-	resp, err := t.transport.RoundTrip(req)
+	resp, err := t.next.RoundTrip(req)
 	if err != nil {
 		return nil, err
 	}
@@ -464,10 +437,10 @@ func (t *defaultTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	return resp, nil
 }
 
-// traceTransport contains the original HTTP transport to enable it to be reverted
+// traceTransport is a client HTTP middleware that dumps HTTP requests and responses content to a logger.
 type traceTransport struct {
-	transport http.RoundTripper
-	logger    *log.Logger
+	logger *log.Logger
+	next   http.RoundTripper
 }
 
 // RoundTrip executes a single HTTP transaction
@@ -478,7 +451,7 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		t.logger.Printf("%s", dump)
 	}
 
-	resp, err := t.transport.RoundTrip(req)
+	resp, err := t.next.RoundTrip(req)
 	if err != nil {
 		return nil, err
 	}

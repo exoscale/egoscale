@@ -7,10 +7,10 @@ import (
 )
 
 func TestRunstatusMaintenanceGenericError(t *testing.T) { // nolint: dupl
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	p := response{200, jsonContentType, fmt.Sprintf(`{"subdomain": "testpage", "services_url": %q}`, ts.URL)}
 	r200 := response{200, jsonContentType, `ERROR`}
@@ -61,10 +61,10 @@ func TestRunstatusMaintenanceGenericError(t *testing.T) { // nolint: dupl
 }
 
 func TestRunstatusListMaintenances(t *testing.T) {
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	ms := response{200, jsonContentType, `
 {
@@ -238,10 +238,10 @@ func TestRunstatusListMaintenances(t *testing.T) {
 }
 
 func TestRunstatusPaginateMaintenances(t *testing.T) {
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	ps := response{200, jsonContentType, fmt.Sprintf(`{
     "next": %q,
@@ -377,10 +377,10 @@ func TestRunstatusPaginateMaintenances(t *testing.T) {
 }
 
 func TestRunstatusMaintenanceDelete(t *testing.T) {
-	ts := newServer(response{204, jsonContentType, ""})
+	ts := newTestServer(response{204, jsonContentType, ""})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	if err := cs.DeleteRunstatusMaintenance(context.TODO(), RunstatusMaintenance{}); err == nil {
 		t.Error("service without a status should fail")
@@ -392,14 +392,14 @@ func TestRunstatusMaintenanceDelete(t *testing.T) {
 }
 
 func TestRunstatusMaintenanceCreate(t *testing.T) {
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 	ts.addResponse(
 		response{200, jsonContentType, fmt.Sprintf(`{"maintenances_url": %q, "subdomain": "d"}`, ts.URL)},
 		response{201, jsonContentType, `{"id": 1, "url": "...", "name": "hello"}`},
 	)
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	if _, err := cs.CreateRunstatusMaintenance(context.TODO(), RunstatusMaintenance{}); err == nil {
 		t.Error("service without a status should fail")

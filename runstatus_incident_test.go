@@ -7,10 +7,10 @@ import (
 )
 
 func TestRunstatusIncidentGenericError(t *testing.T) { // nolint: dupl
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	p := response{200, jsonContentType, fmt.Sprintf(`{"subdomain": "testpage", "incidents_url": %q}`, ts.URL)}
 	r200 := response{200, jsonContentType, `ERROR`}
@@ -61,10 +61,10 @@ func TestRunstatusIncidentGenericError(t *testing.T) { // nolint: dupl
 }
 
 func TestRunstatusListIncidents(t *testing.T) {
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	is := response{200, jsonContentType, `
 {
@@ -206,10 +206,10 @@ func TestRunstatusListIncidents(t *testing.T) {
 }
 
 func TestRunstatusPaginateIncidents(t *testing.T) {
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	is := response{200, jsonContentType, fmt.Sprintf(`
 	{
@@ -303,7 +303,6 @@ func TestRunstatusPaginateIncidents(t *testing.T) {
 
 	ts.addResponse(is, p)
 	cs.PaginateRunstatusIncidents(context.TODO(), RunstatusPage{IncidentsURL: ts.URL}, func(incident *RunstatusIncident, e error) bool {
-
 		if e != nil {
 			t.Errorf(`reply error not expected: %v`, e)
 		}
@@ -314,14 +313,13 @@ func TestRunstatusPaginateIncidents(t *testing.T) {
 
 		return false
 	})
-
 }
 
 func TestRunstatusIncidentDelete(t *testing.T) {
-	ts := newServer(response{204, jsonContentType, ""})
+	ts := newTestServer(response{204, jsonContentType, ""})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	if err := cs.DeleteRunstatusIncident(context.TODO(), RunstatusIncident{}); err == nil {
 		t.Error("incident without a status should fail")
@@ -333,14 +331,14 @@ func TestRunstatusIncidentDelete(t *testing.T) {
 }
 
 func TestRunstatusIncidentCreate(t *testing.T) {
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 	ts.addResponse(
 		response{200, jsonContentType, fmt.Sprintf(`{"incidents_url": %q, "subdomain": "d"}`, ts.URL)},
 		response{201, jsonContentType, `{"url": "...", "name": "hello"}`},
 	)
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	if _, err := cs.CreateRunstatusIncident(context.TODO(), RunstatusIncident{}); err == nil {
 		t.Error("incident without a status should fail")

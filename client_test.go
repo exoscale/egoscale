@@ -15,7 +15,7 @@ import (
 )
 
 func TestClientAPIName(t *testing.T) {
-	cs := NewClient("ENDPOINT", "KEY", "SECRET")
+	cs := newTestClient("ENDPOINT")
 	req := &ListAPIs{}
 	if cs.APIName(req) != "listApis" {
 		t.Errorf("APIName is wrong, wanted listApis")
@@ -32,7 +32,7 @@ func TestClientAPIName(t *testing.T) {
 }
 
 func TestClientAPIDescription(t *testing.T) {
-	cs := NewClient("ENDPOINT", "KEY", "SECRET")
+	cs := newTestClient("ENDPOINT")
 	req := &ListAPIs{}
 	desc := cs.APIDescription(req)
 	if desc != "lists all available apis on the server" {
@@ -41,7 +41,7 @@ func TestClientAPIDescription(t *testing.T) {
 }
 
 func TestClientResponse(t *testing.T) {
-	cs := NewClient("ENDPOINT", "KEY", "SECRET")
+	cs := newTestClient("ENDPOINT")
 
 	r := cs.Response(&ListAPIs{})
 	switch r.(type) {
@@ -88,13 +88,13 @@ func TestClientSyncDelete(t *testing.T) {
 	}
 
 	for _, thing := range things {
-		ts := newServer(
+		ts := newTestServer(
 			response{200, jsonContentType, fmt.Sprintf(bodySuccessString, thing.name)},
 			response{200, jsonContentType, fmt.Sprintf(bodySuccessBool, thing.name)},
 			response{431, jsonContentType, fmt.Sprintf(bodyError, thing.name)},
 		)
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+		cs := newTestClient(ts.URL)
 
 		for i := 0; i < 2; i++ {
 			if err := cs.Delete(thing.deletable); err != nil {
@@ -141,12 +141,12 @@ func TestClientAsyncDelete(t *testing.T) {
 	}
 
 	for _, thing := range things {
-		ts := newServer(
+		ts := newTestServer(
 			response{200, jsonContentType, fmt.Sprintf(body, thing.name)},
 			response{400, jsonContentType, fmt.Sprintf(bodyError, thing.name)},
 		)
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+		cs := newTestClient(ts.URL)
 
 		if err := cs.Delete(thing.deletable); err != nil {
 			t.Errorf("Deletion of %#v. Err: %s", thing, err)
@@ -169,9 +169,9 @@ func TestClientDeleteFailure(t *testing.T) {
 	}
 
 	for _, thing := range things {
-		ts := newServer()
+		ts := newTestServer()
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+		cs := newTestClient(ts.URL)
 
 		if err := cs.Delete(thing); err == nil {
 			t.Errorf("Deletion of %#v. Should have failed", thing)
@@ -211,9 +211,9 @@ func TestClientGetFailure(t *testing.T) {
 	}
 
 	for _, thing := range things {
-		ts := newServer()
+		ts := newTestServer()
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+		cs := newTestClient(ts.URL)
 
 		if _, err := cs.Get(thing); err == nil {
 			t.Errorf("Get of %#v. Should have failed", thing)
@@ -257,12 +257,12 @@ func TestClientGetNone(t *testing.T) {
 	}
 
 	for _, thing := range things {
-		ts := newServer(
+		ts := newTestServer(
 			response{200, jsonContentType, fmt.Sprintf(body, thing.name)},
 			response{431, jsonContentType, bodyError},
 		)
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+		cs := newTestClient(ts.URL)
 
 		_, err := cs.Get(thing.listable)
 		if err == nil {
@@ -317,9 +317,9 @@ func TestClientGetZero(t *testing.T) {
 			plural += "s"
 		}
 		resp := response{200, jsonContentType, fmt.Sprintf(body, plural, thing.name)}
-		ts := newServer(resp)
+		ts := newTestServer(resp)
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+		cs := newTestClient(ts.URL)
 
 		// fake 431
 		_, err := cs.Get(thing.listable)
@@ -381,9 +381,9 @@ func TestClientGetTooMany(t *testing.T) {
 
 	for _, thing := range things {
 		resp := response{200, jsonContentType, fmt.Sprintf(body, thing.name)}
-		ts := newServer(resp)
+		ts := newTestServer(resp)
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+		cs := newTestClient(ts.URL)
 
 		// Too many
 		_, err := cs.Get(thing.listable)
@@ -400,10 +400,10 @@ func TestClientGetTooMany(t *testing.T) {
 }
 
 func TestClientTrace(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `{"listzonesresponse":{ "count": 0, "zone": []}}`})
+	ts := newTestServer(response{200, jsonContentType, `{"listzonesresponse":{ "count": 0, "zone": []}}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	// XXX test something... this only increases the coverage
 	cs.TraceOn()
@@ -556,9 +556,9 @@ func TestClientList(t *testing.T) {
 		for i := range tt.listables {
 			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.fieldName)}
 		}
-		ts := newServer(responses...)
+		ts := newTestServer(responses...)
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+		cs := newTestClient(ts.URL)
 
 		for _, ls := range tt.listables {
 			things, err := cs.List(ls)
@@ -597,9 +597,9 @@ func TestClientPaginate(t *testing.T) {
 		for i := range tt.listables {
 			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.fieldName)}
 		}
-		ts := newServer(responses...)
+		ts := newTestServer(responses...)
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+		cs := newTestClient(ts.URL)
 
 		for _, ls := range tt.listables {
 			req, _ := ls.ListRequest()
@@ -638,9 +638,9 @@ func TestClientPaginateError(t *testing.T) {
 		for i := range tt.listables {
 			responses[i] = response{431, jsonContentType, fmt.Sprintf(body, tt.name)}
 		}
-		ts := newServer(responses...)
+		ts := newTestServer(responses...)
 
-		cs := NewClient(ts.URL, "KEY", "SECRET")
+		cs := NewClient(ts.URL, "KEY", "SECRET", WithoutV2Client())
 
 		for i := range tt.listables {
 			listable := tt.listables[i]
@@ -678,7 +678,7 @@ func TestClient_Do(t *testing.T) {
 			return httpmock.NewStringResponse(http.StatusOK, "test"), nil
 		})
 
-	client := NewClient("x", "x", "x")
+	client := newTestClient("x")
 
 	// Test for ErrNotFound when receiving a http.StatusNotFound status
 	req, err := http.NewRequest(http.MethodGet, "http://example.net/", nil)
@@ -726,7 +726,6 @@ func TestNewClient(t *testing.T) {
 
 	require.Equal(t, testHTTPClient, client.HTTPClient)
 	require.Equal(t, testTimeout, client.Timeout)
-	require.IsType(t, &traceTransport{}, client.HTTPClient.Transport)
 	require.NotNil(t, client.Client)
 
 	// Test embeded v2.Client disabling

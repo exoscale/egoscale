@@ -90,7 +90,7 @@ func TestRequest(t *testing.T) {
 	`)
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 	req := &ListAPIs{
 		Name: "dummy",
 	}
@@ -105,7 +105,7 @@ func TestRequest(t *testing.T) {
 }
 
 func TestRequestSignatureFailure(t *testing.T) {
-	ts := newServer(response{401, jsonContentType, `
+	ts := newTestServer(response{401, jsonContentType, `
 {"createsshkeypairresponse" : {
 	"uuidList":[],
 	"errorcode":401,
@@ -114,7 +114,7 @@ func TestRequestSignatureFailure(t *testing.T) {
 	`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	cs := newTestClient(ts.URL)
 	req := &CreateSSHKeyPair{
 		Name: "123",
 	}
@@ -134,7 +134,7 @@ func TestRequestSignatureFailure(t *testing.T) {
 }
 
 func TestBooleanAsyncRequest(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {
 	"expungevirtualmachineresponse": {
 		"jobid": "01ed7adc-8b81-4e33-a0f2-4f55a3b880cd",
@@ -162,7 +162,7 @@ func TestBooleanAsyncRequest(t *testing.T) {
 	`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	cs := newTestClient(ts.URL)
 	req := &ExpungeVirtualMachine{
 		ID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 	}
@@ -172,7 +172,7 @@ func TestBooleanAsyncRequest(t *testing.T) {
 }
 
 func TestBooleanAsyncRequestFailure(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {
 	"expungevirtualmachineresponse": {
 		"jobid": "7bd023bf-d55c-4b27-9918-680f03efc26c",
@@ -202,7 +202,7 @@ func TestBooleanAsyncRequestFailure(t *testing.T) {
 	`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	cs := newTestClient("ENDPOINT")
 	req := &ExpungeVirtualMachine{
 		ID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 	}
@@ -212,7 +212,7 @@ func TestBooleanAsyncRequestFailure(t *testing.T) {
 }
 
 func TestBooleanAsyncRequestWithContext(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {
 	"expungevirtualmachineresponse": {
 		"jobid": "a0d421e9-8d99-4896-b22c-ea77abaebf06",
@@ -240,7 +240,7 @@ func TestBooleanAsyncRequestWithContext(t *testing.T) {
 	`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	cs := newTestClient(ts.URL)
 	req := &ExpungeVirtualMachine{
 		ID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 	}
@@ -267,7 +267,7 @@ func TestBooleanRequestTimeout(t *testing.T) {
 	done := make(chan bool)
 
 	go func() {
-		cs := NewClient(ts.URL, "TOKEN", "SECRET")
+		cs := newTestClient(ts.URL)
 		cs.HTTPClient.Timeout = time.Millisecond
 
 		req := &ExpungeVirtualMachine{
@@ -291,8 +291,7 @@ func TestBooleanRequestTimeout(t *testing.T) {
 }
 
 func TestSyncRequestWithoutContext(t *testing.T) {
-
-	ts := newServer(
+	ts := newTestServer(
 		response{200, jsonContentType, `{
 	"deployvirtualmachineresponse": {
 		"jobid": "6c4077e3-4ec2-4e6d-9806-4ab1a30138ba",
@@ -304,7 +303,7 @@ func TestSyncRequestWithoutContext(t *testing.T) {
 
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	cs := newTestClient(ts.URL)
 	req := &DeployVirtualMachine{
 		Name:              "test",
 		ServiceOfferingID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
@@ -329,8 +328,7 @@ func TestSyncRequestWithoutContext(t *testing.T) {
 }
 
 func TestAsyncRequestWithoutContext(t *testing.T) {
-
-	ts := newServer(
+	ts := newTestServer(
 		response{200, jsonContentType, `{
 	"deployvirtualmachineresponse": {
 		"jobid": "56bb40d1-4c65-4608-803b-2fdfcb21fa3b",
@@ -357,7 +355,7 @@ func TestAsyncRequestWithoutContext(t *testing.T) {
 
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	cs := newTestClient(ts.URL)
 	req := &DeployVirtualMachine{
 		Name:              "test",
 		ServiceOfferingID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
@@ -390,7 +388,7 @@ func TestAsyncRequestWithoutContext(t *testing.T) {
 }
 
 func TestAsyncRequestWithoutContextFailure(t *testing.T) {
-	ts := newServer(
+	ts := newTestServer(
 		response{200, jsonContentType, `{
 	"deployvirtualmachineresponse": {
 		"jobid": "0a1be26b-415b-4c17-87b6-ffb06c507f8b",
@@ -411,7 +409,7 @@ func TestAsyncRequestWithoutContextFailure(t *testing.T) {
 
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	cs := newTestClient(ts.URL)
 	req := &DeployVirtualMachine{
 		Name:              "test",
 		ServiceOfferingID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
@@ -439,8 +437,7 @@ func TestAsyncRequestWithoutContextFailure(t *testing.T) {
 }
 
 func TestAsyncRequestWithoutContextFailureNext(t *testing.T) {
-
-	ts := newServer(
+	ts := newTestServer(
 		response{200, jsonContentType, `{
 	"deployvirtualmachineresponse: {
 		"jobid": "c3f8457b-a10b-4935-a837-68fb53b29008",
@@ -452,7 +449,7 @@ func TestAsyncRequestWithoutContextFailureNext(t *testing.T) {
 
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	cs := newTestClient(ts.URL)
 	req := &DeployVirtualMachine{
 		Name:              "test",
 		ServiceOfferingID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
@@ -466,8 +463,7 @@ func TestAsyncRequestWithoutContextFailureNext(t *testing.T) {
 }
 
 func TestAsyncRequestWithoutContextFailureNextNext(t *testing.T) {
-
-	ts := newServer(
+	ts := newTestServer(
 		response{200, jsonContentType, `{
 	"deployvirtualmachineresponse": {
 		"jobid": "8933fb8c-ff24-4ca4-b7d1-ba2154e9f2c4",
@@ -494,7 +490,7 @@ func TestAsyncRequestWithoutContextFailureNextNext(t *testing.T) {
 	)
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	cs := newTestClient(ts.URL)
 	req := &DeployVirtualMachine{
 		Name:              "test",
 		ServiceOfferingID: MustParseUUID("71004023-bb72-4a97-b1e9-bc66dfce9470"),
@@ -541,7 +537,7 @@ func TestBooleanRequestWithContext(t *testing.T) {
 	done := make(chan bool)
 
 	go func() {
-		cs := NewClient(ts.URL, "TOKEN", "SECRET")
+		cs := newTestClient(ts.URL)
 		req := &ExpungeVirtualMachine{
 			ID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 		}
@@ -589,7 +585,7 @@ func TestRequestWithContextTimeoutPost(t *testing.T) {
 	}
 
 	go func() {
-		cs := NewClient(ts.URL, "TOKEN", "SECRET")
+		cs := newTestClient(ts.URL)
 		req := &DeployVirtualMachine{
 			ServiceOfferingID: MustParseUUID("925207d3-beea-4c56-8594-ef351b526dd3"),
 			TemplateID:        MustParseUUID("d2fcd819-7f6e-462d-b8c0-bfae83e4d273"),
@@ -634,7 +630,7 @@ func TestBooleanRequestWithContextAndTimeout(t *testing.T) {
 	done := make(chan bool)
 
 	go func() {
-		cs := NewClient(ts.URL, "TOKEN", "SECRET")
+		cs := newTestClient(ts.URL)
 		cs.HTTPClient.Timeout = time.Millisecond
 
 		req := &ExpungeVirtualMachine{
@@ -658,7 +654,7 @@ func TestBooleanRequestWithContextAndTimeout(t *testing.T) {
 }
 
 func TestWrongBodyResponse(t *testing.T) {
-	ts := newServer(response{200, "text/html", `
+	ts := newTestServer(response{200, "text/html", `
 		<html>
 		<header><title>This is title</title></header>
 		<body>
@@ -668,7 +664,7 @@ func TestWrongBodyResponse(t *testing.T) {
 	`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "TOKEN", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	_, err := cs.Request(&ListZones{})
 	if err == nil {
@@ -681,7 +677,7 @@ func TestWrongBodyResponse(t *testing.T) {
 }
 
 func TestRequestNilCommand(t *testing.T) {
-	cs := NewClient("URL", "TOKEN", "SECRET")
+	cs := newTestClient("URL")
 
 	_, err := cs.Request((*ListZones)(nil))
 	if err == nil {
@@ -703,7 +699,11 @@ type response struct {
 	body        string
 }
 
-func newServer(responses ...response) *testServer {
+func newTestClient(endpoint string) *Client {
+	return NewClient(endpoint, "KEY", "SECRET", WithoutV2Client())
+}
+
+func newTestServer(responses ...response) *testServer {
 	mux := http.NewServeMux()
 
 	ts := &testServer{

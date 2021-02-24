@@ -45,7 +45,12 @@ func ClientOptWithTimeout(v time.Duration) ClientOpt {
 	}
 }
 
-// ClientOptWithTimeout returns a ClientOpt overriding the default http.Client.
+// ClientOptWithHTTPClient returns a ClientOpt overriding the default http.Client.
+// Note: the Exoscale API client will chain additional middleware
+// (http.RoundTripper) on the HTTP client internally, which can alter the HTTP
+// requests and responses. If you don't want any other middleware than the ones
+// currently set to your HTTP client, you should duplicate it and pass a copy
+// instead.
 func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
 	return func(c *Client) error {
 		c.httpClient = v

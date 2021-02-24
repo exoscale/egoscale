@@ -7,12 +7,12 @@ import (
 )
 
 func TestRunstatusError(t *testing.T) {
-	ts := newServer(
+	ts := newTestServer(
 		response{401, jsonContentType, `{"detail":"Invalid Authorization header"}`},
 	)
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	_, err := cs.GetRunstatusPage(context.TODO(), RunstatusPage{URL: ts.URL})
 	if err == nil {
@@ -24,12 +24,12 @@ func TestRunstatusError(t *testing.T) {
 }
 
 func TestRunstatusValidationError(t *testing.T) {
-	ts := newServer(
+	ts := newTestServer(
 		response{401, jsonContentType, `{"foo":["bad mojo"]}`},
 	)
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	_, err := cs.GetRunstatusPage(context.TODO(), RunstatusPage{URL: ts.URL})
 	if err == nil {
@@ -41,7 +41,7 @@ func TestRunstatusValidationError(t *testing.T) {
 }
 
 func TestRunstatusPage(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {
   "id": 102,
   "url": "https://example.org/pages/testpage",
@@ -114,7 +114,7 @@ func TestRunstatusPage(t *testing.T) {
 }`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	page, err := cs.GetRunstatusPage(context.TODO(), RunstatusPage{URL: ts.URL})
 	if err != nil {
@@ -127,7 +127,7 @@ func TestRunstatusPage(t *testing.T) {
 }
 
 func TestCreateRunstatusPage(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {
   "id": 102,
   "url": "https://example.org/pages/testpage",
@@ -200,7 +200,7 @@ func TestCreateRunstatusPage(t *testing.T) {
 }`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	page, err := cs.CreateRunstatusPage(context.TODO(), RunstatusPage{})
 	if err != nil {
@@ -213,10 +213,10 @@ func TestCreateRunstatusPage(t *testing.T) {
 }
 
 func TestListRunstatusPage(t *testing.T) {
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	p := response{200, jsonContentType, `
 {
@@ -275,10 +275,10 @@ func TestListRunstatusPage(t *testing.T) {
 }
 
 func TestPaginateRunstatusPage(t *testing.T) {
-	ts := newServer()
+	ts := newTestServer()
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	p := response{200, jsonContentType, fmt.Sprintf(`
   {
@@ -316,7 +316,6 @@ func TestPaginateRunstatusPage(t *testing.T) {
 
 	ts.addResponse(p, ps)
 	cs.PaginateRunstatusPages(context.TODO(), func(pages []RunstatusPage, e error) bool {
-
 		if e != nil {
 			t.Errorf(`reply error not expected: %v`, e)
 		}

@@ -109,7 +109,7 @@ func TestAuthorizeSecurityGroupEgressOnBeforeSendTCP(t *testing.T) {
 }
 
 func TestGetSecurityGroup(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listsecuritygroupsresponse": {
 	"count": 1,
 	"securitygroup": [
@@ -135,7 +135,7 @@ func TestGetSecurityGroup(t *testing.T) {
 }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 	sg := &SecurityGroup{
 		ID: MustParseUUID("4bfe1073-a6d4-48bd-8f24-2ab586674092"),
 	}
@@ -150,7 +150,7 @@ func TestGetSecurityGroup(t *testing.T) {
 }
 
 func TestListSecurityGroups(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 		{"listsecuritygroupsresponse":{
 			"count": 2,
 			"securitygroup": [
@@ -209,7 +209,7 @@ func TestListSecurityGroups(t *testing.T) {
 
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 	sgs, err := cs.List(&SecurityGroup{})
 	if err != nil {
 		t.Fatalf("%v", err)

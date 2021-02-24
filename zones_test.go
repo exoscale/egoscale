@@ -12,11 +12,11 @@ func TestListZonesAPIName(t *testing.T) {
 }
 
 func TestListZonesTypeError(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listzonesresponse": []}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	_, err := cs.List(&Zone{})
 	if err == nil {
@@ -25,7 +25,7 @@ func TestListZonesTypeError(t *testing.T) {
 }
 
 func TestListZonesPaginateBreak(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listzonesresponse": {
 	"count": 4,
 	"zone": [
@@ -43,7 +43,7 @@ func TestListZonesPaginateBreak(t *testing.T) {
 }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	zone := new(Zone)
 	req, _ := zone.ListRequest()
@@ -62,7 +62,7 @@ func TestListZonesPaginateBreak(t *testing.T) {
 }
 
 func TestListZonesAsyncError(t *testing.T) {
-	ts := newServer(response{431, jsonContentType, `
+	ts := newTestServer(response{431, jsonContentType, `
 {
 	"listzonesresponse": {
 		"cserrorcode": 9999,
@@ -74,7 +74,7 @@ func TestListZonesAsyncError(t *testing.T) {
 `})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	zone := &Zone{
 		ID: MustParseUUID("1747ef5e-5451-41fd-9f1a-58913bae9701"),
@@ -107,7 +107,7 @@ func TestListZonesAsyncError(t *testing.T) {
 }
 
 func TestListZonesAsync(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listzonesresponse": {
 	"count": 4,
 	"zone": [
@@ -135,7 +135,7 @@ func TestListZonesAsync(t *testing.T) {
 }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 
 	zone := new(Zone)
 
@@ -175,7 +175,7 @@ func TestListZonesAsync(t *testing.T) {
 }
 
 func TestListZonesTwoPages(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listzonesresponse": {
 	"count": 4,
 	"zone": [
@@ -212,7 +212,7 @@ func TestListZonesTwoPages(t *testing.T) {
 }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 	cs.PageSize = 2
 
 	zone := new(Zone)
@@ -227,7 +227,7 @@ func TestListZonesTwoPages(t *testing.T) {
 }
 
 func TestListZonesError(t *testing.T) {
-	ts := newServer(response{200, jsonContentType, `
+	ts := newTestServer(response{200, jsonContentType, `
 {"listzonesresponse": {
 	"count": 4,
 	"zone": [
@@ -251,7 +251,7 @@ func TestListZonesError(t *testing.T) {
 }}`})
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 	cs.PageSize = 2
 
 	zone := new(Zone)
@@ -268,7 +268,7 @@ func TestListZonesTimeout(t *testing.T) {
 }}`)
 	defer ts.Close()
 
-	cs := NewClient(ts.URL, "KEY", "SECRET")
+	cs := newTestClient(ts.URL)
 	cs.HTTPClient.Timeout = time.Millisecond
 
 	zone := new(Zone)

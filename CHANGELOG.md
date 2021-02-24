@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.43.1
+------
+
+- change: in `NewClient()`, the `v2.Client` embedded in the `Client` struct doesn't inherit the custom `http.Client` set using `WithHTTPClient()`.
+
 0.43.0
 ------
 

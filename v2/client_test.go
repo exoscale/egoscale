@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -43,6 +44,24 @@ func (ts *clientTestSuite) TearDownTest() {
 	ts.client = nil
 
 	httpmock.DeactivateAndReset()
+}
+
+func (ts *clientTestSuite) mockAPIRequest(method, url string, body interface{}) {
+	httpmock.RegisterResponder(method, url, func(_ *http.Request) (*http.Response, error) {
+		resp, err := httpmock.NewJsonResponse(http.StatusOK, body)
+		if err != nil {
+			ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+		}
+		return resp, nil
+	})
+}
+
+func (ts *clientTestSuite) randomID() string {
+	id, err := uuid.NewV4()
+	if err != nil {
+		ts.T().Fatalf("unable to generate a new UUID: %s", err)
+	}
+	return id.String()
 }
 
 func (ts *clientTestSuite) unmarshalJSONRequestBody(req *http.Request, v interface{}) {

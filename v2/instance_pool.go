@@ -165,7 +165,7 @@ func (i *InstancePool) ResetField(ctx context.Context, field interface{}) error 
 		return err
 	}
 
-	resp, err := i.c.DeleteInstancePoolFieldWithResponse(apiv2.WithZone(ctx, i.zone), i.ID, resetField)
+	resp, err := i.c.ResetInstancePoolFieldWithResponse(apiv2.WithZone(ctx, i.zone), i.ID, resetField)
 	if err != nil {
 		return err
 	}

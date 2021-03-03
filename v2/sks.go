@@ -295,7 +295,7 @@ func (c *SKSCluster) ResetField(ctx context.Context, field interface{}) error {
 		return err
 	}
 
-	resp, err := c.c.DeleteSksClusterFieldWithResponse(apiv2.WithZone(ctx, c.zone), c.ID, resetField)
+	resp, err := c.c.ResetSksClusterFieldWithResponse(apiv2.WithZone(ctx, c.zone), c.ID, resetField)
 	if err != nil {
 		return err
 	}
@@ -318,7 +318,7 @@ func (c *SKSCluster) ResetNodepoolField(ctx context.Context, np *SKSNodepool, fi
 		return err
 	}
 
-	resp, err := c.c.DeleteSksNodepoolFieldWithResponse(apiv2.WithZone(ctx, c.zone), c.ID, np.ID, resetField)
+	resp, err := c.c.ResetSksNodepoolFieldWithResponse(apiv2.WithZone(ctx, c.zone), c.ID, np.ID, resetField)
 	if err != nil {
 		return err
 	}

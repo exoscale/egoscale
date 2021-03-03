@@ -331,6 +331,94 @@ func (ts *clientTestSuite) TestSKSCluster_DeleteNodepool() {
 	ts.Require().NoError(cluster.DeleteNodepool(context.Background(), cluster.Nodepools[0]))
 }
 
+func (ts *clientTestSuite) TestSKSCluster_ResetField() {
+	var (
+		testResetField     = "description"
+		testOperationID    = ts.randomID()
+		testOperationState = "success"
+	)
+
+	httpmock.RegisterResponder("DELETE", "=~^/sks-cluster/.*",
+		func(req *http.Request) (*http.Response, error) {
+			ts.Require().Equal(
+				fmt.Sprintf("/sks-cluster/%s/%s", testSKSClusterID, testResetField),
+				req.URL.String())
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testSKSClusterID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testSKSClusterID},
+	})
+
+	cluster := &SKSCluster{
+		ID:   testSKSClusterID,
+		c:    ts.client,
+		zone: testZone,
+
+		Nodepools: []*SKSNodepool{{ID: testSKSNodepoolID}},
+	}
+
+	ts.Require().NoError(cluster.ResetField(context.Background(), &cluster.Description))
+}
+
+func (ts *clientTestSuite) TestSKSCluster_ResetNodepoolField() {
+	var (
+		testResetField     = "description"
+		testOperationID    = ts.randomID()
+		testOperationState = "success"
+	)
+
+	httpmock.RegisterResponder("DELETE", "=~^/sks-cluster/.*",
+		func(req *http.Request) (*http.Response, error) {
+			ts.Require().Equal(
+				fmt.Sprintf("/sks-cluster/%s/nodepool/%s/%s",
+					testSKSClusterID, testSKSNodepoolID, testResetField),
+				req.URL.String())
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testSKSClusterID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testSKSClusterID},
+	})
+
+	cluster := &SKSCluster{
+		ID:   testSKSClusterID,
+		c:    ts.client,
+		zone: testZone,
+
+		Nodepools: []*SKSNodepool{{ID: testSKSNodepoolID}},
+	}
+
+	ts.Require().NoError(cluster.ResetNodepoolField(
+		context.Background(),
+		cluster.Nodepools[0],
+		&cluster.Nodepools[0].Description))
+}
+
 func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
 	var (
 		testOperationID    = ts.randomID()
@@ -566,7 +654,7 @@ func (ts *clientTestSuite) TestClient_UpdateSKSCluster() {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSNodepoolID},
+				Reference: &papi.Reference{Id: &testSKSClusterID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -578,7 +666,7 @@ func (ts *clientTestSuite) TestClient_UpdateSKSCluster() {
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		Reference: &papi.Reference{Id: &testSKSClusterID},
 	})
 
 	clusterUpdated := SKSCluster{
@@ -654,7 +742,7 @@ func (ts *clientTestSuite) TestClient_DeleteSKSCluster() {
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		Reference: &papi.Reference{Id: &testSKSClusterID},
 	})
 
 	ts.Require().NoError(ts.client.DeleteSKSCluster(context.Background(), testZone, testSKSClusterID))

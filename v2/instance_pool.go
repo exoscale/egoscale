@@ -9,23 +9,23 @@ import (
 
 // InstancePool represents an Instance Pool.
 type InstancePool struct {
-	AntiAffinityGroupIDs []string
-	Description          string
+	AntiAffinityGroupIDs []string `reset:"anti-affinity-groups"`
+	Description          string   `reset:"description"`
 	DiskSize             int64
-	ElasticIPIDs         []string
+	ElasticIPIDs         []string `reset:"elastic-ips"`
 	ID                   string
 	IPv6Enabled          bool
 	InstanceIDs          []string
 	InstanceTypeID       string
 	ManagerID            string
 	Name                 string
-	PrivateNetworkIDs    []string
-	SSHKey               string
-	SecurityGroupIDs     []string
+	PrivateNetworkIDs    []string `reset:"private-networks"`
+	SSHKey               string   `reset:"ssh-key"`
+	SecurityGroupIDs     []string `reset:"security-groups"`
 	Size                 int64
 	State                string
 	TemplateID           string
-	UserData             string
+	UserData             string `reset:"user-data"`
 
 	c    *Client
 	zone string
@@ -135,7 +135,7 @@ func (i *InstancePool) Scale(ctx context.Context, instances int64) error {
 	return nil
 }
 
-// EvictNodepoolMembers evicts the specified members (identified by their Compute instance ID) from the
+// EvictMembers evicts the specified members (identified by their Compute instance ID) from the
 // Instance Pool.
 func (i *InstancePool) EvictMembers(ctx context.Context, members []string) error {
 	resp, err := i.c.EvictInstancePoolMembersWithResponse(
@@ -143,6 +143,29 @@ func (i *InstancePool) EvictMembers(ctx context.Context, members []string) error
 		i.ID,
 		papi.EvictInstancePoolMembersJSONRequestBody{Instances: &members},
 	)
+	if err != nil {
+		return err
+	}
+
+	_, err = papi.NewPoller().
+		WithTimeout(i.c.timeout).
+		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ResetField resets the specified Instance Pool field to its default value.
+// The value expected for the field parameter is a pointer to the InstancePool field to reset.
+func (i *InstancePool) ResetField(ctx context.Context, field interface{}) error {
+	resetField, err := resetFieldName(i, field)
+	if err != nil {
+		return err
+	}
+
+	resp, err := i.c.DeleteInstancePoolFieldWithResponse(apiv2.WithZone(ctx, i.zone), i.ID, resetField)
 	if err != nil {
 		return err
 	}

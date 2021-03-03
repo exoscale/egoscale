@@ -14,14 +14,14 @@ import (
 type SKSNodepool struct {
 	ID                   string
 	Name                 string
-	Description          string
+	Description          string `reset:"description"`
 	CreatedAt            time.Time
 	InstancePoolID       string
 	InstanceTypeID       string
 	TemplateID           string
 	DiskSize             int64
-	AntiAffinityGroupIDs []string
-	SecurityGroupIDs     []string
+	AntiAffinityGroupIDs []string `reset:"anti-affinity-groups"`
+	SecurityGroupIDs     []string `reset:"security-groups"`
 	Version              string
 	Size                 int64
 	State                string
@@ -71,7 +71,7 @@ func sksNodepoolFromAPI(n *papi.SksNodepool) *SKSNodepool {
 type SKSCluster struct {
 	ID           string
 	Name         string
-	Description  string
+	Description  string `reset:"description"`
 	CreatedAt    time.Time
 	Endpoint     string
 	Nodepools    []*SKSNodepool
@@ -273,6 +273,52 @@ func (c *SKSCluster) DeleteNodepool(ctx context.Context, np *SKSNodepool) error 
 		c.ID,
 		np.ID,
 	)
+	if err != nil {
+		return err
+	}
+
+	_, err = papi.NewPoller().
+		WithTimeout(c.c.timeout).
+		Poll(ctx, c.c.OperationPoller(c.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ResetField resets the specified SKS cluster field to its default value.
+// The value expected for the field parameter is a pointer to the SKSCluster field to reset.
+func (c *SKSCluster) ResetField(ctx context.Context, field interface{}) error {
+	resetField, err := resetFieldName(c, field)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.c.DeleteSksClusterFieldWithResponse(apiv2.WithZone(ctx, c.zone), c.ID, resetField)
+	if err != nil {
+		return err
+	}
+
+	_, err = papi.NewPoller().
+		WithTimeout(c.c.timeout).
+		Poll(ctx, c.c.OperationPoller(c.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ResetNodepoolField resets the specified SKS Nodepool field to its default value.
+// The value expected for the field parameter is a pointer to the SKSNodepool field to reset.
+func (c *SKSCluster) ResetNodepoolField(ctx context.Context, np *SKSNodepool, field interface{}) error {
+	resetField, err := resetFieldName(np, field)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.c.DeleteSksNodepoolFieldWithResponse(apiv2.WithZone(ctx, c.zone), c.ID, np.ID, resetField)
 	if err != nil {
 		return err
 	}

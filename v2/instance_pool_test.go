@@ -116,6 +116,46 @@ func (ts *clientTestSuite) TestInstancePool_EvictMembers() {
 	ts.Require().NoError(instancePool.EvictMembers(context.Background(), []string{testEvictedMemberID}))
 }
 
+func (ts *clientTestSuite) TestInstancePool_ResetField() {
+	var (
+		testResetField     = "description"
+		testOperationID    = ts.randomID()
+		testOperationState = "success"
+	)
+
+	httpmock.RegisterResponder("DELETE", "=~^/instance-pool/.*",
+		func(req *http.Request) (*http.Response, error) {
+			ts.Require().Equal(
+				fmt.Sprintf("/instance-pool/%s/%s", testInstancePoolID, testResetField),
+				req.URL.String())
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstancePoolID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testInstancePoolID},
+	})
+
+	cluster := &InstancePool{
+		ID:   testInstancePoolID,
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(cluster.ResetField(context.Background(), &cluster.Description))
+}
+
 func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 	var (
 		testOperationID    = ts.randomID()

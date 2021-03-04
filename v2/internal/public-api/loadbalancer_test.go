@@ -42,9 +42,21 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 			Id:          &testID,
 			Ip:          &testIP,
 			Name:        &testName,
-			State:       &testState,
 			Services: &[]LoadBalancerService{{
-				Description:  &testServiceDescription,
+				Description: &testServiceDescription,
+				Healthcheck: &LoadBalancerServiceHealthcheck{
+					Interval: testServiceHealthcheckInterval,
+					Mode:     testServiceHealthcheckMode,
+					Port:     testServiceHealthcheckPort,
+					Retries:  testServiceHealthcheckRetries,
+					Timeout:  testServiceHealthcheckTimeout,
+					TlsSni:   &testServiceHealthcheckTLSSNI,
+					Uri:      &testServiceHealthcheckURI,
+				},
+				HealthcheckStatus: &[]LoadBalancerServerStatus{{
+					PublicIp: &testServiceHealthcheckStatusInstanceIP,
+					Status:   &testServiceHealthcheckStatusStatus,
+				}},
 				Id:           &testServiceID,
 				InstancePool: &InstancePool{Id: &testServiceInstancePoolID},
 				Name:         &testServiceName,
@@ -53,20 +65,8 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 				State:        &testServiceState,
 				Strategy:     &testServiceStrategy,
 				TargetPort:   &testServiceTargetPort,
-				Healthcheck: &Healthcheck{
-					Interval: &testServiceHealthcheckInterval,
-					Mode:     testServiceHealthcheckMode,
-					Port:     testServiceHealthcheckPort,
-					Retries:  &testServiceHealthcheckRetries,
-					Timeout:  &testServiceHealthcheckTimeout,
-					Uri:      &testServiceHealthcheckURI,
-					TlsSni:   &testServiceHealthcheckTLSSNI,
-				},
-				HealthcheckStatus: &[]LoadBalancerServerStatus{{
-					PublicIp: &testServiceHealthcheckStatusInstanceIP,
-					Status:   &testServiceHealthcheckStatusStatus,
-				}},
 			}},
+			State: &testState,
 		}
 
 		actual LoadBalancer
@@ -148,7 +148,20 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 			Name:        &testName,
 			State:       &testState,
 			Services: &[]LoadBalancerService{{
-				Description:  &testServiceDescription,
+				Description: &testServiceDescription,
+				Healthcheck: &LoadBalancerServiceHealthcheck{
+					Interval: testServiceHealthcheckInterval,
+					Mode:     testServiceHealthcheckMode,
+					Port:     testServiceHealthcheckPort,
+					Retries:  testServiceHealthcheckRetries,
+					Timeout:  testServiceHealthcheckTimeout,
+					TlsSni:   &testServiceHealthcheckTLSSNI,
+					Uri:      &testServiceHealthcheckURI,
+				},
+				HealthcheckStatus: &[]LoadBalancerServerStatus{{
+					PublicIp: &testServiceHealthcheckStatusInstanceIP,
+					Status:   &testServiceHealthcheckStatusStatus,
+				}},
 				Id:           &testServiceID,
 				InstancePool: &InstancePool{Id: &testServiceInstancePoolID},
 				Name:         &testServiceName,
@@ -157,19 +170,6 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 				State:        &testServiceState,
 				Strategy:     &testServiceStrategy,
 				TargetPort:   &testServiceTargetPort,
-				Healthcheck: &Healthcheck{
-					Interval: &testServiceHealthcheckInterval,
-					Mode:     testServiceHealthcheckMode,
-					Port:     testServiceHealthcheckPort,
-					Retries:  &testServiceHealthcheckRetries,
-					Timeout:  &testServiceHealthcheckTimeout,
-					Uri:      &testServiceHealthcheckURI,
-					TlsSni:   &testServiceHealthcheckTLSSNI,
-				},
-				HealthcheckStatus: &[]LoadBalancerServerStatus{{
-					PublicIp: &testServiceHealthcheckStatusInstanceIP,
-					Status:   &testServiceHealthcheckStatusStatus,
-				}},
 			}},
 		}
 

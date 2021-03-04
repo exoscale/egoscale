@@ -22,11 +22,28 @@ func (ts *clientTestSuite) TestClient_CreateAntiAffinityGroup() {
 		testOperationState = "success"
 	)
 
-	ts.mockAPIRequest("POST", "/anti-affinity-group", papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testAntiAffinityGroupID},
-	})
+	httpmock.RegisterResponder("POST", "/anti-affinity-group",
+		func(req *http.Request) (*http.Response, error) {
+			var actual papi.CreateAntiAffinityGroupJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.CreateAntiAffinityGroupJSONRequestBody{
+				Description: &testAntiAffinityGroupDescription,
+				Name:        testAntiAffinityGroupName,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testPrivateNetworkID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
 		Id:        &testOperationID,

@@ -22,7 +22,7 @@ var (
 	testSecurityGroupRuleICMPType        = 8
 	testSecurityGroupRuleID              = new(clientTestSuite).randomID()
 	testSecurityGroupRuleNetwork         = "1.2.3.0/24"
-	testSecurityGroupRuleProtocol        = "tcp"
+	testSecurityGroupRuleProtocol        = "icmp"
 	testSecurityGroupRuleSecurityGroupID = new(clientTestSuite).randomID()
 	testSecurityGroupRuleStartPort       = 8081
 )
@@ -33,11 +33,39 @@ func (ts *clientTestSuite) TestSecurityGroup_AddRule() {
 		testOperationState = "success"
 	)
 
-	ts.mockAPIRequest("POST", fmt.Sprintf("/security-group/%s/rules", testSecurityGroupID),
-		papi.Operation{
-			Id:        &testOperationID,
-			State:     &testOperationState,
-			Reference: &papi.Reference{Id: &testSecurityGroupID},
+	httpmock.RegisterResponder("POST", fmt.Sprintf("/security-group/%s/rules", testSecurityGroupID),
+		func(req *http.Request) (*http.Response, error) {
+			var actual papi.AddRuleToSecurityGroupJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.AddRuleToSecurityGroupJSONRequestBody{
+				Description:   &testSecurityGroupRuleDescription,
+				EndPort:       func() *int64 { v := int64(testSecurityGroupRuleEndPort); return &v }(),
+				FlowDirection: testSecurityGroupRuleFlowDirection,
+				Icmp: &struct {
+					Code *int64 `json:"code,omitempty"`
+					Type *int64 `json:"type,omitempty"`
+				}{
+					Code: func() *int64 { v := int64(testSecurityGroupRuleICMPCode); return &v }(),
+					Type: func() *int64 { v := int64(testSecurityGroupRuleICMPType); return &v }(),
+				},
+				Network:       &testSecurityGroupRuleNetwork,
+				Protocol:      &testSecurityGroupRuleProtocol,
+				SecurityGroup: &papi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
+				StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testPrivateNetworkID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
 		})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
@@ -155,11 +183,28 @@ func (ts *clientTestSuite) TestClient_CreateSecurityGroup() {
 		testOperationState = "success"
 	)
 
-	ts.mockAPIRequest("POST", "/security-group", papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSecurityGroupID},
-	})
+	httpmock.RegisterResponder("POST", "/security-group",
+		func(req *http.Request) (*http.Response, error) {
+			var actual papi.CreateSecurityGroupJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.CreateSecurityGroupJSONRequestBody{
+				Description: &testSecurityGroupDescription,
+				Name:        testSecurityGroupName,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testPrivateNetworkID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
 		Id:        &testOperationID,

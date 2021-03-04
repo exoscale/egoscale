@@ -162,11 +162,39 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 		testOperationState = "success"
 	)
 
-	ts.mockAPIRequest("POST", "/instance-pool", papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testInstancePoolID},
-	})
+	httpmock.RegisterResponder("POST", "/instance-pool",
+		func(req *http.Request) (*http.Response, error) {
+			var actual papi.CreateInstancePoolJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.CreateInstancePoolJSONRequestBody{
+				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
+				Description:        &testInstancePoolDescription,
+				DiskSize:           testInstancePoolDiskSize,
+				ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
+				InstanceType:       papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
+				Ipv6Enabled:        &testInstancePoolIPv6Enabled,
+				Name:               testInstancePoolName,
+				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
+				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testInstancePoolSecurityGroupID}},
+				Size:               testInstancePoolSize,
+				SshKey:             &papi.SshKey{Name: &testInstancePoolSSHKey},
+				Template:           papi.Template{Id: &testInstancePoolTemplateID},
+				UserData:           &testInstancePoolUserData,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstancePoolID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
 		Id:        &testOperationID,
@@ -360,6 +388,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 		func(req *http.Request) (*http.Response, error) {
 			var actual papi.UpdateInstancePoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
+
 			expected := papi.UpdateInstancePoolJSONRequestBody{
 				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupIDUpdated}},
 				Description:        &testInstancePoolDescriptionUpdated,

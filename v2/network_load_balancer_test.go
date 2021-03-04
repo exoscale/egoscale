@@ -12,8 +12,6 @@ import (
 	papi "github.com/exoscale/egoscale/v2/internal/public-api"
 )
 
-const iso8601Format = "2006-01-02T15:04:05Z"
-
 var (
 	testNLBID                                        = new(clientTestSuite).randomID()
 	testNLBName                                      = "test-nlb-name"
@@ -26,11 +24,11 @@ var (
 	testNLBServiceDescription                        = new(clientTestSuite).randomID()
 	testNLBServiceInstancePoolID                     = new(clientTestSuite).randomID()
 	testNLBServiceProtocol                           = "tcp"
-	testNLBServicePort                         int64 = 80
-	testNLBServiceTargetPort                   int64 = 8080
+	testNLBServicePort                         int64 = 443
+	testNLBServiceTargetPort                   int64 = 8443
 	testNLBServiceStrategy                           = "round-robin"
 	testNLBServiceState                              = "running"
-	testNLServiceHealthcheckMode                     = "http"
+	testNLServiceHealthcheckMode                     = "https"
 	testNLBServiceHealthcheckPort              int64 = 8080
 	testNLBServiceHealthcheckInterval          int64 = 10
 	testNLBServiceHealthcheckTimeout           int64 = 3
@@ -49,11 +47,42 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_AddService() {
 		testOperationState = "success"
 	)
 
-	ts.mockAPIRequest("POST", fmt.Sprintf("/load-balancer/%s/service", testNLBID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testNLBID},
-	})
+	httpmock.RegisterResponder("POST", fmt.Sprintf("/load-balancer/%s/service", testNLBID),
+		func(req *http.Request) (*http.Response, error) {
+			var actual papi.AddServiceToLoadBalancerJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.AddServiceToLoadBalancerJSONRequestBody{
+				Description: &testNLBServiceDescription,
+				Healthcheck: papi.LoadBalancerServiceHealthcheck{
+					Interval: testNLBServiceHealthcheckInterval,
+					Mode:     testNLServiceHealthcheckMode,
+					Port:     testNLBServiceHealthcheckPort,
+					Retries:  testNLBServiceHealthcheckRetries,
+					Timeout:  testNLBServiceHealthcheckTimeout,
+					TlsSni:   &testNLBServiceHealthcheckTLSSNI,
+					Uri:      &testNLBServiceHealthcheckURI,
+				},
+				InstancePool: papi.InstancePool{Id: &testNLBServiceInstancePoolID},
+				Name:         testNLBServiceName,
+				Port:         testNLBServicePort,
+				Protocol:     testNLBServiceProtocol,
+				Strategy:     testNLBServiceStrategy,
+				TargetPort:   testNLBServiceTargetPort,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testNLBID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
 		Id:        &testOperationID,
@@ -62,28 +91,21 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_AddService() {
 	})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/load-balancer/%s", testNLBID), papi.LoadBalancer{
-		Id:          &testNLBID,
-		Name:        &testNLBName,
-		Description: &testNLBDescription,
 		CreatedAt:   &testNLBCreatedAt,
+		Description: &testNLBDescription,
+		Id:          &testNLBID,
 		Ip:          &testNLBIPAddress,
+		Name:        &testNLBName,
 		Services: &[]papi.LoadBalancerService{{
-			Id:           &testNLBServiceID,
-			Name:         &testNLBServiceName,
-			Description:  &testNLBServiceDescription,
-			InstancePool: &papi.InstancePool{Id: &testNLBServiceInstancePoolID},
-			Protocol:     &testNLBServiceProtocol,
-			Port:         &testNLBServicePort,
-			TargetPort:   &testNLBServiceTargetPort,
-			Strategy:     &testNLBServiceStrategy,
-			Healthcheck: &papi.Healthcheck{
+			Description: &testNLBServiceDescription,
+			Healthcheck: &papi.LoadBalancerServiceHealthcheck{
+				Interval: testNLBServiceHealthcheckInterval,
 				Mode:     testNLServiceHealthcheckMode,
-				Interval: &testNLBServiceHealthcheckInterval,
 				Port:     testNLBServiceHealthcheckPort,
-				Uri:      &testNLBServiceHealthcheckURI,
+				Retries:  testNLBServiceHealthcheckRetries,
+				Timeout:  testNLBServiceHealthcheckTimeout,
 				TlsSni:   &testNLBServiceHealthcheckTLSSNI,
-				Timeout:  &testNLBServiceHealthcheckTimeout,
-				Retries:  &testNLBServiceHealthcheckRetries,
+				Uri:      &testNLBServiceHealthcheckURI,
 			},
 			HealthcheckStatus: &[]papi.LoadBalancerServerStatus{
 				{
@@ -95,39 +117,39 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_AddService() {
 					Status:   &testNLBServiceHealthcheckStatus2Status,
 				},
 			},
-			State: &testNLBServiceState,
+			Id:           &testNLBServiceID,
+			InstancePool: &papi.InstancePool{Id: &testNLBServiceInstancePoolID},
+			Name:         &testNLBServiceName,
+			Port:         &testNLBServicePort,
+			Protocol:     &testNLBServiceProtocol,
+			Strategy:     &testNLBServiceStrategy,
+			TargetPort:   &testNLBServiceTargetPort,
+			State:        &testNLBServiceState,
 		}},
 		State: &testNLBState,
 	})
 
 	nlb := &NetworkLoadBalancer{
-		ID:          testNLBID,
-		Name:        testNLBName,
-		Description: testNLBDescription,
 		CreatedAt:   testNLBCreatedAt,
+		Description: testNLBDescription,
+		ID:          testNLBID,
 		IPAddress:   net.ParseIP(testNLBIPAddress),
+		Name:        testNLBName,
 		State:       testNLBState,
 
 		c: ts.client,
 	}
 
 	expected := &NetworkLoadBalancerService{
-		ID:             testNLBServiceID,
-		Name:           testNLBServiceName,
-		Description:    testNLBServiceDescription,
-		InstancePoolID: testNLBServiceInstancePoolID,
-		Protocol:       testNLBServiceProtocol,
-		Port:           uint16(testNLBServicePort),
-		TargetPort:     uint16(testNLBServiceTargetPort),
-		Strategy:       testNLBServiceStrategy,
+		Description: testNLBServiceDescription,
 		Healthcheck: NetworkLoadBalancerServiceHealthcheck{
+			Interval: time.Duration(testNLBServiceHealthcheckInterval) * time.Second,
 			Mode:     testNLServiceHealthcheckMode,
 			Port:     uint16(testNLBServiceHealthcheckPort),
-			Interval: time.Duration(testNLBServiceHealthcheckInterval) * time.Second,
-			Timeout:  time.Duration(testNLBServiceHealthcheckTimeout) * time.Second,
 			Retries:  testNLBServiceHealthcheckRetries,
-			URI:      testNLBServiceHealthcheckURI,
 			TLSSNI:   testNLBServiceHealthcheckTLSSNI,
+			Timeout:  time.Duration(testNLBServiceHealthcheckTimeout) * time.Second,
+			URI:      testNLBServiceHealthcheckURI,
 		},
 		HealthcheckStatus: []*NetworkLoadBalancerServerStatus{
 			{
@@ -139,7 +161,14 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_AddService() {
 				Status:     testNLBServiceHealthcheckStatus2Status,
 			},
 		},
-		State: testNLBServiceState,
+		ID:             testNLBServiceID,
+		InstancePoolID: testNLBServiceInstancePoolID,
+		Name:           testNLBServiceName,
+		Port:           uint16(testNLBServicePort),
+		Protocol:       testNLBServiceProtocol,
+		Strategy:       testNLBServiceStrategy,
+		TargetPort:     uint16(testNLBServiceTargetPort),
+		State:          testNLBServiceState,
 	}
 
 	actual, err := nlb.AddService(context.Background(), expected)
@@ -255,11 +284,28 @@ func (ts *clientTestSuite) TestClient_CreateNetworkLoadBalancer() {
 		testOperationState = "success"
 	)
 
-	ts.mockAPIRequest("POST", "/load-balancer", papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testNLBID},
-	})
+	httpmock.RegisterResponder("POST", "/load-balancer",
+		func(req *http.Request) (*http.Response, error) {
+			var actual papi.CreateLoadBalancerJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.CreateLoadBalancerJSONRequestBody{
+				Description: &testNLBDescription,
+				Name:        testNLBName,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testNLBID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
 		Id:        &testOperationID,
@@ -300,26 +346,19 @@ func (ts *clientTestSuite) TestClient_ListNetworkLoadBalancers() {
 		LoadBalancers *[]papi.LoadBalancer `json:"load-balancers,omitempty"`
 	}{
 		LoadBalancers: &[]papi.LoadBalancer{{
+			CreatedAt:   &testNLBCreatedAt,
+			Description: &testNLBDescription,
 			Id:          &testNLBID,
 			Name:        &testNLBName,
-			Description: &testNLBDescription,
-			CreatedAt:   &testNLBCreatedAt,
 			Services: &[]papi.LoadBalancerService{{
-				Id:           &testNLBServiceID,
-				Name:         &testNLBServiceName,
-				Description:  &testNLBServiceDescription,
-				InstancePool: &papi.InstancePool{Id: &testNLBServiceInstancePoolID},
-				Protocol:     &testNLBServiceProtocol,
-				Port:         &testNLBServicePort,
-				TargetPort:   &testNLBServiceTargetPort,
-				Strategy:     &testNLBServiceStrategy,
-				Healthcheck: &papi.Healthcheck{
+				Description: &testNLBServiceDescription,
+				Healthcheck: &papi.LoadBalancerServiceHealthcheck{
+					Interval: testNLBServiceHealthcheckInterval,
 					Mode:     testNLServiceHealthcheckMode,
-					Interval: &testNLBServiceHealthcheckInterval,
 					Port:     testNLBServiceHealthcheckPort,
+					Retries:  testNLBServiceHealthcheckRetries,
+					Timeout:  testNLBServiceHealthcheckTimeout,
 					Uri:      &testNLBServiceHealthcheckURI,
-					Timeout:  &testNLBServiceHealthcheckTimeout,
-					Retries:  &testNLBServiceHealthcheckRetries,
 				},
 				HealthcheckStatus: &[]papi.LoadBalancerServerStatus{
 					{
@@ -331,31 +370,31 @@ func (ts *clientTestSuite) TestClient_ListNetworkLoadBalancers() {
 						Status:   &testNLBServiceHealthcheckStatus2Status,
 					},
 				},
-				State: &testNLBState,
+				Id:           &testNLBServiceID,
+				InstancePool: &papi.InstancePool{Id: &testNLBServiceInstancePoolID},
+				Name:         &testNLBServiceName,
+				Port:         &testNLBServicePort,
+				Protocol:     &testNLBServiceProtocol,
+				State:        &testNLBState,
+				Strategy:     &testNLBServiceStrategy,
+				TargetPort:   &testNLBServiceTargetPort,
 			}},
 		}},
 	})
 
 	expected := []*NetworkLoadBalancer{{
+		CreatedAt:   testNLBCreatedAt,
+		Description: testNLBDescription,
 		ID:          testNLBID,
 		Name:        testNLBName,
-		Description: testNLBDescription,
-		CreatedAt:   testNLBCreatedAt,
 		Services: []*NetworkLoadBalancerService{{
-			ID:             testNLBServiceID,
-			Name:           testNLBServiceName,
-			Description:    testNLBServiceDescription,
-			InstancePoolID: testNLBServiceInstancePoolID,
-			Protocol:       testNLBServiceProtocol,
-			Port:           uint16(testNLBServicePort),
-			TargetPort:     uint16(testNLBServiceTargetPort),
-			Strategy:       testNLBServiceStrategy,
+			Description: testNLBServiceDescription,
 			Healthcheck: NetworkLoadBalancerServiceHealthcheck{
+				Interval: time.Duration(testNLBServiceHealthcheckInterval) * time.Second,
 				Mode:     testNLServiceHealthcheckMode,
 				Port:     uint16(testNLBServiceHealthcheckPort),
-				Interval: time.Duration(testNLBServiceHealthcheckInterval) * time.Second,
-				Timeout:  time.Duration(testNLBServiceHealthcheckTimeout) * time.Second,
 				Retries:  testNLBServiceHealthcheckRetries,
+				Timeout:  time.Duration(testNLBServiceHealthcheckTimeout) * time.Second,
 				URI:      testNLBServiceHealthcheckURI,
 			},
 			HealthcheckStatus: []*NetworkLoadBalancerServerStatus{
@@ -368,7 +407,14 @@ func (ts *clientTestSuite) TestClient_ListNetworkLoadBalancers() {
 					Status:     testNLBServiceHealthcheckStatus2Status,
 				},
 			},
-			State: testNLBState,
+			ID:             testNLBServiceID,
+			InstancePoolID: testNLBServiceInstancePoolID,
+			Name:           testNLBServiceName,
+			Port:           uint16(testNLBServicePort),
+			Protocol:       testNLBServiceProtocol,
+			Strategy:       testNLBServiceStrategy,
+			TargetPort:     uint16(testNLBServiceTargetPort),
+			State:          testNLBState,
 		}},
 
 		c:    ts.client,
@@ -382,27 +428,20 @@ func (ts *clientTestSuite) TestClient_ListNetworkLoadBalancers() {
 
 func (ts *clientTestSuite) TestClient_GetNetworkLoadBalancer() {
 	ts.mockAPIRequest("GET", fmt.Sprintf("/load-balancer/%s", testNLBID), papi.LoadBalancer{
-		Id:          &testNLBID,
-		Name:        &testNLBName,
-		Description: &testNLBDescription,
 		CreatedAt:   &testNLBCreatedAt,
+		Description: &testNLBDescription,
+		Id:          &testNLBID,
 		Ip:          &testNLBIPAddress,
+		Name:        &testNLBName,
 		Services: &[]papi.LoadBalancerService{{
-			Id:           &testNLBServiceID,
-			Name:         &testNLBServiceName,
-			Description:  &testNLBServiceDescription,
-			InstancePool: &papi.InstancePool{Id: &testNLBServiceInstancePoolID},
-			Protocol:     &testNLBServiceProtocol,
-			Port:         &testNLBServicePort,
-			TargetPort:   &testNLBServiceTargetPort,
-			Strategy:     &testNLBServiceStrategy,
-			Healthcheck: &papi.Healthcheck{
+			Description: &testNLBServiceDescription,
+			Healthcheck: &papi.LoadBalancerServiceHealthcheck{
+				Interval: testNLBServiceHealthcheckInterval,
 				Mode:     testNLServiceHealthcheckMode,
-				Interval: &testNLBServiceHealthcheckInterval,
 				Port:     testNLBServiceHealthcheckPort,
+				Retries:  testNLBServiceHealthcheckRetries,
+				Timeout:  testNLBServiceHealthcheckTimeout,
 				Uri:      &testNLBServiceHealthcheckURI,
-				Timeout:  &testNLBServiceHealthcheckTimeout,
-				Retries:  &testNLBServiceHealthcheckRetries,
 			},
 			HealthcheckStatus: &[]papi.LoadBalancerServerStatus{
 				{
@@ -414,33 +453,33 @@ func (ts *clientTestSuite) TestClient_GetNetworkLoadBalancer() {
 					Status:   &testNLBServiceHealthcheckStatus2Status,
 				},
 			},
-			State: &testNLBServiceState,
+			Id:           &testNLBServiceID,
+			InstancePool: &papi.InstancePool{Id: &testNLBServiceInstancePoolID},
+			Name:         &testNLBServiceName,
+			Port:         &testNLBServicePort,
+			Protocol:     &testNLBServiceProtocol,
+			Strategy:     &testNLBServiceStrategy,
+			TargetPort:   &testNLBServiceTargetPort,
+			State:        &testNLBServiceState,
 		}},
 		State: &testNLBState,
 	})
 
 	expected := &NetworkLoadBalancer{
-		ID:          testNLBID,
-		Name:        testNLBName,
-		Description: testNLBDescription,
 		CreatedAt:   testNLBCreatedAt,
+		Description: testNLBDescription,
+		ID:          testNLBID,
 		IPAddress:   net.ParseIP(testNLBIPAddress),
+		Name:        testNLBName,
 		State:       testNLBState,
 		Services: []*NetworkLoadBalancerService{{
-			ID:             testNLBServiceID,
-			Name:           testNLBServiceName,
-			Description:    testNLBServiceDescription,
-			InstancePoolID: testNLBServiceInstancePoolID,
-			Protocol:       testNLBServiceProtocol,
-			Port:           uint16(testNLBServicePort),
-			TargetPort:     uint16(testNLBServiceTargetPort),
-			Strategy:       testNLBServiceStrategy,
+			Description: testNLBServiceDescription,
 			Healthcheck: NetworkLoadBalancerServiceHealthcheck{
+				Interval: time.Duration(testNLBServiceHealthcheckInterval) * time.Second,
 				Mode:     testNLServiceHealthcheckMode,
 				Port:     uint16(testNLBServiceHealthcheckPort),
-				Interval: time.Duration(testNLBServiceHealthcheckInterval) * time.Second,
-				Timeout:  time.Duration(testNLBServiceHealthcheckTimeout) * time.Second,
 				Retries:  testNLBServiceHealthcheckRetries,
+				Timeout:  time.Duration(testNLBServiceHealthcheckTimeout) * time.Second,
 				URI:      testNLBServiceHealthcheckURI,
 			},
 			HealthcheckStatus: []*NetworkLoadBalancerServerStatus{
@@ -453,7 +492,14 @@ func (ts *clientTestSuite) TestClient_GetNetworkLoadBalancer() {
 					Status:     testNLBServiceHealthcheckStatus2Status,
 				},
 			},
-			State: testNLBServiceState,
+			ID:             testNLBServiceID,
+			InstancePoolID: testNLBServiceInstancePoolID,
+			Name:           testNLBServiceName,
+			Port:           uint16(testNLBServicePort),
+			Protocol:       testNLBServiceProtocol,
+			Strategy:       testNLBServiceStrategy,
+			TargetPort:     uint16(testNLBServiceTargetPort),
+			State:          testNLBServiceState,
 		}},
 
 		c:    ts.client,

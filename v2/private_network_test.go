@@ -26,11 +26,31 @@ func (ts *clientTestSuite) TestClient_CreatePrivateNetwork() {
 		testOperationState = "success"
 	)
 
-	ts.mockAPIRequest("POST", "/private-network", papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testPrivateNetworkID},
-	})
+	httpmock.RegisterResponder("POST", "/private-network",
+		func(req *http.Request) (*http.Response, error) {
+			var actual papi.CreatePrivateNetworkJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.CreatePrivateNetworkJSONRequestBody{
+				Description: &testPrivateNetworkDescription,
+				EndIp:       &testPrivateNetworkEndIP,
+				Name:        testPrivateNetworkName,
+				Netmask:     &testPrivateNetworkNetmask,
+				StartIp:     &testPrivateNetworkStartIP,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testPrivateNetworkID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
 		Id:        &testOperationID,

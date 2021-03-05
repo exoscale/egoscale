@@ -178,10 +178,17 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_AddService() {
 
 func (ts *clientTestSuite) TestNetworkLoadBalancer_UpdateService() {
 	var (
-		testNLBServiceNameUpdated        = testNLBServiceName + "-updated"
-		testNLBServiceDescriptionUpdated = testNLBServiceDescription + "-updated"
-		testOperationID                  = ts.randomID()
-		testOperationState               = "success"
+		testNLBServiceNameUpdated                = testNLBServiceName + "-updated"
+		testNLBServiceDescriptionUpdated         = testNLBServiceDescription + "-updated"
+		testNLBServiceHealthcheckIntervalUpdated = testNLBServiceHealthcheckInterval + 1
+		testNLBServiceHealthcheckModeUpdated     = "http"
+		testNLBServiceHealthcheckPortUpdated     = testNLBServiceHealthcheckPort + 1
+		testNLBServiceHealthcheckRetriesUpdated  = testNLBServiceHealthcheckRetries + 1
+		testNLBServiceHealthcheckTLSSNIUpdated   = ""
+		testNLBServiceHealthcheckTimeoutUpdated  = testNLBServiceHealthcheckTimeout + 1
+		testNLBServiceHealthcheckURIUpdated      = ""
+		testOperationID                          = ts.randomID()
+		testOperationState                       = "success"
 	)
 
 	nlb := &NetworkLoadBalancer{
@@ -189,25 +196,31 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_UpdateService() {
 		c:    ts.client,
 		zone: testZone,
 
-		Services: []*NetworkLoadBalancerService{
-			{
-				ID:          testNLBServiceID,
-				Name:        testNLBServiceName,
-				Description: testNLBServiceDescription,
-			},
-		},
+		Services: []*NetworkLoadBalancerService{{
+			ID:          testNLBServiceID,
+			Name:        testNLBServiceName,
+			Description: testNLBServiceDescription,
+		}},
 	}
 
 	httpmock.RegisterResponder("PUT", fmt.Sprintf("/load-balancer/%s/service/%s",
 		nlb.ID,
 		nlb.Services[0].ID),
 		func(req *http.Request) (*http.Response, error) {
-			var actual papi.UpdateLoadBalancerJSONRequestBody
+			var actual papi.UpdateLoadBalancerServiceJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.UpdateLoadBalancerJSONRequestBody{
+			expected := papi.UpdateLoadBalancerServiceJSONRequestBody{
 				Name:        &testNLBServiceNameUpdated,
 				Description: &testNLBServiceDescriptionUpdated,
+				Healthcheck: &papi.LoadBalancerServiceHealthcheck{
+					Interval: testNLBServiceHealthcheckIntervalUpdated,
+					Mode:     testNLBServiceHealthcheckModeUpdated,
+					Port:     testNLBServiceHealthcheckPortUpdated,
+					Retries:  testNLBServiceHealthcheckRetriesUpdated,
+					Timeout:  testNLBServiceHealthcheckTimeoutUpdated,
+					Uri:      &testNLBServiceHealthcheckURIUpdated,
+				},
 			}
 			ts.Require().Equal(expected, actual)
 
@@ -229,12 +242,20 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_UpdateService() {
 		Reference: &papi.Reference{Id: &testNLBServiceID},
 	})
 
-	nlbServiceUpdated := NetworkLoadBalancerService{
+	ts.Require().NoError(nlb.UpdateService(context.Background(), &NetworkLoadBalancerService{
 		ID:          nlb.Services[0].ID,
 		Name:        testNLBServiceNameUpdated,
 		Description: testNLBServiceDescriptionUpdated,
-	}
-	ts.Require().NoError(nlb.UpdateService(context.Background(), &nlbServiceUpdated))
+		Healthcheck: NetworkLoadBalancerServiceHealthcheck{
+			Interval: time.Duration(testNLBServiceHealthcheckIntervalUpdated) * time.Second,
+			Mode:     testNLBServiceHealthcheckModeUpdated,
+			Port:     uint16(testNLBServiceHealthcheckPortUpdated),
+			Retries:  testNLBServiceHealthcheckRetriesUpdated,
+			TLSSNI:   testNLBServiceHealthcheckTLSSNIUpdated,
+			Timeout:  time.Duration(testNLBServiceHealthcheckTimeoutUpdated) * time.Second,
+			URI:      testNLBServiceHealthcheckURIUpdated,
+		},
+	}))
 }
 
 func (ts *clientTestSuite) TestNetworkLoadBalancer_DeleteService() {

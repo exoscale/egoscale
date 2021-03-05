@@ -274,11 +274,11 @@ func (c *Client) ListInstancePools(ctx context.Context, zone string) ([]*Instanc
 
 	if resp.JSON200.InstancePools != nil {
 		for i := range *resp.JSON200.InstancePools {
-			cluster := instancePoolFromAPI(&(*resp.JSON200.InstancePools)[i])
-			cluster.c = c
-			cluster.zone = zone
+			instancePool := instancePoolFromAPI(&(*resp.JSON200.InstancePools)[i])
+			instancePool.c = c
+			instancePool.zone = zone
 
-			list = append(list, cluster)
+			list = append(list, instancePool)
 		}
 	}
 

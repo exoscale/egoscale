@@ -147,13 +147,13 @@ func (ts *clientTestSuite) TestInstancePool_ResetField() {
 		Reference: &papi.Reference{Id: &testInstancePoolID},
 	})
 
-	cluster := &InstancePool{
+	instancePool := &InstancePool{
 		ID:   testInstancePoolID,
 		c:    ts.client,
 		zone: testZone,
 	}
 
-	ts.Require().NoError(cluster.ResetField(context.Background(), &cluster.Description))
+	ts.Require().NoError(instancePool.ResetField(context.Background(), &instancePool.Description))
 }
 
 func (ts *clientTestSuite) TestClient_CreateInstancePool() {

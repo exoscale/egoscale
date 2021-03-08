@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.45.0
+------
+
+- feature: v2: add support for Elastic IP management
+- fix: v2: InstancePool.ManagerID resolution (#479)
+
 0.44.0
 ------
 

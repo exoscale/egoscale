@@ -74,8 +74,13 @@ func instancePoolFromAPI(i *papi.InstancePool) *InstancePool {
 			return ids
 		}(),
 		InstanceTypeID: papi.OptionalString(i.InstanceType.Id),
-		ManagerID:      papi.OptionalString(i.Manager.Id),
-		Name:           papi.OptionalString(i.Name),
+		ManagerID: func() string {
+			if i.Manager != nil {
+				return papi.OptionalString(i.Manager.Id)
+			}
+			return ""
+		}(),
+		Name: papi.OptionalString(i.Name),
 		PrivateNetworkIDs: func() []string {
 			ids := make([]string, 0)
 

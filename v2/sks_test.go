@@ -38,6 +38,31 @@ var (
 	testSKSNodepoolVersion                   = "1.18.6"
 )
 
+func (ts *clientTestSuite) TestSKSCluster_AuthorityCert() {
+	var (
+		testAuthority   = "aggregation"
+		testCertificate = base64.StdEncoding.EncodeToString([]byte("test"))
+	)
+
+	cluster := &SKSCluster{
+		ID:   testSKSClusterID,
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.mockAPIRequest("GET",
+		fmt.Sprintf("/sks-cluster/%s/authority/%s/cert", cluster.ID, testAuthority),
+		struct {
+			Cacert string `json:"cacert,omitempty"`
+		}{
+			Cacert: testCertificate,
+		})
+
+	actual, err := cluster.AuthorityCert(context.Background(), testAuthority)
+	ts.Require().NoError(err)
+	ts.Require().Equal(testCertificate, actual)
+}
+
 func (ts *clientTestSuite) TestSKSCluster_RequestKubeconfig() {
 	var (
 		testRequestUser   = "test-user"

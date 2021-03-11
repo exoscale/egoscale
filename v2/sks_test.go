@@ -38,6 +38,28 @@ var (
 	testSKSNodepoolVersion                   = "1.18.6"
 )
 
+func (ts *clientTestSuite) TestSKSCluster_RotateCCMCredentials() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = "success"
+	)
+
+	cluster := &SKSCluster{
+		ID:   testSKSClusterID,
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.mockAPIRequest("PUT", fmt.Sprintf("/sks-cluster/%s/rotate-ccm-credentials", cluster.ID),
+		papi.Operation{
+			Id:        &testOperationID,
+			State:     &testOperationState,
+			Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		})
+
+	ts.Require().NoError(cluster.RotateCCMCredentials(context.Background()))
+}
+
 func (ts *clientTestSuite) TestSKSCluster_AuthorityCert() {
 	var (
 		testAuthority   = "aggregation"

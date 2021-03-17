@@ -57,6 +57,12 @@ func (ts *clientTestSuite) TestSKSCluster_RotateCCMCredentials() {
 			Reference: &papi.Reference{Id: &testSKSNodepoolID},
 		})
 
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+	})
+
 	ts.Require().NoError(cluster.RotateCCMCredentials(context.Background()))
 }
 

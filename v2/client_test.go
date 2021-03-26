@@ -74,6 +74,31 @@ func (ts *clientTestSuite) unmarshalJSONRequestBody(req *http.Request, v interfa
 	}
 }
 
+func (ts *clientTestSuite) TestClient_SetHTTPClient() {
+	testHTTPClient := http.DefaultClient
+
+	client := new(Client)
+	client.SetHTTPClient(testHTTPClient)
+
+	ts.Require().Equal(testHTTPClient, client.httpClient)
+}
+
+func (ts *clientTestSuite) TestClient_SetTimeout() {
+	testTimeout := 5 * time.Minute
+
+	client := new(Client)
+	client.SetTimeout(testTimeout)
+
+	ts.Require().Equal(testTimeout, client.timeout)
+}
+
+func (ts *clientTestSuite) TestClient_SetTrace() {
+	client := new(Client)
+	client.SetTrace(true)
+
+	ts.Require().Equal(true, client.trace)
+}
+
 func TestSetEndpointFromContext(t *testing.T) {
 	var (
 		ctx                = context.Background()

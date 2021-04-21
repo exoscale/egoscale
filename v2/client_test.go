@@ -17,6 +17,14 @@ import (
 	papi "github.com/exoscale/egoscale/v2/internal/public-api"
 )
 
+type dummyResource struct {
+	id string
+}
+
+func (d dummyResource) get(_ context.Context, _ *Client, _, id string) (interface{}, error) {
+	return &dummyResource{id: id}, nil
+}
+
 type clientTestSuite struct {
 	client *Client
 
@@ -24,7 +32,9 @@ type clientTestSuite struct {
 }
 
 func (ts *clientTestSuite) SetupTest() {
-	client, err := NewClient("x", "x")
+	httpmock.Activate()
+
+	client, err := NewClient("x", "x", ClientOptWithHTTPClient(http.DefaultClient))
 	if err != nil {
 		ts.T().Fatal(err)
 	}
@@ -34,8 +44,6 @@ func (ts *clientTestSuite) SetupTest() {
 	if err != nil {
 		ts.T().Fatal(err)
 	}
-
-	httpmock.ActivateNonDefault(client.httpClient)
 
 	ts.client = client
 }
@@ -97,6 +105,71 @@ func (ts *clientTestSuite) TestClient_SetTrace() {
 	client.SetTrace(true)
 
 	ts.Require().Equal(true, client.trace)
+}
+
+func (ts *clientTestSuite) TestClient_fetchfromIDs() {
+	type args struct {
+		ctx  context.Context
+		zone string
+		ids  []string
+		rt   interface{}
+	}
+
+	tests := []struct {
+		name     string
+		args     args
+		expected interface{}
+		wantErr  bool
+	}{
+		{
+			name: "with nil resource type",
+			args: args{
+				ids: nil,
+				rt:  nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "with concrete resource type",
+			args: args{
+				ids: []string{"id1", "id2"},
+				rt:  dummyResource{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "with empty ids",
+			args: args{
+				ctx:  context.Background(),
+				zone: testZone,
+				ids:  nil,
+				rt:   new(dummyResource),
+			},
+			expected: []*dummyResource{},
+		},
+		{
+			name: "ok",
+			args: args{
+				ctx:  context.Background(),
+				zone: testZone,
+				ids:  []string{"id1", "id2"},
+				rt:   new(dummyResource),
+			},
+			expected: []*dummyResource{{id: "id1"}, {id: "id2"}},
+		},
+	}
+
+	for _, tt := range tests {
+		ts.T().Run(tt.name, func(t *testing.T) {
+			actual, err := ts.client.fetchFromIDs(tt.args.ctx, tt.args.zone, tt.args.ids, tt.args.rt)
+			if err != nil != tt.wantErr {
+				t.Fatalf("error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			ts.Require().Equal(tt.expected, actual)
+		})
+	}
 }
 
 func TestSetEndpointFromContext(t *testing.T) {

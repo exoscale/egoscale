@@ -20,6 +20,30 @@ var (
 	testPrivateNetworkStartIP     = "192.168.0.0"
 )
 
+func (ts *clientTestSuite) TestPrivateNetwork_get() {
+	ts.mockAPIRequest("GET", fmt.Sprintf("/private-network/%s", testPrivateNetworkID), papi.PrivateNetwork{
+		Description: &testPrivateNetworkDescription,
+		EndIp:       &testPrivateNetworkEndIP,
+		Id:          &testPrivateNetworkID,
+		Name:        &testPrivateNetworkName,
+		Netmask:     &testPrivateNetworkNetmask,
+		StartIp:     &testPrivateNetworkStartIP,
+	})
+
+	expected := &PrivateNetwork{
+		Description: testPrivateNetworkDescription,
+		EndIP:       net.ParseIP(testPrivateNetworkEndIP),
+		ID:          testPrivateNetworkID,
+		Name:        testPrivateNetworkName,
+		Netmask:     net.ParseIP(testPrivateNetworkNetmask),
+		StartIP:     net.ParseIP(testPrivateNetworkStartIP),
+	}
+
+	actual, err := new(PrivateNetwork).get(context.Background(), ts.client, testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestClient_CreatePrivateNetwork() {
 	var (
 		testOperationID    = ts.randomID()

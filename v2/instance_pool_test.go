@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/jarcoal/httpmock"
@@ -29,6 +30,114 @@ var (
 	testInstancePoolTemplateID                = new(clientTestSuite).randomID()
 	testInstancePoolUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 )
+
+func (ts *clientTestSuite) TestInstancePool_AntiAffinityGroups() {
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
+		papi.AntiAffinityGroup{
+			Id:   &testAntiAffinityGroupID,
+			Name: &testAntiAffinityGroupName,
+		},
+	)
+
+	expected := []*AntiAffinityGroup{{
+		ID:   testAntiAffinityGroupID,
+		Name: testAntiAffinityGroupName,
+	}}
+
+	instancePool := &InstancePool{
+		AntiAffinityGroupIDs: []string{testAntiAffinityGroupID},
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := instancePool.AntiAffinityGroups(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestInstancePool_ElasticIPs() {
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/elastic-ip/%s", testElasticIPID),
+		papi.ElasticIp{
+			Id: &testElasticIPID,
+			Ip: &testElasticIPAddress,
+		},
+	)
+
+	expected := []*ElasticIP{{
+		ID:        testElasticIPID,
+		IPAddress: net.ParseIP(testElasticIPAddress),
+
+		c:    ts.client,
+		zone: testZone,
+	}}
+
+	instancePool := &InstancePool{
+		ElasticIPIDs: []string{testElasticIPID},
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := instancePool.ElasticIPs(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestInstancePool_PrivateNetworks() {
+	ts.mockAPIRequest("GET", fmt.Sprintf("/private-network/%s", testPrivateNetworkID), papi.PrivateNetwork{
+		Id:   &testPrivateNetworkID,
+		Name: &testPrivateNetworkName,
+	})
+
+	expected := []*PrivateNetwork{{
+		ID:   testPrivateNetworkID,
+		Name: testPrivateNetworkName,
+	}}
+
+	instancePool := &InstancePool{
+		PrivateNetworkIDs: []string{testPrivateNetworkID},
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := instancePool.PrivateNetworks(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestInstancePool_SecurityGroups() {
+	ts.mockAPIRequest("GET", fmt.Sprintf("/security-group/%s", testSecurityGroupID), papi.SecurityGroup{
+		Id:   &testSecurityGroupID,
+		Name: &testSecurityGroupName,
+	})
+
+	expected := []*SecurityGroup{
+		{
+			ID:   testSecurityGroupID,
+			Name: testSecurityGroupName,
+
+			c:    ts.client,
+			zone: testZone,
+		},
+	}
+
+	instancePool := &InstancePool{
+		SecurityGroupIDs: []string{testSecurityGroupID},
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := instancePool.SecurityGroups(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
 
 func (ts *clientTestSuite) TestInstancePool_Scale() {
 	var (

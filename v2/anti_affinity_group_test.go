@@ -16,6 +16,27 @@ var (
 	testAntiAffinityGroupName        = "test-anti-affinity-group"
 )
 
+func (ts *clientTestSuite) TestAntiAffinityGroup_get() {
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
+		papi.AntiAffinityGroup{
+			Description: &testAntiAffinityGroupDescription,
+			Id:          &testAntiAffinityGroupID,
+			Name:        &testAntiAffinityGroupName,
+		})
+
+	expected := &AntiAffinityGroup{
+		Description: testAntiAffinityGroupDescription,
+		ID:          testAntiAffinityGroupID,
+		Name:        testAntiAffinityGroupName,
+	}
+
+	actual, err := new(AntiAffinityGroup).get(context.Background(), ts.client, testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestClient_CreateAntiAffinityGroup() {
 	var (
 		testOperationID    = ts.randomID()
@@ -95,11 +116,14 @@ func (ts *clientTestSuite) TestClient_ListAntiAffinityGroups() {
 }
 
 func (ts *clientTestSuite) TestClient_GetAntiAffinityGroup() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID), papi.AntiAffinityGroup{
-		Description: &testAntiAffinityGroupDescription,
-		Id:          &testAntiAffinityGroupID,
-		Name:        &testAntiAffinityGroupName,
-	})
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
+		papi.AntiAffinityGroup{
+			Description: &testAntiAffinityGroupDescription,
+			Id:          &testAntiAffinityGroupID,
+			Name:        &testAntiAffinityGroupName,
+		})
 
 	expected := &AntiAffinityGroup{
 		Description: testAntiAffinityGroupDescription,

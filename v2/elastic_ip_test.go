@@ -27,6 +27,49 @@ var (
 	testElasticIPHealthcheckTLSSkipVerify       = true
 )
 
+func (ts *clientTestSuite) TestElasticIP_get() {
+	ts.mockAPIRequest("GET", fmt.Sprintf("/elastic-ip/%s", testElasticIPID), papi.ElasticIp{
+		Description: &testElasticIPDescription,
+		Healthcheck: &papi.ElasticIpHealthcheck{
+			Interval:      &testElasticIPHealthcheckInterval,
+			Mode:          testNLServiceHealthcheckMode,
+			Port:          testElasticIPHealthcheckPort,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOk:     &testElasticIPHealthcheckStrikesOK,
+			Timeout:       &testElasticIPHealthcheckTimeout,
+			TlsSni:        &testElasticIPHealthcheckTLSSNI,
+			TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Uri:           &testElasticIPHealthcheckURI,
+		},
+		Id: &testElasticIPID,
+		Ip: &testElasticIPAddress,
+	})
+
+	expected := &ElasticIP{
+		Description: testElasticIPDescription,
+		Healthcheck: &ElasticIPHealthcheck{
+			Interval:      time.Duration(testElasticIPHealthcheckInterval) * time.Second,
+			Mode:          testElasticIPHealthcheckMode,
+			Port:          uint16(testElasticIPHealthcheckPort),
+			StrikesFail:   testElasticIPHealthcheckStrikesFail,
+			StrikesOK:     testElasticIPHealthcheckStrikesOK,
+			TLSSNI:        testElasticIPHealthcheckTLSSNI,
+			TLSSkipVerify: testElasticIPHealthcheckTLSSkipVerify,
+			Timeout:       time.Duration(testElasticIPHealthcheckTimeout) * time.Second,
+			URI:           testElasticIPHealthcheckURI,
+		},
+		ID:        testElasticIPID,
+		IPAddress: net.ParseIP(testElasticIPAddress),
+
+		zone: testZone,
+		c:    ts.client,
+	}
+
+	actual, err := new(ElasticIP).get(context.Background(), ts.client, testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestElasticIP_ResetField() {
 	var (
 		testResetField     = "description"

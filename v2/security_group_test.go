@@ -27,6 +27,56 @@ var (
 	testSecurityGroupRuleStartPort       = 8081
 )
 
+func (ts *clientTestSuite) TestSecurityGroup_get() {
+	ts.mockAPIRequest("GET", fmt.Sprintf("/security-group/%s", testSecurityGroupID), papi.SecurityGroup{
+		Description: &testSecurityGroupDescription,
+		Id:          &testSecurityGroupID,
+		Name:        &testSecurityGroupName,
+		Rules: &[]papi.SecurityGroupRule{{
+			Description:   &testSecurityGroupRuleDescription,
+			EndPort:       func() *int64 { v := int64(testSecurityGroupRuleEndPort); return &v }(),
+			FlowDirection: &testSecurityGroupRuleFlowDirection,
+			Icmp: &struct {
+				Code *int64 `json:"code,omitempty"`
+				Type *int64 `json:"type,omitempty"`
+			}{
+				Code: func() *int64 { v := int64(testSecurityGroupRuleICMPCode); return &v }(),
+				Type: func() *int64 { v := int64(testSecurityGroupRuleICMPType); return &v }(),
+			},
+			Id:            &testSecurityGroupRuleID,
+			Network:       &testSecurityGroupRuleNetwork,
+			Protocol:      &testSecurityGroupRuleProtocol,
+			SecurityGroup: &papi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
+			StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
+		}},
+	})
+
+	expected := &SecurityGroup{
+		Description: testSecurityGroupDescription,
+		ID:          testSecurityGroupID,
+		Name:        testSecurityGroupName,
+		Rules: []*SecurityGroupRule{{
+			Description:     testSecurityGroupRuleDescription,
+			EndPort:         uint16(testSecurityGroupRuleEndPort),
+			FlowDirection:   testSecurityGroupRuleFlowDirection,
+			ICMPCode:        uint8(testSecurityGroupRuleICMPCode),
+			ICMPType:        uint8(testSecurityGroupRuleICMPType),
+			ID:              testSecurityGroupRuleID,
+			Network:         func() *net.IPNet { _, v, _ := net.ParseCIDR(testSecurityGroupRuleNetwork); return v }(),
+			Protocol:        testSecurityGroupRuleProtocol,
+			SecurityGroupID: testSecurityGroupRuleSecurityGroupID,
+			StartPort:       uint16(testSecurityGroupRuleStartPort),
+		}},
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := new(SecurityGroup).get(context.Background(), ts.client, testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestSecurityGroup_AddRule() {
 	var (
 		testOperationID    = ts.randomID()

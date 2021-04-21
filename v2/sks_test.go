@@ -38,6 +38,61 @@ var (
 	testSKSNodepoolVersion                   = "1.18.6"
 )
 
+func (ts *clientTestSuite) TestSKSNodepool_AntiAffinityGroups() {
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
+		papi.AntiAffinityGroup{
+			Id:   &testAntiAffinityGroupID,
+			Name: &testAntiAffinityGroupName,
+		},
+	)
+
+	expected := []*AntiAffinityGroup{{
+		ID:   testAntiAffinityGroupID,
+		Name: testAntiAffinityGroupName,
+	}}
+
+	sksNodepool := &SKSNodepool{
+		AntiAffinityGroupIDs: []string{testAntiAffinityGroupID},
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := sksNodepool.AntiAffinityGroups(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestSKSNodepool_SecurityGroups() {
+	ts.mockAPIRequest("GET", fmt.Sprintf("/security-group/%s", testSecurityGroupID), papi.SecurityGroup{
+		Id:   &testSecurityGroupID,
+		Name: &testSecurityGroupName,
+	})
+
+	expected := []*SecurityGroup{
+		{
+			ID:   testSecurityGroupID,
+			Name: testSecurityGroupName,
+
+			c:    ts.client,
+			zone: testZone,
+		},
+	}
+
+	sksNodepool := &SKSNodepool{
+		SecurityGroupIDs: []string{testSecurityGroupID},
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := sksNodepool.SecurityGroups(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestSKSCluster_RotateCCMCredentials() {
 	var (
 		testOperationID    = ts.randomID()
@@ -173,6 +228,9 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 		State:                testSKSNodepoolState,
 		TemplateID:           testSKSNodepoolTemplateID,
 		Version:              testSKSNodepoolVersion,
+
+		c:    ts.client,
+		zone: testZone,
 	}
 
 	actual, err := cluster.AddNodepool(context.Background(), expected)
@@ -612,6 +670,9 @@ func (ts *clientTestSuite) TestClient_ListSKSClusters() {
 			State:                testSKSClusterState,
 			TemplateID:           testSKSNodepoolTemplateID,
 			Version:              testSKSNodepoolVersion,
+
+			c:    ts.client,
+			zone: testZone,
 		}},
 		ServiceLevel: testSKSClusterServiceLevel,
 		State:        testSKSClusterState,
@@ -698,6 +759,9 @@ func (ts *clientTestSuite) TestClient_GetSKSCluster() {
 			State:                testSKSClusterState,
 			TemplateID:           testSKSNodepoolTemplateID,
 			Version:              testSKSNodepoolVersion,
+
+			c:    ts.client,
+			zone: testZone,
 		}},
 		ServiceLevel: testSKSClusterServiceLevel,
 		State:        testSKSClusterState,

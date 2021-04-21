@@ -119,6 +119,30 @@ func instancePoolFromAPI(i *papi.InstancePool) *InstancePool {
 	}
 }
 
+// AntiAffinityGroups returns the list of Anti-Affinity Groups applied to the members of the Instance Pool.
+func (i *InstancePool) AntiAffinityGroups(ctx context.Context) ([]*AntiAffinityGroup, error) {
+	res, err := i.c.fetchFromIDs(ctx, i.zone, i.AntiAffinityGroupIDs, new(AntiAffinityGroup))
+	return res.([]*AntiAffinityGroup), err
+}
+
+// ElasticIPs returns the list of Elastic IPs attached to the members of the Instance Pool.
+func (i *InstancePool) ElasticIPs(ctx context.Context) ([]*ElasticIP, error) {
+	res, err := i.c.fetchFromIDs(ctx, i.zone, i.ElasticIPIDs, new(ElasticIP))
+	return res.([]*ElasticIP), err
+}
+
+// PrivateNetworks returns the list of Private Networks attached to the members of the Instance Pool.
+func (i *InstancePool) PrivateNetworks(ctx context.Context) ([]*PrivateNetwork, error) {
+	res, err := i.c.fetchFromIDs(ctx, i.zone, i.PrivateNetworkIDs, new(PrivateNetwork))
+	return res.([]*PrivateNetwork), err
+}
+
+// SecurityGroups returns the list of Security Groups attached to the members of the Instance Pool.
+func (i *InstancePool) SecurityGroups(ctx context.Context) ([]*SecurityGroup, error) {
+	res, err := i.c.fetchFromIDs(ctx, i.zone, i.SecurityGroupIDs, new(SecurityGroup))
+	return res.([]*SecurityGroup), err
+}
+
 // Scale scales the Instance Pool to the specified number of instances.
 func (i *InstancePool) Scale(ctx context.Context, instances int64) error {
 	resp, err := i.c.ScaleInstancePoolWithResponse(

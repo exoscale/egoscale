@@ -33,7 +33,7 @@ type ElasticIP struct {
 	zone string
 }
 
-func elasticIPFromAPI(e *papi.ElasticIp) *ElasticIP {
+func elasticIPFromAPI(client *Client, zone string, e *papi.ElasticIp) *ElasticIP {
 	return &ElasticIP{
 		Description: papi.OptionalString(e.Description),
 		Healthcheck: func() *ElasticIPHealthcheck {
@@ -54,7 +54,14 @@ func elasticIPFromAPI(e *papi.ElasticIp) *ElasticIP {
 		}(),
 		ID:        papi.OptionalString(e.Id),
 		IPAddress: net.ParseIP(papi.OptionalString(e.Ip)),
+
+		c:    client,
+		zone: zone,
 	}
+}
+
+func (e ElasticIP) get(ctx context.Context, client *Client, zone, id string) (interface{}, error) {
+	return client.GetElasticIP(ctx, zone, id)
 }
 
 // ResetField resets the specified Elastic IP field to its default value.
@@ -134,11 +141,7 @@ func (c *Client) ListElasticIPs(ctx context.Context, zone string) ([]*ElasticIP,
 
 	if resp.JSON200.ElasticIps != nil {
 		for i := range *resp.JSON200.ElasticIps {
-			elasticIP := elasticIPFromAPI(&(*resp.JSON200.ElasticIps)[i])
-			elasticIP.c = c
-			elasticIP.zone = zone
-
-			list = append(list, elasticIP)
+			list = append(list, elasticIPFromAPI(c, zone, &(*resp.JSON200.ElasticIps)[i]))
 		}
 	}
 
@@ -152,11 +155,7 @@ func (c *Client) GetElasticIP(ctx context.Context, zone, id string) (*ElasticIP,
 		return nil, err
 	}
 
-	elasticIP := elasticIPFromAPI(resp.JSON200)
-	elasticIP.c = c
-	elasticIP.zone = zone
-
-	return elasticIP, nil
+	return elasticIPFromAPI(c, zone, resp.JSON200), nil
 }
 
 // UpdateElasticIP updates the specified Elastic IP in the specified zone.

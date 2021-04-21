@@ -87,8 +87,8 @@ func newTestMockPollFunc(duration time.Duration, done bool, res interface{}, err
 
 func TestClientWithResponses_JobOperationPoller(t *testing.T) {
 	var (
-		operationID              = "021ee8b0-a1a4-11ea-aed0-6329b72edcc5"
-		mockOperationReferenceID = "31161e61-2354-47e6-9df0-36c855ef2a10"
+		operationID              = testRandomID(t)
+		mockOperationReferenceID = testRandomID(t)
 
 		newTestClient = func(state string) (*ClientWithResponses, error) {
 			mockClient := NewMockClient()

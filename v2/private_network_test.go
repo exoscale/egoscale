@@ -149,10 +149,13 @@ func (ts *clientTestSuite) TestClient_UpdatePrivateNetwork() {
 		testPrivateNetworkStartIPUpdated     = "172.16.0.0"
 		testOperationID                      = ts.randomID()
 		testOperationState                   = "success"
+		updated                              = false
 	)
 
 	httpmock.RegisterResponder("PUT", fmt.Sprintf("/private-network/%s", testPrivateNetworkID),
 		func(req *http.Request) (*http.Response, error) {
+			updated = true
+
 			var actual papi.UpdatePrivateNetworkJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
@@ -191,17 +194,19 @@ func (ts *clientTestSuite) TestClient_UpdatePrivateNetwork() {
 		Netmask:     net.ParseIP(testPrivateNetworkNetmaskUpdated),
 		StartIP:     net.ParseIP(testPrivateNetworkStartIPUpdated),
 	}))
+	ts.Require().True(updated)
 }
 
 func (ts *clientTestSuite) TestClient_DeletePrivateNetwork() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		deleted            = false
 	)
 
-	httpmock.RegisterResponder("DELETE", "=~^/private-network/.*",
+	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/private-network/%s", testPrivateNetworkID),
 		func(req *http.Request) (*http.Response, error) {
-			ts.Require().Equal(fmt.Sprintf("/private-network/%s", testPrivateNetworkID), req.URL.String())
+			deleted = true
 
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
 				Id:        &testOperationID,
@@ -222,4 +227,5 @@ func (ts *clientTestSuite) TestClient_DeletePrivateNetwork() {
 	})
 
 	ts.Require().NoError(ts.client.DeletePrivateNetwork(context.Background(), testZone, testPrivateNetworkID))
+	ts.Require().True(deleted)
 }

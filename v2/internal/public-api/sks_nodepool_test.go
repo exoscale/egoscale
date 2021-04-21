@@ -11,18 +11,18 @@ import (
 
 func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 	var (
-		testAntiAffinityGroupID       = "a266eadc-1e5c-4b0a-a31c-1325d2060434"
+		testAntiAffinityGroupID       = testRandomID(t)
 		testCreatedAt, _              = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 		testDescription               = "Test Nodepool description"
 		testDiskSize            int64 = 15
-		testID                        = "c19542b7-d269-4bd4-bf7c-2cae36d066d3"
-		testInstancePoolID            = "f1f67118-43b6-4632-a709-d55fada62f21"
-		testInstanceTypeID            = "21624abb-764e-4def-81d7-9fc54b5957fb"
+		testID                        = testRandomID(t)
+		testInstancePoolID            = testRandomID(t)
+		testInstanceTypeID            = testRandomID(t)
 		testName                      = "test-nodepool"
-		testSecurityGroupID           = "efb4f4df-87ce-44e9-b5ee-59a9c1628edf"
+		testSecurityGroupID           = testRandomID(t)
 		testSize                int64 = 3
 		testState                     = "running"
-		testTemplateID                = "f270d9a2-db64-4e8e-9cd3-5125887e91aa"
+		testTemplateID                = testRandomID(t)
 		testVersion                   = "1.18.6"
 
 		expected = SksNodepool{
@@ -66,18 +66,18 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 
 func TestSksNodepool_MarshalJSON(t *testing.T) {
 	var (
-		testAntiAffinityGroupID       = "a266eadc-1e5c-4b0a-a31c-1325d2060434"
+		testAntiAffinityGroupID       = testRandomID(t)
 		testCreatedAt, _              = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 		testDescription               = "Test Nodepool description"
 		testDiskSize            int64 = 15
-		testID                        = "c19542b7-d269-4bd4-bf7c-2cae36d066d3"
-		testInstancePoolID            = "f1f67118-43b6-4632-a709-d55fada62f21"
-		testInstanceTypeID            = "21624abb-764e-4def-81d7-9fc54b5957fb"
+		testID                        = testRandomID(t)
+		testInstancePoolID            = testRandomID(t)
+		testInstanceTypeID            = testRandomID(t)
 		testName                      = "test-nodepool"
-		testSecurityGroupID           = "efb4f4df-87ce-44e9-b5ee-59a9c1628edf"
+		testSecurityGroupID           = testRandomID(t)
 		testSize                int64 = 3
 		testState                     = "running"
-		testTemplateID                = "f270d9a2-db64-4e8e-9cd3-5125887e91aa"
+		testTemplateID                = testRandomID(t)
 		testVersion                   = "1.18.6"
 
 		sksNodepool = SksNodepool{

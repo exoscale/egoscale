@@ -116,11 +116,12 @@ func (ts *clientTestSuite) TestClient_DeleteAntiAffinityGroup() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		deleted            = false
 	)
 
-	httpmock.RegisterResponder("DELETE", "=~^/anti-affinity-group/.*",
+	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
 		func(req *http.Request) (*http.Response, error) {
-			ts.Require().Equal(fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID), req.URL.String())
+			deleted = true
 
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
 				Id:        &testOperationID,
@@ -141,4 +142,5 @@ func (ts *clientTestSuite) TestClient_DeleteAntiAffinityGroup() {
 	})
 
 	ts.Require().NoError(ts.client.DeleteAntiAffinityGroup(context.Background(), testZone, testAntiAffinityGroupID))
+	ts.Require().True(deleted)
 }

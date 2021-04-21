@@ -11,13 +11,13 @@ import (
 
 func TestTemplate_UnmarshalJSON(t *testing.T) {
 	var (
-		testID                    = "c19542b7-d269-4bd4-bf7c-2cae36d066d3"
+		testID                    = testRandomID(t)
 		testName                  = "Linux Ubuntu 20.04 LTS 64-bit"
 		testCreatedAt, _          = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 		testDescription           = "Linux Ubuntu 20.04 LTS 64-bit 2020-08-11-e15f6a"
 		testBootMode              = "uefi"
 		testBuild                 = "2020-08-12-e15f6a"
-		testChecksum              = "e15f6a918f0a645b14238a01568d8cb7"
+		testChecksum              = testRandomID(t)
 		testDefaultUser           = "ubuntu"
 		testFamily                = "20.04 lts"
 		testPasswordEnabled       = true
@@ -72,13 +72,13 @@ func TestTemplate_UnmarshalJSON(t *testing.T) {
 
 func TestTemplate_MarshalJSON(t *testing.T) {
 	var (
-		testID                    = "c19542b7-d269-4bd4-bf7c-2cae36d066d3"
+		testID                    = testRandomID(t)
 		testName                  = "Linux Ubuntu 20.04 LTS 64-bit"
 		testCreatedAt, _          = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 		testDescription           = "Linux Ubuntu 20.04 LTS 64-bit 2020-08-11-e15f6a"
 		testBootMode              = "uefi"
 		testBuild                 = "2020-08-12-e15f6a"
-		testChecksum              = "e15f6a918f0a645b14238a01568d8cb7"
+		testChecksum              = testRandomID(t)
 		testDefaultUser           = "ubuntu"
 		testFamily                = "20.04 lts"
 		testPasswordEnabled       = true

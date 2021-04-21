@@ -39,14 +39,14 @@ func elasticIPFromAPI(e *papi.ElasticIp) *ElasticIP {
 		Healthcheck: func() *ElasticIPHealthcheck {
 			if hc := e.Healthcheck; hc != nil {
 				return &ElasticIPHealthcheck{
-					Interval:      time.Duration(hc.Interval) * time.Second,
+					Interval:      time.Duration(papi.OptionalInt64(hc.Interval)) * time.Second,
 					Mode:          hc.Mode,
 					Port:          uint16(hc.Port),
-					StrikesFail:   hc.StrikesFail,
-					StrikesOK:     hc.StrikesOk,
+					StrikesFail:   papi.OptionalInt64(hc.StrikesFail),
+					StrikesOK:     papi.OptionalInt64(hc.StrikesOk),
 					TLSSNI:        papi.OptionalString(hc.TlsSni),
 					TLSSkipVerify: papi.OptionalBool(hc.TlsSkipVerify),
-					Timeout:       time.Duration(hc.Timeout) * time.Second,
+					Timeout:       time.Duration(papi.OptionalInt64(hc.Timeout)) * time.Second,
 					URI:           papi.OptionalString(hc.Uri),
 				}
 			}
@@ -95,12 +95,12 @@ func (c *Client) CreateElasticIP(ctx context.Context, zone string, elasticIP *El
 					)
 
 					return &papi.ElasticIpHealthcheck{
-						Interval:      interval,
+						Interval:      &interval,
 						Mode:          hc.Mode,
 						Port:          port,
-						StrikesFail:   hc.StrikesFail,
-						StrikesOk:     hc.StrikesOK,
-						Timeout:       timeout,
+						StrikesFail:   &hc.StrikesFail,
+						StrikesOk:     &hc.StrikesOK,
+						Timeout:       &timeout,
 						TlsSkipVerify: &hc.TLSSkipVerify,
 						TlsSni:        &hc.TLSSNI,
 						Uri:           &hc.URI,
@@ -180,12 +180,12 @@ func (c *Client) UpdateElasticIP(ctx context.Context, zone string, elasticIP *El
 					)
 
 					return &papi.ElasticIpHealthcheck{
-						Interval:      interval,
+						Interval:      &interval,
 						Mode:          hc.Mode,
 						Port:          port,
-						StrikesFail:   hc.StrikesFail,
-						StrikesOk:     hc.StrikesOK,
-						Timeout:       timeout,
+						StrikesFail:   &hc.StrikesFail,
+						StrikesOk:     &hc.StrikesOK,
+						Timeout:       &timeout,
 						TlsSkipVerify: &hc.TLSSkipVerify,
 						TlsSni:        &hc.TLSSNI,
 						Uri:           &hc.URI,

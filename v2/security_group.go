@@ -138,7 +138,7 @@ func (s *SecurityGroup) AddRule(ctx context.Context, rule *SecurityGroupRule) (*
 				}
 				return
 			}(),
-			Protocol: &rule.Protocol,
+			Protocol: rule.Protocol,
 			SecurityGroup: func() (v *papi.SecurityGroupResource) {
 				if rule.SecurityGroupID != "" {
 					v = &papi.SecurityGroupResource{Id: &rule.SecurityGroupID}

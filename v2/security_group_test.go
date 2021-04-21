@@ -50,7 +50,7 @@ func (ts *clientTestSuite) TestSecurityGroup_AddRule() {
 					Type: func() *int64 { v := int64(testSecurityGroupRuleICMPType); return &v }(),
 				},
 				Network:       &testSecurityGroupRuleNetwork,
-				Protocol:      &testSecurityGroupRuleProtocol,
+				Protocol:      testSecurityGroupRuleProtocol,
 				SecurityGroup: &papi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
 				StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 			}
@@ -345,11 +345,12 @@ func (ts *clientTestSuite) TestClient_DeleteSecurityGroup() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		deleted            = false
 	)
 
-	httpmock.RegisterResponder("DELETE", "=~^/security-group/.*",
+	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/security-group/%s", testSecurityGroupID),
 		func(req *http.Request) (*http.Response, error) {
-			ts.Require().Equal(fmt.Sprintf("/security-group/%s", testSecurityGroupID), req.URL.String())
+			deleted = true
 
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
 				Id:        &testOperationID,
@@ -370,4 +371,5 @@ func (ts *clientTestSuite) TestClient_DeleteSecurityGroup() {
 	})
 
 	ts.Require().NoError(ts.client.DeleteSecurityGroup(context.Background(), testZone, testSecurityGroupID))
+	ts.Require().True(deleted)
 }

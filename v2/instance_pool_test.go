@@ -382,10 +382,13 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 		testInstancePoolUserDataUpdated                  = testInstancePoolUserData + "-updated"
 		testOperationID                                  = ts.randomID()
 		testOperationState                               = "success"
+		updated                                          = false
 	)
 
 	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance-pool/%s", testInstancePoolID),
 		func(req *http.Request) (*http.Response, error) {
+			updated = true
+
 			var actual papi.UpdateInstancePoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
@@ -439,17 +442,19 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 		TemplateID:           testInstancePoolTemplateIDUpdated,
 		UserData:             testInstancePoolUserDataUpdated,
 	}))
+	ts.Require().True(updated)
 }
 
 func (ts *clientTestSuite) TestClient_DeleteInstancePool() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		deleted            = false
 	)
 
-	httpmock.RegisterResponder("DELETE", "=~^/instance-pool/.*",
+	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/instance-pool/%s", testInstancePoolID),
 		func(req *http.Request) (*http.Response, error) {
-			ts.Require().Equal(fmt.Sprintf("/instance-pool/%s", testInstancePoolID), req.URL.String())
+			deleted = true
 
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
 				Id:        &testOperationID,
@@ -470,4 +475,5 @@ func (ts *clientTestSuite) TestClient_DeleteInstancePool() {
 	})
 
 	ts.Require().NoError(ts.client.DeleteInstancePool(context.Background(), testZone, testInstancePoolID))
+	ts.Require().True(deleted)
 }

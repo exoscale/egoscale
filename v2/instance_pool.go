@@ -131,6 +131,12 @@ func (i *InstancePool) ElasticIPs(ctx context.Context) ([]*ElasticIP, error) {
 	return res.([]*ElasticIP), err
 }
 
+// Instances returns the list of Compute instances member of the Instance Pool.
+func (i *InstancePool) Instances(ctx context.Context) ([]*Instance, error) {
+	res, err := i.c.fetchFromIDs(ctx, i.zone, i.InstanceIDs, new(Instance))
+	return res.([]*Instance), err
+}
+
 // PrivateNetworks returns the list of Private Networks attached to the members of the Instance Pool.
 func (i *InstancePool) PrivateNetworks(ctx context.Context) ([]*PrivateNetwork, error) {
 	res, err := i.c.fetchFromIDs(ctx, i.zone, i.PrivateNetworkIDs, new(PrivateNetwork))

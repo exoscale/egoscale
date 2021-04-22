@@ -88,6 +88,47 @@ func (ts *clientTestSuite) TestInstancePool_ElasticIPs() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestInstancePool_Instances() {
+	ts.mockAPIRequest("GET", fmt.Sprintf("/instance/%s", testInstanceID), papi.Instance{
+		CreatedAt:    &testInstanceCreatedAt,
+		DiskSize:     &testInstanceDiskSize,
+		Id:           &testInstanceID,
+		InstanceType: &papi.InstanceType{Id: &testInstanceInstanceTypeID},
+		Name:         &testInstanceName,
+		State:        &testInstanceState,
+		Template:     &papi.Template{Id: &testInstanceTemplateID},
+	})
+
+	expected := []*Instance{{
+		AntiAffinityGroupIDs: []string{},
+		CreatedAt:            testInstanceCreatedAt,
+		DiskSize:             testInstanceDiskSize,
+		ElasticIPIDs:         []string{},
+		ID:                   testInstanceID,
+		InstanceTypeID:       testInstanceInstanceTypeID,
+		Name:                 testInstanceName,
+		PrivateNetworkIDs:    []string{},
+		SecurityGroupIDs:     []string{},
+		SnapshotIDs:          []string{},
+		State:                testInstanceState,
+		TemplateID:           testInstanceTemplateID,
+
+		c:    ts.client,
+		zone: testZone,
+	}}
+
+	instancePool := &InstancePool{
+		InstanceIDs: []string{testInstanceID},
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := instancePool.Instances(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestInstancePool_PrivateNetworks() {
 	ts.mockAPIRequest("GET", fmt.Sprintf("/private-network/%s", testPrivateNetworkID), papi.PrivateNetwork{
 		Id:   &testPrivateNetworkID,

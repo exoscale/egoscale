@@ -17,6 +17,7 @@ type InstancePool struct {
 	ID                   string
 	IPv6Enabled          bool
 	InstanceIDs          []string
+	InstancePrefix       string
 	InstanceTypeID       string
 	ManagerID            string
 	Name                 string
@@ -80,6 +81,7 @@ func instancePoolFromAPI(i *papi.InstancePool) *InstancePool {
 
 			return ids
 		}(),
+		InstancePrefix: papi.OptionalString(i.InstancePrefix),
 		InstanceTypeID: papi.OptionalString(i.InstanceType.Id),
 		ManagerID: func() string {
 			if i.Manager != nil {
@@ -257,9 +259,10 @@ func (c *Client) CreateInstancePool(ctx context.Context, zone string, instancePo
 				}
 				return nil
 			}(),
-			InstanceType: papi.InstanceType{Id: &instancePool.InstanceTypeID},
-			Ipv6Enabled:  &instancePool.IPv6Enabled,
-			Name:         instancePool.Name,
+			InstancePrefix: &instancePool.InstancePrefix,
+			InstanceType:   papi.InstanceType{Id: &instancePool.InstanceTypeID},
+			Ipv6Enabled:    &instancePool.IPv6Enabled,
+			Name:           instancePool.Name,
 			PrivateNetworks: func() *[]papi.PrivateNetwork {
 				if l := len(instancePool.PrivateNetworkIDs); l > 0 {
 					list := make([]papi.PrivateNetwork, l)
@@ -390,6 +393,12 @@ func (c *Client) UpdateInstancePool(ctx context.Context, zone string, instancePo
 						list[i] = papi.ElasticIp{Id: &v}
 					}
 					return &list
+				}
+				return nil
+			}(),
+			InstancePrefix: func() *string {
+				if instancePool.InstancePrefix != "" {
+					return &instancePool.InstancePrefix
 				}
 				return nil
 			}(),

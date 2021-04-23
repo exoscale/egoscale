@@ -13,6 +13,7 @@ import (
 
 var (
 	testInstancePoolAntiAffinityGroupID       = new(clientTestSuite).randomID()
+	testInstancePoolDeployTargetID            = new(clientTestSuite).randomID()
 	testInstancePoolDescription               = "Test Instance Pool description"
 	testInstancePoolDiskSize            int64 = 10
 	testInstancePoolElasticIPID               = new(clientTestSuite).randomID()
@@ -319,6 +320,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 
 			expected := papi.CreateInstancePoolJSONRequestBody{
 				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
+				DeployTarget:       &papi.DeployTarget{Id: &testInstancePoolDeployTargetID},
 				Description:        &testInstancePoolDescription,
 				DiskSize:           testInstancePoolDiskSize,
 				ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
@@ -354,6 +356,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-pool/%s", testInstancePoolID), papi.InstancePool{
 		AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
+		DeployTarget:       &papi.DeployTarget{Id: &testInstancePoolDeployTargetID},
 		Description:        &testInstancePoolDescription,
 		DiskSize:           &testInstancePoolDiskSize,
 		ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
@@ -374,6 +377,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 
 	expected := &InstancePool{
 		AntiAffinityGroupIDs: []string{testInstancePoolAntiAffinityGroupID},
+		DeployTargetID:       testInstancePoolDeployTargetID,
 		Description:          testInstancePoolDescription,
 		DiskSize:             testInstancePoolDiskSize,
 		ElasticIPIDs:         []string{testInstancePoolElasticIPID},
@@ -397,6 +401,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 
 	actual, err := ts.client.CreateInstancePool(context.Background(), testZone, &InstancePool{
 		AntiAffinityGroupIDs: []string{testInstancePoolAntiAffinityGroupID},
+		DeployTargetID:       testInstancePoolDeployTargetID,
 		Description:          testInstancePoolDescription,
 		DiskSize:             testInstancePoolDiskSize,
 		ElasticIPIDs:         []string{testInstancePoolElasticIPID},
@@ -518,21 +523,22 @@ func (ts *clientTestSuite) TestClient_GetInstancePool() {
 
 func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 	var (
-		testInstancePoolAntiAffinityGroupIDUpdated       = new(clientTestSuite).randomID()
-		testInstancePoolDescriptionUpdated               = testInstancePoolDescription + "-updated"
-		testInstancePoolDiskSizeUpdated            int64 = testInstancePoolDiskSize * 2
-		testInstancePoolElasticIPIDUpdated               = new(clientTestSuite).randomID()
-		testInstancePoolIPv6EnabledUpdated               = true
-		testInstancePoolInstanceTypeIDUpdated            = new(clientTestSuite).randomID()
-		testInstancePoolNameUpdated                      = testInstancePoolName + "-updated"
-		testInstancePoolPrivateNetworkIDUpdated          = new(clientTestSuite).randomID()
-		testInstancePoolSecurityGroupIDUpdated           = new(clientTestSuite).randomID()
-		testInstancePoolSSHKeyUpdated                    = testInstancePoolSSHKey + "-updated"
-		testInstancePoolTemplateIDUpdated                = new(clientTestSuite).randomID()
-		testInstancePoolUserDataUpdated                  = testInstancePoolUserData + "-updated"
-		testOperationID                                  = ts.randomID()
-		testOperationState                               = "success"
-		updated                                          = false
+		testInstancePoolAntiAffinityGroupIDUpdated = new(clientTestSuite).randomID()
+		testInstancePoolDeployTargetIDUpdated      = new(clientTestSuite).randomID()
+		testInstancePoolDescriptionUpdated         = testInstancePoolDescription + "-updated"
+		testInstancePoolDiskSizeUpdated            = testInstancePoolDiskSize * 2
+		testInstancePoolElasticIPIDUpdated         = new(clientTestSuite).randomID()
+		testInstancePoolIPv6EnabledUpdated         = true
+		testInstancePoolInstanceTypeIDUpdated      = new(clientTestSuite).randomID()
+		testInstancePoolNameUpdated                = testInstancePoolName + "-updated"
+		testInstancePoolPrivateNetworkIDUpdated    = new(clientTestSuite).randomID()
+		testInstancePoolSecurityGroupIDUpdated     = new(clientTestSuite).randomID()
+		testInstancePoolSSHKeyUpdated              = testInstancePoolSSHKey + "-updated"
+		testInstancePoolTemplateIDUpdated          = new(clientTestSuite).randomID()
+		testInstancePoolUserDataUpdated            = testInstancePoolUserData + "-updated"
+		testOperationID                            = ts.randomID()
+		testOperationState                         = "success"
+		updated                                    = false
 	)
 
 	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance-pool/%s", testInstancePoolID),
@@ -544,6 +550,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 
 			expected := papi.UpdateInstancePoolJSONRequestBody{
 				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupIDUpdated}},
+				DeployTarget:       &papi.DeployTarget{Id: &testInstancePoolDeployTargetIDUpdated},
 				Description:        &testInstancePoolDescriptionUpdated,
 				DiskSize:           &testInstancePoolDiskSizeUpdated,
 				ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPIDUpdated}},
@@ -578,6 +585,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 
 	ts.Require().NoError(ts.client.UpdateInstancePool(context.Background(), testZone, &InstancePool{
 		AntiAffinityGroupIDs: []string{testInstancePoolAntiAffinityGroupIDUpdated},
+		DeployTargetID:       testInstancePoolDeployTargetIDUpdated,
 		Description:          testInstancePoolDescriptionUpdated,
 		DiskSize:             testInstancePoolDiskSizeUpdated,
 		ElasticIPIDs:         []string{testInstancePoolElasticIPIDUpdated},

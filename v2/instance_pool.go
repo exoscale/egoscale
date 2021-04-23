@@ -10,6 +10,7 @@ import (
 // InstancePool represents an Instance Pool.
 type InstancePool struct {
 	AntiAffinityGroupIDs []string `reset:"anti-affinity-groups"`
+	DeployTargetID       string   `reset:"deploy-target"`
 	Description          string   `reset:"description"`
 	DiskSize             int64
 	ElasticIPIDs         []string `reset:"elastic-ips"`
@@ -44,6 +45,12 @@ func instancePoolFromAPI(i *papi.InstancePool) *InstancePool {
 			}
 
 			return ids
+		}(),
+		DeployTargetID: func() string {
+			if i.DeployTarget != nil {
+				return papi.OptionalString(i.DeployTarget.Id)
+			}
+			return ""
 		}(),
 		Description: papi.OptionalString(i.Description),
 		DiskSize:    papi.OptionalInt64(i.DiskSize),
@@ -231,6 +238,12 @@ func (c *Client) CreateInstancePool(ctx context.Context, zone string, instancePo
 				}
 				return nil
 			}(),
+			DeployTarget: func() *papi.DeployTarget {
+				if instancePool.DeployTargetID != "" {
+					return &papi.DeployTarget{Id: &instancePool.DeployTargetID}
+				}
+				return nil
+			}(),
 			Description: &instancePool.Description,
 			DiskSize:    instancePool.DiskSize,
 			ElasticIps: func() *[]papi.ElasticIp {
@@ -348,6 +361,12 @@ func (c *Client) UpdateInstancePool(ctx context.Context, zone string, instancePo
 						list[i] = papi.AntiAffinityGroup{Id: &v}
 					}
 					return &list
+				}
+				return nil
+			}(),
+			DeployTarget: func() *papi.DeployTarget {
+				if instancePool.DeployTargetID != "" {
+					return &papi.DeployTarget{Id: &instancePool.DeployTargetID}
 				}
 				return nil
 			}(),

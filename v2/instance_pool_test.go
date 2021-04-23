@@ -20,14 +20,15 @@ var (
 	testInstancePoolID                        = new(clientTestSuite).randomID()
 	testInstancePoolIPv6Enabled               = true
 	testInstancePoolInstanceID                = new(clientTestSuite).randomID()
+	testInstancePoolInstancePrefix            = "test-instancepool"
 	testInstancePoolInstanceTypeID            = new(clientTestSuite).randomID()
 	testInstancePoolManagerID                 = new(clientTestSuite).randomID()
 	testInstancePoolName                      = "test-instancepool"
 	testInstancePoolPrivateNetworkID          = new(clientTestSuite).randomID()
+	testInstancePoolSSHKey                    = "test-ssh-key"
 	testInstancePoolSecurityGroupID           = new(clientTestSuite).randomID()
 	testInstancePoolSize                int64 = 3
 	testInstancePoolState                     = "running"
-	testInstancePoolSSHKey                    = "test-ssh-key"
 	testInstancePoolTemplateID                = new(clientTestSuite).randomID()
 	testInstancePoolUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 )
@@ -324,6 +325,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 				Description:        &testInstancePoolDescription,
 				DiskSize:           testInstancePoolDiskSize,
 				ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
+				InstancePrefix:     &testInstancePoolInstancePrefix,
 				InstanceType:       papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
 				Ipv6Enabled:        &testInstancePoolIPv6Enabled,
 				Name:               testInstancePoolName,
@@ -361,6 +363,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 		DiskSize:           &testInstancePoolDiskSize,
 		ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
 		Id:                 &testInstancePoolID,
+		InstancePrefix:     &testInstancePoolInstancePrefix,
 		InstanceType:       &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
 		Instances:          &[]papi.Instance{{Id: &testInstancePoolInstanceID}},
 		Ipv6Enabled:        &testInstancePoolIPv6Enabled,
@@ -384,6 +387,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 		ID:                   testInstancePoolID,
 		IPv6Enabled:          testInstancePoolIPv6Enabled,
 		InstanceIDs:          []string{testInstancePoolInstanceID},
+		InstancePrefix:       testInstancePoolInstancePrefix,
 		InstanceTypeID:       testInstancePoolInstanceTypeID,
 		ManagerID:            testInstancePoolManagerID,
 		Name:                 testInstancePoolName,
@@ -406,6 +410,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 		DiskSize:             testInstancePoolDiskSize,
 		ElasticIPIDs:         []string{testInstancePoolElasticIPID},
 		IPv6Enabled:          testInstancePoolIPv6Enabled,
+		InstancePrefix:       testInstancePoolInstancePrefix,
 		InstanceTypeID:       testInstancePoolInstanceTypeID,
 		Name:                 testInstancePoolName,
 		PrivateNetworkIDs:    []string{testInstancePoolPrivateNetworkID},
@@ -529,6 +534,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 		testInstancePoolDiskSizeUpdated            = testInstancePoolDiskSize * 2
 		testInstancePoolElasticIPIDUpdated         = new(clientTestSuite).randomID()
 		testInstancePoolIPv6EnabledUpdated         = true
+		testInstancePoolInstancePrefixUpdated      = testInstancePoolInstancePrefix + "-updated"
 		testInstancePoolInstanceTypeIDUpdated      = new(clientTestSuite).randomID()
 		testInstancePoolNameUpdated                = testInstancePoolName + "-updated"
 		testInstancePoolPrivateNetworkIDUpdated    = new(clientTestSuite).randomID()
@@ -554,6 +560,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 				Description:        &testInstancePoolDescriptionUpdated,
 				DiskSize:           &testInstancePoolDiskSizeUpdated,
 				ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPIDUpdated}},
+				InstancePrefix:     &testInstancePoolInstancePrefixUpdated,
 				InstanceType:       &papi.InstanceType{Id: &testInstancePoolInstanceTypeIDUpdated},
 				Ipv6Enabled:        &testInstancePoolIPv6EnabledUpdated,
 				Name:               &testInstancePoolNameUpdated,
@@ -592,6 +599,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 		ID:                   testInstancePoolID,
 		IPv6Enabled:          testInstancePoolIPv6EnabledUpdated,
 		InstanceIDs:          []string{testInstancePoolInstanceTypeIDUpdated},
+		InstancePrefix:       testInstancePoolInstancePrefixUpdated,
 		InstanceTypeID:       testInstancePoolInstanceTypeIDUpdated,
 		Name:                 testInstancePoolNameUpdated,
 		PrivateNetworkIDs:    []string{testInstancePoolPrivateNetworkIDUpdated},

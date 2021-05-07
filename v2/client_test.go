@@ -34,7 +34,7 @@ type clientTestSuite struct {
 func (ts *clientTestSuite) SetupTest() {
 	httpmock.Activate()
 
-	client, err := NewClient("x", "x", ClientOptWithHTTPClient(http.DefaultClient))
+	client, err := NewClient("x", "x")
 	if err != nil {
 		ts.T().Fatal(err)
 	}
@@ -170,6 +170,30 @@ func (ts *clientTestSuite) TestClient_fetchfromIDs() {
 			ts.Require().Equal(tt.expected, actual)
 		})
 	}
+}
+
+func (ts *clientTestSuite) TestDefaultTransport_RoundTrip() {
+	var ok bool
+
+	httpmock.RegisterResponder("GET", "/zone",
+		func(req *http.Request) (*http.Response, error) {
+			ts.Require().Equal(UserAgent, req.Header.Get("User-Agent"))
+			ok = true
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, struct {
+				Zones *[]papi.Zone `json:"zones,omitempty"`
+			}{
+				Zones: new([]papi.Zone),
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+			return resp, nil
+		})
+
+	_, err := ts.client.ListZones(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().True(ok)
 }
 
 func TestSetEndpointFromContext(t *testing.T) {

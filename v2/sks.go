@@ -18,6 +18,7 @@ type SKSNodepool struct {
 	DiskSize             int64
 	ID                   string
 	InstancePoolID       string
+	InstancePrefix       string
 	InstanceTypeID       string
 	Name                 string
 	SecurityGroupIDs     []string `reset:"security-groups"`
@@ -47,6 +48,7 @@ func sksNodepoolFromAPI(client *Client, zone string, n *papi.SksNodepool) *SKSNo
 		DiskSize:       papi.OptionalInt64(n.DiskSize),
 		ID:             papi.OptionalString(n.Id),
 		InstancePoolID: papi.OptionalString(n.InstancePool.Id),
+		InstancePrefix: papi.OptionalString(n.InstancePrefix),
 		InstanceTypeID: papi.OptionalString(n.InstanceType.Id),
 		Name:           papi.OptionalString(n.Name),
 		SecurityGroupIDs: func() []string {
@@ -222,9 +224,10 @@ func (c *SKSCluster) AddNodepool(ctx context.Context, np *SKSNodepool) (*SKSNode
 				}
 				return nil
 			}(),
-			DiskSize:     np.DiskSize,
-			InstanceType: papi.InstanceType{Id: &np.InstanceTypeID},
-			Name:         np.Name,
+			DiskSize:       np.DiskSize,
+			InstancePrefix: &np.InstancePrefix,
+			InstanceType:   papi.InstanceType{Id: &np.InstanceTypeID},
+			Name:           np.Name,
 			SecurityGroups: func() *[]papi.SecurityGroup {
 				if l := len(np.SecurityGroupIDs); l > 0 {
 					list := make([]papi.SecurityGroup, l)
@@ -284,6 +287,12 @@ func (c *SKSCluster) UpdateNodepool(ctx context.Context, np *SKSNodepool) error 
 			DiskSize: func() *int64 {
 				if np.DiskSize > 0 {
 					return &np.DiskSize
+				}
+				return nil
+			}(),
+			InstancePrefix: func() *string {
+				if np.InstancePrefix != "" {
+					return &np.InstancePrefix
 				}
 				return nil
 			}(),

@@ -17,6 +17,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 		testDiskSize            int64 = 15
 		testID                        = testRandomID(t)
 		testInstancePoolID            = testRandomID(t)
+		testInstancePrefix            = "test-nodepool"
 		testInstanceTypeID            = testRandomID(t)
 		testName                      = "test-nodepool"
 		testSecurityGroupID           = testRandomID(t)
@@ -31,6 +32,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 			Description:        &testDescription,
 			DiskSize:           &testDiskSize,
 			Id:                 &testID,
+			InstancePrefix:     &testInstancePrefix,
 			InstancePool:       &InstancePool{Id: &testInstancePoolID},
 			InstanceType:       &InstanceType{Id: &testInstanceTypeID},
 			Name:               &testName,
@@ -50,6 +52,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
   "disk-size": ` + fmt.Sprint(testDiskSize) + `,
   "id": "` + testID + `",
   "instance-pool": {"id": "` + testInstancePoolID + `"},
+  "instance-prefix": "` + testInstancePrefix + `",
   "instance-type": {"id": "` + testInstanceTypeID + `"},
   "name": "` + testName + `",
   "security-groups": [{"id":"` + testSecurityGroupID + `"}],
@@ -72,6 +75,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 		testDiskSize            int64 = 15
 		testID                        = testRandomID(t)
 		testInstancePoolID            = testRandomID(t)
+		testInstancePrefix            = "test-nodepool"
 		testInstanceTypeID            = testRandomID(t)
 		testName                      = "test-nodepool"
 		testSecurityGroupID           = testRandomID(t)
@@ -86,6 +90,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 			Description:        &testDescription,
 			DiskSize:           &testDiskSize,
 			Id:                 &testID,
+			InstancePrefix:     &testInstancePrefix,
 			InstancePool:       &InstancePool{Id: &testInstancePoolID},
 			InstanceType:       &InstanceType{Id: &testInstanceTypeID},
 			Name:               &testName,
@@ -103,6 +108,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 			`"disk-size":` + fmt.Sprint(testDiskSize) + `,` +
 			`"id":"` + testID + `",` +
 			`"instance-pool":{"id":"` + testInstancePoolID + `"},` +
+			`"instance-prefix":"` + testInstancePrefix + `",` +
 			`"instance-type":{"id":"` + testInstanceTypeID + `"},` +
 			`"name":"` + testName + `",` +
 			`"security-groups":[{"id":"` + testSecurityGroupID + `"}],` +

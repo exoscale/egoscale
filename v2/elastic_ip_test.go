@@ -75,10 +75,13 @@ func (ts *clientTestSuite) TestElasticIP_ResetField() {
 		testResetField     = "description"
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		reset              = false
 	)
 
 	httpmock.RegisterResponder("DELETE", "=~^/elastic-ip/.*",
 		func(req *http.Request) (*http.Response, error) {
+			reset = true
+
 			ts.Require().Equal(
 				fmt.Sprintf("/elastic-ip/%s/%s", testInstancePoolID, testResetField),
 				req.URL.String())
@@ -108,6 +111,7 @@ func (ts *clientTestSuite) TestElasticIP_ResetField() {
 	}
 
 	ts.Require().NoError(elasticIP.ResetField(context.Background(), &elasticIP.Description))
+	ts.Require().True(reset)
 }
 
 func (ts *clientTestSuite) TestClient_CreateElasticIP() {

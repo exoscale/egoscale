@@ -97,6 +97,7 @@ func (ts *clientTestSuite) TestSKSCluster_RotateCCMCredentials() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		rotated            = false
 	)
 
 	cluster := &SKSCluster{
@@ -105,11 +106,20 @@ func (ts *clientTestSuite) TestSKSCluster_RotateCCMCredentials() {
 		zone: testZone,
 	}
 
-	ts.mockAPIRequest("PUT", fmt.Sprintf("/sks-cluster/%s/rotate-ccm-credentials", cluster.ID),
-		papi.Operation{
-			Id:        &testOperationID,
-			State:     &testOperationState,
-			Reference: &papi.Reference{Id: &testSKSNodepoolID},
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/sks-cluster/%s/rotate-ccm-credentials", cluster.ID),
+		func(req *http.Request) (*http.Response, error) {
+			rotated = true
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testSKSClusterID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
 		})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
@@ -119,6 +129,7 @@ func (ts *clientTestSuite) TestSKSCluster_RotateCCMCredentials() {
 	})
 
 	ts.Require().NoError(cluster.RotateCCMCredentials(context.Background()))
+	ts.Require().True(rotated)
 }
 
 func (ts *clientTestSuite) TestSKSCluster_AuthorityCert() {
@@ -248,6 +259,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 		testSKSNodepoolSecurityGroupIDUpdated     = ts.randomID()
 		testOperationID                           = ts.randomID()
 		testOperationState                        = "success"
+		updated                                   = false
 	)
 
 	cluster := &SKSCluster{
@@ -270,6 +282,8 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 		cluster.ID,
 		cluster.Nodepools[0].ID),
 		func(req *http.Request) (*http.Response, error) {
+			updated = true
+
 			var actual papi.UpdateSksNodepoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
@@ -311,6 +325,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 		SecurityGroupIDs:     []string{testSKSNodepoolSecurityGroupIDUpdated},
 	}
 	ts.Require().NoError(cluster.UpdateNodepool(context.Background(), &nodepoolUpdated))
+	ts.Require().True(updated)
 }
 
 func (ts *clientTestSuite) TestSKSCluster_ScaleNodepool() {
@@ -318,6 +333,7 @@ func (ts *clientTestSuite) TestSKSCluster_ScaleNodepool() {
 		testOperationID          = ts.randomID()
 		testOperationState       = "success"
 		testScaleSize      int64 = 3
+		scaled                   = false
 	)
 
 	cluster := &SKSCluster{
@@ -332,8 +348,11 @@ func (ts *clientTestSuite) TestSKSCluster_ScaleNodepool() {
 		cluster.ID,
 		cluster.Nodepools[0].ID),
 		func(req *http.Request) (*http.Response, error) {
+			scaled = true
+
 			var actual papi.ScaleSksNodepoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
+
 			expected := papi.ScaleSksNodepoolJSONRequestBody{Size: testScaleSize}
 			ts.Require().Equal(expected, actual)
 
@@ -356,6 +375,7 @@ func (ts *clientTestSuite) TestSKSCluster_ScaleNodepool() {
 	})
 
 	ts.Require().NoError(cluster.ScaleNodepool(context.Background(), cluster.Nodepools[0], testScaleSize))
+	ts.Require().True(scaled)
 }
 
 func (ts *clientTestSuite) TestSKSCluster_EvictNodepoolMembers() {
@@ -363,6 +383,7 @@ func (ts *clientTestSuite) TestSKSCluster_EvictNodepoolMembers() {
 		testOperationID     = ts.randomID()
 		testOperationState  = "success"
 		testEvictedMemberID = ts.randomID()
+		evicted             = false
 	)
 
 	cluster := &SKSCluster{
@@ -377,6 +398,8 @@ func (ts *clientTestSuite) TestSKSCluster_EvictNodepoolMembers() {
 		cluster.ID,
 		cluster.Nodepools[0].ID),
 		func(req *http.Request) (*http.Response, error) {
+			evicted = true
+
 			var actual papi.EvictSksNodepoolMembersJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
@@ -405,6 +428,7 @@ func (ts *clientTestSuite) TestSKSCluster_EvictNodepoolMembers() {
 		context.Background(),
 		cluster.Nodepools[0],
 		[]string{testEvictedMemberID}))
+	ts.Require().True(evicted)
 }
 
 func (ts *clientTestSuite) TestSKSCluster_DeleteNodepool() {
@@ -453,10 +477,13 @@ func (ts *clientTestSuite) TestSKSCluster_ResetField() {
 		testResetField     = "description"
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		reset              = false
 	)
 
 	httpmock.RegisterResponder("DELETE", "=~^/sks-cluster/.*",
 		func(req *http.Request) (*http.Response, error) {
+			reset = true
+
 			ts.Require().Equal(
 				fmt.Sprintf("/sks-cluster/%s/%s", testSKSClusterID, testResetField),
 				req.URL.String())
@@ -488,6 +515,7 @@ func (ts *clientTestSuite) TestSKSCluster_ResetField() {
 	}
 
 	ts.Require().NoError(cluster.ResetField(context.Background(), &cluster.Description))
+	ts.Require().True(reset)
 }
 
 func (ts *clientTestSuite) TestSKSCluster_ResetNodepoolField() {
@@ -495,10 +523,13 @@ func (ts *clientTestSuite) TestSKSCluster_ResetNodepoolField() {
 		testResetField     = "description"
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		reset              = false
 	)
 
 	httpmock.RegisterResponder("DELETE", "=~^/sks-cluster/.*",
 		func(req *http.Request) (*http.Response, error) {
+			reset = true
+
 			ts.Require().Equal(
 				fmt.Sprintf("/sks-cluster/%s/nodepool/%s/%s",
 					testSKSClusterID, testSKSNodepoolID, testResetField),
@@ -534,6 +565,7 @@ func (ts *clientTestSuite) TestSKSCluster_ResetNodepoolField() {
 		context.Background(),
 		cluster.Nodepools[0],
 		&cluster.Nodepools[0].Description))
+	ts.Require().True(reset)
 }
 
 func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
@@ -782,10 +814,13 @@ func (ts *clientTestSuite) TestClient_UpdateSKSCluster() {
 		testSKSClusterDescriptionUpdated = testSKSClusterDescription + "-updated"
 		testOperationID                  = ts.randomID()
 		testOperationState               = "success"
+		updated                          = false
 	)
 
 	httpmock.RegisterResponder("PUT", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID),
 		func(req *http.Request) (*http.Response, error) {
+			updated = true
+
 			var actual papi.UpdateSksClusterJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
@@ -819,17 +854,21 @@ func (ts *clientTestSuite) TestClient_UpdateSKSCluster() {
 		Description: testSKSClusterDescriptionUpdated,
 	}
 	ts.Require().NoError(ts.client.UpdateSKSCluster(context.Background(), testZone, &clusterUpdated))
+	ts.Require().True(updated)
 }
 
 func (ts *clientTestSuite) TestClient_UgradeSKSCluster() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		upgraded           = false
 	)
 
 	httpmock.RegisterResponder("PUT",
 		fmt.Sprintf("/sks-cluster/%s/upgrade", testSKSClusterID),
 		func(req *http.Request) (*http.Response, error) {
+			upgraded = true
+
 			var actual papi.UpgradeSksClusterJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
@@ -859,17 +898,19 @@ func (ts *clientTestSuite) TestClient_UgradeSKSCluster() {
 		testZone,
 		testSKSClusterID,
 		testSKSClusterVersion))
+	ts.Require().True(upgraded)
 }
 
 func (ts *clientTestSuite) TestClient_DeleteSKSCluster() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		deleted            = false
 	)
 
-	httpmock.RegisterResponder("DELETE", "=~^/sks-cluster/.*",
+	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID),
 		func(req *http.Request) (*http.Response, error) {
-			ts.Require().Equal(fmt.Sprintf("/sks-cluster/%s", testSKSClusterID), req.URL.String())
+			deleted = true
 
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
 				Id:        &testOperationID,
@@ -890,4 +931,5 @@ func (ts *clientTestSuite) TestClient_DeleteSKSCluster() {
 	})
 
 	ts.Require().NoError(ts.client.DeleteSKSCluster(context.Background(), testZone, testSKSClusterID))
+	ts.Require().True(deleted)
 }

@@ -187,6 +187,7 @@ func (ts *clientTestSuite) TestInstancePool_Scale() {
 		testOperationID          = ts.randomID()
 		testOperationState       = "success"
 		testScaleSize      int64 = testInstancePoolSize * 2
+		scaled                   = false
 	)
 
 	instancePool := &InstancePool{
@@ -199,6 +200,8 @@ func (ts *clientTestSuite) TestInstancePool_Scale() {
 
 	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance-pool/%s:scale", instancePool.ID),
 		func(req *http.Request) (*http.Response, error) {
+			scaled = true
+
 			var actual papi.ScaleInstancePoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
@@ -224,6 +227,7 @@ func (ts *clientTestSuite) TestInstancePool_Scale() {
 	})
 
 	ts.Require().NoError(instancePool.Scale(context.Background(), testScaleSize))
+	ts.Require().True(scaled)
 }
 
 func (ts *clientTestSuite) TestInstancePool_EvictMembers() {
@@ -231,6 +235,7 @@ func (ts *clientTestSuite) TestInstancePool_EvictMembers() {
 		testOperationID     = ts.randomID()
 		testOperationState  = "success"
 		testEvictedMemberID = ts.randomID()
+		evicted             = false
 	)
 
 	instancePool := &InstancePool{
@@ -241,6 +246,8 @@ func (ts *clientTestSuite) TestInstancePool_EvictMembers() {
 
 	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance-pool/%s:evict", instancePool.ID),
 		func(req *http.Request) (*http.Response, error) {
+			evicted = true
+
 			var actual papi.EvictInstancePoolMembersJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
@@ -266,6 +273,7 @@ func (ts *clientTestSuite) TestInstancePool_EvictMembers() {
 	})
 
 	ts.Require().NoError(instancePool.EvictMembers(context.Background(), []string{testEvictedMemberID}))
+	ts.Require().True(evicted)
 }
 
 func (ts *clientTestSuite) TestInstancePool_ResetField() {
@@ -273,10 +281,13 @@ func (ts *clientTestSuite) TestInstancePool_ResetField() {
 		testResetField     = "description"
 		testOperationID    = ts.randomID()
 		testOperationState = "success"
+		reset              = false
 	)
 
 	httpmock.RegisterResponder("DELETE", "=~^/instance-pool/.*",
 		func(req *http.Request) (*http.Response, error) {
+			reset = true
+
 			ts.Require().Equal(
 				fmt.Sprintf("/instance-pool/%s/%s", testInstancePoolID, testResetField),
 				req.URL.String())
@@ -306,6 +317,7 @@ func (ts *clientTestSuite) TestInstancePool_ResetField() {
 	}
 
 	ts.Require().NoError(instancePool.ResetField(context.Background(), &instancePool.Description))
+	ts.Require().True(reset)
 }
 
 func (ts *clientTestSuite) TestClient_CreateInstancePool() {

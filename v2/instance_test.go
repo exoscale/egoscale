@@ -112,6 +112,373 @@ func (ts *clientTestSuite) TestInstance_AntiAffinityGroups() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestInstance_AttachElasticIP() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = "success"
+		attached           = false
+	)
+
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/elastic-ip/%s:attach", testInstanceElasticIPID),
+		func(req *http.Request) (*http.Response, error) {
+			attached = true
+
+			var actual papi.AttachInstanceToElasticIpJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.AttachInstanceToElasticIpJSONRequestBody{
+				Instance: papi.Instance{Id: &testInstanceID},
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testInstanceID},
+	})
+
+	elasticIP := &ElasticIP{
+		ID: testInstanceElasticIPID,
+	}
+
+	instance := &Instance{
+		ID: testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(instance.AttachElasticIP(context.Background(), elasticIP))
+	ts.Require().True(attached)
+}
+
+func (ts *clientTestSuite) TestInstance_AttachPrivateNetwork() {
+	var (
+		testOperationID      = ts.randomID()
+		testOperationState   = "success"
+		testPrivateIPAddress = net.ParseIP("10.0.0.1")
+		attached             = false
+	)
+
+	httpmock.RegisterResponder("PUT",
+		fmt.Sprintf("/private-network/%s:attach", testInstancePrivateNetworkID),
+		func(req *http.Request) (*http.Response, error) {
+			attached = true
+
+			var actual papi.AttachInstanceToPrivateNetworkJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.AttachInstanceToPrivateNetworkJSONRequestBody{
+				Instance: papi.Instance{Id: &testInstanceID},
+				Ip:       func() *string { ip := testPrivateIPAddress.String(); return &ip }(),
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testInstanceID},
+	})
+
+	privateNetwork := &PrivateNetwork{
+		ID: testInstancePrivateNetworkID,
+	}
+
+	instance := &Instance{
+		ID: testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(instance.AttachPrivateNetwork(context.Background(), privateNetwork, testPrivateIPAddress))
+	ts.Require().True(attached)
+}
+
+func (ts *clientTestSuite) TestInstance_AttachSecurityGroup() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = "success"
+		attached           = false
+	)
+
+	httpmock.RegisterResponder("PUT",
+		fmt.Sprintf("/security-group/%s:attach", testInstanceSecurityGroupID),
+		func(req *http.Request) (*http.Response, error) {
+			attached = true
+
+			var actual papi.AttachInstanceToSecurityGroupJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.AttachInstanceToSecurityGroupJSONRequestBody{
+				Instance: papi.Instance{Id: &testInstanceID},
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testInstanceID},
+	})
+
+	securityGroup := &SecurityGroup{
+		ID: testInstanceSecurityGroupID,
+	}
+
+	instance := &Instance{
+		ID: testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(instance.AttachSecurityGroup(context.Background(), securityGroup))
+	ts.Require().True(attached)
+}
+
+func (ts *clientTestSuite) TestInstance_CreateSnapshot() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = "success"
+	)
+
+	ts.mockAPIRequest("POST", fmt.Sprintf("/instance/%s:create-snapshot", testInstanceID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testSnapshotID},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testSnapshotID},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/snapshot/%s", testSnapshotID), papi.Snapshot{
+		CreatedAt: &testSnapshotCreatedAt,
+		Id:        &testSnapshotID,
+		Instance:  &papi.Instance{Id: &testInstanceID},
+		Name:      &testSnapshotName,
+		State:     &testSnapshotState,
+	})
+
+	instance := &Instance{
+		ID: testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	expected := &Snapshot{
+		CreatedAt:  testSnapshotCreatedAt,
+		ID:         testSnapshotID,
+		InstanceID: testInstanceID,
+		Name:       testSnapshotName,
+		State:      testSnapshotState,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := instance.CreateSnapshot(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestInstance_DetachElasticIP() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = "success"
+		detached           = false
+	)
+
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/elastic-ip/%s:detach", testInstanceElasticIPID),
+		func(req *http.Request) (*http.Response, error) {
+			detached = true
+
+			var actual papi.DetachInstanceFromElasticIpJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.DetachInstanceFromElasticIpJSONRequestBody{
+				Instance: papi.Instance{Id: &testInstanceID},
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testInstanceID},
+	})
+
+	elasticIP := &ElasticIP{
+		ID: testInstanceElasticIPID,
+	}
+
+	instance := &Instance{
+		ID: testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(instance.DetachElasticIP(context.Background(), elasticIP))
+	ts.Require().True(detached)
+}
+
+func (ts *clientTestSuite) TestInstance_DetachPrivateNetwork() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = "success"
+		attached           = false
+	)
+
+	httpmock.RegisterResponder("PUT",
+		fmt.Sprintf("/private-network/%s:detach", testInstancePrivateNetworkID),
+		func(req *http.Request) (*http.Response, error) {
+			attached = true
+
+			var actual papi.DetachInstanceFromPrivateNetworkJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.DetachInstanceFromPrivateNetworkJSONRequestBody{
+				Instance: papi.Instance{Id: &testInstanceID},
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testInstanceID},
+	})
+
+	privateNetwork := &PrivateNetwork{
+		ID: testInstancePrivateNetworkID,
+	}
+
+	instance := &Instance{
+		ID: testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(instance.DetachPrivateNetwork(context.Background(), privateNetwork))
+	ts.Require().True(attached)
+}
+
+func (ts *clientTestSuite) TestInstance_DetachSecurityGroup() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = "success"
+		attached           = false
+	)
+
+	httpmock.RegisterResponder("PUT",
+		fmt.Sprintf("/security-group/%s:detach", testInstanceSecurityGroupID),
+		func(req *http.Request) (*http.Response, error) {
+			attached = true
+
+			var actual papi.DetachInstanceFromSecurityGroupJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.DetachInstanceFromSecurityGroupJSONRequestBody{
+				Instance: papi.Instance{Id: &testInstanceID},
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testInstanceID},
+	})
+
+	securityGroup := &SecurityGroup{
+		ID: testInstanceSecurityGroupID,
+	}
+
+	instance := &Instance{
+		ID: testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(instance.DetachSecurityGroup(context.Background(), securityGroup))
+	ts.Require().True(attached)
+}
+
 func (ts *clientTestSuite) TestInstance_ElasticIPs() {
 	ts.mockAPIRequest(
 		"GET",
@@ -169,85 +536,6 @@ func (ts *clientTestSuite) TestInstance_PrivateNetworks() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestInstance_SecurityGroups() {
-	ts.mockAPIRequest(
-		"GET",
-		fmt.Sprintf("/security-group/%s", testSecurityGroupID),
-		papi.SecurityGroup{
-			Id:   &testSecurityGroupID,
-			Name: &testSecurityGroupName,
-		},
-	)
-
-	expected := []*SecurityGroup{{
-		ID:   testSecurityGroupID,
-		Name: testSecurityGroupName,
-
-		c:    ts.client,
-		zone: testZone,
-	}}
-
-	instance := &Instance{
-		SecurityGroupIDs: []string{testSecurityGroupID},
-
-		c:    ts.client,
-		zone: testZone,
-	}
-
-	actual, err := instance.SecurityGroups(context.Background())
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-}
-
-func (ts *clientTestSuite) TestInstance_CreateSnapshot() {
-	var (
-		testOperationID    = ts.randomID()
-		testOperationState = "success"
-	)
-
-	ts.mockAPIRequest("POST", fmt.Sprintf("/instance/%s:create-snapshot", testInstanceID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSnapshotID},
-	})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSnapshotID},
-	})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/snapshot/%s", testSnapshotID), papi.Snapshot{
-		CreatedAt: &testSnapshotCreatedAt,
-		Id:        &testSnapshotID,
-		Instance:  &papi.Instance{Id: &testInstanceID},
-		Name:      &testSnapshotName,
-		State:     &testSnapshotState,
-	})
-
-	instance := &Instance{
-		ID: testInstanceID,
-
-		c:    ts.client,
-		zone: testZone,
-	}
-
-	expected := &Snapshot{
-		CreatedAt:  testSnapshotCreatedAt,
-		ID:         testSnapshotID,
-		InstanceID: testInstanceID,
-		Name:       testSnapshotName,
-		State:      testSnapshotState,
-
-		c:    ts.client,
-		zone: testZone,
-	}
-
-	actual, err := instance.CreateSnapshot(context.Background())
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-}
-
 func (ts *clientTestSuite) TestInstance_RevertToSnapshot() {
 	var (
 		testOperationID    = ts.randomID()
@@ -297,6 +585,36 @@ func (ts *clientTestSuite) TestInstance_RevertToSnapshot() {
 
 	ts.Require().NoError(instance.RevertToSnapshot(context.Background(), snapshot))
 	ts.Require().True(reverted)
+}
+
+func (ts *clientTestSuite) TestInstance_SecurityGroups() {
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/security-group/%s", testSecurityGroupID),
+		papi.SecurityGroup{
+			Id:   &testSecurityGroupID,
+			Name: &testSecurityGroupName,
+		},
+	)
+
+	expected := []*SecurityGroup{{
+		ID:   testSecurityGroupID,
+		Name: testSecurityGroupName,
+
+		c:    ts.client,
+		zone: testZone,
+	}}
+
+	instance := &Instance{
+		SecurityGroupIDs: []string{testSecurityGroupID},
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := instance.SecurityGroups(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
 }
 
 func (ts *clientTestSuite) TestClient_CreateInstance() {

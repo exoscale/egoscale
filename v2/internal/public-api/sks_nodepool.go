@@ -16,6 +16,7 @@ func (n *SksNodepool) UnmarshalJSON(data []byte) error {
 		DiskSize           *int64               `json:"disk-size,omitempty"`
 		Id                 *string              `json:"id,omitempty"` // nolint:golint
 		InstancePool       *InstancePool        `json:"instance-pool,omitempty"`
+		InstancePrefix     *string              `json:"instance-prefix,omitempty"`
 		InstanceType       *InstanceType        `json:"instance-type,omitempty"`
 		Name               *string              `json:"name,omitempty"`
 		SecurityGroups     *[]SecurityGroup     `json:"security-groups,omitempty"`
@@ -42,6 +43,7 @@ func (n *SksNodepool) UnmarshalJSON(data []byte) error {
 	n.DiskSize = raw.DiskSize
 	n.Id = raw.Id
 	n.InstancePool = raw.InstancePool
+	n.InstancePrefix = raw.InstancePrefix
 	n.InstanceType = raw.InstanceType
 	n.Name = raw.Name
 	n.SecurityGroups = raw.SecurityGroups
@@ -63,6 +65,7 @@ func (n *SksNodepool) MarshalJSON() ([]byte, error) {
 		DiskSize           *int64               `json:"disk-size,omitempty"`
 		Id                 *string              `json:"id,omitempty"` // nolint:golint
 		InstancePool       *InstancePool        `json:"instance-pool,omitempty"`
+		InstancePrefix     *string              `json:"instance-prefix,omitempty"`
 		InstanceType       *InstanceType        `json:"instance-type,omitempty"`
 		Name               *string              `json:"name,omitempty"`
 		SecurityGroups     *[]SecurityGroup     `json:"security-groups,omitempty"`
@@ -82,6 +85,7 @@ func (n *SksNodepool) MarshalJSON() ([]byte, error) {
 	raw.DiskSize = n.DiskSize
 	raw.Id = n.Id
 	raw.InstancePool = n.InstancePool
+	raw.InstancePrefix = n.InstancePrefix
 	raw.InstanceType = n.InstanceType
 	raw.Name = n.Name
 	raw.SecurityGroups = n.SecurityGroups

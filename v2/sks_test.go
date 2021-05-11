@@ -29,6 +29,7 @@ var (
 	testSKSNodepoolDiskSize            int64 = 15
 	testSKSNodepoolID                        = new(clientTestSuite).randomID()
 	testSKSNodepoolInstancePoolID            = new(clientTestSuite).randomID()
+	testSKSNodepoolInstancePrefix            = "test-nodepool"
 	testSKSNodepoolInstanceTypeID            = new(clientTestSuite).randomID()
 	testSKSNodepoolName                      = "test-nodepool"
 	testSKSNodepoolSecurityGroupID           = new(clientTestSuite).randomID()
@@ -209,6 +210,7 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 			DiskSize:           &testSKSNodepoolDiskSize,
 			Id:                 &testSKSNodepoolID,
 			InstancePool:       &papi.InstancePool{Id: &testSKSNodepoolInstancePoolID},
+			InstancePrefix:     &testSKSNodepoolInstancePrefix,
 			InstanceType:       &papi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
 			Name:               &testSKSNodepoolName,
 			SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
@@ -232,6 +234,7 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 		DiskSize:             testSKSNodepoolDiskSize,
 		ID:                   testSKSNodepoolID,
 		InstancePoolID:       testSKSNodepoolInstancePoolID,
+		InstancePrefix:       testSKSNodepoolInstancePrefix,
 		InstanceTypeID:       testSKSNodepoolInstanceTypeID,
 		Name:                 testSKSNodepoolName,
 		SecurityGroupIDs:     []string{testSKSNodepoolSecurityGroupID},
@@ -253,6 +256,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 	var (
 		testSKSNodepoolNameUpdated                = testSKSNodepoolName + "-updated"
 		testSKSNodepoolDescriptionUpdated         = testSKSNodepoolDescription + "-updated"
+		testSKSNodepoolInstancePrefixUpdated      = testSKSNodepoolInstancePrefix + "-updated"
 		testSKSNodepoolInstanceTypeIDUpdated      = testSKSNodepoolInstanceTypeID + "-updated"
 		testSKSNodepoolDiskSizeUpdated            = testSKSNodepoolDiskSize + 1
 		testSKSNodepoolAntiAffinityGroupIDUpdated = ts.randomID()
@@ -272,6 +276,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 				Description:    testSKSNodepoolDescription,
 				DiskSize:       testSKSNodepoolDiskSize,
 				ID:             testSKSNodepoolID,
+				InstancePrefix: testSKSNodepoolInstancePrefix,
 				InstanceTypeID: testSKSNodepoolInstanceTypeID,
 				Name:           testSKSNodepoolName,
 			},
@@ -291,6 +296,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupIDUpdated}},
 				Description:        &testSKSNodepoolDescriptionUpdated,
 				DiskSize:           &testSKSNodepoolDiskSizeUpdated,
+				InstancePrefix:     &testSKSNodepoolInstancePrefixUpdated,
 				InstanceType:       &papi.InstanceType{Id: &testSKSNodepoolInstanceTypeIDUpdated},
 				Name:               &testSKSNodepoolNameUpdated,
 				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupIDUpdated}},
@@ -320,6 +326,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 		Description:          testSKSNodepoolDescriptionUpdated,
 		DiskSize:             testSKSNodepoolDiskSizeUpdated,
 		ID:                   cluster.Nodepools[0].ID,
+		InstancePrefix:       testSKSNodepoolInstancePrefixUpdated,
 		InstanceTypeID:       testSKSNodepoolInstanceTypeIDUpdated,
 		Name:                 testSKSNodepoolNameUpdated,
 		SecurityGroupIDs:     []string{testSKSNodepoolSecurityGroupIDUpdated},

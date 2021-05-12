@@ -25,6 +25,7 @@ var (
 	testSKSClusterVersion                    = "1.18.6"
 	testSKSNodepoolAntiAffinityGroupID       = new(clientTestSuite).randomID()
 	testSKSNodepoolCreatedAt, _              = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
+	testSKSNodepoolDeployTargetID            = new(clientTestSuite).randomID()
 	testSKSNodepoolDescription               = "Test Nodepool description"
 	testSKSNodepoolDiskSize            int64 = 15
 	testSKSNodepoolID                        = new(clientTestSuite).randomID()
@@ -188,11 +189,34 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 		testOperationState = "success"
 	)
 
-	ts.mockAPIRequest("POST", fmt.Sprintf("/sks-cluster/%s/nodepool", testSKSClusterID),
-		papi.Operation{
-			Id:        &testOperationID,
-			State:     &testOperationState,
-			Reference: &papi.Reference{Id: &testSKSNodepoolID},
+	httpmock.RegisterResponder("POST", fmt.Sprintf("/sks-cluster/%s/nodepool", testSKSClusterID),
+		func(req *http.Request) (*http.Response, error) {
+			var actual papi.CreateSksNodepoolJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.CreateSksNodepoolJSONRequestBody{
+				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
+				DeployTarget:       &papi.DeployTarget{Id: &testSKSNodepoolDeployTargetID},
+				Description:        &testSKSNodepoolDescription,
+				DiskSize:           testSKSNodepoolDiskSize,
+				InstancePrefix:     &testSKSNodepoolInstancePrefix,
+				InstanceType:       papi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
+				Name:               testSKSNodepoolName,
+				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
+				Size:               testSKSNodepoolSize,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testSKSNodepoolID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
 		})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
@@ -206,6 +230,7 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 		papi.SksNodepool{
 			AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
 			CreatedAt:          &testSKSNodepoolCreatedAt,
+			DeployTarget:       &papi.DeployTarget{Id: &testSKSNodepoolDeployTargetID},
 			Description:        &testSKSNodepoolDescription,
 			DiskSize:           &testSKSNodepoolDiskSize,
 			Id:                 &testSKSNodepoolID,
@@ -230,6 +255,7 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 	expected := &SKSNodepool{
 		AntiAffinityGroupIDs: []string{testSKSNodepoolAntiAffinityGroupID},
 		CreatedAt:            testSKSNodepoolCreatedAt,
+		DeployTargetID:       testSKSNodepoolDeployTargetID,
 		Description:          testSKSNodepoolDescription,
 		DiskSize:             testSKSNodepoolDiskSize,
 		ID:                   testSKSNodepoolID,
@@ -254,14 +280,15 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 
 func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 	var (
-		testSKSNodepoolNameUpdated                = testSKSNodepoolName + "-updated"
+		testOperationID                           = ts.randomID()
+		testSKSNodepoolAntiAffinityGroupIDUpdated = ts.randomID()
+		testSKSNodepoolDeployTargetIDUpdated      = ts.randomID()
 		testSKSNodepoolDescriptionUpdated         = testSKSNodepoolDescription + "-updated"
+		testSKSNodepoolDiskSizeUpdated            = testSKSNodepoolDiskSize + 1
 		testSKSNodepoolInstancePrefixUpdated      = testSKSNodepoolInstancePrefix + "-updated"
 		testSKSNodepoolInstanceTypeIDUpdated      = testSKSNodepoolInstanceTypeID + "-updated"
-		testSKSNodepoolDiskSizeUpdated            = testSKSNodepoolDiskSize + 1
-		testSKSNodepoolAntiAffinityGroupIDUpdated = ts.randomID()
+		testSKSNodepoolNameUpdated                = testSKSNodepoolName + "-updated"
 		testSKSNodepoolSecurityGroupIDUpdated     = ts.randomID()
-		testOperationID                           = ts.randomID()
 		testOperationState                        = "success"
 		updated                                   = false
 	)
@@ -273,6 +300,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 
 		Nodepools: []*SKSNodepool{
 			{
+				DeployTargetID: testSKSNodepoolDeployTargetID,
 				Description:    testSKSNodepoolDescription,
 				DiskSize:       testSKSNodepoolDiskSize,
 				ID:             testSKSNodepoolID,
@@ -294,6 +322,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 
 			expected := papi.UpdateSksNodepoolJSONRequestBody{
 				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupIDUpdated}},
+				DeployTarget:       &papi.DeployTarget{Id: &testSKSNodepoolDeployTargetIDUpdated},
 				Description:        &testSKSNodepoolDescriptionUpdated,
 				DiskSize:           &testSKSNodepoolDiskSizeUpdated,
 				InstancePrefix:     &testSKSNodepoolInstancePrefixUpdated,
@@ -323,6 +352,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 
 	nodepoolUpdated := SKSNodepool{
 		AntiAffinityGroupIDs: []string{testSKSNodepoolAntiAffinityGroupIDUpdated},
+		DeployTargetID:       testSKSNodepoolDeployTargetIDUpdated,
 		Description:          testSKSNodepoolDescriptionUpdated,
 		DiskSize:             testSKSNodepoolDiskSizeUpdated,
 		ID:                   cluster.Nodepools[0].ID,

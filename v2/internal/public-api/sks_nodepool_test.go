@@ -13,6 +13,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 	var (
 		testAntiAffinityGroupID       = testRandomID(t)
 		testCreatedAt, _              = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
+		testDeployTargetID            = testRandomID(t)
 		testDescription               = "Test Nodepool description"
 		testDiskSize            int64 = 15
 		testID                        = testRandomID(t)
@@ -29,6 +30,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 		expected = SksNodepool{
 			AntiAffinityGroups: &[]AntiAffinityGroup{{Id: &testAntiAffinityGroupID}},
 			CreatedAt:          &testCreatedAt,
+			DeployTarget:       &DeployTarget{Id: &testDeployTargetID},
 			Description:        &testDescription,
 			DiskSize:           &testDiskSize,
 			Id:                 &testID,
@@ -48,6 +50,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 		jsonSksNodepool = `{
   "anti-affinity-groups": [{"id":"` + testAntiAffinityGroupID + `"}],
   "created-at": "` + testCreatedAt.Format(iso8601Format) + `",
+  "deploy-target": {"id": "` + testDeployTargetID + `"},
   "description": "` + testDescription + `",
   "disk-size": ` + fmt.Sprint(testDiskSize) + `,
   "id": "` + testID + `",
@@ -71,6 +74,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 	var (
 		testAntiAffinityGroupID       = testRandomID(t)
 		testCreatedAt, _              = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
+		testDeployTargetID            = testRandomID(t)
 		testDescription               = "Test Nodepool description"
 		testDiskSize            int64 = 15
 		testID                        = testRandomID(t)
@@ -87,6 +91,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 		sksNodepool = SksNodepool{
 			AntiAffinityGroups: &[]AntiAffinityGroup{{Id: &testAntiAffinityGroupID}},
 			CreatedAt:          &testCreatedAt,
+			DeployTarget:       &DeployTarget{Id: &testDeployTargetID},
 			Description:        &testDescription,
 			DiskSize:           &testDiskSize,
 			Id:                 &testID,
@@ -104,6 +109,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 		expected = []byte(`{` +
 			`"anti-affinity-groups":[{"id":"` + testAntiAffinityGroupID + `"}],` +
 			`"created-at":"` + testCreatedAt.Format(iso8601Format) + `",` +
+			`"deploy-target":{"id":"` + testDeployTargetID + `"},` +
 			`"description":"` + testDescription + `",` +
 			`"disk-size":` + fmt.Sprint(testDiskSize) + `,` +
 			`"id":"` + testID + `",` +

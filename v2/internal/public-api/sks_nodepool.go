@@ -12,6 +12,7 @@ func (n *SksNodepool) UnmarshalJSON(data []byte) error {
 	raw := struct {
 		AntiAffinityGroups *[]AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
 		CreatedAt          *string              `json:"created-at,omitempty"`
+		DeployTarget       *DeployTarget        `json:"deploy-target,omitempty"`
 		Description        *string              `json:"description,omitempty"`
 		DiskSize           *int64               `json:"disk-size,omitempty"`
 		Id                 *string              `json:"id,omitempty"` // nolint:golint
@@ -39,6 +40,7 @@ func (n *SksNodepool) UnmarshalJSON(data []byte) error {
 	}
 
 	n.AntiAffinityGroups = raw.AntiAffinityGroups
+	n.DeployTarget = raw.DeployTarget
 	n.Description = raw.Description
 	n.DiskSize = raw.DiskSize
 	n.Id = raw.Id
@@ -61,6 +63,7 @@ func (n *SksNodepool) MarshalJSON() ([]byte, error) {
 	raw := struct {
 		AntiAffinityGroups *[]AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
 		CreatedAt          *string              `json:"created-at,omitempty"`
+		DeployTarget       *DeployTarget        `json:"deploy-target,omitempty"`
 		Description        *string              `json:"description,omitempty"`
 		DiskSize           *int64               `json:"disk-size,omitempty"`
 		Id                 *string              `json:"id,omitempty"` // nolint:golint
@@ -81,6 +84,7 @@ func (n *SksNodepool) MarshalJSON() ([]byte, error) {
 	}
 
 	raw.AntiAffinityGroups = n.AntiAffinityGroups
+	raw.DeployTarget = n.DeployTarget
 	raw.Description = n.Description
 	raw.DiskSize = n.DiskSize
 	raw.Id = n.Id

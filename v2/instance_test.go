@@ -22,6 +22,7 @@ var (
 	testInstanceIPv6Enabled               = true
 	testInstanceInstanceTypeID            = new(clientTestSuite).randomID()
 	testInstanceManagerID                 = new(clientTestSuite).randomID()
+	testInstanceManagerType               = "instance-pool"
 	testInstanceName                      = "test-instance"
 	testInstancePrivateNetworkID          = new(clientTestSuite).randomID()
 	testInstancePublicIP                  = "1.2.3.4"
@@ -42,7 +43,7 @@ func (ts *clientTestSuite) TestInstance_get() {
 		Id:                 &testInstanceID,
 		InstanceType:       &papi.InstanceType{Id: &testInstanceInstanceTypeID},
 		Ipv6Address:        &testInstanceIPv6Address,
-		Manager:            &papi.Manager{Id: &testInstanceManagerID},
+		Manager:            &papi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
 		Name:               &testInstanceName,
 		PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
 		PublicIp:           &testInstancePublicIP,
@@ -63,7 +64,7 @@ func (ts *clientTestSuite) TestInstance_get() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
-		ManagerID:            testInstanceManagerID,
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: testInstanceManagerType},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
 		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
@@ -667,7 +668,7 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 		Id:                 &testInstanceID,
 		InstanceType:       &papi.InstanceType{Id: &testInstanceInstanceTypeID},
 		Ipv6Address:        &testInstanceIPv6Address,
-		Manager:            &papi.Manager{Id: &testInstanceManagerID},
+		Manager:            &papi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
 		Name:               &testInstanceName,
 		PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
 		PublicIp:           &testInstancePublicIP,
@@ -688,7 +689,7 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
-		ManagerID:            testInstanceManagerID,
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: testInstanceManagerType},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
 		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
@@ -712,7 +713,7 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
-		ManagerID:            testInstanceManagerID,
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: testInstanceManagerType},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
 		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
@@ -739,7 +740,7 @@ func (ts *clientTestSuite) TestClient_ListInstances() {
 			Id:                 &testInstanceID,
 			InstanceType:       &papi.InstanceType{Id: &testInstanceInstanceTypeID},
 			Ipv6Address:        &testInstanceIPv6Address,
-			Manager:            &papi.Manager{Id: &testInstanceManagerID},
+			Manager:            &papi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
 			Name:               &testInstanceName,
 			PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
 			PublicIp:           &testInstancePublicIP,
@@ -761,7 +762,7 @@ func (ts *clientTestSuite) TestClient_ListInstances() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
-		ManagerID:            testInstanceManagerID,
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: testInstanceManagerType},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
 		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
@@ -790,7 +791,7 @@ func (ts *clientTestSuite) TestClient_GetInstance() {
 		Id:                 &testInstanceID,
 		InstanceType:       &papi.InstanceType{Id: &testInstanceInstanceTypeID},
 		Ipv6Address:        &testInstanceIPv6Address,
-		Manager:            &papi.Manager{Id: &testInstanceManagerID},
+		Manager:            &papi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
 		Name:               &testInstanceName,
 		PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
 		PublicIp:           &testInstancePublicIP,
@@ -811,7 +812,7 @@ func (ts *clientTestSuite) TestClient_GetInstance() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
-		ManagerID:            testInstanceManagerID,
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: testInstanceManagerType},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
 		PublicIPAddress:      net.ParseIP(testInstancePublicIP),

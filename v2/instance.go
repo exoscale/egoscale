@@ -9,6 +9,12 @@ import (
 	papi "github.com/exoscale/egoscale/v2/internal/public-api"
 )
 
+// InstanceManager represents a Compute instance manager.
+type InstanceManager struct {
+	ID   string
+	Type string
+}
+
 // Instance represents a Compute instance.
 type Instance struct {
 	AntiAffinityGroupIDs []string
@@ -19,7 +25,7 @@ type Instance struct {
 	IPv6Address          net.IP
 	IPv6Enabled          bool
 	InstanceTypeID       string
-	ManagerID            string
+	Manager              *InstanceManager
 	Name                 string
 	PrivateNetworkIDs    []string
 	PublicIPAddress      net.IP
@@ -73,11 +79,14 @@ func instanceFromAPI(client *Client, zone string, i *papi.Instance) *Instance {
 			return i.Ipv6Address != nil
 		}(),
 		InstanceTypeID: *i.InstanceType.Id,
-		ManagerID: func() string {
+		Manager: func() *InstanceManager {
 			if i.Manager != nil {
-				return papi.OptionalString(i.Manager.Id)
+				return &InstanceManager{
+					ID:   papi.OptionalString(i.Manager.Id),
+					Type: papi.OptionalString(i.Manager.Type),
+				}
 			}
-			return ""
+			return nil
 		}(),
 		Name: *i.Name,
 		PrivateNetworkIDs: func() []string {

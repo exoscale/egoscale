@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.50.0
+------
+
+- change: v2: the `Instance.ManagerID` field is replaced with `Instance.Manager` of type `*InstanceManager`
+
 0.49.0
 ------
 

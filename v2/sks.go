@@ -14,6 +14,7 @@ import (
 type SKSNodepool struct {
 	AntiAffinityGroupIDs []string `reset:"anti-affinity-groups"`
 	CreatedAt            time.Time
+	DeployTargetID       string `reset:"deploy-target"`
 	Description          string `reset:"description"`
 	DiskSize             int64
 	ID                   string
@@ -31,40 +32,46 @@ type SKSNodepool struct {
 	zone string
 }
 
-func sksNodepoolFromAPI(client *Client, zone string, n *papi.SksNodepool) *SKSNodepool {
+func sksNodepoolFromAPI(client *Client, zone string, np *papi.SksNodepool) *SKSNodepool {
 	return &SKSNodepool{
 		AntiAffinityGroupIDs: func() []string {
 			ids := make([]string, 0)
-			if n.AntiAffinityGroups != nil {
-				for _, aag := range *n.AntiAffinityGroups {
+			if np.AntiAffinityGroups != nil {
+				for _, aag := range *np.AntiAffinityGroups {
 					aag := aag
 					ids = append(ids, *aag.Id)
 				}
 			}
 			return ids
 		}(),
-		CreatedAt:      *n.CreatedAt,
-		Description:    papi.OptionalString(n.Description),
-		DiskSize:       papi.OptionalInt64(n.DiskSize),
-		ID:             papi.OptionalString(n.Id),
-		InstancePoolID: papi.OptionalString(n.InstancePool.Id),
-		InstancePrefix: papi.OptionalString(n.InstancePrefix),
-		InstanceTypeID: papi.OptionalString(n.InstanceType.Id),
-		Name:           papi.OptionalString(n.Name),
+		CreatedAt: *np.CreatedAt,
+		DeployTargetID: func() string {
+			if np.DeployTarget != nil {
+				return papi.OptionalString(np.DeployTarget.Id)
+			}
+			return ""
+		}(),
+		Description:    papi.OptionalString(np.Description),
+		DiskSize:       papi.OptionalInt64(np.DiskSize),
+		ID:             papi.OptionalString(np.Id),
+		InstancePoolID: papi.OptionalString(np.InstancePool.Id),
+		InstancePrefix: papi.OptionalString(np.InstancePrefix),
+		InstanceTypeID: papi.OptionalString(np.InstanceType.Id),
+		Name:           papi.OptionalString(np.Name),
 		SecurityGroupIDs: func() []string {
 			ids := make([]string, 0)
-			if n.SecurityGroups != nil {
-				for _, sg := range *n.SecurityGroups {
+			if np.SecurityGroups != nil {
+				for _, sg := range *np.SecurityGroups {
 					sg := sg
 					ids = append(ids, *sg.Id)
 				}
 			}
 			return ids
 		}(),
-		Size:       papi.OptionalInt64(n.Size),
-		State:      papi.OptionalString(n.State),
-		TemplateID: papi.OptionalString(n.Template.Id),
-		Version:    papi.OptionalString(n.Version),
+		Size:       papi.OptionalInt64(np.Size),
+		State:      papi.OptionalString(np.State),
+		TemplateID: papi.OptionalString(np.Template.Id),
+		Version:    papi.OptionalString(np.Version),
 
 		c:    client,
 		zone: zone,
@@ -218,6 +225,12 @@ func (c *SKSCluster) AddNodepool(ctx context.Context, np *SKSNodepool) (*SKSNode
 				}
 				return nil
 			}(),
+			DeployTarget: func() *papi.DeployTarget {
+				if np.DeployTargetID != "" {
+					return &papi.DeployTarget{Id: &np.DeployTargetID}
+				}
+				return nil
+			}(),
 			Description: func() *string {
 				if np.Description != "" {
 					return &np.Description
@@ -275,6 +288,12 @@ func (c *SKSCluster) UpdateNodepool(ctx context.Context, np *SKSNodepool) error 
 						list[i] = papi.AntiAffinityGroup{Id: &v}
 					}
 					return &list
+				}
+				return nil
+			}(),
+			DeployTarget: func() *papi.DeployTarget {
+				if np.DeployTargetID != "" {
+					return &papi.DeployTarget{Id: &np.DeployTargetID}
 				}
 				return nil
 			}(),

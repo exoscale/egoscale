@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.51.0
+------
+
+- feature: v2: add new `InstanceType` resource
+
 0.50.0
 ------
 

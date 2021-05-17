@@ -52,12 +52,12 @@ func sksNodepoolFromAPI(client *Client, zone string, np *papi.SksNodepool) *SKSN
 			return ""
 		}(),
 		Description:    papi.OptionalString(np.Description),
-		DiskSize:       papi.OptionalInt64(np.DiskSize),
-		ID:             papi.OptionalString(np.Id),
-		InstancePoolID: papi.OptionalString(np.InstancePool.Id),
+		DiskSize:       *np.DiskSize,
+		ID:             *np.Id,
+		InstancePoolID: *np.InstancePool.Id,
 		InstancePrefix: papi.OptionalString(np.InstancePrefix),
-		InstanceTypeID: papi.OptionalString(np.InstanceType.Id),
-		Name:           papi.OptionalString(np.Name),
+		InstanceTypeID: *np.InstanceType.Id,
+		Name:           *np.Name,
 		SecurityGroupIDs: func() []string {
 			ids := make([]string, 0)
 			if np.SecurityGroups != nil {
@@ -68,10 +68,10 @@ func sksNodepoolFromAPI(client *Client, zone string, np *papi.SksNodepool) *SKSN
 			}
 			return ids
 		}(),
-		Size:       papi.OptionalInt64(np.Size),
-		State:      papi.OptionalString(np.State),
-		TemplateID: papi.OptionalString(np.Template.Id),
-		Version:    papi.OptionalString(np.Version),
+		Size:       *np.Size,
+		State:      string(*np.State),
+		TemplateID: *np.Template.Id,
+		Version:    *np.Version,
 
 		c:    client,
 		zone: zone,
@@ -113,16 +113,23 @@ func sksClusterFromAPI(client *Client, zone string, c *papi.SksCluster) *SKSClus
 		AddOns: func() []string {
 			addOns := make([]string, 0)
 			if c.Addons != nil {
-				addOns = append(addOns, *c.Addons...)
+				for _, a := range *c.Addons {
+					addOns = append(addOns, string(a))
+				}
 			}
 			return addOns
 		}(),
-		CNI:         papi.OptionalString(c.Cni),
+		CNI: func() string {
+			if c.Cni != nil {
+				return string(*c.Cni)
+			}
+			return ""
+		}(),
 		CreatedAt:   *c.CreatedAt,
 		Description: papi.OptionalString(c.Description),
-		Endpoint:    papi.OptionalString(c.Endpoint),
-		ID:          papi.OptionalString(c.Id),
-		Name:        papi.OptionalString(c.Name),
+		Endpoint:    *c.Endpoint,
+		ID:          *c.Id,
+		Name:        *c.Name,
 		Nodepools: func() []*SKSNodepool {
 			nodepools := make([]*SKSNodepool, 0)
 			if c.Nodepools != nil {
@@ -133,9 +140,9 @@ func sksClusterFromAPI(client *Client, zone string, c *papi.SksCluster) *SKSClus
 			}
 			return nodepools
 		}(),
-		ServiceLevel: papi.OptionalString(c.Level),
-		State:        papi.OptionalString(c.State),
-		Version:      papi.OptionalString(c.Version),
+		ServiceLevel: string(*c.Level),
+		State:        string(*c.State),
+		Version:      *c.Version,
 
 		c:    client,
 		zone: zone,
@@ -166,7 +173,11 @@ func (c *SKSCluster) AuthorityCert(ctx context.Context, authority string) (strin
 		return "", errors.New("authority not specified")
 	}
 
-	resp, err := c.c.GetSksClusterAuthorityCertWithResponse(apiv2.WithZone(ctx, c.zone), c.ID, authority)
+	resp, err := c.c.GetSksClusterAuthorityCertWithResponse(
+		apiv2.WithZone(ctx, c.zone),
+		c.ID,
+		papi.GetSksClusterAuthorityCertParamsAuthority(authority),
+	)
 	if err != nil {
 		return "", err
 	}
@@ -427,7 +438,11 @@ func (c *SKSCluster) ResetField(ctx context.Context, field interface{}) error {
 		return err
 	}
 
-	resp, err := c.c.ResetSksClusterFieldWithResponse(apiv2.WithZone(ctx, c.zone), c.ID, resetField)
+	resp, err := c.c.ResetSksClusterFieldWithResponse(
+		apiv2.WithZone(ctx, c.zone),
+		c.ID,
+		papi.ResetSksClusterFieldParamsField(resetField),
+	)
 	if err != nil {
 		return err
 	}
@@ -450,7 +465,12 @@ func (c *SKSCluster) ResetNodepoolField(ctx context.Context, np *SKSNodepool, fi
 		return err
 	}
 
-	resp, err := c.c.ResetSksNodepoolFieldWithResponse(apiv2.WithZone(ctx, c.zone), c.ID, np.ID, resetField)
+	resp, err := c.c.ResetSksNodepoolFieldWithResponse(
+		apiv2.WithZone(ctx, c.zone),
+		c.ID,
+		np.ID,
+		papi.ResetSksNodepoolFieldParamsField(resetField),
+	)
 	if err != nil {
 		return err
 	}
@@ -470,22 +490,25 @@ func (c *Client) CreateSKSCluster(ctx context.Context, zone string, cluster *SKS
 	resp, err := c.CreateSksClusterWithResponse(
 		apiv2.WithZone(ctx, zone),
 		papi.CreateSksClusterJSONRequestBody{
-			Addons: func() *[]string {
-				var addOns *[]string
-				if len(cluster.AddOns) > 0 {
-					addOns = &cluster.AddOns
+			Addons: func() *[]papi.CreateSksClusterJSONBodyAddons {
+				var addOns []papi.CreateSksClusterJSONBodyAddons
+				if l := len(cluster.AddOns); l > 0 {
+					addOns = make([]papi.CreateSksClusterJSONBodyAddons, l)
+					for i := range cluster.AddOns {
+						addOns[i] = papi.CreateSksClusterJSONBodyAddons(cluster.AddOns[i])
+					}
+					return &addOns
 				}
-				return addOns
+				return nil
 			}(),
-			Cni: func() *string {
-				var cni *string
+			Cni: func() *papi.CreateSksClusterJSONBodyCni {
 				if cluster.CNI != "" {
-					cni = &cluster.CNI
+					return (*papi.CreateSksClusterJSONBodyCni)(&cluster.CNI)
 				}
-				return cni
+				return nil
 			}(),
 			Description: &cluster.Description,
-			Level:       cluster.ServiceLevel,
+			Level:       papi.CreateSksClusterJSONBodyLevel(cluster.ServiceLevel),
 			Name:        cluster.Name,
 			Version:     cluster.Version,
 		})

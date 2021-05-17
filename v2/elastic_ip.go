@@ -40,10 +40,10 @@ func elasticIPFromAPI(client *Client, zone string, e *papi.ElasticIp) *ElasticIP
 			if hc := e.Healthcheck; hc != nil {
 				return &ElasticIPHealthcheck{
 					Interval:      time.Duration(papi.OptionalInt64(hc.Interval)) * time.Second,
-					Mode:          hc.Mode,
+					Mode:          string(hc.Mode),
 					Port:          uint16(hc.Port),
-					StrikesFail:   papi.OptionalInt64(hc.StrikesFail),
-					StrikesOK:     papi.OptionalInt64(hc.StrikesOk),
+					StrikesFail:   *hc.StrikesFail,
+					StrikesOK:     *hc.StrikesOk,
 					TLSSNI:        papi.OptionalString(hc.TlsSni),
 					TLSSkipVerify: papi.OptionalBool(hc.TlsSkipVerify),
 					Timeout:       time.Duration(papi.OptionalInt64(hc.Timeout)) * time.Second,
@@ -52,8 +52,8 @@ func elasticIPFromAPI(client *Client, zone string, e *papi.ElasticIp) *ElasticIP
 			}
 			return nil
 		}(),
-		ID:        papi.OptionalString(e.Id),
-		IPAddress: net.ParseIP(papi.OptionalString(e.Ip)),
+		ID:        *e.Id,
+		IPAddress: net.ParseIP(*e.Ip),
 
 		c:    client,
 		zone: zone,
@@ -72,7 +72,11 @@ func (e *ElasticIP) ResetField(ctx context.Context, field interface{}) error {
 		return err
 	}
 
-	resp, err := e.c.ResetElasticIpFieldWithResponse(apiv2.WithZone(ctx, e.zone), e.ID, resetField)
+	resp, err := e.c.ResetElasticIpFieldWithResponse(
+		apiv2.WithZone(ctx, e.zone),
+		e.ID,
+		papi.ResetElasticIpFieldParamsField(resetField),
+	)
 	if err != nil {
 		return err
 	}
@@ -103,7 +107,7 @@ func (c *Client) CreateElasticIP(ctx context.Context, zone string, elasticIP *El
 
 					return &papi.ElasticIpHealthcheck{
 						Interval:      &interval,
-						Mode:          hc.Mode,
+						Mode:          papi.ElasticIpHealthcheckMode(hc.Mode),
 						Port:          port,
 						StrikesFail:   &hc.StrikesFail,
 						StrikesOk:     &hc.StrikesOK,
@@ -180,7 +184,7 @@ func (c *Client) UpdateElasticIP(ctx context.Context, zone string, elasticIP *El
 
 					return &papi.ElasticIpHealthcheck{
 						Interval:      &interval,
-						Mode:          hc.Mode,
+						Mode:          papi.ElasticIpHealthcheckMode(hc.Mode),
 						Port:          port,
 						StrikesFail:   &hc.StrikesFail,
 						StrikesOk:     &hc.StrikesOK,

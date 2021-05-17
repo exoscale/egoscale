@@ -22,8 +22,8 @@ func privateNetworkFromAPI(p *papi.PrivateNetwork) *PrivateNetwork {
 	return &PrivateNetwork{
 		Description: papi.OptionalString(p.Description),
 		EndIP:       net.ParseIP(papi.OptionalString(p.EndIp)),
-		ID:          papi.OptionalString(p.Id),
-		Name:        papi.OptionalString(p.Name),
+		ID:          *p.Id,
+		Name:        *p.Name,
 		Netmask:     net.ParseIP(papi.OptionalString(p.Netmask)),
 		StartIP:     net.ParseIP(papi.OptionalString(p.StartIp)),
 	}

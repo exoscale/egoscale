@@ -16,17 +16,17 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 		testName                                     = "test-lb"
 		testCreatedAt, _                             = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
 		testDescription                              = "Test NLB description"
-		testState                                    = "running"
+		testState                                    = LoadBalancerStateRunning
 		testServiceID                                = testRandomID(t)
 		testServiceName                              = "test-service"
 		testServiceDescription                       = "Test service description"
 		testServiceInstancePoolID                    = testRandomID(t)
-		testServiceProtocol                          = "tcp"
+		testServiceProtocol                          = LoadBalancerServiceProtocolTcp
 		testServicePort                        int64 = 1234
 		testServiceTargetPort                  int64 = 5678
-		testServiceStrategy                          = "round-robin"
-		testServiceState                             = "running"
-		testServiceHealthcheckMode                   = "https"
+		testServiceStrategy                          = LoadBalancerServiceStrategyRoundRobin
+		testServiceState                             = LoadBalancerServiceStateRunning
+		testServiceHealthcheckMode                   = LoadBalancerServiceHealthcheckModeHttps
 		testServiceHealthcheckPort                   = testServiceTargetPort
 		testServiceHealthcheckInterval         int64 = 10
 		testServiceHealthcheckTimeout          int64 = 3
@@ -34,7 +34,7 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 		testServiceHealthcheckURI                    = "/health"
 		testServiceHealthcheckTLSSNI                 = "example.net"
 		testServiceHealthcheckStatusInstanceIP       = "5.6.7.8"
-		testServiceHealthcheckStatusStatus           = "success"
+		testServiceHealthcheckStatusStatus           = LoadBalancerServerStatusStatusSuccess
 
 		expected = LoadBalancer{
 			CreatedAt:   &testCreatedAt,
@@ -75,22 +75,22 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
   "id": "` + testID + `",
   "ip": "` + testIP + `",
   "description": "` + testDescription + `",
-  "state": "` + testState + `",
+  "state": "` + string(testState) + `",
   "name": "` + testName + `",
   "created-at": "` + testCreatedAt.Format(iso8601Format) + `",
   "services": [
 	{
 	  "id": "` + testServiceID + `",
 	  "description": "` + testServiceDescription + `",
-	  "protocol": "` + testServiceProtocol + `",
+	  "protocol": "` + string(testServiceProtocol) + `",
 	  "name": "` + testServiceName + `",
-	  "state": "` + testServiceState + `",
+	  "state": "` + string(testServiceState) + `",
 	  "target-port": ` + fmt.Sprint(testServiceTargetPort) + `,
 	  "port": ` + fmt.Sprint(testServicePort) + `,
 	  "instance-pool": {"id": "` + testServiceInstancePoolID + `"},
-	  "strategy": "` + testServiceStrategy + `",
+	  "strategy": "` + string(testServiceStrategy) + `",
 	  "healthcheck": {
-		"mode": "` + testServiceHealthcheckMode + `",
+		"mode": "` + string(testServiceHealthcheckMode) + `",
 		"uri": "` + testServiceHealthcheckURI + `",
 		"interval": ` + fmt.Sprint(testServiceHealthcheckInterval) + `,
 		"timeout": ` + fmt.Sprint(testServiceHealthcheckTimeout) + `,
@@ -101,7 +101,7 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 	  "healthcheck-status": [
         {
           "public-ip": "` + testServiceHealthcheckStatusInstanceIP + `",
-          "status": "` + testServiceHealthcheckStatusStatus + `"
+          "status": "` + string(testServiceHealthcheckStatusStatus) + `"
         }
       ]
 	}
@@ -120,17 +120,17 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 		testName                                     = "test-lb"
 		testCreatedAt, _                             = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
 		testDescription                              = "Test NLB description"
-		testState                                    = "running"
+		testState                                    = LoadBalancerStateRunning
 		testServiceID                                = testRandomID(t)
 		testServiceName                              = "test-service"
 		testServiceDescription                       = "Test service description"
 		testServiceInstancePoolID                    = testRandomID(t)
-		testServiceProtocol                          = "tcp"
+		testServiceProtocol                          = LoadBalancerServiceProtocolTcp
 		testServicePort                        int64 = 1234
 		testServiceTargetPort                  int64 = 5678
-		testServiceStrategy                          = "round-robin"
-		testServiceState                             = "running"
-		testServiceHealthcheckMode                   = "https"
+		testServiceStrategy                          = LoadBalancerServiceStrategyRoundRobin
+		testServiceState                             = LoadBalancerServiceStateRunning
+		testServiceHealthcheckMode                   = LoadBalancerServiceHealthcheckModeHttps
 		testServiceHealthcheckPort                   = testServiceTargetPort
 		testServiceHealthcheckInterval         int64 = 10
 		testServiceHealthcheckTimeout          int64 = 3
@@ -138,7 +138,7 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 		testServiceHealthcheckURI                    = "/health"
 		testServiceHealthcheckTLSSNI                 = "example.net"
 		testServiceHealthcheckStatusInstanceIP       = "5.6.7.8"
-		testServiceHealthcheckStatusStatus           = "success"
+		testServiceHealthcheckStatusStatus           = LoadBalancerServerStatusStatusSuccess
 
 		lb = LoadBalancer{
 			CreatedAt:   &testCreatedAt,
@@ -184,7 +184,7 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 			`"healthcheck":` +
 			`{` +
 			`"interval":` + fmt.Sprint(testServiceHealthcheckInterval) + `,` +
-			`"mode":"` + testServiceHealthcheckMode + `",` +
+			`"mode":"` + string(testServiceHealthcheckMode) + `",` +
 			`"port":` + fmt.Sprint(testServiceHealthcheckPort) + `,` +
 			`"retries":` + fmt.Sprint(testServiceHealthcheckRetries) + `,` +
 			`"timeout":` + fmt.Sprint(testServiceHealthcheckTimeout) + `,` +
@@ -194,20 +194,20 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 			`"healthcheck-status":[` +
 			`{` +
 			`"public-ip":"` + testServiceHealthcheckStatusInstanceIP + `",` +
-			`"status":"` + testServiceHealthcheckStatusStatus + `"` +
+			`"status":"` + string(testServiceHealthcheckStatusStatus) + `"` +
 			`}` +
 			`],` +
 			`"id":"` + testServiceID + `",` +
 			`"instance-pool":{"id":"` + testServiceInstancePoolID + `"},` +
 			`"name":"` + testServiceName + `",` +
 			`"port":` + fmt.Sprint(testServicePort) + `,` +
-			`"protocol":"` + testServiceProtocol + `",` +
-			`"state":"` + testServiceState + `",` +
-			`"strategy":"` + testServiceStrategy + `",` +
+			`"protocol":"` + string(testServiceProtocol) + `",` +
+			`"state":"` + string(testServiceState) + `",` +
+			`"strategy":"` + string(testServiceStrategy) + `",` +
 			`"target-port":` + fmt.Sprint(testServiceTargetPort) +
 			`}` +
 			`],` +
-			`"state":"` + testState + `"` +
+			`"state":"` + string(testState) + `"` +
 			`}`)
 	)
 

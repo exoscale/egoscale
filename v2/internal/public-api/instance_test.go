@@ -24,7 +24,7 @@ func TestInstance_UnmarshalJSON(t *testing.T) {
 		testSecurityGroupID           = testRandomID(t)
 		testSnapshotID                = testRandomID(t)
 		testSSHKeyName                = testRandomID(t)
-		testState                     = "running"
+		testState                     = InstanceStateRunning
 		testTemplateID                = testRandomID(t)
 		testUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 
@@ -63,7 +63,7 @@ func TestInstance_UnmarshalJSON(t *testing.T) {
   "security-groups": [{"id":"` + testSecurityGroupID + `"}],
   "snapshots": [{"id":"` + testSnapshotID + `"}],
   "ssh-key": {"name": "` + testSSHKeyName + `"},
-  "state": "` + testState + `",
+  "state": "` + string(testState) + `",
   "template": {"id": "` + testTemplateID + `"},
   "user-data": "` + testUserData + `"
 }`
@@ -88,7 +88,7 @@ func TestInstance_MarshalJSON(t *testing.T) {
 		testSecurityGroupID           = testRandomID(t)
 		testSnapshotID                = testRandomID(t)
 		testSSHKeyName                = testRandomID(t)
-		testState                     = "running"
+		testState                     = InstanceStateRunning
 		testTemplateID                = testRandomID(t)
 		testUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 
@@ -125,7 +125,7 @@ func TestInstance_MarshalJSON(t *testing.T) {
 			`"security-groups":[{"id":"` + testSecurityGroupID + `"}],` +
 			`"snapshots":[{"id":"` + testSnapshotID + `"}],` +
 			`"ssh-key":{"name":"` + testSSHKeyName + `"},` +
-			`"state":"` + testState + `",` +
+			`"state":"` + string(testState) + `",` +
 			`"template":{"id":"` + testTemplateID + `"},` +
 			`"user-data":"` + testUserData + `"` +
 			`}`)

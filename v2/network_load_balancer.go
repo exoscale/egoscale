@@ -20,7 +20,7 @@ type NetworkLoadBalancerServerStatus struct {
 func nlbServerStatusFromAPI(st *papi.LoadBalancerServerStatus) *NetworkLoadBalancerServerStatus {
 	return &NetworkLoadBalancerServerStatus{
 		InstanceIP: net.ParseIP(papi.OptionalString(st.PublicIp)),
-		Status:     papi.OptionalString(st.Status),
+		Status:     string(*st.Status),
 	}
 }
 
@@ -55,7 +55,7 @@ func nlbServiceFromAPI(svc *papi.LoadBalancerService) *NetworkLoadBalancerServic
 		Description: papi.OptionalString(svc.Description),
 		Healthcheck: NetworkLoadBalancerServiceHealthcheck{
 			Interval: time.Duration(papi.OptionalInt64(svc.Healthcheck.Interval)) * time.Second,
-			Mode:     svc.Healthcheck.Mode,
+			Mode:     string(svc.Healthcheck.Mode),
 			Port:     uint16(svc.Healthcheck.Port),
 			Retries:  papi.OptionalInt64(svc.Healthcheck.Retries),
 			TLSSNI:   papi.OptionalString(svc.Healthcheck.TlsSni),
@@ -72,14 +72,14 @@ func nlbServiceFromAPI(svc *papi.LoadBalancerService) *NetworkLoadBalancerServic
 			}
 			return statuses
 		}(),
-		ID:             papi.OptionalString(svc.Id),
-		InstancePoolID: papi.OptionalString(svc.InstancePool.Id),
-		Name:           papi.OptionalString(svc.Name),
-		Port:           uint16(papi.OptionalInt64(svc.Port)),
-		Protocol:       papi.OptionalString(svc.Protocol),
-		Strategy:       papi.OptionalString(svc.Strategy),
-		TargetPort:     uint16(papi.OptionalInt64(svc.TargetPort)),
-		State:          papi.OptionalString(svc.State),
+		ID:             *svc.Id,
+		InstancePoolID: *svc.InstancePool.Id,
+		Name:           *svc.Name,
+		Port:           uint16(*svc.Port),
+		Protocol:       string(*svc.Protocol),
+		Strategy:       string(*svc.Strategy),
+		TargetPort:     uint16(*svc.TargetPort),
+		State:          string(*svc.State),
 	}
 }
 
@@ -101,9 +101,9 @@ func nlbFromAPI(client *Client, zone string, nlb *papi.LoadBalancer) *NetworkLoa
 	return &NetworkLoadBalancer{
 		CreatedAt:   *nlb.CreatedAt,
 		Description: papi.OptionalString(nlb.Description),
-		ID:          papi.OptionalString(nlb.Id),
+		ID:          *nlb.Id,
 		IPAddress:   net.ParseIP(papi.OptionalString(nlb.Ip)),
-		Name:        papi.OptionalString(nlb.Name),
+		Name:        *nlb.Name,
 		Services: func() []*NetworkLoadBalancerService {
 			services := make([]*NetworkLoadBalancerService, 0)
 			if nlb.Services != nil {
@@ -114,7 +114,7 @@ func nlbFromAPI(client *Client, zone string, nlb *papi.LoadBalancer) *NetworkLoa
 			}
 			return services
 		}(),
-		State: papi.OptionalString(nlb.State),
+		State: string(*nlb.State),
 
 		c:    client,
 		zone: zone,
@@ -154,7 +154,7 @@ func (nlb *NetworkLoadBalancer) AddService(
 			Description: &svc.Description,
 			Healthcheck: papi.LoadBalancerServiceHealthcheck{
 				Interval: &healthcheckInterval,
-				Mode:     svc.Healthcheck.Mode,
+				Mode:     papi.LoadBalancerServiceHealthcheckMode(svc.Healthcheck.Mode),
 				Port:     healthcheckPort,
 				Retries:  &svc.Healthcheck.Retries,
 				Timeout:  &healthcheckTimeout,
@@ -174,8 +174,8 @@ func (nlb *NetworkLoadBalancer) AddService(
 			InstancePool: papi.InstancePool{Id: &svc.InstancePoolID},
 			Name:         svc.Name,
 			Port:         port,
-			Protocol:     svc.Protocol,
-			Strategy:     svc.Strategy,
+			Protocol:     papi.AddServiceToLoadBalancerJSONBodyProtocol(svc.Protocol),
+			Strategy:     papi.AddServiceToLoadBalancerJSONBodyStrategy(svc.Strategy),
 			TargetPort:   targetPort,
 		})
 	if err != nil {
@@ -225,7 +225,7 @@ func (nlb *NetworkLoadBalancer) UpdateService(ctx context.Context, svc *NetworkL
 			}(),
 			Healthcheck: &papi.LoadBalancerServiceHealthcheck{
 				Interval: &healthcheckInterval,
-				Mode:     svc.Healthcheck.Mode,
+				Mode:     papi.LoadBalancerServiceHealthcheckMode(svc.Healthcheck.Mode),
 				Port:     healthcheckPort,
 				Retries:  &svc.Healthcheck.Retries,
 				Timeout:  &healthcheckTimeout,
@@ -255,15 +255,15 @@ func (nlb *NetworkLoadBalancer) UpdateService(ctx context.Context, svc *NetworkL
 				}
 				return nil
 			}(),
-			Protocol: func() *string {
+			Protocol: func() *papi.UpdateLoadBalancerServiceJSONBodyProtocol {
 				if svc.Protocol != "" {
-					return &svc.Protocol
+					return (*papi.UpdateLoadBalancerServiceJSONBodyProtocol)(&svc.Protocol)
 				}
 				return nil
 			}(),
-			Strategy: func() *string {
+			Strategy: func() *papi.UpdateLoadBalancerServiceJSONBodyStrategy {
 				if svc.Strategy != "" {
-					return &svc.Strategy
+					return (*papi.UpdateLoadBalancerServiceJSONBodyStrategy)(&svc.Strategy)
 				}
 				return nil
 			}(),

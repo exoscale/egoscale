@@ -19,8 +19,8 @@ func deployTargetFromAPI(d *papi.DeployTarget) *DeployTarget {
 	return &DeployTarget{
 		Description: papi.OptionalString(d.Description),
 		ID:          *d.Id,
-		Name:        papi.OptionalString(d.Name),
-		Type:        *d.Type,
+		Name:        *d.Name,
+		Type:        string(*d.Type),
 	}
 }
 

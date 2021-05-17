@@ -17,8 +17,8 @@ type AntiAffinityGroup struct {
 func antiAffinityGroupFromAPI(a *papi.AntiAffinityGroup) *AntiAffinityGroup {
 	return &AntiAffinityGroup{
 		Description: papi.OptionalString(a.Description),
-		ID:          papi.OptionalString(a.Id),
-		Name:        papi.OptionalString(a.Name),
+		ID:          *a.Id,
+		Name:        *a.Name,
 	}
 }
 

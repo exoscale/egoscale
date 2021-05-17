@@ -82,8 +82,8 @@ func instanceFromAPI(client *Client, zone string, i *papi.Instance) *Instance {
 		Manager: func() *InstanceManager {
 			if i.Manager != nil {
 				return &InstanceManager{
-					ID:   papi.OptionalString(i.Manager.Id),
-					Type: papi.OptionalString(i.Manager.Type),
+					ID:   *i.Manager.Id,
+					Type: string(*i.Manager.Type),
 				}
 			}
 			return nil
@@ -105,7 +105,7 @@ func instanceFromAPI(client *Client, zone string, i *papi.Instance) *Instance {
 		SSHKey: func() string {
 			key := ""
 			if i.SshKey != nil {
-				key = papi.OptionalString(i.SshKey.Name)
+				key = *i.SshKey.Name
 			}
 			return key
 		}(),
@@ -133,7 +133,7 @@ func instanceFromAPI(client *Client, zone string, i *papi.Instance) *Instance {
 
 			return ids
 		}(),
-		State:      *i.State,
+		State:      string(*i.State),
 		TemplateID: *i.Template.Id,
 		UserData:   papi.OptionalString(i.UserData),
 

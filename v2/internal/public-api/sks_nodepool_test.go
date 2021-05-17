@@ -23,7 +23,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 		testName                      = "test-nodepool"
 		testSecurityGroupID           = testRandomID(t)
 		testSize                int64 = 3
-		testState                     = "running"
+		testState                     = SksNodepoolStateRunning
 		testTemplateID                = testRandomID(t)
 		testVersion                   = "1.18.6"
 
@@ -60,7 +60,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
   "name": "` + testName + `",
   "security-groups": [{"id":"` + testSecurityGroupID + `"}],
   "size": ` + fmt.Sprint(testSize) + `,
-  "state": "` + testState + `",
+  "state": "` + string(testState) + `",
   "template": {"id": "` + testTemplateID + `"},
   "version": "` + testVersion + `"
 }`
@@ -84,7 +84,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 		testName                      = "test-nodepool"
 		testSecurityGroupID           = testRandomID(t)
 		testSize                int64 = 3
-		testState                     = "running"
+		testState                     = SksNodepoolStateRunning
 		testTemplateID                = testRandomID(t)
 		testVersion                   = "1.18.6"
 
@@ -119,7 +119,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 			`"name":"` + testName + `",` +
 			`"security-groups":[{"id":"` + testSecurityGroupID + `"}],` +
 			`"size":` + fmt.Sprint(testSize) + `,` +
-			`"state":"` + testState + `",` +
+			`"state":"` + string(testState) + `",` +
 			`"template":{"id":"` + testTemplateID + `"},` +
 			`"version":"` + testVersion + `"` +
 			`}`)

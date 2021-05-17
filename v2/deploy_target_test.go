@@ -22,7 +22,10 @@ func (ts *clientTestSuite) TestClient_ListDeployTargets() {
 			Description: &testDeployTargetDescription,
 			Id:          &testDeployTargetID,
 			Name:        &testDeployTargetName,
-			Type:        &testDeployTargetType,
+			Type: func() *papi.DeployTargetType {
+				v := papi.DeployTargetType(testDeployTargetType)
+				return &v
+			}(),
 		}},
 	})
 
@@ -46,7 +49,10 @@ func (ts *clientTestSuite) TestClient_GetDeployTarget() {
 			Description: &testDeployTargetDescription,
 			Id:          &testDeployTargetID,
 			Name:        &testDeployTargetName,
-			Type:        &testDeployTargetType,
+			Type: func() *papi.DeployTargetType {
+				v := papi.DeployTargetType(testDeployTargetType)
+				return &v
+			}(),
 		})
 
 	expected := &DeployTarget{

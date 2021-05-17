@@ -15,7 +15,7 @@ func TestTemplate_UnmarshalJSON(t *testing.T) {
 		testName                  = "Linux Ubuntu 20.04 LTS 64-bit"
 		testCreatedAt, _          = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 		testDescription           = "Linux Ubuntu 20.04 LTS 64-bit 2020-08-11-e15f6a"
-		testBootMode              = "uefi"
+		testBootMode              = TemplateBootModeUefi
 		testBuild                 = "2020-08-12-e15f6a"
 		testChecksum              = testRandomID(t)
 		testDefaultUser           = "ubuntu"
@@ -25,7 +25,7 @@ func TestTemplate_UnmarshalJSON(t *testing.T) {
 		testSSHKeyEnabled         = true
 		testURL                   = "https://ubuntu.com/"
 		testVersion               = "20.04 lts"
-		testVisibility            = "public"
+		testVisibility            = TemplateVisibilityPublic
 
 		expected = Template{
 			BootMode:        &testBootMode,
@@ -48,7 +48,7 @@ func TestTemplate_UnmarshalJSON(t *testing.T) {
 		actual Template
 
 		jsonTemplate = `{
-  "boot-mode": "` + testBootMode + `",
+  "boot-mode": "` + string(testBootMode) + `",
   "build": "` + testBuild + `",
   "checksum": "` + testChecksum + `",
   "created-at": "` + testCreatedAt.Format(iso8601Format) + `",
@@ -61,7 +61,7 @@ func TestTemplate_UnmarshalJSON(t *testing.T) {
   "size": ` + fmt.Sprint(testSize) + `,
   "ssh-key-enabled": ` + fmt.Sprint(testSSHKeyEnabled) + `,
   "version": "` + testVersion + `",
-  "visibility": "` + testVisibility + `",
+  "visibility": "` + string(testVisibility) + `",
   "url": "` + testURL + `"
 }`
 	)
@@ -76,7 +76,7 @@ func TestTemplate_MarshalJSON(t *testing.T) {
 		testName                  = "Linux Ubuntu 20.04 LTS 64-bit"
 		testCreatedAt, _          = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 		testDescription           = "Linux Ubuntu 20.04 LTS 64-bit 2020-08-11-e15f6a"
-		testBootMode              = "uefi"
+		testBootMode              = TemplateBootModeUefi
 		testBuild                 = "2020-08-12-e15f6a"
 		testChecksum              = testRandomID(t)
 		testDefaultUser           = "ubuntu"
@@ -85,7 +85,7 @@ func TestTemplate_MarshalJSON(t *testing.T) {
 		testSize            int64 = 10737418240
 		testSSHKeyEnabled         = true
 		testVersion               = "20.04 lts"
-		testVisibility            = "public"
+		testVisibility            = TemplateVisibilityPublic
 		testURL                   = "https://ubuntu.com/"
 
 		template = Template{
@@ -107,7 +107,7 @@ func TestTemplate_MarshalJSON(t *testing.T) {
 		}
 
 		expected = []byte(`{` +
-			`"boot-mode":"` + testBootMode + `",` +
+			`"boot-mode":"` + string(testBootMode) + `",` +
 			`"build":"` + testBuild + `",` +
 			`"checksum":"` + testChecksum + `",` +
 			`"created-at":"` + testCreatedAt.Format(iso8601Format) + `",` +
@@ -121,7 +121,7 @@ func TestTemplate_MarshalJSON(t *testing.T) {
 			`"ssh-key-enabled":` + fmt.Sprint(testSSHKeyEnabled) + `,` +
 			`"url":"` + testURL + `",` +
 			`"version":"` + testVersion + `",` +
-			`"visibility":"` + testVisibility + `"` +
+			`"visibility":"` + string(testVisibility) + `"` +
 			`}`)
 	)
 

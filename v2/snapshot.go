@@ -31,8 +31,8 @@ func snapshotFromAPI(client *Client, zone string, s *papi.Snapshot) *Snapshot {
 		CreatedAt:  *s.CreatedAt,
 		ID:         *s.Id,
 		InstanceID: *s.Instance.Id,
-		Name:       papi.OptionalString(s.Name),
-		State:      *s.State,
+		Name:       *s.Name,
+		State:      string(*s.State),
 
 		c:    client,
 		zone: zone,

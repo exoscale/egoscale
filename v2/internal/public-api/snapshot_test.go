@@ -17,13 +17,13 @@ func TestSnapshot_UnmarshalJSON(t *testing.T) {
 		testName         = "test_ROOT-846459_20200706132534"
 		testExportMD5Sum = "c9887de796993c2519b463bcd9509e08"
 		testExportURL    = fmt.Sprintf("https://sos-ch-gva-2.exo.io/test/%s/%s", testRandomID(t), testID)
-		testState        = "exported"
+		testState        = SnapshotStateExported
 
 		expected = Snapshot{
 			CreatedAt: &testCreatedAt,
 			Export: &struct {
 				Md5sum       *string `json:"md5sum,omitempty"`
-				PresignedUrl *string `json:"presigned-url,omitempty"` // nolint:golint
+				PresignedUrl *string `json:"presigned-url,omitempty"` // nolint:revive
 			}{
 				Md5sum:       &testExportMD5Sum,
 				PresignedUrl: &testExportURL,
@@ -42,7 +42,7 @@ func TestSnapshot_UnmarshalJSON(t *testing.T) {
   "id": "` + testID + `",
   "instance": {"id": "` + testInstanceID + `"},
   "name": "` + testName + `",
-  "state": "` + testState + `"
+  "state": "` + string(testState) + `"
 }`
 	)
 
@@ -58,13 +58,13 @@ func TestSnapshot_MarshalJSON(t *testing.T) {
 		testName         = "test_ROOT-846459_20200706132534"
 		testExportMD5Sum = "c9887de796993c2519b463bcd9509e08"
 		testExportURL    = fmt.Sprintf("https://sos-ch-gva-2.exo.io/test/%s/%s", testRandomID(t), testID)
-		testState        = "exported"
+		testState        = SnapshotStateExported
 
 		snapshot = Snapshot{
 			CreatedAt: &testCreatedAt,
 			Export: &struct {
 				Md5sum       *string `json:"md5sum,omitempty"`
-				PresignedUrl *string `json:"presigned-url,omitempty"` // nolint:golint
+				PresignedUrl *string `json:"presigned-url,omitempty"` // nolint:revive
 			}{
 				Md5sum:       &testExportMD5Sum,
 				PresignedUrl: &testExportURL,
@@ -81,7 +81,7 @@ func TestSnapshot_MarshalJSON(t *testing.T) {
 			`"id":"` + testID + `",` +
 			`"instance":{"id":"` + testInstanceID + `"},` +
 			`"name":"` + testName + `",` +
-			`"state":"` + testState + `"` +
+			`"state":"` + string(testState) + `"` +
 			`}`)
 	)
 

@@ -26,35 +26,35 @@ type SecurityGroupRule struct {
 func securityGroupRuleFromAPI(r *papi.SecurityGroupRule) *SecurityGroupRule {
 	return &SecurityGroupRule{
 		Description:   papi.OptionalString(r.Description),
-		EndPort:       uint16(papi.OptionalInt64(r.EndPort)),
-		FlowDirection: papi.OptionalString(r.FlowDirection),
+		EndPort:       uint16(*r.EndPort),
+		FlowDirection: string(*r.FlowDirection),
 		ICMPCode: func() (v uint8) {
 			if r.Icmp != nil {
-				v = uint8(papi.OptionalInt64(r.Icmp.Code))
+				v = uint8(*r.Icmp.Code)
 			}
 			return
 		}(),
 		ICMPType: func() (v uint8) {
 			if r.Icmp != nil {
-				v = uint8(papi.OptionalInt64(r.Icmp.Type))
+				v = uint8(*r.Icmp.Type)
 			}
 			return
 		}(),
-		ID: papi.OptionalString(r.Id),
+		ID: *r.Id,
 		Network: func() (v *net.IPNet) {
 			if r.Network != nil {
 				_, v, _ = net.ParseCIDR(*r.Network)
 			}
 			return
 		}(),
-		Protocol: papi.OptionalString(r.Protocol),
+		Protocol: string(*r.Protocol),
 		SecurityGroupID: func() (v string) {
 			if r.SecurityGroup != nil {
 				v = papi.OptionalString(r.SecurityGroup.Id)
 			}
 			return
 		}(),
-		StartPort: uint16(papi.OptionalInt64(r.StartPort)),
+		StartPort: uint16(*r.StartPort),
 	}
 }
 
@@ -72,8 +72,8 @@ type SecurityGroup struct {
 func securityGroupFromAPI(client *Client, zone string, s *papi.SecurityGroup) *SecurityGroup {
 	return &SecurityGroup{
 		Description: papi.OptionalString(s.Description),
-		ID:          papi.OptionalString(s.Id),
-		Name:        papi.OptionalString(s.Name),
+		ID:          *s.Id,
+		Name:        *s.Name,
 		Rules: func() (rules []*SecurityGroupRule) {
 			if s.Rules != nil {
 				rules = make([]*SecurityGroupRule, 0)
@@ -136,7 +136,7 @@ func (s *SecurityGroup) AddRule(ctx context.Context, rule *SecurityGroupRule) (*
 		papi.AddRuleToSecurityGroupJSONRequestBody{
 			Description:   &rule.Description,
 			EndPort:       &endPort,
-			FlowDirection: rule.FlowDirection,
+			FlowDirection: papi.AddRuleToSecurityGroupJSONBodyFlowDirection(rule.FlowDirection),
 			Icmp:          icmp,
 			Network: func() (v *string) {
 				if rule.Network != nil {
@@ -145,7 +145,7 @@ func (s *SecurityGroup) AddRule(ctx context.Context, rule *SecurityGroupRule) (*
 				}
 				return
 			}(),
-			Protocol: rule.Protocol,
+			Protocol: papi.AddRuleToSecurityGroupJSONBodyProtocol(rule.Protocol),
 			SecurityGroup: func() (v *papi.SecurityGroupResource) {
 				if rule.SecurityGroupID != "" {
 					v = &papi.SecurityGroupResource{Id: &rule.SecurityGroupID}

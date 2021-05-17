@@ -11,10 +11,10 @@ var (
 	testInstanceTypeAuthorized       = true
 	testInstanceTypeCPUs       int64 = 16
 	testInstanceTypeGPUs       int64 = 2
-	testInstanceTypeFamily           = "gpu2"
+	testInstanceTypeFamily           = papi.InstanceTypeFamilyGpu2
 	testInstanceTypeID               = new(clientTestSuite).randomID()
 	testInstanceTypeMemory     int64 = 96636764160
-	testInstanceTypeSize             = "medium"
+	testInstanceTypeSize             = papi.InstanceTypeSizeMedium
 )
 
 func (ts *clientTestSuite) TestClient_ListInstanceTypes() {
@@ -35,11 +35,11 @@ func (ts *clientTestSuite) TestClient_ListInstanceTypes() {
 	expected := []*InstanceType{{
 		Authorized: testInstanceTypeAuthorized,
 		CPUs:       testInstanceTypeCPUs,
-		Family:     testInstanceTypeFamily,
+		Family:     string(testInstanceTypeFamily),
 		GPUs:       testInstanceTypeGPUs,
 		ID:         testInstanceTypeID,
 		Memory:     testInstanceTypeMemory,
-		Size:       testInstanceTypeSize,
+		Size:       string(testInstanceTypeSize),
 	}}
 
 	actual, err := ts.client.ListInstanceTypes(context.Background(), testZone)
@@ -61,11 +61,11 @@ func (ts *clientTestSuite) TestClient_GetInstanceType() {
 	expected := &InstanceType{
 		Authorized: testInstanceTypeAuthorized,
 		CPUs:       testInstanceTypeCPUs,
-		Family:     testInstanceTypeFamily,
+		Family:     string(testInstanceTypeFamily),
 		GPUs:       testInstanceTypeGPUs,
 		ID:         testInstanceTypeID,
 		Memory:     testInstanceTypeMemory,
-		Size:       testInstanceTypeSize,
+		Size:       string(testInstanceTypeSize),
 	}
 
 	actual, err := ts.client.GetInstanceType(context.Background(), testZone, expected.ID)

@@ -22,14 +22,14 @@ var (
 	testInstanceIPv6Enabled               = true
 	testInstanceInstanceTypeID            = new(clientTestSuite).randomID()
 	testInstanceManagerID                 = new(clientTestSuite).randomID()
-	testInstanceManagerType               = "instance-pool"
+	testInstanceManagerType               = papi.ManagerTypeInstancePool
 	testInstanceName                      = "test-instance"
 	testInstancePrivateNetworkID          = new(clientTestSuite).randomID()
 	testInstancePublicIP                  = "1.2.3.4"
 	testInstanceSSHKey                    = "test-ssh-key"
 	testInstanceSecurityGroupID           = new(clientTestSuite).randomID()
 	testInstanceSnapshotID                = new(clientTestSuite).randomID()
-	testInstanceState                     = "running"
+	testInstanceState                     = papi.InstanceStateRunning
 	testInstanceTemplateID                = new(clientTestSuite).randomID()
 	testInstanceUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 )
@@ -64,14 +64,14 @@ func (ts *clientTestSuite) TestInstance_get() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
-		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: testInstanceManagerType},
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
 		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
 		SSHKey:               testInstanceSSHKey,
 		SecurityGroupIDs:     []string{testInstanceSecurityGroupID},
 		SnapshotIDs:          []string{testInstanceSnapshotID},
-		State:                testInstanceState,
+		State:                string(testInstanceState),
 		TemplateID:           testInstanceTemplateID,
 		UserData:             testInstanceUserData,
 
@@ -116,7 +116,7 @@ func (ts *clientTestSuite) TestInstance_AntiAffinityGroups() {
 func (ts *clientTestSuite) TestInstance_AttachElasticIP() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		attached           = false
 	)
 
@@ -168,7 +168,7 @@ func (ts *clientTestSuite) TestInstance_AttachElasticIP() {
 func (ts *clientTestSuite) TestInstance_AttachPrivateNetwork() {
 	var (
 		testOperationID      = ts.randomID()
-		testOperationState   = "success"
+		testOperationState   = papi.OperationStateSuccess
 		testPrivateIPAddress = net.ParseIP("10.0.0.1")
 		attached             = false
 	)
@@ -223,7 +223,7 @@ func (ts *clientTestSuite) TestInstance_AttachPrivateNetwork() {
 func (ts *clientTestSuite) TestInstance_AttachSecurityGroup() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		attached           = false
 	)
 
@@ -276,7 +276,7 @@ func (ts *clientTestSuite) TestInstance_AttachSecurityGroup() {
 func (ts *clientTestSuite) TestInstance_CreateSnapshot() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	ts.mockAPIRequest("POST", fmt.Sprintf("/instance/%s:create-snapshot", testInstanceID), papi.Operation{
@@ -311,7 +311,7 @@ func (ts *clientTestSuite) TestInstance_CreateSnapshot() {
 		ID:         testSnapshotID,
 		InstanceID: testInstanceID,
 		Name:       testSnapshotName,
-		State:      testSnapshotState,
+		State:      string(testSnapshotState),
 
 		c:    ts.client,
 		zone: testZone,
@@ -325,7 +325,7 @@ func (ts *clientTestSuite) TestInstance_CreateSnapshot() {
 func (ts *clientTestSuite) TestInstance_DetachElasticIP() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		detached           = false
 	)
 
@@ -377,7 +377,7 @@ func (ts *clientTestSuite) TestInstance_DetachElasticIP() {
 func (ts *clientTestSuite) TestInstance_DetachPrivateNetwork() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		attached           = false
 	)
 
@@ -430,7 +430,7 @@ func (ts *clientTestSuite) TestInstance_DetachPrivateNetwork() {
 func (ts *clientTestSuite) TestInstance_DetachSecurityGroup() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		attached           = false
 	)
 
@@ -540,7 +540,7 @@ func (ts *clientTestSuite) TestInstance_PrivateNetworks() {
 func (ts *clientTestSuite) TestInstance_RevertToSnapshot() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		reverted           = false
 	)
 
@@ -621,7 +621,7 @@ func (ts *clientTestSuite) TestInstance_SecurityGroups() {
 func (ts *clientTestSuite) TestClient_CreateInstance() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/instance",
@@ -689,14 +689,14 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
-		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: testInstanceManagerType},
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
 		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
 		SSHKey:               testInstanceSSHKey,
 		SecurityGroupIDs:     []string{testInstanceSecurityGroupID},
 		SnapshotIDs:          []string{testInstanceSnapshotID},
-		State:                testInstanceState,
+		State:                string(testInstanceState),
 		TemplateID:           testInstanceTemplateID,
 		UserData:             testInstanceUserData,
 
@@ -713,14 +713,14 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
-		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: testInstanceManagerType},
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
 		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
 		SSHKey:               testInstanceSSHKey,
 		SecurityGroupIDs:     []string{testInstanceSecurityGroupID},
 		SnapshotIDs:          []string{testInstanceSnapshotID},
-		State:                testInstanceState,
+		State:                string(testInstanceState),
 		TemplateID:           testInstanceTemplateID,
 		UserData:             testInstanceUserData,
 	})
@@ -762,14 +762,14 @@ func (ts *clientTestSuite) TestClient_ListInstances() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
-		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: testInstanceManagerType},
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
 		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
 		SSHKey:               testInstanceSSHKey,
 		SecurityGroupIDs:     []string{testInstanceSecurityGroupID},
 		SnapshotIDs:          []string{testInstanceSnapshotID},
-		State:                testInstanceState,
+		State:                string(testInstanceState),
 		TemplateID:           testInstanceTemplateID,
 		UserData:             testInstanceUserData,
 
@@ -812,14 +812,14 @@ func (ts *clientTestSuite) TestClient_GetInstance() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
-		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: testInstanceManagerType},
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
 		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
 		SSHKey:               testInstanceSSHKey,
 		SecurityGroupIDs:     []string{testInstanceSecurityGroupID},
 		SnapshotIDs:          []string{testInstanceSnapshotID},
-		State:                testInstanceState,
+		State:                string(testInstanceState),
 		TemplateID:           testInstanceTemplateID,
 		UserData:             testInstanceUserData,
 
@@ -837,7 +837,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstance() {
 		testInstanceNameUpdated     = testInstanceName + "-updated"
 		testInstanceUserDataUpdated = testInstanceUserData + "-updated"
 		testOperationID             = ts.randomID()
-		testOperationState          = "success"
+		testOperationState          = papi.OperationStateSuccess
 		updated                     = false
 	)
 
@@ -883,7 +883,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstance() {
 func (ts *clientTestSuite) TestClient_DeleteInstance() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		deleted            = false
 	)
 

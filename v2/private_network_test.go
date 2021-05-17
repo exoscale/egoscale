@@ -47,7 +47,7 @@ func (ts *clientTestSuite) TestPrivateNetwork_get() {
 func (ts *clientTestSuite) TestClient_CreatePrivateNetwork() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/private-network",
@@ -172,7 +172,7 @@ func (ts *clientTestSuite) TestClient_UpdatePrivateNetwork() {
 		testPrivateNetworkNetmaskUpdated     = "255.255.0.0"
 		testPrivateNetworkStartIPUpdated     = "172.16.0.0"
 		testOperationID                      = ts.randomID()
-		testOperationState                   = "success"
+		testOperationState                   = papi.OperationStateSuccess
 		updated                              = false
 	)
 
@@ -224,7 +224,7 @@ func (ts *clientTestSuite) TestClient_UpdatePrivateNetwork() {
 func (ts *clientTestSuite) TestClient_DeletePrivateNetwork() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		deleted            = false
 	)
 

@@ -17,12 +17,12 @@ var (
 	testSecurityGroupName                = "test-security-group"
 	testSecurityGroupRuleDescription     = "Test rule"
 	testSecurityGroupRuleEndPort         = 8080
-	testSecurityGroupRuleFlowDirection   = "ingress"
+	testSecurityGroupRuleFlowDirection   = papi.SecurityGroupRuleFlowDirectionIngress
 	testSecurityGroupRuleICMPCode        = 0
 	testSecurityGroupRuleICMPType        = 8
 	testSecurityGroupRuleID              = new(clientTestSuite).randomID()
 	testSecurityGroupRuleNetwork         = "1.2.3.0/24"
-	testSecurityGroupRuleProtocol        = "icmp"
+	testSecurityGroupRuleProtocol        = papi.SecurityGroupRuleProtocolIcmp
 	testSecurityGroupRuleSecurityGroupID = new(clientTestSuite).randomID()
 	testSecurityGroupRuleStartPort       = 8081
 )
@@ -58,12 +58,12 @@ func (ts *clientTestSuite) TestSecurityGroup_get() {
 		Rules: []*SecurityGroupRule{{
 			Description:     testSecurityGroupRuleDescription,
 			EndPort:         uint16(testSecurityGroupRuleEndPort),
-			FlowDirection:   testSecurityGroupRuleFlowDirection,
+			FlowDirection:   string(testSecurityGroupRuleFlowDirection),
 			ICMPCode:        uint8(testSecurityGroupRuleICMPCode),
 			ICMPType:        uint8(testSecurityGroupRuleICMPType),
 			ID:              testSecurityGroupRuleID,
 			Network:         func() *net.IPNet { _, v, _ := net.ParseCIDR(testSecurityGroupRuleNetwork); return v }(),
-			Protocol:        testSecurityGroupRuleProtocol,
+			Protocol:        string(testSecurityGroupRuleProtocol),
 			SecurityGroupID: testSecurityGroupRuleSecurityGroupID,
 			StartPort:       uint16(testSecurityGroupRuleStartPort),
 		}},
@@ -80,7 +80,7 @@ func (ts *clientTestSuite) TestSecurityGroup_get() {
 func (ts *clientTestSuite) TestSecurityGroup_AddRule() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", fmt.Sprintf("/security-group/%s/rules", testSecurityGroupID),
@@ -91,7 +91,7 @@ func (ts *clientTestSuite) TestSecurityGroup_AddRule() {
 			expected := papi.AddRuleToSecurityGroupJSONRequestBody{
 				Description:   &testSecurityGroupRuleDescription,
 				EndPort:       func() *int64 { v := int64(testSecurityGroupRuleEndPort); return &v }(),
-				FlowDirection: testSecurityGroupRuleFlowDirection,
+				FlowDirection: papi.AddRuleToSecurityGroupJSONBodyFlowDirection(testSecurityGroupRuleFlowDirection),
 				Icmp: &struct {
 					Code *int64 `json:"code,omitempty"`
 					Type *int64 `json:"type,omitempty"`
@@ -100,7 +100,7 @@ func (ts *clientTestSuite) TestSecurityGroup_AddRule() {
 					Type: func() *int64 { v := int64(testSecurityGroupRuleICMPType); return &v }(),
 				},
 				Network:       &testSecurityGroupRuleNetwork,
-				Protocol:      testSecurityGroupRuleProtocol,
+				Protocol:      papi.AddRuleToSecurityGroupJSONBodyProtocol(testSecurityGroupRuleProtocol),
 				SecurityGroup: &papi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
 				StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 			}
@@ -158,12 +158,12 @@ func (ts *clientTestSuite) TestSecurityGroup_AddRule() {
 	expected := SecurityGroupRule{
 		Description:     testSecurityGroupRuleDescription,
 		EndPort:         uint16(testSecurityGroupRuleEndPort),
-		FlowDirection:   testSecurityGroupRuleFlowDirection,
+		FlowDirection:   string(testSecurityGroupRuleFlowDirection),
 		ICMPCode:        uint8(testSecurityGroupRuleICMPCode),
 		ICMPType:        uint8(testSecurityGroupRuleICMPType),
 		ID:              testSecurityGroupRuleID,
 		Network:         func() *net.IPNet { _, v, _ := net.ParseCIDR(testSecurityGroupRuleNetwork); return v }(),
-		Protocol:        testSecurityGroupRuleProtocol,
+		Protocol:        string(testSecurityGroupRuleProtocol),
 		SecurityGroupID: testSecurityGroupRuleSecurityGroupID,
 		StartPort:       uint16(testSecurityGroupRuleStartPort),
 	}
@@ -176,7 +176,7 @@ func (ts *clientTestSuite) TestSecurityGroup_AddRule() {
 func (ts *clientTestSuite) TestSecurityGroup_DeleteRule() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("DELETE",
@@ -211,12 +211,12 @@ func (ts *clientTestSuite) TestSecurityGroup_DeleteRule() {
 		Rules: []*SecurityGroupRule{{
 			Description:     testSecurityGroupRuleDescription,
 			EndPort:         uint16(testSecurityGroupRuleEndPort),
-			FlowDirection:   testSecurityGroupRuleFlowDirection,
+			FlowDirection:   string(testSecurityGroupRuleFlowDirection),
 			ICMPCode:        uint8(testSecurityGroupRuleICMPCode),
 			ICMPType:        uint8(testSecurityGroupRuleICMPType),
 			ID:              testSecurityGroupRuleID,
 			Network:         func() *net.IPNet { _, v, _ := net.ParseCIDR(testSecurityGroupRuleNetwork); return v }(),
-			Protocol:        testSecurityGroupRuleProtocol,
+			Protocol:        string(testSecurityGroupRuleProtocol),
 			SecurityGroupID: testSecurityGroupRuleSecurityGroupID,
 			StartPort:       uint16(testSecurityGroupRuleStartPort),
 		}},
@@ -230,7 +230,7 @@ func (ts *clientTestSuite) TestSecurityGroup_DeleteRule() {
 func (ts *clientTestSuite) TestClient_CreateSecurityGroup() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/security-group",
@@ -321,12 +321,12 @@ func (ts *clientTestSuite) TestClient_ListSecurityGroups() {
 			Rules: []*SecurityGroupRule{{
 				Description:     testSecurityGroupRuleDescription,
 				EndPort:         uint16(testSecurityGroupRuleEndPort),
-				FlowDirection:   testSecurityGroupRuleFlowDirection,
+				FlowDirection:   string(testSecurityGroupRuleFlowDirection),
 				ICMPCode:        uint8(testSecurityGroupRuleICMPCode),
 				ICMPType:        uint8(testSecurityGroupRuleICMPType),
 				ID:              testSecurityGroupRuleID,
 				Network:         func() *net.IPNet { _, v, _ := net.ParseCIDR(testSecurityGroupRuleNetwork); return v }(),
-				Protocol:        testSecurityGroupRuleProtocol,
+				Protocol:        string(testSecurityGroupRuleProtocol),
 				SecurityGroupID: testSecurityGroupRuleSecurityGroupID,
 				StartPort:       uint16(testSecurityGroupRuleStartPort),
 			}},
@@ -372,12 +372,12 @@ func (ts *clientTestSuite) TestClient_GetSecurityGroup() {
 		Rules: []*SecurityGroupRule{{
 			Description:     testSecurityGroupRuleDescription,
 			EndPort:         uint16(testSecurityGroupRuleEndPort),
-			FlowDirection:   testSecurityGroupRuleFlowDirection,
+			FlowDirection:   string(testSecurityGroupRuleFlowDirection),
 			ICMPCode:        uint8(testSecurityGroupRuleICMPCode),
 			ICMPType:        uint8(testSecurityGroupRuleICMPType),
 			ID:              testSecurityGroupRuleID,
 			Network:         func() *net.IPNet { _, v, _ := net.ParseCIDR(testSecurityGroupRuleNetwork); return v }(),
-			Protocol:        testSecurityGroupRuleProtocol,
+			Protocol:        string(testSecurityGroupRuleProtocol),
 			SecurityGroupID: testSecurityGroupRuleSecurityGroupID,
 			StartPort:       uint16(testSecurityGroupRuleStartPort),
 		}},
@@ -394,7 +394,7 @@ func (ts *clientTestSuite) TestClient_GetSecurityGroup() {
 func (ts *clientTestSuite) TestClient_DeleteSecurityGroup() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		deleted            = false
 	)
 

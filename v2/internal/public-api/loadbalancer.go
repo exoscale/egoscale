@@ -12,11 +12,11 @@ func (lb *LoadBalancer) UnmarshalJSON(data []byte) error {
 	raw := struct {
 		CreatedAt   *string                `json:"created-at,omitempty"`
 		Description *string                `json:"description,omitempty"`
-		Id          *string                `json:"id,omitempty"` // nolint:golint
-		Ip          *string                `json:"ip,omitempty"` // nolint:golint
+		Id          *string                `json:"id,omitempty"` // nolint:revive
+		Ip          *string                `json:"ip,omitempty"` // nolint:revive
 		Name        *string                `json:"name,omitempty"`
 		Services    *[]LoadBalancerService `json:"services,omitempty"`
-		State       *string                `json:"state,omitempty"`
+		State       *LoadBalancerState     `json:"state,omitempty"`
 	}{}
 
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -47,11 +47,11 @@ func (lb *LoadBalancer) MarshalJSON() ([]byte, error) {
 	raw := struct {
 		CreatedAt   *string                `json:"created-at,omitempty"`
 		Description *string                `json:"description,omitempty"`
-		Id          *string                `json:"id,omitempty"` // nolint:golint
-		Ip          *string                `json:"ip,omitempty"` // nolint:golint
+		Id          *string                `json:"id,omitempty"` // nolint:revive
+		Ip          *string                `json:"ip,omitempty"` // nolint:revive
 		Name        *string                `json:"name,omitempty"`
 		Services    *[]LoadBalancerService `json:"services,omitempty"`
-		State       *string                `json:"state,omitempty"`
+		State       *LoadBalancerState     `json:"state,omitempty"`
 	}{}
 
 	if lb.CreatedAt != nil {

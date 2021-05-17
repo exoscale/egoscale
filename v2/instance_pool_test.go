@@ -28,7 +28,7 @@ var (
 	testInstancePoolSSHKey                    = "test-ssh-key"
 	testInstancePoolSecurityGroupID           = new(clientTestSuite).randomID()
 	testInstancePoolSize                int64 = 3
-	testInstancePoolState                     = "running"
+	testInstancePoolState                     = papi.InstancePoolStateRunning
 	testInstancePoolTemplateID                = new(clientTestSuite).randomID()
 	testInstancePoolUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 )
@@ -112,7 +112,7 @@ func (ts *clientTestSuite) TestInstancePool_Instances() {
 		PrivateNetworkIDs:    []string{},
 		SecurityGroupIDs:     []string{},
 		SnapshotIDs:          []string{},
-		State:                testInstanceState,
+		State:                string(testInstanceState),
 		TemplateID:           testInstanceTemplateID,
 
 		c:    ts.client,
@@ -184,10 +184,10 @@ func (ts *clientTestSuite) TestInstancePool_SecurityGroups() {
 
 func (ts *clientTestSuite) TestInstancePool_Scale() {
 	var (
-		testOperationID          = ts.randomID()
-		testOperationState       = "success"
-		testScaleSize      int64 = testInstancePoolSize * 2
-		scaled                   = false
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+		testScaleSize      = testInstancePoolSize * 2
+		scaled             = false
 	)
 
 	instancePool := &InstancePool{
@@ -233,7 +233,7 @@ func (ts *clientTestSuite) TestInstancePool_Scale() {
 func (ts *clientTestSuite) TestInstancePool_EvictMembers() {
 	var (
 		testOperationID     = ts.randomID()
-		testOperationState  = "success"
+		testOperationState  = papi.OperationStateSuccess
 		testEvictedMemberID = ts.randomID()
 		evicted             = false
 	)
@@ -280,7 +280,7 @@ func (ts *clientTestSuite) TestInstancePool_ResetField() {
 	var (
 		testResetField     = "description"
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		reset              = false
 	)
 
@@ -323,7 +323,7 @@ func (ts *clientTestSuite) TestInstancePool_ResetField() {
 func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/instance-pool",
@@ -407,7 +407,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 		SSHKey:               testInstancePoolSSHKey,
 		SecurityGroupIDs:     []string{testInstancePoolSecurityGroupID},
 		Size:                 testInstancePoolSize,
-		State:                testInstancePoolState,
+		State:                string(testInstancePoolState),
 		TemplateID:           testInstancePoolTemplateID,
 		UserData:             testInstancePoolUserData,
 
@@ -476,7 +476,7 @@ func (ts *clientTestSuite) TestClient_ListInstancePools() {
 		SSHKey:               testInstancePoolSSHKey,
 		SecurityGroupIDs:     []string{testInstancePoolSecurityGroupID},
 		Size:                 testInstancePoolSize,
-		State:                testInstancePoolState,
+		State:                string(testInstancePoolState),
 		TemplateID:           testInstancePoolTemplateID,
 		UserData:             testInstancePoolUserData,
 
@@ -525,7 +525,7 @@ func (ts *clientTestSuite) TestClient_GetInstancePool() {
 		SSHKey:               testInstancePoolSSHKey,
 		SecurityGroupIDs:     []string{testInstancePoolSecurityGroupID},
 		Size:                 testInstancePoolSize,
-		State:                testInstancePoolState,
+		State:                string(testInstancePoolState),
 		TemplateID:           testInstancePoolTemplateID,
 		UserData:             testInstancePoolUserData,
 
@@ -555,7 +555,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 		testInstancePoolTemplateIDUpdated          = new(clientTestSuite).randomID()
 		testInstancePoolUserDataUpdated            = testInstancePoolUserData + "-updated"
 		testOperationID                            = ts.randomID()
-		testOperationState                         = "success"
+		testOperationState                         = papi.OperationStateSuccess
 		updated                                    = false
 	)
 
@@ -626,7 +626,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 func (ts *clientTestSuite) TestClient_DeleteInstancePool() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		deleted            = false
 	)
 

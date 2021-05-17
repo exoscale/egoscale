@@ -38,7 +38,7 @@ func (ts *clientTestSuite) TestClient_ListTemplates() {
 				Templates *[]papi.Template `json:"templates,omitempty"`
 			}{
 				Templates: &[]papi.Template{{
-					BootMode:        &testTemplateBootMode,
+					BootMode:        (*papi.TemplateBootMode)(&testTemplateBootMode),
 					Build:           &testTemplateBuild,
 					Checksum:        &testTemplateChecksum,
 					CreatedAt:       &testTemplateCreatedAt,
@@ -52,7 +52,7 @@ func (ts *clientTestSuite) TestClient_ListTemplates() {
 					SshKeyEnabled:   &testTemplateSSHKeyEnabled,
 					Url:             &testTemplateURL,
 					Version:         &testTemplateVersion,
-					Visibility:      &testTemplateVisibility,
+					Visibility:      (*papi.TemplateVisibility)(&testTemplateVisibility),
 				}},
 			})
 		if err != nil {
@@ -86,7 +86,7 @@ func (ts *clientTestSuite) TestClient_ListTemplates() {
 
 func (ts *clientTestSuite) TestClient_GetTemplate() {
 	ts.mockAPIRequest("GET", fmt.Sprintf("/template/%s", testTemplateID), papi.Template{
-		BootMode:        &testTemplateBootMode,
+		BootMode:        (*papi.TemplateBootMode)(&testTemplateBootMode),
 		Build:           &testTemplateBuild,
 		Checksum:        &testTemplateChecksum,
 		CreatedAt:       &testTemplateCreatedAt,
@@ -100,7 +100,7 @@ func (ts *clientTestSuite) TestClient_GetTemplate() {
 		SshKeyEnabled:   &testTemplateSSHKeyEnabled,
 		Url:             &testTemplateURL,
 		Version:         &testTemplateVersion,
-		Visibility:      &testTemplateVisibility,
+		Visibility:      (*papi.TemplateVisibility)(&testTemplateVisibility),
 	})
 
 	expected := &Template{
@@ -129,7 +129,7 @@ func (ts *clientTestSuite) TestClient_GetTemplate() {
 func (ts *clientTestSuite) TestClient_DeleteTemplate() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		deleted            = false
 	)
 

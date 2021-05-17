@@ -15,7 +15,7 @@ var (
 	testSnapshotID           = new(clientTestSuite).randomID()
 	testSnapshotInstanceID   = new(clientTestSuite).randomID()
 	testSnapshotName         = "test-snapshot"
-	testSnapshotState        = "exported"
+	testSnapshotState        = papi.SnapshotStateExported
 )
 
 func (ts *clientTestSuite) TestSnapshot_get() {
@@ -32,7 +32,7 @@ func (ts *clientTestSuite) TestSnapshot_get() {
 		ID:         testSnapshotID,
 		InstanceID: testSnapshotInstanceID,
 		Name:       testSnapshotName,
-		State:      testSnapshotState,
+		State:      string(testSnapshotState),
 
 		c:    ts.client,
 		zone: testZone,
@@ -51,7 +51,7 @@ func (ts *clientTestSuite) TestSnapshot_Export() {
 			ts.randomID(),
 			testSnapshotID)
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		exported           = false
 	)
 
@@ -81,7 +81,7 @@ func (ts *clientTestSuite) TestSnapshot_Export() {
 		CreatedAt: &testSnapshotCreatedAt,
 		Export: &struct {
 			Md5sum       *string `json:"md5sum,omitempty"`
-			PresignedUrl *string `json:"presigned-url,omitempty"` // nolint:golint
+			PresignedUrl *string `json:"presigned-url,omitempty"` // nolint:revive
 		}{
 			Md5sum:       &testSnapshotExportMD5Sum,
 			PresignedUrl: &testSnapshotExportPresignedURL,
@@ -97,7 +97,7 @@ func (ts *clientTestSuite) TestSnapshot_Export() {
 		ID:         testSnapshotID,
 		InstanceID: testSnapshotInstanceID,
 		Name:       testSnapshotName,
-		State:      testSnapshotState,
+		State:      string(testSnapshotState),
 
 		c:    ts.client,
 		zone: testZone,
@@ -132,7 +132,7 @@ func (ts *clientTestSuite) TestClient_ListSnapshots() {
 		ID:         testSnapshotID,
 		InstanceID: testSnapshotInstanceID,
 		Name:       testSnapshotName,
-		State:      testSnapshotState,
+		State:      string(testSnapshotState),
 
 		c:    ts.client,
 		zone: testZone,
@@ -157,7 +157,7 @@ func (ts *clientTestSuite) TestClient_GetSnapshot() {
 		ID:         testSnapshotID,
 		InstanceID: testSnapshotInstanceID,
 		Name:       testSnapshotName,
-		State:      testSnapshotState,
+		State:      string(testSnapshotState),
 
 		c:    ts.client,
 		zone: testZone,
@@ -171,7 +171,7 @@ func (ts *clientTestSuite) TestClient_GetSnapshot() {
 func (ts *clientTestSuite) TestClient_DeleteSnapshot() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		deleted            = false
 	)
 

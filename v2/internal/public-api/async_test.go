@@ -96,7 +96,7 @@ func TestClientWithResponses_JobOperationPoller(t *testing.T) {
 				func(req *http.Request) (*http.Response, error) {
 					resp, err := httpmock.NewJsonResponse(http.StatusOK, Operation{
 						Id:        &operationID,
-						State:     &state,
+						State:     (*OperationState)(&state),
 						Reference: &Reference{Id: &mockOperationReferenceID},
 					})
 					if err != nil {

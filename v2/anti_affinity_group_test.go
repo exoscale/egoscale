@@ -40,7 +40,7 @@ func (ts *clientTestSuite) TestAntiAffinityGroup_get() {
 func (ts *clientTestSuite) TestClient_CreateAntiAffinityGroup() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/anti-affinity-group",
@@ -139,7 +139,7 @@ func (ts *clientTestSuite) TestClient_GetAntiAffinityGroup() {
 func (ts *clientTestSuite) TestClient_DeleteAntiAffinityGroup() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		deleted            = false
 	)
 

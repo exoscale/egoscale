@@ -49,7 +49,7 @@ func instancePoolFromAPI(i *papi.InstancePool) *InstancePool {
 		}(),
 		DeployTargetID: func() string {
 			if i.DeployTarget != nil {
-				return papi.OptionalString(i.DeployTarget.Id)
+				return *i.DeployTarget.Id
 			}
 			return ""
 		}(),
@@ -67,8 +67,8 @@ func instancePoolFromAPI(i *papi.InstancePool) *InstancePool {
 
 			return ids
 		}(),
-		ID:          papi.OptionalString(i.Id),
-		IPv6Enabled: papi.OptionalBool(i.Ipv6Enabled),
+		ID:          *i.Id,
+		IPv6Enabled: *i.Ipv6Enabled,
 		InstanceIDs: func() []string {
 			ids := make([]string, 0)
 
@@ -82,14 +82,14 @@ func instancePoolFromAPI(i *papi.InstancePool) *InstancePool {
 			return ids
 		}(),
 		InstancePrefix: papi.OptionalString(i.InstancePrefix),
-		InstanceTypeID: papi.OptionalString(i.InstanceType.Id),
+		InstanceTypeID: *i.InstanceType.Id,
 		ManagerID: func() string {
 			if i.Manager != nil {
-				return papi.OptionalString(i.Manager.Id)
+				return *i.Manager.Id
 			}
 			return ""
 		}(),
-		Name: papi.OptionalString(i.Name),
+		Name: *i.Name,
 		PrivateNetworkIDs: func() []string {
 			ids := make([]string, 0)
 
@@ -105,7 +105,7 @@ func instancePoolFromAPI(i *papi.InstancePool) *InstancePool {
 		SSHKey: func() string {
 			key := ""
 			if i.SshKey != nil {
-				key = papi.OptionalString(i.SshKey.Name)
+				key = *i.SshKey.Name
 			}
 			return key
 		}(),
@@ -121,9 +121,9 @@ func instancePoolFromAPI(i *papi.InstancePool) *InstancePool {
 
 			return ids
 		}(),
-		Size:       papi.OptionalInt64(i.Size),
-		State:      papi.OptionalString(i.State),
-		TemplateID: papi.OptionalString(i.Template.Id),
+		Size:       *i.Size,
+		State:      string(*i.State),
+		TemplateID: *i.Template.Id,
 		UserData:   papi.OptionalString(i.UserData),
 	}
 }
@@ -209,7 +209,11 @@ func (i *InstancePool) ResetField(ctx context.Context, field interface{}) error 
 		return err
 	}
 
-	resp, err := i.c.ResetInstancePoolFieldWithResponse(apiv2.WithZone(ctx, i.zone), i.ID, resetField)
+	resp, err := i.c.ResetInstancePoolFieldWithResponse(
+		apiv2.WithZone(ctx, i.zone),
+		i.ID,
+		papi.ResetInstancePoolFieldParamsField(resetField),
+	)
 	if err != nil {
 		return err
 	}

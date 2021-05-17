@@ -28,7 +28,7 @@ func (ts *clientTestSuite) TestClient_ListZones() {
 					zones := make([]papi.Zone, len(testZones))
 					for i := range testZones {
 						name := testZones[i]
-						zones[i] = papi.Zone{Name: &name}
+						zones[i] = papi.Zone{Name: (*papi.ZoneName)(&name)}
 					}
 					return &zones
 				}(),

@@ -32,7 +32,7 @@ func (ts *clientTestSuite) TestElasticIP_get() {
 		Description: &testElasticIPDescription,
 		Healthcheck: &papi.ElasticIpHealthcheck{
 			Interval:      &testElasticIPHealthcheckInterval,
-			Mode:          testNLServiceHealthcheckMode,
+			Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
 			Port:          testElasticIPHealthcheckPort,
 			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
 			StrikesOk:     &testElasticIPHealthcheckStrikesOK,
@@ -74,7 +74,7 @@ func (ts *clientTestSuite) TestElasticIP_ResetField() {
 	var (
 		testResetField     = "description"
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		reset              = false
 	)
 
@@ -117,7 +117,7 @@ func (ts *clientTestSuite) TestElasticIP_ResetField() {
 func (ts *clientTestSuite) TestClient_CreateElasticIP() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/elastic-ip",
@@ -129,7 +129,7 @@ func (ts *clientTestSuite) TestClient_CreateElasticIP() {
 				Description: &testElasticIPDescription,
 				Healthcheck: &papi.ElasticIpHealthcheck{
 					Interval:      &testElasticIPHealthcheckInterval,
-					Mode:          testNLServiceHealthcheckMode,
+					Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
 					Port:          testElasticIPHealthcheckPort,
 					StrikesFail:   &testElasticIPHealthcheckStrikesFail,
 					StrikesOk:     &testElasticIPHealthcheckStrikesOK,
@@ -163,7 +163,7 @@ func (ts *clientTestSuite) TestClient_CreateElasticIP() {
 		Description: &testElasticIPDescription,
 		Healthcheck: &papi.ElasticIpHealthcheck{
 			Interval:      &testElasticIPHealthcheckInterval,
-			Mode:          testNLServiceHealthcheckMode,
+			Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
 			Port:          testElasticIPHealthcheckPort,
 			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
 			StrikesOk:     &testElasticIPHealthcheckStrikesOK,
@@ -223,7 +223,7 @@ func (ts *clientTestSuite) TestClient_ListElasticIPs() {
 			Description: &testElasticIPDescription,
 			Healthcheck: &papi.ElasticIpHealthcheck{
 				Interval:      &testElasticIPHealthcheckInterval,
-				Mode:          testNLServiceHealthcheckMode,
+				Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
 				Port:          testElasticIPHealthcheckPort,
 				StrikesFail:   &testElasticIPHealthcheckStrikesFail,
 				StrikesOk:     &testElasticIPHealthcheckStrikesOK,
@@ -267,7 +267,7 @@ func (ts *clientTestSuite) TestClient_GetElasticIP() {
 		Description: &testElasticIPDescription,
 		Healthcheck: &papi.ElasticIpHealthcheck{
 			Interval:      &testElasticIPHealthcheckInterval,
-			Mode:          testNLServiceHealthcheckMode,
+			Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
 			Port:          testElasticIPHealthcheckPort,
 			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
 			StrikesOk:     &testElasticIPHealthcheckStrikesOK,
@@ -308,7 +308,7 @@ func (ts *clientTestSuite) TestClient_GetElasticIP() {
 func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 	var (
 		testElasticIPDescriptionUpdated              = testElasticIPDescription + "-updated"
-		testElasticIPHealthcheckModeUpdated          = "http"
+		testElasticIPHealthcheckModeUpdated          = papi.ElasticIpHealthcheckModeHttp
 		testElasticIPHealthcheckPortUpdated          = testElasticIPHealthcheckPort + 1
 		testElasticIPHealthcheckIntervalUpdated      = testElasticIPHealthcheckInterval + 1
 		testElasticIPHealthcheckTimeoutUpdated       = testElasticIPHealthcheckTimeout + 1
@@ -318,7 +318,7 @@ func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 		testElasticIPHealthcheckTLSSNIUpdated        = ""
 		testElasticIPHealthcheckTLSSkipVerifyUpdated = false
 		testOperationID                              = ts.randomID()
-		testOperationState                           = "success"
+		testOperationState                           = papi.OperationStateSuccess
 		updated                                      = false
 	)
 
@@ -367,7 +367,7 @@ func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 		Description: testElasticIPDescriptionUpdated,
 		Healthcheck: &ElasticIPHealthcheck{
 			Interval:      time.Duration(testElasticIPHealthcheckIntervalUpdated) * time.Second,
-			Mode:          testElasticIPHealthcheckModeUpdated,
+			Mode:          string(testElasticIPHealthcheckModeUpdated),
 			Port:          uint16(testElasticIPHealthcheckPortUpdated),
 			StrikesFail:   testElasticIPHealthcheckStrikesFailUpdated,
 			StrikesOK:     testElasticIPHealthcheckStrikesOKUpdated,
@@ -388,7 +388,7 @@ func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 func (ts *clientTestSuite) TestClient_DeleteElasticIP() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		deleted            = false
 	)
 

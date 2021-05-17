@@ -13,15 +13,15 @@ import (
 )
 
 var (
-	testSKSClusterAddons                     = []string{"exoscale-cloud-controller"}
+	testSKSClusterAddons                     = []papi.SksClusterAddons{papi.SksClusterAddonsExoscaleCloudController}
 	testSKSClusterCNI                        = "calico"
 	testSKSClusterCreatedAt, _               = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
 	testSKSClusterDescription                = "Test Cluster description"
 	testSKSClusterEndpoint                   = fmt.Sprintf("%s.sks-%s.exo.io", testSKSClusterID, testZone)
 	testSKSClusterID                         = new(clientTestSuite).randomID()
 	testSKSClusterName                       = "test-cluster"
-	testSKSClusterServiceLevel               = "pro"
-	testSKSClusterState                      = "running"
+	testSKSClusterServiceLevel               = papi.SksClusterLevelPro
+	testSKSClusterState                      = papi.SksClusterStateRunning
 	testSKSClusterVersion                    = "1.18.6"
 	testSKSNodepoolAntiAffinityGroupID       = new(clientTestSuite).randomID()
 	testSKSNodepoolCreatedAt, _              = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
@@ -35,7 +35,7 @@ var (
 	testSKSNodepoolName                      = "test-nodepool"
 	testSKSNodepoolSecurityGroupID           = new(clientTestSuite).randomID()
 	testSKSNodepoolSize                int64 = 3
-	testSKSNodepoolState                     = "running"
+	testSKSNodepoolState                     = papi.SksNodepoolStateRunning
 	testSKSNodepoolTemplateID                = new(clientTestSuite).randomID()
 	testSKSNodepoolVersion                   = "1.18.6"
 )
@@ -98,7 +98,7 @@ func (ts *clientTestSuite) TestSKSNodepool_SecurityGroups() {
 func (ts *clientTestSuite) TestSKSCluster_RotateCCMCredentials() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		rotated            = false
 	)
 
@@ -186,7 +186,7 @@ func (ts *clientTestSuite) TestSKSCluster_RequestKubeconfig() {
 func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", fmt.Sprintf("/sks-cluster/%s/nodepool", testSKSClusterID),
@@ -265,7 +265,7 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 		Name:                 testSKSNodepoolName,
 		SecurityGroupIDs:     []string{testSKSNodepoolSecurityGroupID},
 		Size:                 testSKSNodepoolSize,
-		State:                testSKSNodepoolState,
+		State:                string(testSKSNodepoolState),
 		TemplateID:           testSKSNodepoolTemplateID,
 		Version:              testSKSNodepoolVersion,
 
@@ -289,7 +289,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 		testSKSNodepoolInstanceTypeIDUpdated      = testSKSNodepoolInstanceTypeID + "-updated"
 		testSKSNodepoolNameUpdated                = testSKSNodepoolName + "-updated"
 		testSKSNodepoolSecurityGroupIDUpdated     = ts.randomID()
-		testOperationState                        = "success"
+		testOperationState                        = papi.OperationStateSuccess
 		updated                                   = false
 	)
 
@@ -368,7 +368,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 func (ts *clientTestSuite) TestSKSCluster_ScaleNodepool() {
 	var (
 		testOperationID          = ts.randomID()
-		testOperationState       = "success"
+		testOperationState       = papi.OperationStateSuccess
 		testScaleSize      int64 = 3
 		scaled                   = false
 	)
@@ -418,7 +418,7 @@ func (ts *clientTestSuite) TestSKSCluster_ScaleNodepool() {
 func (ts *clientTestSuite) TestSKSCluster_EvictNodepoolMembers() {
 	var (
 		testOperationID     = ts.randomID()
-		testOperationState  = "success"
+		testOperationState  = papi.OperationStateSuccess
 		testEvictedMemberID = ts.randomID()
 		evicted             = false
 	)
@@ -471,7 +471,7 @@ func (ts *clientTestSuite) TestSKSCluster_EvictNodepoolMembers() {
 func (ts *clientTestSuite) TestSKSCluster_DeleteNodepool() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("DELETE",
@@ -513,7 +513,7 @@ func (ts *clientTestSuite) TestSKSCluster_ResetField() {
 	var (
 		testResetField     = "description"
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		reset              = false
 	)
 
@@ -559,7 +559,7 @@ func (ts *clientTestSuite) TestSKSCluster_ResetNodepoolField() {
 	var (
 		testResetField     = "description"
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		reset              = false
 	)
 
@@ -608,7 +608,7 @@ func (ts *clientTestSuite) TestSKSCluster_ResetNodepoolField() {
 func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/sks-cluster",
@@ -617,10 +617,12 @@ func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
 			ts.unmarshalJSONRequestBody(req, &actual)
 
 			expected := papi.CreateSksClusterJSONRequestBody{
-				Addons:      &testSKSClusterAddons,
-				Cni:         &testSKSClusterCNI,
+				Addons: &[]papi.CreateSksClusterJSONBodyAddons{
+					papi.CreateSksClusterJSONBodyAddons(testSKSClusterAddons[0]),
+				},
+				Cni:         (*papi.CreateSksClusterJSONBodyCni)(&testSKSClusterCNI),
 				Description: &testSKSClusterDescription,
-				Level:       testSKSClusterServiceLevel,
+				Level:       papi.CreateSksClusterJSONBodyLevel(testSKSClusterServiceLevel),
 				Name:        testSKSClusterName,
 				Version:     testSKSClusterVersion,
 			}
@@ -646,9 +648,10 @@ func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID), papi.SksCluster{
 		Addons:      &testSKSClusterAddons,
-		Cni:         &testSKSClusterCNI,
+		Cni:         (*papi.SksClusterCni)(&testSKSClusterCNI),
 		CreatedAt:   &testSKSClusterCreatedAt,
 		Description: &testSKSClusterDescription,
+		Endpoint:    &testSKSClusterEndpoint,
 		Id:          &testSKSClusterID,
 		Level:       &testSKSClusterServiceLevel,
 		Name:        &testSKSClusterName,
@@ -657,15 +660,16 @@ func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
 	})
 
 	expected := &SKSCluster{
-		AddOns:       testSKSClusterAddons,
+		AddOns:       []string{string(testSKSClusterAddons[0])},
 		CNI:          testSKSClusterCNI,
 		CreatedAt:    testSKSClusterCreatedAt,
 		Description:  testSKSClusterDescription,
+		Endpoint:     testSKSClusterEndpoint,
 		ID:           testSKSClusterID,
 		Name:         testSKSClusterName,
 		Nodepools:    []*SKSNodepool{},
-		ServiceLevel: testSKSClusterServiceLevel,
-		State:        testSKSClusterState,
+		ServiceLevel: string(testSKSClusterServiceLevel),
+		State:        string(testSKSClusterState),
 		Version:      testSKSClusterVersion,
 
 		c:    ts.client,
@@ -673,11 +677,11 @@ func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
 	}
 
 	actual, err := ts.client.CreateSKSCluster(context.Background(), testZone, &SKSCluster{
-		AddOns:       testSKSClusterAddons,
+		AddOns:       []string{string(testSKSClusterAddons[0])},
 		CNI:          testSKSClusterCNI,
 		Description:  testSKSClusterDescription,
 		Name:         testSKSClusterName,
-		ServiceLevel: testSKSClusterServiceLevel,
+		ServiceLevel: string(testSKSClusterServiceLevel),
 		Version:      testSKSClusterVersion,
 	})
 	ts.Require().NoError(err)
@@ -690,7 +694,7 @@ func (ts *clientTestSuite) TestClient_ListSKSClusters() {
 	}{
 		SksClusters: &[]papi.SksCluster{{
 			Addons:      &testSKSClusterAddons,
-			Cni:         &testSKSClusterCNI,
+			Cni:         (*papi.SksClusterCni)(&testSKSClusterCNI),
 			CreatedAt:   &testSKSClusterCreatedAt,
 			Description: &testSKSClusterDescription,
 			Endpoint:    &testSKSClusterEndpoint,
@@ -718,7 +722,7 @@ func (ts *clientTestSuite) TestClient_ListSKSClusters() {
 	})
 
 	expected := []*SKSCluster{{
-		AddOns:      testSKSClusterAddons,
+		AddOns:      []string{string(testSKSClusterAddons[0])},
 		CNI:         testSKSClusterCNI,
 		CreatedAt:   testSKSClusterCreatedAt,
 		Description: testSKSClusterDescription,
@@ -736,15 +740,15 @@ func (ts *clientTestSuite) TestClient_ListSKSClusters() {
 			Name:                 testSKSNodepoolName,
 			SecurityGroupIDs:     []string{testSKSNodepoolSecurityGroupID},
 			Size:                 testSKSNodepoolSize,
-			State:                testSKSClusterState,
+			State:                string(testSKSClusterState),
 			TemplateID:           testSKSNodepoolTemplateID,
 			Version:              testSKSNodepoolVersion,
 
 			c:    ts.client,
 			zone: testZone,
 		}},
-		ServiceLevel: testSKSClusterServiceLevel,
-		State:        testSKSClusterState,
+		ServiceLevel: string(testSKSClusterServiceLevel),
+		State:        string(testSKSClusterState),
 		Version:      testSKSClusterVersion,
 
 		c:    ts.client,
@@ -780,7 +784,7 @@ func (ts *clientTestSuite) TestClient_ListSKSClusterVersions() {
 func (ts *clientTestSuite) TestClient_GetSKSCluster() {
 	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID), papi.SksCluster{
 		Addons:      &testSKSClusterAddons,
-		Cni:         &testSKSClusterCNI,
+		Cni:         (*papi.SksClusterCni)(&testSKSClusterCNI),
 		CreatedAt:   &testSKSClusterCreatedAt,
 		Description: &testSKSClusterDescription,
 		Endpoint:    &testSKSClusterEndpoint,
@@ -807,7 +811,7 @@ func (ts *clientTestSuite) TestClient_GetSKSCluster() {
 	})
 
 	expected := &SKSCluster{
-		AddOns:      testSKSClusterAddons,
+		AddOns:      []string{string(testSKSClusterAddons[0])},
 		CNI:         testSKSClusterCNI,
 		CreatedAt:   testSKSClusterCreatedAt,
 		Description: testSKSClusterDescription,
@@ -825,15 +829,15 @@ func (ts *clientTestSuite) TestClient_GetSKSCluster() {
 			Name:                 testSKSNodepoolName,
 			SecurityGroupIDs:     []string{testSKSNodepoolSecurityGroupID},
 			Size:                 testSKSNodepoolSize,
-			State:                testSKSClusterState,
+			State:                string(testSKSClusterState),
 			TemplateID:           testSKSNodepoolTemplateID,
 			Version:              testSKSNodepoolVersion,
 
 			c:    ts.client,
 			zone: testZone,
 		}},
-		ServiceLevel: testSKSClusterServiceLevel,
-		State:        testSKSClusterState,
+		ServiceLevel: string(testSKSClusterServiceLevel),
+		State:        string(testSKSClusterState),
 		Version:      testSKSClusterVersion,
 
 		c:    ts.client,
@@ -850,7 +854,7 @@ func (ts *clientTestSuite) TestClient_UpdateSKSCluster() {
 		testSKSClusterNameUpdated        = testSKSClusterName + "-updated"
 		testSKSClusterDescriptionUpdated = testSKSClusterDescription + "-updated"
 		testOperationID                  = ts.randomID()
-		testOperationState               = "success"
+		testOperationState               = papi.OperationStateSuccess
 		updated                          = false
 	)
 
@@ -897,7 +901,7 @@ func (ts *clientTestSuite) TestClient_UpdateSKSCluster() {
 func (ts *clientTestSuite) TestClient_UgradeSKSCluster() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		upgraded           = false
 	)
 
@@ -941,7 +945,7 @@ func (ts *clientTestSuite) TestClient_UgradeSKSCluster() {
 func (ts *clientTestSuite) TestClient_DeleteSKSCluster() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = "success"
+		testOperationState = papi.OperationStateSuccess
 		deleted            = false
 	)
 

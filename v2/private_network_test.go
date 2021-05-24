@@ -8,6 +8,7 @@ import (
 
 	"github.com/jarcoal/httpmock"
 
+	apiv2 "github.com/exoscale/egoscale/v2/api"
 	papi "github.com/exoscale/egoscale/v2/internal/public-api"
 )
 
@@ -162,6 +163,60 @@ func (ts *clientTestSuite) TestClient_GetPrivateNetwork() {
 	actual, err := ts.client.GetPrivateNetwork(context.Background(), testZone, expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestClient_FindPrivateNetwork() {
+	ts.mockAPIRequest("GET", "/private-network", struct {
+		PrivateNetworks *[]papi.PrivateNetwork `json:"private-networks,omitempty"`
+	}{
+		PrivateNetworks: &[]papi.PrivateNetwork{
+			{
+				Description: &testPrivateNetworkDescription,
+				EndIp:       &testPrivateNetworkEndIP,
+				Id:          &testPrivateNetworkID,
+				Name:        &testPrivateNetworkName,
+				Netmask:     &testPrivateNetworkNetmask,
+				StartIp:     &testPrivateNetworkStartIP,
+			},
+			{
+				Id:   func() *string { id := ts.randomID(); return &id }(),
+				Name: func() *string { name := "dup"; return &name }(),
+			},
+			{
+				Id:   func() *string { id := ts.randomID(); return &id }(),
+				Name: func() *string { name := "dup"; return &name }(),
+			},
+		},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/private-network/%s", testPrivateNetworkID), papi.PrivateNetwork{
+		Description: &testPrivateNetworkDescription,
+		EndIp:       &testPrivateNetworkEndIP,
+		Id:          &testPrivateNetworkID,
+		Name:        &testPrivateNetworkName,
+		Netmask:     &testPrivateNetworkNetmask,
+		StartIp:     &testPrivateNetworkStartIP,
+	})
+
+	expected := &PrivateNetwork{
+		Description: testPrivateNetworkDescription,
+		EndIP:       net.ParseIP(testPrivateNetworkEndIP),
+		ID:          testPrivateNetworkID,
+		Name:        testPrivateNetworkName,
+		Netmask:     net.ParseIP(testPrivateNetworkNetmask),
+		StartIP:     net.ParseIP(testPrivateNetworkStartIP),
+	}
+
+	actual, err := ts.client.FindPrivateNetwork(context.Background(), testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindPrivateNetwork(context.Background(), testZone, expected.Name)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	_, err = ts.client.FindPrivateNetwork(context.Background(), testZone, "dup")
+	ts.Require().EqualError(err, apiv2.ErrTooManyFound.Error())
 }
 
 func (ts *clientTestSuite) TestClient_UpdatePrivateNetwork() {

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	apiv2 "github.com/exoscale/egoscale/v2/api"
 	"github.com/jarcoal/httpmock"
 
 	papi "github.com/exoscale/egoscale/v2/internal/public-api"
@@ -830,6 +831,81 @@ func (ts *clientTestSuite) TestClient_GetInstance() {
 	actual, err := ts.client.GetInstance(context.Background(), testZone, expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestClient_FindInstance() {
+	ts.mockAPIRequest("GET", "/instance", struct {
+		Instances *[]papi.Instance `json:"instances,omitempty"`
+	}{
+		Instances: &[]papi.Instance{
+			{
+				CreatedAt:    &testInstanceCreatedAt,
+				DiskSize:     &testInstanceDiskSize,
+				Id:           &testInstanceID,
+				InstanceType: &papi.InstanceType{Id: &testInstanceInstanceTypeID},
+				Name:         &testInstanceName,
+				State:        &testInstanceState,
+				Template:     &papi.Template{Id: &testInstanceTemplateID},
+			},
+			{
+				CreatedAt:    &testInstanceCreatedAt,
+				DiskSize:     &testInstanceDiskSize,
+				Id:           func() *string { id := ts.randomID(); return &id }(),
+				InstanceType: &papi.InstanceType{Id: &testInstanceInstanceTypeID},
+				Name:         func() *string { name := "dup"; return &name }(),
+				State:        &testInstanceState,
+				Template:     &papi.Template{Id: &testInstanceTemplateID},
+			},
+			{
+				CreatedAt:    &testInstanceCreatedAt,
+				DiskSize:     &testInstanceDiskSize,
+				Id:           func() *string { id := ts.randomID(); return &id }(),
+				InstanceType: &papi.InstanceType{Id: &testInstanceInstanceTypeID},
+				Name:         func() *string { name := "dup"; return &name }(),
+				State:        &testInstanceState,
+				Template:     &papi.Template{Id: &testInstanceTemplateID},
+			},
+		},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/instance/%s", testInstanceID), papi.Instance{
+		CreatedAt:    &testInstanceCreatedAt,
+		DiskSize:     &testInstanceDiskSize,
+		Id:           &testInstanceID,
+		InstanceType: &papi.InstanceType{Id: &testInstanceInstanceTypeID},
+		Name:         &testInstanceName,
+		State:        &testInstanceState,
+		Template:     &papi.Template{Id: &testInstanceTemplateID},
+	})
+
+	expected := &Instance{
+		AntiAffinityGroupIDs: []string{},
+		CreatedAt:            testInstanceCreatedAt,
+		DiskSize:             testInstanceDiskSize,
+		ElasticIPIDs:         []string{},
+		ID:                   testInstanceID,
+		InstanceTypeID:       testInstanceInstanceTypeID,
+		Name:                 testInstanceName,
+		PrivateNetworkIDs:    []string{},
+		SecurityGroupIDs:     []string{},
+		SnapshotIDs:          []string{},
+		State:                string(testInstanceState),
+		TemplateID:           testInstanceTemplateID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := ts.client.FindInstance(context.Background(), testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindInstance(context.Background(), testZone, expected.Name)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	_, err = ts.client.FindInstance(context.Background(), testZone, "dup")
+	ts.Require().EqualError(err, apiv2.ErrTooManyFound.Error())
 }
 
 func (ts *clientTestSuite) TestClient_UpdateInstance() {

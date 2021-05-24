@@ -354,6 +354,22 @@ func (c *Client) GetInstancePool(ctx context.Context, zone, id string) (*Instanc
 	return instancePool, nil
 }
 
+// FindInstancePool attempts to find an Instance Pool by name or ID in the specified zone.
+func (c *Client) FindInstancePool(ctx context.Context, zone, v string) (*InstancePool, error) {
+	res, err := c.ListInstancePools(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range res {
+		if r.ID == v || r.Name == v {
+			return c.GetInstancePool(ctx, zone, r.ID)
+		}
+	}
+
+	return nil, apiv2.ErrNotFound
+}
+
 // UpdateInstancePool updates the specified Instance Pool in the specified zone.
 func (c *Client) UpdateInstancePool(ctx context.Context, zone string, instancePool *InstancePool) error {
 	resp, err := c.UpdateInstancePoolWithResponse(

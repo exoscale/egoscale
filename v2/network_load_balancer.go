@@ -366,6 +366,22 @@ func (c *Client) GetNetworkLoadBalancer(ctx context.Context, zone, id string) (*
 	return nlbFromAPI(c, zone, resp.JSON200), nil
 }
 
+// FindNetworkLoadBalancer attempts to find a Network Load Balancer by name or ID in the specified zone.
+func (c *Client) FindNetworkLoadBalancer(ctx context.Context, zone, v string) (*NetworkLoadBalancer, error) {
+	res, err := c.ListNetworkLoadBalancers(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range res {
+		if r.ID == v || r.Name == v {
+			return c.GetNetworkLoadBalancer(ctx, zone, r.ID)
+		}
+	}
+
+	return nil, apiv2.ErrNotFound
+}
+
 // UpdateNetworkLoadBalancer updates the specified Network Load Balancer instance in the specified zone.
 func (c *Client) UpdateNetworkLoadBalancer(ctx context.Context, zone string, nlb *NetworkLoadBalancer) error {
 	resp, err := c.UpdateLoadBalancerWithResponse(

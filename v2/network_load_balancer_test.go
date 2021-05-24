@@ -539,6 +539,46 @@ func (ts *clientTestSuite) TestClient_GetNetworkLoadBalancer() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestClient_FindNetworkLoadBalancer() {
+	ts.mockAPIRequest("GET", "/load-balancer", struct {
+		LoadBalancers *[]papi.LoadBalancer `json:"load-balancers,omitempty"`
+	}{
+		LoadBalancers: &[]papi.LoadBalancer{{
+			CreatedAt: &testNLBCreatedAt,
+			Id:        &testNLBID,
+			Name:      &testNLBName,
+			State:     &testNLBState,
+		}},
+	})
+	ts.mockAPIRequest("GET", fmt.Sprintf("/load-balancer/%s", testNLBID), papi.LoadBalancer{
+		CreatedAt: &testNLBCreatedAt,
+		Id:        &testNLBID,
+		Ip:        &testNLBIPAddress,
+		Name:      &testNLBName,
+		State:     &testNLBState,
+	})
+
+	expected := &NetworkLoadBalancer{
+		CreatedAt: testNLBCreatedAt,
+		ID:        testNLBID,
+		IPAddress: net.ParseIP(testNLBIPAddress),
+		Name:      testNLBName,
+		Services:  []*NetworkLoadBalancerService{},
+		State:     string(testNLBState),
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := ts.client.FindNetworkLoadBalancer(context.Background(), testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindNetworkLoadBalancer(context.Background(), testZone, expected.Name)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestClient_UpdateNetworkLoadBalancer() {
 	var (
 		testNLBNameUpdated        = testNLBName + "-updated"

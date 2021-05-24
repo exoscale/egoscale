@@ -421,6 +421,38 @@ func (c *Client) GetInstance(ctx context.Context, zone, id string) (*Instance, e
 	return instanceFromAPI(c, zone, resp.JSON200), nil
 }
 
+// FindInstance attempts to find a Compute instance by name or ID in the specified zone.
+// In case the identifier is a name and multiple resources match, an ErrTooManyFound error is returned.
+func (c *Client) FindInstance(ctx context.Context, zone, v string) (*Instance, error) {
+	res, err := c.ListInstances(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	var found *Instance
+	for _, r := range res {
+		if r.ID == v {
+			return c.GetInstance(ctx, zone, r.ID)
+		}
+
+		// Historically, the Exoscale API allowed users to create multiple Compute instances sharing a common name.
+		// This function being expected to return one resource at most, in case the specified identifier is a name
+		// we have to check that there aren't more that one matching result before returning it.
+		if r.Name == v {
+			if found != nil {
+				return nil, apiv2.ErrTooManyFound
+			}
+			found = r
+		}
+	}
+
+	if found != nil {
+		return found, nil
+	}
+
+	return nil, apiv2.ErrNotFound
+}
+
 // UpdateInstance updates the specified Compute instance in the specified zone.
 func (c *Client) UpdateInstance(ctx context.Context, zone string, instance *Instance) error {
 	resp, err := c.UpdateInstanceWithResponse(

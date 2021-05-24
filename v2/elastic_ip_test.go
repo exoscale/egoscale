@@ -305,6 +305,38 @@ func (ts *clientTestSuite) TestClient_GetElasticIP() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestClient_FindElasticIP() {
+	ts.mockAPIRequest("GET", "/elastic-ip", struct {
+		ElasticIPs *[]papi.ElasticIp `json:"elastic-ips,omitempty"`
+	}{
+		ElasticIPs: &[]papi.ElasticIp{{
+			Id: &testElasticIPID,
+			Ip: &testElasticIPAddress,
+		}},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/elastic-ip/%s", testElasticIPID), papi.ElasticIp{
+		Id: &testElasticIPID,
+		Ip: &testElasticIPAddress,
+	})
+
+	expected := &ElasticIP{
+		ID:        testElasticIPID,
+		IPAddress: net.ParseIP(testElasticIPAddress),
+
+		zone: testZone,
+		c:    ts.client,
+	}
+
+	actual, err := ts.client.FindElasticIP(context.Background(), testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindElasticIP(context.Background(), testZone, expected.IPAddress.String())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 	var (
 		testElasticIPDescriptionUpdated              = testElasticIPDescription + "-updated"

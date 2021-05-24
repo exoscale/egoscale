@@ -108,6 +108,38 @@ func (c *Client) GetPrivateNetwork(ctx context.Context, zone, id string) (*Priva
 	return privateNetworkFromAPI(resp.JSON200), nil
 }
 
+// FindPrivateNetwork attempts to find a Private Network by name or ID in the specified zone.
+// In case the identifier is a name and multiple resources match, an ErrTooManyFound error is returned.
+func (c *Client) FindPrivateNetwork(ctx context.Context, zone, v string) (*PrivateNetwork, error) {
+	res, err := c.ListPrivateNetworks(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	var found *PrivateNetwork
+	for _, r := range res {
+		if r.ID == v {
+			return c.GetPrivateNetwork(ctx, zone, r.ID)
+		}
+
+		// Historically, the Exoscale API allowed users to create multiple Private Networks sharing a common name.
+		// This function being expected to return one resource at most, in case the specified identifier is a name
+		// we have to check that there aren't more that one matching result before returning it.
+		if r.Name == v {
+			if found != nil {
+				return nil, apiv2.ErrTooManyFound
+			}
+			found = r
+		}
+	}
+
+	if found != nil {
+		return found, nil
+	}
+
+	return nil, apiv2.ErrNotFound
+}
+
 // UpdatePrivateNetwork updates the specified Private Network in the specified zone.
 func (c *Client) UpdatePrivateNetwork(ctx context.Context, zone string, privateNetwork *PrivateNetwork) error {
 	resp, err := c.UpdatePrivateNetworkWithResponse(

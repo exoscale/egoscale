@@ -66,3 +66,47 @@ func (ts *clientTestSuite) TestClient_GetDeployTarget() {
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
+
+func (ts *clientTestSuite) TestClient_FindDeployTarget() {
+	ts.mockAPIRequest("GET", "/deploy-target", struct {
+		DeployTargets *[]papi.DeployTarget `json:"deploy-targets,omitempty"`
+	}{
+		DeployTargets: &[]papi.DeployTarget{{
+			Description: &testDeployTargetDescription,
+			Id:          &testDeployTargetID,
+			Name:        &testDeployTargetName,
+			Type: func() *papi.DeployTargetType {
+				v := papi.DeployTargetType(testDeployTargetType)
+				return &v
+			}(),
+		}},
+	})
+
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/deploy-target/%s", testDeployTargetID),
+		papi.DeployTarget{
+			Description: &testDeployTargetDescription,
+			Id:          &testDeployTargetID,
+			Name:        &testDeployTargetName,
+			Type: func() *papi.DeployTargetType {
+				v := papi.DeployTargetType(testDeployTargetType)
+				return &v
+			}(),
+		})
+
+	expected := &DeployTarget{
+		Description: testDeployTargetDescription,
+		ID:          testDeployTargetID,
+		Name:        testDeployTargetName,
+		Type:        testDeployTargetType,
+	}
+
+	actual, err := ts.client.FindDeployTarget(context.Background(), testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindDeployTarget(context.Background(), testZone, expected.Name)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}

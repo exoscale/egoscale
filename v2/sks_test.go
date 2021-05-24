@@ -849,6 +849,58 @@ func (ts *clientTestSuite) TestClient_GetSKSCluster() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestClient_FindSKSCluster() {
+	ts.mockAPIRequest("GET", "/sks-cluster", struct {
+		SksClusters *[]papi.SksCluster `json:"sks-clusters,omitempty"`
+	}{
+		SksClusters: &[]papi.SksCluster{{
+			Cni:       (*papi.SksClusterCni)(&testSKSClusterCNI),
+			CreatedAt: &testSKSClusterCreatedAt,
+			Endpoint:  &testSKSClusterEndpoint,
+			Id:        &testSKSClusterID,
+			Level:     &testSKSClusterServiceLevel,
+			Name:      &testSKSClusterName,
+			State:     &testSKSClusterState,
+			Version:   &testSKSClusterVersion,
+		}},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID), papi.SksCluster{
+		Cni:       (*papi.SksClusterCni)(&testSKSClusterCNI),
+		CreatedAt: &testSKSClusterCreatedAt,
+		Endpoint:  &testSKSClusterEndpoint,
+		Id:        &testSKSClusterID,
+		Level:     &testSKSClusterServiceLevel,
+		Name:      &testSKSClusterName,
+		State:     &testSKSClusterState,
+		Version:   &testSKSClusterVersion,
+	})
+
+	expected := &SKSCluster{
+		AddOns:       []string{},
+		CNI:          testSKSClusterCNI,
+		CreatedAt:    testSKSClusterCreatedAt,
+		Endpoint:     testSKSClusterEndpoint,
+		ID:           testSKSClusterID,
+		Name:         testSKSClusterName,
+		Nodepools:    []*SKSNodepool{},
+		ServiceLevel: string(testSKSClusterServiceLevel),
+		State:        string(testSKSClusterState),
+		Version:      testSKSClusterVersion,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := ts.client.FindSKSCluster(context.Background(), testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindSKSCluster(context.Background(), testZone, expected.Name)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestClient_UpdateSKSCluster() {
 	var (
 		testSKSClusterNameUpdated        = testSKSClusterName + "-updated"

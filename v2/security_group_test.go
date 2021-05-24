@@ -391,6 +391,38 @@ func (ts *clientTestSuite) TestClient_GetSecurityGroup() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestClient_FindSecurityGroup() {
+	ts.mockAPIRequest("GET", "/security-group", struct {
+		SecurityGroups *[]papi.SecurityGroup `json:"security-groups,omitempty"`
+	}{
+		SecurityGroups: &[]papi.SecurityGroup{{
+			Id:   &testSecurityGroupID,
+			Name: &testSecurityGroupName,
+		}},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/security-group/%s", testSecurityGroupID), papi.SecurityGroup{
+		Id:   &testSecurityGroupID,
+		Name: &testSecurityGroupName,
+	})
+
+	expected := &SecurityGroup{
+		ID:   testSecurityGroupID,
+		Name: testSecurityGroupName,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := ts.client.FindSecurityGroup(context.Background(), testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindSecurityGroup(context.Background(), testZone, expected.Name)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestClient_DeleteSecurityGroup() {
 	var (
 		testOperationID    = ts.randomID()

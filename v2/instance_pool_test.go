@@ -538,6 +538,70 @@ func (ts *clientTestSuite) TestClient_GetInstancePool() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestClient_FindInstancePool() {
+	ts.mockAPIRequest("GET", "/instance-pool", struct {
+		InstancePools *[]papi.InstancePool `json:"instance-pools,omitempty"`
+	}{
+		InstancePools: &[]papi.InstancePool{{
+			Description:  &testInstancePoolDescription,
+			DiskSize:     &testInstancePoolDiskSize,
+			Id:           &testInstancePoolID,
+			InstanceType: &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
+			Ipv6Enabled:  &testInstancePoolIPv6Enabled,
+			Manager:      &papi.Manager{Id: &testInstancePoolManagerID},
+			Name:         &testInstancePoolName,
+			Size:         &testInstancePoolSize,
+			SshKey:       &papi.SshKey{Name: &testInstancePoolSSHKey},
+			State:        &testInstancePoolState,
+			Template:     &papi.Template{Id: &testInstancePoolTemplateID},
+		}},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-pool/%s", testInstancePoolID), papi.InstancePool{
+		Description:  &testInstancePoolDescription,
+		DiskSize:     &testInstancePoolDiskSize,
+		Id:           &testInstancePoolID,
+		InstanceType: &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
+		Ipv6Enabled:  &testInstancePoolIPv6Enabled,
+		Manager:      &papi.Manager{Id: &testInstancePoolManagerID},
+		Name:         &testInstancePoolName,
+		Size:         &testInstancePoolSize,
+		SshKey:       &papi.SshKey{Name: &testInstancePoolSSHKey},
+		State:        &testInstancePoolState,
+		Template:     &papi.Template{Id: &testInstancePoolTemplateID},
+	})
+
+	expected := &InstancePool{
+		AntiAffinityGroupIDs: []string{},
+		Description:          testInstancePoolDescription,
+		DiskSize:             testInstancePoolDiskSize,
+		ElasticIPIDs:         []string{},
+		ID:                   testInstancePoolID,
+		IPv6Enabled:          testInstancePoolIPv6Enabled,
+		InstanceIDs:          []string{},
+		InstanceTypeID:       testInstancePoolInstanceTypeID,
+		ManagerID:            testInstancePoolManagerID,
+		Name:                 testInstancePoolName,
+		PrivateNetworkIDs:    []string{},
+		SSHKey:               testInstancePoolSSHKey,
+		SecurityGroupIDs:     []string{},
+		Size:                 testInstancePoolSize,
+		State:                string(testInstancePoolState),
+		TemplateID:           testInstancePoolTemplateID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := ts.client.FindInstancePool(context.Background(), testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindInstancePool(context.Background(), testZone, expected.Name)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 	var (
 		testInstancePoolAntiAffinityGroupIDUpdated = new(clientTestSuite).randomID()

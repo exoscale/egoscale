@@ -136,6 +136,41 @@ func (ts *clientTestSuite) TestClient_GetAntiAffinityGroup() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestClient_FindAntiAffinityGroup() {
+	ts.mockAPIRequest("GET", "/anti-affinity-group", struct {
+		AntiAffinityGroups *[]papi.AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	}{
+		AntiAffinityGroups: &[]papi.AntiAffinityGroup{{
+			Description: &testAntiAffinityGroupDescription,
+			Id:          &testAntiAffinityGroupID,
+			Name:        &testAntiAffinityGroupName,
+		}},
+	})
+
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
+		papi.AntiAffinityGroup{
+			Description: &testAntiAffinityGroupDescription,
+			Id:          &testAntiAffinityGroupID,
+			Name:        &testAntiAffinityGroupName,
+		})
+
+	expected := &AntiAffinityGroup{
+		Description: testAntiAffinityGroupDescription,
+		ID:          testAntiAffinityGroupID,
+		Name:        testAntiAffinityGroupName,
+	}
+
+	actual, err := ts.client.FindAntiAffinityGroup(context.Background(), testZone, expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindAntiAffinityGroup(context.Background(), testZone, expected.Name)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestClient_DeleteAntiAffinityGroup() {
 	var (
 		testOperationID    = ts.randomID()

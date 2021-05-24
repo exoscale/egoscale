@@ -255,6 +255,22 @@ func (c *Client) GetSecurityGroup(ctx context.Context, zone, id string) (*Securi
 	return securityGroupFromAPI(c, zone, resp.JSON200), nil
 }
 
+// FindSecurityGroup attempts to find a Security Group by name or ID in the specified zone.
+func (c *Client) FindSecurityGroup(ctx context.Context, zone, v string) (*SecurityGroup, error) {
+	res, err := c.ListSecurityGroups(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range res {
+		if r.ID == v || r.Name == v {
+			return c.GetSecurityGroup(ctx, zone, r.ID)
+		}
+	}
+
+	return nil, apiv2.ErrNotFound
+}
+
 // DeleteSecurityGroup deletes the specified Security Group in the specified zone.
 func (c *Client) DeleteSecurityGroup(ctx context.Context, zone, id string) error {
 	resp, err := c.DeleteSecurityGroupWithResponse(apiv2.WithZone(ctx, zone), id)

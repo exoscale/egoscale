@@ -10,7 +10,7 @@ import (
 	papi "github.com/exoscale/egoscale/v2/internal/public-api"
 )
 
-// SKSNodepool represents a SKS Nodepool.
+// SKSNodepool represents an SKS Nodepool.
 type SKSNodepool struct {
 	AntiAffinityGroupIDs []string `reset:"anti-affinity-groups"`
 	CreatedAt            time.Time
@@ -90,7 +90,7 @@ func (n *SKSNodepool) SecurityGroups(ctx context.Context) ([]*SecurityGroup, err
 	return res.([]*SecurityGroup), err
 }
 
-// SKSCluster represents a SKS cluster.
+// SKSCluster represents an SKS cluster.
 type SKSCluster struct {
 	AddOns       []string
 	CNI          string
@@ -485,7 +485,7 @@ func (c *SKSCluster) ResetNodepoolField(ctx context.Context, np *SKSNodepool, fi
 	return nil
 }
 
-// CreateSKSCluster creates a SKS cluster in the specified zone.
+// CreateSKSCluster creates an SKS cluster in the specified zone.
 func (c *Client) CreateSKSCluster(ctx context.Context, zone string, cluster *SKSCluster) (*SKSCluster, error) {
 	resp, err := c.CreateSksClusterWithResponse(
 		apiv2.WithZone(ctx, zone),
@@ -571,6 +571,22 @@ func (c *Client) GetSKSCluster(ctx context.Context, zone, id string) (*SKSCluste
 	}
 
 	return sksClusterFromAPI(c, zone, resp.JSON200), nil
+}
+
+// FindSKSCluster attempts to find an SKS cluster by name or ID in the specified zone.
+func (c *Client) FindSKSCluster(ctx context.Context, zone, v string) (*SKSCluster, error) {
+	res, err := c.ListSKSClusters(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range res {
+		if r.ID == v || r.Name == v {
+			return c.GetSKSCluster(ctx, zone, r.ID)
+		}
+	}
+
+	return nil, apiv2.ErrNotFound
 }
 
 // UpdateSKSCluster updates the specified SKS cluster in the specified zone.

@@ -162,6 +162,22 @@ func (c *Client) GetElasticIP(ctx context.Context, zone, id string) (*ElasticIP,
 	return elasticIPFromAPI(c, zone, resp.JSON200), nil
 }
 
+// FindElasticIP attempts to find an Elastic IP by IP address or ID in the specified zone.
+func (c *Client) FindElasticIP(ctx context.Context, zone, v string) (*ElasticIP, error) {
+	res, err := c.ListElasticIPs(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range res {
+		if r.ID == v || r.IPAddress.String() == v {
+			return c.GetElasticIP(ctx, zone, r.ID)
+		}
+	}
+
+	return nil, apiv2.ErrNotFound
+}
+
 // UpdateElasticIP updates the specified Elastic IP in the specified zone.
 func (c *Client) UpdateElasticIP(ctx context.Context, zone string, elasticIP *ElasticIP) error {
 	resp, err := c.UpdateElasticIpWithResponse(

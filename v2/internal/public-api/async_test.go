@@ -13,7 +13,7 @@ import (
 
 func TestNewPoller(t *testing.T) {
 	require.Equal(t,
-		&Poller{interval: defaultPollingInterval},
+		&Poller{interval: DefaultPollingInterval},
 		NewPoller())
 }
 
@@ -28,7 +28,7 @@ func TestPoller_WithTimeout(t *testing.T) {
 	testPoller := NewPoller()
 	require.Equal(t,
 		&Poller{
-			interval: defaultPollingInterval,
+			interval: DefaultPollingInterval,
 			timeout:  time.Second,
 		},
 		testPoller.WithTimeout(time.Second))

@@ -83,6 +83,7 @@ func (e *ElasticIP) ResetField(ctx context.Context, field interface{}) error {
 
 	_, err = papi.NewPoller().
 		WithTimeout(e.c.timeout).
+		WithInterval(e.c.pollInterval).
 		Poll(ctx, e.c.OperationPoller(e.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -126,6 +127,7 @@ func (c *Client) CreateElasticIP(ctx context.Context, zone string, elasticIP *El
 
 	res, err := papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -219,6 +221,7 @@ func (c *Client) UpdateElasticIP(ctx context.Context, zone string, elasticIP *El
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -236,6 +239,7 @@ func (c *Client) DeleteElasticIP(ctx context.Context, zone, id string) error {
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

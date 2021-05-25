@@ -52,6 +52,7 @@ func (s *Snapshot) Export(ctx context.Context) (*SnapshotExport, error) {
 
 	res, err := papi.NewPoller().
 		WithTimeout(s.c.timeout).
+		WithInterval(s.c.pollInterval).
 		Poll(ctx, s.c.OperationPoller(s.zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -105,6 +106,7 @@ func (c *Client) DeleteSnapshot(ctx context.Context, zone, id string) error {
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

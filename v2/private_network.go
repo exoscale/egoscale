@@ -72,6 +72,7 @@ func (c *Client) CreatePrivateNetwork(
 
 	res, err := papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -176,6 +177,7 @@ func (c *Client) UpdatePrivateNetwork(ctx context.Context, zone string, privateN
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -193,6 +195,7 @@ func (c *Client) DeletePrivateNetwork(ctx context.Context, zone, id string) erro
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

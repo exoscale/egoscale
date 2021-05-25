@@ -191,6 +191,7 @@ func (nlb *NetworkLoadBalancer) AddService(
 
 	res, err := papi.NewPoller().
 		WithTimeout(nlb.c.timeout).
+		WithInterval(nlb.c.pollInterval).
 		Poll(ctx, nlb.c.OperationPoller(nlb.zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -288,6 +289,7 @@ func (nlb *NetworkLoadBalancer) UpdateService(ctx context.Context, svc *NetworkL
 
 	_, err = papi.NewPoller().
 		WithTimeout(nlb.c.timeout).
+		WithInterval(nlb.c.pollInterval).
 		Poll(ctx, nlb.c.OperationPoller(nlb.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -309,6 +311,7 @@ func (nlb *NetworkLoadBalancer) DeleteService(ctx context.Context, svc *NetworkL
 
 	_, err = papi.NewPoller().
 		WithTimeout(nlb.c.timeout).
+		WithInterval(nlb.c.pollInterval).
 		Poll(ctx, nlb.c.OperationPoller(nlb.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -336,6 +339,7 @@ func (nlb *NetworkLoadBalancer) ResetField(ctx context.Context, field interface{
 
 	_, err = papi.NewPoller().
 		WithTimeout(nlb.c.timeout).
+		WithInterval(nlb.c.pollInterval).
 		Poll(ctx, nlb.c.OperationPoller(nlb.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -363,6 +367,7 @@ func (c *Client) CreateNetworkLoadBalancer(
 
 	res, err := papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -448,6 +453,7 @@ func (c *Client) UpdateNetworkLoadBalancer(ctx context.Context, zone string, nlb
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -465,6 +471,7 @@ func (c *Client) DeleteNetworkLoadBalancer(ctx context.Context, zone, id string)
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

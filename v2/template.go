@@ -92,6 +92,7 @@ func (c *Client) DeleteTemplate(ctx context.Context, zone, id string) error {
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

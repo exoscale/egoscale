@@ -44,6 +44,7 @@ func (c *Client) CreateAntiAffinityGroup(
 
 	res, err := papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -105,6 +106,7 @@ func (c *Client) DeleteAntiAffinityGroup(ctx context.Context, zone, id string) e
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

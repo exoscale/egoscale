@@ -34,7 +34,7 @@ type clientTestSuite struct {
 func (ts *clientTestSuite) SetupTest() {
 	httpmock.Activate()
 
-	client, err := NewClient("x", "x")
+	client, err := NewClient("x", "x", ClientOptWithPollInterval(10*time.Millisecond))
 	if err != nil {
 		ts.T().Fatal(err)
 	}
@@ -224,6 +224,7 @@ func TestNewClient(t *testing.T) {
 		testHTTPTransport = http.Transport{}
 		testHTTPClient    = &http.Client{Transport: &testHTTPTransport}
 		testTimeout       = 5 * time.Second
+		testPollInterval  = 10 * time.Second
 	)
 
 	client, err := NewClient(
@@ -232,6 +233,7 @@ func TestNewClient(t *testing.T) {
 		ClientOptWithAPIEndpoint(testAPIEndpoint),
 		ClientOptWithHTTPClient(testHTTPClient),
 		ClientOptWithTimeout(testTimeout),
+		ClientOptWithPollInterval(testPollInterval),
 	)
 
 	require.NoError(t, err)
@@ -240,6 +242,7 @@ func TestNewClient(t *testing.T) {
 	require.Equal(t, testAPIEndpoint+api.Prefix, client.apiEndpoint)
 	require.Equal(t, testHTTPClient, client.httpClient)
 	require.Equal(t, testTimeout, client.timeout)
+	require.Equal(t, testPollInterval, client.pollInterval)
 	require.IsType(t, &api.ErrorHandlerMiddleware{}, client.httpClient.Transport)
 }
 

@@ -228,6 +228,7 @@ func (i *Instance) CreateSnapshot(ctx context.Context) (*Snapshot, error) {
 
 	res, err := papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -248,6 +249,7 @@ func (i *Instance) DetachElasticIP(ctx context.Context, elasticIP *ElasticIP) er
 
 	_, err = papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -268,6 +270,7 @@ func (i *Instance) DetachPrivateNetwork(ctx context.Context, privateNetwork *Pri
 
 	_, err = papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -288,6 +291,7 @@ func (i *Instance) DetachSecurityGroup(ctx context.Context, securityGroup *Secur
 
 	_, err = papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -320,6 +324,7 @@ func (i *Instance) RevertToSnapshot(ctx context.Context, snapshot *Snapshot) err
 
 	_, err = papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -385,6 +390,7 @@ func (c *Client) CreateInstance(ctx context.Context, zone string, instance *Inst
 
 	res, err := papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -478,6 +484,7 @@ func (c *Client) UpdateInstance(ctx context.Context, zone string, instance *Inst
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -495,6 +502,7 @@ func (c *Client) DeleteInstance(ctx context.Context, zone, id string) error {
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

@@ -170,6 +170,7 @@ func (s *SecurityGroup) AddRule(ctx context.Context, rule *SecurityGroupRule) (*
 
 	res, err := papi.NewPoller().
 		WithTimeout(s.c.timeout).
+		WithInterval(s.c.pollInterval).
 		Poll(ctx, s.c.OperationPoller(s.zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -205,6 +206,7 @@ func (s *SecurityGroup) DeleteRule(ctx context.Context, rule *SecurityGroupRule)
 
 	_, err = papi.NewPoller().
 		WithTimeout(s.c.timeout).
+		WithInterval(s.c.pollInterval).
 		Poll(ctx, s.c.OperationPoller(s.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -229,6 +231,7 @@ func (c *Client) CreateSecurityGroup(
 
 	res, err := papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -290,6 +293,7 @@ func (c *Client) DeleteSecurityGroup(ctx context.Context, zone, id string) error
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

@@ -171,6 +171,7 @@ func (i *InstancePool) Scale(ctx context.Context, instances int64) error {
 
 	_, err = papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -193,6 +194,7 @@ func (i *InstancePool) EvictMembers(ctx context.Context, members []string) error
 
 	_, err = papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -220,6 +222,7 @@ func (i *InstancePool) ResetField(ctx context.Context, field interface{}) error 
 
 	_, err = papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -310,6 +313,7 @@ func (c *Client) CreateInstancePool(ctx context.Context, zone string, instancePo
 
 	res, err := papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -482,6 +486,7 @@ func (c *Client) UpdateInstancePool(ctx context.Context, zone string, instancePo
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -499,6 +504,7 @@ func (c *Client) DeleteInstancePool(ctx context.Context, zone, id string) error 
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

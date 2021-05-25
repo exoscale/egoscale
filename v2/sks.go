@@ -159,6 +159,7 @@ func (c *SKSCluster) RotateCCMCredentials(ctx context.Context) error {
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.c.timeout).
+		WithInterval(c.c.pollInterval).
 		Poll(ctx, c.c.OperationPoller(c.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -271,6 +272,7 @@ func (c *SKSCluster) AddNodepool(ctx context.Context, np *SKSNodepool) (*SKSNode
 
 	res, err := papi.NewPoller().
 		WithTimeout(c.c.timeout).
+		WithInterval(c.c.pollInterval).
 		Poll(ctx, c.c.OperationPoller(c.zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -356,6 +358,7 @@ func (c *SKSCluster) UpdateNodepool(ctx context.Context, np *SKSNodepool) error 
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.c.timeout).
+		WithInterval(c.c.pollInterval).
 		Poll(ctx, c.c.OperationPoller(c.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -378,6 +381,7 @@ func (c *SKSCluster) ScaleNodepool(ctx context.Context, np *SKSNodepool, nodes i
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.c.timeout).
+		WithInterval(c.c.pollInterval).
 		Poll(ctx, c.c.OperationPoller(c.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -401,6 +405,7 @@ func (c *SKSCluster) EvictNodepoolMembers(ctx context.Context, np *SKSNodepool, 
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.c.timeout).
+		WithInterval(c.c.pollInterval).
 		Poll(ctx, c.c.OperationPoller(c.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -422,6 +427,7 @@ func (c *SKSCluster) DeleteNodepool(ctx context.Context, np *SKSNodepool) error 
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.c.timeout).
+		WithInterval(c.c.pollInterval).
 		Poll(ctx, c.c.OperationPoller(c.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -449,6 +455,7 @@ func (c *SKSCluster) ResetField(ctx context.Context, field interface{}) error {
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.c.timeout).
+		WithInterval(c.c.pollInterval).
 		Poll(ctx, c.c.OperationPoller(c.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -477,6 +484,7 @@ func (c *SKSCluster) ResetNodepoolField(ctx context.Context, np *SKSNodepool, fi
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.c.timeout).
+		WithInterval(c.c.pollInterval).
 		Poll(ctx, c.c.OperationPoller(c.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -518,6 +526,7 @@ func (c *Client) CreateSKSCluster(ctx context.Context, zone string, cluster *SKS
 
 	res, err := papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
@@ -614,6 +623,7 @@ func (c *Client) UpdateSKSCluster(ctx context.Context, zone string, cluster *SKS
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -635,6 +645,7 @@ func (c *Client) UpgradeSKSCluster(ctx context.Context, zone, id, version string
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -652,6 +663,7 @@ func (c *Client) DeleteSKSCluster(ctx context.Context, zone, id string) error {
 
 	_, err = papi.NewPoller().
 		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
 		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

@@ -89,6 +89,7 @@ type NetworkLoadBalancer struct {
 	Description string
 	ID          string
 	IPAddress   net.IP
+	Labels      map[string]string `reset:"labels"`
 	Name        string
 	Services    []*NetworkLoadBalancerService
 	State       string
@@ -103,7 +104,13 @@ func nlbFromAPI(client *Client, zone string, nlb *papi.LoadBalancer) *NetworkLoa
 		Description: papi.OptionalString(nlb.Description),
 		ID:          *nlb.Id,
 		IPAddress:   net.ParseIP(papi.OptionalString(nlb.Ip)),
-		Name:        *nlb.Name,
+		Labels: func() map[string]string {
+			if nlb.Labels != nil {
+				return nlb.Labels.AdditionalProperties
+			}
+			return nil
+		}(),
+		Name: *nlb.Name,
 		Services: func() []*NetworkLoadBalancerService {
 			services := make([]*NetworkLoadBalancerService, 0)
 			if nlb.Services != nil {
@@ -310,6 +317,33 @@ func (nlb *NetworkLoadBalancer) DeleteService(ctx context.Context, svc *NetworkL
 	return nil
 }
 
+// ResetField resets the specified Network Load Balancer field to its default value.
+// The value expected for the field parameter is a pointer to the NetworkLoadBalancer field to reset.
+func (nlb *NetworkLoadBalancer) ResetField(ctx context.Context, field interface{}) error {
+	resetField, err := resetFieldName(nlb, field)
+	if err != nil {
+		return err
+	}
+
+	resp, err := nlb.c.ResetLoadBalancerFieldWithResponse(
+		apiv2.WithZone(ctx, nlb.zone),
+		nlb.ID,
+		papi.ResetLoadBalancerFieldParamsField(resetField),
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = papi.NewPoller().
+		WithTimeout(nlb.c.timeout).
+		Poll(ctx, nlb.c.OperationPoller(nlb.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateNetworkLoadBalancer creates a Network Load Balancer instance in the specified zone.
 func (c *Client) CreateNetworkLoadBalancer(
 	ctx context.Context,
@@ -320,6 +354,7 @@ func (c *Client) CreateNetworkLoadBalancer(
 		apiv2.WithZone(ctx, zone),
 		papi.CreateLoadBalancerJSONRequestBody{
 			Description: &nlb.Description,
+			Labels:      &papi.Labels{AdditionalProperties: nlb.Labels},
 			Name:        nlb.Name,
 		})
 	if err != nil {
@@ -391,6 +426,12 @@ func (c *Client) UpdateNetworkLoadBalancer(ctx context.Context, zone string, nlb
 			Description: func() *string {
 				if nlb.Description != "" {
 					return &nlb.Description
+				}
+				return nil
+			}(),
+			Labels: func() *papi.Labels {
+				if len(nlb.Labels) > 0 {
+					return &papi.Labels{AdditionalProperties: nlb.Labels}
 				}
 				return nil
 			}(),

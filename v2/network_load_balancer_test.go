@@ -18,6 +18,7 @@ var (
 	testNLBDescription                               = "test-nlb-description"
 	testNLBCreatedAt, _                              = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
 	testNLBIPAddress                                 = "101.102.103.104"
+	testNLBLabels                                    = map[string]string{"k1": "v1", "k2": "v2"}
 	testNLBState                                     = papi.LoadBalancerStateRunning
 	testNLBServiceID                                 = new(clientTestSuite).randomID()
 	testNLBServiceName                               = "test-svc-name"
@@ -304,6 +305,47 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_DeleteService() {
 	ts.Require().True(deleted)
 }
 
+func (ts *clientTestSuite) TestNetworkLoadBalancer_ResetField() {
+	var (
+		testResetField     = "labels"
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+		reset              = false
+	)
+
+	httpmock.RegisterResponder("DELETE",
+		fmt.Sprintf("/load-balancer/%s/%s:reset", testNLBID, testResetField),
+		func(req *http.Request) (*http.Response, error) {
+			reset = true
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstancePoolID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testNLBID},
+	})
+
+	nlb := &NetworkLoadBalancer{
+		ID:   testNLBID,
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(nlb.ResetField(context.Background(), &nlb.Labels))
+	ts.Require().True(reset)
+}
+
 func (ts *clientTestSuite) TestClient_CreateNetworkLoadBalancer() {
 	var (
 		testOperationID    = ts.randomID()
@@ -317,6 +359,7 @@ func (ts *clientTestSuite) TestClient_CreateNetworkLoadBalancer() {
 
 			expected := papi.CreateLoadBalancerJSONRequestBody{
 				Description: &testNLBDescription,
+				Labels:      &papi.Labels{AdditionalProperties: testNLBLabels},
 				Name:        testNLBName,
 			}
 			ts.Require().Equal(expected, actual)
@@ -343,6 +386,7 @@ func (ts *clientTestSuite) TestClient_CreateNetworkLoadBalancer() {
 		CreatedAt:   &testNLBCreatedAt,
 		Description: &testNLBDescription,
 		Id:          &testNLBID,
+		Labels:      &papi.Labels{AdditionalProperties: testNLBLabels},
 		Name:        &testNLBName,
 		State:       &testNLBState,
 	})
@@ -351,6 +395,7 @@ func (ts *clientTestSuite) TestClient_CreateNetworkLoadBalancer() {
 		CreatedAt:   testNLBCreatedAt,
 		Description: testNLBDescription,
 		ID:          testNLBID,
+		Labels:      testNLBLabels,
 		Name:        testNLBName,
 		Services:    []*NetworkLoadBalancerService{},
 		State:       string(testNLBState),
@@ -361,6 +406,7 @@ func (ts *clientTestSuite) TestClient_CreateNetworkLoadBalancer() {
 
 	actual, err := ts.client.CreateNetworkLoadBalancer(context.Background(), testZone, &NetworkLoadBalancer{
 		Description: testNLBDescription,
+		Labels:      testNLBLabels,
 		Name:        testNLBName,
 	})
 	ts.Require().NoError(err)
@@ -581,8 +627,9 @@ func (ts *clientTestSuite) TestClient_FindNetworkLoadBalancer() {
 
 func (ts *clientTestSuite) TestClient_UpdateNetworkLoadBalancer() {
 	var (
-		testNLBNameUpdated        = testNLBName + "-updated"
 		testNLBDescriptionUpdated = testNLBDescription + "-updated"
+		testNLBLabelsUpdated      = map[string]string{"k3": "v3"}
+		testNLBNameUpdated        = testNLBName + "-updated"
 		testOperationID           = ts.randomID()
 		testOperationState        = papi.OperationStateSuccess
 		updated                   = false
@@ -596,8 +643,9 @@ func (ts *clientTestSuite) TestClient_UpdateNetworkLoadBalancer() {
 			ts.unmarshalJSONRequestBody(req, &actual)
 
 			expected := papi.UpdateLoadBalancerJSONRequestBody{
-				Name:        &testNLBNameUpdated,
 				Description: &testNLBDescriptionUpdated,
+				Labels:      &papi.Labels{AdditionalProperties: testNLBLabelsUpdated},
+				Name:        &testNLBNameUpdated,
 			}
 			ts.Require().Equal(expected, actual)
 
@@ -624,13 +672,15 @@ func (ts *clientTestSuite) TestClient_UpdateNetworkLoadBalancer() {
 		Description: &testNLBDescriptionUpdated,
 		Id:          &testNLBID,
 		Ip:          &testNLBIPAddress,
+		Labels:      &papi.Labels{AdditionalProperties: testNLBLabelsUpdated},
 		Name:        &testNLBNameUpdated,
 	})
 
 	nlbUpdated := NetworkLoadBalancer{
-		ID:          testNLBID,
-		Name:        testNLBNameUpdated,
 		Description: testNLBDescriptionUpdated,
+		ID:          testNLBID,
+		Labels:      testNLBLabelsUpdated,
+		Name:        testNLBNameUpdated,
 	}
 
 	ts.Require().NoError(ts.client.UpdateNetworkLoadBalancer(context.Background(), testZone, &nlbUpdated))

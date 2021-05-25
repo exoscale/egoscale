@@ -14,6 +14,7 @@ func (lb *LoadBalancer) UnmarshalJSON(data []byte) error {
 		Description *string                `json:"description,omitempty"`
 		Id          *string                `json:"id,omitempty"` // nolint:revive
 		Ip          *string                `json:"ip,omitempty"` // nolint:revive
+		Labels      *Labels                `json:"labels,omitempty"`
 		Name        *string                `json:"name,omitempty"`
 		Services    *[]LoadBalancerService `json:"services,omitempty"`
 		State       *LoadBalancerState     `json:"state,omitempty"`
@@ -34,6 +35,7 @@ func (lb *LoadBalancer) UnmarshalJSON(data []byte) error {
 	lb.Description = raw.Description
 	lb.Id = raw.Id
 	lb.Ip = raw.Ip
+	lb.Labels = raw.Labels
 	lb.Name = raw.Name
 	lb.Services = raw.Services
 	lb.State = raw.State
@@ -49,6 +51,7 @@ func (lb *LoadBalancer) MarshalJSON() ([]byte, error) {
 		Description *string                `json:"description,omitempty"`
 		Id          *string                `json:"id,omitempty"` // nolint:revive
 		Ip          *string                `json:"ip,omitempty"` // nolint:revive
+		Labels      *Labels                `json:"labels,omitempty"`
 		Name        *string                `json:"name,omitempty"`
 		Services    *[]LoadBalancerService `json:"services,omitempty"`
 		State       *LoadBalancerState     `json:"state,omitempty"`
@@ -62,6 +65,7 @@ func (lb *LoadBalancer) MarshalJSON() ([]byte, error) {
 	raw.Description = lb.Description
 	raw.Id = lb.Id
 	raw.Ip = lb.Ip
+	raw.Labels = lb.Labels
 	raw.Name = lb.Name
 	raw.Services = lb.Services
 	raw.State = lb.State

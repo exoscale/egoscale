@@ -46,7 +46,7 @@ func (ts *clientTestSuite) TestSecurityGroup_get() {
 			Id:            &testSecurityGroupRuleID,
 			Network:       &testSecurityGroupRuleNetwork,
 			Protocol:      &testSecurityGroupRuleProtocol,
-			SecurityGroup: &papi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
+			SecurityGroup: &papi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
 			StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 		}},
 	})
@@ -101,7 +101,7 @@ func (ts *clientTestSuite) TestSecurityGroup_AddRule() {
 				},
 				Network:       &testSecurityGroupRuleNetwork,
 				Protocol:      papi.AddRuleToSecurityGroupJSONBodyProtocol(testSecurityGroupRuleProtocol),
-				SecurityGroup: &papi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
+				SecurityGroup: &papi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
 				StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 			}
 			ts.Require().Equal(expected, actual)
@@ -142,7 +142,7 @@ func (ts *clientTestSuite) TestSecurityGroup_AddRule() {
 			Id:            &testSecurityGroupRuleID,
 			Network:       &testSecurityGroupRuleNetwork,
 			Protocol:      &testSecurityGroupRuleProtocol,
-			SecurityGroup: &papi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
+			SecurityGroup: &papi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
 			StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 		}},
 	})
@@ -307,7 +307,7 @@ func (ts *clientTestSuite) TestClient_ListSecurityGroups() {
 				Id:            &testSecurityGroupRuleID,
 				Network:       &testSecurityGroupRuleNetwork,
 				Protocol:      &testSecurityGroupRuleProtocol,
-				SecurityGroup: &papi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
+				SecurityGroup: &papi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
 				StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 			}},
 		}},
@@ -360,7 +360,7 @@ func (ts *clientTestSuite) TestClient_GetSecurityGroup() {
 			Id:            &testSecurityGroupRuleID,
 			Network:       &testSecurityGroupRuleNetwork,
 			Protocol:      &testSecurityGroupRuleProtocol,
-			SecurityGroup: &papi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
+			SecurityGroup: &papi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
 			StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 		}},
 	})

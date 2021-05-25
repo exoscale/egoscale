@@ -55,7 +55,7 @@ func securityGroupRuleFromAPI(r *papi.SecurityGroupRule) *SecurityGroupRule {
 		Protocol: string(*r.Protocol),
 		SecurityGroupID: func() (v string) {
 			if r.SecurityGroup != nil {
-				v = papi.OptionalString(r.SecurityGroup.Id)
+				v = r.SecurityGroup.Id
 			}
 			return
 		}(),
@@ -158,7 +158,7 @@ func (s *SecurityGroup) AddRule(ctx context.Context, rule *SecurityGroupRule) (*
 			Protocol: papi.AddRuleToSecurityGroupJSONBodyProtocol(rule.Protocol),
 			SecurityGroup: func() (v *papi.SecurityGroupResource) {
 				if rule.SecurityGroupID != "" {
-					v = &papi.SecurityGroupResource{Id: &rule.SecurityGroupID}
+					v = &papi.SecurityGroupResource{Id: rule.SecurityGroupID}
 				}
 				return
 			}(),

@@ -13,6 +13,7 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 	var (
 		testID                                       = testRandomID(t)
 		testIP                                       = "1.2.3.4"
+		testLabels                                   = map[string]string{"k1": "v1", "k2": "v2"}
 		testName                                     = "test-lb"
 		testCreatedAt, _                             = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
 		testDescription                              = "Test NLB description"
@@ -41,6 +42,7 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 			Description: &testDescription,
 			Id:          &testID,
 			Ip:          &testIP,
+			Labels:      &Labels{AdditionalProperties: testLabels},
 			Name:        &testName,
 			Services: &[]LoadBalancerService{{
 				Description: &testServiceDescription,
@@ -74,6 +76,7 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 		jsonNLB = `{
   "id": "` + testID + `",
   "ip": "` + testIP + `",
+  "labels": {"k1": "` + testLabels["k1"] + `", "k2": "` + testLabels["k2"] + `"},
   "description": "` + testDescription + `",
   "state": "` + string(testState) + `",
   "name": "` + testName + `",
@@ -117,6 +120,7 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 	var (
 		testID                                       = testRandomID(t)
 		testIP                                       = "1.2.3.4"
+		testLabels                                   = map[string]string{"k1": "v1", "k2": "v2"}
 		testName                                     = "test-lb"
 		testCreatedAt, _                             = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
 		testDescription                              = "Test NLB description"
@@ -145,6 +149,7 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 			Description: &testDescription,
 			Id:          &testID,
 			Ip:          &testIP,
+			Labels:      &Labels{AdditionalProperties: testLabels},
 			Name:        &testName,
 			State:       &testState,
 			Services: &[]LoadBalancerService{{
@@ -178,6 +183,7 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 			`"description":"` + testDescription + `",` +
 			`"id":"` + testID + `",` +
 			`"ip":"` + testIP + `",` +
+			`"labels":{"k1":"` + testLabels["k1"] + `","k2":"` + testLabels["k2"] + `"},` +
 			`"name":"` + testName + `",` +
 			`"services":[{` +
 			`"description":"` + testServiceDescription + `",` +

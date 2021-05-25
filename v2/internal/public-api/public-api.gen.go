@@ -19,20 +19,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Defines values for AccessKeyType.
-const (
-	AccessKeyTypeRestricted AccessKeyType = "restricted"
-
-	AccessKeyTypeUnrestricted AccessKeyType = "unrestricted"
-)
-
-// Defines values for AccessKeyVersion.
-const (
-	AccessKeyVersionV1 AccessKeyVersion = "v1"
-
-	AccessKeyVersionV2 AccessKeyVersion = "v2"
-)
-
 // Defines values for DbaasNodeStateRole.
 const (
 	DbaasNodeStateRoleMaster DbaasNodeStateRole = "master"
@@ -474,37 +460,6 @@ const (
 
 	ZoneNameDeMuc1 ZoneName = "de-muc-1"
 )
-
-// IAM Access Key
-type AccessKey struct {
-
-	// IAM Access Key
-	Key *string `json:"key,omitempty"`
-
-	// IAM Access Key name
-	Name *string `json:"name,omitempty"`
-
-	// IAM Access Key operations
-	Operations *[]string `json:"operations,omitempty"`
-
-	// IAM Access Key Secret
-	Secret *string `json:"secret,omitempty"`
-
-	// IAM Access Key tags
-	Tags *[]string `json:"tags,omitempty"`
-
-	// IAM Access Key type
-	Type *AccessKeyType `json:"type,omitempty"`
-
-	// IAM Access Key version
-	Version *AccessKeyVersion `json:"version,omitempty"`
-}
-
-// IAM Access Key type
-type AccessKeyType string
-
-// IAM Access Key version
-type AccessKeyVersion string
 
 // Anti-affinity Group
 type AntiAffinityGroup struct {
@@ -1263,6 +1218,11 @@ type InstanceTypeFamily string
 // Instance type size
 type InstanceTypeSize string
 
+// Labels defines model for labels.
+type Labels struct {
+	AdditionalProperties map[string]string `json:"-"`
+}
+
 // Load Balancer
 type LoadBalancer struct {
 
@@ -1276,7 +1236,8 @@ type LoadBalancer struct {
 	Id *string `json:"id,omitempty"`
 
 	// Load Balancer public IP
-	Ip *string `json:"ip,omitempty"`
+	Ip     *string `json:"ip,omitempty"`
+	Labels *Labels `json:"labels,omitempty"`
 
 	// Load Balancer name
 	Name *string `json:"name,omitempty"`
@@ -1428,6 +1389,9 @@ type PrivateNetwork struct {
 	// Private Network ID
 	Id *string `json:"id,omitempty"`
 
+	// Private Network leased IP addresses
+	Leases *[]PrivateNetworkLease `json:"leases,omitempty"`
+
 	// Private Network name
 	Name *string `json:"name,omitempty"`
 
@@ -1436,6 +1400,16 @@ type PrivateNetwork struct {
 
 	// Private Network start IP address
 	StartIp *string `json:"start-ip,omitempty"`
+}
+
+// Private Network leased IP address
+type PrivateNetworkLease struct {
+
+	// Attached instance ID
+	InstanceId *string `json:"instance-id,omitempty"`
+
+	// Private Network IP address
+	Ip *string `json:"ip,omitempty"`
 }
 
 // Resource reference
@@ -1471,10 +1445,10 @@ type SecurityGroup struct {
 type SecurityGroupResource struct {
 
 	// Security Group ID
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id"`
 
 	// Security Group name
-	Name string `json:"name"`
+	Name *string `json:"name,omitempty"`
 }
 
 // Security Group rule
@@ -1737,9 +1711,6 @@ type Zone struct {
 
 // Zone short name
 type ZoneName string
-
-// CreateAccessKeyJSONBody defines parameters for CreateAccessKey.
-type CreateAccessKeyJSONBody AccessKey
 
 // CreateAntiAffinityGroupJSONBody defines parameters for CreateAntiAffinityGroup.
 type CreateAntiAffinityGroupJSONBody struct {
@@ -2030,6 +2001,7 @@ type CreateLoadBalancerJSONBody struct {
 
 	// Load Balancer description
 	Description *string `json:"description,omitempty"`
+	Labels      *Labels `json:"labels,omitempty"`
 
 	// Load Balancer name
 	Name string `json:"name"`
@@ -2038,6 +2010,7 @@ type CreateLoadBalancerJSONBody struct {
 // UpdateLoadBalancerJSONBody defines parameters for UpdateLoadBalancer.
 type UpdateLoadBalancerJSONBody struct {
 	Description *string `json:"description,omitempty"`
+	Labels      *Labels `json:"labels,omitempty"`
 	Name        *string `json:"name,omitempty"`
 }
 
@@ -2105,6 +2078,9 @@ type UpdateLoadBalancerServiceJSONBodyProtocol string
 
 // UpdateLoadBalancerServiceJSONBodyStrategy defines parameters for UpdateLoadBalancerService.
 type UpdateLoadBalancerServiceJSONBodyStrategy string
+
+// ResetLoadBalancerFieldParamsField defines parameters for ResetLoadBalancerField.
+type ResetLoadBalancerFieldParamsField string
 
 // CreatePrivateNetworkJSONBody defines parameters for CreatePrivateNetwork.
 type CreatePrivateNetworkJSONBody struct {
@@ -2407,9 +2383,6 @@ type CopyTemplateJSONBody struct {
 	// Target Zone ID
 	TargetZone string `json:"target-zone"`
 }
-
-// CreateAccessKeyJSONRequestBody defines body for CreateAccessKey for application/json ContentType.
-type CreateAccessKeyJSONRequestBody CreateAccessKeyJSONBody
 
 // CreateAntiAffinityGroupJSONRequestBody defines body for CreateAntiAffinityGroup for application/json ContentType.
 type CreateAntiAffinityGroupJSONRequestBody CreateAntiAffinityGroupJSONBody
@@ -3102,6 +3075,59 @@ func (a Event_Payload) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// Getter for additional properties for Labels. Returns the specified
+// element and whether it was found
+func (a Labels) Get(fieldName string) (value string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Labels
+func (a *Labels) Set(fieldName string, value string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Labels to handle AdditionalProperties
+func (a *Labels) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Labels to handle AdditionalProperties
+func (a Labels) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
@@ -3175,20 +3201,6 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ListAccessKeys request
-	ListAccessKeys(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// CreateAccessKey request  with any body
-	CreateAccessKeyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	CreateAccessKey(ctx context.Context, body CreateAccessKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// RevokeAccessKey request
-	RevokeAccessKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetAccessKey request
-	GetAccessKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// ListAntiAffinityGroups request
 	ListAntiAffinityGroups(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3203,6 +3215,9 @@ type ClientInterface interface {
 	// GetAntiAffinityGroup request
 	GetAntiAffinityGroup(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// DbaasListServices request
+	DbaasListServices(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// DbaasCreateService request  with any body
 	DbaasCreateServiceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3210,6 +3225,9 @@ type ClientInterface interface {
 
 	// DbaasListServiceTypes request
 	DbaasListServiceTypes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DbaasGetServiceType request
+	DbaasGetServiceType(ctx context.Context, serviceTypeName string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DbaasTerminateService request
 	DbaasTerminateService(ctx context.Context, serviceName string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3221,9 +3239,6 @@ type ClientInterface interface {
 	DbaasUpdateServiceWithBody(ctx context.Context, serviceName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	DbaasUpdateService(ctx context.Context, serviceName string, body DbaasUpdateServiceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// DbaasListServices request
-	DbaasListServices(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDeployTargets request
 	ListDeployTargets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3326,6 +3341,12 @@ type ClientInterface interface {
 	// CreateSnapshot request
 	CreateSnapshot(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// StartInstance request
+	StartInstance(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// StopInstance request
+	StopInstance(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// RevertInstanceToSnapshot request  with any body
 	RevertInstanceToSnapshotWithBody(ctx context.Context, instanceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3365,6 +3386,9 @@ type ClientInterface interface {
 	UpdateLoadBalancerServiceWithBody(ctx context.Context, id string, serviceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	UpdateLoadBalancerService(ctx context.Context, id string, serviceId string, body UpdateLoadBalancerServiceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResetLoadBalancerField request
+	ResetLoadBalancerField(ctx context.Context, id string, field ResetLoadBalancerFieldParamsField, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOperation request
 	GetOperation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3541,66 +3565,6 @@ type ClientInterface interface {
 	ListZones(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) ListAccessKeys(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListAccessKeysRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateAccessKeyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateAccessKeyRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreateAccessKey(ctx context.Context, body CreateAccessKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateAccessKeyRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) RevokeAccessKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewRevokeAccessKeyRequest(c.Server, key)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetAccessKey(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetAccessKeyRequest(c.Server, key)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) ListAntiAffinityGroups(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListAntiAffinityGroupsRequest(c.Server)
 	if err != nil {
@@ -3661,6 +3625,18 @@ func (c *Client) GetAntiAffinityGroup(ctx context.Context, id string, reqEditors
 	return c.Client.Do(req)
 }
 
+func (c *Client) DbaasListServices(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDbaasListServicesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) DbaasCreateServiceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDbaasCreateServiceRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -3687,6 +3663,18 @@ func (c *Client) DbaasCreateService(ctx context.Context, body DbaasCreateService
 
 func (c *Client) DbaasListServiceTypes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDbaasListServiceTypesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DbaasGetServiceType(ctx context.Context, serviceTypeName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDbaasGetServiceTypeRequest(c.Server, serviceTypeName)
 	if err != nil {
 		return nil, err
 	}
@@ -3735,18 +3723,6 @@ func (c *Client) DbaasUpdateServiceWithBody(ctx context.Context, serviceName str
 
 func (c *Client) DbaasUpdateService(ctx context.Context, serviceName string, body DbaasUpdateServiceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDbaasUpdateServiceRequest(c.Server, serviceName, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) DbaasListServices(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDbaasListServicesRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -4201,6 +4177,30 @@ func (c *Client) CreateSnapshot(ctx context.Context, id string, reqEditors ...Re
 	return c.Client.Do(req)
 }
 
+func (c *Client) StartInstance(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStartInstanceRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) StopInstance(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStopInstanceRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) RevertInstanceToSnapshotWithBody(ctx context.Context, instanceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRevertInstanceToSnapshotRequestWithBody(c.Server, instanceId, contentType, body)
 	if err != nil {
@@ -4371,6 +4371,18 @@ func (c *Client) UpdateLoadBalancerServiceWithBody(ctx context.Context, id strin
 
 func (c *Client) UpdateLoadBalancerService(ctx context.Context, id string, serviceId string, body UpdateLoadBalancerServiceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateLoadBalancerServiceRequest(c.Server, id, serviceId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResetLoadBalancerField(ctx context.Context, id string, field ResetLoadBalancerFieldParamsField, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResetLoadBalancerFieldRequest(c.Server, id, field)
 	if err != nil {
 		return nil, err
 	}
@@ -5149,141 +5161,6 @@ func (c *Client) ListZones(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
-// NewListAccessKeysRequest generates requests for ListAccessKeys
-func NewListAccessKeysRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/access-key")
-	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
-	}
-
-	queryURL := serverURL.ResolveReference(&operationURL)
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewCreateAccessKeyRequest calls the generic CreateAccessKey builder with application/json body
-func NewCreateAccessKeyRequest(server string, body CreateAccessKeyJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreateAccessKeyRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewCreateAccessKeyRequestWithBody generates requests for CreateAccessKey with any type of body
-func NewCreateAccessKeyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/access-key")
-	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
-	}
-
-	queryURL := serverURL.ResolveReference(&operationURL)
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewRevokeAccessKeyRequest generates requests for RevokeAccessKey
-func NewRevokeAccessKeyRequest(server string, key string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "key", runtime.ParamLocationPath, key)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/access-key/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
-	}
-
-	queryURL := serverURL.ResolveReference(&operationURL)
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetAccessKeyRequest generates requests for GetAccessKey
-func NewGetAccessKeyRequest(server string, key string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "key", runtime.ParamLocationPath, key)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/access-key/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
-	}
-
-	queryURL := serverURL.ResolveReference(&operationURL)
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewListAntiAffinityGroupsRequest generates requests for ListAntiAffinityGroups
 func NewListAntiAffinityGroupsRequest(server string) (*http.Request, error) {
 	var err error
@@ -5419,6 +5296,33 @@ func NewGetAntiAffinityGroupRequest(server string, id string) (*http.Request, er
 	return req, nil
 }
 
+// NewDbaasListServicesRequest generates requests for DbaasListServices
+func NewDbaasListServicesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-service")
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewDbaasCreateServiceRequest calls the generic DbaasCreateService builder with application/json body
 func NewDbaasCreateServiceRequest(server string, body DbaasCreateServiceJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -5468,7 +5372,41 @@ func NewDbaasListServiceTypesRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/dbaas-service-types")
+	operationPath := fmt.Sprintf("/dbaas-service-type")
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDbaasGetServiceTypeRequest generates requests for DbaasGetServiceType
+func NewDbaasGetServiceTypeRequest(server string, serviceTypeName string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-type-name", runtime.ParamLocationPath, serviceTypeName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-service-type/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
@@ -5597,33 +5535,6 @@ func NewDbaasUpdateServiceRequestWithBody(server string, serviceName string, con
 	}
 
 	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewDbaasListServicesRequest generates requests for DbaasListServices
-func NewDbaasListServicesRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/dbaas-services")
-	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
-	}
-
-	queryURL := serverURL.ResolveReference(&operationURL)
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
 
 	return req, nil
 }
@@ -6663,6 +6574,74 @@ func NewCreateSnapshotRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewStartInstanceRequest generates requests for StartInstance
+func NewStartInstanceRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/instance/%s:start", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewStopInstanceRequest generates requests for StopInstance
+func NewStopInstanceRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/instance/%s:stop", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewRevertInstanceToSnapshotRequest calls the generic RevertInstanceToSnapshot builder with application/json body
 func NewRevertInstanceToSnapshotRequest(server string, instanceId string, body RevertInstanceToSnapshotJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -7071,6 +7050,47 @@ func NewUpdateLoadBalancerServiceRequestWithBody(server string, id string, servi
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewResetLoadBalancerFieldRequest generates requests for ResetLoadBalancerField
+func NewResetLoadBalancerFieldRequest(server string, id string, field ResetLoadBalancerFieldParamsField) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "field", runtime.ParamLocationPath, field)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/load-balancer/%s/%s:reset", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -8965,20 +8985,6 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ListAccessKeys request
-	ListAccessKeysWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAccessKeysResponse, error)
-
-	// CreateAccessKey request  with any body
-	CreateAccessKeyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAccessKeyResponse, error)
-
-	CreateAccessKeyWithResponse(ctx context.Context, body CreateAccessKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAccessKeyResponse, error)
-
-	// RevokeAccessKey request
-	RevokeAccessKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*RevokeAccessKeyResponse, error)
-
-	// GetAccessKey request
-	GetAccessKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetAccessKeyResponse, error)
-
 	// ListAntiAffinityGroups request
 	ListAntiAffinityGroupsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAntiAffinityGroupsResponse, error)
 
@@ -8993,6 +8999,9 @@ type ClientWithResponsesInterface interface {
 	// GetAntiAffinityGroup request
 	GetAntiAffinityGroupWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetAntiAffinityGroupResponse, error)
 
+	// DbaasListServices request
+	DbaasListServicesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DbaasListServicesResponse, error)
+
 	// DbaasCreateService request  with any body
 	DbaasCreateServiceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DbaasCreateServiceResponse, error)
 
@@ -9000,6 +9009,9 @@ type ClientWithResponsesInterface interface {
 
 	// DbaasListServiceTypes request
 	DbaasListServiceTypesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DbaasListServiceTypesResponse, error)
+
+	// DbaasGetServiceType request
+	DbaasGetServiceTypeWithResponse(ctx context.Context, serviceTypeName string, reqEditors ...RequestEditorFn) (*DbaasGetServiceTypeResponse, error)
 
 	// DbaasTerminateService request
 	DbaasTerminateServiceWithResponse(ctx context.Context, serviceName string, reqEditors ...RequestEditorFn) (*DbaasTerminateServiceResponse, error)
@@ -9011,9 +9023,6 @@ type ClientWithResponsesInterface interface {
 	DbaasUpdateServiceWithBodyWithResponse(ctx context.Context, serviceName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DbaasUpdateServiceResponse, error)
 
 	DbaasUpdateServiceWithResponse(ctx context.Context, serviceName string, body DbaasUpdateServiceJSONRequestBody, reqEditors ...RequestEditorFn) (*DbaasUpdateServiceResponse, error)
-
-	// DbaasListServices request
-	DbaasListServicesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DbaasListServicesResponse, error)
 
 	// ListDeployTargets request
 	ListDeployTargetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDeployTargetsResponse, error)
@@ -9116,6 +9125,12 @@ type ClientWithResponsesInterface interface {
 	// CreateSnapshot request
 	CreateSnapshotWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*CreateSnapshotResponse, error)
 
+	// StartInstance request
+	StartInstanceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*StartInstanceResponse, error)
+
+	// StopInstance request
+	StopInstanceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*StopInstanceResponse, error)
+
 	// RevertInstanceToSnapshot request  with any body
 	RevertInstanceToSnapshotWithBodyWithResponse(ctx context.Context, instanceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RevertInstanceToSnapshotResponse, error)
 
@@ -9155,6 +9170,9 @@ type ClientWithResponsesInterface interface {
 	UpdateLoadBalancerServiceWithBodyWithResponse(ctx context.Context, id string, serviceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateLoadBalancerServiceResponse, error)
 
 	UpdateLoadBalancerServiceWithResponse(ctx context.Context, id string, serviceId string, body UpdateLoadBalancerServiceJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateLoadBalancerServiceResponse, error)
+
+	// ResetLoadBalancerField request
+	ResetLoadBalancerFieldWithResponse(ctx context.Context, id string, field ResetLoadBalancerFieldParamsField, reqEditors ...RequestEditorFn) (*ResetLoadBalancerFieldResponse, error)
 
 	// GetOperation request
 	GetOperationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOperationResponse, error)
@@ -9331,94 +9349,6 @@ type ClientWithResponsesInterface interface {
 	ListZonesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListZonesResponse, error)
 }
 
-type ListAccessKeysResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *[]AccessKey
-}
-
-// Status returns HTTPResponse.Status
-func (r ListAccessKeysResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ListAccessKeysResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type CreateAccessKeyResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *AccessKey
-}
-
-// Status returns HTTPResponse.Status
-func (r CreateAccessKeyResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CreateAccessKeyResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type RevokeAccessKeyResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *AccessKey
-}
-
-// Status returns HTTPResponse.Status
-func (r RevokeAccessKeyResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r RevokeAccessKeyResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetAccessKeyResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *AccessKey
-}
-
-// Status returns HTTPResponse.Status
-func (r GetAccessKeyResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetAccessKeyResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type ListAntiAffinityGroupsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -9509,6 +9439,30 @@ func (r GetAntiAffinityGroupResponse) StatusCode() int {
 	return 0
 }
 
+type DbaasListServicesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		DbaasService *[]DbaasService `json:"dbaas-service,omitempty"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r DbaasListServicesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DbaasListServicesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type DbaasCreateServiceResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -9549,6 +9503,28 @@ func (r DbaasListServiceTypesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r DbaasListServiceTypesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DbaasGetServiceTypeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DbaasServiceType
+}
+
+// Status returns HTTPResponse.Status
+func (r DbaasGetServiceTypeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DbaasGetServiceTypeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -9617,30 +9593,6 @@ func (r DbaasUpdateServiceResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r DbaasUpdateServiceResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type DbaasListServicesResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *struct {
-		DbaasService *[]DbaasService `json:"dbaas-service,omitempty"`
-	}
-}
-
-// Status returns HTTPResponse.Status
-func (r DbaasListServicesResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DbaasListServicesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -10251,6 +10203,50 @@ func (r CreateSnapshotResponse) StatusCode() int {
 	return 0
 }
 
+type StartInstanceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r StartInstanceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r StartInstanceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type StopInstanceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r StopInstanceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r StopInstanceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type RevertInstanceToSnapshotResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -10467,6 +10463,28 @@ func (r UpdateLoadBalancerServiceResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UpdateLoadBalancerServiceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ResetLoadBalancerFieldResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r ResetLoadBalancerFieldResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResetLoadBalancerFieldResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -11505,50 +11523,6 @@ func (r ListZonesResponse) StatusCode() int {
 	return 0
 }
 
-// ListAccessKeysWithResponse request returning *ListAccessKeysResponse
-func (c *ClientWithResponses) ListAccessKeysWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAccessKeysResponse, error) {
-	rsp, err := c.ListAccessKeys(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseListAccessKeysResponse(rsp)
-}
-
-// CreateAccessKeyWithBodyWithResponse request with arbitrary body returning *CreateAccessKeyResponse
-func (c *ClientWithResponses) CreateAccessKeyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAccessKeyResponse, error) {
-	rsp, err := c.CreateAccessKeyWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateAccessKeyResponse(rsp)
-}
-
-func (c *ClientWithResponses) CreateAccessKeyWithResponse(ctx context.Context, body CreateAccessKeyJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAccessKeyResponse, error) {
-	rsp, err := c.CreateAccessKey(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreateAccessKeyResponse(rsp)
-}
-
-// RevokeAccessKeyWithResponse request returning *RevokeAccessKeyResponse
-func (c *ClientWithResponses) RevokeAccessKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*RevokeAccessKeyResponse, error) {
-	rsp, err := c.RevokeAccessKey(ctx, key, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseRevokeAccessKeyResponse(rsp)
-}
-
-// GetAccessKeyWithResponse request returning *GetAccessKeyResponse
-func (c *ClientWithResponses) GetAccessKeyWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetAccessKeyResponse, error) {
-	rsp, err := c.GetAccessKey(ctx, key, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetAccessKeyResponse(rsp)
-}
-
 // ListAntiAffinityGroupsWithResponse request returning *ListAntiAffinityGroupsResponse
 func (c *ClientWithResponses) ListAntiAffinityGroupsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAntiAffinityGroupsResponse, error) {
 	rsp, err := c.ListAntiAffinityGroups(ctx, reqEditors...)
@@ -11593,6 +11567,15 @@ func (c *ClientWithResponses) GetAntiAffinityGroupWithResponse(ctx context.Conte
 	return ParseGetAntiAffinityGroupResponse(rsp)
 }
 
+// DbaasListServicesWithResponse request returning *DbaasListServicesResponse
+func (c *ClientWithResponses) DbaasListServicesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DbaasListServicesResponse, error) {
+	rsp, err := c.DbaasListServices(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDbaasListServicesResponse(rsp)
+}
+
 // DbaasCreateServiceWithBodyWithResponse request with arbitrary body returning *DbaasCreateServiceResponse
 func (c *ClientWithResponses) DbaasCreateServiceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DbaasCreateServiceResponse, error) {
 	rsp, err := c.DbaasCreateServiceWithBody(ctx, contentType, body, reqEditors...)
@@ -11617,6 +11600,15 @@ func (c *ClientWithResponses) DbaasListServiceTypesWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseDbaasListServiceTypesResponse(rsp)
+}
+
+// DbaasGetServiceTypeWithResponse request returning *DbaasGetServiceTypeResponse
+func (c *ClientWithResponses) DbaasGetServiceTypeWithResponse(ctx context.Context, serviceTypeName string, reqEditors ...RequestEditorFn) (*DbaasGetServiceTypeResponse, error) {
+	rsp, err := c.DbaasGetServiceType(ctx, serviceTypeName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDbaasGetServiceTypeResponse(rsp)
 }
 
 // DbaasTerminateServiceWithResponse request returning *DbaasTerminateServiceResponse
@@ -11652,15 +11644,6 @@ func (c *ClientWithResponses) DbaasUpdateServiceWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseDbaasUpdateServiceResponse(rsp)
-}
-
-// DbaasListServicesWithResponse request returning *DbaasListServicesResponse
-func (c *ClientWithResponses) DbaasListServicesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*DbaasListServicesResponse, error) {
-	rsp, err := c.DbaasListServices(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDbaasListServicesResponse(rsp)
 }
 
 // ListDeployTargetsWithResponse request returning *ListDeployTargetsResponse
@@ -11986,6 +11969,24 @@ func (c *ClientWithResponses) CreateSnapshotWithResponse(ctx context.Context, id
 	return ParseCreateSnapshotResponse(rsp)
 }
 
+// StartInstanceWithResponse request returning *StartInstanceResponse
+func (c *ClientWithResponses) StartInstanceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*StartInstanceResponse, error) {
+	rsp, err := c.StartInstance(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStartInstanceResponse(rsp)
+}
+
+// StopInstanceWithResponse request returning *StopInstanceResponse
+func (c *ClientWithResponses) StopInstanceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*StopInstanceResponse, error) {
+	rsp, err := c.StopInstance(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStopInstanceResponse(rsp)
+}
+
 // RevertInstanceToSnapshotWithBodyWithResponse request with arbitrary body returning *RevertInstanceToSnapshotResponse
 func (c *ClientWithResponses) RevertInstanceToSnapshotWithBodyWithResponse(ctx context.Context, instanceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RevertInstanceToSnapshotResponse, error) {
 	rsp, err := c.RevertInstanceToSnapshotWithBody(ctx, instanceId, contentType, body, reqEditors...)
@@ -12114,6 +12115,15 @@ func (c *ClientWithResponses) UpdateLoadBalancerServiceWithResponse(ctx context.
 		return nil, err
 	}
 	return ParseUpdateLoadBalancerServiceResponse(rsp)
+}
+
+// ResetLoadBalancerFieldWithResponse request returning *ResetLoadBalancerFieldResponse
+func (c *ClientWithResponses) ResetLoadBalancerFieldWithResponse(ctx context.Context, id string, field ResetLoadBalancerFieldParamsField, reqEditors ...RequestEditorFn) (*ResetLoadBalancerFieldResponse, error) {
+	rsp, err := c.ResetLoadBalancerField(ctx, id, field, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResetLoadBalancerFieldResponse(rsp)
 }
 
 // GetOperationWithResponse request returning *GetOperationResponse
@@ -12674,110 +12684,6 @@ func (c *ClientWithResponses) ListZonesWithResponse(ctx context.Context, reqEdit
 	return ParseListZonesResponse(rsp)
 }
 
-// ParseListAccessKeysResponse parses an HTTP response from a ListAccessKeysWithResponse call
-func ParseListAccessKeysResponse(rsp *http.Response) (*ListAccessKeysResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ListAccessKeysResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []AccessKey
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseCreateAccessKeyResponse parses an HTTP response from a CreateAccessKeyWithResponse call
-func ParseCreateAccessKeyResponse(rsp *http.Response) (*CreateAccessKeyResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CreateAccessKeyResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest AccessKey
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseRevokeAccessKeyResponse parses an HTTP response from a RevokeAccessKeyWithResponse call
-func ParseRevokeAccessKeyResponse(rsp *http.Response) (*RevokeAccessKeyResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &RevokeAccessKeyResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest AccessKey
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseGetAccessKeyResponse parses an HTTP response from a GetAccessKeyWithResponse call
-func ParseGetAccessKeyResponse(rsp *http.Response) (*GetAccessKeyResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetAccessKeyResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest AccessKey
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseListAntiAffinityGroupsResponse parses an HTTP response from a ListAntiAffinityGroupsWithResponse call
 func ParseListAntiAffinityGroupsResponse(rsp *http.Response) (*ListAntiAffinityGroupsResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -12884,6 +12790,34 @@ func ParseGetAntiAffinityGroupResponse(rsp *http.Response) (*GetAntiAffinityGrou
 	return response, nil
 }
 
+// ParseDbaasListServicesResponse parses an HTTP response from a DbaasListServicesWithResponse call
+func ParseDbaasListServicesResponse(rsp *http.Response) (*DbaasListServicesResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DbaasListServicesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			DbaasService *[]DbaasService `json:"dbaas-service,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseDbaasCreateServiceResponse parses an HTTP response from a DbaasCreateServiceWithResponse call
 func ParseDbaasCreateServiceResponse(rsp *http.Response) (*DbaasCreateServiceResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -12928,6 +12862,32 @@ func ParseDbaasListServiceTypesResponse(rsp *http.Response) (*DbaasListServiceTy
 		var dest struct {
 			DbaasServiceTypes *[]DbaasServiceType `json:"dbaas-service-types,omitempty"`
 		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDbaasGetServiceTypeResponse parses an HTTP response from a DbaasGetServiceTypeWithResponse call
+func ParseDbaasGetServiceTypeResponse(rsp *http.Response) (*DbaasGetServiceTypeResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DbaasGetServiceTypeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DbaasServiceType
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -13008,34 +12968,6 @@ func ParseDbaasUpdateServiceResponse(rsp *http.Response) (*DbaasUpdateServiceRes
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest DbaasService
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDbaasListServicesResponse parses an HTTP response from a DbaasListServicesWithResponse call
-func ParseDbaasListServicesResponse(rsp *http.Response) (*DbaasListServicesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DbaasListServicesResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			DbaasService *[]DbaasService `json:"dbaas-service,omitempty"`
-		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -13758,6 +13690,58 @@ func ParseCreateSnapshotResponse(rsp *http.Response) (*CreateSnapshotResponse, e
 	return response, nil
 }
 
+// ParseStartInstanceResponse parses an HTTP response from a StartInstanceWithResponse call
+func ParseStartInstanceResponse(rsp *http.Response) (*StartInstanceResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &StartInstanceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseStopInstanceResponse parses an HTTP response from a StopInstanceWithResponse call
+func ParseStopInstanceResponse(rsp *http.Response) (*StopInstanceResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &StopInstanceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseRevertInstanceToSnapshotResponse parses an HTTP response from a RevertInstanceToSnapshotWithResponse call
 func ParseRevertInstanceToSnapshotResponse(rsp *http.Response) (*RevertInstanceToSnapshotResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -14003,6 +13987,32 @@ func ParseUpdateLoadBalancerServiceResponse(rsp *http.Response) (*UpdateLoadBala
 	}
 
 	response := &UpdateLoadBalancerServiceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseResetLoadBalancerFieldResponse parses an HTTP response from a ResetLoadBalancerFieldWithResponse call
+func ParseResetLoadBalancerFieldResponse(rsp *http.Response) (*ResetLoadBalancerFieldResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResetLoadBalancerFieldResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

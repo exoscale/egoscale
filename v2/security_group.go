@@ -25,8 +25,13 @@ type SecurityGroupRule struct {
 
 func securityGroupRuleFromAPI(r *papi.SecurityGroupRule) *SecurityGroupRule {
 	return &SecurityGroupRule{
-		Description:   papi.OptionalString(r.Description),
-		EndPort:       uint16(*r.EndPort),
+		Description: papi.OptionalString(r.Description),
+		EndPort: func() (v uint16) {
+			if r.EndPort != nil {
+				v = uint16(*r.EndPort)
+			}
+			return
+		}(),
 		FlowDirection: string(*r.FlowDirection),
 		ICMPCode: func() (v uint8) {
 			if r.Icmp != nil {
@@ -54,7 +59,12 @@ func securityGroupRuleFromAPI(r *papi.SecurityGroupRule) *SecurityGroupRule {
 			}
 			return
 		}(),
-		StartPort: uint16(*r.StartPort),
+		StartPort: func() (v uint16) {
+			if r.StartPort != nil {
+				v = uint16(*r.StartPort)
+			}
+			return
+		}(),
 	}
 }
 

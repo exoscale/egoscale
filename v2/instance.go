@@ -339,6 +339,42 @@ func (i *Instance) SecurityGroups(ctx context.Context) ([]*SecurityGroup, error)
 	return res.([]*SecurityGroup), err
 }
 
+// Start starts the Compute instance.
+func (i *Instance) Start(ctx context.Context) error {
+	resp, err := i.c.StartInstanceWithResponse(apiv2.WithZone(ctx, i.zone), i.ID)
+	if err != nil {
+		return err
+	}
+
+	_, err = papi.NewPoller().
+		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
+		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Stop stops the Compute instance.
+func (i *Instance) Stop(ctx context.Context) error {
+	resp, err := i.c.StopInstanceWithResponse(apiv2.WithZone(ctx, i.zone), i.ID)
+	if err != nil {
+		return err
+	}
+
+	_, err = papi.NewPoller().
+		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
+		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateInstance creates a Compute instance in the specified zone.
 func (c *Client) CreateInstance(ctx context.Context, zone string, instance *Instance) (*Instance, error) {
 	resp, err := c.CreateInstanceWithResponse(

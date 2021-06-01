@@ -340,14 +340,12 @@ func (ts *clientTestSuite) TestClient_FindElasticIP() {
 func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 	var (
 		testElasticIPDescriptionUpdated              = testElasticIPDescription + "-updated"
-		testElasticIPHealthcheckModeUpdated          = papi.ElasticIpHealthcheckModeHttp
+		testElasticIPHealthcheckModeUpdated          = papi.ElasticIpHealthcheckModeTcp
 		testElasticIPHealthcheckPortUpdated          = testElasticIPHealthcheckPort + 1
 		testElasticIPHealthcheckIntervalUpdated      = testElasticIPHealthcheckInterval + 1
 		testElasticIPHealthcheckTimeoutUpdated       = testElasticIPHealthcheckTimeout + 1
 		testElasticIPHealthcheckStrikesFailUpdated   = testElasticIPHealthcheckStrikesFail + 1
 		testElasticIPHealthcheckStrikesOKUpdated     = testElasticIPHealthcheckStrikesOK + 1
-		testElasticIPHealthcheckURIUpdated           = ""
-		testElasticIPHealthcheckTLSSNIUpdated        = ""
 		testElasticIPHealthcheckTLSSkipVerifyUpdated = false
 		testOperationID                              = ts.randomID()
 		testOperationState                           = papi.OperationStateSuccess
@@ -370,9 +368,7 @@ func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 					StrikesFail:   &testElasticIPHealthcheckStrikesFailUpdated,
 					StrikesOk:     &testElasticIPHealthcheckStrikesOKUpdated,
 					Timeout:       &testElasticIPHealthcheckTimeoutUpdated,
-					TlsSni:        &testElasticIPHealthcheckTLSSNIUpdated,
 					TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerifyUpdated,
-					Uri:           &testElasticIPHealthcheckURIUpdated,
 				},
 			}
 			ts.Require().Equal(expected, actual)
@@ -404,9 +400,7 @@ func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 			StrikesFail:   testElasticIPHealthcheckStrikesFailUpdated,
 			StrikesOK:     testElasticIPHealthcheckStrikesOKUpdated,
 			Timeout:       time.Duration(testElasticIPHealthcheckTimeoutUpdated) * time.Second,
-			TLSSNI:        testElasticIPHealthcheckTLSSNIUpdated,
 			TLSSkipVerify: testElasticIPHealthcheckTLSSkipVerifyUpdated,
-			URI:           testElasticIPHealthcheckURIUpdated,
 		},
 		ID:        testElasticIPID,
 		IPAddress: net.ParseIP(testElasticIPAddress),

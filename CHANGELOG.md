@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.55.0
+------
+
+- change: the `IngressRule`/`EgressRule` and `v2.SecurityGroupRule` structs now use an `int` type for the ICMP code/type storage (#498)
+
 0.54.0
 ------
 

@@ -57,8 +57,8 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_AddService() {
 				Description: &testNLBServiceDescription,
 				Healthcheck: papi.LoadBalancerServiceHealthcheck{
 					Interval: &testNLBServiceHealthcheckInterval,
-					Mode:     testNLServiceHealthcheckMode,
-					Port:     testNLBServiceHealthcheckPort,
+					Mode:     &testNLServiceHealthcheckMode,
+					Port:     &testNLBServiceHealthcheckPort,
 					Retries:  &testNLBServiceHealthcheckRetries,
 					Timeout:  &testNLBServiceHealthcheckTimeout,
 					TlsSni:   &testNLBServiceHealthcheckTLSSNI,
@@ -101,8 +101,8 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_AddService() {
 			Description: &testNLBServiceDescription,
 			Healthcheck: &papi.LoadBalancerServiceHealthcheck{
 				Interval: &testNLBServiceHealthcheckInterval,
-				Mode:     testNLServiceHealthcheckMode,
-				Port:     testNLBServiceHealthcheckPort,
+				Mode:     &testNLServiceHealthcheckMode,
+				Port:     &testNLBServiceHealthcheckPort,
 				Retries:  &testNLBServiceHealthcheckRetries,
 				Timeout:  &testNLBServiceHealthcheckTimeout,
 				TlsSni:   &testNLBServiceHealthcheckTLSSNI,
@@ -219,8 +219,8 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_UpdateService() {
 				Description: &testNLBServiceDescriptionUpdated,
 				Healthcheck: &papi.LoadBalancerServiceHealthcheck{
 					Interval: &testNLBServiceHealthcheckIntervalUpdated,
-					Mode:     testNLBServiceHealthcheckModeUpdated,
-					Port:     testNLBServiceHealthcheckPortUpdated,
+					Mode:     &testNLBServiceHealthcheckModeUpdated,
+					Port:     &testNLBServiceHealthcheckPortUpdated,
 					Retries:  &testNLBServiceHealthcheckRetriesUpdated,
 					Timeout:  &testNLBServiceHealthcheckTimeoutUpdated,
 					Uri:      &testNLBServiceHealthcheckURIUpdated,
@@ -314,7 +314,7 @@ func (ts *clientTestSuite) TestNetworkLoadBalancer_ResetField() {
 	)
 
 	httpmock.RegisterResponder("DELETE",
-		fmt.Sprintf("/load-balancer/%s/%s:reset", testNLBID, testResetField),
+		fmt.Sprintf("/load-balancer/%s/%s", testNLBID, testResetField),
 		func(req *http.Request) (*http.Response, error) {
 			reset = true
 
@@ -426,8 +426,8 @@ func (ts *clientTestSuite) TestClient_ListNetworkLoadBalancers() {
 				Description: &testNLBServiceDescription,
 				Healthcheck: &papi.LoadBalancerServiceHealthcheck{
 					Interval: &testNLBServiceHealthcheckInterval,
-					Mode:     testNLServiceHealthcheckMode,
-					Port:     testNLBServiceHealthcheckPort,
+					Mode:     &testNLServiceHealthcheckMode,
+					Port:     &testNLBServiceHealthcheckPort,
 					Retries:  &testNLBServiceHealthcheckRetries,
 					Timeout:  &testNLBServiceHealthcheckTimeout,
 					Uri:      &testNLBServiceHealthcheckURI,
@@ -511,8 +511,8 @@ func (ts *clientTestSuite) TestClient_GetNetworkLoadBalancer() {
 			Description: &testNLBServiceDescription,
 			Healthcheck: &papi.LoadBalancerServiceHealthcheck{
 				Interval: &testNLBServiceHealthcheckInterval,
-				Mode:     testNLServiceHealthcheckMode,
-				Port:     testNLBServiceHealthcheckPort,
+				Mode:     &testNLServiceHealthcheckMode,
+				Port:     &testNLBServiceHealthcheckPort,
 				Retries:  &testNLBServiceHealthcheckRetries,
 				Timeout:  &testNLBServiceHealthcheckTimeout,
 				Uri:      &testNLBServiceHealthcheckURI,

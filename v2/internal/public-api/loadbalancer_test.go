@@ -48,8 +48,8 @@ func TestLoadBalancer_UnmarshalJSON(t *testing.T) {
 				Description: &testServiceDescription,
 				Healthcheck: &LoadBalancerServiceHealthcheck{
 					Interval: &testServiceHealthcheckInterval,
-					Mode:     testServiceHealthcheckMode,
-					Port:     testServiceHealthcheckPort,
+					Mode:     &testServiceHealthcheckMode,
+					Port:     &testServiceHealthcheckPort,
 					Retries:  &testServiceHealthcheckRetries,
 					Timeout:  &testServiceHealthcheckTimeout,
 					TlsSni:   &testServiceHealthcheckTLSSNI,
@@ -156,8 +156,8 @@ func TestLoadBalancer_MarshalJSON(t *testing.T) {
 				Description: &testServiceDescription,
 				Healthcheck: &LoadBalancerServiceHealthcheck{
 					Interval: &testServiceHealthcheckInterval,
-					Mode:     testServiceHealthcheckMode,
-					Port:     testServiceHealthcheckPort,
+					Mode:     &testServiceHealthcheckMode,
+					Port:     &testServiceHealthcheckPort,
 					Retries:  &testServiceHealthcheckRetries,
 					Timeout:  &testServiceHealthcheckTimeout,
 					TlsSni:   &testServiceHealthcheckTLSSNI,

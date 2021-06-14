@@ -9694,7 +9694,7 @@ type ListDbaasServicesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		DbaasService *[]DbaasService `json:"dbaas-service,omitempty"`
+		DbaasServices *[]DbaasService `json:"dbaas-services,omitempty"`
 	}
 }
 
@@ -13189,7 +13189,7 @@ func ParseListDbaasServicesResponse(rsp *http.Response) (*ListDbaasServicesRespo
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			DbaasService *[]DbaasService `json:"dbaas-service,omitempty"`
+			DbaasServices *[]DbaasService `json:"dbaas-services,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

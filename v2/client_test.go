@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"testing"
 	"time"
@@ -16,6 +17,8 @@ import (
 	"github.com/exoscale/egoscale/v2/api"
 	papi "github.com/exoscale/egoscale/v2/internal/public-api"
 )
+
+var testSeededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 type dummyResource struct {
 	id string
@@ -70,6 +73,21 @@ func (ts *clientTestSuite) randomID() string {
 		ts.T().Fatalf("unable to generate a new UUID: %s", err)
 	}
 	return id.String()
+}
+
+func (ts *clientTestSuite) randomStringWithCharset(length int, charset string) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[testSeededRand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+func (ts *clientTestSuite) randomString(length int) string {
+	const defaultCharset = "abcdefghijklmnopqrstuvwxyz" +
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	return ts.randomStringWithCharset(length, defaultCharset)
 }
 
 func (ts *clientTestSuite) unmarshalJSONRequestBody(req *http.Request, v interface{}) {

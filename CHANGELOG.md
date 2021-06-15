@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.58.0
+------
+
+- feature: v2: add labels support for Compute instances
+
 0.57.0
 ------
 

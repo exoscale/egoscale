@@ -22,6 +22,7 @@ var (
 	testInstanceIPv6Address               = "2001:db8:abcd::1"
 	testInstanceIPv6Enabled               = true
 	testInstanceInstanceTypeID            = new(clientTestSuite).randomID()
+	testInstanceLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
 	testInstanceManagerID                 = new(clientTestSuite).randomID()
 	testInstanceManagerType               = papi.ManagerTypeInstancePool
 	testInstanceName                      = "test-instance"
@@ -538,6 +539,47 @@ func (ts *clientTestSuite) TestInstance_PrivateNetworks() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestInstance_ResetField() {
+	var (
+		testResetField     = "labels"
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+		reset              = false
+	)
+
+	httpmock.RegisterResponder("DELETE",
+		fmt.Sprintf("/instance/%s/%s", testInstanceID, testResetField),
+		func(req *http.Request) (*http.Response, error) {
+			reset = true
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstancePoolID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testNLBID},
+	})
+
+	instance := &Instance{
+		ID:   testInstanceID,
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(instance.ResetField(context.Background(), &instance.Labels))
+	ts.Require().True(reset)
+}
+
 func (ts *clientTestSuite) TestInstance_RevertToSnapshot() {
 	var (
 		testOperationID    = ts.randomID()
@@ -715,6 +757,7 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 				DiskSize:           testInstanceDiskSize,
 				InstanceType:       papi.InstanceType{Id: &testInstanceInstanceTypeID},
 				Ipv6Enabled:        &testInstanceIPv6Enabled,
+				Labels:             &papi.Labels{AdditionalProperties: testInstanceLabels},
 				Name:               &testInstanceName,
 				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
 				SshKey:             &papi.SshKey{Name: &testInstanceSSHKey},
@@ -749,6 +792,7 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 		Id:                 &testInstanceID,
 		InstanceType:       &papi.InstanceType{Id: &testInstanceInstanceTypeID},
 		Ipv6Address:        &testInstanceIPv6Address,
+		Labels:             &papi.Labels{AdditionalProperties: testInstanceLabels},
 		Manager:            &papi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
 		Name:               &testInstanceName,
 		PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
@@ -770,6 +814,7 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
+		Labels:               testInstanceLabels,
 		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
@@ -794,6 +839,7 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
 		IPv6Enabled:          testInstanceIPv6Enabled,
 		InstanceTypeID:       testInstanceInstanceTypeID,
+		Labels:               testInstanceLabels,
 		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
 		Name:                 testInstanceName,
 		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
@@ -990,6 +1036,7 @@ func (ts *clientTestSuite) TestClient_FindInstance() {
 
 func (ts *clientTestSuite) TestClient_UpdateInstance() {
 	var (
+		testInstanceLabelsUpdated   = map[string]string{"k3": "v3"}
 		testInstanceNameUpdated     = testInstanceName + "-updated"
 		testInstanceUserDataUpdated = testInstanceUserData + "-updated"
 		testOperationID             = ts.randomID()
@@ -1005,6 +1052,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstance() {
 			ts.unmarshalJSONRequestBody(req, &actual)
 
 			expected := papi.UpdateInstanceJSONRequestBody{
+				Labels:   &papi.Labels{AdditionalProperties: testInstanceLabelsUpdated},
 				Name:     &testInstanceNameUpdated,
 				UserData: &testInstanceUserDataUpdated,
 			}
@@ -1030,6 +1078,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstance() {
 
 	ts.Require().NoError(ts.client.UpdateInstance(context.Background(), testZone, &Instance{
 		ID:       testInstanceID,
+		Labels:   testInstanceLabelsUpdated,
 		Name:     testInstanceNameUpdated,
 		UserData: testInstanceUserDataUpdated,
 	}))

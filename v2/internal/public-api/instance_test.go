@@ -18,12 +18,13 @@ func TestInstance_UnmarshalJSON(t *testing.T) {
 		testID                        = testRandomID(t)
 		testInstanceTypeID            = testRandomID(t)
 		testIpv6Address               = "2001:db8:abcd::1"
+		testLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
 		testManagerID                 = testRandomID(t)
 		testName                      = "test-instance"
 		testPrivateNetworkID          = testRandomID(t)
+		testSSHKeyName                = testRandomID(t)
 		testSecurityGroupID           = testRandomID(t)
 		testSnapshotID                = testRandomID(t)
-		testSSHKeyName                = testRandomID(t)
 		testState                     = InstanceStateRunning
 		testTemplateID                = testRandomID(t)
 		testUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
@@ -36,6 +37,7 @@ func TestInstance_UnmarshalJSON(t *testing.T) {
 			Id:                 &testID,
 			InstanceType:       &InstanceType{Id: &testInstanceTypeID},
 			Ipv6Address:        &testIpv6Address,
+			Labels:             &Labels{AdditionalProperties: testLabels},
 			Manager:            &Manager{Id: &testManagerID},
 			Name:               &testName,
 			PrivateNetworks:    &[]PrivateNetwork{{Id: &testPrivateNetworkID}},
@@ -57,6 +59,7 @@ func TestInstance_UnmarshalJSON(t *testing.T) {
   "id": "` + testID + `",
   "instance-type": {"id": "` + testInstanceTypeID + `"},
   "ipv6-address": "` + fmt.Sprint(testIpv6Address) + `",
+  "labels": {"k1": "` + testLabels["k1"] + `", "k2": "` + testLabels["k2"] + `"},
   "manager": {"id": "` + testManagerID + `"},
   "name": "` + testName + `",
   "private-networks": [{"id":"` + testPrivateNetworkID + `"}],
@@ -82,6 +85,7 @@ func TestInstance_MarshalJSON(t *testing.T) {
 		testID                        = testRandomID(t)
 		testInstanceTypeID            = testRandomID(t)
 		testIpv6Address               = "2001:db8:abcd::1"
+		testLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
 		testManagerID                 = testRandomID(t)
 		testName                      = "test-instance"
 		testPrivateNetworkID          = testRandomID(t)
@@ -100,6 +104,7 @@ func TestInstance_MarshalJSON(t *testing.T) {
 			Id:                 &testID,
 			InstanceType:       &InstanceType{Id: &testInstanceTypeID},
 			Ipv6Address:        &testIpv6Address,
+			Labels:             &Labels{AdditionalProperties: testLabels},
 			Manager:            &Manager{Id: &testManagerID},
 			Name:               &testName,
 			PrivateNetworks:    &[]PrivateNetwork{{Id: &testPrivateNetworkID}},
@@ -119,6 +124,7 @@ func TestInstance_MarshalJSON(t *testing.T) {
 			`"id":"` + testID + `",` +
 			`"instance-type":{"id":"` + testInstanceTypeID + `"},` +
 			`"ipv6-address":"` + fmt.Sprint(testIpv6Address) + `",` +
+			`"labels":{"k1":"` + testLabels["k1"] + `","k2":"` + testLabels["k2"] + `"},` +
 			`"manager":{"id":"` + testManagerID + `"},` +
 			`"name":"` + testName + `",` +
 			`"private-networks":[{"id":"` + testPrivateNetworkID + `"}],` +

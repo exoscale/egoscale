@@ -74,26 +74,26 @@ func (ts *clientTestSuite) TestClient_GetDatabaseServiceType() {
 		})
 
 	expected := &DatabaseServiceType{
-		DefaultVersion: testDatabaseServiceTypeDefaultVersion,
-		Description:    testDatabaseServiceTypeDescription,
-		LatestVersion:  testDatabaseServiceTypeLatestVersion,
-		Name:           string(testDatabaseServiceTypeName),
+		DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
+		Description:    &testDatabaseServiceTypeDescription,
+		LatestVersion:  &testDatabaseServiceTypeLatestVersion,
+		Name:           (*string)(&testDatabaseServiceTypeName),
 		Plans: []*DatabasePlan{{
 			BackupConfig: &DatabaseBackupConfig{
-				Interval:     testDatabasePlanBackupConfigInterval,
-				MaxCount:     testDatabasePlanBackupConfigMaxCount,
-				RecoveryMode: testDatabasePlanBackupConfigRecoveryMode,
+				Interval:     &testDatabasePlanBackupConfigInterval,
+				MaxCount:     &testDatabasePlanBackupConfigMaxCount,
+				RecoveryMode: &testDatabasePlanBackupConfigRecoveryMode,
 			},
-			DiskSpace:  testDatabasePlanDiskSpace,
-			Name:       testDatabasePlanName,
-			Nodes:      testDatabasePlanNodeCount,
-			NodeCPUs:   testDatabasePlanNodeCPUCount,
-			NodeMemory: testDatabasePlanNodeMemory,
+			DiskSpace:  &testDatabasePlanDiskSpace,
+			Name:       &testDatabasePlanName,
+			Nodes:      &testDatabasePlanNodeCount,
+			NodeCPUs:   &testDatabasePlanNodeCPUCount,
+			NodeMemory: &testDatabasePlanNodeMemory,
 		}},
 		UserConfigSchema: map[string]interface{}{"k": "v"},
 	}
 
-	actual, err := ts.client.GetDatabaseServiceType(context.Background(), testZone, expected.Name)
+	actual, err := ts.client.GetDatabaseServiceType(context.Background(), testZone, *expected.Name)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -126,21 +126,21 @@ func (ts *clientTestSuite) TestClient_ListDatabaseServiceTypes() {
 	})
 
 	expected := []*DatabaseServiceType{{
-		DefaultVersion: testDatabaseServiceTypeDefaultVersion,
-		Description:    testDatabaseServiceTypeDescription,
-		LatestVersion:  testDatabaseServiceTypeLatestVersion,
-		Name:           string(testDatabaseServiceTypeName),
+		DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
+		Description:    &testDatabaseServiceTypeDescription,
+		LatestVersion:  &testDatabaseServiceTypeLatestVersion,
+		Name:           (*string)(&testDatabaseServiceTypeName),
 		Plans: []*DatabasePlan{{
 			BackupConfig: &DatabaseBackupConfig{
-				Interval:     testDatabasePlanBackupConfigInterval,
-				MaxCount:     testDatabasePlanBackupConfigMaxCount,
-				RecoveryMode: testDatabasePlanBackupConfigRecoveryMode,
+				Interval:     &testDatabasePlanBackupConfigInterval,
+				MaxCount:     &testDatabasePlanBackupConfigMaxCount,
+				RecoveryMode: &testDatabasePlanBackupConfigRecoveryMode,
 			},
-			DiskSpace:  testDatabasePlanDiskSpace,
-			Name:       testDatabasePlanName,
-			Nodes:      testDatabasePlanNodeCount,
-			NodeCPUs:   testDatabasePlanNodeCPUCount,
-			NodeMemory: testDatabasePlanNodeMemory,
+			DiskSpace:  &testDatabasePlanDiskSpace,
+			Name:       &testDatabasePlanName,
+			Nodes:      &testDatabasePlanNodeCount,
+			NodeCPUs:   &testDatabasePlanNodeCPUCount,
+			NodeMemory: &testDatabasePlanNodeMemory,
 		}},
 		UserConfigSchema: map[string]interface{}{"k": "v"},
 	}}
@@ -247,35 +247,34 @@ func (ts *clientTestSuite) TestClient_CreateDatabaseService() {
 
 	expected := &DatabaseService{
 		Backups: []*DatabaseServiceBackup{{
-			Name: testDatabaseServiceBackupName,
-			Size: testDatabaseServiceBackupDataSize,
-			Date: testDatabaseServiceBackupTime,
+			Name: &testDatabaseServiceBackupName,
+			Size: &testDatabaseServiceBackupDataSize,
+			Date: &testDatabaseServiceBackupTime,
 		}},
 		ConnectionInfo: map[string]interface{}{"k": "v"},
-		CreatedAt:      testDatabaseServiceCreatedAt,
-		Description:    testDatabaseServiceDescription,
-		DiskSize:       testDatabaseServiceDiskSize,
+		CreatedAt:      &testDatabaseServiceCreatedAt,
+		DiskSize:       &testDatabaseServiceDiskSize,
 		Features:       map[string]interface{}{"k": "v"},
 		Maintenance: &DatabaseServiceMaintenance{
 			DOW:  string(testDatabaseServiceMaintenanceDOW),
 			Time: testDatabaseServiceMaintenanceTime,
 		},
 		Metadata:              map[string]interface{}{"k": "v"},
-		Name:                  testDatabaseServiceName,
-		Nodes:                 testDatabaseServiceNodeCount,
-		NodeCPUs:              testDatabaseServiceNodeCPUCount,
-		NodeMemory:            testDatabaseServiceNodeMemory,
-		Plan:                  testDatabasePlanName,
-		State:                 string(testDatabaseServiceState),
-		TerminationProtection: testDatabaseServiceTerminationProtection,
-		Type:                  string(testDatabaseServiceType),
-		UpdatedAt:             testDatabaseServiceUpdatedAt,
+		Name:                  &testDatabaseServiceName,
+		Nodes:                 &testDatabaseServiceNodeCount,
+		NodeCPUs:              &testDatabaseServiceNodeCPUCount,
+		NodeMemory:            &testDatabaseServiceNodeMemory,
+		Plan:                  &testDatabasePlanName,
+		State:                 (*string)(&testDatabaseServiceState),
+		TerminationProtection: &testDatabaseServiceTerminationProtection,
+		Type:                  (*string)(&testDatabaseServiceType),
+		UpdatedAt:             &testDatabaseServiceUpdatedAt,
 		URI:                   func() *url.URL { u, _ := url.Parse(testDatabaseServiceURI); return u }(),
 		UserConfig:            map[string]interface{}{"k": "v"},
 		Users: []*DatabaseServiceUser{{
-			Password: testDatabaseServiceUserPassword,
-			Type:     testDatabaseServiceUserType,
-			UserName: testDatabaseServiceUserUsername,
+			Password: &testDatabaseServiceUserPassword,
+			Type:     &testDatabaseServiceUserType,
+			UserName: &testDatabaseServiceUserUsername,
 		}},
 	}
 
@@ -284,10 +283,10 @@ func (ts *clientTestSuite) TestClient_CreateDatabaseService() {
 			DOW:  string(testDatabaseServiceMaintenanceDOW),
 			Time: testDatabaseServiceMaintenanceTime,
 		},
-		Name:                  testDatabaseServiceName,
-		Plan:                  testDatabasePlanName,
-		TerminationProtection: testDatabaseServiceTerminationProtection,
-		Type:                  string(testDatabaseServiceType),
+		Name:                  &testDatabaseServiceName,
+		Plan:                  &testDatabasePlanName,
+		TerminationProtection: &testDatabaseServiceTerminationProtection,
+		Type:                  (*string)(&testDatabaseServiceType),
 		UserConfig:            map[string]interface{}{"k": "v"},
 	})
 	ts.Require().NoError(err)
@@ -354,35 +353,34 @@ func (ts *clientTestSuite) TestClient_ListDatabaseServices() {
 
 	expected := []*DatabaseService{{
 		Backups: []*DatabaseServiceBackup{{
-			Name: testDatabaseServiceBackupName,
-			Size: testDatabaseServiceBackupDataSize,
-			Date: testDatabaseServiceBackupTime,
+			Name: &testDatabaseServiceBackupName,
+			Size: &testDatabaseServiceBackupDataSize,
+			Date: &testDatabaseServiceBackupTime,
 		}},
 		ConnectionInfo: map[string]interface{}{"k": "v"},
-		CreatedAt:      testDatabaseServiceCreatedAt,
-		Description:    testDatabaseServiceDescription,
-		DiskSize:       testDatabaseServiceDiskSize,
+		CreatedAt:      &testDatabaseServiceCreatedAt,
+		DiskSize:       &testDatabaseServiceDiskSize,
 		Features:       map[string]interface{}{"k": "v"},
 		Maintenance: &DatabaseServiceMaintenance{
 			DOW:  string(testDatabaseServiceMaintenanceDOW),
 			Time: testDatabaseServiceMaintenanceTime,
 		},
 		Metadata:              map[string]interface{}{"k": "v"},
-		Name:                  testDatabaseServiceName,
-		Nodes:                 testDatabaseServiceNodeCount,
-		NodeCPUs:              testDatabaseServiceNodeCPUCount,
-		NodeMemory:            testDatabaseServiceNodeMemory,
-		Plan:                  testDatabasePlanName,
-		State:                 string(testDatabaseServiceState),
-		TerminationProtection: testDatabaseServiceTerminationProtection,
-		Type:                  string(testDatabaseServiceType),
-		UpdatedAt:             testDatabaseServiceUpdatedAt,
+		Name:                  &testDatabaseServiceName,
+		Nodes:                 &testDatabaseServiceNodeCount,
+		NodeCPUs:              &testDatabaseServiceNodeCPUCount,
+		NodeMemory:            &testDatabaseServiceNodeMemory,
+		Plan:                  &testDatabasePlanName,
+		State:                 (*string)(&testDatabaseServiceState),
+		TerminationProtection: &testDatabaseServiceTerminationProtection,
+		Type:                  (*string)(&testDatabaseServiceType),
+		UpdatedAt:             &testDatabaseServiceUpdatedAt,
 		URI:                   func() *url.URL { u, _ := url.Parse(testDatabaseServiceURI); return u }(),
 		UserConfig:            map[string]interface{}{"k": "v"},
 		Users: []*DatabaseServiceUser{{
-			Password: testDatabaseServiceUserPassword,
-			Type:     testDatabaseServiceUserType,
-			UserName: testDatabaseServiceUserUsername,
+			Password: &testDatabaseServiceUserPassword,
+			Type:     &testDatabaseServiceUserType,
+			UserName: &testDatabaseServiceUserUsername,
 		}},
 	}}
 
@@ -449,39 +447,38 @@ func (ts *clientTestSuite) TestClient_GetDatabaseService() {
 
 	expected := &DatabaseService{
 		Backups: []*DatabaseServiceBackup{{
-			Name: testDatabaseServiceBackupName,
-			Size: testDatabaseServiceBackupDataSize,
-			Date: testDatabaseServiceBackupTime,
+			Name: &testDatabaseServiceBackupName,
+			Size: &testDatabaseServiceBackupDataSize,
+			Date: &testDatabaseServiceBackupTime,
 		}},
 		ConnectionInfo: map[string]interface{}{"k": "v"},
-		CreatedAt:      testDatabaseServiceCreatedAt,
-		Description:    testDatabaseServiceDescription,
-		DiskSize:       testDatabaseServiceDiskSize,
+		CreatedAt:      &testDatabaseServiceCreatedAt,
+		DiskSize:       &testDatabaseServiceDiskSize,
 		Features:       map[string]interface{}{"k": "v"},
 		Maintenance: &DatabaseServiceMaintenance{
 			DOW:  string(testDatabaseServiceMaintenanceDOW),
 			Time: testDatabaseServiceMaintenanceTime,
 		},
 		Metadata:              map[string]interface{}{"k": "v"},
-		Name:                  testDatabaseServiceName,
-		Nodes:                 testDatabaseServiceNodeCount,
-		NodeCPUs:              testDatabaseServiceNodeCPUCount,
-		NodeMemory:            testDatabaseServiceNodeMemory,
-		Plan:                  testDatabasePlanName,
-		State:                 string(testDatabaseServiceState),
-		TerminationProtection: testDatabaseServiceTerminationProtection,
-		Type:                  string(testDatabaseServiceType),
-		UpdatedAt:             testDatabaseServiceUpdatedAt,
+		Name:                  &testDatabaseServiceName,
+		Nodes:                 &testDatabaseServiceNodeCount,
+		NodeCPUs:              &testDatabaseServiceNodeCPUCount,
+		NodeMemory:            &testDatabaseServiceNodeMemory,
+		Plan:                  &testDatabasePlanName,
+		State:                 (*string)(&testDatabaseServiceState),
+		TerminationProtection: &testDatabaseServiceTerminationProtection,
+		Type:                  (*string)(&testDatabaseServiceType),
+		UpdatedAt:             &testDatabaseServiceUpdatedAt,
 		URI:                   func() *url.URL { u, _ := url.Parse(testDatabaseServiceURI); return u }(),
 		UserConfig:            map[string]interface{}{"k": "v"},
 		Users: []*DatabaseServiceUser{{
-			Password: testDatabaseServiceUserPassword,
-			Type:     testDatabaseServiceUserType,
-			UserName: testDatabaseServiceUserUsername,
+			Password: &testDatabaseServiceUserPassword,
+			Type:     &testDatabaseServiceUserType,
+			UserName: &testDatabaseServiceUserUsername,
 		}},
 	}
 
-	actual, err := ts.client.GetDatabaseService(context.Background(), testZone, expected.Name)
+	actual, err := ts.client.GetDatabaseService(context.Background(), testZone, *expected.Name)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -540,10 +537,10 @@ func (ts *clientTestSuite) TestClient_UpdateDatabaseService() {
 			DOW:  string(testDatabaseServiceMaintenanceDOW),
 			Time: testDatabaseServiceMaintenanceTime,
 		},
-		Name:                  testDatabaseServiceName,
-		Plan:                  testDatabasePlanName,
-		TerminationProtection: testDatabaseServiceTerminationProtection,
-		Type:                  string(testDatabaseServiceType),
+		Name:                  &testDatabaseServiceName,
+		Plan:                  &testDatabasePlanName,
+		TerminationProtection: &testDatabaseServiceTerminationProtection,
+		Type:                  (*string)(&testDatabaseServiceType),
 		UserConfig:            map[string]interface{}{"k": "v"},
 	}))
 	ts.Require().True(updated)

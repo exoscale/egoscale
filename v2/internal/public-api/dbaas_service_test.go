@@ -15,7 +15,6 @@ func TestDbaasService_UnmarshalJSON(t *testing.T) {
 		testBackupName                  = testBackupTime.Format("2006-01-02_15-04_0.00000000.pghoard")
 		testBackupDataSize        int64 = 36259840
 		testCreatedAt, _                = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
-		testDescription                 = testRandomString(10)
 		testDiskSize              int64 = 10995116277760
 		testMaintenanceDOW              = DbaasServiceMaintenanceDowSunday
 		testMaintenanceTime             = "01:23:45"
@@ -52,7 +51,6 @@ func TestDbaasService_UnmarshalJSON(t *testing.T) {
 			ConnectionInfo:  &DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
 			ConnectionPools: &[]DbaasServiceConnectionPools{},
 			CreatedAt:       &testCreatedAt,
-			Description:     &testDescription,
 			DiskSize:        &testDiskSize,
 			Features:        &DbaasService_Features{AdditionalProperties: map[string]interface{}{"k": "v"}},
 			Integrations:    &[]DbaasServiceIntegration{},
@@ -113,7 +111,6 @@ func TestDbaasService_UnmarshalJSON(t *testing.T) {
   },
   "connection-pools": [],
   "created-at": "` + testCreatedAt.Format(iso8601Format) + `",
-  "description": "` + testDescription + `",
   "disk-size": ` + fmt.Sprint(testDiskSize) + `,
   "features": {
     "k": "v"
@@ -172,7 +169,6 @@ func TestDbaasService_MarshalJSON(t *testing.T) {
 		testBackupName                  = testBackupTime.Format("2006-01-02_15-04_0.00000000.pghoard")
 		testBackupDataSize        int64 = 36259840
 		testCreatedAt, _                = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
-		testDescription                 = "Test Database"
 		testDiskSize              int64 = 10995116277760
 		testMaintenanceDOW              = DbaasServiceMaintenanceDowSunday
 		testMaintenanceTime             = "04:00"
@@ -209,7 +205,6 @@ func TestDbaasService_MarshalJSON(t *testing.T) {
 			ConnectionInfo:  &DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
 			ConnectionPools: &[]DbaasServiceConnectionPools{},
 			CreatedAt:       &testCreatedAt,
-			Description:     &testDescription,
 			DiskSize:        &testDiskSize,
 			Features:        &DbaasService_Features{AdditionalProperties: map[string]interface{}{"k": "v"}},
 			Integrations:    &[]DbaasServiceIntegration{},
@@ -262,7 +257,6 @@ func TestDbaasService_MarshalJSON(t *testing.T) {
 			`"connection-info":{"k":"v"},` +
 			`"connection-pools":[],` +
 			`"created-at":"` + testCreatedAt.Format(iso8601Format) + `",` +
-			`"description":"` + testDescription + `",` +
 			`"disk-size":` + fmt.Sprint(testDiskSize) + `,` +
 			`"features":{"k":"v"},` +
 			`"integrations":[],` +

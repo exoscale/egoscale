@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.59.0
+------
+
+- change: v2: `Database*` structs fields are now pointers
+
 0.58.0
 ------
 

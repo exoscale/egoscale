@@ -171,6 +171,7 @@ func (i *Instance) AttachElasticIP(ctx context.Context, elasticIP *ElasticIP) er
 
 	_, err = papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -198,6 +199,7 @@ func (i *Instance) AttachPrivateNetwork(ctx context.Context, privateNetwork *Pri
 
 	_, err = papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
@@ -218,6 +220,7 @@ func (i *Instance) AttachSecurityGroup(ctx context.Context, securityGroup *Secur
 
 	_, err = papi.NewPoller().
 		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
 		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
 	if err != nil {
 		return err

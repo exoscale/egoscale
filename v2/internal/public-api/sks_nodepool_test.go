@@ -20,6 +20,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 		testInstancePoolID            = testRandomID(t)
 		testInstancePrefix            = "test-nodepool"
 		testInstanceTypeID            = testRandomID(t)
+		testLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
 		testName                      = "test-nodepool"
 		testSecurityGroupID           = testRandomID(t)
 		testSize                int64 = 3
@@ -37,6 +38,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 			InstancePrefix:     &testInstancePrefix,
 			InstancePool:       &InstancePool{Id: &testInstancePoolID},
 			InstanceType:       &InstanceType{Id: &testInstanceTypeID},
+			Labels:             &Labels{AdditionalProperties: testLabels},
 			Name:               &testName,
 			SecurityGroups:     &[]SecurityGroup{{Id: &testSecurityGroupID}},
 			Size:               &testSize,
@@ -57,6 +59,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
   "instance-pool": {"id": "` + testInstancePoolID + `"},
   "instance-prefix": "` + testInstancePrefix + `",
   "instance-type": {"id": "` + testInstanceTypeID + `"},
+  "labels": {"k1": "` + testLabels["k1"] + `", "k2": "` + testLabels["k2"] + `"},
   "name": "` + testName + `",
   "security-groups": [{"id":"` + testSecurityGroupID + `"}],
   "size": ` + fmt.Sprint(testSize) + `,
@@ -81,6 +84,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 		testInstancePoolID            = testRandomID(t)
 		testInstancePrefix            = "test-nodepool"
 		testInstanceTypeID            = testRandomID(t)
+		testLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
 		testName                      = "test-nodepool"
 		testSecurityGroupID           = testRandomID(t)
 		testSize                int64 = 3
@@ -98,6 +102,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 			InstancePrefix:     &testInstancePrefix,
 			InstancePool:       &InstancePool{Id: &testInstancePoolID},
 			InstanceType:       &InstanceType{Id: &testInstanceTypeID},
+			Labels:             &Labels{AdditionalProperties: testLabels},
 			Name:               &testName,
 			SecurityGroups:     &[]SecurityGroup{{Id: &testSecurityGroupID}},
 			Size:               &testSize,
@@ -116,6 +121,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 			`"instance-pool":{"id":"` + testInstancePoolID + `"},` +
 			`"instance-prefix":"` + testInstancePrefix + `",` +
 			`"instance-type":{"id":"` + testInstanceTypeID + `"},` +
+			`"labels":{"k1":"` + testLabels["k1"] + `","k2":"` + testLabels["k2"] + `"},` +
 			`"name":"` + testName + `",` +
 			`"security-groups":[{"id":"` + testSecurityGroupID + `"}],` +
 			`"size":` + fmt.Sprint(testSize) + `,` +

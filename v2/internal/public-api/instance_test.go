@@ -13,6 +13,7 @@ func TestInstance_UnmarshalJSON(t *testing.T) {
 	var (
 		testAntiAffinityGroupID       = testRandomID(t)
 		testCreatedAt, _              = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
+		testDeployTargetID            = testRandomID(t)
 		testDiskSize            int64 = 15
 		testElasticIPID               = testRandomID(t)
 		testID                        = testRandomID(t)
@@ -32,6 +33,7 @@ func TestInstance_UnmarshalJSON(t *testing.T) {
 		expected = Instance{
 			AntiAffinityGroups: &[]AntiAffinityGroup{{Id: &testAntiAffinityGroupID}},
 			CreatedAt:          &testCreatedAt,
+			DeployTarget:       &DeployTarget{Id: &testDeployTargetID},
 			DiskSize:           &testDiskSize,
 			ElasticIps:         &[]ElasticIp{{Id: &testElasticIPID}},
 			Id:                 &testID,
@@ -54,6 +56,7 @@ func TestInstance_UnmarshalJSON(t *testing.T) {
 		jsonInstance = `{
   "anti-affinity-groups": [{"id":"` + testAntiAffinityGroupID + `"}],
   "created-at": "` + testCreatedAt.Format(iso8601Format) + `",
+  "deploy-target": {"id": "` + testDeployTargetID + `"},
   "disk-size": ` + fmt.Sprint(testDiskSize) + `,
   "elastic-ips": [{"id":"` + testElasticIPID + `"}],
   "id": "` + testID + `",
@@ -80,6 +83,7 @@ func TestInstance_MarshalJSON(t *testing.T) {
 	var (
 		testAntiAffinityGroupID       = testRandomID(t)
 		testCreatedAt, _              = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
+		testDeployTargetID            = testRandomID(t)
 		testDiskSize            int64 = 15
 		testElasticIPID               = testRandomID(t)
 		testID                        = testRandomID(t)
@@ -99,6 +103,7 @@ func TestInstance_MarshalJSON(t *testing.T) {
 		instance = Instance{
 			AntiAffinityGroups: &[]AntiAffinityGroup{{Id: &testAntiAffinityGroupID}},
 			CreatedAt:          &testCreatedAt,
+			DeployTarget:       &DeployTarget{Id: &testDeployTargetID},
 			DiskSize:           &testDiskSize,
 			ElasticIps:         &[]ElasticIp{{Id: &testElasticIPID}},
 			Id:                 &testID,
@@ -119,6 +124,7 @@ func TestInstance_MarshalJSON(t *testing.T) {
 		expected = []byte(`{` +
 			`"anti-affinity-groups":[{"id":"` + testAntiAffinityGroupID + `"}],` +
 			`"created-at":"` + testCreatedAt.Format(iso8601Format) + `",` +
+			`"deploy-target":{"id":"` + testDeployTargetID + `"},` +
 			`"disk-size":` + fmt.Sprint(testDiskSize) + `,` +
 			`"elastic-ips":[{"id":"` + testElasticIPID + `"}],` +
 			`"id":"` + testID + `",` +

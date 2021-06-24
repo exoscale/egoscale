@@ -12,11 +12,13 @@ import (
 func TestSksCluster_UnmarshalJSON(t *testing.T) {
 	var (
 		testAddons                        = []SksClusterAddons{SksClusterAddonsExoscaleCloudController}
+		testAutoUpgrade                   = true
 		testCNI                           = SksClusterCniCalico
 		testCreatedAt, _                  = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
 		testDescription                   = "Test Cluster description"
 		testEndpoint                      = "df421958-3679-4e9c-afb9-02fb6f331301.sks-ch-gva-2.exo.io"
 		testID                            = testRandomID(t)
+		testLabels                        = map[string]string{"k1": "v1", "k2": "v2"}
 		testLevel                         = SksClusterLevelPro
 		testName                          = "test-cluster"
 		testNodepoolCreatedAt, _          = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
@@ -36,11 +38,13 @@ func TestSksCluster_UnmarshalJSON(t *testing.T) {
 
 		expected = SksCluster{
 			Addons:      &testAddons,
+			AutoUpgrade: &testAutoUpgrade,
 			Cni:         &testCNI,
 			CreatedAt:   &testCreatedAt,
 			Description: &testDescription,
 			Endpoint:    &testEndpoint,
 			Id:          &testID,
+			Labels:      &Labels{AdditionalProperties: testLabels},
 			Level:       &testLevel,
 			Name:        &testName,
 			Nodepools: &[]SksNodepool{{
@@ -65,11 +69,13 @@ func TestSksCluster_UnmarshalJSON(t *testing.T) {
 
 		jsonSksCluster = `{
   "addons": ["` + string(testAddons[0]) + `"],
+  "auto-upgrade": ` + fmt.Sprint(testAutoUpgrade) + `,
   "cni": "` + string(testCNI) + `",
   "created-at": "` + testCreatedAt.Format(iso8601Format) + `",
   "description": "` + testDescription + `",
   "endpoint": "` + testEndpoint + `",
   "id": "` + testID + `",
+  "labels": {"k1": "` + testLabels["k1"] + `", "k2": "` + testLabels["k2"] + `"},
   "level": "` + string(testLevel) + `",
   "name": "` + testName + `",
   "nodepools": [{
@@ -98,11 +104,13 @@ func TestSksCluster_UnmarshalJSON(t *testing.T) {
 func TestSksCluster_MarshalJSON(t *testing.T) {
 	var (
 		testAddons                        = []SksClusterAddons{SksClusterAddonsExoscaleCloudController}
+		testAutoUpgrade                   = true
 		testCNI                           = SksClusterCniCalico
 		testCreatedAt, _                  = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
 		testDescription                   = "Test Cluster description"
 		testEndpoint                      = "df421958-3679-4e9c-afb9-02fb6f331301.sks-ch-gva-2.exo.io"
 		testID                            = testRandomID(t)
+		testLabels                        = map[string]string{"k1": "v1", "k2": "v2"}
 		testLevel                         = SksClusterLevelPro
 		testName                          = "test-cluster"
 		testNodepoolCreatedAt, _          = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
@@ -122,11 +130,13 @@ func TestSksCluster_MarshalJSON(t *testing.T) {
 
 		sksCluster = SksCluster{
 			Addons:      &testAddons,
+			AutoUpgrade: &testAutoUpgrade,
 			Cni:         &testCNI,
 			CreatedAt:   &testCreatedAt,
 			Description: &testDescription,
 			Endpoint:    &testEndpoint,
 			Id:          &testID,
+			Labels:      &Labels{AdditionalProperties: testLabels},
 			Level:       &testLevel,
 			Name:        &testName,
 			Nodepools: &[]SksNodepool{{
@@ -149,11 +159,13 @@ func TestSksCluster_MarshalJSON(t *testing.T) {
 
 		expected = []byte(`{` +
 			`"addons":["` + string(testAddons[0]) + `"],` +
+			`"auto-upgrade":` + fmt.Sprint(testAutoUpgrade) + `,` +
 			`"cni":"` + string(testCNI) + `",` +
 			`"created-at":"` + testCreatedAt.Format(iso8601Format) + `",` +
 			`"description":"` + testDescription + `",` +
 			`"endpoint":"` + testEndpoint + `",` +
 			`"id":"` + testID + `",` +
+			`"labels":{"k1":"` + testLabels["k1"] + `","k2":"` + testLabels["k2"] + `"},` +
 			`"level":"` + string(testLevel) + `",` +
 			`"name":"` + testName + `",` +
 			`"nodepools":[{` +

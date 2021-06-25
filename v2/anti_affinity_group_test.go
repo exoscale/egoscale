@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	testAntiAffinityGroupDescription = "Test Anti-Affinity Group description"
+	testAntiAffinityGroupDescription = new(clientTestSuite).randomString(10)
 	testAntiAffinityGroupID          = new(clientTestSuite).randomID()
-	testAntiAffinityGroupName        = "test-anti-affinity-group"
+	testAntiAffinityGroupName        = new(clientTestSuite).randomString(10)
 )
 
 func (ts *clientTestSuite) TestAntiAffinityGroup_get() {
@@ -27,12 +27,12 @@ func (ts *clientTestSuite) TestAntiAffinityGroup_get() {
 		})
 
 	expected := &AntiAffinityGroup{
-		Description: testAntiAffinityGroupDescription,
-		ID:          testAntiAffinityGroupID,
-		Name:        testAntiAffinityGroupName,
+		Description: &testAntiAffinityGroupDescription,
+		ID:          &testAntiAffinityGroupID,
+		Name:        &testAntiAffinityGroupName,
 	}
 
-	actual, err := new(AntiAffinityGroup).get(context.Background(), ts.client, testZone, expected.ID)
+	actual, err := new(AntiAffinityGroup).get(context.Background(), ts.client, testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -79,15 +79,15 @@ func (ts *clientTestSuite) TestClient_CreateAntiAffinityGroup() {
 	})
 
 	expected := &AntiAffinityGroup{
-		Description: testAntiAffinityGroupDescription,
-		ID:          testAntiAffinityGroupID,
-		Name:        testAntiAffinityGroupName,
+		Description: &testAntiAffinityGroupDescription,
+		ID:          &testAntiAffinityGroupID,
+		Name:        &testAntiAffinityGroupName,
 	}
 
 	actual, err := ts.client.CreateAntiAffinityGroup(context.Background(), testZone, &AntiAffinityGroup{
-		Description: testAntiAffinityGroupDescription,
-		ID:          testAntiAffinityGroupID,
-		Name:        testAntiAffinityGroupName,
+		Description: &testAntiAffinityGroupDescription,
+		ID:          &testAntiAffinityGroupID,
+		Name:        &testAntiAffinityGroupName,
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
@@ -105,9 +105,9 @@ func (ts *clientTestSuite) TestClient_ListAntiAffinityGroups() {
 	})
 
 	expected := []*AntiAffinityGroup{{
-		Description: testAntiAffinityGroupDescription,
-		ID:          testAntiAffinityGroupID,
-		Name:        testAntiAffinityGroupName,
+		Description: &testAntiAffinityGroupDescription,
+		ID:          &testAntiAffinityGroupID,
+		Name:        &testAntiAffinityGroupName,
 	}}
 
 	actual, err := ts.client.ListAntiAffinityGroups(context.Background(), testZone)
@@ -126,12 +126,12 @@ func (ts *clientTestSuite) TestClient_GetAntiAffinityGroup() {
 		})
 
 	expected := &AntiAffinityGroup{
-		Description: testAntiAffinityGroupDescription,
-		ID:          testAntiAffinityGroupID,
-		Name:        testAntiAffinityGroupName,
+		Description: &testAntiAffinityGroupDescription,
+		ID:          &testAntiAffinityGroupID,
+		Name:        &testAntiAffinityGroupName,
 	}
 
-	actual, err := ts.client.GetAntiAffinityGroup(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.GetAntiAffinityGroup(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -157,16 +157,16 @@ func (ts *clientTestSuite) TestClient_FindAntiAffinityGroup() {
 		})
 
 	expected := &AntiAffinityGroup{
-		Description: testAntiAffinityGroupDescription,
-		ID:          testAntiAffinityGroupID,
-		Name:        testAntiAffinityGroupName,
+		Description: &testAntiAffinityGroupDescription,
+		ID:          &testAntiAffinityGroupID,
+		Name:        &testAntiAffinityGroupName,
 	}
 
-	actual, err := ts.client.FindAntiAffinityGroup(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.FindAntiAffinityGroup(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 
-	actual, err = ts.client.FindAntiAffinityGroup(context.Background(), testZone, expected.Name)
+	actual, err = ts.client.FindAntiAffinityGroup(context.Background(), testZone, *expected.Name)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }

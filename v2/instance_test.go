@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	apiv2 "github.com/exoscale/egoscale/v2/api"
 	"github.com/jarcoal/httpmock"
 
+	apiv2 "github.com/exoscale/egoscale/v2/api"
 	papi "github.com/exoscale/egoscale/v2/internal/public-api"
 )
 
@@ -20,15 +20,17 @@ var (
 	testInstanceElasticIPID               = new(clientTestSuite).randomID()
 	testInstanceID                        = new(clientTestSuite).randomID()
 	testInstanceIPv6Address               = "2001:db8:abcd::1"
+	testInstanceIPv6AddressP              = net.ParseIP(testInstanceIPv6Address)
 	testInstanceIPv6Enabled               = true
 	testInstanceInstanceTypeID            = new(clientTestSuite).randomID()
 	testInstanceLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
 	testInstanceManagerID                 = new(clientTestSuite).randomID()
 	testInstanceManagerType               = papi.ManagerTypeInstancePool
-	testInstanceName                      = "test-instance"
+	testInstanceName                      = new(clientTestSuite).randomString(10)
 	testInstancePrivateNetworkID          = new(clientTestSuite).randomID()
 	testInstancePublicIP                  = "1.2.3.4"
-	testInstanceSSHKey                    = "test-ssh-key"
+	testInstancePublicIPP                 = net.ParseIP(testInstancePublicIP)
+	testInstanceSSHKey                    = new(clientTestSuite).randomString(10)
 	testInstanceSecurityGroupID           = new(clientTestSuite).randomID()
 	testInstanceSnapshotID                = new(clientTestSuite).randomID()
 	testInstanceState                     = papi.InstanceStateRunning
@@ -58,30 +60,30 @@ func (ts *clientTestSuite) TestInstance_get() {
 	})
 
 	expected := &Instance{
-		AntiAffinityGroupIDs: []string{testInstanceAntiAffinityGroupID},
-		CreatedAt:            testInstanceCreatedAt,
-		DiskSize:             testInstanceDiskSize,
-		ElasticIPIDs:         []string{testInstanceElasticIPID},
-		ID:                   testInstanceID,
-		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
-		IPv6Enabled:          testInstanceIPv6Enabled,
-		InstanceTypeID:       testInstanceInstanceTypeID,
+		AntiAffinityGroupIDs: &[]string{testInstanceAntiAffinityGroupID},
+		CreatedAt:            &testInstanceCreatedAt,
+		DiskSize:             &testInstanceDiskSize,
+		ElasticIPIDs:         &[]string{testInstanceElasticIPID},
+		ID:                   &testInstanceID,
+		IPv6Address:          &testInstanceIPv6AddressP,
+		IPv6Enabled:          &testInstanceIPv6Enabled,
+		InstanceTypeID:       &testInstanceInstanceTypeID,
 		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
-		Name:                 testInstanceName,
-		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
-		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
-		SSHKey:               testInstanceSSHKey,
-		SecurityGroupIDs:     []string{testInstanceSecurityGroupID},
-		SnapshotIDs:          []string{testInstanceSnapshotID},
-		State:                string(testInstanceState),
-		TemplateID:           testInstanceTemplateID,
-		UserData:             testInstanceUserData,
+		Name:                 &testInstanceName,
+		PrivateNetworkIDs:    &[]string{testInstancePrivateNetworkID},
+		PublicIPAddress:      &testInstancePublicIPP,
+		SSHKey:               &testInstanceSSHKey,
+		SecurityGroupIDs:     &[]string{testInstanceSecurityGroupID},
+		SnapshotIDs:          &[]string{testInstanceSnapshotID},
+		State:                (*string)(&testInstanceState),
+		TemplateID:           &testInstanceTemplateID,
+		UserData:             &testInstanceUserData,
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
-	actual, err := new(Instance).get(context.Background(), ts.client, testZone, expected.ID)
+	actual, err := new(Instance).get(context.Background(), ts.client, testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -98,13 +100,13 @@ func (ts *clientTestSuite) TestInstance_AntiAffinityGroups() {
 	)
 
 	expected := []*AntiAffinityGroup{{
-		Description: testAntiAffinityGroupDescription,
-		ID:          testAntiAffinityGroupID,
-		Name:        testAntiAffinityGroupName,
+		Description: &testAntiAffinityGroupDescription,
+		ID:          &testAntiAffinityGroupID,
+		Name:        &testAntiAffinityGroupName,
 	}}
 
 	instance := &Instance{
-		AntiAffinityGroupIDs: []string{testAntiAffinityGroupID},
+		AntiAffinityGroupIDs: &[]string{testAntiAffinityGroupID},
 
 		c:    ts.client,
 		zone: testZone,
@@ -153,11 +155,11 @@ func (ts *clientTestSuite) TestInstance_AttachElasticIP() {
 	})
 
 	elasticIP := &ElasticIP{
-		ID: testInstanceElasticIPID,
+		ID: &testInstanceElasticIPID,
 	}
 
 	instance := &Instance{
-		ID: testInstanceID,
+		ID: &testInstanceID,
 
 		c:    ts.client,
 		zone: testZone,
@@ -208,11 +210,11 @@ func (ts *clientTestSuite) TestInstance_AttachPrivateNetwork() {
 	})
 
 	privateNetwork := &PrivateNetwork{
-		ID: testInstancePrivateNetworkID,
+		ID: &testInstancePrivateNetworkID,
 	}
 
 	instance := &Instance{
-		ID: testInstanceID,
+		ID: &testInstanceID,
 
 		c:    ts.client,
 		zone: testZone,
@@ -261,11 +263,11 @@ func (ts *clientTestSuite) TestInstance_AttachSecurityGroup() {
 	})
 
 	securityGroup := &SecurityGroup{
-		ID: testInstanceSecurityGroupID,
+		ID: &testInstanceSecurityGroupID,
 	}
 
 	instance := &Instance{
-		ID: testInstanceID,
+		ID: &testInstanceID,
 
 		c:    ts.client,
 		zone: testZone,
@@ -302,18 +304,18 @@ func (ts *clientTestSuite) TestInstance_CreateSnapshot() {
 	})
 
 	instance := &Instance{
-		ID: testInstanceID,
+		ID: &testInstanceID,
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
 	expected := &Snapshot{
-		CreatedAt:  testSnapshotCreatedAt,
-		ID:         testSnapshotID,
-		InstanceID: testInstanceID,
-		Name:       testSnapshotName,
-		State:      string(testSnapshotState),
+		CreatedAt:  &testSnapshotCreatedAt,
+		ID:         &testSnapshotID,
+		InstanceID: &testInstanceID,
+		Name:       &testSnapshotName,
+		State:      (*string)(&testSnapshotState),
 
 		c:    ts.client,
 		zone: testZone,
@@ -362,11 +364,11 @@ func (ts *clientTestSuite) TestInstance_DetachElasticIP() {
 	})
 
 	elasticIP := &ElasticIP{
-		ID: testInstanceElasticIPID,
+		ID: &testInstanceElasticIPID,
 	}
 
 	instance := &Instance{
-		ID: testInstanceID,
+		ID: &testInstanceID,
 
 		c:    ts.client,
 		zone: testZone,
@@ -415,11 +417,11 @@ func (ts *clientTestSuite) TestInstance_DetachPrivateNetwork() {
 	})
 
 	privateNetwork := &PrivateNetwork{
-		ID: testInstancePrivateNetworkID,
+		ID: &testInstancePrivateNetworkID,
 	}
 
 	instance := &Instance{
-		ID: testInstanceID,
+		ID: &testInstanceID,
 
 		c:    ts.client,
 		zone: testZone,
@@ -468,11 +470,11 @@ func (ts *clientTestSuite) TestInstance_DetachSecurityGroup() {
 	})
 
 	securityGroup := &SecurityGroup{
-		ID: testInstanceSecurityGroupID,
+		ID: &testInstanceSecurityGroupID,
 	}
 
 	instance := &Instance{
-		ID: testInstanceID,
+		ID: &testInstanceID,
 
 		c:    ts.client,
 		zone: testZone,
@@ -493,15 +495,15 @@ func (ts *clientTestSuite) TestInstance_ElasticIPs() {
 	)
 
 	expected := []*ElasticIP{{
-		ID:        testElasticIPID,
-		IPAddress: net.ParseIP(testElasticIPAddress),
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressP,
 
 		c:    ts.client,
 		zone: testZone,
 	}}
 
 	instance := &Instance{
-		ElasticIPIDs: []string{testElasticIPID},
+		ElasticIPIDs: &[]string{testElasticIPID},
 
 		c:    ts.client,
 		zone: testZone,
@@ -523,12 +525,12 @@ func (ts *clientTestSuite) TestInstance_PrivateNetworks() {
 	)
 
 	expected := []*PrivateNetwork{{
-		ID:   testPrivateNetworkID,
-		Name: testPrivateNetworkName,
+		ID:   &testPrivateNetworkID,
+		Name: &testPrivateNetworkName,
 	}}
 
 	instance := &Instance{
-		PrivateNetworkIDs: []string{testPrivateNetworkID},
+		PrivateNetworkIDs: &[]string{testPrivateNetworkID},
 
 		c:    ts.client,
 		zone: testZone,
@@ -537,47 +539,6 @@ func (ts *clientTestSuite) TestInstance_PrivateNetworks() {
 	actual, err := instance.PrivateNetworks(context.Background())
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
-}
-
-func (ts *clientTestSuite) TestInstance_ResetField() {
-	var (
-		testResetField     = "labels"
-		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
-		reset              = false
-	)
-
-	httpmock.RegisterResponder("DELETE",
-		fmt.Sprintf("/instance/%s/%s", testInstanceID, testResetField),
-		func(req *http.Request) (*http.Response, error) {
-			reset = true
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testInstancePoolID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testNLBID},
-	})
-
-	instance := &Instance{
-		ID:   testInstanceID,
-		c:    ts.client,
-		zone: testZone,
-	}
-
-	ts.Require().NoError(instance.ResetField(context.Background(), &instance.Labels))
-	ts.Require().True(reset)
 }
 
 func (ts *clientTestSuite) TestInstance_RevertToSnapshot() {
@@ -616,15 +577,15 @@ func (ts *clientTestSuite) TestInstance_RevertToSnapshot() {
 	})
 
 	instance := &Instance{
-		ID: testInstanceID,
+		ID: &testInstanceID,
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
 	snapshot := &Snapshot{
-		ID:         testSnapshotID,
-		InstanceID: testInstanceID,
+		ID:         &testSnapshotID,
+		InstanceID: &testInstanceID,
 	}
 
 	ts.Require().NoError(instance.RevertToSnapshot(context.Background(), snapshot))
@@ -642,15 +603,15 @@ func (ts *clientTestSuite) TestInstance_SecurityGroups() {
 	)
 
 	expected := []*SecurityGroup{{
-		ID:   testSecurityGroupID,
-		Name: testSecurityGroupName,
+		ID:   &testSecurityGroupID,
+		Name: &testSecurityGroupName,
 
 		c:    ts.client,
 		zone: testZone,
 	}}
 
 	instance := &Instance{
-		SecurityGroupIDs: []string{testSecurityGroupID},
+		SecurityGroupIDs: &[]string{testSecurityGroupID},
 
 		c:    ts.client,
 		zone: testZone,
@@ -691,7 +652,7 @@ func (ts *clientTestSuite) TestInstance_Start() {
 	})
 
 	instance := &Instance{
-		ID: testInstanceID,
+		ID: &testInstanceID,
 
 		c:    ts.client,
 		zone: testZone,
@@ -731,7 +692,7 @@ func (ts *clientTestSuite) TestInstance_Stop() {
 	})
 
 	instance := &Instance{
-		ID: testInstanceID,
+		ID: &testInstanceID,
 
 		c:    ts.client,
 		zone: testZone,
@@ -806,50 +767,50 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 	})
 
 	expected := &Instance{
-		AntiAffinityGroupIDs: []string{testInstanceAntiAffinityGroupID},
-		CreatedAt:            testInstanceCreatedAt,
-		DiskSize:             testInstanceDiskSize,
-		ElasticIPIDs:         []string{testInstanceElasticIPID},
-		ID:                   testInstanceID,
-		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
-		IPv6Enabled:          testInstanceIPv6Enabled,
-		InstanceTypeID:       testInstanceInstanceTypeID,
-		Labels:               testInstanceLabels,
+		AntiAffinityGroupIDs: &[]string{testInstanceAntiAffinityGroupID},
+		CreatedAt:            &testInstanceCreatedAt,
+		DiskSize:             &testInstanceDiskSize,
+		ElasticIPIDs:         &[]string{testInstanceElasticIPID},
+		ID:                   &testInstanceID,
+		IPv6Address:          &testInstanceIPv6AddressP,
+		IPv6Enabled:          &testInstanceIPv6Enabled,
+		InstanceTypeID:       &testInstanceInstanceTypeID,
+		Labels:               &testInstanceLabels,
 		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
-		Name:                 testInstanceName,
-		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
-		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
-		SSHKey:               testInstanceSSHKey,
-		SecurityGroupIDs:     []string{testInstanceSecurityGroupID},
-		SnapshotIDs:          []string{testInstanceSnapshotID},
-		State:                string(testInstanceState),
-		TemplateID:           testInstanceTemplateID,
-		UserData:             testInstanceUserData,
+		Name:                 &testInstanceName,
+		PrivateNetworkIDs:    &[]string{testInstancePrivateNetworkID},
+		PublicIPAddress:      &testInstancePublicIPP,
+		SSHKey:               &testInstanceSSHKey,
+		SecurityGroupIDs:     &[]string{testInstanceSecurityGroupID},
+		SnapshotIDs:          &[]string{testInstanceSnapshotID},
+		State:                (*string)(&testInstanceState),
+		TemplateID:           &testInstanceTemplateID,
+		UserData:             &testInstanceUserData,
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
 	actual, err := ts.client.CreateInstance(context.Background(), testZone, &Instance{
-		AntiAffinityGroupIDs: []string{testInstanceAntiAffinityGroupID},
-		CreatedAt:            testInstanceCreatedAt,
-		DiskSize:             testInstanceDiskSize,
-		ElasticIPIDs:         []string{testInstanceElasticIPID},
-		ID:                   testInstanceID,
-		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
-		IPv6Enabled:          testInstanceIPv6Enabled,
-		InstanceTypeID:       testInstanceInstanceTypeID,
-		Labels:               testInstanceLabels,
+		AntiAffinityGroupIDs: &[]string{testInstanceAntiAffinityGroupID},
+		CreatedAt:            &testInstanceCreatedAt,
+		DiskSize:             &testInstanceDiskSize,
+		ElasticIPIDs:         &[]string{testInstanceElasticIPID},
+		ID:                   &testInstanceID,
+		IPv6Address:          &testInstanceIPv6AddressP,
+		IPv6Enabled:          &testInstanceIPv6Enabled,
+		InstanceTypeID:       &testInstanceInstanceTypeID,
+		Labels:               &testInstanceLabels,
 		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
-		Name:                 testInstanceName,
-		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
-		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
-		SSHKey:               testInstanceSSHKey,
-		SecurityGroupIDs:     []string{testInstanceSecurityGroupID},
-		SnapshotIDs:          []string{testInstanceSnapshotID},
-		State:                string(testInstanceState),
-		TemplateID:           testInstanceTemplateID,
-		UserData:             testInstanceUserData,
+		Name:                 &testInstanceName,
+		PrivateNetworkIDs:    &[]string{testInstancePrivateNetworkID},
+		PublicIPAddress:      &testInstancePublicIPP,
+		SSHKey:               &testInstanceSSHKey,
+		SecurityGroupIDs:     &[]string{testInstanceSecurityGroupID},
+		SnapshotIDs:          &[]string{testInstanceSnapshotID},
+		State:                (*string)(&testInstanceState),
+		TemplateID:           &testInstanceTemplateID,
+		UserData:             &testInstanceUserData,
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
@@ -881,24 +842,24 @@ func (ts *clientTestSuite) TestClient_ListInstances() {
 	})
 
 	expected := []*Instance{{
-		AntiAffinityGroupIDs: []string{testInstanceAntiAffinityGroupID},
-		CreatedAt:            testInstanceCreatedAt,
-		DiskSize:             testInstanceDiskSize,
-		ElasticIPIDs:         []string{testInstanceElasticIPID},
-		ID:                   testInstanceID,
-		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
-		IPv6Enabled:          testInstanceIPv6Enabled,
-		InstanceTypeID:       testInstanceInstanceTypeID,
+		AntiAffinityGroupIDs: &[]string{testInstanceAntiAffinityGroupID},
+		CreatedAt:            &testInstanceCreatedAt,
+		DiskSize:             &testInstanceDiskSize,
+		ElasticIPIDs:         &[]string{testInstanceElasticIPID},
+		ID:                   &testInstanceID,
+		IPv6Address:          &testInstanceIPv6AddressP,
+		IPv6Enabled:          &testInstanceIPv6Enabled,
+		InstanceTypeID:       &testInstanceInstanceTypeID,
 		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
-		Name:                 testInstanceName,
-		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
-		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
-		SSHKey:               testInstanceSSHKey,
-		SecurityGroupIDs:     []string{testInstanceSecurityGroupID},
-		SnapshotIDs:          []string{testInstanceSnapshotID},
-		State:                string(testInstanceState),
-		TemplateID:           testInstanceTemplateID,
-		UserData:             testInstanceUserData,
+		Name:                 &testInstanceName,
+		PrivateNetworkIDs:    &[]string{testInstancePrivateNetworkID},
+		PublicIPAddress:      &testInstancePublicIPP,
+		SSHKey:               &testInstanceSSHKey,
+		SecurityGroupIDs:     &[]string{testInstanceSecurityGroupID},
+		SnapshotIDs:          &[]string{testInstanceSnapshotID},
+		State:                (*string)(&testInstanceState),
+		TemplateID:           &testInstanceTemplateID,
+		UserData:             &testInstanceUserData,
 
 		c:    ts.client,
 		zone: testZone,
@@ -931,30 +892,30 @@ func (ts *clientTestSuite) TestClient_GetInstance() {
 	})
 
 	expected := &Instance{
-		AntiAffinityGroupIDs: []string{testInstanceAntiAffinityGroupID},
-		CreatedAt:            testInstanceCreatedAt,
-		DiskSize:             testInstanceDiskSize,
-		ElasticIPIDs:         []string{testInstanceElasticIPID},
-		ID:                   testInstanceID,
-		IPv6Address:          net.ParseIP(testInstanceIPv6Address),
-		IPv6Enabled:          testInstanceIPv6Enabled,
-		InstanceTypeID:       testInstanceInstanceTypeID,
+		AntiAffinityGroupIDs: &[]string{testInstanceAntiAffinityGroupID},
+		CreatedAt:            &testInstanceCreatedAt,
+		DiskSize:             &testInstanceDiskSize,
+		ElasticIPIDs:         &[]string{testInstanceElasticIPID},
+		ID:                   &testInstanceID,
+		IPv6Address:          &testInstanceIPv6AddressP,
+		IPv6Enabled:          &testInstanceIPv6Enabled,
+		InstanceTypeID:       &testInstanceInstanceTypeID,
 		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
-		Name:                 testInstanceName,
-		PrivateNetworkIDs:    []string{testInstancePrivateNetworkID},
-		PublicIPAddress:      net.ParseIP(testInstancePublicIP),
-		SSHKey:               testInstanceSSHKey,
-		SecurityGroupIDs:     []string{testInstanceSecurityGroupID},
-		SnapshotIDs:          []string{testInstanceSnapshotID},
-		State:                string(testInstanceState),
-		TemplateID:           testInstanceTemplateID,
-		UserData:             testInstanceUserData,
+		Name:                 &testInstanceName,
+		PrivateNetworkIDs:    &[]string{testInstancePrivateNetworkID},
+		PublicIPAddress:      &testInstancePublicIPP,
+		SSHKey:               &testInstanceSSHKey,
+		SecurityGroupIDs:     &[]string{testInstanceSecurityGroupID},
+		SnapshotIDs:          &[]string{testInstanceSnapshotID},
+		State:                (*string)(&testInstanceState),
+		TemplateID:           &testInstanceTemplateID,
+		UserData:             &testInstanceUserData,
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
-	actual, err := ts.client.GetInstance(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.GetInstance(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -1005,28 +966,23 @@ func (ts *clientTestSuite) TestClient_FindInstance() {
 	})
 
 	expected := &Instance{
-		AntiAffinityGroupIDs: []string{},
-		CreatedAt:            testInstanceCreatedAt,
-		DiskSize:             testInstanceDiskSize,
-		ElasticIPIDs:         []string{},
-		ID:                   testInstanceID,
-		InstanceTypeID:       testInstanceInstanceTypeID,
-		Name:                 testInstanceName,
-		PrivateNetworkIDs:    []string{},
-		SecurityGroupIDs:     []string{},
-		SnapshotIDs:          []string{},
-		State:                string(testInstanceState),
-		TemplateID:           testInstanceTemplateID,
+		CreatedAt:      &testInstanceCreatedAt,
+		DiskSize:       &testInstanceDiskSize,
+		ID:             &testInstanceID,
+		InstanceTypeID: &testInstanceInstanceTypeID,
+		Name:           &testInstanceName,
+		State:          (*string)(&testInstanceState),
+		TemplateID:     &testInstanceTemplateID,
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
-	actual, err := ts.client.FindInstance(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.FindInstance(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 
-	actual, err = ts.client.FindInstance(context.Background(), testZone, expected.Name)
+	actual, err = ts.client.FindInstance(context.Background(), testZone, *expected.Name)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 
@@ -1077,10 +1033,10 @@ func (ts *clientTestSuite) TestClient_UpdateInstance() {
 	})
 
 	ts.Require().NoError(ts.client.UpdateInstance(context.Background(), testZone, &Instance{
-		ID:       testInstanceID,
-		Labels:   testInstanceLabelsUpdated,
-		Name:     testInstanceNameUpdated,
-		UserData: testInstanceUserDataUpdated,
+		ID:       &testInstanceID,
+		Labels:   &testInstanceLabelsUpdated,
+		Name:     &testInstanceNameUpdated,
+		UserData: &testInstanceUserDataUpdated,
 	}))
 	ts.Require().True(updated)
 }

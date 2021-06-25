@@ -11,7 +11,7 @@ import (
 type AntiAffinityGroup struct {
 	Description *string
 	ID          *string
-	Name        *string
+	Name        *string `req-for:"create"`
 }
 
 func antiAffinityGroupFromAPI(a *papi.AntiAffinityGroup) *AntiAffinityGroup {
@@ -32,6 +32,10 @@ func (c *Client) CreateAntiAffinityGroup(
 	zone string,
 	antiAffinityGroup *AntiAffinityGroup,
 ) (*AntiAffinityGroup, error) {
+	if err := validateOperationParams(antiAffinityGroup, "create"); err != nil {
+		return nil, err
+	}
+
 	resp, err := c.CreateAntiAffinityGroupWithResponse(
 		apiv2.WithZone(ctx, zone),
 		papi.CreateAntiAffinityGroupJSONRequestBody{

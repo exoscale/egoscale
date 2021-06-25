@@ -14,12 +14,12 @@ import (
 type SecurityGroupRule struct {
 	Description     *string
 	EndPort         *uint16
-	FlowDirection   *string
+	FlowDirection   *string `req-for:"create"`
 	ICMPCode        *int64
 	ICMPType        *int64
-	ID              *string
+	ID              *string `req-for:"delete"`
 	Network         *net.IPNet
-	Protocol        *string
+	Protocol        *string `req-for:"create"`
 	SecurityGroupID *string
 	StartPort       *uint16
 }
@@ -75,7 +75,7 @@ func securityGroupRuleFromAPI(r *papi.SecurityGroupRule) *SecurityGroupRule {
 type SecurityGroup struct {
 	Description *string
 	ID          *string
-	Name        *string
+	Name        *string `req-for:"create"`
 	Rules       []*SecurityGroupRule
 
 	zone string
@@ -109,6 +109,10 @@ func (s SecurityGroup) get(ctx context.Context, client *Client, zone, id string)
 
 // AddRule adds a rule to the Security Group.
 func (s *SecurityGroup) AddRule(ctx context.Context, rule *SecurityGroupRule) (*SecurityGroupRule, error) {
+	if err := validateOperationParams(rule, "create"); err != nil {
+		return nil, err
+	}
+
 	var icmp *struct {
 		Code *int64 `json:"code,omitempty"`
 		Type *int64 `json:"type,omitempty"`
@@ -204,6 +208,10 @@ func (s *SecurityGroup) AddRule(ctx context.Context, rule *SecurityGroupRule) (*
 
 // DeleteRule deletes the specified rule from the Security Group.
 func (s *SecurityGroup) DeleteRule(ctx context.Context, rule *SecurityGroupRule) error {
+	if err := validateOperationParams(rule, "delete"); err != nil {
+		return err
+	}
+
 	resp, err := s.c.DeleteRuleFromSecurityGroupWithResponse(
 		apiv2.WithZone(ctx, s.zone),
 		*s.ID,
@@ -230,6 +238,10 @@ func (c *Client) CreateSecurityGroup(
 	zone string,
 	securityGroup *SecurityGroup,
 ) (*SecurityGroup, error) {
+	if err := validateOperationParams(securityGroup, "create"); err != nil {
+		return nil, err
+	}
+
 	resp, err := c.CreateSecurityGroupWithResponse(ctx, papi.CreateSecurityGroupJSONRequestBody{
 		Description: securityGroup.Description,
 		Name:        *securityGroup.Name,

@@ -16,15 +16,15 @@ type SKSNodepool struct {
 	CreatedAt            *time.Time
 	DeployTargetID       *string
 	Description          *string
-	DiskSize             *int64
-	ID                   *string
+	DiskSize             *int64  `req-for:"create"`
+	ID                   *string `req-for:"update,scale,evict,delete"`
 	InstancePoolID       *string
 	InstancePrefix       *string
-	InstanceTypeID       *string
+	InstanceTypeID       *string `req-for:"create"`
 	Labels               *map[string]string
-	Name                 *string
+	Name                 *string `req-for:"create"`
 	SecurityGroupIDs     *[]string
-	Size                 *int64
+	Size                 *int64 `req-for:"create"`
 	State                *string
 	TemplateID           *string
 	Version              *string
@@ -113,13 +113,13 @@ type SKSCluster struct {
 	CreatedAt    *time.Time
 	Description  *string
 	Endpoint     *string
-	ID           *string
+	ID           *string `req-for:"update"`
 	Labels       *map[string]string
-	Name         *string
+	Name         *string `req-for:"create"`
 	Nodepools    []*SKSNodepool
-	ServiceLevel *string
+	ServiceLevel *string `req-for:"create"`
 	State        *string
-	Version      *string
+	Version      *string `req-for:"create"`
 
 	c    *Client
 	zone string
@@ -242,6 +242,10 @@ func (c *SKSCluster) RequestKubeconfig(
 
 // AddNodepool adds a Nodepool to the SKS cluster.
 func (c *SKSCluster) AddNodepool(ctx context.Context, nodepool *SKSNodepool) (*SKSNodepool, error) {
+	if err := validateOperationParams(nodepool, "create"); err != nil {
+		return nil, err
+	}
+
 	resp, err := c.c.CreateSksNodepoolWithResponse(
 		apiv2.WithZone(ctx, c.zone),
 		*c.ID,
@@ -309,6 +313,10 @@ func (c *SKSCluster) AddNodepool(ctx context.Context, nodepool *SKSNodepool) (*S
 
 // UpdateNodepool updates the specified SKS cluster Nodepool.
 func (c *SKSCluster) UpdateNodepool(ctx context.Context, nodepool *SKSNodepool) error {
+	if err := validateOperationParams(nodepool, "update"); err != nil {
+		return err
+	}
+
 	resp, err := c.c.UpdateSksNodepoolWithResponse(
 		apiv2.WithZone(ctx, c.zone),
 		*c.ID,
@@ -376,6 +384,10 @@ func (c *SKSCluster) UpdateNodepool(ctx context.Context, nodepool *SKSNodepool) 
 
 // ScaleNodepool scales the SKS cluster Nodepool to the specified number of Kubernetes Nodes.
 func (c *SKSCluster) ScaleNodepool(ctx context.Context, nodepool *SKSNodepool, nodes int64) error {
+	if err := validateOperationParams(nodepool, "scale"); err != nil {
+		return err
+	}
+
 	resp, err := c.c.ScaleSksNodepoolWithResponse(
 		apiv2.WithZone(ctx, c.zone),
 		*c.ID,
@@ -400,6 +412,10 @@ func (c *SKSCluster) ScaleNodepool(ctx context.Context, nodepool *SKSNodepool, n
 // EvictNodepoolMembers evicts the specified members (identified by their Compute instance ID) from the
 // SKS cluster Nodepool.
 func (c *SKSCluster) EvictNodepoolMembers(ctx context.Context, nodepool *SKSNodepool, members []string) error {
+	if err := validateOperationParams(nodepool, "evict"); err != nil {
+		return err
+	}
+
 	resp, err := c.c.EvictSksNodepoolMembersWithResponse(
 		apiv2.WithZone(ctx, c.zone),
 		*c.ID,
@@ -423,6 +439,10 @@ func (c *SKSCluster) EvictNodepoolMembers(ctx context.Context, nodepool *SKSNode
 
 // DeleteNodepool deletes the specified Nodepool from the SKS cluster.
 func (c *SKSCluster) DeleteNodepool(ctx context.Context, nodepool *SKSNodepool) error {
+	if err := validateOperationParams(nodepool, "delete"); err != nil {
+		return err
+	}
+
 	resp, err := c.c.DeleteSksNodepoolWithResponse(
 		apiv2.WithZone(ctx, c.zone),
 		*c.ID,
@@ -445,6 +465,10 @@ func (c *SKSCluster) DeleteNodepool(ctx context.Context, nodepool *SKSNodepool) 
 
 // CreateSKSCluster creates an SKS cluster in the specified zone.
 func (c *Client) CreateSKSCluster(ctx context.Context, zone string, cluster *SKSCluster) (*SKSCluster, error) {
+	if err := validateOperationParams(cluster, "create"); err != nil {
+		return nil, err
+	}
+
 	resp, err := c.CreateSksClusterWithResponse(
 		apiv2.WithZone(ctx, zone),
 		papi.CreateSksClusterJSONRequestBody{
@@ -551,6 +575,10 @@ func (c *Client) FindSKSCluster(ctx context.Context, zone, v string) (*SKSCluste
 
 // UpdateSKSCluster updates the specified SKS cluster in the specified zone.
 func (c *Client) UpdateSKSCluster(ctx context.Context, zone string, cluster *SKSCluster) error {
+	if err := validateOperationParams(cluster, "update"); err != nil {
+		return err
+	}
+
 	resp, err := c.UpdateSksClusterWithResponse(
 		apiv2.WithZone(ctx, zone),
 		*cluster.ID,

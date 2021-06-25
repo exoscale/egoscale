@@ -43,16 +43,16 @@ type NetworkLoadBalancerServiceHealthcheck struct {
 // NetworkLoadBalancerService represents a Network Load Balancer service.
 type NetworkLoadBalancerService struct {
 	Description       *string
-	Healthcheck       *NetworkLoadBalancerServiceHealthcheck
+	Healthcheck       *NetworkLoadBalancerServiceHealthcheck `req-for:"create"`
 	HealthcheckStatus []*NetworkLoadBalancerServerStatus
-	ID                *string
-	InstancePoolID    *string
-	Name              *string
-	Port              *uint16
-	Protocol          *string
-	State             *string
-	Strategy          *string
-	TargetPort        *uint16
+	ID                *string `req-for:"update,delete"`
+	InstancePoolID    *string `req-for:"create"`
+	Name              *string `req-for:"create"`
+	Port              *uint16 `req-for:"create"`
+	Protocol          *string `req-for:"create"`
+	State             *string `req-for:"create"`
+	Strategy          *string `req-for:"create"`
+	TargetPort        *uint16 `req-for:"create"`
 }
 
 func nlbServiceFromAPI(svc *papi.LoadBalancerService) *NetworkLoadBalancerService {
@@ -100,10 +100,10 @@ func nlbServiceFromAPI(svc *papi.LoadBalancerService) *NetworkLoadBalancerServic
 type NetworkLoadBalancer struct {
 	CreatedAt   *time.Time
 	Description *string
-	ID          *string
+	ID          *string `req-for:"update"`
 	IPAddress   *net.IP
 	Labels      *map[string]string
-	Name        *string
+	Name        *string `req-for:"create"`
 	Services    []*NetworkLoadBalancerService
 	State       *string
 
@@ -152,6 +152,10 @@ func (nlb *NetworkLoadBalancer) AddService(
 	ctx context.Context,
 	svc *NetworkLoadBalancerService,
 ) (*NetworkLoadBalancerService, error) {
+	if err := validateOperationParams(svc, "create"); err != nil {
+		return nil, err
+	}
+
 	var (
 		port                = int64(*svc.Port)
 		targetPort          = int64(*svc.TargetPort)
@@ -223,6 +227,10 @@ func (nlb *NetworkLoadBalancer) AddService(
 
 // UpdateService updates the specified Network Load Balancer service.
 func (nlb *NetworkLoadBalancer) UpdateService(ctx context.Context, svc *NetworkLoadBalancerService) error {
+	if err := validateOperationParams(svc, "update"); err != nil {
+		return err
+	}
+
 	resp, err := nlb.c.UpdateLoadBalancerServiceWithResponse(
 		apiv2.WithZone(ctx, nlb.zone),
 		*nlb.ID,
@@ -291,6 +299,10 @@ func (nlb *NetworkLoadBalancer) UpdateService(ctx context.Context, svc *NetworkL
 
 // DeleteService deletes the specified service from the Network Load Balancer instance.
 func (nlb *NetworkLoadBalancer) DeleteService(ctx context.Context, svc *NetworkLoadBalancerService) error {
+	if err := validateOperationParams(svc, "delete"); err != nil {
+		return err
+	}
+
 	resp, err := nlb.c.DeleteLoadBalancerServiceWithResponse(
 		apiv2.WithZone(ctx, nlb.zone),
 		*nlb.ID,
@@ -317,6 +329,10 @@ func (c *Client) CreateNetworkLoadBalancer(
 	zone string,
 	nlb *NetworkLoadBalancer,
 ) (*NetworkLoadBalancer, error) {
+	if err := validateOperationParams(nlb, "create"); err != nil {
+		return nil, err
+	}
+
 	resp, err := c.CreateLoadBalancerWithResponse(
 		apiv2.WithZone(ctx, zone),
 		papi.CreateLoadBalancerJSONRequestBody{
@@ -392,6 +408,10 @@ func (c *Client) FindNetworkLoadBalancer(ctx context.Context, zone, v string) (*
 
 // UpdateNetworkLoadBalancer updates the specified Network Load Balancer instance in the specified zone.
 func (c *Client) UpdateNetworkLoadBalancer(ctx context.Context, zone string, nlb *NetworkLoadBalancer) error {
+	if err := validateOperationParams(nlb, "update"); err != nil {
+		return err
+	}
+
 	resp, err := c.UpdateLoadBalancerWithResponse(
 		apiv2.WithZone(ctx, zone),
 		*nlb.ID,

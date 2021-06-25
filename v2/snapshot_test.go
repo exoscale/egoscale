@@ -14,7 +14,7 @@ var (
 	testSnapshotCreatedAt, _ = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
 	testSnapshotID           = new(clientTestSuite).randomID()
 	testSnapshotInstanceID   = new(clientTestSuite).randomID()
-	testSnapshotName         = "test-snapshot"
+	testSnapshotName         = new(clientTestSuite).randomString(10)
 	testSnapshotState        = papi.SnapshotStateExported
 )
 
@@ -28,17 +28,17 @@ func (ts *clientTestSuite) TestSnapshot_get() {
 	})
 
 	expected := &Snapshot{
-		CreatedAt:  testSnapshotCreatedAt,
-		ID:         testSnapshotID,
-		InstanceID: testSnapshotInstanceID,
-		Name:       testSnapshotName,
-		State:      string(testSnapshotState),
+		CreatedAt:  &testSnapshotCreatedAt,
+		ID:         &testSnapshotID,
+		InstanceID: &testSnapshotInstanceID,
+		Name:       &testSnapshotName,
+		State:      (*string)(&testSnapshotState),
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
-	actual, err := new(Snapshot).get(context.Background(), ts.client, testZone, expected.ID)
+	actual, err := new(Snapshot).get(context.Background(), ts.client, testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -93,19 +93,19 @@ func (ts *clientTestSuite) TestSnapshot_Export() {
 	})
 
 	snapshot := &Snapshot{
-		CreatedAt:  testSnapshotCreatedAt,
-		ID:         testSnapshotID,
-		InstanceID: testSnapshotInstanceID,
-		Name:       testSnapshotName,
-		State:      string(testSnapshotState),
+		CreatedAt:  &testSnapshotCreatedAt,
+		ID:         &testSnapshotID,
+		InstanceID: &testSnapshotInstanceID,
+		Name:       &testSnapshotName,
+		State:      (*string)(&testSnapshotState),
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
 	expected := &SnapshotExport{
-		MD5sum:       testSnapshotExportMD5Sum,
-		PresignedURL: testSnapshotExportPresignedURL,
+		MD5sum:       &testSnapshotExportMD5Sum,
+		PresignedURL: &testSnapshotExportPresignedURL,
 	}
 
 	actual, err := snapshot.Export(context.Background())
@@ -128,11 +128,11 @@ func (ts *clientTestSuite) TestClient_ListSnapshots() {
 	})
 
 	expected := []*Snapshot{{
-		CreatedAt:  testSnapshotCreatedAt,
-		ID:         testSnapshotID,
-		InstanceID: testSnapshotInstanceID,
-		Name:       testSnapshotName,
-		State:      string(testSnapshotState),
+		CreatedAt:  &testSnapshotCreatedAt,
+		ID:         &testSnapshotID,
+		InstanceID: &testSnapshotInstanceID,
+		Name:       &testSnapshotName,
+		State:      (*string)(&testSnapshotState),
 
 		c:    ts.client,
 		zone: testZone,
@@ -153,17 +153,17 @@ func (ts *clientTestSuite) TestClient_GetSnapshot() {
 	})
 
 	expected := &Snapshot{
-		CreatedAt:  testSnapshotCreatedAt,
-		ID:         testSnapshotID,
-		InstanceID: testSnapshotInstanceID,
-		Name:       testSnapshotName,
-		State:      string(testSnapshotState),
+		CreatedAt:  &testSnapshotCreatedAt,
+		ID:         &testSnapshotID,
+		InstanceID: &testSnapshotInstanceID,
+		Name:       &testSnapshotName,
+		State:      (*string)(&testSnapshotState),
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
-	actual, err := ts.client.GetSnapshot(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.GetSnapshot(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }

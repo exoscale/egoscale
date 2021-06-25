@@ -13,18 +13,21 @@ import (
 )
 
 var (
-	testElasticIPDescription                    = "Test Elastic IP description"
-	testElasticIPID                             = new(clientTestSuite).randomID()
-	testElasticIPAddress                        = "1.2.3.4"
-	testElasticIPHealthcheckMode                = "https"
-	testElasticIPHealthcheckPort          int64 = 8080
-	testElasticIPHealthcheckInterval      int64 = 10
-	testElasticIPHealthcheckTimeout       int64 = 3
-	testElasticIPHealthcheckStrikesFail   int64 = 1
-	testElasticIPHealthcheckStrikesOK     int64 = 1
-	testElasticIPHealthcheckURI                 = "/health"
-	testElasticIPHealthcheckTLSSNI              = "example.net"
-	testElasticIPHealthcheckTLSSkipVerify       = true
+	testElasticIPDescription                     = new(clientTestSuite).randomString(10)
+	testElasticIPID                              = new(clientTestSuite).randomID()
+	testElasticIPAddress                         = "1.2.3.4"
+	testElasticIPAddressP                        = net.ParseIP(testElasticIPAddress)
+	testElasticIPHealthcheckMode                 = "https"
+	testElasticIPHealthcheckPort          uint16 = 8080
+	testElasticIPHealthcheckInterval      int64  = 10
+	testElasticIPHealthcheckIntervalD            = time.Duration(testElasticIPHealthcheckInterval) * time.Second
+	testElasticIPHealthcheckTimeout       int64  = 3
+	testElasticIPHealthcheckTimeoutD             = time.Duration(testElasticIPHealthcheckTimeout) * time.Second
+	testElasticIPHealthcheckStrikesFail   int64  = 1
+	testElasticIPHealthcheckStrikesOK     int64  = 1
+	testElasticIPHealthcheckURI                  = new(clientTestSuite).randomString(10)
+	testElasticIPHealthcheckTLSSNI               = new(clientTestSuite).randomString(10)
+	testElasticIPHealthcheckTLSSkipVerify        = true
 )
 
 func (ts *clientTestSuite) TestElasticIP_get() {
@@ -33,7 +36,7 @@ func (ts *clientTestSuite) TestElasticIP_get() {
 		Healthcheck: &papi.ElasticIpHealthcheck{
 			Interval:      &testElasticIPHealthcheckInterval,
 			Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
-			Port:          testElasticIPHealthcheckPort,
+			Port:          int64(testElasticIPHealthcheckPort),
 			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
 			StrikesOk:     &testElasticIPHealthcheckStrikesOK,
 			Timeout:       &testElasticIPHealthcheckTimeout,
@@ -46,72 +49,28 @@ func (ts *clientTestSuite) TestElasticIP_get() {
 	})
 
 	expected := &ElasticIP{
-		Description: testElasticIPDescription,
+		Description: &testElasticIPDescription,
 		Healthcheck: &ElasticIPHealthcheck{
-			Interval:      time.Duration(testElasticIPHealthcheckInterval) * time.Second,
-			Mode:          testElasticIPHealthcheckMode,
-			Port:          uint16(testElasticIPHealthcheckPort),
-			StrikesFail:   testElasticIPHealthcheckStrikesFail,
-			StrikesOK:     testElasticIPHealthcheckStrikesOK,
-			TLSSNI:        testElasticIPHealthcheckTLSSNI,
-			TLSSkipVerify: testElasticIPHealthcheckTLSSkipVerify,
-			Timeout:       time.Duration(testElasticIPHealthcheckTimeout) * time.Second,
-			URI:           testElasticIPHealthcheckURI,
+			Interval:      &testElasticIPHealthcheckIntervalD,
+			Mode:          &testElasticIPHealthcheckMode,
+			Port:          &testElasticIPHealthcheckPort,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
+			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
+			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Timeout:       &testElasticIPHealthcheckTimeoutD,
+			URI:           &testElasticIPHealthcheckURI,
 		},
-		ID:        testElasticIPID,
-		IPAddress: net.ParseIP(testElasticIPAddress),
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressP,
 
 		zone: testZone,
 		c:    ts.client,
 	}
 
-	actual, err := new(ElasticIP).get(context.Background(), ts.client, testZone, expected.ID)
+	actual, err := new(ElasticIP).get(context.Background(), ts.client, testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
-}
-
-func (ts *clientTestSuite) TestElasticIP_ResetField() {
-	var (
-		testResetField     = "description"
-		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
-		reset              = false
-	)
-
-	httpmock.RegisterResponder("DELETE", "=~^/elastic-ip/.*",
-		func(req *http.Request) (*http.Response, error) {
-			reset = true
-
-			ts.Require().Equal(
-				fmt.Sprintf("/elastic-ip/%s/%s", testInstancePoolID, testResetField),
-				req.URL.String())
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testInstancePoolID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testInstancePoolID},
-	})
-
-	elasticIP := &ElasticIP{
-		ID:   testInstancePoolID,
-		c:    ts.client,
-		zone: testZone,
-	}
-
-	ts.Require().NoError(elasticIP.ResetField(context.Background(), &elasticIP.Description))
-	ts.Require().True(reset)
 }
 
 func (ts *clientTestSuite) TestClient_CreateElasticIP() {
@@ -130,7 +89,7 @@ func (ts *clientTestSuite) TestClient_CreateElasticIP() {
 				Healthcheck: &papi.ElasticIpHealthcheck{
 					Interval:      &testElasticIPHealthcheckInterval,
 					Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
-					Port:          testElasticIPHealthcheckPort,
+					Port:          int64(testElasticIPHealthcheckPort),
 					StrikesFail:   &testElasticIPHealthcheckStrikesFail,
 					StrikesOk:     &testElasticIPHealthcheckStrikesOK,
 					Timeout:       &testElasticIPHealthcheckTimeout,
@@ -164,7 +123,7 @@ func (ts *clientTestSuite) TestClient_CreateElasticIP() {
 		Healthcheck: &papi.ElasticIpHealthcheck{
 			Interval:      &testElasticIPHealthcheckInterval,
 			Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
-			Port:          testElasticIPHealthcheckPort,
+			Port:          int64(testElasticIPHealthcheckPort),
 			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
 			StrikesOk:     &testElasticIPHealthcheckStrikesOK,
 			Timeout:       &testElasticIPHealthcheckTimeout,
@@ -177,39 +136,39 @@ func (ts *clientTestSuite) TestClient_CreateElasticIP() {
 	})
 
 	expected := &ElasticIP{
-		Description: testElasticIPDescription,
+		Description: &testElasticIPDescription,
 		Healthcheck: &ElasticIPHealthcheck{
-			Interval:      time.Duration(testElasticIPHealthcheckInterval) * time.Second,
-			Mode:          testElasticIPHealthcheckMode,
-			Port:          uint16(testElasticIPHealthcheckPort),
-			StrikesFail:   testElasticIPHealthcheckStrikesFail,
-			StrikesOK:     testElasticIPHealthcheckStrikesOK,
-			TLSSNI:        testElasticIPHealthcheckTLSSNI,
-			TLSSkipVerify: testElasticIPHealthcheckTLSSkipVerify,
-			Timeout:       time.Duration(testElasticIPHealthcheckTimeout) * time.Second,
-			URI:           testElasticIPHealthcheckURI,
+			Interval:      &testElasticIPHealthcheckIntervalD,
+			Mode:          &testElasticIPHealthcheckMode,
+			Port:          &testElasticIPHealthcheckPort,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
+			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
+			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Timeout:       &testElasticIPHealthcheckTimeoutD,
+			URI:           &testElasticIPHealthcheckURI,
 		},
-		ID:        testElasticIPID,
-		IPAddress: net.ParseIP(testElasticIPAddress),
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressP,
 
 		zone: testZone,
 		c:    ts.client,
 	}
 
 	actual, err := ts.client.CreateElasticIP(context.Background(), testZone, &ElasticIP{
-		Description: testElasticIPDescription,
+		Description: &testElasticIPDescription,
 		Healthcheck: &ElasticIPHealthcheck{
-			Interval:      time.Duration(testElasticIPHealthcheckInterval) * time.Second,
-			Mode:          testElasticIPHealthcheckMode,
-			Port:          uint16(testElasticIPHealthcheckPort),
-			StrikesFail:   testElasticIPHealthcheckStrikesFail,
-			StrikesOK:     testElasticIPHealthcheckStrikesOK,
-			TLSSNI:        testElasticIPHealthcheckTLSSNI,
-			TLSSkipVerify: testElasticIPHealthcheckTLSSkipVerify,
-			Timeout:       time.Duration(testElasticIPHealthcheckTimeout) * time.Second,
-			URI:           testElasticIPHealthcheckURI,
+			Interval:      &testElasticIPHealthcheckIntervalD,
+			Mode:          &testElasticIPHealthcheckMode,
+			Port:          &testElasticIPHealthcheckPort,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
+			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
+			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Timeout:       &testElasticIPHealthcheckTimeoutD,
+			URI:           &testElasticIPHealthcheckURI,
 		},
-		ID: testElasticIPID,
+		ID: &testElasticIPID,
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
@@ -224,7 +183,7 @@ func (ts *clientTestSuite) TestClient_ListElasticIPs() {
 			Healthcheck: &papi.ElasticIpHealthcheck{
 				Interval:      &testElasticIPHealthcheckInterval,
 				Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
-				Port:          testElasticIPHealthcheckPort,
+				Port:          int64(testElasticIPHealthcheckPort),
 				StrikesFail:   &testElasticIPHealthcheckStrikesFail,
 				StrikesOk:     &testElasticIPHealthcheckStrikesOK,
 				Timeout:       &testElasticIPHealthcheckTimeout,
@@ -238,20 +197,20 @@ func (ts *clientTestSuite) TestClient_ListElasticIPs() {
 	})
 
 	expected := []*ElasticIP{{
-		Description: testElasticIPDescription,
+		Description: &testElasticIPDescription,
 		Healthcheck: &ElasticIPHealthcheck{
-			Interval:      time.Duration(testElasticIPHealthcheckInterval) * time.Second,
-			Mode:          testElasticIPHealthcheckMode,
-			Port:          uint16(testElasticIPHealthcheckPort),
-			StrikesFail:   testElasticIPHealthcheckStrikesFail,
-			StrikesOK:     testElasticIPHealthcheckStrikesOK,
-			TLSSNI:        testElasticIPHealthcheckTLSSNI,
-			TLSSkipVerify: testElasticIPHealthcheckTLSSkipVerify,
-			Timeout:       time.Duration(testElasticIPHealthcheckTimeout) * time.Second,
-			URI:           testElasticIPHealthcheckURI,
+			Interval:      &testElasticIPHealthcheckIntervalD,
+			Mode:          &testElasticIPHealthcheckMode,
+			Port:          &testElasticIPHealthcheckPort,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
+			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
+			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Timeout:       &testElasticIPHealthcheckTimeoutD,
+			URI:           &testElasticIPHealthcheckURI,
 		},
-		ID:        testElasticIPID,
-		IPAddress: net.ParseIP(testElasticIPAddress),
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressP,
 
 		zone: testZone,
 		c:    ts.client,
@@ -268,7 +227,7 @@ func (ts *clientTestSuite) TestClient_GetElasticIP() {
 		Healthcheck: &papi.ElasticIpHealthcheck{
 			Interval:      &testElasticIPHealthcheckInterval,
 			Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
-			Port:          testElasticIPHealthcheckPort,
+			Port:          int64(testElasticIPHealthcheckPort),
 			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
 			StrikesOk:     &testElasticIPHealthcheckStrikesOK,
 			Timeout:       &testElasticIPHealthcheckTimeout,
@@ -281,26 +240,26 @@ func (ts *clientTestSuite) TestClient_GetElasticIP() {
 	})
 
 	expected := &ElasticIP{
-		Description: testElasticIPDescription,
+		Description: &testElasticIPDescription,
 		Healthcheck: &ElasticIPHealthcheck{
-			Interval:      time.Duration(testElasticIPHealthcheckInterval) * time.Second,
-			Mode:          testElasticIPHealthcheckMode,
-			Port:          uint16(testElasticIPHealthcheckPort),
-			StrikesFail:   testElasticIPHealthcheckStrikesFail,
-			StrikesOK:     testElasticIPHealthcheckStrikesOK,
-			TLSSNI:        testElasticIPHealthcheckTLSSNI,
-			TLSSkipVerify: testElasticIPHealthcheckTLSSkipVerify,
-			Timeout:       time.Duration(testElasticIPHealthcheckTimeout) * time.Second,
-			URI:           testElasticIPHealthcheckURI,
+			Interval:      &testElasticIPHealthcheckIntervalD,
+			Mode:          &testElasticIPHealthcheckMode,
+			Port:          &testElasticIPHealthcheckPort,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
+			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
+			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Timeout:       &testElasticIPHealthcheckTimeoutD,
+			URI:           &testElasticIPHealthcheckURI,
 		},
-		ID:        testElasticIPID,
-		IPAddress: net.ParseIP(testElasticIPAddress),
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressP,
 
 		zone: testZone,
 		c:    ts.client,
 	}
 
-	actual, err := ts.client.GetElasticIP(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.GetElasticIP(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -321,14 +280,14 @@ func (ts *clientTestSuite) TestClient_FindElasticIP() {
 	})
 
 	expected := &ElasticIP{
-		ID:        testElasticIPID,
-		IPAddress: net.ParseIP(testElasticIPAddress),
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressP,
 
 		zone: testZone,
 		c:    ts.client,
 	}
 
-	actual, err := ts.client.FindElasticIP(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.FindElasticIP(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 
@@ -343,7 +302,9 @@ func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 		testElasticIPHealthcheckModeUpdated          = papi.ElasticIpHealthcheckModeTcp
 		testElasticIPHealthcheckPortUpdated          = testElasticIPHealthcheckPort + 1
 		testElasticIPHealthcheckIntervalUpdated      = testElasticIPHealthcheckInterval + 1
+		testElasticIPHealthcheckIntervalDUpdated     = time.Duration(testElasticIPHealthcheckIntervalUpdated) * time.Second
 		testElasticIPHealthcheckTimeoutUpdated       = testElasticIPHealthcheckTimeout + 1
+		testElasticIPHealthcheckTimeoutDUpdated      = time.Duration(testElasticIPHealthcheckTimeoutUpdated) * time.Second
 		testElasticIPHealthcheckStrikesFailUpdated   = testElasticIPHealthcheckStrikesFail + 1
 		testElasticIPHealthcheckStrikesOKUpdated     = testElasticIPHealthcheckStrikesOK + 1
 		testElasticIPHealthcheckTLSSkipVerifyUpdated = false
@@ -364,7 +325,7 @@ func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 				Healthcheck: &papi.ElasticIpHealthcheck{
 					Interval:      &testElasticIPHealthcheckIntervalUpdated,
 					Mode:          testElasticIPHealthcheckModeUpdated,
-					Port:          testElasticIPHealthcheckPortUpdated,
+					Port:          int64(testElasticIPHealthcheckPortUpdated),
 					StrikesFail:   &testElasticIPHealthcheckStrikesFailUpdated,
 					StrikesOk:     &testElasticIPHealthcheckStrikesOKUpdated,
 					Timeout:       &testElasticIPHealthcheckTimeoutUpdated,
@@ -392,18 +353,18 @@ func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 	})
 
 	ts.Require().NoError(ts.client.UpdateElasticIP(context.Background(), testZone, &ElasticIP{
-		Description: testElasticIPDescriptionUpdated,
+		Description: &testElasticIPDescriptionUpdated,
 		Healthcheck: &ElasticIPHealthcheck{
-			Interval:      time.Duration(testElasticIPHealthcheckIntervalUpdated) * time.Second,
-			Mode:          string(testElasticIPHealthcheckModeUpdated),
-			Port:          uint16(testElasticIPHealthcheckPortUpdated),
-			StrikesFail:   testElasticIPHealthcheckStrikesFailUpdated,
-			StrikesOK:     testElasticIPHealthcheckStrikesOKUpdated,
-			Timeout:       time.Duration(testElasticIPHealthcheckTimeoutUpdated) * time.Second,
-			TLSSkipVerify: testElasticIPHealthcheckTLSSkipVerifyUpdated,
+			Interval:      &testElasticIPHealthcheckIntervalDUpdated,
+			Mode:          (*string)(&testElasticIPHealthcheckModeUpdated),
+			Port:          &testElasticIPHealthcheckPortUpdated,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFailUpdated,
+			StrikesOK:     &testElasticIPHealthcheckStrikesOKUpdated,
+			Timeout:       &testElasticIPHealthcheckTimeoutDUpdated,
+			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerifyUpdated,
 		},
-		ID:        testElasticIPID,
-		IPAddress: net.ParseIP(testElasticIPAddress),
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressP,
 
 		zone: testZone,
 		c:    ts.client,

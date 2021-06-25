@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	testDeployTargetDescription = "Test Deploy Target description"
+	testDeployTargetDescription = new(clientTestSuite).randomString(10)
 	testDeployTargetID          = new(clientTestSuite).randomID()
-	testDeployTargetName        = "test-deploy-target"
+	testDeployTargetName        = new(clientTestSuite).randomString(10)
 	testDeployTargetType        = "dedicated"
 )
 
@@ -30,10 +30,10 @@ func (ts *clientTestSuite) TestClient_ListDeployTargets() {
 	})
 
 	expected := []*DeployTarget{{
-		Description: testDeployTargetDescription,
-		ID:          testDeployTargetID,
-		Name:        testDeployTargetName,
-		Type:        testDeployTargetType,
+		Description: &testDeployTargetDescription,
+		ID:          &testDeployTargetID,
+		Name:        &testDeployTargetName,
+		Type:        &testDeployTargetType,
 	}}
 
 	actual, err := ts.client.ListDeployTargets(context.Background(), testZone)
@@ -56,13 +56,13 @@ func (ts *clientTestSuite) TestClient_GetDeployTarget() {
 		})
 
 	expected := &DeployTarget{
-		Description: testDeployTargetDescription,
-		ID:          testDeployTargetID,
-		Name:        testDeployTargetName,
-		Type:        testDeployTargetType,
+		Description: &testDeployTargetDescription,
+		ID:          &testDeployTargetID,
+		Name:        &testDeployTargetName,
+		Type:        &testDeployTargetType,
 	}
 
-	actual, err := ts.client.GetDeployTarget(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.GetDeployTarget(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -96,17 +96,17 @@ func (ts *clientTestSuite) TestClient_FindDeployTarget() {
 		})
 
 	expected := &DeployTarget{
-		Description: testDeployTargetDescription,
-		ID:          testDeployTargetID,
-		Name:        testDeployTargetName,
-		Type:        testDeployTargetType,
+		Description: &testDeployTargetDescription,
+		ID:          &testDeployTargetID,
+		Name:        &testDeployTargetName,
+		Type:        &testDeployTargetType,
 	}
 
-	actual, err := ts.client.FindDeployTarget(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.FindDeployTarget(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 
-	actual, err = ts.client.FindDeployTarget(context.Background(), testZone, expected.Name)
+	actual, err = ts.client.FindDeployTarget(context.Background(), testZone, *expected.Name)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }

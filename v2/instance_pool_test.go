@@ -3,7 +3,6 @@ package v2
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 
 	"github.com/jarcoal/httpmock"
@@ -14,18 +13,19 @@ import (
 var (
 	testInstancePoolAntiAffinityGroupID       = new(clientTestSuite).randomID()
 	testInstancePoolDeployTargetID            = new(clientTestSuite).randomID()
-	testInstancePoolDescription               = "Test Instance Pool description"
+	testInstancePoolDescription               = new(clientTestSuite).randomString(10)
 	testInstancePoolDiskSize            int64 = 10
 	testInstancePoolElasticIPID               = new(clientTestSuite).randomID()
 	testInstancePoolID                        = new(clientTestSuite).randomID()
 	testInstancePoolIPv6Enabled               = true
 	testInstancePoolInstanceID                = new(clientTestSuite).randomID()
-	testInstancePoolInstancePrefix            = "test-instancepool"
+	testInstancePoolInstancePrefix            = new(clientTestSuite).randomString(10)
 	testInstancePoolInstanceTypeID            = new(clientTestSuite).randomID()
+	testInstancePoolLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
 	testInstancePoolManagerID                 = new(clientTestSuite).randomID()
-	testInstancePoolName                      = "test-instancepool"
+	testInstancePoolName                      = new(clientTestSuite).randomString(10)
 	testInstancePoolPrivateNetworkID          = new(clientTestSuite).randomID()
-	testInstancePoolSSHKey                    = "test-ssh-key"
+	testInstancePoolSSHKey                    = new(clientTestSuite).randomString(10)
 	testInstancePoolSecurityGroupID           = new(clientTestSuite).randomID()
 	testInstancePoolSize                int64 = 3
 	testInstancePoolState                     = papi.InstancePoolStateRunning
@@ -44,12 +44,12 @@ func (ts *clientTestSuite) TestInstancePool_AntiAffinityGroups() {
 	)
 
 	expected := []*AntiAffinityGroup{{
-		ID:   testAntiAffinityGroupID,
-		Name: testAntiAffinityGroupName,
+		ID:   &testAntiAffinityGroupID,
+		Name: &testAntiAffinityGroupName,
 	}}
 
 	instancePool := &InstancePool{
-		AntiAffinityGroupIDs: []string{testAntiAffinityGroupID},
+		AntiAffinityGroupIDs: &[]string{testAntiAffinityGroupID},
 
 		c:    ts.client,
 		zone: testZone,
@@ -71,15 +71,15 @@ func (ts *clientTestSuite) TestInstancePool_ElasticIPs() {
 	)
 
 	expected := []*ElasticIP{{
-		ID:        testElasticIPID,
-		IPAddress: net.ParseIP(testElasticIPAddress),
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressP,
 
 		c:    ts.client,
 		zone: testZone,
 	}}
 
 	instancePool := &InstancePool{
-		ElasticIPIDs: []string{testElasticIPID},
+		ElasticIPIDs: &[]string{testElasticIPID},
 
 		c:    ts.client,
 		zone: testZone,
@@ -102,25 +102,20 @@ func (ts *clientTestSuite) TestInstancePool_Instances() {
 	})
 
 	expected := []*Instance{{
-		AntiAffinityGroupIDs: []string{},
-		CreatedAt:            testInstanceCreatedAt,
-		DiskSize:             testInstanceDiskSize,
-		ElasticIPIDs:         []string{},
-		ID:                   testInstanceID,
-		InstanceTypeID:       testInstanceInstanceTypeID,
-		Name:                 testInstanceName,
-		PrivateNetworkIDs:    []string{},
-		SecurityGroupIDs:     []string{},
-		SnapshotIDs:          []string{},
-		State:                string(testInstanceState),
-		TemplateID:           testInstanceTemplateID,
+		CreatedAt:      &testInstanceCreatedAt,
+		DiskSize:       &testInstanceDiskSize,
+		ID:             &testInstanceID,
+		InstanceTypeID: &testInstanceInstanceTypeID,
+		Name:           &testInstanceName,
+		State:          (*string)(&testInstanceState),
+		TemplateID:     &testInstanceTemplateID,
 
 		c:    ts.client,
 		zone: testZone,
 	}}
 
 	instancePool := &InstancePool{
-		InstanceIDs: []string{testInstanceID},
+		InstanceIDs: &[]string{testInstanceID},
 
 		c:    ts.client,
 		zone: testZone,
@@ -138,12 +133,12 @@ func (ts *clientTestSuite) TestInstancePool_PrivateNetworks() {
 	})
 
 	expected := []*PrivateNetwork{{
-		ID:   testPrivateNetworkID,
-		Name: testPrivateNetworkName,
+		ID:   &testPrivateNetworkID,
+		Name: &testPrivateNetworkName,
 	}}
 
 	instancePool := &InstancePool{
-		PrivateNetworkIDs: []string{testPrivateNetworkID},
+		PrivateNetworkIDs: &[]string{testPrivateNetworkID},
 
 		c:    ts.client,
 		zone: testZone,
@@ -162,8 +157,8 @@ func (ts *clientTestSuite) TestInstancePool_SecurityGroups() {
 
 	expected := []*SecurityGroup{
 		{
-			ID:   testSecurityGroupID,
-			Name: testSecurityGroupName,
+			ID:   &testSecurityGroupID,
+			Name: &testSecurityGroupName,
 
 			c:    ts.client,
 			zone: testZone,
@@ -171,7 +166,7 @@ func (ts *clientTestSuite) TestInstancePool_SecurityGroups() {
 	}
 
 	instancePool := &InstancePool{
-		SecurityGroupIDs: []string{testSecurityGroupID},
+		SecurityGroupIDs: &[]string{testSecurityGroupID},
 
 		c:    ts.client,
 		zone: testZone,
@@ -191,14 +186,14 @@ func (ts *clientTestSuite) TestInstancePool_Scale() {
 	)
 
 	instancePool := &InstancePool{
-		ID:   testInstancePoolID,
+		ID:   &testInstancePoolID,
 		c:    ts.client,
 		zone: testZone,
 
-		InstanceIDs: []string{testInstancePoolID},
+		InstanceIDs: &[]string{testInstancePoolID},
 	}
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance-pool/%s:scale", instancePool.ID),
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance-pool/%s:scale", *instancePool.ID),
 		func(req *http.Request) (*http.Response, error) {
 			scaled = true
 
@@ -239,12 +234,12 @@ func (ts *clientTestSuite) TestInstancePool_EvictMembers() {
 	)
 
 	instancePool := &InstancePool{
-		ID:   testInstancePoolID,
+		ID:   &testInstancePoolID,
 		c:    ts.client,
 		zone: testZone,
 	}
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance-pool/%s:evict", instancePool.ID),
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance-pool/%s:evict", *instancePool.ID),
 		func(req *http.Request) (*http.Response, error) {
 			evicted = true
 
@@ -276,50 +271,6 @@ func (ts *clientTestSuite) TestInstancePool_EvictMembers() {
 	ts.Require().True(evicted)
 }
 
-func (ts *clientTestSuite) TestInstancePool_ResetField() {
-	var (
-		testResetField     = "description"
-		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
-		reset              = false
-	)
-
-	httpmock.RegisterResponder("DELETE", "=~^/instance-pool/.*",
-		func(req *http.Request) (*http.Response, error) {
-			reset = true
-
-			ts.Require().Equal(
-				fmt.Sprintf("/instance-pool/%s/%s", testInstancePoolID, testResetField),
-				req.URL.String())
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testInstancePoolID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testInstancePoolID},
-	})
-
-	instancePool := &InstancePool{
-		ID:   testInstancePoolID,
-		c:    ts.client,
-		zone: testZone,
-	}
-
-	ts.Require().NoError(instancePool.ResetField(context.Background(), &instancePool.Description))
-	ts.Require().True(reset)
-}
-
 func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 	var (
 		testOperationID    = ts.randomID()
@@ -340,6 +291,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 				InstancePrefix:     &testInstancePoolInstancePrefix,
 				InstanceType:       papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
 				Ipv6Enabled:        &testInstancePoolIPv6Enabled,
+				Labels:             &papi.Labels{AdditionalProperties: testInstancePoolLabels},
 				Name:               testInstancePoolName,
 				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
 				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testInstancePoolSecurityGroupID}},
@@ -379,6 +331,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 		InstanceType:       &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
 		Instances:          &[]papi.Instance{{Id: &testInstancePoolInstanceID}},
 		Ipv6Enabled:        &testInstancePoolIPv6Enabled,
+		Labels:             &papi.Labels{AdditionalProperties: testInstancePoolLabels},
 		Manager:            &papi.Manager{Id: &testInstancePoolManagerID},
 		Name:               &testInstancePoolName,
 		PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
@@ -391,46 +344,48 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 	})
 
 	expected := &InstancePool{
-		AntiAffinityGroupIDs: []string{testInstancePoolAntiAffinityGroupID},
-		DeployTargetID:       testInstancePoolDeployTargetID,
-		Description:          testInstancePoolDescription,
-		DiskSize:             testInstancePoolDiskSize,
-		ElasticIPIDs:         []string{testInstancePoolElasticIPID},
-		ID:                   testInstancePoolID,
-		IPv6Enabled:          testInstancePoolIPv6Enabled,
-		InstanceIDs:          []string{testInstancePoolInstanceID},
-		InstancePrefix:       testInstancePoolInstancePrefix,
-		InstanceTypeID:       testInstancePoolInstanceTypeID,
-		ManagerID:            testInstancePoolManagerID,
-		Name:                 testInstancePoolName,
-		PrivateNetworkIDs:    []string{testInstancePoolPrivateNetworkID},
-		SSHKey:               testInstancePoolSSHKey,
-		SecurityGroupIDs:     []string{testInstancePoolSecurityGroupID},
-		Size:                 testInstancePoolSize,
-		State:                string(testInstancePoolState),
-		TemplateID:           testInstancePoolTemplateID,
-		UserData:             testInstancePoolUserData,
+		AntiAffinityGroupIDs: &[]string{testInstancePoolAntiAffinityGroupID},
+		DeployTargetID:       &testInstancePoolDeployTargetID,
+		Description:          &testInstancePoolDescription,
+		DiskSize:             &testInstancePoolDiskSize,
+		ElasticIPIDs:         &[]string{testInstancePoolElasticIPID},
+		ID:                   &testInstancePoolID,
+		IPv6Enabled:          &testInstancePoolIPv6Enabled,
+		InstanceIDs:          &[]string{testInstancePoolInstanceID},
+		InstancePrefix:       &testInstancePoolInstancePrefix,
+		InstanceTypeID:       &testInstancePoolInstanceTypeID,
+		Labels:               &testInstanceLabels,
+		ManagerID:            &testInstancePoolManagerID,
+		Name:                 &testInstancePoolName,
+		PrivateNetworkIDs:    &[]string{testInstancePoolPrivateNetworkID},
+		SSHKey:               &testInstancePoolSSHKey,
+		SecurityGroupIDs:     &[]string{testInstancePoolSecurityGroupID},
+		Size:                 &testInstancePoolSize,
+		State:                (*string)(&testInstancePoolState),
+		TemplateID:           &testInstancePoolTemplateID,
+		UserData:             &testInstancePoolUserData,
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
 	actual, err := ts.client.CreateInstancePool(context.Background(), testZone, &InstancePool{
-		AntiAffinityGroupIDs: []string{testInstancePoolAntiAffinityGroupID},
-		DeployTargetID:       testInstancePoolDeployTargetID,
-		Description:          testInstancePoolDescription,
-		DiskSize:             testInstancePoolDiskSize,
-		ElasticIPIDs:         []string{testInstancePoolElasticIPID},
-		IPv6Enabled:          testInstancePoolIPv6Enabled,
-		InstancePrefix:       testInstancePoolInstancePrefix,
-		InstanceTypeID:       testInstancePoolInstanceTypeID,
-		Name:                 testInstancePoolName,
-		PrivateNetworkIDs:    []string{testInstancePoolPrivateNetworkID},
-		SSHKey:               testInstancePoolSSHKey,
-		SecurityGroupIDs:     []string{testInstancePoolSecurityGroupID},
-		Size:                 testInstancePoolSize,
-		TemplateID:           testInstancePoolTemplateID,
-		UserData:             testInstancePoolUserData,
+		AntiAffinityGroupIDs: &[]string{testInstancePoolAntiAffinityGroupID},
+		DeployTargetID:       &testInstancePoolDeployTargetID,
+		Description:          &testInstancePoolDescription,
+		DiskSize:             &testInstancePoolDiskSize,
+		ElasticIPIDs:         &[]string{testInstancePoolElasticIPID},
+		IPv6Enabled:          &testInstancePoolIPv6Enabled,
+		InstancePrefix:       &testInstancePoolInstancePrefix,
+		InstanceTypeID:       &testInstancePoolInstanceTypeID,
+		Labels:               &testInstanceLabels,
+		Name:                 &testInstancePoolName,
+		PrivateNetworkIDs:    &[]string{testInstancePoolPrivateNetworkID},
+		SSHKey:               &testInstancePoolSSHKey,
+		SecurityGroupIDs:     &[]string{testInstancePoolSecurityGroupID},
+		Size:                 &testInstancePoolSize,
+		TemplateID:           &testInstancePoolTemplateID,
+		UserData:             &testInstancePoolUserData,
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
@@ -449,6 +404,7 @@ func (ts *clientTestSuite) TestClient_ListInstancePools() {
 			InstanceType:       &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
 			Instances:          &[]papi.Instance{{Id: &testInstancePoolInstanceID}},
 			Ipv6Enabled:        &testInstancePoolIPv6Enabled,
+			Labels:             &papi.Labels{AdditionalProperties: testInstancePoolLabels},
 			Manager:            &papi.Manager{Id: &testInstancePoolManagerID},
 			Name:               &testInstancePoolName,
 			PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
@@ -462,23 +418,24 @@ func (ts *clientTestSuite) TestClient_ListInstancePools() {
 	})
 
 	expected := []*InstancePool{{
-		AntiAffinityGroupIDs: []string{testInstancePoolAntiAffinityGroupID},
-		Description:          testInstancePoolDescription,
-		DiskSize:             testInstancePoolDiskSize,
-		ElasticIPIDs:         []string{testInstancePoolElasticIPID},
-		ID:                   testInstancePoolID,
-		IPv6Enabled:          testInstancePoolIPv6Enabled,
-		InstanceIDs:          []string{testInstancePoolInstanceID},
-		InstanceTypeID:       testInstancePoolInstanceTypeID,
-		ManagerID:            testInstancePoolManagerID,
-		Name:                 testInstancePoolName,
-		PrivateNetworkIDs:    []string{testInstancePoolPrivateNetworkID},
-		SSHKey:               testInstancePoolSSHKey,
-		SecurityGroupIDs:     []string{testInstancePoolSecurityGroupID},
-		Size:                 testInstancePoolSize,
-		State:                string(testInstancePoolState),
-		TemplateID:           testInstancePoolTemplateID,
-		UserData:             testInstancePoolUserData,
+		AntiAffinityGroupIDs: &[]string{testInstancePoolAntiAffinityGroupID},
+		Description:          &testInstancePoolDescription,
+		DiskSize:             &testInstancePoolDiskSize,
+		ElasticIPIDs:         &[]string{testInstancePoolElasticIPID},
+		ID:                   &testInstancePoolID,
+		IPv6Enabled:          &testInstancePoolIPv6Enabled,
+		InstanceIDs:          &[]string{testInstancePoolInstanceID},
+		InstanceTypeID:       &testInstancePoolInstanceTypeID,
+		Labels:               &testInstancePoolLabels,
+		ManagerID:            &testInstancePoolManagerID,
+		Name:                 &testInstancePoolName,
+		PrivateNetworkIDs:    &[]string{testInstancePoolPrivateNetworkID},
+		SSHKey:               &testInstancePoolSSHKey,
+		SecurityGroupIDs:     &[]string{testInstancePoolSecurityGroupID},
+		Size:                 &testInstancePoolSize,
+		State:                (*string)(&testInstancePoolState),
+		TemplateID:           &testInstancePoolTemplateID,
+		UserData:             &testInstancePoolUserData,
 
 		c:    ts.client,
 		zone: testZone,
@@ -499,6 +456,7 @@ func (ts *clientTestSuite) TestClient_GetInstancePool() {
 		InstanceType:       &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
 		Instances:          &[]papi.Instance{{Id: &testInstancePoolInstanceID}},
 		Ipv6Enabled:        &testInstancePoolIPv6Enabled,
+		Labels:             &papi.Labels{AdditionalProperties: testInstancePoolLabels},
 		Manager:            &papi.Manager{Id: &testInstancePoolManagerID},
 		Name:               &testInstancePoolName,
 		PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
@@ -511,29 +469,30 @@ func (ts *clientTestSuite) TestClient_GetInstancePool() {
 	})
 
 	expected := &InstancePool{
-		AntiAffinityGroupIDs: []string{testInstancePoolAntiAffinityGroupID},
-		Description:          testInstancePoolDescription,
-		DiskSize:             testInstancePoolDiskSize,
-		ElasticIPIDs:         []string{testInstancePoolElasticIPID},
-		ID:                   testInstancePoolID,
-		IPv6Enabled:          testInstancePoolIPv6Enabled,
-		InstanceIDs:          []string{testInstancePoolInstanceID},
-		InstanceTypeID:       testInstancePoolInstanceTypeID,
-		ManagerID:            testInstancePoolManagerID,
-		Name:                 testInstancePoolName,
-		PrivateNetworkIDs:    []string{testInstancePoolPrivateNetworkID},
-		SSHKey:               testInstancePoolSSHKey,
-		SecurityGroupIDs:     []string{testInstancePoolSecurityGroupID},
-		Size:                 testInstancePoolSize,
-		State:                string(testInstancePoolState),
-		TemplateID:           testInstancePoolTemplateID,
-		UserData:             testInstancePoolUserData,
+		AntiAffinityGroupIDs: &[]string{testInstancePoolAntiAffinityGroupID},
+		Description:          &testInstancePoolDescription,
+		DiskSize:             &testInstancePoolDiskSize,
+		ElasticIPIDs:         &[]string{testInstancePoolElasticIPID},
+		ID:                   &testInstancePoolID,
+		IPv6Enabled:          &testInstancePoolIPv6Enabled,
+		InstanceIDs:          &[]string{testInstancePoolInstanceID},
+		InstanceTypeID:       &testInstancePoolInstanceTypeID,
+		Labels:               &testInstancePoolLabels,
+		ManagerID:            &testInstancePoolManagerID,
+		Name:                 &testInstancePoolName,
+		PrivateNetworkIDs:    &[]string{testInstancePoolPrivateNetworkID},
+		SSHKey:               &testInstancePoolSSHKey,
+		SecurityGroupIDs:     &[]string{testInstancePoolSecurityGroupID},
+		Size:                 &testInstancePoolSize,
+		State:                (*string)(&testInstancePoolState),
+		TemplateID:           &testInstancePoolTemplateID,
+		UserData:             &testInstancePoolUserData,
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
-	actual, err := ts.client.GetInstancePool(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.GetInstancePool(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -543,61 +502,47 @@ func (ts *clientTestSuite) TestClient_FindInstancePool() {
 		InstancePools *[]papi.InstancePool `json:"instance-pools,omitempty"`
 	}{
 		InstancePools: &[]papi.InstancePool{{
-			Description:  &testInstancePoolDescription,
 			DiskSize:     &testInstancePoolDiskSize,
 			Id:           &testInstancePoolID,
 			InstanceType: &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
-			Ipv6Enabled:  &testInstancePoolIPv6Enabled,
 			Manager:      &papi.Manager{Id: &testInstancePoolManagerID},
 			Name:         &testInstancePoolName,
 			Size:         &testInstancePoolSize,
-			SshKey:       &papi.SshKey{Name: &testInstancePoolSSHKey},
 			State:        &testInstancePoolState,
 			Template:     &papi.Template{Id: &testInstancePoolTemplateID},
 		}},
 	})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-pool/%s", testInstancePoolID), papi.InstancePool{
-		Description:  &testInstancePoolDescription,
 		DiskSize:     &testInstancePoolDiskSize,
 		Id:           &testInstancePoolID,
 		InstanceType: &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
-		Ipv6Enabled:  &testInstancePoolIPv6Enabled,
 		Manager:      &papi.Manager{Id: &testInstancePoolManagerID},
 		Name:         &testInstancePoolName,
 		Size:         &testInstancePoolSize,
-		SshKey:       &papi.SshKey{Name: &testInstancePoolSSHKey},
 		State:        &testInstancePoolState,
 		Template:     &papi.Template{Id: &testInstancePoolTemplateID},
 	})
 
 	expected := &InstancePool{
-		AntiAffinityGroupIDs: []string{},
-		Description:          testInstancePoolDescription,
-		DiskSize:             testInstancePoolDiskSize,
-		ElasticIPIDs:         []string{},
-		ID:                   testInstancePoolID,
-		IPv6Enabled:          testInstancePoolIPv6Enabled,
-		InstanceIDs:          []string{},
-		InstanceTypeID:       testInstancePoolInstanceTypeID,
-		ManagerID:            testInstancePoolManagerID,
-		Name:                 testInstancePoolName,
-		PrivateNetworkIDs:    []string{},
-		SSHKey:               testInstancePoolSSHKey,
-		SecurityGroupIDs:     []string{},
-		Size:                 testInstancePoolSize,
-		State:                string(testInstancePoolState),
-		TemplateID:           testInstancePoolTemplateID,
+		DiskSize:       &testInstancePoolDiskSize,
+		ID:             &testInstancePoolID,
+		InstanceTypeID: &testInstancePoolInstanceTypeID,
+		ManagerID:      &testInstancePoolManagerID,
+		Name:           &testInstancePoolName,
+		Size:           &testInstancePoolSize,
+		State:          (*string)(&testInstancePoolState),
+		TemplateID:     &testInstancePoolTemplateID,
 
 		c:    ts.client,
 		zone: testZone,
 	}
 
-	actual, err := ts.client.FindInstancePool(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.FindInstancePool(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 
-	actual, err = ts.client.FindInstancePool(context.Background(), testZone, expected.Name)
+	actual, err = ts.client.FindInstancePool(context.Background(), testZone, *expected.Name)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -612,6 +557,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 		testInstancePoolIPv6EnabledUpdated         = true
 		testInstancePoolInstancePrefixUpdated      = testInstancePoolInstancePrefix + "-updated"
 		testInstancePoolInstanceTypeIDUpdated      = new(clientTestSuite).randomID()
+		testInstancePoolLabelsUpdated              = map[string]string{"k3": "v3"}
 		testInstancePoolNameUpdated                = testInstancePoolName + "-updated"
 		testInstancePoolPrivateNetworkIDUpdated    = new(clientTestSuite).randomID()
 		testInstancePoolSecurityGroupIDUpdated     = new(clientTestSuite).randomID()
@@ -639,6 +585,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 				InstancePrefix:     &testInstancePoolInstancePrefixUpdated,
 				InstanceType:       &papi.InstanceType{Id: &testInstancePoolInstanceTypeIDUpdated},
 				Ipv6Enabled:        &testInstancePoolIPv6EnabledUpdated,
+				Labels:             &papi.Labels{AdditionalProperties: testInstancePoolLabelsUpdated},
 				Name:               &testInstancePoolNameUpdated,
 				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkIDUpdated}},
 				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testInstancePoolSecurityGroupIDUpdated}},
@@ -667,22 +614,23 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 	})
 
 	ts.Require().NoError(ts.client.UpdateInstancePool(context.Background(), testZone, &InstancePool{
-		AntiAffinityGroupIDs: []string{testInstancePoolAntiAffinityGroupIDUpdated},
-		DeployTargetID:       testInstancePoolDeployTargetIDUpdated,
-		Description:          testInstancePoolDescriptionUpdated,
-		DiskSize:             testInstancePoolDiskSizeUpdated,
-		ElasticIPIDs:         []string{testInstancePoolElasticIPIDUpdated},
-		ID:                   testInstancePoolID,
-		IPv6Enabled:          testInstancePoolIPv6EnabledUpdated,
-		InstanceIDs:          []string{testInstancePoolInstanceTypeIDUpdated},
-		InstancePrefix:       testInstancePoolInstancePrefixUpdated,
-		InstanceTypeID:       testInstancePoolInstanceTypeIDUpdated,
-		Name:                 testInstancePoolNameUpdated,
-		PrivateNetworkIDs:    []string{testInstancePoolPrivateNetworkIDUpdated},
-		SSHKey:               testInstancePoolSSHKeyUpdated,
-		SecurityGroupIDs:     []string{testInstancePoolSecurityGroupIDUpdated},
-		TemplateID:           testInstancePoolTemplateIDUpdated,
-		UserData:             testInstancePoolUserDataUpdated,
+		AntiAffinityGroupIDs: &[]string{testInstancePoolAntiAffinityGroupIDUpdated},
+		DeployTargetID:       &testInstancePoolDeployTargetIDUpdated,
+		Description:          &testInstancePoolDescriptionUpdated,
+		DiskSize:             &testInstancePoolDiskSizeUpdated,
+		ElasticIPIDs:         &[]string{testInstancePoolElasticIPIDUpdated},
+		ID:                   &testInstancePoolID,
+		IPv6Enabled:          &testInstancePoolIPv6EnabledUpdated,
+		InstanceIDs:          &[]string{testInstancePoolInstanceTypeIDUpdated},
+		InstancePrefix:       &testInstancePoolInstancePrefixUpdated,
+		InstanceTypeID:       &testInstancePoolInstanceTypeIDUpdated,
+		Labels:               &testInstancePoolLabelsUpdated,
+		Name:                 &testInstancePoolNameUpdated,
+		PrivateNetworkIDs:    &[]string{testInstancePoolPrivateNetworkIDUpdated},
+		SSHKey:               &testInstancePoolSSHKeyUpdated,
+		SecurityGroupIDs:     &[]string{testInstancePoolSecurityGroupIDUpdated},
+		TemplateID:           &testInstancePoolTemplateIDUpdated,
+		UserData:             &testInstancePoolUserDataUpdated,
 	}))
 	ts.Require().True(updated)
 }

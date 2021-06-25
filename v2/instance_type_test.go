@@ -33,13 +33,13 @@ func (ts *clientTestSuite) TestClient_ListInstanceTypes() {
 	})
 
 	expected := []*InstanceType{{
-		Authorized: testInstanceTypeAuthorized,
-		CPUs:       testInstanceTypeCPUs,
-		Family:     string(testInstanceTypeFamily),
-		GPUs:       testInstanceTypeGPUs,
-		ID:         testInstanceTypeID,
-		Memory:     testInstanceTypeMemory,
-		Size:       string(testInstanceTypeSize),
+		Authorized: &testInstanceTypeAuthorized,
+		CPUs:       &testInstanceTypeCPUs,
+		Family:     (*string)(&testInstanceTypeFamily),
+		GPUs:       &testInstanceTypeGPUs,
+		ID:         &testInstanceTypeID,
+		Memory:     &testInstanceTypeMemory,
+		Size:       (*string)(&testInstanceTypeSize),
 	}}
 
 	actual, err := ts.client.ListInstanceTypes(context.Background(), testZone)
@@ -59,16 +59,16 @@ func (ts *clientTestSuite) TestClient_GetInstanceType() {
 	})
 
 	expected := &InstanceType{
-		Authorized: testInstanceTypeAuthorized,
-		CPUs:       testInstanceTypeCPUs,
-		Family:     string(testInstanceTypeFamily),
-		GPUs:       testInstanceTypeGPUs,
-		ID:         testInstanceTypeID,
-		Memory:     testInstanceTypeMemory,
-		Size:       string(testInstanceTypeSize),
+		Authorized: &testInstanceTypeAuthorized,
+		CPUs:       &testInstanceTypeCPUs,
+		Family:     (*string)(&testInstanceTypeFamily),
+		GPUs:       &testInstanceTypeGPUs,
+		ID:         &testInstanceTypeID,
+		Memory:     &testInstanceTypeMemory,
+		Size:       (*string)(&testInstanceTypeSize),
 	}
 
-	actual, err := ts.client.GetInstanceType(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.GetInstanceType(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -81,7 +81,6 @@ func (ts *clientTestSuite) TestClient_FindInstanceType() {
 			Authorized: &testInstanceTypeAuthorized,
 			Cpus:       &testInstanceTypeCPUs,
 			Family:     &testInstanceTypeFamily,
-			Gpus:       &testInstanceTypeGPUs,
 			Id:         &testInstanceTypeID,
 			Memory:     &testInstanceTypeMemory,
 			Size:       &testInstanceTypeSize,
@@ -92,27 +91,25 @@ func (ts *clientTestSuite) TestClient_FindInstanceType() {
 		Authorized: &testInstanceTypeAuthorized,
 		Cpus:       &testInstanceTypeCPUs,
 		Family:     &testInstanceTypeFamily,
-		Gpus:       &testInstanceTypeGPUs,
 		Id:         &testInstanceTypeID,
 		Memory:     &testInstanceTypeMemory,
 		Size:       &testInstanceTypeSize,
 	})
 
 	expected := &InstanceType{
-		Authorized: testInstanceTypeAuthorized,
-		CPUs:       testInstanceTypeCPUs,
-		Family:     string(testInstanceTypeFamily),
-		GPUs:       testInstanceTypeGPUs,
-		ID:         testInstanceTypeID,
-		Memory:     testInstanceTypeMemory,
-		Size:       string(testInstanceTypeSize),
+		Authorized: &testInstanceTypeAuthorized,
+		CPUs:       &testInstanceTypeCPUs,
+		Family:     (*string)(&testInstanceTypeFamily),
+		ID:         &testInstanceTypeID,
+		Memory:     &testInstanceTypeMemory,
+		Size:       (*string)(&testInstanceTypeSize),
 	}
 
-	actual, err := ts.client.FindInstanceType(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.FindInstanceType(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 
-	actual, err = ts.client.FindInstanceType(context.Background(), testZone, expected.Family+"."+expected.Size)
+	actual, err = ts.client.FindInstanceType(context.Background(), testZone, *expected.Family+"."+*expected.Size)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }

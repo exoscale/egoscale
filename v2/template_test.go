@@ -15,15 +15,15 @@ var (
 	testTemplateBuild                 = "2020-04-22-ed8fea"
 	testTemplateChecksum              = "ed8fea0b3c7c8a62801e414b91e23e74"
 	testTemplateCreatedAt, _          = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
-	testTemplateDefaultUser           = "test-user"
-	testTemplateDescription           = "Test Template description"
-	testTemplateFamily                = "test-family"
+	testTemplateDefaultUser           = new(clientTestSuite).randomString(10)
+	testTemplateDescription           = new(clientTestSuite).randomString(10)
+	testTemplateFamily                = new(clientTestSuite).randomString(10)
 	testTemplateID                    = new(clientTestSuite).randomID()
-	testTemplateName                  = "test-template"
+	testTemplateName                  = new(clientTestSuite).randomString(10)
 	testTemplatePasswordEnabled       = true
 	testTemplateSize            int64 = 10737418240
 	testTemplateSSHKeyEnabled         = true
-	testTemplateURL                   = "https://www.exoscale.com/"
+	testTemplateURL                   = new(clientTestSuite).randomString(10)
 	testTemplateVersion               = "1"
 	testTemplateVisibility            = "public"
 )
@@ -62,21 +62,21 @@ func (ts *clientTestSuite) TestClient_ListTemplates() {
 	})
 
 	expected := []*Template{{
-		BootMode:        testTemplateBootMode,
-		Build:           testTemplateBuild,
-		Checksum:        testTemplateChecksum,
-		CreatedAt:       testTemplateCreatedAt,
-		DefaultUser:     testTemplateDefaultUser,
-		Description:     testTemplateDescription,
-		Family:          testTemplateFamily,
-		ID:              testTemplateID,
-		Name:            testTemplateName,
-		PasswordEnabled: testTemplatePasswordEnabled,
-		SSHKeyEnabled:   testTemplateSSHKeyEnabled,
-		Size:            testTemplateSize,
-		URL:             testTemplateURL,
-		Version:         testTemplateVersion,
-		Visibility:      testTemplateVisibility,
+		BootMode:        &testTemplateBootMode,
+		Build:           &testTemplateBuild,
+		Checksum:        &testTemplateChecksum,
+		CreatedAt:       &testTemplateCreatedAt,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		Family:          &testTemplateFamily,
+		ID:              &testTemplateID,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
+		Size:            &testTemplateSize,
+		URL:             &testTemplateURL,
+		Version:         &testTemplateVersion,
+		Visibility:      &testTemplateVisibility,
 	}}
 
 	actual, err := ts.client.ListTemplates(context.Background(), testZone, testTemplateVisibility, testTemplateFamily)
@@ -104,24 +104,24 @@ func (ts *clientTestSuite) TestClient_GetTemplate() {
 	})
 
 	expected := &Template{
-		BootMode:        testTemplateBootMode,
-		Build:           testTemplateBuild,
-		Checksum:        testTemplateChecksum,
-		CreatedAt:       testTemplateCreatedAt,
-		DefaultUser:     testTemplateDefaultUser,
-		Description:     testTemplateDescription,
-		Family:          testTemplateFamily,
-		ID:              testTemplateID,
-		Name:            testTemplateName,
-		PasswordEnabled: testTemplatePasswordEnabled,
-		SSHKeyEnabled:   testTemplateSSHKeyEnabled,
-		Size:            testTemplateSize,
-		URL:             testTemplateURL,
-		Version:         testTemplateVersion,
-		Visibility:      testTemplateVisibility,
+		BootMode:        &testTemplateBootMode,
+		Build:           &testTemplateBuild,
+		Checksum:        &testTemplateChecksum,
+		CreatedAt:       &testTemplateCreatedAt,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		Family:          &testTemplateFamily,
+		ID:              &testTemplateID,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
+		Size:            &testTemplateSize,
+		URL:             &testTemplateURL,
+		Version:         &testTemplateVersion,
+		Visibility:      &testTemplateVisibility,
 	}
 
-	actual, err := ts.client.GetTemplate(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.GetTemplate(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }

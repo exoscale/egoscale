@@ -13,12 +13,15 @@ import (
 )
 
 var (
-	testPrivateNetworkDescription = "Test Private Network description"
+	testPrivateNetworkDescription = new(clientTestSuite).randomString(10)
 	testPrivateNetworkEndIP       = "192.168.0.254"
+	testPrivateNetworkEndIPP      = net.ParseIP(testPrivateNetworkEndIP)
 	testPrivateNetworkID          = new(clientTestSuite).randomID()
-	testPrivateNetworkName        = "test-private-network"
+	testPrivateNetworkName        = new(clientTestSuite).randomString(10)
 	testPrivateNetworkNetmask     = "255.255.255.0"
+	testPrivateNetworkNetmaskP    = net.ParseIP(testPrivateNetworkNetmask)
 	testPrivateNetworkStartIP     = "192.168.0.0"
+	testPrivateNetworkStartIPP    = net.ParseIP(testPrivateNetworkStartIP)
 )
 
 func (ts *clientTestSuite) TestPrivateNetwork_get() {
@@ -32,15 +35,15 @@ func (ts *clientTestSuite) TestPrivateNetwork_get() {
 	})
 
 	expected := &PrivateNetwork{
-		Description: testPrivateNetworkDescription,
-		EndIP:       net.ParseIP(testPrivateNetworkEndIP),
-		ID:          testPrivateNetworkID,
-		Name:        testPrivateNetworkName,
-		Netmask:     net.ParseIP(testPrivateNetworkNetmask),
-		StartIP:     net.ParseIP(testPrivateNetworkStartIP),
+		Description: &testPrivateNetworkDescription,
+		EndIP:       &testPrivateNetworkEndIPP,
+		ID:          &testPrivateNetworkID,
+		Name:        &testPrivateNetworkName,
+		Netmask:     &testPrivateNetworkNetmaskP,
+		StartIP:     &testPrivateNetworkStartIPP,
 	}
 
-	actual, err := new(PrivateNetwork).get(context.Background(), ts.client, testZone, expected.ID)
+	actual, err := new(PrivateNetwork).get(context.Background(), ts.client, testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -93,21 +96,21 @@ func (ts *clientTestSuite) TestClient_CreatePrivateNetwork() {
 	})
 
 	expected := &PrivateNetwork{
-		Description: testPrivateNetworkDescription,
-		EndIP:       net.ParseIP(testPrivateNetworkEndIP),
-		ID:          testPrivateNetworkID,
-		Name:        testPrivateNetworkName,
-		Netmask:     net.ParseIP(testPrivateNetworkNetmask),
-		StartIP:     net.ParseIP(testPrivateNetworkStartIP),
+		Description: &testPrivateNetworkDescription,
+		EndIP:       &testPrivateNetworkEndIPP,
+		ID:          &testPrivateNetworkID,
+		Name:        &testPrivateNetworkName,
+		Netmask:     &testPrivateNetworkNetmaskP,
+		StartIP:     &testPrivateNetworkStartIPP,
 	}
 
 	actual, err := ts.client.CreatePrivateNetwork(context.Background(), testZone, &PrivateNetwork{
-		Description: testPrivateNetworkDescription,
-		EndIP:       net.ParseIP(testPrivateNetworkEndIP),
-		ID:          testPrivateNetworkID,
-		Name:        testPrivateNetworkName,
-		Netmask:     net.ParseIP(testPrivateNetworkNetmask),
-		StartIP:     net.ParseIP(testPrivateNetworkStartIP),
+		Description: &testPrivateNetworkDescription,
+		EndIP:       &testPrivateNetworkEndIPP,
+		ID:          &testPrivateNetworkID,
+		Name:        &testPrivateNetworkName,
+		Netmask:     &testPrivateNetworkNetmaskP,
+		StartIP:     &testPrivateNetworkStartIPP,
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
@@ -128,12 +131,12 @@ func (ts *clientTestSuite) TestClient_ListPrivateNetworks() {
 	})
 
 	expected := []*PrivateNetwork{{
-		Description: testPrivateNetworkDescription,
-		EndIP:       net.ParseIP(testPrivateNetworkEndIP),
-		ID:          testPrivateNetworkID,
-		Name:        testPrivateNetworkName,
-		Netmask:     net.ParseIP(testPrivateNetworkNetmask),
-		StartIP:     net.ParseIP(testPrivateNetworkStartIP),
+		Description: &testPrivateNetworkDescription,
+		EndIP:       &testPrivateNetworkEndIPP,
+		ID:          &testPrivateNetworkID,
+		Name:        &testPrivateNetworkName,
+		Netmask:     &testPrivateNetworkNetmaskP,
+		StartIP:     &testPrivateNetworkStartIPP,
 	}}
 
 	actual, err := ts.client.ListPrivateNetworks(context.Background(), testZone)
@@ -152,15 +155,15 @@ func (ts *clientTestSuite) TestClient_GetPrivateNetwork() {
 	})
 
 	expected := &PrivateNetwork{
-		Description: testPrivateNetworkDescription,
-		EndIP:       net.ParseIP(testPrivateNetworkEndIP),
-		ID:          testPrivateNetworkID,
-		Name:        testPrivateNetworkName,
-		Netmask:     net.ParseIP(testPrivateNetworkNetmask),
-		StartIP:     net.ParseIP(testPrivateNetworkStartIP),
+		Description: &testPrivateNetworkDescription,
+		EndIP:       &testPrivateNetworkEndIPP,
+		ID:          &testPrivateNetworkID,
+		Name:        &testPrivateNetworkName,
+		Netmask:     &testPrivateNetworkNetmaskP,
+		StartIP:     &testPrivateNetworkStartIPP,
 	}
 
-	actual, err := ts.client.GetPrivateNetwork(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.GetPrivateNetwork(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -171,12 +174,8 @@ func (ts *clientTestSuite) TestClient_FindPrivateNetwork() {
 	}{
 		PrivateNetworks: &[]papi.PrivateNetwork{
 			{
-				Description: &testPrivateNetworkDescription,
-				EndIp:       &testPrivateNetworkEndIP,
-				Id:          &testPrivateNetworkID,
-				Name:        &testPrivateNetworkName,
-				Netmask:     &testPrivateNetworkNetmask,
-				StartIp:     &testPrivateNetworkStartIP,
+				Id:   &testPrivateNetworkID,
+				Name: &testPrivateNetworkName,
 			},
 			{
 				Id:   func() *string { id := ts.randomID(); return &id }(),
@@ -190,28 +189,20 @@ func (ts *clientTestSuite) TestClient_FindPrivateNetwork() {
 	})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/private-network/%s", testPrivateNetworkID), papi.PrivateNetwork{
-		Description: &testPrivateNetworkDescription,
-		EndIp:       &testPrivateNetworkEndIP,
-		Id:          &testPrivateNetworkID,
-		Name:        &testPrivateNetworkName,
-		Netmask:     &testPrivateNetworkNetmask,
-		StartIp:     &testPrivateNetworkStartIP,
+		Id:   &testPrivateNetworkID,
+		Name: &testPrivateNetworkName,
 	})
 
 	expected := &PrivateNetwork{
-		Description: testPrivateNetworkDescription,
-		EndIP:       net.ParseIP(testPrivateNetworkEndIP),
-		ID:          testPrivateNetworkID,
-		Name:        testPrivateNetworkName,
-		Netmask:     net.ParseIP(testPrivateNetworkNetmask),
-		StartIP:     net.ParseIP(testPrivateNetworkStartIP),
+		ID:   &testPrivateNetworkID,
+		Name: &testPrivateNetworkName,
 	}
 
-	actual, err := ts.client.FindPrivateNetwork(context.Background(), testZone, expected.ID)
+	actual, err := ts.client.FindPrivateNetwork(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 
-	actual, err = ts.client.FindPrivateNetwork(context.Background(), testZone, expected.Name)
+	actual, err = ts.client.FindPrivateNetwork(context.Background(), testZone, *expected.Name)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 
@@ -223,9 +214,12 @@ func (ts *clientTestSuite) TestClient_UpdatePrivateNetwork() {
 	var (
 		testPrivateNetworkDescriptionUpdated = testPrivateNetworkDescription + "-updated"
 		testPrivateNetworkEndIPUpdated       = "172.16.254.254"
+		testPrivateNetworkEndIPPUpdated      = net.ParseIP(testPrivateNetworkEndIPUpdated)
 		testPrivateNetworkNameUpdated        = testPrivateNetworkName + "-updated"
 		testPrivateNetworkNetmaskUpdated     = "255.255.0.0"
+		testPrivateNetworkNetmaskPUpdated    = net.ParseIP(testPrivateNetworkNetmaskUpdated)
 		testPrivateNetworkStartIPUpdated     = "172.16.0.0"
+		testPrivateNetworkStartIPPUpdated    = net.ParseIP(testPrivateNetworkStartIPUpdated)
 		testOperationID                      = ts.randomID()
 		testOperationState                   = papi.OperationStateSuccess
 		updated                              = false
@@ -266,12 +260,12 @@ func (ts *clientTestSuite) TestClient_UpdatePrivateNetwork() {
 	})
 
 	ts.Require().NoError(ts.client.UpdatePrivateNetwork(context.Background(), testZone, &PrivateNetwork{
-		Description: testPrivateNetworkDescriptionUpdated,
-		EndIP:       net.ParseIP(testPrivateNetworkEndIPUpdated),
-		ID:          testPrivateNetworkID,
-		Name:        testPrivateNetworkNameUpdated,
-		Netmask:     net.ParseIP(testPrivateNetworkNetmaskUpdated),
-		StartIP:     net.ParseIP(testPrivateNetworkStartIPUpdated),
+		Description: &testPrivateNetworkDescriptionUpdated,
+		EndIP:       &testPrivateNetworkEndIPPUpdated,
+		ID:          &testPrivateNetworkID,
+		Name:        &testPrivateNetworkNameUpdated,
+		Netmask:     &testPrivateNetworkNetmaskPUpdated,
+		StartIP:     &testPrivateNetworkStartIPPUpdated,
 	}))
 	ts.Require().True(updated)
 }

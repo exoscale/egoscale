@@ -12,8 +12,8 @@ import (
 type PrivateNetwork struct {
 	Description *string
 	EndIP       *net.IP
-	ID          *string
-	Name        *string
+	ID          *string `req-for:"update"`
+	Name        *string `req-for:"create"`
 	Netmask     *net.IP
 	StartIP     *net.IP
 }
@@ -57,6 +57,10 @@ func (c *Client) CreatePrivateNetwork(
 	zone string,
 	privateNetwork *PrivateNetwork,
 ) (*PrivateNetwork, error) {
+	if err := validateOperationParams(privateNetwork, "create"); err != nil {
+		return nil, err
+	}
+
 	resp, err := c.CreatePrivateNetworkWithResponse(
 		apiv2.WithZone(ctx, zone),
 		papi.CreatePrivateNetworkJSONRequestBody{
@@ -161,6 +165,10 @@ func (c *Client) FindPrivateNetwork(ctx context.Context, zone, v string) (*Priva
 
 // UpdatePrivateNetwork updates the specified Private Network in the specified zone.
 func (c *Client) UpdatePrivateNetwork(ctx context.Context, zone string, privateNetwork *PrivateNetwork) error {
+	if err := validateOperationParams(privateNetwork, "update"); err != nil {
+		return err
+	}
+
 	resp, err := c.UpdatePrivateNetworkWithResponse(
 		apiv2.WithZone(ctx, zone),
 		*privateNetwork.ID,

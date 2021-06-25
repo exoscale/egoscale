@@ -20,22 +20,22 @@ type Instance struct {
 	AntiAffinityGroupIDs *[]string
 	CreatedAt            *time.Time
 	DeployTargetID       *string
-	DiskSize             *int64
+	DiskSize             *int64 `req-if:"create"`
 	ElasticIPIDs         *[]string
-	ID                   *string
+	ID                   *string `req-if:"update"`
 	IPv6Address          *net.IP
 	IPv6Enabled          *bool
-	InstanceTypeID       *string
+	InstanceTypeID       *string `req-if:"create"`
 	Labels               *map[string]string
 	Manager              *InstanceManager
-	Name                 *string
+	Name                 *string `req-if:"create"`
 	PrivateNetworkIDs    *[]string
 	PublicIPAddress      *net.IP
 	SSHKey               *string
 	SecurityGroupIDs     *[]string
 	SnapshotIDs          *[]string
 	State                *string
-	TemplateID           *string
+	TemplateID           *string `req-if:"create"`
 	UserData             *string
 
 	c    *Client
@@ -406,6 +406,10 @@ func (i *Instance) Stop(ctx context.Context) error {
 
 // CreateInstance creates a Compute instance in the specified zone.
 func (c *Client) CreateInstance(ctx context.Context, zone string, instance *Instance) (*Instance, error) {
+	if err := validateOperationParams(instance, "create"); err != nil {
+		return nil, err
+	}
+
 	resp, err := c.CreateInstanceWithResponse(
 		apiv2.WithZone(ctx, zone),
 		papi.CreateInstanceJSONRequestBody{
@@ -533,6 +537,10 @@ func (c *Client) FindInstance(ctx context.Context, zone, v string) (*Instance, e
 
 // UpdateInstance updates the specified Compute instance in the specified zone.
 func (c *Client) UpdateInstance(ctx context.Context, zone string, instance *Instance) error {
+	if err := validateOperationParams(instance, "update"); err != nil {
+		return err
+	}
+
 	resp, err := c.UpdateInstanceWithResponse(
 		apiv2.WithZone(ctx, zone),
 		*instance.ID,

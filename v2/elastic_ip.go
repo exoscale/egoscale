@@ -12,8 +12,8 @@ import (
 // ElasticIPHealthcheck represents an Elastic IP healthcheck.
 type ElasticIPHealthcheck struct {
 	Interval      *time.Duration
-	Mode          *string
-	Port          *uint16
+	Mode          *string `req-for:"create,update"`
+	Port          *uint16 `req-for:"create,update"`
 	StrikesFail   *int64
 	StrikesOK     *int64
 	TLSSNI        *string
@@ -26,7 +26,7 @@ type ElasticIPHealthcheck struct {
 type ElasticIP struct {
 	Description *string
 	Healthcheck *ElasticIPHealthcheck
-	ID          *string
+	ID          *string `req-for:"update"`
 	IPAddress   *net.IP
 
 	c    *Client
@@ -72,6 +72,15 @@ func (e ElasticIP) get(ctx context.Context, client *Client, zone, id string) (in
 
 // CreateElasticIP creates an Elastic IP in the specified zone.
 func (c *Client) CreateElasticIP(ctx context.Context, zone string, elasticIP *ElasticIP) (*ElasticIP, error) {
+	if err := validateOperationParams(elasticIP, "create"); err != nil {
+		return nil, err
+	}
+	if elasticIP.Healthcheck != nil {
+		if err := validateOperationParams(elasticIP.Healthcheck, "create"); err != nil {
+			return nil, err
+		}
+	}
+
 	resp, err := c.CreateElasticIpWithResponse(
 		apiv2.WithZone(ctx, zone),
 		papi.CreateElasticIpJSONRequestBody{
@@ -160,6 +169,15 @@ func (c *Client) FindElasticIP(ctx context.Context, zone, v string) (*ElasticIP,
 
 // UpdateElasticIP updates the specified Elastic IP in the specified zone.
 func (c *Client) UpdateElasticIP(ctx context.Context, zone string, elasticIP *ElasticIP) error {
+	if err := validateOperationParams(elasticIP, "update"); err != nil {
+		return err
+	}
+	if elasticIP.Healthcheck != nil {
+		if err := validateOperationParams(elasticIP.Healthcheck, "update"); err != nil {
+			return err
+		}
+	}
+
 	resp, err := c.UpdateElasticIpWithResponse(
 		apiv2.WithZone(ctx, zone),
 		*elasticIP.ID,

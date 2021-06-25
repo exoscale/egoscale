@@ -12,22 +12,22 @@ type InstancePool struct {
 	AntiAffinityGroupIDs *[]string
 	DeployTargetID       *string
 	Description          *string
-	DiskSize             *int64
+	DiskSize             *int64 `req-for:"create"`
 	ElasticIPIDs         *[]string
-	ID                   *string
+	ID                   *string `req-for:"update"`
 	IPv6Enabled          *bool
 	InstanceIDs          *[]string
 	InstancePrefix       *string
-	InstanceTypeID       *string
+	InstanceTypeID       *string `req-for:"create"`
 	Labels               *map[string]string
 	ManagerID            *string
-	Name                 *string
+	Name                 *string `req-for:"create"`
 	PrivateNetworkIDs    *[]string
 	SSHKey               *string
 	SecurityGroupIDs     *[]string
-	Size                 *int64
+	Size                 *int64 `req-for:"create"`
 	State                *string
-	TemplateID           *string
+	TemplateID           *string `req-for:"create"`
 	UserData             *string
 
 	c    *Client
@@ -220,6 +220,10 @@ func (c *Client) CreateInstancePool(
 	zone string,
 	instancePool *InstancePool,
 ) (*InstancePool, error) {
+	if err := validateOperationParams(instancePool, "create"); err != nil {
+		return nil, err
+	}
+
 	resp, err := c.CreateInstancePoolWithResponse(
 		apiv2.WithZone(ctx, zone),
 		papi.CreateInstancePoolJSONRequestBody{
@@ -364,6 +368,10 @@ func (c *Client) FindInstancePool(ctx context.Context, zone, v string) (*Instanc
 
 // UpdateInstancePool updates the specified Instance Pool in the specified zone.
 func (c *Client) UpdateInstancePool(ctx context.Context, zone string, instancePool *InstancePool) error {
+	if err := validateOperationParams(instancePool, "update"); err != nil {
+		return err
+	}
+
 	resp, err := c.UpdateInstancePoolWithResponse(
 		apiv2.WithZone(ctx, zone),
 		*instancePool.ID,

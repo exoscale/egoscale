@@ -622,6 +622,46 @@ func (ts *clientTestSuite) TestInstance_SecurityGroups() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestInstance_Reboot() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+		started            = false
+	)
+
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:reboot", testInstanceID),
+		func(req *http.Request) (*http.Response, error) {
+			started = true
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testInstanceID},
+	})
+
+	instance := &Instance{
+		ID: &testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(instance.Reboot(context.Background()))
+	ts.Require().True(started)
+}
+
 func (ts *clientTestSuite) TestInstance_Start() {
 	var (
 		testOperationID    = ts.randomID()

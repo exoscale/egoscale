@@ -27,7 +27,7 @@ func TestDbaasService_UnmarshalJSON(t *testing.T) {
 		testPlan                        = "hobbyist-1"
 		testState                       = DbaasServiceStateRunning
 		testTerminationProtection       = true
-		testType                        = DbaasServiceTypeNamePg
+		testType                        = DbaasServiceTypeName("pg")
 		testUserType                    = "primary"
 		testUserUsername                = testRandomString(10)
 		testUserPassword                = testRandomString(10)
@@ -181,7 +181,7 @@ func TestDbaasService_MarshalJSON(t *testing.T) {
 		testPlan                        = "hobbyist-1"
 		testState                       = DbaasServiceStateRunning
 		testTerminationProtection       = true
-		testType                        = DbaasServiceTypeNamePg
+		testType                        = DbaasServiceTypeName("pg")
 		testUserType                    = "primary"
 		testUserUsername                = "test-user"
 		testUserPassword                = "test-password"

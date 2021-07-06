@@ -36,11 +36,11 @@ var (
 	testDatabasePlanNodeMemory               int64 = 2147483648
 	testDatabaseServiceState                       = papi.DbaasServiceStateRunning
 	testDatabaseServiceTerminationProtection       = true
-	testDatabaseServiceType                        = papi.DbaasServiceTypeNamePg
+	testDatabaseServiceType                        = papi.DbaasServiceTypeName("pg")
 	testDatabaseServiceTypeDefaultVersion          = "13"
 	testDatabaseServiceTypeDescription             = new(clientTestSuite).randomString(10)
 	testDatabaseServiceTypeLatestVersion           = "13.3"
-	testDatabaseServiceTypeName                    = papi.DbaasServiceTypeNamePg
+	testDatabaseServiceTypeName                    = papi.DbaasServiceTypeName("pg")
 	testDatabaseServiceURI                         = "postgres://username:password@host:port/dbname?sslmode=required"
 	testDatabaseServiceUpdatedAt, _                = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 	testDatabaseServiceUserPassword                = new(clientTestSuite).randomString(10)

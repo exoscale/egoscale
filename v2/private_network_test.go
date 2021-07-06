@@ -41,11 +41,72 @@ func (ts *clientTestSuite) TestPrivateNetwork_get() {
 		Name:        &testPrivateNetworkName,
 		Netmask:     &testPrivateNetworkNetmaskP,
 		StartIP:     &testPrivateNetworkStartIPP,
+
+		c:    ts.client,
+		zone: testZone,
 	}
 
 	actual, err := new(PrivateNetwork).get(context.Background(), ts.client, testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestPrivateNetwork_UpdateInstanceIPAddress() {
+	var (
+		testInstanceIPAddress = "192.168.0.1"
+		testOperationID       = ts.randomID()
+		testOperationState    = papi.OperationStateSuccess
+		updated               = false
+	)
+
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/private-network/%s:update-ip", testPrivateNetworkID),
+		func(req *http.Request) (*http.Response, error) {
+			updated = true
+
+			var actual papi.UpdatePrivateNetworkInstanceIpJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.UpdatePrivateNetworkInstanceIpJSONRequestBody{
+				Instance: papi.Instance{Id: &testInstanceID},
+				Ip:       &testInstanceIPAddress,
+			}
+
+			ts.Require().Equal(expected, actual)
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testInstanceID},
+	})
+
+	privateNetwork := &PrivateNetwork{
+		ID: &testPrivateNetworkID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	instance := &Instance{
+		ID: &testInstanceID,
+	}
+
+	ts.Require().NoError(privateNetwork.UpdateInstanceIPAddress(
+		context.Background(),
+		instance,
+		net.ParseIP(testInstanceIPAddress)),
+	)
+	ts.Require().True(updated)
 }
 
 func (ts *clientTestSuite) TestClient_CreatePrivateNetwork() {
@@ -102,6 +163,9 @@ func (ts *clientTestSuite) TestClient_CreatePrivateNetwork() {
 		Name:        &testPrivateNetworkName,
 		Netmask:     &testPrivateNetworkNetmaskP,
 		StartIP:     &testPrivateNetworkStartIPP,
+
+		c:    ts.client,
+		zone: testZone,
 	}
 
 	actual, err := ts.client.CreatePrivateNetwork(context.Background(), testZone, &PrivateNetwork{
@@ -137,6 +201,9 @@ func (ts *clientTestSuite) TestClient_ListPrivateNetworks() {
 		Name:        &testPrivateNetworkName,
 		Netmask:     &testPrivateNetworkNetmaskP,
 		StartIP:     &testPrivateNetworkStartIPP,
+
+		c:    ts.client,
+		zone: testZone,
 	}}
 
 	actual, err := ts.client.ListPrivateNetworks(context.Background(), testZone)
@@ -161,6 +228,9 @@ func (ts *clientTestSuite) TestClient_GetPrivateNetwork() {
 		Name:        &testPrivateNetworkName,
 		Netmask:     &testPrivateNetworkNetmaskP,
 		StartIP:     &testPrivateNetworkStartIPP,
+
+		c:    ts.client,
+		zone: testZone,
 	}
 
 	actual, err := ts.client.GetPrivateNetwork(context.Background(), testZone, *expected.ID)
@@ -196,6 +266,9 @@ func (ts *clientTestSuite) TestClient_FindPrivateNetwork() {
 	expected := &PrivateNetwork{
 		ID:   &testPrivateNetworkID,
 		Name: &testPrivateNetworkName,
+
+		c:    ts.client,
+		zone: testZone,
 	}
 
 	actual, err := ts.client.FindPrivateNetwork(context.Background(), testZone, *expected.ID)

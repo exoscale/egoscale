@@ -135,6 +135,9 @@ func (ts *clientTestSuite) TestInstancePool_PrivateNetworks() {
 	expected := []*PrivateNetwork{{
 		ID:   &testPrivateNetworkID,
 		Name: &testPrivateNetworkName,
+
+		c:    ts.client,
+		zone: testZone,
 	}}
 
 	instancePool := &InstancePool{

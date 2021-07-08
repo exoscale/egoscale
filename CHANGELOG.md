@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.62.1
+------
+
+- fix: v2: fix required params validation for NLB services
+
 0.62.0
 ------
 

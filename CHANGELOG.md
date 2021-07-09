@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.62.2
+------
+
+- v2: fix a crash in `NetworkLoadBalancer.AddService()` method
+
 0.62.1
 ------
 

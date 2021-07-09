@@ -220,7 +220,7 @@ func (nlb *NetworkLoadBalancer) AddService(
 
 	// Look for an unknown service: if we find one we hope it's the one we've just created.
 	for _, s := range nlbUpdated.Services {
-		if _, ok := services[*svc.ID]; !ok && *s.Name == *svc.Name {
+		if _, ok := services[*s.ID]; !ok && *s.Name == *svc.Name {
 			return s, nil
 		}
 	}

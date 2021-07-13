@@ -270,7 +270,7 @@ func (ts *clientTestSuite) TestClient_CreateDatabaseService() {
 		Type:                  (*string)(&testDatabaseServiceType),
 		UpdatedAt:             &testDatabaseServiceUpdatedAt,
 		URI:                   func() *url.URL { u, _ := url.Parse(testDatabaseServiceURI); return u }(),
-		UserConfig:            map[string]interface{}{"k": "v"},
+		UserConfig:            &map[string]interface{}{"k": "v"},
 		Users: []*DatabaseServiceUser{{
 			Password: &testDatabaseServiceUserPassword,
 			Type:     &testDatabaseServiceUserType,
@@ -287,7 +287,7 @@ func (ts *clientTestSuite) TestClient_CreateDatabaseService() {
 		Plan:                  &testDatabasePlanName,
 		TerminationProtection: &testDatabaseServiceTerminationProtection,
 		Type:                  (*string)(&testDatabaseServiceType),
-		UserConfig:            map[string]interface{}{"k": "v"},
+		UserConfig:            &map[string]interface{}{"k": "v"},
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
@@ -376,7 +376,7 @@ func (ts *clientTestSuite) TestClient_ListDatabaseServices() {
 		Type:                  (*string)(&testDatabaseServiceType),
 		UpdatedAt:             &testDatabaseServiceUpdatedAt,
 		URI:                   func() *url.URL { u, _ := url.Parse(testDatabaseServiceURI); return u }(),
-		UserConfig:            map[string]interface{}{"k": "v"},
+		UserConfig:            &map[string]interface{}{"k": "v"},
 		Users: []*DatabaseServiceUser{{
 			Password: &testDatabaseServiceUserPassword,
 			Type:     &testDatabaseServiceUserType,
@@ -470,7 +470,7 @@ func (ts *clientTestSuite) TestClient_GetDatabaseService() {
 		Type:                  (*string)(&testDatabaseServiceType),
 		UpdatedAt:             &testDatabaseServiceUpdatedAt,
 		URI:                   func() *url.URL { u, _ := url.Parse(testDatabaseServiceURI); return u }(),
-		UserConfig:            map[string]interface{}{"k": "v"},
+		UserConfig:            &map[string]interface{}{"k": "v"},
 		Users: []*DatabaseServiceUser{{
 			Password: &testDatabaseServiceUserPassword,
 			Type:     &testDatabaseServiceUserType,
@@ -541,7 +541,7 @@ func (ts *clientTestSuite) TestClient_UpdateDatabaseService() {
 		Plan:                  &testDatabasePlanName,
 		TerminationProtection: &testDatabaseServiceTerminationProtection,
 		Type:                  (*string)(&testDatabaseServiceType),
-		UserConfig:            map[string]interface{}{"k": "v"},
+		UserConfig:            &map[string]interface{}{"k": "v"},
 	}))
 	ts.Require().True(updated)
 }

@@ -36,6 +36,7 @@ var (
 	testSKSNodepoolInstanceTypeID            = new(clientTestSuite).randomID()
 	testSKSNodepoolLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
 	testSKSNodepoolName                      = new(clientTestSuite).randomString(10)
+	testSKSNodepoolPrivateNetworkID          = new(clientTestSuite).randomID()
 	testSKSNodepoolSecurityGroupID           = new(clientTestSuite).randomID()
 	testSKSNodepoolSize                int64 = 3
 	testSKSNodepoolState                     = papi.SksNodepoolStateRunning
@@ -70,11 +71,41 @@ func (ts *clientTestSuite) TestSKSNodepool_AntiAffinityGroups() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestSKSNodepool_PrivateNetworks() {
+	ts.mockAPIRequest("GET", fmt.Sprintf("/private-network/%s", testPrivateNetworkID),
+		papi.PrivateNetwork{
+			Id:   &testPrivateNetworkID,
+			Name: &testPrivateNetworkName,
+		})
+
+	expected := []*PrivateNetwork{
+		{
+			ID:   &testPrivateNetworkID,
+			Name: &testPrivateNetworkName,
+
+			c:    ts.client,
+			zone: testZone,
+		},
+	}
+
+	sksNodepool := &SKSNodepool{
+		PrivateNetworkIDs: &[]string{testPrivateNetworkID},
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	actual, err := sksNodepool.PrivateNetworks(context.Background())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestSKSNodepool_SecurityGroups() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/security-group/%s", testSecurityGroupID), papi.SecurityGroup{
-		Id:   &testSecurityGroupID,
-		Name: &testSecurityGroupName,
-	})
+	ts.mockAPIRequest("GET", fmt.Sprintf("/security-group/%s", testSecurityGroupID),
+		papi.SecurityGroup{
+			Id:   &testSecurityGroupID,
+			Name: &testSecurityGroupName,
+		})
 
 	expected := []*SecurityGroup{
 		{
@@ -206,6 +237,7 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 				InstanceType:       papi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
 				Labels:             &papi.Labels{AdditionalProperties: testSKSNodepoolLabels},
 				Name:               testSKSNodepoolName,
+				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
 				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 				Size:               testSKSNodepoolSize,
 			}
@@ -243,6 +275,7 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 			InstanceType:       &papi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
 			Labels:             &papi.Labels{AdditionalProperties: testSKSNodepoolLabels},
 			Name:               &testSKSNodepoolName,
+			PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
 			SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 			Size:               &testSKSNodepoolSize,
 			State:              &testSKSNodepoolState,
@@ -269,6 +302,7 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 		InstanceTypeID:       &testSKSNodepoolInstanceTypeID,
 		Labels:               &testSKSNodepoolLabels,
 		Name:                 &testSKSNodepoolName,
+		PrivateNetworkIDs:    &[]string{testSKSNodepoolPrivateNetworkID},
 		SecurityGroupIDs:     &[]string{testSKSNodepoolSecurityGroupID},
 		Size:                 &testSKSNodepoolSize,
 		State:                (*string)(&testSKSNodepoolState),
@@ -295,6 +329,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 		testSKSNodepoolInstanceTypeIDUpdated      = testSKSNodepoolInstanceTypeID + "-updated"
 		testSKSNodepoolLabelsUpdated              = map[string]string{"k3": "v3"}
 		testSKSNodepoolNameUpdated                = testSKSNodepoolName + "-updated"
+		testSKSNodepoolPrivateNetworkIDUpdated    = ts.randomID()
 		testSKSNodepoolSecurityGroupIDUpdated     = ts.randomID()
 		testOperationState                        = papi.OperationStateSuccess
 		updated                                   = false
@@ -337,6 +372,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 				InstanceType:       &papi.InstanceType{Id: &testSKSNodepoolInstanceTypeIDUpdated},
 				Labels:             &papi.Labels{AdditionalProperties: testSKSNodepoolLabelsUpdated},
 				Name:               &testSKSNodepoolNameUpdated,
+				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkIDUpdated}},
 				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupIDUpdated}},
 			}
 			ts.Require().Equal(expected, actual)
@@ -369,6 +405,7 @@ func (ts *clientTestSuite) TestSKSCluster_UpdateNodepool() {
 		InstanceTypeID:       &testSKSNodepoolInstanceTypeIDUpdated,
 		Labels:               &testSKSNodepoolLabelsUpdated,
 		Name:                 &testSKSNodepoolNameUpdated,
+		PrivateNetworkIDs:    &[]string{testSKSNodepoolPrivateNetworkIDUpdated},
 		SecurityGroupIDs:     &[]string{testSKSNodepoolSecurityGroupIDUpdated},
 	}
 	ts.Require().NoError(cluster.UpdateNodepool(context.Background(), &nodepoolUpdated))
@@ -635,6 +672,7 @@ func (ts *clientTestSuite) TestClient_ListSKSClusters() {
 				InstanceType:       &papi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
 				Labels:             &papi.Labels{AdditionalProperties: testSKSNodepoolLabels},
 				Name:               &testSKSNodepoolName,
+				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
 				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 				Size:               &testSKSNodepoolSize,
 				State:              &testSKSNodepoolState,
@@ -666,6 +704,7 @@ func (ts *clientTestSuite) TestClient_ListSKSClusters() {
 			InstanceTypeID:       &testSKSNodepoolInstanceTypeID,
 			Labels:               &testSKSNodepoolLabels,
 			Name:                 &testSKSNodepoolName,
+			PrivateNetworkIDs:    &[]string{testSKSNodepoolPrivateNetworkID},
 			SecurityGroupIDs:     &[]string{testSKSNodepoolSecurityGroupID},
 			Size:                 &testSKSNodepoolSize,
 			State:                (*string)(&testSKSClusterState),
@@ -731,6 +770,7 @@ func (ts *clientTestSuite) TestClient_GetSKSCluster() {
 			InstanceType:       &papi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
 			Labels:             &papi.Labels{AdditionalProperties: testSKSNodepoolLabels},
 			Name:               &testSKSNodepoolName,
+			PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
 			SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 			Size:               &testSKSNodepoolSize,
 			State:              &testSKSNodepoolState,
@@ -761,6 +801,7 @@ func (ts *clientTestSuite) TestClient_GetSKSCluster() {
 			InstanceTypeID:       &testSKSNodepoolInstanceTypeID,
 			Labels:               &testSKSNodepoolLabels,
 			Name:                 &testSKSNodepoolName,
+			PrivateNetworkIDs:    &[]string{testSKSNodepoolPrivateNetworkID},
 			SecurityGroupIDs:     &[]string{testSKSNodepoolSecurityGroupID},
 			Size:                 &testSKSNodepoolSize,
 			State:                (*string)(&testSKSClusterState),

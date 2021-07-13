@@ -24,4 +24,5 @@ jobs:
         version: v1.40
     - name: Tests
       run: |
-        go test -race -v ./...
+        git submodule update --init --recursive go.mk
+        PATH=$(go env GOPATH)/bin:$PATH make test

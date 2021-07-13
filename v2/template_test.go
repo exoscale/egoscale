@@ -23,10 +23,96 @@ var (
 	testTemplatePasswordEnabled       = true
 	testTemplateSize            int64 = 10737418240
 	testTemplateSSHKeyEnabled         = true
-	testTemplateURL                   = new(clientTestSuite).randomString(10)
+	testTemplateURL                   = "https://example.net/test.qcow2"
 	testTemplateVersion               = "1"
 	testTemplateVisibility            = "public"
 )
+
+func (ts *clientTestSuite) TestClient_RegisterTemplate() {
+	var (
+		templateVisibility = "private"
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+	)
+
+	httpmock.RegisterResponder("POST", "/template",
+		func(req *http.Request) (*http.Response, error) {
+			var actual papi.RegisterTemplateJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.RegisterTemplateJSONRequestBody{
+				BootMode:        (*papi.RegisterTemplateJSONBodyBootMode)(&testTemplateBootMode),
+				Checksum:        testTemplateChecksum,
+				DefaultUser:     &testTemplateDefaultUser,
+				Description:     &testTemplateDescription,
+				Name:            testTemplateName,
+				PasswordEnabled: testTemplatePasswordEnabled,
+				SshKeyEnabled:   testTemplateSSHKeyEnabled,
+				Url:             testTemplateURL,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testTemplateID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testTemplateID},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/template/%s", testTemplateID), papi.Template{
+		BootMode:        (*papi.TemplateBootMode)(&testTemplateBootMode),
+		Checksum:        &testTemplateChecksum,
+		CreatedAt:       &testTemplateCreatedAt,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		Id:              &testTemplateID,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		Size:            &testTemplateSize,
+		SshKeyEnabled:   &testTemplateSSHKeyEnabled,
+		Url:             &testTemplateURL,
+		Visibility:      (*papi.TemplateVisibility)(&templateVisibility),
+	})
+
+	expected := &Template{
+		BootMode:        &testTemplateBootMode,
+		Checksum:        &testTemplateChecksum,
+		CreatedAt:       &testTemplateCreatedAt,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		ID:              &testTemplateID,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
+		Size:            &testTemplateSize,
+		URL:             &testTemplateURL,
+		Visibility:      &templateVisibility,
+	}
+
+	actual, err := ts.client.RegisterTemplate(context.Background(), testZone, &Template{
+		BootMode:        &testTemplateBootMode,
+		Checksum:        &testTemplateChecksum,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
+		URL:             &testTemplateURL,
+	})
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
 
 func (ts *clientTestSuite) TestClient_ListTemplates() {
 	httpmock.RegisterResponder("GET", "/template", func(req *http.Request) (*http.Response, error) {

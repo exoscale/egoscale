@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.64.0
+------
+
+- change: v2: replace `InstancePool.ManagerID` of type `string` with `InstancePool.Manager` field of type `*InstancePoolManager`.
+
 0.63.0
 ------
 

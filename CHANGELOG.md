@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.64.1
+------
+
+- tests: v2: add resource API mocks
+
 0.64.0
 ------
 

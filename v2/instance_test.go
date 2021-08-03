@@ -688,6 +688,57 @@ func (ts *clientTestSuite) TestInstance_RevertToSnapshot() {
 	ts.Require().True(reverted)
 }
 
+func (ts *clientTestSuite) TestInstance_Scale() {
+	var (
+		testScaleInstanceTypeID = ts.randomID()
+		testOperationID         = ts.randomID()
+		testOperationState      = papi.OperationStateSuccess
+		scaled                  = false
+	)
+
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:scale", testInstanceID),
+		func(req *http.Request) (*http.Response, error) {
+			scaled = true
+
+			var actual papi.ScaleInstanceJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.ScaleInstanceJSONRequestBody{
+				InstanceType: papi.InstanceType{Id: &testScaleInstanceTypeID},
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testSnapshotID},
+	})
+
+	instance := &Instance{
+		ID: &testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	instanceType := &InstanceType{ID: &testScaleInstanceTypeID}
+
+	ts.Require().NoError(instance.Scale(context.Background(), instanceType))
+	ts.Require().True(scaled)
+}
+
 func (ts *clientTestSuite) TestInstance_SecurityGroups() {
 	ts.mockAPIRequest(
 		"GET",

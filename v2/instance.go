@@ -412,6 +412,28 @@ func (i *Instance) RevertToSnapshot(ctx context.Context, snapshot *Snapshot) err
 	return nil
 }
 
+// Scale scales the Compute instance type.
+func (i *Instance) Scale(ctx context.Context, instanceType *InstanceType) error {
+	resp, err := i.c.ScaleInstanceWithResponse(
+		apiv2.WithZone(ctx, i.zone),
+		*i.ID,
+		papi.ScaleInstanceJSONRequestBody{InstanceType: papi.InstanceType{Id: instanceType.ID}},
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = papi.NewPoller().
+		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
+		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // SecurityGroups returns the list of Security Groups attached to the Compute instance.
 func (i *Instance) SecurityGroups(ctx context.Context) ([]*SecurityGroup, error) {
 	if i.SecurityGroupIDs != nil {

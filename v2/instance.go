@@ -338,6 +338,59 @@ func (i *Instance) PrivateNetworks(ctx context.Context) ([]*PrivateNetwork, erro
 	return nil, nil
 }
 
+// Reboot reboots the Compute instance.
+func (i *Instance) Reboot(ctx context.Context) error {
+	resp, err := i.c.RebootInstanceWithResponse(apiv2.WithZone(ctx, i.zone), *i.ID)
+	if err != nil {
+		return err
+	}
+
+	_, err = papi.NewPoller().
+		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
+		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Reset resets the Compute instance to a base template state (the current instance template if not specified),
+// and optionally resizes the disk size.
+func (i *Instance) Reset(ctx context.Context, template *Template, diskSize int64) error {
+	resp, err := i.c.ResetInstanceWithResponse(
+		apiv2.WithZone(ctx, i.zone),
+		*i.ID,
+		papi.ResetInstanceJSONRequestBody{
+			DiskSize: func() (v *int64) {
+				if diskSize > 0 {
+					v = &diskSize
+				}
+				return
+			}(),
+			Template: func() (v *papi.Template) {
+				if template != nil {
+					v = &papi.Template{Id: template.ID}
+				}
+				return
+			}(),
+		})
+	if err != nil {
+		return err
+	}
+
+	_, err = papi.NewPoller().
+		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
+		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // RevertToSnapshot reverts the Compute instance storage volume to the specified Snapshot.
 func (i *Instance) RevertToSnapshot(ctx context.Context, snapshot *Snapshot) error {
 	resp, err := i.c.RevertInstanceToSnapshotWithResponse(
@@ -366,24 +419,6 @@ func (i *Instance) SecurityGroups(ctx context.Context) ([]*SecurityGroup, error)
 		return res.([]*SecurityGroup), err
 	}
 	return nil, nil
-}
-
-// Reboot reboots the Compute instance.
-func (i *Instance) Reboot(ctx context.Context) error {
-	resp, err := i.c.RebootInstanceWithResponse(apiv2.WithZone(ctx, i.zone), *i.ID)
-	if err != nil {
-		return err
-	}
-
-	_, err = papi.NewPoller().
-		WithTimeout(i.c.timeout).
-		WithInterval(i.c.pollInterval).
-		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Start starts the Compute instance.

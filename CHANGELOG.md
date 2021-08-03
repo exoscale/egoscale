@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.65.1
+------
+
+- fix: v2: fix `RegisterSSHKey()` method
+
 0.65.0
 ------
 

@@ -391,6 +391,27 @@ func (i *Instance) Reset(ctx context.Context, template *Template, diskSize int64
 	return nil
 }
 
+// ResizeDisk resizes the Compute instance's disk to a larger size.
+func (i *Instance) ResizeDisk(ctx context.Context, size int64) error {
+	resp, err := i.c.ResizeInstanceDiskWithResponse(
+		apiv2.WithZone(ctx, i.zone),
+		*i.ID,
+		papi.ResizeInstanceDiskJSONRequestBody{DiskSize: size})
+	if err != nil {
+		return err
+	}
+
+	_, err = papi.NewPoller().
+		WithTimeout(i.c.timeout).
+		WithInterval(i.c.pollInterval).
+		Poll(ctx, i.c.OperationPoller(i.zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // RevertToSnapshot reverts the Compute instance storage volume to the specified Snapshot.
 func (i *Instance) RevertToSnapshot(ctx context.Context, snapshot *Snapshot) error {
 	resp, err := i.c.RevertInstanceToSnapshotWithResponse(

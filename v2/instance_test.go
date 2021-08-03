@@ -637,6 +637,55 @@ func (ts *clientTestSuite) TestInstance_Reset() {
 	ts.Require().True(reset)
 }
 
+func (ts *clientTestSuite) TestInstance_ResizeDisk() {
+	var (
+		testResizeDiskSize int64 = 50
+		testOperationID          = ts.randomID()
+		testOperationState       = papi.OperationStateSuccess
+		resized                  = false
+	)
+
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:resize-disk", testInstanceID),
+		func(req *http.Request) (*http.Response, error) {
+			resized = true
+
+			var actual papi.ResizeInstanceDiskJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.ResizeInstanceDiskJSONRequestBody{
+				DiskSize: testResizeDiskSize,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testSnapshotID},
+	})
+
+	instance := &Instance{
+		ID: &testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(instance.ResizeDisk(context.Background(), testResizeDiskSize))
+	ts.Require().True(resized)
+}
+
 func (ts *clientTestSuite) TestInstance_RevertToSnapshot() {
 	var (
 		testOperationID    = ts.randomID()

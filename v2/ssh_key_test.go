@@ -44,12 +44,6 @@ func (ts *clientTestSuite) TestClient_RegisterSSHKey() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSSHKeyName},
-	})
-
 	ts.mockAPIRequest("GET", fmt.Sprintf("/ssh-key/%s", testSSHKeyName), papi.SshKey{
 		Fingerprint: &testSSHKeyFingerprint,
 		Name:        &testSSHKeyName,

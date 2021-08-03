@@ -22,7 +22,7 @@ func sshKeyFromAPI(k *papi.SshKey) *SSHKey {
 
 // RegisterSSHKey registers a new SSH key in the specified zone.
 func (c *Client) RegisterSSHKey(ctx context.Context, zone, name, publicKey string) (*SSHKey, error) {
-	resp, err := c.RegisterSshKeyWithResponse(
+	_, err := c.RegisterSshKeyWithResponse(
 		apiv2.WithZone(ctx, zone),
 		papi.RegisterSshKeyJSONRequestBody{
 			Name:      name,
@@ -32,15 +32,7 @@ func (c *Client) RegisterSSHKey(ctx context.Context, zone, name, publicKey strin
 		return nil, err
 	}
 
-	res, err := papi.NewPoller().
-		WithTimeout(c.timeout).
-		WithInterval(c.pollInterval).
-		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
-	if err != nil {
-		return nil, err
-	}
-
-	return c.GetSSHKey(ctx, zone, *res.(*papi.Reference).Id)
+	return c.GetSSHKey(ctx, zone, name)
 }
 
 // ListSSHKeys returns the list of existing SSH keys in the specified zone.

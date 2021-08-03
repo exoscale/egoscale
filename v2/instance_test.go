@@ -544,6 +544,99 @@ func (ts *clientTestSuite) TestInstance_PrivateNetworks() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *clientTestSuite) TestInstance_Reboot() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+		started            = false
+	)
+
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:reboot", testInstanceID),
+		func(req *http.Request) (*http.Response, error) {
+			started = true
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testInstanceID},
+	})
+
+	instance := &Instance{
+		ID: &testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	ts.Require().NoError(instance.Reboot(context.Background()))
+	ts.Require().True(started)
+}
+
+func (ts *clientTestSuite) TestInstance_Reset() {
+	var (
+		testResetDiskSize   int64 = 50
+		testResetTemplateID       = ts.randomID()
+		testOperationID           = ts.randomID()
+		testOperationState        = papi.OperationStateSuccess
+		reset                     = false
+	)
+
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:reset", testInstanceID),
+		func(req *http.Request) (*http.Response, error) {
+			reset = true
+
+			var actual papi.ResetInstanceJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := papi.ResetInstanceJSONRequestBody{
+				DiskSize: &testResetDiskSize,
+				Template: &papi.Template{Id: &testResetTemplateID},
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testInstanceID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testSnapshotID},
+	})
+
+	instance := &Instance{
+		ID: &testInstanceID,
+
+		c:    ts.client,
+		zone: testZone,
+	}
+
+	template := &Template{ID: &testResetTemplateID}
+
+	ts.Require().NoError(instance.Reset(context.Background(), template, testResetDiskSize))
+	ts.Require().True(reset)
+}
+
 func (ts *clientTestSuite) TestInstance_RevertToSnapshot() {
 	var (
 		testOperationID    = ts.randomID()
@@ -623,46 +716,6 @@ func (ts *clientTestSuite) TestInstance_SecurityGroups() {
 	actual, err := instance.SecurityGroups(context.Background())
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
-}
-
-func (ts *clientTestSuite) TestInstance_Reboot() {
-	var (
-		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
-		started            = false
-	)
-
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:reboot", testInstanceID),
-		func(req *http.Request) (*http.Response, error) {
-			started = true
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testInstanceID},
-	})
-
-	instance := &Instance{
-		ID: &testInstanceID,
-
-		c:    ts.client,
-		zone: testZone,
-	}
-
-	ts.Require().NoError(instance.Reboot(context.Background()))
-	ts.Require().True(started)
 }
 
 func (ts *clientTestSuite) TestInstance_Start() {

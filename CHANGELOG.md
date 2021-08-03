@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.65.0
+------
+
+- feature: v2: add support for SSH keys management
+
 0.64.1
 ------
 

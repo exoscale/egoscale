@@ -602,7 +602,7 @@ func (c *Client) CreateInstance(ctx context.Context, zone string, instance *Inst
 func (c *Client) ListInstances(ctx context.Context, zone string) ([]*Instance, error) {
 	list := make([]*Instance, 0)
 
-	resp, err := c.ListInstancesWithResponse(apiv2.WithZone(ctx, zone))
+	resp, err := c.ListInstancesWithResponse(apiv2.WithZone(ctx, zone), &papi.ListInstancesParams{})
 	if err != nil {
 		return nil, err
 	}
@@ -642,7 +642,7 @@ func (c *Client) FindInstance(ctx context.Context, zone, v string) (*Instance, e
 
 		// Historically, the Exoscale API allowed users to create multiple Compute instances sharing a common name.
 		// This function being expected to return one resource at most, in case the specified identifier is a name
-		// we have to check that there aren't more that one matching result before returning it.
+		// we have to check that there aren't more than one matching result before returning it.
 		if *r.Name == v {
 			if found != nil {
 				return nil, apiv2.ErrTooManyFound

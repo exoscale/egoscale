@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.67.0
+------
+
+- feature: v2: add support for SKS Nodepool add-ons
+
 0.66.0
 ------
 

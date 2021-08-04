@@ -12,6 +12,7 @@ import (
 
 // SKSNodepool represents an SKS Nodepool.
 type SKSNodepool struct {
+	AddOns               *[]string
 	AntiAffinityGroupIDs *[]string
 	CreatedAt            *time.Time
 	DeployTargetID       *string
@@ -34,12 +35,22 @@ type SKSNodepool struct {
 	zone string
 }
 
-func sksNodepoolFromAPI(client *Client, zone string, np *papi.SksNodepool) *SKSNodepool {
+func sksNodepoolFromAPI(client *Client, zone string, n *papi.SksNodepool) *SKSNodepool {
 	return &SKSNodepool{
+		AddOns: func() (v *[]string) {
+			if n.Addons != nil {
+				addOns := make([]string, 0)
+				for _, a := range *n.Addons {
+					addOns = append(addOns, string(a))
+				}
+				v = &addOns
+			}
+			return
+		}(),
 		AntiAffinityGroupIDs: func() (v *[]string) {
 			ids := make([]string, 0)
-			if np.AntiAffinityGroups != nil && len(*np.AntiAffinityGroups) > 0 {
-				for _, item := range *np.AntiAffinityGroups {
+			if n.AntiAffinityGroups != nil && len(*n.AntiAffinityGroups) > 0 {
+				for _, item := range *n.AntiAffinityGroups {
 					item := item
 					ids = append(ids, *item.Id)
 				}
@@ -47,30 +58,30 @@ func sksNodepoolFromAPI(client *Client, zone string, np *papi.SksNodepool) *SKSN
 			}
 			return
 		}(),
-		CreatedAt: np.CreatedAt,
+		CreatedAt: n.CreatedAt,
 		DeployTargetID: func() (v *string) {
-			if np.DeployTarget != nil {
-				v = np.DeployTarget.Id
+			if n.DeployTarget != nil {
+				v = n.DeployTarget.Id
 			}
 			return
 		}(),
-		Description:    np.Description,
-		DiskSize:       np.DiskSize,
-		ID:             np.Id,
-		InstancePoolID: np.InstancePool.Id,
-		InstancePrefix: np.InstancePrefix,
-		InstanceTypeID: np.InstanceType.Id,
+		Description:    n.Description,
+		DiskSize:       n.DiskSize,
+		ID:             n.Id,
+		InstancePoolID: n.InstancePool.Id,
+		InstancePrefix: n.InstancePrefix,
+		InstanceTypeID: n.InstanceType.Id,
 		Labels: func() (v *map[string]string) {
-			if np.Labels != nil && len(np.Labels.AdditionalProperties) > 0 {
-				v = &np.Labels.AdditionalProperties
+			if n.Labels != nil && len(n.Labels.AdditionalProperties) > 0 {
+				v = &n.Labels.AdditionalProperties
 			}
 			return
 		}(),
-		Name: np.Name,
+		Name: n.Name,
 		PrivateNetworkIDs: func() (v *[]string) {
 			ids := make([]string, 0)
-			if np.PrivateNetworks != nil && len(*np.PrivateNetworks) > 0 {
-				for _, item := range *np.PrivateNetworks {
+			if n.PrivateNetworks != nil && len(*n.PrivateNetworks) > 0 {
+				for _, item := range *n.PrivateNetworks {
 					item := item
 					ids = append(ids, *item.Id)
 				}
@@ -80,8 +91,8 @@ func sksNodepoolFromAPI(client *Client, zone string, np *papi.SksNodepool) *SKSN
 		}(),
 		SecurityGroupIDs: func() (v *[]string) {
 			ids := make([]string, 0)
-			if np.SecurityGroups != nil && len(*np.SecurityGroups) > 0 {
-				for _, item := range *np.SecurityGroups {
+			if n.SecurityGroups != nil && len(*n.SecurityGroups) > 0 {
+				for _, item := range *n.SecurityGroups {
 					item := item
 					ids = append(ids, *item.Id)
 				}
@@ -89,10 +100,10 @@ func sksNodepoolFromAPI(client *Client, zone string, np *papi.SksNodepool) *SKSN
 			}
 			return
 		}(),
-		Size:       np.Size,
-		State:      (*string)(np.State),
-		TemplateID: np.Template.Id,
-		Version:    np.Version,
+		Size:       n.Size,
+		State:      (*string)(n.State),
+		TemplateID: n.Template.Id,
+		Version:    n.Version,
 
 		c:    client,
 		zone: zone,
@@ -271,6 +282,16 @@ func (c *SKSCluster) AddNodepool(ctx context.Context, nodepool *SKSNodepool) (*S
 		apiv2.WithZone(ctx, c.zone),
 		*c.ID,
 		papi.CreateSksNodepoolJSONRequestBody{
+			Addons: func() (v *[]papi.CreateSksNodepoolJSONBodyAddons) {
+				if nodepool.AddOns != nil {
+					addOns := make([]papi.CreateSksNodepoolJSONBodyAddons, len(*nodepool.AddOns))
+					for i, a := range *nodepool.AddOns {
+						addOns[i] = papi.CreateSksNodepoolJSONBodyAddons(a)
+					}
+					v = &addOns
+				}
+				return
+			}(),
 			AntiAffinityGroups: func() (v *[]papi.AntiAffinityGroup) {
 				if nodepool.AntiAffinityGroupIDs != nil {
 					ids := make([]papi.AntiAffinityGroup, len(*nodepool.AntiAffinityGroupIDs))

@@ -25,6 +25,7 @@ var (
 	testSKSClusterServiceLevel               = papi.SksClusterLevelPro
 	testSKSClusterState                      = papi.SksClusterStateRunning
 	testSKSClusterVersion                    = "1.18.6"
+	testSKSNodepoolAddons                    = []papi.SksNodepoolAddons{papi.SksNodepoolAddonsLinbit}
 	testSKSNodepoolAntiAffinityGroupID       = new(clientTestSuite).randomID()
 	testSKSNodepoolCreatedAt, _              = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
 	testSKSNodepoolDeployTargetID            = new(clientTestSuite).randomID()
@@ -229,6 +230,9 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 			ts.unmarshalJSONRequestBody(req, &actual)
 
 			expected := papi.CreateSksNodepoolJSONRequestBody{
+				Addons: &[]papi.CreateSksNodepoolJSONBodyAddons{
+					papi.CreateSksNodepoolJSONBodyAddons(testSKSNodepoolAddons[0]),
+				},
 				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
 				DeployTarget:       &papi.DeployTarget{Id: &testSKSNodepoolDeployTargetID},
 				Description:        &testSKSNodepoolDescription,
@@ -264,6 +268,7 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s/nodepool/%s",
 		testSKSClusterID, testSKSNodepoolID),
 		papi.SksNodepool{
+			Addons:             &testSKSNodepoolAddons,
 			AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
 			CreatedAt:          &testSKSNodepoolCreatedAt,
 			DeployTarget:       &papi.DeployTarget{Id: &testSKSNodepoolDeployTargetID},
@@ -291,6 +296,7 @@ func (ts *clientTestSuite) TestSKSCluster_AddNodepool() {
 	}
 
 	expected := &SKSNodepool{
+		AddOns:               &[]string{string(testSKSNodepoolAddons[0])},
 		AntiAffinityGroupIDs: &[]string{testSKSNodepoolAntiAffinityGroupID},
 		CreatedAt:            &testSKSNodepoolCreatedAt,
 		DeployTargetID:       &testSKSNodepoolDeployTargetID,

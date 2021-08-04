@@ -11,6 +11,7 @@ import (
 
 func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 	var (
+		testAddons                    = []SksNodepoolAddons{SksNodepoolAddonsLinbit}
 		testAntiAffinityGroupID       = testRandomID(t)
 		testCreatedAt, _              = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 		testDeployTargetID            = testRandomID(t)
@@ -30,6 +31,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 		testVersion                   = "1.18.6"
 
 		expected = SksNodepool{
+			Addons:             &testAddons,
 			AntiAffinityGroups: &[]AntiAffinityGroup{{Id: &testAntiAffinityGroupID}},
 			CreatedAt:          &testCreatedAt,
 			DeployTarget:       &DeployTarget{Id: &testDeployTargetID},
@@ -52,6 +54,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 		actual SksNodepool
 
 		jsonSksNodepool = `{
+  "addons": ["` + string(testAddons[0]) + `"],
   "anti-affinity-groups": [{"id":"` + testAntiAffinityGroupID + `"}],
   "created-at": "` + testCreatedAt.Format(iso8601Format) + `",
   "deploy-target": {"id": "` + testDeployTargetID + `"},
@@ -78,6 +81,7 @@ func TestSksNodepool_UnmarshalJSON(t *testing.T) {
 
 func TestSksNodepool_MarshalJSON(t *testing.T) {
 	var (
+		testAddons                    = []SksNodepoolAddons{SksNodepoolAddonsLinbit}
 		testAntiAffinityGroupID       = testRandomID(t)
 		testCreatedAt, _              = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 		testDeployTargetID            = testRandomID(t)
@@ -97,6 +101,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 		testVersion                   = "1.18.6"
 
 		sksNodepool = SksNodepool{
+			Addons:             &testAddons,
 			AntiAffinityGroups: &[]AntiAffinityGroup{{Id: &testAntiAffinityGroupID}},
 			CreatedAt:          &testCreatedAt,
 			DeployTarget:       &DeployTarget{Id: &testDeployTargetID},
@@ -117,6 +122,7 @@ func TestSksNodepool_MarshalJSON(t *testing.T) {
 		}
 
 		expected = []byte(`{` +
+			`"addons":["` + string(testAddons[0]) + `"],` +
 			`"anti-affinity-groups":[{"id":"` + testAntiAffinityGroupID + `"}],` +
 			`"created-at":"` + testCreatedAt.Format(iso8601Format) + `",` +
 			`"deploy-target":{"id":"` + testDeployTargetID + `"},` +

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.68.0
+------
+
+- feature: v2: add support for quotas management
+- change: v2: all API resource-based methods have been relocated to the `Client` struct
+
 0.67.0
 ------
 
@@ -31,7 +37,7 @@ Changelog
 0.64.0
 ------
 
-- change: v2: replace `InstancePool.ManagerID` of type `string` with `InstancePool.Manager` field of type `*InstancePoolManager`.
+- change: v2: replace `InstancePool.ManagerID` of type `string` with `InstancePool.Manager` field of type `*InstancePoolManager`
 
 0.63.0
 ------

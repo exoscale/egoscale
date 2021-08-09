@@ -18,32 +18,40 @@ var (
 	testSnapshotState        = papi.SnapshotStateExported
 )
 
-func (ts *clientTestSuite) TestSnapshot_get() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/snapshot/%s", testSnapshotID), papi.Snapshot{
-		CreatedAt: &testSnapshotCreatedAt,
-		Id:        &testSnapshotID,
-		Instance:  &papi.Instance{Id: &testSnapshotInstanceID},
-		Name:      &testSnapshotName,
-		State:     &testSnapshotState,
+func (ts *clientTestSuite) TestClient_DeleteSnapshot() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+		deleted            = false
+	)
+
+	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/snapshot/%s", testSnapshotID),
+		func(req *http.Request) (*http.Response, error) {
+			deleted = true
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testSnapshotID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testSnapshotID},
 	})
 
-	expected := &Snapshot{
-		CreatedAt:  &testSnapshotCreatedAt,
-		ID:         &testSnapshotID,
-		InstanceID: &testSnapshotInstanceID,
-		Name:       &testSnapshotName,
-		State:      (*string)(&testSnapshotState),
-
-		c:    ts.client,
-		zone: testZone,
-	}
-
-	actual, err := new(Snapshot).get(context.Background(), ts.client, testZone, *expected.ID)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
+	ts.Require().NoError(ts.client.DeleteSnapshot(context.Background(), testZone, &Snapshot{ID: &testSnapshotID}))
+	ts.Require().True(deleted)
 }
 
-func (ts *clientTestSuite) TestSnapshot_Export() {
+func (ts *clientTestSuite) TestClient_ExportSnapshot() {
 	var (
 		testSnapshotExportMD5Sum       = "c9887de796993c2519b463bcd9509e08"
 		testSnapshotExportPresignedURL = fmt.Sprintf("https://sos-%s.exo.io/test/%s/%s",
@@ -92,23 +100,12 @@ func (ts *clientTestSuite) TestSnapshot_Export() {
 		State:    &testSnapshotState,
 	})
 
-	snapshot := &Snapshot{
-		CreatedAt:  &testSnapshotCreatedAt,
-		ID:         &testSnapshotID,
-		InstanceID: &testSnapshotInstanceID,
-		Name:       &testSnapshotName,
-		State:      (*string)(&testSnapshotState),
-
-		c:    ts.client,
-		zone: testZone,
-	}
-
 	expected := &SnapshotExport{
 		MD5sum:       &testSnapshotExportMD5Sum,
 		PresignedURL: &testSnapshotExportPresignedURL,
 	}
 
-	actual, err := snapshot.Export(context.Background())
+	actual, err := ts.client.ExportSnapshot(context.Background(), testZone, &Snapshot{ID: &testSnapshotID})
 	ts.Require().NoError(err)
 	ts.Require().True(exported)
 	ts.Require().Equal(expected, actual)
@@ -133,9 +130,6 @@ func (ts *clientTestSuite) TestClient_ListSnapshots() {
 		InstanceID: &testSnapshotInstanceID,
 		Name:       &testSnapshotName,
 		State:      (*string)(&testSnapshotState),
-
-		c:    ts.client,
-		zone: testZone,
 	}}
 
 	actual, err := ts.client.ListSnapshots(context.Background(), testZone)
@@ -158,45 +152,9 @@ func (ts *clientTestSuite) TestClient_GetSnapshot() {
 		InstanceID: &testSnapshotInstanceID,
 		Name:       &testSnapshotName,
 		State:      (*string)(&testSnapshotState),
-
-		c:    ts.client,
-		zone: testZone,
 	}
 
 	actual, err := ts.client.GetSnapshot(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
-}
-
-func (ts *clientTestSuite) TestClient_DeleteSnapshot() {
-	var (
-		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
-		deleted            = false
-	)
-
-	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/snapshot/%s", testSnapshotID),
-		func(req *http.Request) (*http.Response, error) {
-			deleted = true
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSnapshotID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSnapshotID},
-	})
-
-	ts.Require().NoError(ts.client.DeleteSnapshot(context.Background(), testZone, testSnapshotID))
-	ts.Require().True(deleted)
 }

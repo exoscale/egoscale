@@ -16,27 +16,6 @@ var (
 	testAntiAffinityGroupName        = new(clientTestSuite).randomString(10)
 )
 
-func (ts *clientTestSuite) TestAntiAffinityGroup_get() {
-	ts.mockAPIRequest(
-		"GET",
-		fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
-		papi.AntiAffinityGroup{
-			Description: &testAntiAffinityGroupDescription,
-			Id:          &testAntiAffinityGroupID,
-			Name:        &testAntiAffinityGroupName,
-		})
-
-	expected := &AntiAffinityGroup{
-		Description: &testAntiAffinityGroupDescription,
-		ID:          &testAntiAffinityGroupID,
-		Name:        &testAntiAffinityGroupName,
-	}
-
-	actual, err := new(AntiAffinityGroup).get(context.Background(), ts.client, testZone, *expected.ID)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-}
-
 func (ts *clientTestSuite) TestClient_CreateAntiAffinityGroup() {
 	var (
 		testOperationID    = ts.randomID()
@@ -93,47 +72,41 @@ func (ts *clientTestSuite) TestClient_CreateAntiAffinityGroup() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_ListAntiAffinityGroups() {
-	ts.mockAPIRequest("GET", "/anti-affinity-group", struct {
-		AntiAffinityGroups *[]papi.AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
-	}{
-		AntiAffinityGroups: &[]papi.AntiAffinityGroup{{
-			Description: &testAntiAffinityGroupDescription,
-			Id:          &testAntiAffinityGroupID,
-			Name:        &testAntiAffinityGroupName,
-		}},
-	})
+func (ts *clientTestSuite) TestClient_DeleteAntiAffinityGroup() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+		deleted            = false
+	)
 
-	expected := []*AntiAffinityGroup{{
-		Description: &testAntiAffinityGroupDescription,
-		ID:          &testAntiAffinityGroupID,
-		Name:        &testAntiAffinityGroupName,
-	}}
+	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
+		func(req *http.Request) (*http.Response, error) {
+			deleted = true
 
-	actual, err := ts.client.ListAntiAffinityGroups(context.Background(), testZone)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-}
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testAntiAffinityGroupID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
 
-func (ts *clientTestSuite) TestClient_GetAntiAffinityGroup() {
-	ts.mockAPIRequest(
-		"GET",
-		fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
-		papi.AntiAffinityGroup{
-			Description: &testAntiAffinityGroupDescription,
-			Id:          &testAntiAffinityGroupID,
-			Name:        &testAntiAffinityGroupName,
+			return resp, nil
 		})
 
-	expected := &AntiAffinityGroup{
-		Description: &testAntiAffinityGroupDescription,
-		ID:          &testAntiAffinityGroupID,
-		Name:        &testAntiAffinityGroupName,
-	}
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testAntiAffinityGroupID},
+	})
 
-	actual, err := ts.client.GetAntiAffinityGroup(context.Background(), testZone, *expected.ID)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
+	ts.Require().NoError(ts.client.DeleteAntiAffinityGroup(
+		context.Background(),
+		testZone,
+		&AntiAffinityGroup{ID: &testAntiAffinityGroupID},
+	))
+	ts.Require().True(deleted)
 }
 
 func (ts *clientTestSuite) TestClient_FindAntiAffinityGroup() {
@@ -171,35 +144,45 @@ func (ts *clientTestSuite) TestClient_FindAntiAffinityGroup() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_DeleteAntiAffinityGroup() {
-	var (
-		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
-		deleted            = false
-	)
-
-	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
-		func(req *http.Request) (*http.Response, error) {
-			deleted = true
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testAntiAffinityGroupID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
+func (ts *clientTestSuite) TestClient_GetAntiAffinityGroup() {
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
+		papi.AntiAffinityGroup{
+			Description: &testAntiAffinityGroupDescription,
+			Id:          &testAntiAffinityGroupID,
+			Name:        &testAntiAffinityGroupName,
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testAntiAffinityGroupID},
+	expected := &AntiAffinityGroup{
+		Description: &testAntiAffinityGroupDescription,
+		ID:          &testAntiAffinityGroupID,
+		Name:        &testAntiAffinityGroupName,
+	}
+
+	actual, err := ts.client.GetAntiAffinityGroup(context.Background(), testZone, *expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestClient_ListAntiAffinityGroups() {
+	ts.mockAPIRequest("GET", "/anti-affinity-group", struct {
+		AntiAffinityGroups *[]papi.AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	}{
+		AntiAffinityGroups: &[]papi.AntiAffinityGroup{{
+			Description: &testAntiAffinityGroupDescription,
+			Id:          &testAntiAffinityGroupID,
+			Name:        &testAntiAffinityGroupName,
+		}},
 	})
 
-	ts.Require().NoError(ts.client.DeleteAntiAffinityGroup(context.Background(), testZone, testAntiAffinityGroupID))
-	ts.Require().True(deleted)
+	expected := []*AntiAffinityGroup{{
+		Description: &testAntiAffinityGroupDescription,
+		ID:          &testAntiAffinityGroupID,
+		Name:        &testAntiAffinityGroupName,
+	}}
+
+	actual, err := ts.client.ListAntiAffinityGroups(context.Background(), testZone)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
 }

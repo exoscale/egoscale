@@ -30,49 +30,6 @@ var (
 	testElasticIPHealthcheckTLSSkipVerify        = true
 )
 
-func (ts *clientTestSuite) TestElasticIP_get() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/elastic-ip/%s", testElasticIPID), papi.ElasticIp{
-		Description: &testElasticIPDescription,
-		Healthcheck: &papi.ElasticIpHealthcheck{
-			Interval:      &testElasticIPHealthcheckInterval,
-			Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
-			Port:          int64(testElasticIPHealthcheckPort),
-			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
-			StrikesOk:     &testElasticIPHealthcheckStrikesOK,
-			Timeout:       &testElasticIPHealthcheckTimeout,
-			TlsSni:        &testElasticIPHealthcheckTLSSNI,
-			TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
-			Uri:           &testElasticIPHealthcheckURI,
-		},
-		Id: &testElasticIPID,
-		Ip: &testElasticIPAddress,
-	})
-
-	expected := &ElasticIP{
-		Description: &testElasticIPDescription,
-		Healthcheck: &ElasticIPHealthcheck{
-			Interval:      &testElasticIPHealthcheckIntervalD,
-			Mode:          &testElasticIPHealthcheckMode,
-			Port:          &testElasticIPHealthcheckPort,
-			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
-			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
-			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
-			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
-			Timeout:       &testElasticIPHealthcheckTimeoutD,
-			URI:           &testElasticIPHealthcheckURI,
-		},
-		ID:        &testElasticIPID,
-		IPAddress: &testElasticIPAddressP,
-
-		zone: testZone,
-		c:    ts.client,
-	}
-
-	actual, err := new(ElasticIP).get(context.Background(), ts.client, testZone, *expected.ID)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-}
-
 func (ts *clientTestSuite) TestClient_CreateElasticIP() {
 	var (
 		testOperationID    = ts.randomID()
@@ -150,9 +107,6 @@ func (ts *clientTestSuite) TestClient_CreateElasticIP() {
 		},
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressP,
-
-		zone: testZone,
-		c:    ts.client,
 	}
 
 	actual, err := ts.client.CreateElasticIP(context.Background(), testZone, &ElasticIP{
@@ -170,6 +124,108 @@ func (ts *clientTestSuite) TestClient_CreateElasticIP() {
 		},
 		ID: &testElasticIPID,
 	})
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestClient_DeleteElasticIP() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+		deleted            = false
+	)
+
+	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/elastic-ip/%s", testElasticIPID),
+		func(req *http.Request) (*http.Response, error) {
+			deleted = true
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testElasticIPID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testElasticIPID},
+	})
+
+	ts.Require().NoError(ts.client.DeleteElasticIP(context.Background(), testZone, &ElasticIP{ID: &testElasticIPID}))
+	ts.Require().True(deleted)
+}
+
+func (ts *clientTestSuite) TestClient_FindElasticIP() {
+	ts.mockAPIRequest("GET", "/elastic-ip", struct {
+		ElasticIPs *[]papi.ElasticIp `json:"elastic-ips,omitempty"`
+	}{
+		ElasticIPs: &[]papi.ElasticIp{{
+			Id: &testElasticIPID,
+			Ip: &testElasticIPAddress,
+		}},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/elastic-ip/%s", testElasticIPID), papi.ElasticIp{
+		Id: &testElasticIPID,
+		Ip: &testElasticIPAddress,
+	})
+
+	expected := &ElasticIP{
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressP,
+	}
+
+	actual, err := ts.client.FindElasticIP(context.Background(), testZone, *expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindElasticIP(context.Background(), testZone, expected.IPAddress.String())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestClient_GetElasticIP() {
+	ts.mockAPIRequest("GET", fmt.Sprintf("/elastic-ip/%s", testElasticIPID), papi.ElasticIp{
+		Description: &testElasticIPDescription,
+		Healthcheck: &papi.ElasticIpHealthcheck{
+			Interval:      &testElasticIPHealthcheckInterval,
+			Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
+			Port:          int64(testElasticIPHealthcheckPort),
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOk:     &testElasticIPHealthcheckStrikesOK,
+			Timeout:       &testElasticIPHealthcheckTimeout,
+			TlsSni:        &testElasticIPHealthcheckTLSSNI,
+			TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Uri:           &testElasticIPHealthcheckURI,
+		},
+		Id: &testElasticIPID,
+		Ip: &testElasticIPAddress,
+	})
+
+	expected := &ElasticIP{
+		Description: &testElasticIPDescription,
+		Healthcheck: &ElasticIPHealthcheck{
+			Interval:      &testElasticIPHealthcheckIntervalD,
+			Mode:          &testElasticIPHealthcheckMode,
+			Port:          &testElasticIPHealthcheckPort,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
+			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
+			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Timeout:       &testElasticIPHealthcheckTimeoutD,
+			URI:           &testElasticIPHealthcheckURI,
+		},
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressP,
+	}
+
+	actual, err := ts.client.GetElasticIP(context.Background(), testZone, *expected.ID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -211,87 +267,9 @@ func (ts *clientTestSuite) TestClient_ListElasticIPs() {
 		},
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressP,
-
-		zone: testZone,
-		c:    ts.client,
 	}}
 
 	actual, err := ts.client.ListElasticIPs(context.Background(), testZone)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-}
-
-func (ts *clientTestSuite) TestClient_GetElasticIP() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/elastic-ip/%s", testElasticIPID), papi.ElasticIp{
-		Description: &testElasticIPDescription,
-		Healthcheck: &papi.ElasticIpHealthcheck{
-			Interval:      &testElasticIPHealthcheckInterval,
-			Mode:          papi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
-			Port:          int64(testElasticIPHealthcheckPort),
-			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
-			StrikesOk:     &testElasticIPHealthcheckStrikesOK,
-			Timeout:       &testElasticIPHealthcheckTimeout,
-			TlsSni:        &testElasticIPHealthcheckTLSSNI,
-			TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
-			Uri:           &testElasticIPHealthcheckURI,
-		},
-		Id: &testElasticIPID,
-		Ip: &testElasticIPAddress,
-	})
-
-	expected := &ElasticIP{
-		Description: &testElasticIPDescription,
-		Healthcheck: &ElasticIPHealthcheck{
-			Interval:      &testElasticIPHealthcheckIntervalD,
-			Mode:          &testElasticIPHealthcheckMode,
-			Port:          &testElasticIPHealthcheckPort,
-			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
-			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
-			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
-			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
-			Timeout:       &testElasticIPHealthcheckTimeoutD,
-			URI:           &testElasticIPHealthcheckURI,
-		},
-		ID:        &testElasticIPID,
-		IPAddress: &testElasticIPAddressP,
-
-		zone: testZone,
-		c:    ts.client,
-	}
-
-	actual, err := ts.client.GetElasticIP(context.Background(), testZone, *expected.ID)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-}
-
-func (ts *clientTestSuite) TestClient_FindElasticIP() {
-	ts.mockAPIRequest("GET", "/elastic-ip", struct {
-		ElasticIPs *[]papi.ElasticIp `json:"elastic-ips,omitempty"`
-	}{
-		ElasticIPs: &[]papi.ElasticIp{{
-			Id: &testElasticIPID,
-			Ip: &testElasticIPAddress,
-		}},
-	})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/elastic-ip/%s", testElasticIPID), papi.ElasticIp{
-		Id: &testElasticIPID,
-		Ip: &testElasticIPAddress,
-	})
-
-	expected := &ElasticIP{
-		ID:        &testElasticIPID,
-		IPAddress: &testElasticIPAddressP,
-
-		zone: testZone,
-		c:    ts.client,
-	}
-
-	actual, err := ts.client.FindElasticIP(context.Background(), testZone, *expected.ID)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-
-	actual, err = ts.client.FindElasticIP(context.Background(), testZone, expected.IPAddress.String())
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
@@ -365,42 +343,6 @@ func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 		},
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressP,
-
-		zone: testZone,
-		c:    ts.client,
 	}))
 	ts.Require().True(updated)
-}
-
-func (ts *clientTestSuite) TestClient_DeleteElasticIP() {
-	var (
-		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
-		deleted            = false
-	)
-
-	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/elastic-ip/%s", testElasticIPID),
-		func(req *http.Request) (*http.Response, error) {
-			deleted = true
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testElasticIPID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testElasticIPID},
-	})
-
-	ts.Require().NoError(ts.client.DeleteElasticIP(context.Background(), testZone, testElasticIPID))
-	ts.Require().True(deleted)
 }

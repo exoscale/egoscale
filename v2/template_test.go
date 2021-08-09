@@ -28,6 +28,137 @@ var (
 	testTemplateVisibility            = "public"
 )
 
+func (ts *clientTestSuite) TestClient_DeleteTemplate() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+		deleted            = false
+	)
+
+	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/template/%s", testTemplateID),
+		func(req *http.Request) (*http.Response, error) {
+			deleted = true
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testTemplateID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testTemplateID},
+	})
+
+	ts.Require().NoError(ts.client.DeleteTemplate(context.Background(), testZone, &Template{ID: &testTemplateID}))
+	ts.Require().True(deleted)
+}
+
+func (ts *clientTestSuite) TestClient_GetTemplate() {
+	ts.mockAPIRequest("GET", fmt.Sprintf("/template/%s", testTemplateID), papi.Template{
+		BootMode:        (*papi.TemplateBootMode)(&testTemplateBootMode),
+		Build:           &testTemplateBuild,
+		Checksum:        &testTemplateChecksum,
+		CreatedAt:       &testTemplateCreatedAt,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		Family:          &testTemplateFamily,
+		Id:              &testTemplateID,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		Size:            &testTemplateSize,
+		SshKeyEnabled:   &testTemplateSSHKeyEnabled,
+		Url:             &testTemplateURL,
+		Version:         &testTemplateVersion,
+		Visibility:      (*papi.TemplateVisibility)(&testTemplateVisibility),
+	})
+
+	expected := &Template{
+		BootMode:        &testTemplateBootMode,
+		Build:           &testTemplateBuild,
+		Checksum:        &testTemplateChecksum,
+		CreatedAt:       &testTemplateCreatedAt,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		Family:          &testTemplateFamily,
+		ID:              &testTemplateID,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
+		Size:            &testTemplateSize,
+		URL:             &testTemplateURL,
+		Version:         &testTemplateVersion,
+		Visibility:      &testTemplateVisibility,
+	}
+
+	actual, err := ts.client.GetTemplate(context.Background(), testZone, *expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestClient_ListTemplates() {
+	httpmock.RegisterResponder("GET", "/template", func(req *http.Request) (*http.Response, error) {
+		ts.Require().Equal(testTemplateVisibility, req.URL.Query().Get("visibility"))
+		ts.Require().Equal(testTemplateFamily, req.URL.Query().Get("family"))
+
+		resp, err := httpmock.NewJsonResponse(http.StatusOK,
+			struct {
+				Templates *[]papi.Template `json:"templates,omitempty"`
+			}{
+				Templates: &[]papi.Template{{
+					BootMode:        (*papi.TemplateBootMode)(&testTemplateBootMode),
+					Build:           &testTemplateBuild,
+					Checksum:        &testTemplateChecksum,
+					CreatedAt:       &testTemplateCreatedAt,
+					DefaultUser:     &testTemplateDefaultUser,
+					Description:     &testTemplateDescription,
+					Family:          &testTemplateFamily,
+					Id:              &testTemplateID,
+					Name:            &testTemplateName,
+					PasswordEnabled: &testTemplatePasswordEnabled,
+					Size:            &testTemplateSize,
+					SshKeyEnabled:   &testTemplateSSHKeyEnabled,
+					Url:             &testTemplateURL,
+					Version:         &testTemplateVersion,
+					Visibility:      (*papi.TemplateVisibility)(&testTemplateVisibility),
+				}},
+			})
+		if err != nil {
+			ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+		}
+		return resp, nil
+	})
+
+	expected := []*Template{{
+		BootMode:        &testTemplateBootMode,
+		Build:           &testTemplateBuild,
+		Checksum:        &testTemplateChecksum,
+		CreatedAt:       &testTemplateCreatedAt,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		Family:          &testTemplateFamily,
+		ID:              &testTemplateID,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
+		Size:            &testTemplateSize,
+		URL:             &testTemplateURL,
+		Version:         &testTemplateVersion,
+		Visibility:      &testTemplateVisibility,
+	}}
+
+	actual, err := ts.client.ListTemplates(context.Background(), testZone, testTemplateVisibility, testTemplateFamily)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestClient_RegisterTemplate() {
 	var (
 		templateVisibility = "private"
@@ -112,135 +243,4 @@ func (ts *clientTestSuite) TestClient_RegisterTemplate() {
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
-}
-
-func (ts *clientTestSuite) TestClient_ListTemplates() {
-	httpmock.RegisterResponder("GET", "/template", func(req *http.Request) (*http.Response, error) {
-		ts.Require().Equal(testTemplateVisibility, req.URL.Query().Get("visibility"))
-		ts.Require().Equal(testTemplateFamily, req.URL.Query().Get("family"))
-
-		resp, err := httpmock.NewJsonResponse(http.StatusOK,
-			struct {
-				Templates *[]papi.Template `json:"templates,omitempty"`
-			}{
-				Templates: &[]papi.Template{{
-					BootMode:        (*papi.TemplateBootMode)(&testTemplateBootMode),
-					Build:           &testTemplateBuild,
-					Checksum:        &testTemplateChecksum,
-					CreatedAt:       &testTemplateCreatedAt,
-					DefaultUser:     &testTemplateDefaultUser,
-					Description:     &testTemplateDescription,
-					Family:          &testTemplateFamily,
-					Id:              &testTemplateID,
-					Name:            &testTemplateName,
-					PasswordEnabled: &testTemplatePasswordEnabled,
-					Size:            &testTemplateSize,
-					SshKeyEnabled:   &testTemplateSSHKeyEnabled,
-					Url:             &testTemplateURL,
-					Version:         &testTemplateVersion,
-					Visibility:      (*papi.TemplateVisibility)(&testTemplateVisibility),
-				}},
-			})
-		if err != nil {
-			ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-		}
-		return resp, nil
-	})
-
-	expected := []*Template{{
-		BootMode:        &testTemplateBootMode,
-		Build:           &testTemplateBuild,
-		Checksum:        &testTemplateChecksum,
-		CreatedAt:       &testTemplateCreatedAt,
-		DefaultUser:     &testTemplateDefaultUser,
-		Description:     &testTemplateDescription,
-		Family:          &testTemplateFamily,
-		ID:              &testTemplateID,
-		Name:            &testTemplateName,
-		PasswordEnabled: &testTemplatePasswordEnabled,
-		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
-		Size:            &testTemplateSize,
-		URL:             &testTemplateURL,
-		Version:         &testTemplateVersion,
-		Visibility:      &testTemplateVisibility,
-	}}
-
-	actual, err := ts.client.ListTemplates(context.Background(), testZone, testTemplateVisibility, testTemplateFamily)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-}
-
-func (ts *clientTestSuite) TestClient_GetTemplate() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/template/%s", testTemplateID), papi.Template{
-		BootMode:        (*papi.TemplateBootMode)(&testTemplateBootMode),
-		Build:           &testTemplateBuild,
-		Checksum:        &testTemplateChecksum,
-		CreatedAt:       &testTemplateCreatedAt,
-		DefaultUser:     &testTemplateDefaultUser,
-		Description:     &testTemplateDescription,
-		Family:          &testTemplateFamily,
-		Id:              &testTemplateID,
-		Name:            &testTemplateName,
-		PasswordEnabled: &testTemplatePasswordEnabled,
-		Size:            &testTemplateSize,
-		SshKeyEnabled:   &testTemplateSSHKeyEnabled,
-		Url:             &testTemplateURL,
-		Version:         &testTemplateVersion,
-		Visibility:      (*papi.TemplateVisibility)(&testTemplateVisibility),
-	})
-
-	expected := &Template{
-		BootMode:        &testTemplateBootMode,
-		Build:           &testTemplateBuild,
-		Checksum:        &testTemplateChecksum,
-		CreatedAt:       &testTemplateCreatedAt,
-		DefaultUser:     &testTemplateDefaultUser,
-		Description:     &testTemplateDescription,
-		Family:          &testTemplateFamily,
-		ID:              &testTemplateID,
-		Name:            &testTemplateName,
-		PasswordEnabled: &testTemplatePasswordEnabled,
-		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
-		Size:            &testTemplateSize,
-		URL:             &testTemplateURL,
-		Version:         &testTemplateVersion,
-		Visibility:      &testTemplateVisibility,
-	}
-
-	actual, err := ts.client.GetTemplate(context.Background(), testZone, *expected.ID)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-}
-
-func (ts *clientTestSuite) TestClient_DeleteTemplate() {
-	var (
-		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
-		deleted            = false
-	)
-
-	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/template/%s", testTemplateID),
-		func(req *http.Request) (*http.Response, error) {
-			deleted = true
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testTemplateID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testTemplateID},
-	})
-
-	ts.Require().NoError(ts.client.DeleteTemplate(context.Background(), testZone, testTemplateID))
-	ts.Require().True(deleted)
 }

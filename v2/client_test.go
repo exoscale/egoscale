@@ -248,10 +248,11 @@ func TestNewClient(t *testing.T) {
 	client, err := NewClient(
 		testAPIKey,
 		testAPISecret,
+		ClientOptCond(func() bool { return true }, ClientOptWithTrace()),
 		ClientOptWithAPIEndpoint(testAPIEndpoint),
 		ClientOptWithHTTPClient(testHTTPClient),
-		ClientOptWithTimeout(testTimeout),
 		ClientOptWithPollInterval(testPollInterval),
+		ClientOptWithTimeout(testTimeout),
 	)
 
 	require.NoError(t, err)
@@ -261,6 +262,7 @@ func TestNewClient(t *testing.T) {
 	require.Equal(t, testHTTPClient, client.httpClient)
 	require.Equal(t, testTimeout, client.timeout)
 	require.Equal(t, testPollInterval, client.pollInterval)
+	require.True(t, client.trace)
 	require.IsType(t, &api.ErrorHandlerMiddleware{}, client.httpClient.Transport)
 }
 

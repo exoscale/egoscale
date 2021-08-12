@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.68.1
+------
+
+- fix: v2: add missing `Snapshot.Size` field
+
 0.68.0
 ------
 

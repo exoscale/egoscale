@@ -11,11 +11,12 @@ import (
 )
 
 var (
-	testSnapshotCreatedAt, _ = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
-	testSnapshotID           = new(clientTestSuite).randomID()
-	testSnapshotInstanceID   = new(clientTestSuite).randomID()
-	testSnapshotName         = new(clientTestSuite).randomString(10)
-	testSnapshotState        = papi.SnapshotStateExported
+	testSnapshotCreatedAt, _       = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
+	testSnapshotID                 = new(clientTestSuite).randomID()
+	testSnapshotInstanceID         = new(clientTestSuite).randomID()
+	testSnapshotName               = new(clientTestSuite).randomString(10)
+	testSnapshotSize         int64 = 10
+	testSnapshotState              = papi.SnapshotStateExported
 )
 
 func (ts *clientTestSuite) TestClient_DeleteSnapshot() {
@@ -120,6 +121,7 @@ func (ts *clientTestSuite) TestClient_ListSnapshots() {
 			Id:        &testSnapshotID,
 			Instance:  &papi.Instance{Id: &testSnapshotInstanceID},
 			Name:      &testSnapshotName,
+			Size:      &testSnapshotSize,
 			State:     &testSnapshotState,
 		}},
 	})
@@ -129,6 +131,7 @@ func (ts *clientTestSuite) TestClient_ListSnapshots() {
 		ID:         &testSnapshotID,
 		InstanceID: &testSnapshotInstanceID,
 		Name:       &testSnapshotName,
+		Size:       &testSnapshotSize,
 		State:      (*string)(&testSnapshotState),
 	}}
 
@@ -143,6 +146,7 @@ func (ts *clientTestSuite) TestClient_GetSnapshot() {
 		Id:        &testSnapshotID,
 		Instance:  &papi.Instance{Id: &testSnapshotInstanceID},
 		Name:      &testSnapshotName,
+		Size:      &testSnapshotSize,
 		State:     &testSnapshotState,
 	})
 
@@ -151,6 +155,7 @@ func (ts *clientTestSuite) TestClient_GetSnapshot() {
 		ID:         &testSnapshotID,
 		InstanceID: &testSnapshotInstanceID,
 		Name:       &testSnapshotName,
+		Size:       &testSnapshotSize,
 		State:      (*string)(&testSnapshotState),
 	}
 

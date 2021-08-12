@@ -20,6 +20,7 @@ type Snapshot struct {
 	ID         *string
 	InstanceID *string
 	Name       *string
+	Size       *int64
 	State      *string
 }
 
@@ -29,6 +30,7 @@ func snapshotFromAPI(s *papi.Snapshot) *Snapshot {
 		ID:         s.Id,
 		InstanceID: s.Instance.Id,
 		Name:       s.Name,
+		Size:       s.Size,
 		State:      (*string)(s.State),
 	}
 }

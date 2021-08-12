@@ -11,13 +11,14 @@ import (
 
 func TestSnapshot_UnmarshalJSON(t *testing.T) {
 	var (
-		testCreatedAt, _ = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
-		testID           = testRandomID(t)
-		testInstanceID   = testRandomID(t)
-		testName         = "test_ROOT-846459_20200706132534"
-		testExportMD5Sum = "c9887de796993c2519b463bcd9509e08"
-		testExportURL    = fmt.Sprintf("https://sos-ch-gva-2.exo.io/test/%s/%s", testRandomID(t), testID)
-		testState        = SnapshotStateExported
+		testCreatedAt, _       = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
+		testID                 = testRandomID(t)
+		testInstanceID         = testRandomID(t)
+		testName               = "test_ROOT-846459_20200706132534"
+		testExportMD5Sum       = "c9887de796993c2519b463bcd9509e08"
+		testExportURL          = fmt.Sprintf("https://sos-ch-gva-2.exo.io/test/%s/%s", testRandomID(t), testID)
+		testSize         int64 = 10
+		testState              = SnapshotStateExported
 
 		expected = Snapshot{
 			CreatedAt: &testCreatedAt,
@@ -31,6 +32,7 @@ func TestSnapshot_UnmarshalJSON(t *testing.T) {
 			Id:       &testID,
 			Instance: &Instance{Id: &testInstanceID},
 			Name:     &testName,
+			Size:     &testSize,
 			State:    &testState,
 		}
 
@@ -42,6 +44,7 @@ func TestSnapshot_UnmarshalJSON(t *testing.T) {
   "id": "` + testID + `",
   "instance": {"id": "` + testInstanceID + `"},
   "name": "` + testName + `",
+  "size": ` + fmt.Sprint(testSize) + `,
   "state": "` + string(testState) + `"
 }`
 	)
@@ -52,13 +55,14 @@ func TestSnapshot_UnmarshalJSON(t *testing.T) {
 
 func TestSnapshot_MarshalJSON(t *testing.T) {
 	var (
-		testCreatedAt, _ = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
-		testID           = testRandomID(t)
-		testInstanceID   = testRandomID(t)
-		testName         = "test_ROOT-846459_20200706132534"
-		testExportMD5Sum = "c9887de796993c2519b463bcd9509e08"
-		testExportURL    = fmt.Sprintf("https://sos-ch-gva-2.exo.io/test/%s/%s", testRandomID(t), testID)
-		testState        = SnapshotStateExported
+		testCreatedAt, _       = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
+		testID                 = testRandomID(t)
+		testInstanceID         = testRandomID(t)
+		testName               = "test_ROOT-846459_20200706132534"
+		testExportMD5Sum       = "c9887de796993c2519b463bcd9509e08"
+		testExportURL          = fmt.Sprintf("https://sos-ch-gva-2.exo.io/test/%s/%s", testRandomID(t), testID)
+		testSize         int64 = 10
+		testState              = SnapshotStateExported
 
 		snapshot = Snapshot{
 			CreatedAt: &testCreatedAt,
@@ -72,6 +76,7 @@ func TestSnapshot_MarshalJSON(t *testing.T) {
 			Id:       &testID,
 			Instance: &Instance{Id: &testInstanceID},
 			Name:     &testName,
+			Size:     &testSize,
 			State:    &testState,
 		}
 
@@ -81,6 +86,7 @@ func TestSnapshot_MarshalJSON(t *testing.T) {
 			`"id":"` + testID + `",` +
 			`"instance":{"id":"` + testInstanceID + `"},` +
 			`"name":"` + testName + `",` +
+			`"size":` + fmt.Sprint(testSize) + "," +
 			`"state":"` + string(testState) + `"` +
 			`}`)
 	)

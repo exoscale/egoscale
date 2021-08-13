@@ -12,9 +12,22 @@ import (
 )
 
 var (
+	testDatabasePlanBackupConfigInterval     int64 = 24
+	testDatabasePlanBackupConfigMaxCount     int64 = 2
+	testDatabasePlanBackupConfigRecoveryMode       = "pitr"
+	testDatabasePlanDiskSpace                int64 = 10737418240
+	testDatabasePlanName                           = "hobbyist-1"
+	testDatabasePlanNodeCPUCount             int64 = 2
+	testDatabasePlanNodeCount                int64 = 1
+	testDatabasePlanNodeMemory               int64 = 2147483648
 	testDatabaseServiceBackupDataSize        int64 = 36259840
-	testDatabaseServiceBackupTime, _               = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 	testDatabaseServiceBackupName                  = testDatabaseServiceBackupTime.Format("2006-01-02_15-04_0.00000000.pghoard")
+	testDatabaseServiceBackupTime, _               = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
+	testDatabaseServiceComponent                   = "pgbouncer"
+	testDatabaseServiceComponentHost               = new(clientTestSuite).randomString(30)
+	testDatabaseServiceComponentPort         int64 = 12345
+	testDatabaseServiceComponentRoute              = papi.DbaasServiceComponentsRouteDynamic
+	testDatabaseServiceComponentUsage              = papi.DbaasServiceComponentsUsagePrimary
 	testDatabaseServiceCreatedAt, _                = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 	testDatabaseServiceDescription                 = new(clientTestSuite).randomString(10)
 	testDatabaseServiceDiskSize              int64 = 10995116277760
@@ -26,14 +39,6 @@ var (
 	testDatabaseServiceNodeMemory            int64 = 2199023255552
 	testDatabaseServiceNodeStateRole               = papi.DbaasNodeStateRoleMaster
 	testDatabaseServiceNodeStateState              = papi.DbaasNodeStateStateRunning
-	testDatabasePlanBackupConfigInterval     int64 = 24
-	testDatabasePlanBackupConfigMaxCount     int64 = 2
-	testDatabasePlanBackupConfigRecoveryMode       = "pitr"
-	testDatabasePlanDiskSpace                int64 = 10737418240
-	testDatabasePlanName                           = "hobbyist-1"
-	testDatabasePlanNodeCPUCount             int64 = 2
-	testDatabasePlanNodeCount                int64 = 1
-	testDatabasePlanNodeMemory               int64 = 2147483648
 	testDatabaseServiceState                       = papi.DbaasServiceStateRunning
 	testDatabaseServiceTerminationProtection       = true
 	testDatabaseServiceType                        = papi.DbaasServiceTypeName("pg")
@@ -98,11 +103,11 @@ func (ts *clientTestSuite) TestClient_CreateDatabaseService() {
 			DataSize:   testDatabaseServiceBackupDataSize,
 		}},
 		Components: &[]papi.DbaasServiceComponents{{
-			Component: "pg",
-			Host:      "host",
-			Port:      12345,
-			Route:     papi.DbaasServiceComponentsRouteDynamic,
-			Usage:     papi.DbaasServiceComponentsUsagePrimary,
+			Component: testDatabaseServiceComponent,
+			Host:      testDatabaseServiceComponentHost,
+			Port:      testDatabaseServiceComponentPort,
+			Route:     testDatabaseServiceComponentRoute,
+			Usage:     testDatabaseServiceComponentUsage,
 		}},
 		ConnectionInfo:  &papi.DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
 		ConnectionPools: &[]papi.DbaasServiceConnectionPools{},
@@ -148,6 +153,15 @@ func (ts *clientTestSuite) TestClient_CreateDatabaseService() {
 			Name: &testDatabaseServiceBackupName,
 			Size: &testDatabaseServiceBackupDataSize,
 			Date: &testDatabaseServiceBackupTime,
+		}},
+		Components: []*DatabaseServiceComponent{{
+			Name: &testDatabaseServiceComponent,
+			Info: map[string]interface{}{
+				"host":  testDatabaseServiceComponentHost,
+				"port":  testDatabaseServiceComponentPort,
+				"route": testDatabaseServiceComponentRoute,
+				"usage": testDatabaseServiceComponentUsage,
+			},
 		}},
 		ConnectionInfo: map[string]interface{}{"k": "v"},
 		CreatedAt:      &testDatabaseServiceCreatedAt,
@@ -256,11 +270,11 @@ func (ts *clientTestSuite) TestClient_GetDatabaseService() {
 				DataSize:   testDatabaseServiceBackupDataSize,
 			}},
 			Components: &[]papi.DbaasServiceComponents{{
-				Component: "pg",
-				Host:      "host",
-				Port:      12345,
-				Route:     papi.DbaasServiceComponentsRouteDynamic,
-				Usage:     papi.DbaasServiceComponentsUsagePrimary,
+				Component: testDatabaseServiceComponent,
+				Host:      testDatabaseServiceComponentHost,
+				Port:      testDatabaseServiceComponentPort,
+				Route:     testDatabaseServiceComponentRoute,
+				Usage:     testDatabaseServiceComponentUsage,
 			}},
 			ConnectionInfo:  &papi.DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
 			ConnectionPools: &[]papi.DbaasServiceConnectionPools{},
@@ -306,6 +320,15 @@ func (ts *clientTestSuite) TestClient_GetDatabaseService() {
 			Name: &testDatabaseServiceBackupName,
 			Size: &testDatabaseServiceBackupDataSize,
 			Date: &testDatabaseServiceBackupTime,
+		}},
+		Components: []*DatabaseServiceComponent{{
+			Name: &testDatabaseServiceComponent,
+			Info: map[string]interface{}{
+				"host":  testDatabaseServiceComponentHost,
+				"port":  testDatabaseServiceComponentPort,
+				"route": testDatabaseServiceComponentRoute,
+				"usage": testDatabaseServiceComponentUsage,
+			},
 		}},
 		ConnectionInfo: map[string]interface{}{"k": "v"},
 		CreatedAt:      &testDatabaseServiceCreatedAt,
@@ -453,11 +476,11 @@ func (ts *clientTestSuite) TestClient_ListDatabaseServices() {
 				DataSize:   testDatabaseServiceBackupDataSize,
 			}},
 			Components: &[]papi.DbaasServiceComponents{{
-				Component: "pg",
-				Host:      "host",
-				Port:      12345,
-				Route:     papi.DbaasServiceComponentsRouteDynamic,
-				Usage:     papi.DbaasServiceComponentsUsagePrimary,
+				Component: testDatabaseServiceComponent,
+				Host:      testDatabaseServiceComponentHost,
+				Port:      testDatabaseServiceComponentPort,
+				Route:     testDatabaseServiceComponentRoute,
+				Usage:     testDatabaseServiceComponentUsage,
 			}},
 			ConnectionInfo:  &papi.DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
 			ConnectionPools: &[]papi.DbaasServiceConnectionPools{},
@@ -504,6 +527,15 @@ func (ts *clientTestSuite) TestClient_ListDatabaseServices() {
 			Name: &testDatabaseServiceBackupName,
 			Size: &testDatabaseServiceBackupDataSize,
 			Date: &testDatabaseServiceBackupTime,
+		}},
+		Components: []*DatabaseServiceComponent{{
+			Name: &testDatabaseServiceComponent,
+			Info: map[string]interface{}{
+				"host":  testDatabaseServiceComponentHost,
+				"port":  testDatabaseServiceComponentPort,
+				"route": testDatabaseServiceComponentRoute,
+				"usage": testDatabaseServiceComponentUsage,
+			},
 		}},
 		ConnectionInfo: map[string]interface{}{"k": "v"},
 		CreatedAt:      &testDatabaseServiceCreatedAt,

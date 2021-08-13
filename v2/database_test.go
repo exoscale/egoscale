@@ -228,6 +228,23 @@ func (ts *clientTestSuite) TestClient_DeleteDatabaseService() {
 	ts.Require().True(deleted)
 }
 
+func (ts *clientTestSuite) TestClient_GetDatabaseCACertificate() {
+	testCACertificate := `-----BEGIN CERTIFICATE-----
+` + ts.randomString(1000) +
+		`-----END CERTIFICATE-----
+`
+
+	ts.mockAPIRequest("GET", "/dbaas-ca-certificate", struct {
+		Certificate *string "json:\"certificate,omitempty\""
+	}{
+		Certificate: &testCACertificate,
+	})
+
+	actual, err := ts.client.GetDatabaseCACertificate(context.Background(), testZone)
+	ts.Require().NoError(err)
+	ts.Require().Equal(testCACertificate, actual)
+}
+
 func (ts *clientTestSuite) TestClient_GetDatabaseService() {
 	ts.mockAPIRequest("GET",
 		fmt.Sprintf("/dbaas-service/%s", testDatabaseServiceName),

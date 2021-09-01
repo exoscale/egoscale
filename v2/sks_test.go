@@ -903,3 +903,40 @@ func (ts *clientTestSuite) TestClient_UgradeSKSCluster() {
 		testSKSClusterVersion))
 	ts.Require().True(upgraded)
 }
+
+func (ts *clientTestSuite) TestClient_UgradeSKSClusterServiceLevel() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = papi.OperationStateSuccess
+		upgraded           = false
+	)
+
+	httpmock.RegisterResponder("PUT",
+		fmt.Sprintf("/sks-cluster/%s/upgrade-service-level", testSKSClusterID),
+		func(req *http.Request) (*http.Response, error) {
+			upgraded = true
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &papi.Reference{Id: &testSKSNodepoolID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+	})
+
+	ts.Require().NoError(ts.client.UpgradeSKSClusterServiceLevel(
+		context.Background(),
+		testZone,
+		&SKSCluster{ID: &testSKSClusterID}))
+	ts.Require().True(upgraded)
+}

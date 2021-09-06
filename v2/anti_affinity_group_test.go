@@ -13,6 +13,7 @@ import (
 var (
 	testAntiAffinityGroupDescription = new(clientTestSuite).randomString(10)
 	testAntiAffinityGroupID          = new(clientTestSuite).randomID()
+	testAntiAffinityGroupInstanceID  = new(clientTestSuite).randomID()
 	testAntiAffinityGroupName        = new(clientTestSuite).randomString(10)
 )
 
@@ -126,12 +127,14 @@ func (ts *clientTestSuite) TestClient_FindAntiAffinityGroup() {
 		papi.AntiAffinityGroup{
 			Description: &testAntiAffinityGroupDescription,
 			Id:          &testAntiAffinityGroupID,
+			Instances:   &[]papi.Instance{{Id: &testAntiAffinityGroupInstanceID}},
 			Name:        &testAntiAffinityGroupName,
 		})
 
 	expected := &AntiAffinityGroup{
 		Description: &testAntiAffinityGroupDescription,
 		ID:          &testAntiAffinityGroupID,
+		InstanceIDs: &[]string{testAntiAffinityGroupInstanceID},
 		Name:        &testAntiAffinityGroupName,
 	}
 
@@ -151,12 +154,14 @@ func (ts *clientTestSuite) TestClient_GetAntiAffinityGroup() {
 		papi.AntiAffinityGroup{
 			Description: &testAntiAffinityGroupDescription,
 			Id:          &testAntiAffinityGroupID,
+			Instances:   &[]papi.Instance{{Id: &testAntiAffinityGroupInstanceID}},
 			Name:        &testAntiAffinityGroupName,
 		})
 
 	expected := &AntiAffinityGroup{
 		Description: &testAntiAffinityGroupDescription,
 		ID:          &testAntiAffinityGroupID,
+		InstanceIDs: &[]string{testAntiAffinityGroupInstanceID},
 		Name:        &testAntiAffinityGroupName,
 	}
 
@@ -172,6 +177,7 @@ func (ts *clientTestSuite) TestClient_ListAntiAffinityGroups() {
 		AntiAffinityGroups: &[]papi.AntiAffinityGroup{{
 			Description: &testAntiAffinityGroupDescription,
 			Id:          &testAntiAffinityGroupID,
+			Instances:   &[]papi.Instance{{Id: &testAntiAffinityGroupInstanceID}},
 			Name:        &testAntiAffinityGroupName,
 		}},
 	})
@@ -179,6 +185,7 @@ func (ts *clientTestSuite) TestClient_ListAntiAffinityGroups() {
 	expected := []*AntiAffinityGroup{{
 		Description: &testAntiAffinityGroupDescription,
 		ID:          &testAntiAffinityGroupID,
+		InstanceIDs: &[]string{testAntiAffinityGroupInstanceID},
 		Name:        &testAntiAffinityGroupName,
 	}}
 

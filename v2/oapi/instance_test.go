@@ -1,4 +1,4 @@
-package publicapi
+package oapi
 
 import (
 	"encoding/json"
@@ -9,141 +9,141 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSksNodepool_UnmarshalJSON(t *testing.T) {
+func TestInstance_UnmarshalJSON(t *testing.T) {
 	var (
-		testAddons                    = []SksNodepoolAddons{SksNodepoolAddonsLinbit}
 		testAntiAffinityGroupID       = testRandomID(t)
 		testCreatedAt, _              = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 		testDeployTargetID            = testRandomID(t)
-		testDescription               = "Test Nodepool description"
 		testDiskSize            int64 = 15
+		testElasticIPID               = testRandomID(t)
 		testID                        = testRandomID(t)
-		testInstancePoolID            = testRandomID(t)
-		testInstancePrefix            = "test-nodepool"
 		testInstanceTypeID            = testRandomID(t)
+		testIpv6Address               = "2001:db8:abcd::1"
 		testLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
-		testName                      = "test-nodepool"
+		testManagerID                 = testRandomID(t)
+		testName                      = "test-instance"
 		testPrivateNetworkID          = testRandomID(t)
+		testSSHKeyName                = testRandomID(t)
 		testSecurityGroupID           = testRandomID(t)
-		testSize                int64 = 3
-		testState                     = SksNodepoolStateRunning
+		testSnapshotID                = testRandomID(t)
+		testState                     = InstanceStateRunning
 		testTemplateID                = testRandomID(t)
-		testVersion                   = "1.18.6"
+		testUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 
-		expected = SksNodepool{
-			Addons:             &testAddons,
+		expected = Instance{
 			AntiAffinityGroups: &[]AntiAffinityGroup{{Id: &testAntiAffinityGroupID}},
 			CreatedAt:          &testCreatedAt,
 			DeployTarget:       &DeployTarget{Id: &testDeployTargetID},
-			Description:        &testDescription,
 			DiskSize:           &testDiskSize,
+			ElasticIps:         &[]ElasticIp{{Id: &testElasticIPID}},
 			Id:                 &testID,
-			InstancePrefix:     &testInstancePrefix,
-			InstancePool:       &InstancePool{Id: &testInstancePoolID},
 			InstanceType:       &InstanceType{Id: &testInstanceTypeID},
+			Ipv6Address:        &testIpv6Address,
 			Labels:             &Labels{AdditionalProperties: testLabels},
+			Manager:            &Manager{Id: &testManagerID},
 			Name:               &testName,
 			PrivateNetworks:    &[]PrivateNetwork{{Id: &testPrivateNetworkID}},
 			SecurityGroups:     &[]SecurityGroup{{Id: &testSecurityGroupID}},
-			Size:               &testSize,
+			Snapshots:          &[]Snapshot{{Id: &testSnapshotID}},
+			SshKey:             &SshKey{Name: &testSSHKeyName},
 			State:              &testState,
 			Template:           &Template{Id: &testTemplateID},
-			Version:            &testVersion,
+			UserData:           &testUserData,
 		}
 
-		actual SksNodepool
+		actual Instance
 
-		jsonSksNodepool = `{
-  "addons": ["` + string(testAddons[0]) + `"],
+		jsonInstance = `{
   "anti-affinity-groups": [{"id":"` + testAntiAffinityGroupID + `"}],
   "created-at": "` + testCreatedAt.Format(iso8601Format) + `",
   "deploy-target": {"id": "` + testDeployTargetID + `"},
-  "description": "` + testDescription + `",
   "disk-size": ` + fmt.Sprint(testDiskSize) + `,
+  "elastic-ips": [{"id":"` + testElasticIPID + `"}],
   "id": "` + testID + `",
-  "instance-pool": {"id": "` + testInstancePoolID + `"},
-  "instance-prefix": "` + testInstancePrefix + `",
   "instance-type": {"id": "` + testInstanceTypeID + `"},
+  "ipv6-address": "` + fmt.Sprint(testIpv6Address) + `",
   "labels": {"k1": "` + testLabels["k1"] + `", "k2": "` + testLabels["k2"] + `"},
+  "manager": {"id": "` + testManagerID + `"},
   "name": "` + testName + `",
   "private-networks": [{"id":"` + testPrivateNetworkID + `"}],
   "security-groups": [{"id":"` + testSecurityGroupID + `"}],
-  "size": ` + fmt.Sprint(testSize) + `,
+  "snapshots": [{"id":"` + testSnapshotID + `"}],
+  "ssh-key": {"name": "` + testSSHKeyName + `"},
   "state": "` + string(testState) + `",
   "template": {"id": "` + testTemplateID + `"},
-  "version": "` + testVersion + `"
+  "user-data": "` + testUserData + `"
 }`
 	)
 
-	require.NoError(t, json.Unmarshal([]byte(jsonSksNodepool), &actual))
+	require.NoError(t, json.Unmarshal([]byte(jsonInstance), &actual))
 	require.Equal(t, expected, actual)
 }
 
-func TestSksNodepool_MarshalJSON(t *testing.T) {
+func TestInstance_MarshalJSON(t *testing.T) {
 	var (
-		testAddons                    = []SksNodepoolAddons{SksNodepoolAddonsLinbit}
 		testAntiAffinityGroupID       = testRandomID(t)
 		testCreatedAt, _              = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 		testDeployTargetID            = testRandomID(t)
-		testDescription               = "Test Nodepool description"
 		testDiskSize            int64 = 15
+		testElasticIPID               = testRandomID(t)
 		testID                        = testRandomID(t)
-		testInstancePoolID            = testRandomID(t)
-		testInstancePrefix            = "test-nodepool"
 		testInstanceTypeID            = testRandomID(t)
+		testIpv6Address               = "2001:db8:abcd::1"
 		testLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
-		testName                      = "test-nodepool"
+		testManagerID                 = testRandomID(t)
+		testName                      = "test-instance"
 		testPrivateNetworkID          = testRandomID(t)
 		testSecurityGroupID           = testRandomID(t)
-		testSize                int64 = 3
-		testState                     = SksNodepoolStateRunning
+		testSnapshotID                = testRandomID(t)
+		testSSHKeyName                = testRandomID(t)
+		testState                     = InstanceStateRunning
 		testTemplateID                = testRandomID(t)
-		testVersion                   = "1.18.6"
+		testUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 
-		sksNodepool = SksNodepool{
-			Addons:             &testAddons,
+		instance = Instance{
 			AntiAffinityGroups: &[]AntiAffinityGroup{{Id: &testAntiAffinityGroupID}},
 			CreatedAt:          &testCreatedAt,
 			DeployTarget:       &DeployTarget{Id: &testDeployTargetID},
-			Description:        &testDescription,
 			DiskSize:           &testDiskSize,
+			ElasticIps:         &[]ElasticIp{{Id: &testElasticIPID}},
 			Id:                 &testID,
-			InstancePrefix:     &testInstancePrefix,
-			InstancePool:       &InstancePool{Id: &testInstancePoolID},
 			InstanceType:       &InstanceType{Id: &testInstanceTypeID},
+			Ipv6Address:        &testIpv6Address,
 			Labels:             &Labels{AdditionalProperties: testLabels},
+			Manager:            &Manager{Id: &testManagerID},
 			Name:               &testName,
 			PrivateNetworks:    &[]PrivateNetwork{{Id: &testPrivateNetworkID}},
 			SecurityGroups:     &[]SecurityGroup{{Id: &testSecurityGroupID}},
-			Size:               &testSize,
+			Snapshots:          &[]Snapshot{{Id: &testSnapshotID}},
+			SshKey:             &SshKey{Name: &testSSHKeyName},
 			State:              &testState,
 			Template:           &Template{Id: &testTemplateID},
-			Version:            &testVersion,
+			UserData:           &testUserData,
 		}
 
 		expected = []byte(`{` +
-			`"addons":["` + string(testAddons[0]) + `"],` +
 			`"anti-affinity-groups":[{"id":"` + testAntiAffinityGroupID + `"}],` +
 			`"created-at":"` + testCreatedAt.Format(iso8601Format) + `",` +
 			`"deploy-target":{"id":"` + testDeployTargetID + `"},` +
-			`"description":"` + testDescription + `",` +
 			`"disk-size":` + fmt.Sprint(testDiskSize) + `,` +
+			`"elastic-ips":[{"id":"` + testElasticIPID + `"}],` +
 			`"id":"` + testID + `",` +
-			`"instance-pool":{"id":"` + testInstancePoolID + `"},` +
-			`"instance-prefix":"` + testInstancePrefix + `",` +
 			`"instance-type":{"id":"` + testInstanceTypeID + `"},` +
+			`"ipv6-address":"` + fmt.Sprint(testIpv6Address) + `",` +
 			`"labels":{"k1":"` + testLabels["k1"] + `","k2":"` + testLabels["k2"] + `"},` +
+			`"manager":{"id":"` + testManagerID + `"},` +
 			`"name":"` + testName + `",` +
 			`"private-networks":[{"id":"` + testPrivateNetworkID + `"}],` +
 			`"security-groups":[{"id":"` + testSecurityGroupID + `"}],` +
-			`"size":` + fmt.Sprint(testSize) + `,` +
+			`"snapshots":[{"id":"` + testSnapshotID + `"}],` +
+			`"ssh-key":{"name":"` + testSSHKeyName + `"},` +
 			`"state":"` + string(testState) + `",` +
 			`"template":{"id":"` + testTemplateID + `"},` +
-			`"version":"` + testVersion + `"` +
+			`"user-data":"` + testUserData + `"` +
 			`}`)
 	)
 
-	actual, err := json.Marshal(sksNodepool)
+	actual, err := json.Marshal(instance)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }

@@ -4,24 +4,24 @@ import (
 	"context"
 	"fmt"
 
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var (
 	testInstanceTypeAuthorized       = true
 	testInstanceTypeCPUs       int64 = 16
 	testInstanceTypeGPUs       int64 = 2
-	testInstanceTypeFamily           = papi.InstanceTypeFamilyGpu2
+	testInstanceTypeFamily           = oapi.InstanceTypeFamilyGpu2
 	testInstanceTypeID               = new(clientTestSuite).randomID()
 	testInstanceTypeMemory     int64 = 96636764160
-	testInstanceTypeSize             = papi.InstanceTypeSizeMedium
+	testInstanceTypeSize             = oapi.InstanceTypeSizeMedium
 )
 
 func (ts *clientTestSuite) TestClient_ListInstanceTypes() {
 	ts.mockAPIRequest("GET", "/instance-type", struct {
-		InstanceTypes *[]papi.InstanceType `json:"instance-types,omitempty"`
+		InstanceTypes *[]oapi.InstanceType `json:"instance-types,omitempty"`
 	}{
-		InstanceTypes: &[]papi.InstanceType{{
+		InstanceTypes: &[]oapi.InstanceType{{
 			Authorized: &testInstanceTypeAuthorized,
 			Cpus:       &testInstanceTypeCPUs,
 			Family:     &testInstanceTypeFamily,
@@ -48,7 +48,7 @@ func (ts *clientTestSuite) TestClient_ListInstanceTypes() {
 }
 
 func (ts *clientTestSuite) TestClient_GetInstanceType() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-type/%s", testInstanceTypeID), papi.InstanceType{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-type/%s", testInstanceTypeID), oapi.InstanceType{
 		Authorized: &testInstanceTypeAuthorized,
 		Cpus:       &testInstanceTypeCPUs,
 		Family:     &testInstanceTypeFamily,
@@ -75,9 +75,9 @@ func (ts *clientTestSuite) TestClient_GetInstanceType() {
 
 func (ts *clientTestSuite) TestClient_FindInstanceType() {
 	ts.mockAPIRequest("GET", "/instance-type", struct {
-		InstanceTypes *[]papi.InstanceType `json:"instance-types,omitempty"`
+		InstanceTypes *[]oapi.InstanceType `json:"instance-types,omitempty"`
 	}{
-		InstanceTypes: &[]papi.InstanceType{{
+		InstanceTypes: &[]oapi.InstanceType{{
 			Authorized: &testInstanceTypeAuthorized,
 			Cpus:       &testInstanceTypeCPUs,
 			Family:     &testInstanceTypeFamily,
@@ -87,7 +87,7 @@ func (ts *clientTestSuite) TestClient_FindInstanceType() {
 		}},
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-type/%s", testInstanceTypeID), papi.InstanceType{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-type/%s", testInstanceTypeID), oapi.InstanceType{
 		Authorized: &testInstanceTypeAuthorized,
 		Cpus:       &testInstanceTypeCPUs,
 		Family:     &testInstanceTypeFamily,

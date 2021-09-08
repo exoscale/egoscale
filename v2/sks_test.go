@@ -9,11 +9,11 @@ import (
 
 	"github.com/jarcoal/httpmock"
 
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var (
-	testSKSClusterAddons                     = []papi.SksClusterAddons{papi.SksClusterAddonsExoscaleCloudController}
+	testSKSClusterAddons                     = []oapi.SksClusterAddons{oapi.SksClusterAddonsExoscaleCloudController}
 	testSKSClusterAutoUpgrade                = true
 	testSKSClusterCNI                        = "calico"
 	testSKSClusterCreatedAt, _               = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
@@ -22,10 +22,10 @@ var (
 	testSKSClusterID                         = new(clientTestSuite).randomID()
 	testSKSClusterLabels                     = map[string]string{"k1": "v1", "k2": "v2"}
 	testSKSClusterName                       = new(clientTestSuite).randomString(10)
-	testSKSClusterServiceLevel               = papi.SksClusterLevelPro
-	testSKSClusterState                      = papi.SksClusterStateRunning
+	testSKSClusterServiceLevel               = oapi.SksClusterLevelPro
+	testSKSClusterState                      = oapi.SksClusterStateRunning
 	testSKSClusterVersion                    = "1.18.6"
-	testSKSNodepoolAddons                    = []papi.SksNodepoolAddons{papi.SksNodepoolAddonsLinbit}
+	testSKSNodepoolAddons                    = []oapi.SksNodepoolAddons{oapi.SksNodepoolAddonsLinbit}
 	testSKSNodepoolAntiAffinityGroupID       = new(clientTestSuite).randomID()
 	testSKSNodepoolCreatedAt, _              = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
 	testSKSNodepoolDeployTargetID            = new(clientTestSuite).randomID()
@@ -40,7 +40,7 @@ var (
 	testSKSNodepoolPrivateNetworkID          = new(clientTestSuite).randomID()
 	testSKSNodepoolSecurityGroupID           = new(clientTestSuite).randomID()
 	testSKSNodepoolSize                int64 = 3
-	testSKSNodepoolState                     = papi.SksNodepoolStateRunning
+	testSKSNodepoolState                     = oapi.SksNodepoolStateRunning
 	testSKSNodepoolTemplateID                = new(clientTestSuite).randomID()
 	testSKSNodepoolVersion                   = "1.18.6"
 )
@@ -48,32 +48,32 @@ var (
 func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/sks-cluster",
 		func(req *http.Request) (*http.Response, error) {
-			var actual papi.CreateSksClusterJSONRequestBody
+			var actual oapi.CreateSksClusterJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.CreateSksClusterJSONRequestBody{
-				Addons: &[]papi.CreateSksClusterJSONBodyAddons{
-					papi.CreateSksClusterJSONBodyAddons(testSKSClusterAddons[0]),
+			expected := oapi.CreateSksClusterJSONRequestBody{
+				Addons: &[]oapi.CreateSksClusterJSONBodyAddons{
+					oapi.CreateSksClusterJSONBodyAddons(testSKSClusterAddons[0]),
 				},
 				AutoUpgrade: &testSKSClusterAutoUpgrade,
-				Cni:         (*papi.CreateSksClusterJSONBodyCni)(&testSKSClusterCNI),
+				Cni:         (*oapi.CreateSksClusterJSONBodyCni)(&testSKSClusterCNI),
 				Description: &testSKSClusterDescription,
-				Labels:      &papi.Labels{AdditionalProperties: testSKSClusterLabels},
-				Level:       papi.CreateSksClusterJSONBodyLevel(testSKSClusterServiceLevel),
+				Labels:      &oapi.Labels{AdditionalProperties: testSKSClusterLabels},
+				Level:       oapi.CreateSksClusterJSONBodyLevel(testSKSClusterServiceLevel),
 				Name:        testSKSClusterName,
 				Version:     testSKSClusterVersion,
 			}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSClusterID},
+				Reference: &oapi.Reference{Id: &testSKSClusterID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -82,21 +82,21 @@ func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSClusterID},
+		Reference: &oapi.Reference{Id: &testSKSClusterID},
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID), papi.SksCluster{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID), oapi.SksCluster{
 		Addons:      &testSKSClusterAddons,
 		AutoUpgrade: &testSKSClusterAutoUpgrade,
-		Cni:         (*papi.SksClusterCni)(&testSKSClusterCNI),
+		Cni:         (*oapi.SksClusterCni)(&testSKSClusterCNI),
 		CreatedAt:   &testSKSClusterCreatedAt,
 		Description: &testSKSClusterDescription,
 		Endpoint:    &testSKSClusterEndpoint,
 		Id:          &testSKSClusterID,
-		Labels:      &papi.Labels{AdditionalProperties: testSKSClusterLabels},
+		Labels:      &oapi.Labels{AdditionalProperties: testSKSClusterLabels},
 		Level:       &testSKSClusterServiceLevel,
 		Name:        &testSKSClusterName,
 		State:       &testSKSClusterState,
@@ -136,36 +136,36 @@ func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
 func (ts *clientTestSuite) TestCLient_CreateSKSNodepool() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", fmt.Sprintf("/sks-cluster/%s/nodepool", testSKSClusterID),
 		func(req *http.Request) (*http.Response, error) {
-			var actual papi.CreateSksNodepoolJSONRequestBody
+			var actual oapi.CreateSksNodepoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.CreateSksNodepoolJSONRequestBody{
-				Addons: &[]papi.CreateSksNodepoolJSONBodyAddons{
-					papi.CreateSksNodepoolJSONBodyAddons(testSKSNodepoolAddons[0]),
+			expected := oapi.CreateSksNodepoolJSONRequestBody{
+				Addons: &[]oapi.CreateSksNodepoolJSONBodyAddons{
+					oapi.CreateSksNodepoolJSONBodyAddons(testSKSNodepoolAddons[0]),
 				},
-				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
-				DeployTarget:       &papi.DeployTarget{Id: &testSKSNodepoolDeployTargetID},
+				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
+				DeployTarget:       &oapi.DeployTarget{Id: &testSKSNodepoolDeployTargetID},
 				Description:        &testSKSNodepoolDescription,
 				DiskSize:           testSKSNodepoolDiskSize,
 				InstancePrefix:     &testSKSNodepoolInstancePrefix,
-				InstanceType:       papi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
-				Labels:             &papi.Labels{AdditionalProperties: testSKSNodepoolLabels},
+				InstanceType:       oapi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
+				Labels:             &oapi.Labels{AdditionalProperties: testSKSNodepoolLabels},
 				Name:               testSKSNodepoolName,
-				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
-				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
+				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
+				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 				Size:               testSKSNodepoolSize,
 			}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSNodepoolID},
+				Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -174,32 +174,32 @@ func (ts *clientTestSuite) TestCLient_CreateSKSNodepool() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 	})
 
 	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s/nodepool/%s",
 		testSKSClusterID, testSKSNodepoolID),
-		papi.SksNodepool{
+		oapi.SksNodepool{
 			Addons:             &testSKSNodepoolAddons,
-			AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
+			AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
 			CreatedAt:          &testSKSNodepoolCreatedAt,
-			DeployTarget:       &papi.DeployTarget{Id: &testSKSNodepoolDeployTargetID},
+			DeployTarget:       &oapi.DeployTarget{Id: &testSKSNodepoolDeployTargetID},
 			Description:        &testSKSNodepoolDescription,
 			DiskSize:           &testSKSNodepoolDiskSize,
 			Id:                 &testSKSNodepoolID,
-			InstancePool:       &papi.InstancePool{Id: &testSKSNodepoolInstancePoolID},
+			InstancePool:       &oapi.InstancePool{Id: &testSKSNodepoolInstancePoolID},
 			InstancePrefix:     &testSKSNodepoolInstancePrefix,
-			InstanceType:       &papi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
-			Labels:             &papi.Labels{AdditionalProperties: testSKSNodepoolLabels},
+			InstanceType:       &oapi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
+			Labels:             &oapi.Labels{AdditionalProperties: testSKSNodepoolLabels},
 			Name:               &testSKSNodepoolName,
-			PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
-			SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
+			PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
+			SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 			Size:               &testSKSNodepoolSize,
 			State:              &testSKSNodepoolState,
-			Template:           &papi.Template{Id: &testSKSNodepoolTemplateID},
+			Template:           &oapi.Template{Id: &testSKSNodepoolTemplateID},
 			Version:            &testSKSNodepoolVersion,
 		})
 
@@ -236,7 +236,7 @@ func (ts *clientTestSuite) TestCLient_CreateSKSNodepool() {
 func (ts *clientTestSuite) TestClient_DeleteSKSCluster() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
@@ -244,10 +244,10 @@ func (ts *clientTestSuite) TestClient_DeleteSKSCluster() {
 		func(req *http.Request) (*http.Response, error) {
 			deleted = true
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSClusterID},
+				Reference: &oapi.Reference{Id: &testSKSClusterID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -256,10 +256,10 @@ func (ts *clientTestSuite) TestClient_DeleteSKSCluster() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSClusterID},
+		Reference: &oapi.Reference{Id: &testSKSClusterID},
 	})
 
 	ts.Require().NoError(ts.client.DeleteSKSCluster(
@@ -273,7 +273,7 @@ func (ts *clientTestSuite) TestClient_DeleteSKSCluster() {
 func (ts *clientTestSuite) TestClient_DeleteSKSNodepool() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("DELETE",
@@ -282,10 +282,10 @@ func (ts *clientTestSuite) TestClient_DeleteSKSNodepool() {
 			ts.Require().Equal(fmt.Sprintf("/sks-cluster/%s/nodepool/%s",
 				testSKSClusterID, testSKSNodepoolID), req.URL.String())
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSClusterID},
+				Reference: &oapi.Reference{Id: &testSKSClusterID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -294,10 +294,10 @@ func (ts *clientTestSuite) TestClient_DeleteSKSNodepool() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 	})
 
 	cluster := &SKSCluster{
@@ -316,7 +316,7 @@ func (ts *clientTestSuite) TestClient_DeleteSKSNodepool() {
 func (ts *clientTestSuite) TestClient_EvictSKSNodepoolMembers() {
 	var (
 		testOperationID     = ts.randomID()
-		testOperationState  = papi.OperationStateSuccess
+		testOperationState  = oapi.OperationStateSuccess
 		testEvictedMemberID = ts.randomID()
 		evicted             = false
 	)
@@ -332,16 +332,16 @@ func (ts *clientTestSuite) TestClient_EvictSKSNodepoolMembers() {
 		func(req *http.Request) (*http.Response, error) {
 			evicted = true
 
-			var actual papi.EvictSksNodepoolMembersJSONRequestBody
+			var actual oapi.EvictSksNodepoolMembersJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.EvictSksNodepoolMembersJSONRequestBody{Instances: &[]string{testEvictedMemberID}}
+			expected := oapi.EvictSksNodepoolMembersJSONRequestBody{Instances: &[]string{testEvictedMemberID}}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSNodepoolID},
+				Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -350,10 +350,10 @@ func (ts *clientTestSuite) TestClient_EvictSKSNodepoolMembers() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 	})
 
 	ts.Require().NoError(ts.client.EvictSKSNodepoolMembers(
@@ -368,9 +368,9 @@ func (ts *clientTestSuite) TestClient_EvictSKSNodepoolMembers() {
 
 func (ts *clientTestSuite) TestClient_FindSKSCluster() {
 	ts.mockAPIRequest("GET", "/sks-cluster", struct {
-		SksClusters *[]papi.SksCluster `json:"sks-clusters,omitempty"`
+		SksClusters *[]oapi.SksCluster `json:"sks-clusters,omitempty"`
 	}{
-		SksClusters: &[]papi.SksCluster{{
+		SksClusters: &[]oapi.SksCluster{{
 			CreatedAt: &testSKSClusterCreatedAt,
 			Endpoint:  &testSKSClusterEndpoint,
 			Id:        &testSKSClusterID,
@@ -381,7 +381,7 @@ func (ts *clientTestSuite) TestClient_FindSKSCluster() {
 		}},
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID), papi.SksCluster{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID), oapi.SksCluster{
 		CreatedAt: &testSKSClusterCreatedAt,
 		Endpoint:  &testSKSClusterEndpoint,
 		Id:        &testSKSClusterID,
@@ -412,32 +412,32 @@ func (ts *clientTestSuite) TestClient_FindSKSCluster() {
 }
 
 func (ts *clientTestSuite) TestClient_GetSKSCluster() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID), papi.SksCluster{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/sks-cluster/%s", testSKSClusterID), oapi.SksCluster{
 		Addons:      &testSKSClusterAddons,
 		AutoUpgrade: &testSKSClusterAutoUpgrade,
-		Cni:         (*papi.SksClusterCni)(&testSKSClusterCNI),
+		Cni:         (*oapi.SksClusterCni)(&testSKSClusterCNI),
 		CreatedAt:   &testSKSClusterCreatedAt,
 		Description: &testSKSClusterDescription,
 		Endpoint:    &testSKSClusterEndpoint,
 		Id:          &testSKSClusterID,
-		Labels:      &papi.Labels{AdditionalProperties: testSKSClusterLabels},
+		Labels:      &oapi.Labels{AdditionalProperties: testSKSClusterLabels},
 		Level:       &testSKSClusterServiceLevel,
 		Name:        &testSKSClusterName,
-		Nodepools: &[]papi.SksNodepool{{
-			AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
+		Nodepools: &[]oapi.SksNodepool{{
+			AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
 			CreatedAt:          &testSKSNodepoolCreatedAt,
 			Description:        &testSKSNodepoolDescription,
 			DiskSize:           &testSKSNodepoolDiskSize,
 			Id:                 &testSKSNodepoolID,
-			InstancePool:       &papi.InstancePool{Id: &testSKSNodepoolInstancePoolID},
-			InstanceType:       &papi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
-			Labels:             &papi.Labels{AdditionalProperties: testSKSNodepoolLabels},
+			InstancePool:       &oapi.InstancePool{Id: &testSKSNodepoolInstancePoolID},
+			InstanceType:       &oapi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
+			Labels:             &oapi.Labels{AdditionalProperties: testSKSNodepoolLabels},
 			Name:               &testSKSNodepoolName,
-			PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
-			SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
+			PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
+			SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 			Size:               &testSKSNodepoolSize,
 			State:              &testSKSNodepoolState,
-			Template:           &papi.Template{Id: &testSKSNodepoolTemplateID},
+			Template:           &oapi.Template{Id: &testSKSNodepoolTemplateID},
 			Version:            &testSKSNodepoolVersion,
 		}},
 		State:   &testSKSClusterState,
@@ -535,34 +535,34 @@ func (ts *clientTestSuite) TestClient_GetSKSClusterKubeconfig() {
 
 func (ts *clientTestSuite) TestClient_ListSKSClusters() {
 	ts.mockAPIRequest("GET", "/sks-cluster", struct {
-		SksClusters *[]papi.SksCluster `json:"sks-clusters,omitempty"`
+		SksClusters *[]oapi.SksCluster `json:"sks-clusters,omitempty"`
 	}{
-		SksClusters: &[]papi.SksCluster{{
+		SksClusters: &[]oapi.SksCluster{{
 			Addons:      &testSKSClusterAddons,
 			AutoUpgrade: &testSKSClusterAutoUpgrade,
-			Cni:         (*papi.SksClusterCni)(&testSKSClusterCNI),
+			Cni:         (*oapi.SksClusterCni)(&testSKSClusterCNI),
 			CreatedAt:   &testSKSClusterCreatedAt,
 			Description: &testSKSClusterDescription,
 			Endpoint:    &testSKSClusterEndpoint,
 			Id:          &testSKSClusterID,
-			Labels:      &papi.Labels{AdditionalProperties: testSKSClusterLabels},
+			Labels:      &oapi.Labels{AdditionalProperties: testSKSClusterLabels},
 			Level:       &testSKSClusterServiceLevel,
 			Name:        &testSKSClusterName,
-			Nodepools: &[]papi.SksNodepool{{
-				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
+			Nodepools: &[]oapi.SksNodepool{{
+				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
 				CreatedAt:          &testSKSNodepoolCreatedAt,
 				Description:        &testSKSNodepoolDescription,
 				DiskSize:           &testSKSNodepoolDiskSize,
 				Id:                 &testSKSNodepoolID,
-				InstancePool:       &papi.InstancePool{Id: &testSKSNodepoolInstancePoolID},
-				InstanceType:       &papi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
-				Labels:             &papi.Labels{AdditionalProperties: testSKSNodepoolLabels},
+				InstancePool:       &oapi.InstancePool{Id: &testSKSNodepoolInstancePoolID},
+				InstanceType:       &oapi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
+				Labels:             &oapi.Labels{AdditionalProperties: testSKSNodepoolLabels},
 				Name:               &testSKSNodepoolName,
-				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
-				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
+				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
+				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 				Size:               &testSKSNodepoolSize,
 				State:              &testSKSNodepoolState,
-				Template:           &papi.Template{Id: &testSKSNodepoolTemplateID},
+				Template:           &oapi.Template{Id: &testSKSNodepoolTemplateID},
 				Version:            &testSKSNodepoolVersion,
 			}},
 			State:   &testSKSClusterState,
@@ -631,7 +631,7 @@ func (ts *clientTestSuite) TestClient_ListSKSClusterVersions() {
 func (ts *clientTestSuite) TestClient_RotateSKSClusterCCMCredentials() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		rotated            = false
 	)
 
@@ -643,10 +643,10 @@ func (ts *clientTestSuite) TestClient_RotateSKSClusterCCMCredentials() {
 		func(req *http.Request) (*http.Response, error) {
 			rotated = true
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSClusterID},
+				Reference: &oapi.Reference{Id: &testSKSClusterID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -655,10 +655,10 @@ func (ts *clientTestSuite) TestClient_RotateSKSClusterCCMCredentials() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 	})
 
 	ts.Require().NoError(ts.client.RotateSKSClusterCCMCredentials(context.Background(), testZone, cluster))
@@ -668,7 +668,7 @@ func (ts *clientTestSuite) TestClient_RotateSKSClusterCCMCredentials() {
 func (ts *clientTestSuite) TestClient_ScaleSKSNodepool() {
 	var (
 		testOperationID          = ts.randomID()
-		testOperationState       = papi.OperationStateSuccess
+		testOperationState       = oapi.OperationStateSuccess
 		testScaleSize      int64 = 3
 		scaled                   = false
 	)
@@ -684,16 +684,16 @@ func (ts *clientTestSuite) TestClient_ScaleSKSNodepool() {
 		func(req *http.Request) (*http.Response, error) {
 			scaled = true
 
-			var actual papi.ScaleSksNodepoolJSONRequestBody
+			var actual oapi.ScaleSksNodepoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.ScaleSksNodepoolJSONRequestBody{Size: testScaleSize}
+			expected := oapi.ScaleSksNodepoolJSONRequestBody{Size: testScaleSize}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSNodepoolID},
+				Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -702,10 +702,10 @@ func (ts *clientTestSuite) TestClient_ScaleSKSNodepool() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 	})
 
 	ts.Require().NoError(ts.client.ScaleSKSNodepool(
@@ -725,7 +725,7 @@ func (ts *clientTestSuite) TestClient_UpdateSKSCluster() {
 		testSKSClusterLabelsUpdated      = map[string]string{"k3": "v3"}
 		testSKSClusterNameUpdated        = testSKSClusterName + "-updated"
 		testOperationID                  = ts.randomID()
-		testOperationState               = papi.OperationStateSuccess
+		testOperationState               = oapi.OperationStateSuccess
 		updated                          = false
 	)
 
@@ -733,21 +733,21 @@ func (ts *clientTestSuite) TestClient_UpdateSKSCluster() {
 		func(req *http.Request) (*http.Response, error) {
 			updated = true
 
-			var actual papi.UpdateSksClusterJSONRequestBody
+			var actual oapi.UpdateSksClusterJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.UpdateSksClusterJSONRequestBody{
+			expected := oapi.UpdateSksClusterJSONRequestBody{
 				AutoUpgrade: &testSKSClusterAutoUpgradeUpdated,
-				Labels:      &papi.Labels{AdditionalProperties: testSKSClusterLabelsUpdated},
+				Labels:      &oapi.Labels{AdditionalProperties: testSKSClusterLabelsUpdated},
 				Name:        &testSKSClusterNameUpdated,
 				Description: &testSKSClusterDescriptionUpdated,
 			}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSClusterID},
+				Reference: &oapi.Reference{Id: &testSKSClusterID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -756,10 +756,10 @@ func (ts *clientTestSuite) TestClient_UpdateSKSCluster() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSClusterID},
+		Reference: &oapi.Reference{Id: &testSKSClusterID},
 	})
 
 	ts.Require().NoError(ts.client.UpdateSKSCluster(context.Background(), testZone, &SKSCluster{
@@ -785,7 +785,7 @@ func (ts *clientTestSuite) TestClient_UpdateSKSNodepool() {
 		testSKSNodepoolNameUpdated                = testSKSNodepoolName + "-updated"
 		testSKSNodepoolPrivateNetworkIDUpdated    = ts.randomID()
 		testSKSNodepoolSecurityGroupIDUpdated     = ts.randomID()
-		testOperationState                        = papi.OperationStateSuccess
+		testOperationState                        = oapi.OperationStateSuccess
 		updated                                   = false
 	)
 
@@ -809,27 +809,27 @@ func (ts *clientTestSuite) TestClient_UpdateSKSNodepool() {
 		func(req *http.Request) (*http.Response, error) {
 			updated = true
 
-			var actual papi.UpdateSksNodepoolJSONRequestBody
+			var actual oapi.UpdateSksNodepoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.UpdateSksNodepoolJSONRequestBody{
-				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupIDUpdated}},
-				DeployTarget:       &papi.DeployTarget{Id: &testSKSNodepoolDeployTargetIDUpdated},
+			expected := oapi.UpdateSksNodepoolJSONRequestBody{
+				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupIDUpdated}},
+				DeployTarget:       &oapi.DeployTarget{Id: &testSKSNodepoolDeployTargetIDUpdated},
 				Description:        &testSKSNodepoolDescriptionUpdated,
 				DiskSize:           &testSKSNodepoolDiskSizeUpdated,
 				InstancePrefix:     &testSKSNodepoolInstancePrefixUpdated,
-				InstanceType:       &papi.InstanceType{Id: &testSKSNodepoolInstanceTypeIDUpdated},
-				Labels:             &papi.Labels{AdditionalProperties: testSKSNodepoolLabelsUpdated},
+				InstanceType:       &oapi.InstanceType{Id: &testSKSNodepoolInstanceTypeIDUpdated},
+				Labels:             &oapi.Labels{AdditionalProperties: testSKSNodepoolLabelsUpdated},
 				Name:               &testSKSNodepoolNameUpdated,
-				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkIDUpdated}},
-				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupIDUpdated}},
+				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkIDUpdated}},
+				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupIDUpdated}},
 			}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSNodepoolID},
+				Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -838,10 +838,10 @@ func (ts *clientTestSuite) TestClient_UpdateSKSNodepool() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 	})
 
 	ts.Require().NoError(ts.client.UpdateSKSNodepool(context.Background(), testZone, cluster, &SKSNodepool{
@@ -863,7 +863,7 @@ func (ts *clientTestSuite) TestClient_UpdateSKSNodepool() {
 func (ts *clientTestSuite) TestClient_UgradeSKSCluster() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		upgraded           = false
 	)
 
@@ -872,16 +872,16 @@ func (ts *clientTestSuite) TestClient_UgradeSKSCluster() {
 		func(req *http.Request) (*http.Response, error) {
 			upgraded = true
 
-			var actual papi.UpgradeSksClusterJSONRequestBody
+			var actual oapi.UpgradeSksClusterJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.UpgradeSksClusterJSONRequestBody{Version: testSKSClusterVersion}
+			expected := oapi.UpgradeSksClusterJSONRequestBody{Version: testSKSClusterVersion}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSNodepoolID},
+				Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -890,10 +890,10 @@ func (ts *clientTestSuite) TestClient_UgradeSKSCluster() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 	})
 
 	ts.Require().NoError(ts.client.UpgradeSKSCluster(
@@ -907,7 +907,7 @@ func (ts *clientTestSuite) TestClient_UgradeSKSCluster() {
 func (ts *clientTestSuite) TestClient_UgradeSKSClusterServiceLevel() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		upgraded           = false
 	)
 
@@ -916,10 +916,10 @@ func (ts *clientTestSuite) TestClient_UgradeSKSClusterServiceLevel() {
 		func(req *http.Request) (*http.Response, error) {
 			upgraded = true
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSKSNodepoolID},
+				Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -928,10 +928,10 @@ func (ts *clientTestSuite) TestClient_UgradeSKSClusterServiceLevel() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSKSNodepoolID},
+		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
 	})
 
 	ts.Require().NoError(ts.client.UpgradeSKSClusterServiceLevel(

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 	"github.com/jarcoal/httpmock"
 )
 
@@ -16,13 +16,13 @@ var (
 	testSnapshotInstanceID         = new(clientTestSuite).randomID()
 	testSnapshotName               = new(clientTestSuite).randomString(10)
 	testSnapshotSize         int64 = 10
-	testSnapshotState              = papi.SnapshotStateExported
+	testSnapshotState              = oapi.SnapshotStateExported
 )
 
 func (ts *clientTestSuite) TestClient_DeleteSnapshot() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
@@ -30,10 +30,10 @@ func (ts *clientTestSuite) TestClient_DeleteSnapshot() {
 		func(req *http.Request) (*http.Response, error) {
 			deleted = true
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSnapshotID},
+				Reference: &oapi.Reference{Id: &testSnapshotID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -42,10 +42,10 @@ func (ts *clientTestSuite) TestClient_DeleteSnapshot() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSnapshotID},
+		Reference: &oapi.Reference{Id: &testSnapshotID},
 	})
 
 	ts.Require().NoError(ts.client.DeleteSnapshot(context.Background(), testZone, &Snapshot{ID: &testSnapshotID}))
@@ -60,7 +60,7 @@ func (ts *clientTestSuite) TestClient_ExportSnapshot() {
 			ts.randomID(),
 			testSnapshotID)
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		exported           = false
 	)
 
@@ -68,10 +68,10 @@ func (ts *clientTestSuite) TestClient_ExportSnapshot() {
 		func(req *http.Request) (*http.Response, error) {
 			exported = true
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSnapshotID},
+				Reference: &oapi.Reference{Id: &testSnapshotID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -80,13 +80,13 @@ func (ts *clientTestSuite) TestClient_ExportSnapshot() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSnapshotID},
+		Reference: &oapi.Reference{Id: &testSnapshotID},
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/snapshot/%s", testSnapshotID), papi.Snapshot{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/snapshot/%s", testSnapshotID), oapi.Snapshot{
 		CreatedAt: &testSnapshotCreatedAt,
 		Export: &struct {
 			Md5sum       *string `json:"md5sum,omitempty"`
@@ -96,7 +96,7 @@ func (ts *clientTestSuite) TestClient_ExportSnapshot() {
 			PresignedUrl: &testSnapshotExportPresignedURL,
 		},
 		Id:       &testSnapshotID,
-		Instance: &papi.Instance{Id: &testSnapshotInstanceID},
+		Instance: &oapi.Instance{Id: &testSnapshotInstanceID},
 		Name:     &testSnapshotName,
 		State:    &testSnapshotState,
 	})
@@ -114,12 +114,12 @@ func (ts *clientTestSuite) TestClient_ExportSnapshot() {
 
 func (ts *clientTestSuite) TestClient_ListSnapshots() {
 	ts.mockAPIRequest("GET", "/snapshot", struct {
-		Snapshots *[]papi.Snapshot `json:"snapshots,omitempty"`
+		Snapshots *[]oapi.Snapshot `json:"snapshots,omitempty"`
 	}{
-		Snapshots: &[]papi.Snapshot{{
+		Snapshots: &[]oapi.Snapshot{{
 			CreatedAt: &testSnapshotCreatedAt,
 			Id:        &testSnapshotID,
-			Instance:  &papi.Instance{Id: &testSnapshotInstanceID},
+			Instance:  &oapi.Instance{Id: &testSnapshotInstanceID},
 			Name:      &testSnapshotName,
 			Size:      &testSnapshotSize,
 			State:     &testSnapshotState,
@@ -141,10 +141,10 @@ func (ts *clientTestSuite) TestClient_ListSnapshots() {
 }
 
 func (ts *clientTestSuite) TestClient_GetSnapshot() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/snapshot/%s", testSnapshotID), papi.Snapshot{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/snapshot/%s", testSnapshotID), oapi.Snapshot{
 		CreatedAt: &testSnapshotCreatedAt,
 		Id:        &testSnapshotID,
-		Instance:  &papi.Instance{Id: &testSnapshotInstanceID},
+		Instance:  &oapi.Instance{Id: &testSnapshotInstanceID},
 		Name:      &testSnapshotName,
 		Size:      &testSnapshotSize,
 		State:     &testSnapshotState,

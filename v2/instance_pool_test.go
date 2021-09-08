@@ -7,7 +7,7 @@ import (
 
 	"github.com/jarcoal/httpmock"
 
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var (
@@ -23,13 +23,13 @@ var (
 	testInstancePoolInstanceTypeID            = new(clientTestSuite).randomID()
 	testInstancePoolLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
 	testInstancePoolManagerID                 = new(clientTestSuite).randomID()
-	testInstancePoolManagerType               = papi.ManagerTypeSksNodepool
+	testInstancePoolManagerType               = oapi.ManagerTypeSksNodepool
 	testInstancePoolName                      = new(clientTestSuite).randomString(10)
 	testInstancePoolPrivateNetworkID          = new(clientTestSuite).randomID()
 	testInstancePoolSSHKey                    = new(clientTestSuite).randomString(10)
 	testInstancePoolSecurityGroupID           = new(clientTestSuite).randomID()
 	testInstancePoolSize                int64 = 3
-	testInstancePoolState                     = papi.InstancePoolStateRunning
+	testInstancePoolState                     = oapi.InstancePoolStateRunning
 	testInstancePoolTemplateID                = new(clientTestSuite).randomID()
 	testInstancePoolUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 )
@@ -37,38 +37,38 @@ var (
 func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/instance-pool",
 		func(req *http.Request) (*http.Response, error) {
-			var actual papi.CreateInstancePoolJSONRequestBody
+			var actual oapi.CreateInstancePoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.CreateInstancePoolJSONRequestBody{
-				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
-				DeployTarget:       &papi.DeployTarget{Id: &testInstancePoolDeployTargetID},
+			expected := oapi.CreateInstancePoolJSONRequestBody{
+				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
+				DeployTarget:       &oapi.DeployTarget{Id: &testInstancePoolDeployTargetID},
 				Description:        &testInstancePoolDescription,
 				DiskSize:           testInstancePoolDiskSize,
-				ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
+				ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
 				InstancePrefix:     &testInstancePoolInstancePrefix,
-				InstanceType:       papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
+				InstanceType:       oapi.InstanceType{Id: &testInstancePoolInstanceTypeID},
 				Ipv6Enabled:        &testInstancePoolIPv6Enabled,
-				Labels:             &papi.Labels{AdditionalProperties: testInstancePoolLabels},
+				Labels:             &oapi.Labels{AdditionalProperties: testInstancePoolLabels},
 				Name:               testInstancePoolName,
-				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
-				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testInstancePoolSecurityGroupID}},
+				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
+				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstancePoolSecurityGroupID}},
 				Size:               testInstancePoolSize,
-				SshKey:             &papi.SshKey{Name: &testInstancePoolSSHKey},
-				Template:           papi.Template{Id: &testInstancePoolTemplateID},
+				SshKey:             &oapi.SshKey{Name: &testInstancePoolSSHKey},
+				Template:           oapi.Template{Id: &testInstancePoolTemplateID},
 				UserData:           &testInstancePoolUserData,
 			}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testInstancePoolID},
+				Reference: &oapi.Reference{Id: &testInstancePoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -77,32 +77,32 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testInstancePoolID},
+		Reference: &oapi.Reference{Id: &testInstancePoolID},
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-pool/%s", testInstancePoolID), papi.InstancePool{
-		AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
-		DeployTarget:       &papi.DeployTarget{Id: &testInstancePoolDeployTargetID},
+	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-pool/%s", testInstancePoolID), oapi.InstancePool{
+		AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
+		DeployTarget:       &oapi.DeployTarget{Id: &testInstancePoolDeployTargetID},
 		Description:        &testInstancePoolDescription,
 		DiskSize:           &testInstancePoolDiskSize,
-		ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
+		ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
 		Id:                 &testInstancePoolID,
 		InstancePrefix:     &testInstancePoolInstancePrefix,
-		InstanceType:       &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
-		Instances:          &[]papi.Instance{{Id: &testInstancePoolInstanceID}},
+		InstanceType:       &oapi.InstanceType{Id: &testInstancePoolInstanceTypeID},
+		Instances:          &[]oapi.Instance{{Id: &testInstancePoolInstanceID}},
 		Ipv6Enabled:        &testInstancePoolIPv6Enabled,
-		Labels:             &papi.Labels{AdditionalProperties: testInstancePoolLabels},
-		Manager:            &papi.Manager{Id: &testInstancePoolManagerID, Type: &testInstancePoolManagerType},
+		Labels:             &oapi.Labels{AdditionalProperties: testInstancePoolLabels},
+		Manager:            &oapi.Manager{Id: &testInstancePoolManagerID, Type: &testInstancePoolManagerType},
 		Name:               &testInstancePoolName,
-		PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
-		SecurityGroups:     &[]papi.SecurityGroup{{Id: &testInstancePoolSecurityGroupID}},
+		PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
+		SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstancePoolSecurityGroupID}},
 		Size:               &testInstancePoolSize,
-		SshKey:             &papi.SshKey{Name: &testInstancePoolSSHKey},
+		SshKey:             &oapi.SshKey{Name: &testInstancePoolSSHKey},
 		State:              &testInstancePoolState,
-		Template:           &papi.Template{Id: &testInstancePoolTemplateID},
+		Template:           &oapi.Template{Id: &testInstancePoolTemplateID},
 		UserData:           &testInstancePoolUserData,
 	})
 
@@ -154,7 +154,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 func (ts *clientTestSuite) TestClient_DeleteInstancePool() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
@@ -162,10 +162,10 @@ func (ts *clientTestSuite) TestClient_DeleteInstancePool() {
 		func(req *http.Request) (*http.Response, error) {
 			deleted = true
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testInstancePoolID},
+				Reference: &oapi.Reference{Id: &testInstancePoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -174,10 +174,10 @@ func (ts *clientTestSuite) TestClient_DeleteInstancePool() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testInstancePoolID},
+		Reference: &oapi.Reference{Id: &testInstancePoolID},
 	})
 
 	ts.Require().NoError(ts.client.DeleteInstancePool(
@@ -191,7 +191,7 @@ func (ts *clientTestSuite) TestClient_DeleteInstancePool() {
 func (ts *clientTestSuite) TestClient_EvictInstancePooltMembers() {
 	var (
 		testOperationID     = ts.randomID()
-		testOperationState  = papi.OperationStateSuccess
+		testOperationState  = oapi.OperationStateSuccess
 		testEvictedMemberID = ts.randomID()
 		evicted             = false
 	)
@@ -204,16 +204,16 @@ func (ts *clientTestSuite) TestClient_EvictInstancePooltMembers() {
 		func(req *http.Request) (*http.Response, error) {
 			evicted = true
 
-			var actual papi.EvictInstancePoolMembersJSONRequestBody
+			var actual oapi.EvictInstancePoolMembersJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.EvictInstancePoolMembersJSONRequestBody{Instances: &[]string{testEvictedMemberID}}
+			expected := oapi.EvictInstancePoolMembersJSONRequestBody{Instances: &[]string{testEvictedMemberID}}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testInstancePoolID},
+				Reference: &oapi.Reference{Id: &testInstancePoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -222,10 +222,10 @@ func (ts *clientTestSuite) TestClient_EvictInstancePooltMembers() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testInstancePoolID},
+		Reference: &oapi.Reference{Id: &testInstancePoolID},
 	})
 
 	ts.Require().NoError(ts.client.EvictInstancePoolMembers(
@@ -239,29 +239,29 @@ func (ts *clientTestSuite) TestClient_EvictInstancePooltMembers() {
 
 func (ts *clientTestSuite) TestClient_FindInstancePool() {
 	ts.mockAPIRequest("GET", "/instance-pool", struct {
-		InstancePools *[]papi.InstancePool `json:"instance-pools,omitempty"`
+		InstancePools *[]oapi.InstancePool `json:"instance-pools,omitempty"`
 	}{
-		InstancePools: &[]papi.InstancePool{{
+		InstancePools: &[]oapi.InstancePool{{
 			DiskSize:     &testInstancePoolDiskSize,
 			Id:           &testInstancePoolID,
-			InstanceType: &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
-			Manager:      &papi.Manager{Id: &testInstancePoolManagerID, Type: &testInstancePoolManagerType},
+			InstanceType: &oapi.InstanceType{Id: &testInstancePoolInstanceTypeID},
+			Manager:      &oapi.Manager{Id: &testInstancePoolManagerID, Type: &testInstancePoolManagerType},
 			Name:         &testInstancePoolName,
 			Size:         &testInstancePoolSize,
 			State:        &testInstancePoolState,
-			Template:     &papi.Template{Id: &testInstancePoolTemplateID},
+			Template:     &oapi.Template{Id: &testInstancePoolTemplateID},
 		}},
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-pool/%s", testInstancePoolID), papi.InstancePool{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-pool/%s", testInstancePoolID), oapi.InstancePool{
 		DiskSize:     &testInstancePoolDiskSize,
 		Id:           &testInstancePoolID,
-		InstanceType: &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
-		Manager:      &papi.Manager{Id: &testInstancePoolManagerID, Type: &testInstancePoolManagerType},
+		InstanceType: &oapi.InstanceType{Id: &testInstancePoolInstanceTypeID},
+		Manager:      &oapi.Manager{Id: &testInstancePoolManagerID, Type: &testInstancePoolManagerType},
 		Name:         &testInstancePoolName,
 		Size:         &testInstancePoolSize,
 		State:        &testInstancePoolState,
-		Template:     &papi.Template{Id: &testInstancePoolTemplateID},
+		Template:     &oapi.Template{Id: &testInstancePoolTemplateID},
 	})
 
 	expected := &InstancePool{
@@ -288,24 +288,24 @@ func (ts *clientTestSuite) TestClient_FindInstancePool() {
 }
 
 func (ts *clientTestSuite) TestClient_GetInstancePool() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-pool/%s", testInstancePoolID), papi.InstancePool{
-		AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
+	ts.mockAPIRequest("GET", fmt.Sprintf("/instance-pool/%s", testInstancePoolID), oapi.InstancePool{
+		AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
 		Description:        &testInstancePoolDescription,
 		DiskSize:           &testInstancePoolDiskSize,
-		ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
+		ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
 		Id:                 &testInstancePoolID,
-		InstanceType:       &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
-		Instances:          &[]papi.Instance{{Id: &testInstancePoolInstanceID}},
+		InstanceType:       &oapi.InstanceType{Id: &testInstancePoolInstanceTypeID},
+		Instances:          &[]oapi.Instance{{Id: &testInstancePoolInstanceID}},
 		Ipv6Enabled:        &testInstancePoolIPv6Enabled,
-		Labels:             &papi.Labels{AdditionalProperties: testInstancePoolLabels},
-		Manager:            &papi.Manager{Id: &testInstancePoolManagerID, Type: &testInstancePoolManagerType},
+		Labels:             &oapi.Labels{AdditionalProperties: testInstancePoolLabels},
+		Manager:            &oapi.Manager{Id: &testInstancePoolManagerID, Type: &testInstancePoolManagerType},
 		Name:               &testInstancePoolName,
-		PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
-		SecurityGroups:     &[]papi.SecurityGroup{{Id: &testInstancePoolSecurityGroupID}},
+		PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
+		SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstancePoolSecurityGroupID}},
 		Size:               &testInstancePoolSize,
-		SshKey:             &papi.SshKey{Name: &testInstancePoolSSHKey},
+		SshKey:             &oapi.SshKey{Name: &testInstancePoolSSHKey},
 		State:              &testInstancePoolState,
-		Template:           &papi.Template{Id: &testInstancePoolTemplateID},
+		Template:           &oapi.Template{Id: &testInstancePoolTemplateID},
 		UserData:           &testInstancePoolUserData,
 	})
 
@@ -340,26 +340,26 @@ func (ts *clientTestSuite) TestClient_GetInstancePool() {
 
 func (ts *clientTestSuite) TestClient_ListInstancePools() {
 	ts.mockAPIRequest("GET", "/instance-pool", struct {
-		InstancePools *[]papi.InstancePool `json:"instance-pools,omitempty"`
+		InstancePools *[]oapi.InstancePool `json:"instance-pools,omitempty"`
 	}{
-		InstancePools: &[]papi.InstancePool{{
-			AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
+		InstancePools: &[]oapi.InstancePool{{
+			AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
 			Description:        &testInstancePoolDescription,
 			DiskSize:           &testInstancePoolDiskSize,
-			ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
+			ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
 			Id:                 &testInstancePoolID,
-			InstanceType:       &papi.InstanceType{Id: &testInstancePoolInstanceTypeID},
-			Instances:          &[]papi.Instance{{Id: &testInstancePoolInstanceID}},
+			InstanceType:       &oapi.InstanceType{Id: &testInstancePoolInstanceTypeID},
+			Instances:          &[]oapi.Instance{{Id: &testInstancePoolInstanceID}},
 			Ipv6Enabled:        &testInstancePoolIPv6Enabled,
-			Labels:             &papi.Labels{AdditionalProperties: testInstancePoolLabels},
-			Manager:            &papi.Manager{Id: &testInstancePoolManagerID, Type: &testInstancePoolManagerType},
+			Labels:             &oapi.Labels{AdditionalProperties: testInstancePoolLabels},
+			Manager:            &oapi.Manager{Id: &testInstancePoolManagerID, Type: &testInstancePoolManagerType},
 			Name:               &testInstancePoolName,
-			PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
-			SecurityGroups:     &[]papi.SecurityGroup{{Id: &testInstancePoolSecurityGroupID}},
+			PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkID}},
+			SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstancePoolSecurityGroupID}},
 			Size:               &testInstancePoolSize,
-			SshKey:             &papi.SshKey{Name: &testInstancePoolSSHKey},
+			SshKey:             &oapi.SshKey{Name: &testInstancePoolSSHKey},
 			State:              &testInstancePoolState,
-			Template:           &papi.Template{Id: &testInstancePoolTemplateID},
+			Template:           &oapi.Template{Id: &testInstancePoolTemplateID},
 			UserData:           &testInstancePoolUserData,
 		}},
 	})
@@ -396,7 +396,7 @@ func (ts *clientTestSuite) TestClient_ListInstancePools() {
 func (ts *clientTestSuite) TestClient_ScaleInstancePool() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		testScaleSize      = testInstancePoolSize * 2
 		scaled             = false
 	)
@@ -410,16 +410,16 @@ func (ts *clientTestSuite) TestClient_ScaleInstancePool() {
 		func(req *http.Request) (*http.Response, error) {
 			scaled = true
 
-			var actual papi.ScaleInstancePoolJSONRequestBody
+			var actual oapi.ScaleInstancePoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.ScaleInstancePoolJSONRequestBody{Size: testScaleSize}
+			expected := oapi.ScaleInstancePoolJSONRequestBody{Size: testScaleSize}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testInstancePoolID},
+				Reference: &oapi.Reference{Id: &testInstancePoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -428,10 +428,10 @@ func (ts *clientTestSuite) TestClient_ScaleInstancePool() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testInstancePoolID},
+		Reference: &oapi.Reference{Id: &testInstancePoolID},
 	})
 
 	ts.Require().NoError(ts.client.ScaleInstancePool(context.Background(), testZone, instancePool, testScaleSize))
@@ -456,7 +456,7 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 		testInstancePoolTemplateIDUpdated          = new(clientTestSuite).randomID()
 		testInstancePoolUserDataUpdated            = testInstancePoolUserData + "-updated"
 		testOperationID                            = ts.randomID()
-		testOperationState                         = papi.OperationStateSuccess
+		testOperationState                         = oapi.OperationStateSuccess
 		updated                                    = false
 	)
 
@@ -464,32 +464,32 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 		func(req *http.Request) (*http.Response, error) {
 			updated = true
 
-			var actual papi.UpdateInstancePoolJSONRequestBody
+			var actual oapi.UpdateInstancePoolJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.UpdateInstancePoolJSONRequestBody{
-				AntiAffinityGroups: &[]papi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupIDUpdated}},
-				DeployTarget:       &papi.DeployTarget{Id: &testInstancePoolDeployTargetIDUpdated},
+			expected := oapi.UpdateInstancePoolJSONRequestBody{
+				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupIDUpdated}},
+				DeployTarget:       &oapi.DeployTarget{Id: &testInstancePoolDeployTargetIDUpdated},
 				Description:        &testInstancePoolDescriptionUpdated,
 				DiskSize:           &testInstancePoolDiskSizeUpdated,
-				ElasticIps:         &[]papi.ElasticIp{{Id: &testInstancePoolElasticIPIDUpdated}},
+				ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstancePoolElasticIPIDUpdated}},
 				InstancePrefix:     &testInstancePoolInstancePrefixUpdated,
-				InstanceType:       &papi.InstanceType{Id: &testInstancePoolInstanceTypeIDUpdated},
+				InstanceType:       &oapi.InstanceType{Id: &testInstancePoolInstanceTypeIDUpdated},
 				Ipv6Enabled:        &testInstancePoolIPv6EnabledUpdated,
-				Labels:             &papi.Labels{AdditionalProperties: testInstancePoolLabelsUpdated},
+				Labels:             &oapi.Labels{AdditionalProperties: testInstancePoolLabelsUpdated},
 				Name:               &testInstancePoolNameUpdated,
-				PrivateNetworks:    &[]papi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkIDUpdated}},
-				SecurityGroups:     &[]papi.SecurityGroup{{Id: &testInstancePoolSecurityGroupIDUpdated}},
-				SshKey:             &papi.SshKey{Name: &testInstancePoolSSHKeyUpdated},
-				Template:           &papi.Template{Id: &testInstancePoolTemplateIDUpdated},
+				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePoolPrivateNetworkIDUpdated}},
+				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstancePoolSecurityGroupIDUpdated}},
+				SshKey:             &oapi.SshKey{Name: &testInstancePoolSSHKeyUpdated},
+				Template:           &oapi.Template{Id: &testInstancePoolTemplateIDUpdated},
 				UserData:           &testInstancePoolUserDataUpdated,
 			}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testInstancePoolID},
+				Reference: &oapi.Reference{Id: &testInstancePoolID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -498,10 +498,10 @@ func (ts *clientTestSuite) TestClient_UpdateInstancePool() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testInstancePoolID},
+		Reference: &oapi.Reference{Id: &testInstancePoolID},
 	})
 
 	ts.Require().NoError(ts.client.UpdateInstancePool(context.Background(), testZone, &InstancePool{

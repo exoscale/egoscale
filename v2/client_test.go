@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/exoscale/egoscale/v2/api"
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var testSeededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -43,7 +43,7 @@ func (ts *clientTestSuite) SetupTest() {
 	}
 
 	// Overriding the internal public API client with mocked HTTP client.
-	client.ClientWithResponses, err = papi.NewClientWithResponses("", papi.WithHTTPClient(client.httpClient))
+	client.ClientWithResponses, err = oapi.NewClientWithResponses("", oapi.WithHTTPClient(client.httpClient))
 	if err != nil {
 		ts.T().Fatal(err)
 	}
@@ -199,9 +199,9 @@ func (ts *clientTestSuite) TestDefaultTransport_RoundTrip() {
 			ok = true
 
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, struct {
-				Zones *[]papi.Zone `json:"zones,omitempty"`
+				Zones *[]oapi.Zone `json:"zones,omitempty"`
 			}{
-				Zones: new([]papi.Zone),
+				Zones: new([]oapi.Zone),
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)

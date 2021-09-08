@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 	"github.com/jarcoal/httpmock"
 )
 
@@ -18,7 +18,7 @@ var (
 func (ts *clientTestSuite) TestClient_DeleteSSHKey() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
@@ -26,10 +26,10 @@ func (ts *clientTestSuite) TestClient_DeleteSSHKey() {
 		func(req *http.Request) (*http.Response, error) {
 			deleted = true
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSSHKeyName},
+				Reference: &oapi.Reference{Id: &testSSHKeyName},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -38,10 +38,10 @@ func (ts *clientTestSuite) TestClient_DeleteSSHKey() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testSSHKeyName},
+		Reference: &oapi.Reference{Id: &testSSHKeyName},
 	})
 
 	ts.Require().NoError(ts.client.DeleteSSHKey(context.Background(), testZone, &SSHKey{Name: &testSSHKeyName}))
@@ -49,7 +49,7 @@ func (ts *clientTestSuite) TestClient_DeleteSSHKey() {
 }
 
 func (ts *clientTestSuite) TestClient_GetSSHKey() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/ssh-key/%s", testSSHKeyName), papi.SshKey{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/ssh-key/%s", testSSHKeyName), oapi.SshKey{
 		Fingerprint: &testSSHKeyFingerprint,
 		Name:        &testSSHKeyName,
 	})
@@ -68,9 +68,9 @@ func (ts *clientTestSuite) TestClient_ListSSHKeys() {
 	httpmock.RegisterResponder("GET", "/ssh-key", func(req *http.Request) (*http.Response, error) {
 		resp, err := httpmock.NewJsonResponse(http.StatusOK,
 			struct {
-				SSHKeys *[]papi.SshKey `json:"ssh-keys,omitempty"`
+				SSHKeys *[]oapi.SshKey `json:"ssh-keys,omitempty"`
 			}{
-				SSHKeys: &[]papi.SshKey{{
+				SSHKeys: &[]oapi.SshKey{{
 					Fingerprint: &testSSHKeyFingerprint,
 					Name:        &testSSHKeyName,
 				}},
@@ -94,24 +94,24 @@ func (ts *clientTestSuite) TestClient_ListSSHKeys() {
 func (ts *clientTestSuite) TestClient_RegisterSSHKey() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/ssh-key",
 		func(req *http.Request) (*http.Response, error) {
-			var actual papi.RegisterSshKeyJSONRequestBody
+			var actual oapi.RegisterSshKeyJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.RegisterSshKeyJSONRequestBody{
+			expected := oapi.RegisterSshKeyJSONRequestBody{
 				Name:      testSSHKeyName,
 				PublicKey: testSSHKeyPublicKey,
 			}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testSSHKeyName},
+				Reference: &oapi.Reference{Id: &testSSHKeyName},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -120,7 +120,7 @@ func (ts *clientTestSuite) TestClient_RegisterSSHKey() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/ssh-key/%s", testSSHKeyName), papi.SshKey{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/ssh-key/%s", testSSHKeyName), oapi.SshKey{
 		Fingerprint: &testSSHKeyFingerprint,
 		Name:        &testSSHKeyName,
 	})

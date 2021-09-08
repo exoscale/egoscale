@@ -6,7 +6,7 @@ import (
 
 	"github.com/jarcoal/httpmock"
 
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 func (ts *clientTestSuite) TestClient_ListZones() {
@@ -22,13 +22,13 @@ func (ts *clientTestSuite) TestClient_ListZones() {
 	httpmock.RegisterResponder("GET", "/zone",
 		func(_ *http.Request) (*http.Response, error) {
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, struct {
-				Zones *[]papi.Zone `json:"zones,omitempty"`
+				Zones *[]oapi.Zone `json:"zones,omitempty"`
 			}{
-				Zones: func() *[]papi.Zone {
-					zones := make([]papi.Zone, len(testZones))
+				Zones: func() *[]oapi.Zone {
+					zones := make([]oapi.Zone, len(testZones))
 					for i := range testZones {
 						name := testZones[i]
-						zones[i] = papi.Zone{Name: (*papi.ZoneName)(&name)}
+						zones[i] = oapi.Zone{Name: (*oapi.ZoneName)(&name)}
 					}
 					return &zones
 				}(),

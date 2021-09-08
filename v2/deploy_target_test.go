@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var (
@@ -16,14 +16,14 @@ var (
 
 func (ts *clientTestSuite) TestClient_FindDeployTarget() {
 	ts.mockAPIRequest("GET", "/deploy-target", struct {
-		DeployTargets *[]papi.DeployTarget `json:"deploy-targets,omitempty"`
+		DeployTargets *[]oapi.DeployTarget `json:"deploy-targets,omitempty"`
 	}{
-		DeployTargets: &[]papi.DeployTarget{{
+		DeployTargets: &[]oapi.DeployTarget{{
 			Description: &testDeployTargetDescription,
 			Id:          &testDeployTargetID,
 			Name:        &testDeployTargetName,
-			Type: func() *papi.DeployTargetType {
-				v := papi.DeployTargetType(testDeployTargetType)
+			Type: func() *oapi.DeployTargetType {
+				v := oapi.DeployTargetType(testDeployTargetType)
 				return &v
 			}(),
 		}},
@@ -32,12 +32,12 @@ func (ts *clientTestSuite) TestClient_FindDeployTarget() {
 	ts.mockAPIRequest(
 		"GET",
 		fmt.Sprintf("/deploy-target/%s", testDeployTargetID),
-		papi.DeployTarget{
+		oapi.DeployTarget{
 			Description: &testDeployTargetDescription,
 			Id:          &testDeployTargetID,
 			Name:        &testDeployTargetName,
-			Type: func() *papi.DeployTargetType {
-				v := papi.DeployTargetType(testDeployTargetType)
+			Type: func() *oapi.DeployTargetType {
+				v := oapi.DeployTargetType(testDeployTargetType)
 				return &v
 			}(),
 		})
@@ -62,12 +62,12 @@ func (ts *clientTestSuite) TestClient_GetDeployTarget() {
 	ts.mockAPIRequest(
 		"GET",
 		fmt.Sprintf("/deploy-target/%s", testDeployTargetID),
-		papi.DeployTarget{
+		oapi.DeployTarget{
 			Description: &testDeployTargetDescription,
 			Id:          &testDeployTargetID,
 			Name:        &testDeployTargetName,
-			Type: func() *papi.DeployTargetType {
-				v := papi.DeployTargetType(testDeployTargetType)
+			Type: func() *oapi.DeployTargetType {
+				v := oapi.DeployTargetType(testDeployTargetType)
 				return &v
 			}(),
 		})
@@ -86,14 +86,14 @@ func (ts *clientTestSuite) TestClient_GetDeployTarget() {
 
 func (ts *clientTestSuite) TestClient_ListDeployTargets() {
 	ts.mockAPIRequest("GET", "/deploy-target", struct {
-		DeployTargets *[]papi.DeployTarget `json:"deploy-targets,omitempty"`
+		DeployTargets *[]oapi.DeployTarget `json:"deploy-targets,omitempty"`
 	}{
-		DeployTargets: &[]papi.DeployTarget{{
+		DeployTargets: &[]oapi.DeployTarget{{
 			Description: &testDeployTargetDescription,
 			Id:          &testDeployTargetID,
 			Name:        &testDeployTargetName,
-			Type: func() *papi.DeployTargetType {
-				v := papi.DeployTargetType(testDeployTargetType)
+			Type: func() *oapi.DeployTargetType {
+				v := oapi.DeployTargetType(testDeployTargetType)
 				return &v
 			}(),
 		}},

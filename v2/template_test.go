@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 	"github.com/jarcoal/httpmock"
 )
 
@@ -31,7 +31,7 @@ var (
 func (ts *clientTestSuite) TestClient_DeleteTemplate() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
@@ -39,10 +39,10 @@ func (ts *clientTestSuite) TestClient_DeleteTemplate() {
 		func(req *http.Request) (*http.Response, error) {
 			deleted = true
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testTemplateID},
+				Reference: &oapi.Reference{Id: &testTemplateID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -51,10 +51,10 @@ func (ts *clientTestSuite) TestClient_DeleteTemplate() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testTemplateID},
+		Reference: &oapi.Reference{Id: &testTemplateID},
 	})
 
 	ts.Require().NoError(ts.client.DeleteTemplate(context.Background(), testZone, &Template{ID: &testTemplateID}))
@@ -62,8 +62,8 @@ func (ts *clientTestSuite) TestClient_DeleteTemplate() {
 }
 
 func (ts *clientTestSuite) TestClient_GetTemplate() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/template/%s", testTemplateID), papi.Template{
-		BootMode:        (*papi.TemplateBootMode)(&testTemplateBootMode),
+	ts.mockAPIRequest("GET", fmt.Sprintf("/template/%s", testTemplateID), oapi.Template{
+		BootMode:        (*oapi.TemplateBootMode)(&testTemplateBootMode),
 		Build:           &testTemplateBuild,
 		Checksum:        &testTemplateChecksum,
 		CreatedAt:       &testTemplateCreatedAt,
@@ -77,7 +77,7 @@ func (ts *clientTestSuite) TestClient_GetTemplate() {
 		SshKeyEnabled:   &testTemplateSSHKeyEnabled,
 		Url:             &testTemplateURL,
 		Version:         &testTemplateVersion,
-		Visibility:      (*papi.TemplateVisibility)(&testTemplateVisibility),
+		Visibility:      (*oapi.TemplateVisibility)(&testTemplateVisibility),
 	})
 
 	expected := &Template{
@@ -110,10 +110,10 @@ func (ts *clientTestSuite) TestClient_ListTemplates() {
 
 		resp, err := httpmock.NewJsonResponse(http.StatusOK,
 			struct {
-				Templates *[]papi.Template `json:"templates,omitempty"`
+				Templates *[]oapi.Template `json:"templates,omitempty"`
 			}{
-				Templates: &[]papi.Template{{
-					BootMode:        (*papi.TemplateBootMode)(&testTemplateBootMode),
+				Templates: &[]oapi.Template{{
+					BootMode:        (*oapi.TemplateBootMode)(&testTemplateBootMode),
 					Build:           &testTemplateBuild,
 					Checksum:        &testTemplateChecksum,
 					CreatedAt:       &testTemplateCreatedAt,
@@ -127,7 +127,7 @@ func (ts *clientTestSuite) TestClient_ListTemplates() {
 					SshKeyEnabled:   &testTemplateSSHKeyEnabled,
 					Url:             &testTemplateURL,
 					Version:         &testTemplateVersion,
-					Visibility:      (*papi.TemplateVisibility)(&testTemplateVisibility),
+					Visibility:      (*oapi.TemplateVisibility)(&testTemplateVisibility),
 				}},
 			})
 		if err != nil {
@@ -163,16 +163,16 @@ func (ts *clientTestSuite) TestClient_RegisterTemplate() {
 	var (
 		templateVisibility = "private"
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/template",
 		func(req *http.Request) (*http.Response, error) {
-			var actual papi.RegisterTemplateJSONRequestBody
+			var actual oapi.RegisterTemplateJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.RegisterTemplateJSONRequestBody{
-				BootMode:        (*papi.RegisterTemplateJSONBodyBootMode)(&testTemplateBootMode),
+			expected := oapi.RegisterTemplateJSONRequestBody{
+				BootMode:        (*oapi.RegisterTemplateJSONBodyBootMode)(&testTemplateBootMode),
 				Checksum:        testTemplateChecksum,
 				DefaultUser:     &testTemplateDefaultUser,
 				Description:     &testTemplateDescription,
@@ -183,10 +183,10 @@ func (ts *clientTestSuite) TestClient_RegisterTemplate() {
 			}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testTemplateID},
+				Reference: &oapi.Reference{Id: &testTemplateID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -195,14 +195,14 @@ func (ts *clientTestSuite) TestClient_RegisterTemplate() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testTemplateID},
+		Reference: &oapi.Reference{Id: &testTemplateID},
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/template/%s", testTemplateID), papi.Template{
-		BootMode:        (*papi.TemplateBootMode)(&testTemplateBootMode),
+	ts.mockAPIRequest("GET", fmt.Sprintf("/template/%s", testTemplateID), oapi.Template{
+		BootMode:        (*oapi.TemplateBootMode)(&testTemplateBootMode),
 		Checksum:        &testTemplateChecksum,
 		CreatedAt:       &testTemplateCreatedAt,
 		DefaultUser:     &testTemplateDefaultUser,
@@ -213,7 +213,7 @@ func (ts *clientTestSuite) TestClient_RegisterTemplate() {
 		Size:            &testTemplateSize,
 		SshKeyEnabled:   &testTemplateSSHKeyEnabled,
 		Url:             &testTemplateURL,
-		Visibility:      (*papi.TemplateVisibility)(&templateVisibility),
+		Visibility:      (*oapi.TemplateVisibility)(&templateVisibility),
 	})
 
 	expected := &Template{

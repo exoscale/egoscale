@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 	"github.com/jarcoal/httpmock"
 )
 
@@ -26,26 +26,26 @@ var (
 	testDatabaseServiceComponent                   = "pgbouncer"
 	testDatabaseServiceComponentHost               = new(clientTestSuite).randomString(30)
 	testDatabaseServiceComponentPort         int64 = 12345
-	testDatabaseServiceComponentRoute              = papi.DbaasServiceComponentsRouteDynamic
-	testDatabaseServiceComponentUsage              = papi.DbaasServiceComponentsUsagePrimary
+	testDatabaseServiceComponentRoute              = oapi.DbaasServiceComponentsRouteDynamic
+	testDatabaseServiceComponentUsage              = oapi.DbaasServiceComponentsUsagePrimary
 	testDatabaseServiceCreatedAt, _                = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 	testDatabaseServiceDescription                 = new(clientTestSuite).randomString(10)
 	testDatabaseServiceDiskSize              int64 = 10995116277760
-	testDatabaseServiceMaintenanceDOW              = papi.DbaasServiceMaintenanceDowSunday
+	testDatabaseServiceMaintenanceDOW              = oapi.DbaasServiceMaintenanceDowSunday
 	testDatabaseServiceMaintenanceTime             = "01:23:45"
 	testDatabaseServiceName                        = new(clientTestSuite).randomString(10)
 	testDatabaseServiceNodeCPUCount          int64 = 2
 	testDatabaseServiceNodeCount             int64 = 1
 	testDatabaseServiceNodeMemory            int64 = 2199023255552
-	testDatabaseServiceNodeStateRole               = papi.DbaasNodeStateRoleMaster
-	testDatabaseServiceNodeStateState              = papi.DbaasNodeStateStateRunning
-	testDatabaseServiceState                       = papi.DbaasServiceStateRunning
+	testDatabaseServiceNodeStateRole               = oapi.DbaasNodeStateRoleMaster
+	testDatabaseServiceNodeStateState              = oapi.DbaasNodeStateStateRunning
+	testDatabaseServiceState                       = oapi.DbaasServiceStateRunning
 	testDatabaseServiceTerminationProtection       = true
-	testDatabaseServiceType                        = papi.DbaasServiceTypeName("pg")
+	testDatabaseServiceType                        = oapi.DbaasServiceTypeName("pg")
 	testDatabaseServiceTypeDefaultVersion          = "13"
 	testDatabaseServiceTypeDescription             = new(clientTestSuite).randomString(10)
 	testDatabaseServiceTypeLatestVersion           = "13.3"
-	testDatabaseServiceTypeName                    = papi.DbaasServiceTypeName("pg")
+	testDatabaseServiceTypeName                    = oapi.DbaasServiceTypeName("pg")
 	testDatabaseServiceURI                         = "postgres://username:password@host:port/dbname?sslmode=required"
 	testDatabaseServiceUpdatedAt, _                = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 	testDatabaseServiceUserPassword                = new(clientTestSuite).randomString(10)
@@ -57,36 +57,36 @@ func (ts *clientTestSuite) TestClient_CreateDatabaseService() {
 	var (
 		testID             = ts.randomID()
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 	)
 
 	httpmock.RegisterResponder("POST", "/dbaas-service",
 		func(req *http.Request) (*http.Response, error) {
-			var actual papi.CreateDbaasServiceJSONRequestBody
+			var actual oapi.CreateDbaasServiceJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.CreateDbaasServiceJSONRequestBody{
+			expected := oapi.CreateDbaasServiceJSONRequestBody{
 				Maintenance: &struct {
-					Dow  papi.CreateDbaasServiceJSONBodyMaintenanceDow `json:"dow"`
+					Dow  oapi.CreateDbaasServiceJSONBodyMaintenanceDow `json:"dow"`
 					Time string                                        `json:"time"`
 				}{
-					Dow:  papi.CreateDbaasServiceJSONBodyMaintenanceDow(testDatabaseServiceMaintenanceDOW),
+					Dow:  oapi.CreateDbaasServiceJSONBodyMaintenanceDow(testDatabaseServiceMaintenanceDOW),
 					Time: testDatabaseServiceMaintenanceTime,
 				},
-				Name:                  papi.DbaasServiceName(testDatabaseServiceName),
+				Name:                  oapi.DbaasServiceName(testDatabaseServiceName),
 				Plan:                  testDatabasePlanName,
 				TerminationProtection: &testDatabaseServiceTerminationProtection,
 				Type:                  testDatabaseServiceType,
-				UserConfig: &papi.CreateDbaasServiceJSONBody_UserConfig{
+				UserConfig: &oapi.CreateDbaasServiceJSONBody_UserConfig{
 					AdditionalProperties: map[string]interface{}{"k": "v"},
 				},
 			}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testID},
+				Reference: &oapi.Reference{Id: &testID},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -95,53 +95,53 @@ func (ts *clientTestSuite) TestClient_CreateDatabaseService() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/dbaas-service/%s", testDatabaseServiceName), papi.DbaasService{
-		Acl: &[]papi.DbaasServiceAcl{},
-		Backups: &[]papi.DbaasServiceBackup{{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/dbaas-service/%s", testDatabaseServiceName), oapi.DbaasService{
+		Acl: &[]oapi.DbaasServiceAcl{},
+		Backups: &[]oapi.DbaasServiceBackup{{
 			BackupName: testDatabaseServiceBackupName,
 			BackupTime: testDatabaseServiceBackupTime,
 			DataSize:   testDatabaseServiceBackupDataSize,
 		}},
-		Components: &[]papi.DbaasServiceComponents{{
+		Components: &[]oapi.DbaasServiceComponents{{
 			Component: testDatabaseServiceComponent,
 			Host:      testDatabaseServiceComponentHost,
 			Port:      testDatabaseServiceComponentPort,
 			Route:     testDatabaseServiceComponentRoute,
 			Usage:     testDatabaseServiceComponentUsage,
 		}},
-		ConnectionInfo:  &papi.DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
-		ConnectionPools: &[]papi.DbaasServiceConnectionPools{},
+		ConnectionInfo:  &oapi.DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
+		ConnectionPools: &[]oapi.DbaasServiceConnectionPools{},
 		CreatedAt:       &testDatabaseServiceCreatedAt,
 		Description:     &testDatabaseServiceDescription,
 		DiskSize:        &testDatabaseServiceDiskSize,
-		Features:        &papi.DbaasService_Features{AdditionalProperties: map[string]interface{}{"k": "v"}},
-		Integrations:    &[]papi.DbaasServiceIntegration{},
-		Maintenance: &papi.DbaasServiceMaintenance{
+		Features:        &oapi.DbaasService_Features{AdditionalProperties: map[string]interface{}{"k": "v"}},
+		Integrations:    &[]oapi.DbaasServiceIntegration{},
+		Maintenance: &oapi.DbaasServiceMaintenance{
 			Dow:     testDatabaseServiceMaintenanceDOW,
 			Time:    testDatabaseServiceMaintenanceTime,
-			Updates: []papi.DbaasServiceUpdate{},
+			Updates: []oapi.DbaasServiceUpdate{},
 		},
-		Metadata:     &papi.DbaasService_Metadata{AdditionalProperties: map[string]interface{}{"k": "v"}},
-		Name:         papi.DbaasServiceName(testDatabaseServiceName),
+		Metadata:     &oapi.DbaasService_Metadata{AdditionalProperties: map[string]interface{}{"k": "v"}},
+		Name:         oapi.DbaasServiceName(testDatabaseServiceName),
 		NodeCount:    &testDatabaseServiceNodeCount,
 		NodeCpuCount: &testDatabaseServiceNodeCPUCount,
 		NodeMemory:   &testDatabaseServiceNodeMemory,
-		NodeStates: &[]papi.DbaasNodeState{{
+		NodeStates: &[]oapi.DbaasNodeState{{
 			Name:            ts.randomString(10),
-			ProgressUpdates: &[]papi.DbaasNodeStateProgressUpdate{},
+			ProgressUpdates: &[]oapi.DbaasNodeStateProgressUpdate{},
 			Role:            &testDatabaseServiceNodeStateRole,
 			State:           testDatabaseServiceNodeStateState,
 		}},
-		Notifications:         &[]papi.DbaasServiceNotification{},
+		Notifications:         &[]oapi.DbaasServiceNotification{},
 		Plan:                  testDatabasePlanName,
 		State:                 &testDatabaseServiceState,
 		TerminationProtection: &testDatabaseServiceTerminationProtection,
 		Type:                  testDatabaseServiceType,
 		UpdatedAt:             &testDatabaseServiceUpdatedAt,
 		Uri:                   &testDatabaseServiceURI,
-		UriParams:             &papi.DbaasService_UriParams{AdditionalProperties: map[string]interface{}{"k": "v"}},
-		UserConfig:            &papi.DbaasService_UserConfig{AdditionalProperties: map[string]interface{}{"k": "v"}},
-		Users: &[]papi.DbaasServiceUser{{
+		UriParams:             &oapi.DbaasService_UriParams{AdditionalProperties: map[string]interface{}{"k": "v"}},
+		UserConfig:            &oapi.DbaasService_UserConfig{AdditionalProperties: map[string]interface{}{"k": "v"}},
+		Users: &[]oapi.DbaasServiceUser{{
 			Password: &testDatabaseServiceUserPassword,
 			Type:     testDatabaseServiceUserType,
 			Username: testDatabaseServiceUserUsername,
@@ -208,7 +208,7 @@ func (ts *clientTestSuite) TestClient_CreateDatabaseService() {
 func (ts *clientTestSuite) TestClient_DeleteDatabaseService() {
 	var (
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
@@ -216,10 +216,10 @@ func (ts *clientTestSuite) TestClient_DeleteDatabaseService() {
 		func(req *http.Request) (*http.Response, error) {
 			deleted = true
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testDatabaseServiceName},
+				Reference: &oapi.Reference{Id: &testDatabaseServiceName},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -228,10 +228,10 @@ func (ts *clientTestSuite) TestClient_DeleteDatabaseService() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testDatabaseServiceName},
+		Reference: &oapi.Reference{Id: &testDatabaseServiceName},
 	})
 
 	ts.Require().NoError(ts.client.DeleteDatabaseService(
@@ -262,53 +262,53 @@ func (ts *clientTestSuite) TestClient_GetDatabaseCACertificate() {
 func (ts *clientTestSuite) TestClient_GetDatabaseService() {
 	ts.mockAPIRequest("GET",
 		fmt.Sprintf("/dbaas-service/%s", testDatabaseServiceName),
-		papi.DbaasService{
-			Acl: &[]papi.DbaasServiceAcl{},
-			Backups: &[]papi.DbaasServiceBackup{{
+		oapi.DbaasService{
+			Acl: &[]oapi.DbaasServiceAcl{},
+			Backups: &[]oapi.DbaasServiceBackup{{
 				BackupName: testDatabaseServiceBackupName,
 				BackupTime: testDatabaseServiceBackupTime,
 				DataSize:   testDatabaseServiceBackupDataSize,
 			}},
-			Components: &[]papi.DbaasServiceComponents{{
+			Components: &[]oapi.DbaasServiceComponents{{
 				Component: testDatabaseServiceComponent,
 				Host:      testDatabaseServiceComponentHost,
 				Port:      testDatabaseServiceComponentPort,
 				Route:     testDatabaseServiceComponentRoute,
 				Usage:     testDatabaseServiceComponentUsage,
 			}},
-			ConnectionInfo:  &papi.DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
-			ConnectionPools: &[]papi.DbaasServiceConnectionPools{},
+			ConnectionInfo:  &oapi.DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
+			ConnectionPools: &[]oapi.DbaasServiceConnectionPools{},
 			CreatedAt:       &testDatabaseServiceCreatedAt,
 			Description:     &testDatabaseServiceDescription,
 			DiskSize:        &testDatabaseServiceDiskSize,
-			Features:        &papi.DbaasService_Features{AdditionalProperties: map[string]interface{}{"k": "v"}},
-			Integrations:    &[]papi.DbaasServiceIntegration{},
-			Maintenance: &papi.DbaasServiceMaintenance{
+			Features:        &oapi.DbaasService_Features{AdditionalProperties: map[string]interface{}{"k": "v"}},
+			Integrations:    &[]oapi.DbaasServiceIntegration{},
+			Maintenance: &oapi.DbaasServiceMaintenance{
 				Dow:     testDatabaseServiceMaintenanceDOW,
 				Time:    testDatabaseServiceMaintenanceTime,
-				Updates: []papi.DbaasServiceUpdate{},
+				Updates: []oapi.DbaasServiceUpdate{},
 			},
-			Metadata:     &papi.DbaasService_Metadata{AdditionalProperties: map[string]interface{}{"k": "v"}},
-			Name:         papi.DbaasServiceName(testDatabaseServiceName),
+			Metadata:     &oapi.DbaasService_Metadata{AdditionalProperties: map[string]interface{}{"k": "v"}},
+			Name:         oapi.DbaasServiceName(testDatabaseServiceName),
 			NodeCount:    &testDatabaseServiceNodeCount,
 			NodeCpuCount: &testDatabaseServiceNodeCPUCount,
 			NodeMemory:   &testDatabaseServiceNodeMemory,
-			NodeStates: &[]papi.DbaasNodeState{{
+			NodeStates: &[]oapi.DbaasNodeState{{
 				Name:            ts.randomString(10),
-				ProgressUpdates: &[]papi.DbaasNodeStateProgressUpdate{},
+				ProgressUpdates: &[]oapi.DbaasNodeStateProgressUpdate{},
 				Role:            &testDatabaseServiceNodeStateRole,
 				State:           testDatabaseServiceNodeStateState,
 			}},
-			Notifications:         &[]papi.DbaasServiceNotification{},
+			Notifications:         &[]oapi.DbaasServiceNotification{},
 			Plan:                  testDatabasePlanName,
 			State:                 &testDatabaseServiceState,
 			TerminationProtection: &testDatabaseServiceTerminationProtection,
 			Type:                  testDatabaseServiceType,
 			UpdatedAt:             &testDatabaseServiceUpdatedAt,
 			Uri:                   &testDatabaseServiceURI,
-			UriParams:             &papi.DbaasService_UriParams{AdditionalProperties: map[string]interface{}{"k": "v"}},
-			UserConfig:            &papi.DbaasService_UserConfig{AdditionalProperties: map[string]interface{}{"k": "v"}},
-			Users: &[]papi.DbaasServiceUser{{
+			UriParams:             &oapi.DbaasService_UriParams{AdditionalProperties: map[string]interface{}{"k": "v"}},
+			UserConfig:            &oapi.DbaasService_UserConfig{AdditionalProperties: map[string]interface{}{"k": "v"}},
+			Users: &[]oapi.DbaasServiceUser{{
 				Password: &testDatabaseServiceUserPassword,
 				Type:     testDatabaseServiceUserType,
 				Username: testDatabaseServiceUserUsername,
@@ -365,13 +365,13 @@ func (ts *clientTestSuite) TestClient_GetDatabaseService() {
 func (ts *clientTestSuite) TestClient_GetDatabaseServiceType() {
 	ts.mockAPIRequest("GET",
 		fmt.Sprintf("/dbaas-service-type/%s", testDatabaseServiceTypeName),
-		papi.DbaasServiceType{
+		oapi.DbaasServiceType{
 			DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
 			Description:    &testDatabaseServiceTypeDescription,
 			LatestVersion:  &testDatabaseServiceTypeLatestVersion,
 			Name:           &testDatabaseServiceTypeName,
-			Plans: &[]papi.DbaasPlan{{
-				BackupConfig: &papi.DbaasBackupConfig{
+			Plans: &[]oapi.DbaasPlan{{
+				BackupConfig: &oapi.DbaasBackupConfig{
 					Interval:     &testDatabasePlanBackupConfigInterval,
 					MaxCount:     &testDatabasePlanBackupConfigMaxCount,
 					RecoveryMode: &testDatabasePlanBackupConfigRecoveryMode,
@@ -382,7 +382,7 @@ func (ts *clientTestSuite) TestClient_GetDatabaseServiceType() {
 				NodeCpuCount: &testDatabasePlanNodeCPUCount,
 				NodeMemory:   &testDatabasePlanNodeMemory,
 			}},
-			UserConfigSchema: &papi.DbaasServiceType_UserConfigSchema{
+			UserConfigSchema: &oapi.DbaasServiceType_UserConfigSchema{
 				AdditionalProperties: map[string]interface{}{"k": "v"},
 			},
 		})
@@ -414,15 +414,15 @@ func (ts *clientTestSuite) TestClient_GetDatabaseServiceType() {
 
 func (ts *clientTestSuite) TestClient_ListDatabaseServiceTypes() {
 	ts.mockAPIRequest("GET", "/dbaas-service-type", struct {
-		DatabaseServiceTypes *[]papi.DbaasServiceType `json:"dbaas-service-types,omitempty"`
+		DatabaseServiceTypes *[]oapi.DbaasServiceType `json:"dbaas-service-types,omitempty"`
 	}{
-		DatabaseServiceTypes: &[]papi.DbaasServiceType{{
+		DatabaseServiceTypes: &[]oapi.DbaasServiceType{{
 			DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
 			Description:    &testDatabaseServiceTypeDescription,
 			LatestVersion:  &testDatabaseServiceTypeLatestVersion,
 			Name:           &testDatabaseServiceTypeName,
-			Plans: &[]papi.DbaasPlan{{
-				BackupConfig: &papi.DbaasBackupConfig{
+			Plans: &[]oapi.DbaasPlan{{
+				BackupConfig: &oapi.DbaasBackupConfig{
 					Interval:     &testDatabasePlanBackupConfigInterval,
 					MaxCount:     &testDatabasePlanBackupConfigMaxCount,
 					RecoveryMode: &testDatabasePlanBackupConfigRecoveryMode,
@@ -433,7 +433,7 @@ func (ts *clientTestSuite) TestClient_ListDatabaseServiceTypes() {
 				NodeCpuCount: &testDatabasePlanNodeCPUCount,
 				NodeMemory:   &testDatabasePlanNodeMemory,
 			}},
-			UserConfigSchema: &papi.DbaasServiceType_UserConfigSchema{
+			UserConfigSchema: &oapi.DbaasServiceType_UserConfigSchema{
 				AdditionalProperties: map[string]interface{}{"k": "v"},
 			},
 		}},
@@ -466,55 +466,55 @@ func (ts *clientTestSuite) TestClient_ListDatabaseServiceTypes() {
 
 func (ts *clientTestSuite) TestClient_ListDatabaseServices() {
 	ts.mockAPIRequest("GET", "/dbaas-service", struct {
-		DatabaseServices *[]papi.DbaasService `json:"dbaas-services,omitempty"`
+		DatabaseServices *[]oapi.DbaasService `json:"dbaas-services,omitempty"`
 	}{
-		DatabaseServices: &[]papi.DbaasService{{
-			Acl: &[]papi.DbaasServiceAcl{},
-			Backups: &[]papi.DbaasServiceBackup{{
+		DatabaseServices: &[]oapi.DbaasService{{
+			Acl: &[]oapi.DbaasServiceAcl{},
+			Backups: &[]oapi.DbaasServiceBackup{{
 				BackupName: testDatabaseServiceBackupName,
 				BackupTime: testDatabaseServiceBackupTime,
 				DataSize:   testDatabaseServiceBackupDataSize,
 			}},
-			Components: &[]papi.DbaasServiceComponents{{
+			Components: &[]oapi.DbaasServiceComponents{{
 				Component: testDatabaseServiceComponent,
 				Host:      testDatabaseServiceComponentHost,
 				Port:      testDatabaseServiceComponentPort,
 				Route:     testDatabaseServiceComponentRoute,
 				Usage:     testDatabaseServiceComponentUsage,
 			}},
-			ConnectionInfo:  &papi.DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
-			ConnectionPools: &[]papi.DbaasServiceConnectionPools{},
+			ConnectionInfo:  &oapi.DbaasService_ConnectionInfo{AdditionalProperties: map[string]interface{}{"k": "v"}},
+			ConnectionPools: &[]oapi.DbaasServiceConnectionPools{},
 			CreatedAt:       &testDatabaseServiceCreatedAt,
 			Description:     &testDatabaseServiceDescription,
 			DiskSize:        &testDatabaseServiceDiskSize,
-			Features:        &papi.DbaasService_Features{AdditionalProperties: map[string]interface{}{"k": "v"}},
-			Integrations:    &[]papi.DbaasServiceIntegration{},
-			Maintenance: &papi.DbaasServiceMaintenance{
+			Features:        &oapi.DbaasService_Features{AdditionalProperties: map[string]interface{}{"k": "v"}},
+			Integrations:    &[]oapi.DbaasServiceIntegration{},
+			Maintenance: &oapi.DbaasServiceMaintenance{
 				Dow:     testDatabaseServiceMaintenanceDOW,
 				Time:    testDatabaseServiceMaintenanceTime,
-				Updates: []papi.DbaasServiceUpdate{},
+				Updates: []oapi.DbaasServiceUpdate{},
 			},
-			Metadata:     &papi.DbaasService_Metadata{AdditionalProperties: map[string]interface{}{"k": "v"}},
-			Name:         papi.DbaasServiceName(testDatabaseServiceName),
+			Metadata:     &oapi.DbaasService_Metadata{AdditionalProperties: map[string]interface{}{"k": "v"}},
+			Name:         oapi.DbaasServiceName(testDatabaseServiceName),
 			NodeCount:    &testDatabaseServiceNodeCount,
 			NodeCpuCount: &testDatabaseServiceNodeCPUCount,
 			NodeMemory:   &testDatabaseServiceNodeMemory,
-			NodeStates: &[]papi.DbaasNodeState{{
+			NodeStates: &[]oapi.DbaasNodeState{{
 				Name:            ts.randomString(10),
-				ProgressUpdates: &[]papi.DbaasNodeStateProgressUpdate{},
+				ProgressUpdates: &[]oapi.DbaasNodeStateProgressUpdate{},
 				Role:            &testDatabaseServiceNodeStateRole,
 				State:           testDatabaseServiceNodeStateState,
 			}},
-			Notifications:         &[]papi.DbaasServiceNotification{},
+			Notifications:         &[]oapi.DbaasServiceNotification{},
 			Plan:                  testDatabasePlanName,
 			State:                 &testDatabaseServiceState,
 			TerminationProtection: &testDatabaseServiceTerminationProtection,
 			Type:                  testDatabaseServiceType,
 			UpdatedAt:             &testDatabaseServiceUpdatedAt,
 			Uri:                   &testDatabaseServiceURI,
-			UriParams:             &papi.DbaasService_UriParams{AdditionalProperties: map[string]interface{}{"k": "v"}},
-			UserConfig:            &papi.DbaasService_UserConfig{AdditionalProperties: map[string]interface{}{"k": "v"}},
-			Users: &[]papi.DbaasServiceUser{{
+			UriParams:             &oapi.DbaasService_UriParams{AdditionalProperties: map[string]interface{}{"k": "v"}},
+			UserConfig:            &oapi.DbaasService_UserConfig{AdditionalProperties: map[string]interface{}{"k": "v"}},
+			Users: &[]oapi.DbaasServiceUser{{
 				Password: &testDatabaseServiceUserPassword,
 				Type:     testDatabaseServiceUserType,
 				Username: testDatabaseServiceUserUsername,
@@ -573,7 +573,7 @@ func (ts *clientTestSuite) TestClient_UpdateDatabaseService() {
 	var (
 		testID             = ts.randomID()
 		testOperationID    = ts.randomID()
-		testOperationState = papi.OperationStateSuccess
+		testOperationState = oapi.OperationStateSuccess
 		updated            = false
 	)
 
@@ -581,29 +581,29 @@ func (ts *clientTestSuite) TestClient_UpdateDatabaseService() {
 		func(req *http.Request) (*http.Response, error) {
 			updated = true
 
-			var actual papi.UpdateDbaasServiceJSONRequestBody
+			var actual oapi.UpdateDbaasServiceJSONRequestBody
 			ts.unmarshalJSONRequestBody(req, &actual)
 
-			expected := papi.UpdateDbaasServiceJSONRequestBody{
+			expected := oapi.UpdateDbaasServiceJSONRequestBody{
 				Maintenance: &struct {
-					Dow  papi.UpdateDbaasServiceJSONBodyMaintenanceDow `json:"dow"`
+					Dow  oapi.UpdateDbaasServiceJSONBodyMaintenanceDow `json:"dow"`
 					Time string                                        `json:"time"`
 				}{
-					Dow:  papi.UpdateDbaasServiceJSONBodyMaintenanceDow(testDatabaseServiceMaintenanceDOW),
+					Dow:  oapi.UpdateDbaasServiceJSONBodyMaintenanceDow(testDatabaseServiceMaintenanceDOW),
 					Time: testDatabaseServiceMaintenanceTime,
 				},
 				Plan:                  &testDatabasePlanName,
 				TerminationProtection: &testDatabaseServiceTerminationProtection,
-				UserConfig: &papi.UpdateDbaasServiceJSONBody_UserConfig{
+				UserConfig: &oapi.UpdateDbaasServiceJSONBody_UserConfig{
 					AdditionalProperties: map[string]interface{}{"k": "v"},
 				},
 			}
 			ts.Require().Equal(expected, actual)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, papi.Operation{
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &papi.Reference{Id: &testDatabaseServiceName},
+				Reference: &oapi.Reference{Id: &testDatabaseServiceName},
 			})
 			if err != nil {
 				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
@@ -612,10 +612,10 @@ func (ts *clientTestSuite) TestClient_UpdateDatabaseService() {
 			return resp, nil
 		})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), papi.Operation{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
 		Id:        &testOperationID,
 		State:     &testOperationState,
-		Reference: &papi.Reference{Id: &testID},
+		Reference: &oapi.Reference{Id: &testID},
 	})
 
 	ts.Require().NoError(ts.client.UpdateDatabaseService(context.Background(), testZone, &DatabaseService{

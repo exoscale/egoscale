@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	papi "github.com/exoscale/egoscale/v2/internal/public-api"
+	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var (
@@ -15,9 +15,9 @@ var (
 
 func (ts *clientTestSuite) TestClient_ListQuotas() {
 	ts.mockAPIRequest("GET", "/quota", struct {
-		Quotas *[]papi.Quota `json:"quotas,omitempty"`
+		Quotas *[]oapi.Quota `json:"quotas,omitempty"`
 	}{
-		Quotas: &[]papi.Quota{{
+		Quotas: &[]oapi.Quota{{
 			Limit:    &testQuotaLimit,
 			Resource: &testQuotaResource,
 			Usage:    &testQuotaUsage,
@@ -36,7 +36,7 @@ func (ts *clientTestSuite) TestClient_ListQuotas() {
 }
 
 func (ts *clientTestSuite) TestClient_GetQuota() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/quota/%s", testQuotaResource), papi.Quota{
+	ts.mockAPIRequest("GET", fmt.Sprintf("/quota/%s", testQuotaResource), oapi.Quota{
 		Limit:    &testQuotaLimit,
 		Resource: &testQuotaResource,
 		Usage:    &testQuotaUsage,

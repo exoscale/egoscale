@@ -193,19 +193,27 @@ func (c *Client) UpdateElasticIP(ctx context.Context, zone string, elasticIP *El
 			Description: elasticIP.Description,
 			Healthcheck: func() *oapi.ElasticIpHealthcheck {
 				if hc := elasticIP.Healthcheck; hc != nil {
-					var (
-						port     = int64(*hc.Port)
-						interval = int64(hc.Interval.Seconds())
-						timeout  = int64(hc.Timeout.Seconds())
-					)
+					port := int64(*hc.Port)
 
 					return &oapi.ElasticIpHealthcheck{
-						Interval:      &interval,
-						Mode:          oapi.ElasticIpHealthcheckMode(*hc.Mode),
-						Port:          port,
-						StrikesFail:   hc.StrikesFail,
-						StrikesOk:     hc.StrikesOK,
-						Timeout:       &timeout,
+						Interval: func() (v *int64) {
+							if hc.Interval != nil {
+								interval := int64(hc.Interval.Seconds())
+								v = &interval
+							}
+							return
+						}(),
+						Mode:        oapi.ElasticIpHealthcheckMode(*hc.Mode),
+						Port:        port,
+						StrikesFail: hc.StrikesFail,
+						StrikesOk:   hc.StrikesOK,
+						Timeout: func() (v *int64) {
+							if hc.Timeout != nil {
+								timeout := int64(hc.Timeout.Seconds())
+								v = &timeout
+							}
+							return
+						}(),
 						TlsSkipVerify: hc.TLSSkipVerify,
 						TlsSni:        hc.TLSSNI,
 						Uri:           hc.URI,

@@ -25,6 +25,7 @@ var (
 	_, testSecurityGroupRuleNetworkP, _         = net.ParseCIDR(testSecurityGroupRuleNetwork)
 	testSecurityGroupRuleProtocol               = oapi.SecurityGroupRuleProtocolIcmp
 	testSecurityGroupRuleSecurityGroupID        = new(clientTestSuite).randomID()
+	testSecurityGroupExternalSource             = "8.8.8.8/32"
 	testSecurityGroupRuleStartPort       uint16 = 8081
 )
 
@@ -175,6 +176,108 @@ func (ts *clientTestSuite) TestClient_CreateSecurityGroupRule() {
 	actual, err := ts.client.CreateSecurityGroupRule(context.Background(), testZone, securityGroup, &expected)
 	ts.Require().NoError(err)
 	ts.Require().Equal(&expected, actual)
+}
+
+func (ts *clientTestSuite) TestClient_AddExternalSourceToSecurityGroup() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = oapi.OperationStateSuccess
+	)
+
+	httpmock.RegisterResponder(
+		"PUT",
+		fmt.Sprintf("/security-group/%s:add-source", testSecurityGroupID),
+		func(req *http.Request) (*http.Response, error) {
+			var actual oapi.AddExternalSourceToSecurityGroupJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := oapi.AddExternalSourceToSecurityGroupJSONRequestBody{
+				Cidr: testSecurityGroupExternalSource,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
+				Id:    &testOperationID,
+				State: &testOperationState,
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/operation/%s", testOperationID),
+		oapi.Operation{
+			Id:    &testOperationID,
+			State: &testOperationState,
+		})
+
+	securityGroup := &SecurityGroup{
+		Description: &testSecurityGroupDescription,
+		ID:          &testSecurityGroupID,
+		Name:        &testSecurityGroupName,
+	}
+
+	err := ts.client.AddExternalSourceToSecurityGroup(
+		context.Background(),
+		testZone,
+		securityGroup,
+		testSecurityGroupExternalSource)
+	ts.Require().NoError(err)
+}
+
+func (ts *clientTestSuite) TestClient_RemoveExternalSourceFromSecurityGroup() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = oapi.OperationStateSuccess
+	)
+
+	httpmock.RegisterResponder(
+		"PUT",
+		fmt.Sprintf("/security-group/%s:remove-source", testSecurityGroupID),
+		func(req *http.Request) (*http.Response, error) {
+			var actual oapi.RemoveExternalSourceFromSecurityGroupJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := oapi.RemoveExternalSourceFromSecurityGroupJSONRequestBody{
+				Cidr: testSecurityGroupExternalSource,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
+				Id:    &testOperationID,
+				State: &testOperationState,
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest(
+		"GET",
+		fmt.Sprintf("/operation/%s", testOperationID),
+		oapi.Operation{
+			Id:    &testOperationID,
+			State: &testOperationState,
+		})
+
+	securityGroup := &SecurityGroup{
+		Description: &testSecurityGroupDescription,
+		ID:          &testSecurityGroupID,
+		Name:        &testSecurityGroupName,
+	}
+
+	err := ts.client.RemoveExternalSourceFromSecurityGroup(
+		context.Background(),
+		testZone,
+		securityGroup,
+		testSecurityGroupExternalSource)
+	ts.Require().NoError(err)
 }
 
 func (ts *clientTestSuite) TestClient_DeleteSecurityGroup() {

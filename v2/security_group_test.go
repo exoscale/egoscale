@@ -26,6 +26,7 @@ var (
 	testSecurityGroupRuleProtocol               = oapi.SecurityGroupRuleProtocolIcmp
 	testSecurityGroupRuleSecurityGroupID        = new(clientTestSuite).randomID()
 	testSecurityGroupExternalSource             = "8.8.8.8/32"
+	testSecurityGroupExternalSources            = []string{"8.8.8.8/32"}
 	testSecurityGroupRuleStartPort       uint16 = 8081
 )
 
@@ -409,9 +410,10 @@ func (ts *clientTestSuite) TestClient_FindSecurityGroup() {
 
 func (ts *clientTestSuite) TestClient_GetSecurityGroup() {
 	ts.mockAPIRequest("GET", fmt.Sprintf("/security-group/%s", testSecurityGroupID), oapi.SecurityGroup{
-		Description: &testSecurityGroupDescription,
-		Id:          &testSecurityGroupID,
-		Name:        &testSecurityGroupName,
+		Description:     &testSecurityGroupDescription,
+		Id:              &testSecurityGroupID,
+		Name:            &testSecurityGroupName,
+		ExternalSources: &testSecurityGroupExternalSources,
 		Rules: &[]oapi.SecurityGroupRule{{
 			Description:   &testSecurityGroupRuleDescription,
 			EndPort:       func() *int64 { v := int64(testSecurityGroupRuleEndPort); return &v }(),
@@ -432,9 +434,10 @@ func (ts *clientTestSuite) TestClient_GetSecurityGroup() {
 	})
 
 	expected := &SecurityGroup{
-		Description: &testSecurityGroupDescription,
-		ID:          &testSecurityGroupID,
-		Name:        &testSecurityGroupName,
+		Description:     &testSecurityGroupDescription,
+		ID:              &testSecurityGroupID,
+		Name:            &testSecurityGroupName,
+		ExternalSources: &testSecurityGroupExternalSources,
 		Rules: []*SecurityGroupRule{{
 			Description:     &testSecurityGroupRuleDescription,
 			EndPort:         &testSecurityGroupRuleEndPort,

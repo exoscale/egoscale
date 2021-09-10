@@ -73,17 +73,19 @@ func securityGroupRuleFromAPI(r *oapi.SecurityGroupRule) *SecurityGroupRule {
 
 // SecurityGroup represents a Security Group.
 type SecurityGroup struct {
-	Description *string
-	ID          *string
-	Name        *string `req-for:"create"`
-	Rules       []*SecurityGroupRule
+	Description     *string
+	ID              *string
+	Name            *string `req-for:"create"`
+	ExternalSources *[]string
+	Rules           []*SecurityGroupRule
 }
 
 func securityGroupFromAPI(s *oapi.SecurityGroup) *SecurityGroup {
 	return &SecurityGroup{
-		Description: s.Description,
-		ID:          s.Id,
-		Name:        s.Name,
+		Description:     s.Description,
+		ID:              s.Id,
+		Name:            s.Name,
+		ExternalSources: s.ExternalSources,
 		Rules: func() (rules []*SecurityGroupRule) {
 			if s.Rules != nil {
 				rules = make([]*SecurityGroupRule, 0)

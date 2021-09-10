@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.73.1
+------
+
+- fix: v2: `SecurityGroup`: return external sources when present
+
 0.73.0
 ------
 

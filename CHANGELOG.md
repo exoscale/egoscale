@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.73.2
+------
+
+- fix: v2: add missing operations params validation
+
 0.73.1
 ------
 

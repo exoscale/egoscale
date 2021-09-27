@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.74.0
+------
+
+- feature: v2: add a new `Zone` struct field to zone-local API resources
+
 0.73.2
 ------
 

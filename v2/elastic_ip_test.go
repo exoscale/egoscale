@@ -107,6 +107,7 @@ func (ts *clientTestSuite) TestClient_CreateElasticIP() {
 		},
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressP,
+		Zone:      &testZone,
 	}
 
 	actual, err := ts.client.CreateElasticIP(context.Background(), testZone, &ElasticIP{
@@ -179,6 +180,7 @@ func (ts *clientTestSuite) TestClient_FindElasticIP() {
 	expected := &ElasticIP{
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressP,
+		Zone:      &testZone,
 	}
 
 	actual, err := ts.client.FindElasticIP(context.Background(), testZone, *expected.ID)
@@ -223,6 +225,7 @@ func (ts *clientTestSuite) TestClient_GetElasticIP() {
 		},
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressP,
+		Zone:      &testZone,
 	}
 
 	actual, err := ts.client.GetElasticIP(context.Background(), testZone, *expected.ID)
@@ -267,6 +270,7 @@ func (ts *clientTestSuite) TestClient_ListElasticIPs() {
 		},
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressP,
+		Zone:      &testZone,
 	}}
 
 	actual, err := ts.client.ListElasticIPs(context.Background(), testZone)
@@ -343,6 +347,7 @@ func (ts *clientTestSuite) TestClient_UpdateElasticIP() {
 		},
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressP,
+		Zone:      &testZone,
 	}))
 	ts.Require().True(updated)
 }

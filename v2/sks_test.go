@@ -117,6 +117,7 @@ func (ts *clientTestSuite) TestClient_CreateSKSCluster() {
 		ServiceLevel: (*string)(&testSKSClusterServiceLevel),
 		State:        (*string)(&testSKSClusterState),
 		Version:      &testSKSClusterVersion,
+		Zone:         &testZone,
 	}
 
 	actual, err := ts.client.CreateSKSCluster(context.Background(), testZone, &SKSCluster{
@@ -400,6 +401,7 @@ func (ts *clientTestSuite) TestClient_FindSKSCluster() {
 		ServiceLevel: (*string)(&testSKSClusterServiceLevel),
 		State:        (*string)(&testSKSClusterState),
 		Version:      &testSKSClusterVersion,
+		Zone:         &testZone,
 	}
 
 	actual, err := ts.client.FindSKSCluster(context.Background(), testZone, *expected.ID)
@@ -474,6 +476,7 @@ func (ts *clientTestSuite) TestClient_GetSKSCluster() {
 		ServiceLevel: (*string)(&testSKSClusterServiceLevel),
 		State:        (*string)(&testSKSClusterState),
 		Version:      &testSKSClusterVersion,
+		Zone:         &testZone,
 	}
 
 	actual, err := ts.client.GetSKSCluster(context.Background(), testZone, *expected.ID)
@@ -600,6 +603,7 @@ func (ts *clientTestSuite) TestClient_ListSKSClusters() {
 		ServiceLevel: (*string)(&testSKSClusterServiceLevel),
 		State:        (*string)(&testSKSClusterState),
 		Version:      &testSKSClusterVersion,
+		Zone:         &testZone,
 	}}
 
 	actual, err := ts.client.ListSKSClusters(context.Background(), testZone)

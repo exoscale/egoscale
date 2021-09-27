@@ -81,6 +81,7 @@ func (ts *clientTestSuite) TestClient_CreatePrivateNetwork() {
 		Name:        &testPrivateNetworkName,
 		Netmask:     &testPrivateNetworkNetmaskP,
 		StartIP:     &testPrivateNetworkStartIPP,
+		Zone:        &testZone,
 	}
 
 	actual, err := ts.client.CreatePrivateNetwork(context.Background(), testZone, &PrivateNetwork{
@@ -160,6 +161,7 @@ func (ts *clientTestSuite) TestClient_FindPrivateNetwork() {
 	expected := &PrivateNetwork{
 		ID:   &testPrivateNetworkID,
 		Name: &testPrivateNetworkName,
+		Zone: &testZone,
 	}
 
 	actual, err := ts.client.FindPrivateNetwork(context.Background(), testZone, *expected.ID)
@@ -199,6 +201,7 @@ func (ts *clientTestSuite) TestClient_GetPrivateNetwork() {
 		Name:    &testPrivateNetworkName,
 		Netmask: &testPrivateNetworkNetmaskP,
 		StartIP: &testPrivateNetworkStartIPP,
+		Zone:    &testZone,
 	}
 
 	actual, err := ts.client.GetPrivateNetwork(context.Background(), testZone, *expected.ID)
@@ -235,6 +238,7 @@ func (ts *clientTestSuite) TestClient_ListPrivateNetworks() {
 		Name:    &testPrivateNetworkName,
 		Netmask: &testPrivateNetworkNetmaskP,
 		StartIP: &testPrivateNetworkStartIPP,
+		Zone:    &testZone,
 	}}
 
 	actual, err := ts.client.ListPrivateNetworks(context.Background(), testZone)

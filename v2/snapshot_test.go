@@ -133,6 +133,7 @@ func (ts *clientTestSuite) TestClient_ListSnapshots() {
 		Name:       &testSnapshotName,
 		Size:       &testSnapshotSize,
 		State:      (*string)(&testSnapshotState),
+		Zone:       &testZone,
 	}}
 
 	actual, err := ts.client.ListSnapshots(context.Background(), testZone)
@@ -157,6 +158,7 @@ func (ts *clientTestSuite) TestClient_GetSnapshot() {
 		Name:       &testSnapshotName,
 		Size:       &testSnapshotSize,
 		State:      (*string)(&testSnapshotState),
+		Zone:       &testZone,
 	}
 
 	actual, err := ts.client.GetSnapshot(context.Background(), testZone, *expected.ID)

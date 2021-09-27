@@ -47,6 +47,7 @@ func (ts *clientTestSuite) TestClient_FindDeployTarget() {
 		ID:          &testDeployTargetID,
 		Name:        &testDeployTargetName,
 		Type:        &testDeployTargetType,
+		Zone:        &testZone,
 	}
 
 	actual, err := ts.client.FindDeployTarget(context.Background(), testZone, *expected.ID)
@@ -77,6 +78,7 @@ func (ts *clientTestSuite) TestClient_GetDeployTarget() {
 		ID:          &testDeployTargetID,
 		Name:        &testDeployTargetName,
 		Type:        &testDeployTargetType,
+		Zone:        &testZone,
 	}
 
 	actual, err := ts.client.GetDeployTarget(context.Background(), testZone, *expected.ID)
@@ -104,6 +106,7 @@ func (ts *clientTestSuite) TestClient_ListDeployTargets() {
 		ID:          &testDeployTargetID,
 		Name:        &testDeployTargetName,
 		Type:        &testDeployTargetType,
+		Zone:        &testZone,
 	}}
 
 	actual, err := ts.client.ListDeployTargets(context.Background(), testZone)

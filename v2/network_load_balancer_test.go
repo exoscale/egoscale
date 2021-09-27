@@ -100,6 +100,7 @@ func (ts *clientTestSuite) TestClient_CreateNetworkLoadBalancer() {
 		Name:        &testNLBName,
 		Services:    []*NetworkLoadBalancerService{},
 		State:       (*string)(&testNLBState),
+		Zone:        &testZone,
 	}
 
 	actual, err := ts.client.CreateNetworkLoadBalancer(context.Background(), testZone, &NetworkLoadBalancer{
@@ -206,6 +207,7 @@ func (ts *clientTestSuite) TestClient_CreateNetworkLoadBalancerService() {
 		IPAddress:   &testNLBIPAddressP,
 		Name:        &testNLBName,
 		State:       (*string)(&testNLBState),
+		Zone:        &testZone,
 	}
 
 	expected := &NetworkLoadBalancerService{
@@ -351,6 +353,7 @@ func (ts *clientTestSuite) TestClient_FindNetworkLoadBalancer() {
 		Name:      &testNLBName,
 		Services:  []*NetworkLoadBalancerService{},
 		State:     (*string)(&testNLBState),
+		Zone:      &testZone,
 	}
 
 	actual, err := ts.client.FindNetworkLoadBalancer(context.Background(), testZone, *expected.ID)
@@ -407,7 +410,6 @@ func (ts *clientTestSuite) TestClient_GetNetworkLoadBalancer() {
 		ID:          &testNLBID,
 		IPAddress:   &testNLBIPAddressP,
 		Name:        &testNLBName,
-		State:       (*string)(&testNLBState),
 		Services: []*NetworkLoadBalancerService{{
 			Description: &testNLBServiceDescription,
 			Healthcheck: &NetworkLoadBalancerServiceHealthcheck{
@@ -437,6 +439,8 @@ func (ts *clientTestSuite) TestClient_GetNetworkLoadBalancer() {
 			Strategy:       (*string)(&testNLBServiceStrategy),
 			TargetPort:     &testNLBServiceTargetPort,
 		}},
+		State: (*string)(&testNLBState),
+		Zone:  &testZone,
 	}
 
 	actual, err := ts.client.GetNetworkLoadBalancer(context.Background(), testZone, *expected.ID)
@@ -521,6 +525,7 @@ func (ts *clientTestSuite) TestClient_ListNetworkLoadBalancers() {
 			TargetPort:     &testNLBServiceTargetPort,
 		}},
 		State: (*string)(&testNLBState),
+		Zone:  &testZone,
 	}}
 
 	actual, err := ts.client.ListNetworkLoadBalancers(context.Background(), testZone)

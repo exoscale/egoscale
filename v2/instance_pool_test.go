@@ -127,6 +127,7 @@ func (ts *clientTestSuite) TestClient_CreateInstancePool() {
 		State:                (*string)(&testInstancePoolState),
 		TemplateID:           &testInstancePoolTemplateID,
 		UserData:             &testInstancePoolUserData,
+		Zone:                 &testZone,
 	}
 
 	actual, err := ts.client.CreateInstancePool(context.Background(), testZone, &InstancePool{
@@ -276,6 +277,7 @@ func (ts *clientTestSuite) TestClient_FindInstancePool() {
 		Size:       &testInstancePoolSize,
 		State:      (*string)(&testInstancePoolState),
 		TemplateID: &testInstancePoolTemplateID,
+		Zone:       &testZone,
 	}
 
 	actual, err := ts.client.FindInstancePool(context.Background(), testZone, *expected.ID)
@@ -331,6 +333,7 @@ func (ts *clientTestSuite) TestClient_GetInstancePool() {
 		State:             (*string)(&testInstancePoolState),
 		TemplateID:        &testInstancePoolTemplateID,
 		UserData:          &testInstancePoolUserData,
+		Zone:              &testZone,
 	}
 
 	actual, err := ts.client.GetInstancePool(context.Background(), testZone, *expected.ID)
@@ -386,6 +389,7 @@ func (ts *clientTestSuite) TestClient_ListInstancePools() {
 		State:             (*string)(&testInstancePoolState),
 		TemplateID:        &testInstancePoolTemplateID,
 		UserData:          &testInstancePoolUserData,
+		Zone:              &testZone,
 	}}
 
 	actual, err := ts.client.ListInstancePools(context.Background(), testZone)

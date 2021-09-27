@@ -265,6 +265,7 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 		State:                (*string)(&testInstanceState),
 		TemplateID:           &testInstanceTemplateID,
 		UserData:             &testInstanceUserData,
+		Zone:                 &testZone,
 	}
 
 	actual, err := ts.client.CreateInstance(context.Background(), testZone, &Instance{
@@ -324,6 +325,7 @@ func (ts *clientTestSuite) TestClient_CreateInstanceSnapshot() {
 		InstanceID: &testInstanceID,
 		Name:       &testSnapshotName,
 		State:      (*string)(&testSnapshotState),
+		Zone:       &testZone,
 	}
 
 	actual, err := ts.client.CreateInstanceSnapshot(
@@ -548,6 +550,7 @@ func (ts *clientTestSuite) TestClient_GetInstance() {
 		State:                (*string)(&testInstanceState),
 		TemplateID:           &testInstanceTemplateID,
 		UserData:             &testInstanceUserData,
+		Zone:                 &testZone,
 	}
 
 	actual, err := ts.client.GetInstance(context.Background(), testZone, *expected.ID)
@@ -608,6 +611,7 @@ func (ts *clientTestSuite) TestClient_FindInstance() {
 		Name:           &testInstanceName,
 		State:          (*string)(&testInstanceState),
 		TemplateID:     &testInstanceTemplateID,
+		Zone:           &testZone,
 	}
 
 	actual, err := ts.client.FindInstance(context.Background(), testZone, *expected.ID)
@@ -666,6 +670,7 @@ func (ts *clientTestSuite) TestClient_ListInstances() {
 		State:                (*string)(&testInstanceState),
 		TemplateID:           &testInstanceTemplateID,
 		UserData:             &testInstanceUserData,
+		Zone:                 &testZone,
 	}}
 
 	actual, err := ts.client.ListInstances(context.Background(), testZone)

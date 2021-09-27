@@ -96,6 +96,7 @@ func (ts *clientTestSuite) TestClient_GetTemplate() {
 		URL:             &testTemplateURL,
 		Version:         &testTemplateVersion,
 		Visibility:      &testTemplateVisibility,
+		Zone:            &testZone,
 	}
 
 	actual, err := ts.client.GetTemplate(context.Background(), testZone, *expected.ID)
@@ -152,6 +153,7 @@ func (ts *clientTestSuite) TestClient_ListTemplates() {
 		URL:             &testTemplateURL,
 		Version:         &testTemplateVersion,
 		Visibility:      &testTemplateVisibility,
+		Zone:            &testZone,
 	}}
 
 	actual, err := ts.client.ListTemplates(context.Background(), testZone, testTemplateVisibility, testTemplateFamily)
@@ -229,6 +231,7 @@ func (ts *clientTestSuite) TestClient_RegisterTemplate() {
 		Size:            &testTemplateSize,
 		URL:             &testTemplateURL,
 		Visibility:      &templateVisibility,
+		Zone:            &testZone,
 	}
 
 	actual, err := ts.client.RegisterTemplate(context.Background(), testZone, &Template{

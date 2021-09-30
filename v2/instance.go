@@ -40,6 +40,18 @@ type Instance struct {
 	Zone                 *string
 }
 
+// StartInstanceOpt represents a StartInstance operation option.
+type StartInstanceOpt func(*oapi.StartInstanceJSONRequestBody)
+
+// StartInstanceWithRescueProfile sets the rescue profile to start a Compute instance with.
+func StartInstanceWithRescueProfile(v string) StartInstanceOpt {
+	return func(b *oapi.StartInstanceJSONRequestBody) {
+		if v != "" {
+			b.RescueProfile = (*oapi.StartInstanceJSONBodyRescueProfile)(&v)
+		}
+	}
+}
+
 func instanceFromAPI(i *oapi.Instance, zone string) *Instance {
 	return &Instance{
 		AntiAffinityGroupIDs: func() (v *[]string) {
@@ -686,12 +698,17 @@ func (c *Client) ScaleInstance(ctx context.Context, zone string, instance *Insta
 }
 
 // StartInstance starts a Compute instance.
-func (c *Client) StartInstance(ctx context.Context, zone string, instance *Instance) error {
+func (c *Client) StartInstance(ctx context.Context, zone string, instance *Instance, opts ...StartInstanceOpt) error {
 	if err := validateOperationParams(instance, "update"); err != nil {
 		return err
 	}
 
-	resp, err := c.StartInstanceWithResponse(apiv2.WithZone(ctx, zone), *instance.ID)
+	var body oapi.StartInstanceJSONRequestBody
+	for _, opt := range opts {
+		opt(&body)
+	}
+
+	resp, err := c.StartInstanceWithResponse(apiv2.WithZone(ctx, zone), *instance.ID, body)
 	if err != nil {
 		return err
 	}

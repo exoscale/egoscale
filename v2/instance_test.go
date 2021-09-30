@@ -33,6 +33,7 @@ var (
 	testInstanceSSHKey                    = new(clientTestSuite).randomString(10)
 	testInstanceSecurityGroupID           = new(clientTestSuite).randomID()
 	testInstanceSnapshotID                = new(clientTestSuite).randomID()
+	testInstanceStartRescueProfile        = new(clientTestSuite).randomString(10)
 	testInstanceState                     = oapi.InstanceStateRunning
 	testInstanceTemplateID                = new(clientTestSuite).randomID()
 	testInstanceUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
@@ -915,6 +916,14 @@ func (ts *clientTestSuite) TestClient_StartInstance() {
 		func(req *http.Request) (*http.Response, error) {
 			started = true
 
+			var actual oapi.StartInstanceJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := oapi.StartInstanceJSONRequestBody{
+				RescueProfile: (*oapi.StartInstanceJSONBodyRescueProfile)(&testInstanceStartRescueProfile),
+			}
+			ts.Require().Equal(expected, actual)
+
 			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
@@ -933,7 +942,12 @@ func (ts *clientTestSuite) TestClient_StartInstance() {
 		Reference: &oapi.Reference{Id: &testInstanceID},
 	})
 
-	ts.Require().NoError(ts.client.StartInstance(context.Background(), testZone, &Instance{ID: &testInstanceID}))
+	ts.Require().NoError(ts.client.StartInstance(
+		context.Background(),
+		testZone,
+		&Instance{ID: &testInstanceID},
+		StartInstanceWithRescueProfile(testInstanceStartRescueProfile),
+	))
 	ts.Require().True(started)
 }
 

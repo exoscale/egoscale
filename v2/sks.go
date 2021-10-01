@@ -59,8 +59,8 @@ func sksNodepoolFromAPI(n *oapi.SksNodepool) *SKSNodepool {
 			return
 		}(),
 		AntiAffinityGroupIDs: func() (v *[]string) {
-			ids := make([]string, 0)
 			if n.AntiAffinityGroups != nil && len(*n.AntiAffinityGroups) > 0 {
+				ids := make([]string, 0)
 				for _, item := range *n.AntiAffinityGroups {
 					item := item
 					ids = append(ids, *item.Id)
@@ -90,8 +90,8 @@ func sksNodepoolFromAPI(n *oapi.SksNodepool) *SKSNodepool {
 		}(),
 		Name: n.Name,
 		PrivateNetworkIDs: func() (v *[]string) {
-			ids := make([]string, 0)
 			if n.PrivateNetworks != nil && len(*n.PrivateNetworks) > 0 {
+				ids := make([]string, 0)
 				for _, item := range *n.PrivateNetworks {
 					item := item
 					ids = append(ids, *item.Id)
@@ -101,8 +101,8 @@ func sksNodepoolFromAPI(n *oapi.SksNodepool) *SKSNodepool {
 			return
 		}(),
 		SecurityGroupIDs: func() (v *[]string) {
-			ids := make([]string, 0)
 			if n.SecurityGroups != nil && len(*n.SecurityGroups) > 0 {
+				ids := make([]string, 0)
 				for _, item := range *n.SecurityGroups {
 					item := item
 					ids = append(ids, *item.Id)

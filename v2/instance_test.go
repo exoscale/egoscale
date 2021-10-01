@@ -130,7 +130,7 @@ func (ts *clientTestSuite) TestClient_AttachInstanceToPrivateNetwork() {
 		testZone,
 		&Instance{ID: &testInstanceID},
 		&PrivateNetwork{ID: &testInstancePrivateNetworkID},
-		testPrivateIPAddress,
+		AttachInstanceToPrivateNetworkWithIPAddress(testPrivateIPAddress),
 	))
 	ts.Require().True(attached)
 }
@@ -756,8 +756,8 @@ func (ts *clientTestSuite) TestClient_ResetInstance() {
 		context.Background(),
 		testZone,
 		&Instance{ID: &testInstanceID},
-		&Template{ID: &testResetTemplateID},
-		testResetDiskSize,
+		ResetInstanceWithTemplate(&Template{ID: &testResetTemplateID}),
+		ResetInstanceWithDiskSize(testResetDiskSize),
 	))
 	ts.Require().True(reset)
 }

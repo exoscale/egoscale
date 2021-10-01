@@ -156,7 +156,12 @@ func (ts *clientTestSuite) TestClient_ListTemplates() {
 		Zone:            &testZone,
 	}}
 
-	actual, err := ts.client.ListTemplates(context.Background(), testZone, testTemplateVisibility, testTemplateFamily)
+	actual, err := ts.client.ListTemplates(
+		context.Background(),
+		testZone,
+		ListTemplatesWithVisibility(testTemplateVisibility),
+		ListTemplatesWithFamily(testTemplateFamily),
+	)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }

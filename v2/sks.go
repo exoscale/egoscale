@@ -10,6 +10,19 @@ import (
 	"github.com/exoscale/egoscale/v2/oapi"
 )
 
+// SKSNodepoolTaint represents an SKS Nodepool Kubernetes Node taint.
+type SKSNodepoolTaint struct {
+	Effect string
+	Value  string
+}
+
+func sksNodepoolTaintFromAPI(t *oapi.Taint) *SKSNodepoolTaint {
+	return &SKSNodepoolTaint{
+		Effect: string(*t.Effect),
+		Value:  *t.Value,
+	}
+}
+
 // SKSNodepool represents an SKS Nodepool.
 type SKSNodepool struct {
 	AddOns               *[]string
@@ -28,6 +41,7 @@ type SKSNodepool struct {
 	SecurityGroupIDs     *[]string
 	Size                 *int64 `req-for:"create"`
 	State                *string
+	Taints               *map[string]*SKSNodepoolTaint
 	TemplateID           *string
 	Version              *string
 }
@@ -97,8 +111,18 @@ func sksNodepoolFromAPI(n *oapi.SksNodepool) *SKSNodepool {
 			}
 			return
 		}(),
-		Size:       n.Size,
-		State:      (*string)(n.State),
+		Size:  n.Size,
+		State: (*string)(n.State),
+		Taints: func() (v *map[string]*SKSNodepoolTaint) {
+			if n.Taints != nil && len(n.Taints.AdditionalProperties) > 0 {
+				taints := make(map[string]*SKSNodepoolTaint)
+				for k, t := range n.Taints.AdditionalProperties {
+					taints[k] = sksNodepoolTaintFromAPI(&t)
+				}
+				v = &taints
+			}
+			return
+		}(),
 		TemplateID: n.Template.Id,
 		Version:    n.Version,
 	}
@@ -290,6 +314,19 @@ func (c *Client) CreateSKSNodepool(
 				return
 			}(),
 			Size: *nodepool.Size,
+			Taints: func() (v *oapi.Taints) {
+				if nodepool.Taints != nil {
+					taints := oapi.Taints{AdditionalProperties: make(map[string]oapi.Taint)}
+					for k, t := range *nodepool.Taints {
+						taints.AdditionalProperties[k] = oapi.Taint{
+							Effect: (*oapi.TaintEffect)(&t.Effect),
+							Value:  &t.Value,
+						}
+					}
+					v = &taints
+				}
+				return
+			}(),
 		})
 	if err != nil {
 		return nil, err
@@ -690,6 +727,19 @@ func (c *Client) UpdateSKSNodepool(
 						ids[i] = oapi.SecurityGroup{Id: &item}
 					}
 					v = &ids
+				}
+				return
+			}(),
+			Taints: func() (v *oapi.Taints) {
+				if nodepool.Taints != nil {
+					taints := oapi.Taints{AdditionalProperties: make(map[string]oapi.Taint)}
+					for k, t := range *nodepool.Taints {
+						taints.AdditionalProperties[k] = oapi.Taint{
+							Effect: (*oapi.TaintEffect)(&t.Effect),
+							Value:  &t.Value,
+						}
+					}
+					v = &taints
 				}
 				return
 			}(),

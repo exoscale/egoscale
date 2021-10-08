@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.78.0
+------
+
+- change: v2: type-specific `DatabaseService` methods have been removed, to be re-implemented in a future version; use `v2/oapi` methods for type-specific operations in the meantime.
+
 0.77.0
 ------
 

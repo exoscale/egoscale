@@ -16,10 +16,10 @@ type SKSNodepoolTaint struct {
 	Value  string
 }
 
-func sksNodepoolTaintFromAPI(t *oapi.Taint) *SKSNodepoolTaint {
+func sksNodepoolTaintFromAPI(t *oapi.SksNodepoolTaint) *SKSNodepoolTaint {
 	return &SKSNodepoolTaint{
-		Effect: string(*t.Effect),
-		Value:  *t.Value,
+		Effect: string(t.Effect),
+		Value:  t.Value,
 	}
 }
 
@@ -314,13 +314,13 @@ func (c *Client) CreateSKSNodepool(
 				return
 			}(),
 			Size: *nodepool.Size,
-			Taints: func() (v *oapi.Taints) {
+			Taints: func() (v *oapi.SksNodepoolTaints) {
 				if nodepool.Taints != nil {
-					taints := oapi.Taints{AdditionalProperties: make(map[string]oapi.Taint)}
+					taints := oapi.SksNodepoolTaints{AdditionalProperties: map[string]oapi.SksNodepoolTaint{}}
 					for k, t := range *nodepool.Taints {
-						taints.AdditionalProperties[k] = oapi.Taint{
-							Effect: (*oapi.TaintEffect)(&t.Effect),
-							Value:  &t.Value,
+						taints.AdditionalProperties[k] = oapi.SksNodepoolTaint{
+							Effect: (oapi.SksNodepoolTaintEffect)(t.Effect),
+							Value:  t.Value,
 						}
 					}
 					v = &taints
@@ -730,13 +730,13 @@ func (c *Client) UpdateSKSNodepool(
 				}
 				return
 			}(),
-			Taints: func() (v *oapi.Taints) {
+			Taints: func() (v *oapi.SksNodepoolTaints) {
 				if nodepool.Taints != nil {
-					taints := oapi.Taints{AdditionalProperties: make(map[string]oapi.Taint)}
+					taints := oapi.SksNodepoolTaints{AdditionalProperties: map[string]oapi.SksNodepoolTaint{}}
 					for k, t := range *nodepool.Taints {
-						taints.AdditionalProperties[k] = oapi.Taint{
-							Effect: (*oapi.TaintEffect)(&t.Effect),
-							Value:  &t.Value,
+						taints.AdditionalProperties[k] = oapi.SksNodepoolTaint{
+							Effect: (oapi.SksNodepoolTaintEffect)(t.Effect),
+							Value:  t.Value,
 						}
 					}
 					v = &taints

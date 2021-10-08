@@ -41,7 +41,7 @@ var (
 	testSKSNodepoolSecurityGroupID           = new(clientTestSuite).randomID()
 	testSKSNodepoolSize                int64 = 3
 	testSKSNodepoolState                     = oapi.SksNodepoolStateRunning
-	testSKSNodepoolTaintEffect               = oapi.TaintEffectNoExecute
+	testSKSNodepoolTaintEffect               = oapi.SksNodepoolTaintEffectNoExecute
 	testSKSNodepoolTaintKey                  = new(clientTestSuite).randomString(10)
 	testSKSNodepoolTaintValue                = new(clientTestSuite).randomString(10)
 	testSKSNodepoolTemplateID                = new(clientTestSuite).randomID()
@@ -163,11 +163,11 @@ func (ts *clientTestSuite) TestCLient_CreateSKSNodepool() {
 				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
 				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 				Size:               testSKSNodepoolSize,
-				Taints: &oapi.Taints{
-					AdditionalProperties: map[string]oapi.Taint{
+				Taints: &oapi.SksNodepoolTaints{
+					AdditionalProperties: map[string]oapi.SksNodepoolTaint{
 						testSKSNodepoolTaintKey: {
-							Effect: &testSKSNodepoolTaintEffect,
-							Value:  &testSKSNodepoolTaintValue,
+							Effect: testSKSNodepoolTaintEffect,
+							Value:  testSKSNodepoolTaintValue,
 						},
 					},
 				},
@@ -211,11 +211,11 @@ func (ts *clientTestSuite) TestCLient_CreateSKSNodepool() {
 			SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 			Size:               &testSKSNodepoolSize,
 			State:              &testSKSNodepoolState,
-			Taints: &oapi.Taints{
-				AdditionalProperties: map[string]oapi.Taint{
+			Taints: &oapi.SksNodepoolTaints{
+				AdditionalProperties: map[string]oapi.SksNodepoolTaint{
 					testSKSNodepoolTaintKey: {
-						Effect: &testSKSNodepoolTaintEffect,
-						Value:  &testSKSNodepoolTaintValue,
+						Effect: testSKSNodepoolTaintEffect,
+						Value:  testSKSNodepoolTaintValue,
 					},
 				},
 			},
@@ -464,11 +464,11 @@ func (ts *clientTestSuite) TestClient_GetSKSCluster() {
 			SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 			Size:               &testSKSNodepoolSize,
 			State:              &testSKSNodepoolState,
-			Taints: &oapi.Taints{
-				AdditionalProperties: map[string]oapi.Taint{
+			Taints: &oapi.SksNodepoolTaints{
+				AdditionalProperties: map[string]oapi.SksNodepoolTaint{
 					testSKSNodepoolTaintKey: {
-						Effect: &testSKSNodepoolTaintEffect,
-						Value:  &testSKSNodepoolTaintValue,
+						Effect: testSKSNodepoolTaintEffect,
+						Value:  testSKSNodepoolTaintValue,
 					},
 				},
 			},
@@ -604,11 +604,11 @@ func (ts *clientTestSuite) TestClient_ListSKSClusters() {
 				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupID}},
 				Size:               &testSKSNodepoolSize,
 				State:              &testSKSNodepoolState,
-				Taints: &oapi.Taints{
-					AdditionalProperties: map[string]oapi.Taint{
+				Taints: &oapi.SksNodepoolTaints{
+					AdditionalProperties: map[string]oapi.SksNodepoolTaint{
 						testSKSNodepoolTaintKey: {
-							Effect: &testSKSNodepoolTaintEffect,
-							Value:  &testSKSNodepoolTaintValue,
+							Effect: testSKSNodepoolTaintEffect,
+							Value:  testSKSNodepoolTaintValue,
 						},
 					},
 				},
@@ -880,11 +880,11 @@ func (ts *clientTestSuite) TestClient_UpdateSKSNodepool() {
 				Name:               &testSKSNodepoolNameUpdated,
 				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkIDUpdated}},
 				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testSKSNodepoolSecurityGroupIDUpdated}},
-				Taints: &oapi.Taints{
-					AdditionalProperties: map[string]oapi.Taint{
+				Taints: &oapi.SksNodepoolTaints{
+					AdditionalProperties: map[string]oapi.SksNodepoolTaint{
 						testSKSNodepoolTaintKey: {
-							Effect: &testSKSNodepoolTaintEffect,
-							Value:  &testSKSNodepoolTaintValue,
+							Effect: testSKSNodepoolTaintEffect,
+							Value:  testSKSNodepoolTaintValue,
 						},
 					},
 				},

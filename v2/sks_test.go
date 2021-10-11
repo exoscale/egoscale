@@ -673,14 +673,27 @@ func (ts *clientTestSuite) TestClient_ListSKSClusterVersions() {
 		err error
 	)
 
-	ts.mockAPIRequest("GET", "/sks-cluster-version", struct {
-		SksClusterVersions *[]string `json:"sks-cluster-versions,omitempty"`
-	}{
-		SksClusterVersions: &testSKSClusterVersions,
-	})
+	httpmock.RegisterResponder("GET", "/sks-cluster-version",
+		func(req *http.Request) (*http.Response, error) {
+			ts.Require().Equal("true", req.URL.Query().Get("include-deprecated"))
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, struct {
+				SksClusterVersions *[]string `json:"sks-cluster-versions,omitempty"`
+			}{
+				SksClusterVersions: &testSKSClusterVersions,
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
 
 	expected := testSKSClusterVersions
-	actual, err := ts.client.ListSKSClusterVersions(context.Background())
+	actual, err := ts.client.ListSKSClusterVersions(
+		context.Background(),
+		ListSKSClusterVersionsWithDeprecated(true),
+	)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }

@@ -10,6 +10,20 @@ import (
 	"github.com/exoscale/egoscale/v2/oapi"
 )
 
+// ListSKSClusterVersionsOpt represents an ListSKSClusterVersions operation option.
+type ListSKSClusterVersionsOpt func(params *oapi.ListSksClusterVersionsParams)
+
+// ListSKSClusterVersionsWithDeprecated includes deprecated results when listing SKS Cluster versions
+// nolint:gocritic
+func ListSKSClusterVersionsWithDeprecated(v bool) ListSKSClusterVersionsOpt {
+	return func(p *oapi.ListSksClusterVersionsParams) {
+		if v {
+			vs := "true"
+			p.IncludeDeprecated = &vs
+		}
+	}
+}
+
 // SKSNodepoolTaint represents an SKS Nodepool Kubernetes Node taint.
 type SKSNodepoolTaint struct {
 	Effect string
@@ -544,10 +558,16 @@ func (c *Client) ListSKSClusters(ctx context.Context, zone string) ([]*SKSCluste
 }
 
 // ListSKSClusterVersions returns the list of Kubernetes versions supported during SKS cluster creation.
-func (c *Client) ListSKSClusterVersions(ctx context.Context) ([]string, error) {
+func (c *Client) ListSKSClusterVersions(ctx context.Context, opts ...ListSKSClusterVersionsOpt) ([]string, error) {
 	list := make([]string, 0)
 
-	resp, err := c.ListSksClusterVersionsWithResponse(ctx)
+	params := oapi.ListSksClusterVersionsParams{}
+
+	for _, opt := range opts {
+		opt(&params)
+	}
+
+	resp, err := c.ListSksClusterVersionsWithResponse(ctx, &params)
 	if err != nil {
 		return nil, err
 	}

@@ -3257,6 +3257,11 @@ type CreateSksClusterJSONBodyLevel string
 // GenerateSksClusterKubeconfigJSONBody defines parameters for GenerateSksClusterKubeconfig.
 type GenerateSksClusterKubeconfigJSONBody SksKubeconfigRequest
 
+// ListSksClusterVersionsParams defines parameters for ListSksClusterVersions.
+type ListSksClusterVersionsParams struct {
+	IncludeDeprecated *string `json:"include-deprecated,omitempty"`
+}
+
 // UpdateSksClusterJSONBody defines parameters for UpdateSksCluster.
 type UpdateSksClusterJSONBody struct {
 	// Enable auto upgrade of the control plane to the latest patch version available
@@ -3881,6 +3886,9 @@ type ClientInterface interface {
 	// GetDbaasSettingsPg request
 	GetDbaasSettingsPg(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetDbaasSettingsRedis request
+	GetDbaasSettingsRedis(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListDeployTargets request
 	ListDeployTargets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4171,7 +4179,7 @@ type ClientInterface interface {
 	GenerateSksClusterKubeconfig(ctx context.Context, id string, body GenerateSksClusterKubeconfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListSksClusterVersions request
-	ListSksClusterVersions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListSksClusterVersions(ctx context.Context, params *ListSksClusterVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteSksCluster request
 	DeleteSksCluster(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4733,6 +4741,18 @@ func (c *Client) GetDbaasSettingsMysql(ctx context.Context, reqEditors ...Reques
 
 func (c *Client) GetDbaasSettingsPg(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetDbaasSettingsPgRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDbaasSettingsRedis(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDbaasSettingsRedisRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -6027,8 +6047,8 @@ func (c *Client) GenerateSksClusterKubeconfig(ctx context.Context, id string, bo
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListSksClusterVersions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListSksClusterVersionsRequest(c.Server)
+func (c *Client) ListSksClusterVersions(ctx context.Context, params *ListSksClusterVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListSksClusterVersionsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -7512,6 +7532,33 @@ func NewGetDbaasSettingsPgRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/dbaas-settings-pg")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetDbaasSettingsRedisRequest generates requests for GetDbaasSettingsRedis
+func NewGetDbaasSettingsRedisRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-settings-redis")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -10519,7 +10566,7 @@ func NewGenerateSksClusterKubeconfigRequestWithBody(server string, id string, co
 }
 
 // NewListSksClusterVersionsRequest generates requests for ListSksClusterVersions
-func NewListSksClusterVersionsRequest(server string) (*http.Request, error) {
+func NewListSksClusterVersionsRequest(server string, params *ListSksClusterVersionsParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -10536,6 +10583,26 @@ func NewListSksClusterVersionsRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	queryValues := queryURL.Query()
+
+	if params.IncludeDeprecated != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "include-deprecated", runtime.ParamLocationQuery, *params.IncludeDeprecated); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	queryURL.RawQuery = queryValues.Encode()
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -11952,6 +12019,9 @@ type ClientWithResponsesInterface interface {
 	// GetDbaasSettingsPg request
 	GetDbaasSettingsPgWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetDbaasSettingsPgResponse, error)
 
+	// GetDbaasSettingsRedis request
+	GetDbaasSettingsRedisWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetDbaasSettingsRedisResponse, error)
+
 	// ListDeployTargets request
 	ListDeployTargetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDeployTargetsResponse, error)
 
@@ -12242,7 +12312,7 @@ type ClientWithResponsesInterface interface {
 	GenerateSksClusterKubeconfigWithResponse(ctx context.Context, id string, body GenerateSksClusterKubeconfigJSONRequestBody, reqEditors ...RequestEditorFn) (*GenerateSksClusterKubeconfigResponse, error)
 
 	// ListSksClusterVersions request
-	ListSksClusterVersionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListSksClusterVersionsResponse, error)
+	ListSksClusterVersionsWithResponse(ctx context.Context, params *ListSksClusterVersionsParams, reqEditors ...RequestEditorFn) (*ListSksClusterVersionsResponse, error)
 
 	// DeleteSksCluster request
 	DeleteSksClusterWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteSksClusterResponse, error)
@@ -13032,6 +13102,38 @@ func (r GetDbaasSettingsPgResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetDbaasSettingsPgResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetDbaasSettingsRedisResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Settings *struct {
+			// Redis configuration values
+			Redis *struct {
+				AdditionalProperties *bool                   `json:"additionalProperties,omitempty"`
+				Properties           *map[string]interface{} `json:"properties,omitempty"`
+				Title                *string                 `json:"title,omitempty"`
+				Type                 *string                 `json:"type,omitempty"`
+			} `json:"redis,omitempty"`
+		} `json:"settings,omitempty"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDbaasSettingsRedisResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDbaasSettingsRedisResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -15763,6 +15865,15 @@ func (c *ClientWithResponses) GetDbaasSettingsPgWithResponse(ctx context.Context
 	return ParseGetDbaasSettingsPgResponse(rsp)
 }
 
+// GetDbaasSettingsRedisWithResponse request returning *GetDbaasSettingsRedisResponse
+func (c *ClientWithResponses) GetDbaasSettingsRedisWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetDbaasSettingsRedisResponse, error) {
+	rsp, err := c.GetDbaasSettingsRedis(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDbaasSettingsRedisResponse(rsp)
+}
+
 // ListDeployTargetsWithResponse request returning *ListDeployTargetsResponse
 func (c *ClientWithResponses) ListDeployTargetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDeployTargetsResponse, error) {
 	rsp, err := c.ListDeployTargets(ctx, reqEditors...)
@@ -16695,8 +16806,8 @@ func (c *ClientWithResponses) GenerateSksClusterKubeconfigWithResponse(ctx conte
 }
 
 // ListSksClusterVersionsWithResponse request returning *ListSksClusterVersionsResponse
-func (c *ClientWithResponses) ListSksClusterVersionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListSksClusterVersionsResponse, error) {
-	rsp, err := c.ListSksClusterVersions(ctx, reqEditors...)
+func (c *ClientWithResponses) ListSksClusterVersionsWithResponse(ctx context.Context, params *ListSksClusterVersionsParams, reqEditors ...RequestEditorFn) (*ListSksClusterVersionsResponse, error) {
+	rsp, err := c.ListSksClusterVersions(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -17838,6 +17949,42 @@ func ParseGetDbaasSettingsPgResponse(rsp *http.Response) (*GetDbaasSettingsPgRes
 					Title                *string                 `json:"title,omitempty"`
 					Type                 *string                 `json:"type,omitempty"`
 				} `json:"timescaledb,omitempty"`
+			} `json:"settings,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetDbaasSettingsRedisResponse parses an HTTP response from a GetDbaasSettingsRedisWithResponse call
+func ParseGetDbaasSettingsRedisResponse(rsp *http.Response) (*GetDbaasSettingsRedisResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDbaasSettingsRedisResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Settings *struct {
+				// Redis configuration values
+				Redis *struct {
+					AdditionalProperties *bool                   `json:"additionalProperties,omitempty"`
+					Properties           *map[string]interface{} `json:"properties,omitempty"`
+					Title                *string                 `json:"title,omitempty"`
+					Type                 *string                 `json:"type,omitempty"`
+				} `json:"redis,omitempty"`
 			} `json:"settings,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {

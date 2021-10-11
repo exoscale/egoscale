@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.79.0
+------
+
+- feature: v2: `ListSKSClusterVersions()` method now accepts an additional `ListSKSClusterVersionsOpt` variadic argument
+
 0.78.0
 ------
 

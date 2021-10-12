@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.80.0
+------
+
+- feature: v2: add new `CopyTemplate()`/`UpdateTemplate()` methods
+
 0.79.0
 ------
 

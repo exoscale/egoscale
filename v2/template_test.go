@@ -28,6 +28,78 @@ var (
 	testTemplateVisibility            = "public"
 )
 
+func (ts *clientTestSuite) TestClient_CopyTemplate() {
+	var (
+		dstZone            = "ch-dk-2"
+		templateVisibility = "private"
+		testOperationID    = ts.randomID()
+		testOperationState = oapi.OperationStateSuccess
+	)
+
+	httpmock.RegisterResponder("POST", fmt.Sprintf("/template/%s", testTemplateID),
+		func(req *http.Request) (*http.Response, error) {
+			var actual oapi.CopyTemplateJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := oapi.CopyTemplateJSONRequestBody{
+				TargetZone: oapi.Zone{Name: (*oapi.ZoneName)(&dstZone)},
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &oapi.Reference{Id: &testTemplateID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &oapi.Reference{Id: &testTemplateID},
+	})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/template/%s", testTemplateID), oapi.Template{
+		BootMode:        (*oapi.TemplateBootMode)(&testTemplateBootMode),
+		Checksum:        &testTemplateChecksum,
+		CreatedAt:       &testTemplateCreatedAt,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		Id:              &testTemplateID,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		Size:            &testTemplateSize,
+		SshKeyEnabled:   &testTemplateSSHKeyEnabled,
+		Url:             &testTemplateURL,
+		Visibility:      (*oapi.TemplateVisibility)(&templateVisibility),
+	})
+
+	expected := &Template{
+		BootMode:        &testTemplateBootMode,
+		Checksum:        &testTemplateChecksum,
+		CreatedAt:       &testTemplateCreatedAt,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		ID:              &testTemplateID,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
+		Size:            &testTemplateSize,
+		URL:             &testTemplateURL,
+		Visibility:      &templateVisibility,
+		Zone:            &dstZone,
+	}
+
+	actual, err := ts.client.CopyTemplate(context.Background(), testZone, &Template{ID: &testTemplateID}, dstZone)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *clientTestSuite) TestClient_DeleteTemplate() {
 	var (
 		testOperationID    = ts.randomID()
@@ -251,4 +323,52 @@ func (ts *clientTestSuite) TestClient_RegisterTemplate() {
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
+}
+
+func (ts *clientTestSuite) TestClient_UpdateTemplate() {
+	var (
+		testTemplateDescriptionUpdated = testTemplateDescription + "-updated"
+		testTemplateNameUpdated        = testTemplateName + "-updated"
+		testOperationID                = ts.randomID()
+		testOperationState             = oapi.OperationStateSuccess
+		updated                        = false
+	)
+
+	httpmock.RegisterResponder("PUT", fmt.Sprintf("/template/%s", testTemplateID),
+		func(req *http.Request) (*http.Response, error) {
+			updated = true
+
+			var actual oapi.UpdateTemplateJSONRequestBody
+			ts.unmarshalJSONRequestBody(req, &actual)
+
+			expected := oapi.UpdateTemplateJSONRequestBody{
+				Description: &testTemplateDescriptionUpdated,
+				Name:        &testTemplateNameUpdated,
+			}
+			ts.Require().Equal(expected, actual)
+
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
+				Id:        &testOperationID,
+				State:     &testOperationState,
+				Reference: &oapi.Reference{Id: &testTemplateID},
+			})
+			if err != nil {
+				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
+			}
+
+			return resp, nil
+		})
+
+	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+		Id:        &testOperationID,
+		State:     &testOperationState,
+		Reference: &oapi.Reference{Id: &testTemplateID},
+	})
+
+	ts.Require().NoError(ts.client.UpdateTemplate(context.Background(), testZone, &Template{
+		Description: &testTemplateDescriptionUpdated,
+		ID:          &testTemplateID,
+		Name:        &testTemplateNameUpdated,
+	}))
+	ts.Require().True(updated)
 }

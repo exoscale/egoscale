@@ -1343,8 +1343,11 @@ type DbaasServiceRedis struct {
 	Notifications *[]DbaasServiceNotification `json:"notifications,omitempty"`
 
 	// Subscription plan
-	Plan  string            `json:"plan"`
-	State *EnumServiceState `json:"state,omitempty"`
+	Plan string `json:"plan"`
+
+	// Redis-specific settings
+	RedisSettings *map[string]interface{} `json:"redis-settings,omitempty"`
+	State         *EnumServiceState       `json:"state,omitempty"`
 
 	// Service is protected against termination and powering off
 	TerminationProtection *bool                `json:"termination-protection,omitempty"`

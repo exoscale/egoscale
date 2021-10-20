@@ -26,7 +26,7 @@ var (
 	testDatabaseServiceNodeCPUCount          int64 = 2
 	testDatabaseServiceNodeCount             int64 = 1
 	testDatabaseServiceNodeMemory            int64 = 2199023255552
-	testDatabaseServiceState                       = oapi.DbaasServiceStateRunning
+	testDatabaseServiceState                       = oapi.EnumServiceStateRunning
 	testDatabaseServiceTerminationProtection       = true
 	testDatabaseServiceType                        = oapi.DbaasServiceTypeName("pg")
 	testDatabaseServiceTypeDefaultVersion          = "13"
@@ -203,7 +203,7 @@ func (ts *clientTestSuite) TestClient_ListDatabaseServices() {
 			NodeMemory:            &testDatabaseServiceNodeMemory,
 			Notifications:         &[]oapi.DbaasServiceNotification{},
 			Plan:                  testDatabasePlanName,
-			State:                 (*oapi.EnumServiceState)(&testDatabaseServiceState),
+			State:                 &testDatabaseServiceState,
 			TerminationProtection: &testDatabaseServiceTerminationProtection,
 			Type:                  testDatabaseServiceType,
 			UpdatedAt:             &testDatabaseServiceUpdatedAt,

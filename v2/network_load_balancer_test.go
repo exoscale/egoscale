@@ -29,7 +29,7 @@ var (
 	testNLBServicePort                          uint16 = 443
 	testNLBServiceTargetPort                    uint16 = 8443
 	testNLBServiceStrategy                             = oapi.LoadBalancerServiceStrategyRoundRobin
-	testNLBServiceState                                = oapi.DbaasServiceStateRunning
+	testNLBServiceState                                = oapi.LoadBalancerServiceStateRunning
 	testNLServiceHealthcheckMode                       = oapi.LoadBalancerServiceHealthcheckModeHttps
 	testNLBServiceHealthcheckPort               uint16 = 8080
 	testNLBServiceHealthcheckInterval           int64  = 10

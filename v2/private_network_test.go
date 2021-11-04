@@ -2,77 +2,90 @@ package v2
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 
-	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/mock"
 
 	apiv2 "github.com/exoscale/egoscale/v2/api"
 	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var (
-	testPrivateNetworkDescription     = new(clientTestSuite).randomString(10)
+	testPrivateNetworkDescription     = new(testSuite).randomString(10)
 	testPrivateNetworkEndIP           = "192.168.0.254"
 	testPrivateNetworkEndIPP          = net.ParseIP(testPrivateNetworkEndIP)
-	testPrivateNetworkID              = new(clientTestSuite).randomID()
-	testPrivateNetworkName            = new(clientTestSuite).randomString(10)
+	testPrivateNetworkID              = new(testSuite).randomID()
+	testPrivateNetworkName            = new(testSuite).randomString(10)
 	testPrivateNetworkNetmask         = "255.255.255.0"
 	testPrivateNetworkNetmaskP        = net.ParseIP(testPrivateNetworkNetmask)
 	testPrivateNetworkStartIP         = "192.168.0.0"
 	testPrivateNetworkStartIPP        = net.ParseIP(testPrivateNetworkStartIP)
-	testPrivateNetworkLeaseInstanceID = new(clientTestSuite).randomID()
+	testPrivateNetworkLeaseInstanceID = new(testSuite).randomID()
 	testPrivateNetworkLeaseIPAddress  = "192.168.0.1"
 	testPrivateNetworkLeaseIPAddressP = net.ParseIP(testPrivateNetworkLeaseIPAddress)
 )
 
-func (ts *clientTestSuite) TestClient_CreatePrivateNetwork() {
+func (ts *testSuite) TestClient_CreatePrivateNetwork() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 	)
 
-	httpmock.RegisterResponder("POST", "/private-network",
-		func(req *http.Request) (*http.Response, error) {
-			var actual oapi.CreatePrivateNetworkJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
+	ts.mock().
+		On(
+			"CreatePrivateNetworkWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.CreatePrivateNetworkJSONRequestBody{
+					Description: &testPrivateNetworkDescription,
+					EndIp:       &testPrivateNetworkEndIP,
+					Name:        testPrivateNetworkName,
+					Netmask:     &testPrivateNetworkNetmask,
+					StartIp:     &testPrivateNetworkStartIP,
+				},
+				args.Get(1),
+			)
+		}).
+		Return(
+			&oapi.CreatePrivateNetworkResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			expected := oapi.CreatePrivateNetworkJSONRequestBody{
+	ts.mockGetOperation(&oapi.Operation{
+		Id:        &testOperationID,
+		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+		State:     &testOperationState,
+	})
+
+	ts.mock().
+		On("GetPrivateNetworkWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetPrivateNetworkResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.PrivateNetwork{
 				Description: &testPrivateNetworkDescription,
 				EndIp:       &testPrivateNetworkEndIP,
-				Name:        testPrivateNetworkName,
+				Id:          &testPrivateNetworkID,
+				Name:        &testPrivateNetworkName,
 				Netmask:     &testPrivateNetworkNetmask,
 				StartIp:     &testPrivateNetworkStartIP,
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-	})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/private-network/%s", testPrivateNetworkID), oapi.PrivateNetwork{
-		Description: &testPrivateNetworkDescription,
-		EndIp:       &testPrivateNetworkEndIP,
-		Id:          &testPrivateNetworkID,
-		Name:        &testPrivateNetworkName,
-		Netmask:     &testPrivateNetworkNetmask,
-		StartIp:     &testPrivateNetworkStartIP,
-	})
+			},
+		}, nil)
 
 	expected := &PrivateNetwork{
 		Description: &testPrivateNetworkDescription,
@@ -96,33 +109,40 @@ func (ts *clientTestSuite) TestClient_CreatePrivateNetwork() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_DeletePrivateNetwork() {
+func (ts *testSuite) TestClient_DeletePrivateNetwork() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
-	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/private-network/%s", testPrivateNetworkID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"DeletePrivateNetworkWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testPrivateNetworkID, args.Get(1))
 			deleted = true
+		}).
+		Return(
+			&oapi.DeletePrivateNetworkResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeletePrivateNetwork(
@@ -133,30 +153,50 @@ func (ts *clientTestSuite) TestClient_DeletePrivateNetwork() {
 	ts.Require().True(deleted)
 }
 
-func (ts *clientTestSuite) TestClient_FindPrivateNetwork() {
-	ts.mockAPIRequest("GET", "/private-network", struct {
-		PrivateNetworks *[]oapi.PrivateNetwork `json:"private-networks,omitempty"`
-	}{
-		PrivateNetworks: &[]oapi.PrivateNetwork{
-			{
+func (ts *testSuite) TestClient_FindPrivateNetwork() {
+	ts.mock().
+		On("ListPrivateNetworksWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListPrivateNetworksResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				PrivateNetworks *[]oapi.PrivateNetwork `json:"private-networks,omitempty"`
+			}{
+				PrivateNetworks: &[]oapi.PrivateNetwork{
+					{
+						Id:   &testPrivateNetworkID,
+						Name: &testPrivateNetworkName,
+					},
+					{
+						Id:   func() *string { id := ts.randomID(); return &id }(),
+						Name: func() *string { name := "dup"; return &name }(),
+					},
+					{
+						Id:   func() *string { id := ts.randomID(); return &id }(),
+						Name: func() *string { name := "dup"; return &name }(),
+					},
+				},
+			},
+		}, nil)
+
+	ts.mock().
+		On("GetPrivateNetworkWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testPrivateNetworkID, args.Get(1))
+		}).
+		Return(&oapi.GetPrivateNetworkResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.PrivateNetwork{
 				Id:   &testPrivateNetworkID,
 				Name: &testPrivateNetworkName,
 			},
-			{
-				Id:   func() *string { id := ts.randomID(); return &id }(),
-				Name: func() *string { name := "dup"; return &name }(),
-			},
-			{
-				Id:   func() *string { id := ts.randomID(); return &id }(),
-				Name: func() *string { name := "dup"; return &name }(),
-			},
-		},
-	})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/private-network/%s", testPrivateNetworkID), oapi.PrivateNetwork{
-		Id:   &testPrivateNetworkID,
-		Name: &testPrivateNetworkName,
-	})
+		}, nil)
 
 	expected := &PrivateNetwork{
 		ID:   &testPrivateNetworkID,
@@ -176,19 +216,31 @@ func (ts *clientTestSuite) TestClient_FindPrivateNetwork() {
 	ts.Require().EqualError(err, apiv2.ErrTooManyFound.Error())
 }
 
-func (ts *clientTestSuite) TestClient_GetPrivateNetwork() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/private-network/%s", testPrivateNetworkID), oapi.PrivateNetwork{
-		Description: &testPrivateNetworkDescription,
-		EndIp:       &testPrivateNetworkEndIP,
-		Id:          &testPrivateNetworkID,
-		Name:        &testPrivateNetworkName,
-		Netmask:     &testPrivateNetworkNetmask,
-		StartIp:     &testPrivateNetworkStartIP,
-		Leases: &[]oapi.PrivateNetworkLease{{
-			InstanceId: &testPrivateNetworkLeaseInstanceID,
-			Ip:         &testPrivateNetworkLeaseIPAddress,
-		}},
-	})
+func (ts *testSuite) TestClient_GetPrivateNetwork() {
+	ts.mock().
+		On("GetPrivateNetworkWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testPrivateNetworkID, args.Get(1))
+		}).
+		Return(&oapi.GetPrivateNetworkResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.PrivateNetwork{
+				Description: &testPrivateNetworkDescription,
+				EndIp:       &testPrivateNetworkEndIP,
+				Id:          &testPrivateNetworkID,
+				Name:        &testPrivateNetworkName,
+				Netmask:     &testPrivateNetworkNetmask,
+				StartIp:     &testPrivateNetworkStartIP,
+				Leases: &[]oapi.PrivateNetworkLease{{
+					InstanceId: &testPrivateNetworkLeaseInstanceID,
+					Ip:         &testPrivateNetworkLeaseIPAddress,
+				}},
+			},
+		}, nil)
 
 	expected := &PrivateNetwork{
 		Description: &testPrivateNetworkDescription,
@@ -209,23 +261,31 @@ func (ts *clientTestSuite) TestClient_GetPrivateNetwork() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_ListPrivateNetworks() {
-	ts.mockAPIRequest("GET", "/private-network", struct {
-		PrivateNetworks *[]oapi.PrivateNetwork `json:"private-networks,omitempty"`
-	}{
-		PrivateNetworks: &[]oapi.PrivateNetwork{{
-			Description: &testPrivateNetworkDescription,
-			EndIp:       &testPrivateNetworkEndIP,
-			Id:          &testPrivateNetworkID,
-			Leases: &[]oapi.PrivateNetworkLease{{
-				InstanceId: &testPrivateNetworkLeaseInstanceID,
-				Ip:         &testPrivateNetworkLeaseIPAddress,
-			}},
-			Name:    &testPrivateNetworkName,
-			Netmask: &testPrivateNetworkNetmask,
-			StartIp: &testPrivateNetworkStartIP,
-		}},
-	})
+func (ts *testSuite) TestClient_ListPrivateNetworks() {
+	ts.mock().
+		On("ListPrivateNetworksWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListPrivateNetworksResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				PrivateNetworks *[]oapi.PrivateNetwork `json:"private-networks,omitempty"`
+			}{
+				PrivateNetworks: &[]oapi.PrivateNetwork{{
+					Description: &testPrivateNetworkDescription,
+					EndIp:       &testPrivateNetworkEndIP,
+					Id:          &testPrivateNetworkID,
+					Leases: &[]oapi.PrivateNetworkLease{{
+						InstanceId: &testPrivateNetworkLeaseInstanceID,
+						Ip:         &testPrivateNetworkLeaseIPAddress,
+					}},
+					Name:    &testPrivateNetworkName,
+					Netmask: &testPrivateNetworkNetmask,
+					StartIp: &testPrivateNetworkStartIP,
+				}},
+			},
+		}, nil)
 
 	expected := []*PrivateNetwork{{
 		Description: &testPrivateNetworkDescription,
@@ -246,7 +306,7 @@ func (ts *clientTestSuite) TestClient_ListPrivateNetworks() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_UpdatePrivateNetwork() {
+func (ts *testSuite) TestClient_UpdatePrivateNetwork() {
 	var (
 		testPrivateNetworkDescriptionUpdated = testPrivateNetworkDescription + "-updated"
 		testPrivateNetworkEndIPUpdated       = "172.16.254.254"
@@ -261,38 +321,43 @@ func (ts *clientTestSuite) TestClient_UpdatePrivateNetwork() {
 		updated                              = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/private-network/%s", testPrivateNetworkID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"UpdatePrivateNetworkWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.UpdatePrivateNetworkJSONRequestBody{
+					Description: &testPrivateNetworkDescriptionUpdated,
+					EndIp:       &testPrivateNetworkEndIPUpdated,
+					Name:        &testPrivateNetworkNameUpdated,
+					Netmask:     &testPrivateNetworkNetmaskUpdated,
+					StartIp:     &testPrivateNetworkStartIPUpdated,
+				},
+				args.Get(2),
+			)
 			updated = true
+		}).
+		Return(
+			&oapi.UpdatePrivateNetworkResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.UpdatePrivateNetworkJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.UpdatePrivateNetworkJSONRequestBody{
-				Description: &testPrivateNetworkDescriptionUpdated,
-				EndIp:       &testPrivateNetworkEndIPUpdated,
-				Name:        &testPrivateNetworkNameUpdated,
-				Netmask:     &testPrivateNetworkNetmaskUpdated,
-				StartIp:     &testPrivateNetworkStartIPUpdated,
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpdatePrivateNetwork(context.Background(), testZone, &PrivateNetwork{
@@ -306,43 +371,47 @@ func (ts *clientTestSuite) TestClient_UpdatePrivateNetwork() {
 	ts.Require().True(updated)
 }
 
-func (ts *clientTestSuite) TestClient_UpdatePrivateNetworkInstanceIPAddress() {
+func (ts *testSuite) TestClient_UpdatePrivateNetworkInstanceIPAddress() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		updated            = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/private-network/%s:update-ip", testPrivateNetworkID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"UpdatePrivateNetworkInstanceIpWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.UpdatePrivateNetworkInstanceIpJSONRequestBody{
+					Instance: oapi.Instance{Id: &testPrivateNetworkLeaseInstanceID},
+					Ip:       &testPrivateNetworkLeaseIPAddress,
+				},
+				args.Get(2),
+			)
 			updated = true
+		}).
+		Return(
+			&oapi.UpdatePrivateNetworkInstanceIpResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.UpdatePrivateNetworkInstanceIpJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.UpdatePrivateNetworkInstanceIpJSONRequestBody{
-				Instance: oapi.Instance{Id: &testPrivateNetworkLeaseInstanceID},
-				Ip:       &testPrivateNetworkLeaseIPAddress,
-			}
-
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpdatePrivateNetworkInstanceIPAddress(

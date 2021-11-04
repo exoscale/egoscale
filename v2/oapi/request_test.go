@@ -3,12 +3,9 @@ package oapi
 import (
 	"context"
 	"net/http"
-	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
-func TestMultiRequestsEditor(t *testing.T) {
+func (ts *testSuite) TestMultiRequestsEditor() {
 	var (
 		testRequestEditorFn = func(k, v string) RequestEditorFn {
 			return func(_ context.Context, req *http.Request) error {
@@ -25,8 +22,8 @@ func TestMultiRequestsEditor(t *testing.T) {
 	)
 
 	err := multiRequestsEditorFn(context.Background(), req)
-	require.NoError(t, err)
-	require.Equal(t, http.Header{
+	ts.Require().NoError(err)
+	ts.Require().Equal(http.Header{
 		"H1": []string{"v1"},
 		"H2": []string{"v2"},
 	}, req.Header)

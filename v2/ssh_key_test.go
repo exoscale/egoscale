@@ -2,57 +2,76 @@ package v2
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
+	"github.com/stretchr/testify/mock"
+
 	"github.com/exoscale/egoscale/v2/oapi"
-	"github.com/jarcoal/httpmock"
 )
 
 var (
-	testSSHKeyFingerprint = new(clientTestSuite).randomString(10)
-	testSSHKeyName        = new(clientTestSuite).randomString(10)
-	testSSHKeyPublicKey   = new(clientTestSuite).randomString(10)
+	testSSHKeyFingerprint = new(testSuite).randomString(10)
+	testSSHKeyName        = new(testSuite).randomString(10)
+	testSSHKeyPublicKey   = new(testSuite).randomString(10)
 )
 
-func (ts *clientTestSuite) TestClient_DeleteSSHKey() {
+func (ts *testSuite) TestClient_DeleteSSHKey() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
-	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/ssh-key/%s", testSSHKeyName),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"DeleteSshKeyWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // name
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testSSHKeyName, args.Get(1))
 			deleted = true
+		}).
+		Return(
+			&oapi.DeleteSshKeyResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testSSHKeyName},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testSSHKeyName},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testSSHKeyName},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeleteSSHKey(context.Background(), testZone, &SSHKey{Name: &testSSHKeyName}))
 	ts.Require().True(deleted)
 }
 
-func (ts *clientTestSuite) TestClient_GetSSHKey() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/ssh-key/%s", testSSHKeyName), oapi.SshKey{
-		Fingerprint: &testSSHKeyFingerprint,
-		Name:        &testSSHKeyName,
-	})
+func (ts *testSuite) TestClient_GetSSHKey() {
+	ts.mock().
+		On("GetSshKeyWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // name
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testSSHKeyName, args.Get(1))
+		}).
+		Return(&oapi.GetSshKeyResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.SshKey{
+				Fingerprint: &testSSHKeyFingerprint,
+				Name:        &testSSHKeyName,
+			},
+		}, nil)
 
 	expected := &SSHKey{
 		Fingerprint: &testSSHKeyFingerprint,
@@ -64,22 +83,23 @@ func (ts *clientTestSuite) TestClient_GetSSHKey() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_ListSSHKeys() {
-	httpmock.RegisterResponder("GET", "/ssh-key", func(req *http.Request) (*http.Response, error) {
-		resp, err := httpmock.NewJsonResponse(http.StatusOK,
-			struct {
-				SSHKeys *[]oapi.SshKey `json:"ssh-keys,omitempty"`
+func (ts *testSuite) TestClient_ListSSHKeys() {
+	ts.mock().
+		On("ListSshKeysWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListSshKeysResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				SshKeys *[]oapi.SshKey `json:"ssh-keys,omitempty"` // nolint:revive
 			}{
-				SSHKeys: &[]oapi.SshKey{{
+				SshKeys: &[]oapi.SshKey{{
 					Fingerprint: &testSSHKeyFingerprint,
 					Name:        &testSSHKeyName,
 				}},
-			})
-		if err != nil {
-			ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-		}
-		return resp, nil
-	})
+			},
+		}, nil)
 
 	expected := []*SSHKey{{
 		Fingerprint: &testSSHKeyFingerprint,
@@ -91,39 +111,53 @@ func (ts *clientTestSuite) TestClient_ListSSHKeys() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_RegisterSSHKey() {
+func (ts *testSuite) TestClient_RegisterSSHKey() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 	)
 
-	httpmock.RegisterResponder("POST", "/ssh-key",
-		func(req *http.Request) (*http.Response, error) {
-			var actual oapi.RegisterSshKeyJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
+	ts.mock().
+		On(
+			"RegisterSshKeyWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.RegisterSshKeyJSONRequestBody{
+					Name:      testSSHKeyName,
+					PublicKey: testSSHKeyPublicKey,
+				},
+				args.Get(1),
+			)
+		}).
+		Return(
+			&oapi.RegisterSshKeyResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testSSHKeyName},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			expected := oapi.RegisterSshKeyJSONRequestBody{
-				Name:      testSSHKeyName,
-				PublicKey: testSSHKeyPublicKey,
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testSSHKeyName},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/ssh-key/%s", testSSHKeyName), oapi.SshKey{
-		Fingerprint: &testSSHKeyFingerprint,
-		Name:        &testSSHKeyName,
-	})
+	ts.mock().
+		On("GetSshKeyWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // name
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetSshKeyResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.SshKey{
+				Fingerprint: &testSSHKeyFingerprint,
+				Name:        &testSSHKeyName,
+			},
+		}, nil)
 
 	expected := &SSHKey{
 		Fingerprint: &testSSHKeyFingerprint,

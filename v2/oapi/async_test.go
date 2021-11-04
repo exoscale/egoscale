@@ -7,74 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jarcoal/httpmock"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/mock"
 )
-
-func TestNewPoller(t *testing.T) {
-	require.Equal(t,
-		&Poller{interval: DefaultPollingInterval},
-		NewPoller())
-}
-
-func TestPoller_WithInterval(t *testing.T) {
-	testPoller := NewPoller()
-	require.Equal(t,
-		&Poller{interval: time.Second},
-		testPoller.WithInterval(time.Second))
-}
-
-func TestPoller_WithTimeout(t *testing.T) {
-	testPoller := NewPoller()
-	require.Equal(t,
-		&Poller{
-			interval: DefaultPollingInterval,
-			timeout:  time.Second,
-		},
-		testPoller.WithTimeout(time.Second))
-}
-
-func TestPoller_Poll_FailWithTimeout(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	poller := NewPoller()
-	require.Eventually(t,
-		func() bool {
-			_, err := poller.Poll(ctx,
-				newTestMockPollFunc(10*time.Second, true, nil, nil))
-			require.ErrorIs(t, err, context.DeadlineExceeded)
-			return true
-		},
-		5*time.Second,
-		time.Second,
-		"polling must fail on context timeout")
-}
-
-func TestPoller_Poll_FinishWithError(t *testing.T) {
-	poller := NewPoller().WithInterval(time.Second)
-	require.Eventually(t,
-		func() bool {
-			_, err := poller.Poll(context.Background(),
-				newTestMockPollFunc(time.Second, true, nil, errors.New("o noes")))
-			return err != nil
-		},
-		5*time.Second,
-		time.Second,
-		"polling must complete with error before the timeout")
-}
-
-func TestPoller_Poll_FinishOK(t *testing.T) {
-	poller := NewPoller().WithInterval(time.Second)
-	require.Eventually(t,
-		func() bool {
-			res, err := poller.Poll(context.Background(),
-				newTestMockPollFunc(time.Second, true, "yay", nil))
-			return res.(string) == "yay" && err == nil
-		},
-		5*time.Second,
-		time.Second,
-		"polling must complete successfully before the timeout")
-}
 
 // newTestMockPollFunc returns a mocked polling function that sleeps for a specified duration,
 // then returns the provided completion flag, resource and error.
@@ -85,64 +19,184 @@ func newTestMockPollFunc(duration time.Duration, done bool, res interface{}, err
 	}
 }
 
-func TestClientWithResponses_JobOperationPoller(t *testing.T) {
+func (ts *testSuite) TestNewPoller() {
+	ts.Require().Equal(
+		&Poller{interval: DefaultPollingInterval},
+		NewPoller())
+}
+
+func (ts *testSuite) TestPoller_WithInterval() {
+	poller := NewPoller()
+	ts.Require().Equal(&Poller{interval: time.Second}, poller.WithInterval(time.Second))
+}
+
+func (ts *testSuite) TestPoller_WithTimeout() {
+	poller := NewPoller()
+	ts.Require().Equal(&Poller{
+		interval: DefaultPollingInterval,
+		timeout:  time.Second,
+	},
+		poller.WithTimeout(time.Second),
+	)
+}
+
+func (ts *testSuite) TestPoller_Poll() {
+	tests := []struct {
+		name     string
+		testFunc func(ctx context.Context, ts *testSuite) func() bool
+	}{
+		{
+			name: "failure by timeout",
+			testFunc: func(ctx context.Context, ts *testSuite) func() bool {
+				return func() bool {
+					_, err := NewPoller().
+						Poll(
+							ctx,
+							newTestMockPollFunc(10*time.Second, true, nil, nil),
+						)
+					ts.Require().ErrorIs(err, context.DeadlineExceeded)
+
+					return true
+				}
+			},
+		},
+		{
+			name: "failure by error during polling",
+			testFunc: func(ctx context.Context, ts *testSuite) func() bool {
+				return func() bool {
+					_, err := NewPoller().
+						WithInterval(time.Second).
+						Poll(
+							ctx,
+							newTestMockPollFunc(time.Second, true, nil, errors.New("o noes")),
+						)
+					return err != nil
+				}
+			},
+		},
+		{
+			name: "ok",
+			testFunc: func(ctx context.Context, ts *testSuite) func() bool {
+				return func() bool {
+					res, err := NewPoller().
+						WithInterval(time.Second).
+						Poll(
+							ctx,
+							newTestMockPollFunc(time.Second, true, "yay", nil),
+						)
+					return res.(string) == "yay" && err == nil
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		ts.T().Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			ts.Require().Eventually(
+				tt.testFunc(ctx, ts),
+				5*time.Second,
+				100*time.Millisecond,
+			)
+		})
+	}
+}
+
+func (ts *testSuite) TestOperationPoller() {
 	var (
-		operationID              = testRandomID(t)
-		mockOperationReferenceID = testRandomID(t)
-
-		newTestClient = func(state string) (*ClientWithResponses, error) {
-			mockClient := NewMockClient()
-			mockClient.RegisterResponder("GET", "/operation/"+operationID,
-				func(req *http.Request) (*http.Response, error) {
-					resp, err := httpmock.NewJsonResponse(http.StatusOK, Operation{
-						Id:        &operationID,
-						State:     (*OperationState)(&state),
-						Reference: &Reference{Id: &mockOperationReferenceID},
-					})
-					if err != nil {
-						t.Fatalf("error initializing mock HTTP responder: %s", err)
-					}
-					return resp, nil
-				})
-
-			return NewClientWithResponses("", WithHTTPClient(mockClient))
-		}
+		operationID           = ts.randomID()
+		operationReferenceID  = ts.randomID()
+		operationStatePending = OperationStatePending
+		operationStateSuccess = OperationStateSuccess
+		operationStateFailure = OperationStateFailure
+		operationStateTimeout = OperationStateTimeout
 	)
 
-	// A pending job must return done=false and no error
-	{
-		c, err := newTestClient(operationStatePending)
-		require.NoError(t, err)
-		done, _, err := c.OperationPoller("", operationID)(context.Background())
-		require.NoError(t, err)
-		require.False(t, done)
+	tests := []struct {
+		name               string
+		httpResponseStatus int
+		operationResponse  *Operation
+		setupFunc          func(ts *testSuite)
+		testFunc           func(ts *testSuite, done bool, res interface{}, err error)
+	}{
+		{
+			name:               "pending",
+			httpResponseStatus: http.StatusOK,
+			operationResponse: &Operation{
+				Id:        &operationID,
+				State:     &operationStatePending,
+				Reference: &Reference{Id: &operationReferenceID},
+			},
+			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
+				ts.Require().NoError(err)
+				ts.Require().False(done)
+			},
+		},
+		{
+			name:               "success",
+			httpResponseStatus: http.StatusOK,
+			operationResponse: &Operation{
+				Id:        &operationID,
+				State:     &operationStateSuccess,
+				Reference: &Reference{Id: &operationReferenceID},
+			},
+			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
+				ts.Require().NoError(err)
+				ts.Require().Equal(&Reference{Id: &operationReferenceID}, res)
+				ts.Require().True(done)
+			},
+		},
+		{
+			name:               "failure",
+			httpResponseStatus: http.StatusOK,
+			operationResponse: &Operation{
+				Id:        &operationID,
+				State:     &operationStateFailure,
+				Reference: &Reference{Id: &operationReferenceID},
+			},
+			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
+				ts.Require().Error(err)
+				ts.Require().True(done)
+			},
+		},
+		{
+			name:               "timeout",
+			httpResponseStatus: http.StatusOK,
+			operationResponse: &Operation{
+				Id:        &operationID,
+				State:     &operationStateTimeout,
+				Reference: &Reference{Id: &operationReferenceID},
+			},
+			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
+				ts.Require().Error(err)
+				ts.Require().True(done)
+			},
+		},
+		{
+			name:               "API error",
+			httpResponseStatus: http.StatusInternalServerError,
+			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
+				ts.Require().Error(err)
+			},
+		},
 	}
 
-	// A successful job must return done=true and no error
-	{
-		c, err := newTestClient(operationStateSuccess)
-		require.NoError(t, err)
-		done, res, err := c.OperationPoller("", operationID)(context.Background())
-		require.NoError(t, err)
-		require.Equal(t, &Reference{Id: &mockOperationReferenceID}, res)
-		require.True(t, done)
-	}
+	for _, tt := range tests {
+		// Reset the OAPI client mock calls stack between test cases
+		ts.client.(*oapiClientMock).ExpectedCalls = nil
 
-	// A failed job must return done=true and and an error
-	{
-		c, err := newTestClient(operationStateFailure)
-		require.NoError(t, err)
-		done, _, err := c.OperationPoller("", operationID)(context.Background())
-		require.Error(t, err)
-		require.True(t, done)
-	}
+		ts.T().Run(tt.name, func(t *testing.T) {
+			ts.client.(*oapiClientMock).
+				On("GetOperationWithResponse", mock.Anything, mock.Anything, ([]RequestEditorFn)(nil)).
+				Return(&GetOperationResponse{
+					HTTPResponse: &http.Response{StatusCode: tt.httpResponseStatus},
+					JSON200:      tt.operationResponse,
+				}, nil)
 
-	// A timed-out job must return done=true and and an error
-	{
-		c, err := newTestClient(operationStateTimeout)
-		require.NoError(t, err)
-		done, _, err := c.OperationPoller("", operationID)(context.Background())
-		require.Error(t, err)
-		require.True(t, done)
+			done, res, err := OperationPoller(ts.client, "", ts.randomID())(context.Background())
+			tt.testFunc(ts, done, res, err)
+		})
 	}
 }

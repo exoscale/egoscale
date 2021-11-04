@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/exoscale/egoscale/v2/oapi"
 )
 
-func (ts *clientTestSuite) TestClient_ListZones() {
+func (ts *testSuite) TestClient_ListZones() {
 	testZones := []string{
 		"at-vie-1",
 		"bg-sof-1",
@@ -19,9 +19,14 @@ func (ts *clientTestSuite) TestClient_ListZones() {
 		"de-muc-1",
 	}
 
-	httpmock.RegisterResponder("GET", "/zone",
-		func(_ *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, struct {
+	ts.mock().
+		On("ListZonesWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListZonesResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
 				Zones *[]oapi.Zone `json:"zones,omitempty"`
 			}{
 				Zones: func() *[]oapi.Zone {
@@ -32,12 +37,8 @@ func (ts *clientTestSuite) TestClient_ListZones() {
 					}
 					return &zones
 				}(),
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-			return resp, nil
-		})
+			},
+		}, nil)
 
 	expected := testZones
 	actual, err := ts.client.ListZones(context.Background())

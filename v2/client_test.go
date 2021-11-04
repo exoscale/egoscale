@@ -2,15 +2,14 @@ package v2
 
 import (
 	"context"
-	"encoding/json"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -28,46 +27,44 @@ func (d dummyResource) get(_ context.Context, _ *Client, _, id string) (interfac
 	return &dummyResource{id: id}, nil
 }
 
-type clientTestSuite struct {
-	client *Client
-
+type testSuite struct {
 	suite.Suite
+
+	client *Client
 }
 
-func (ts *clientTestSuite) SetupTest() {
-	httpmock.Activate()
-
-	client, err := NewClient("x", "x", ClientOptWithPollInterval(10*time.Millisecond))
-	if err != nil {
-		ts.T().Fatal(err)
+func (ts *testSuite) SetupTest() {
+	ts.client = &Client{
+		oapiClient:   new(oapiClientMock),
+		pollInterval: 10 * time.Millisecond,
 	}
-
-	// Overriding the internal public API client with mocked HTTP client.
-	client.ClientWithResponses, err = oapi.NewClientWithResponses("", oapi.WithHTTPClient(client.httpClient))
-	if err != nil {
-		ts.T().Fatal(err)
-	}
-
-	ts.client = client
 }
 
-func (ts *clientTestSuite) TearDownTest() {
+func (ts *testSuite) TearDownTest() {
 	ts.client = nil
-
-	httpmock.DeactivateAndReset()
 }
 
-func (ts *clientTestSuite) mockAPIRequest(method, url string, body interface{}) {
-	httpmock.RegisterResponder(method, url, func(_ *http.Request) (*http.Response, error) {
-		resp, err := httpmock.NewJsonResponse(http.StatusOK, body)
-		if err != nil {
-			ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-		}
-		return resp, nil
-	})
+func (ts *testSuite) mock() *oapiClientMock {
+	return ts.client.oapiClient.(*oapiClientMock)
 }
 
-func (ts *clientTestSuite) randomID() string {
+func (ts *testSuite) mockGetOperation(o *oapi.Operation) {
+	ts.mock().
+		On("GetOperationWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(
+			&oapi.GetOperationResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200:      o,
+			},
+			nil,
+		)
+}
+
+func (ts *testSuite) randomID() string {
 	id, err := uuid.NewV4()
 	if err != nil {
 		ts.T().Fatalf("unable to generate a new UUID: %s", err)
@@ -75,7 +72,7 @@ func (ts *clientTestSuite) randomID() string {
 	return id.String()
 }
 
-func (ts *clientTestSuite) randomStringWithCharset(length int, charset string) string {
+func (ts *testSuite) randomStringWithCharset(length int, charset string) string {
 	b := make([]byte, length)
 	for i := range b {
 		b[i] = charset[testSeededRand.Intn(len(charset))]
@@ -83,24 +80,14 @@ func (ts *clientTestSuite) randomStringWithCharset(length int, charset string) s
 	return string(b)
 }
 
-func (ts *clientTestSuite) randomString(length int) string {
+func (ts *testSuite) randomString(length int) string {
 	const defaultCharset = "abcdefghijklmnopqrstuvwxyz" +
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 	return ts.randomStringWithCharset(length, defaultCharset)
 }
 
-func (ts *clientTestSuite) unmarshalJSONRequestBody(req *http.Request, v interface{}) {
-	data, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		ts.T().Fatalf("error reading request body: %s", err)
-	}
-	if err = json.Unmarshal(data, v); err != nil {
-		ts.T().Fatalf("error while unmarshalling JSON body: %s", err)
-	}
-}
-
-func (ts *clientTestSuite) TestClient_SetHTTPClient() {
+func (ts *testSuite) TestClient_SetHTTPClient() {
 	testHTTPClient := http.DefaultClient
 
 	client := new(Client)
@@ -109,7 +96,7 @@ func (ts *clientTestSuite) TestClient_SetHTTPClient() {
 	ts.Require().Equal(testHTTPClient, client.httpClient)
 }
 
-func (ts *clientTestSuite) TestClient_SetTimeout() {
+func (ts *testSuite) TestClient_SetTimeout() {
 	testTimeout := 5 * time.Minute
 
 	client := new(Client)
@@ -118,14 +105,14 @@ func (ts *clientTestSuite) TestClient_SetTimeout() {
 	ts.Require().Equal(testTimeout, client.timeout)
 }
 
-func (ts *clientTestSuite) TestClient_SetTrace() {
+func (ts *testSuite) TestClient_SetTrace() {
 	client := new(Client)
 	client.SetTrace(true)
 
 	ts.Require().Equal(true, client.trace)
 }
 
-func (ts *clientTestSuite) TestClient_fetchfromIDs() {
+func (ts *testSuite) TestClient_fetchfromIDs() {
 	type args struct {
 		ctx  context.Context
 		zone string
@@ -190,28 +177,19 @@ func (ts *clientTestSuite) TestClient_fetchfromIDs() {
 	}
 }
 
-func (ts *clientTestSuite) TestDefaultTransport_RoundTrip() {
-	var ok bool
+func (ts *testSuite) TestDefaultTransport_RoundTrip() {
+	testServer := httptest.NewServer(nil)
+	defer testServer.Close()
 
-	httpmock.RegisterResponder("GET", "/zone",
-		func(req *http.Request) (*http.Response, error) {
-			ts.Require().Equal(UserAgent, req.Header.Get("User-Agent"))
-			ok = true
+	testClient := testServer.Client()
+	testClient.Transport = &defaultTransport{next: testClient.Transport}
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, struct {
-				Zones *[]oapi.Zone `json:"zones,omitempty"`
-			}{
-				Zones: new([]oapi.Zone),
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-			return resp, nil
-		})
-
-	_, err := ts.client.ListZones(context.Background())
+	req, err := http.NewRequest(http.MethodGet, testServer.URL, nil)
 	ts.Require().NoError(err)
-	ts.Require().True(ok)
+
+	_, err = testClient.Do(req)
+	ts.Require().NoError(err)
+	ts.Require().Equal(UserAgent, req.Header.Get("User-Agent"))
 }
 
 func TestSetEndpointFromContext(t *testing.T) {
@@ -267,5 +245,5 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestSuiteClientTestSuite(t *testing.T) {
-	suite.Run(t, new(clientTestSuite))
+	suite.Run(t, new(testSuite))
 }

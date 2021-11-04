@@ -2,78 +2,80 @@ package v2
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/mock"
 
 	apiv2 "github.com/exoscale/egoscale/v2/api"
 	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var (
-	testInstanceAntiAffinityGroupID       = new(clientTestSuite).randomID()
+	testInstanceAntiAffinityGroupID       = new(testSuite).randomID()
 	testInstanceCreatedAt, _              = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
 	testInstanceDiskSize            int64 = 10
-	testInstanceElasticIPID               = new(clientTestSuite).randomID()
-	testInstanceID                        = new(clientTestSuite).randomID()
+	testInstanceElasticIPID               = new(testSuite).randomID()
+	testInstanceID                        = new(testSuite).randomID()
 	testInstanceIPv6Address               = "2001:db8:abcd::1"
 	testInstanceIPv6AddressP              = net.ParseIP(testInstanceIPv6Address)
 	testInstanceIPv6Enabled               = true
-	testInstanceInstanceTypeID            = new(clientTestSuite).randomID()
+	testInstanceInstanceTypeID            = new(testSuite).randomID()
 	testInstanceLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
-	testInstanceManagerID                 = new(clientTestSuite).randomID()
+	testInstanceManagerID                 = new(testSuite).randomID()
 	testInstanceManagerType               = oapi.ManagerTypeInstancePool
-	testInstanceName                      = new(clientTestSuite).randomString(10)
-	testInstancePrivateNetworkID          = new(clientTestSuite).randomID()
+	testInstanceName                      = new(testSuite).randomString(10)
+	testInstancePrivateNetworkID          = new(testSuite).randomID()
 	testInstancePublicIP                  = "1.2.3.4"
 	testInstancePublicIPP                 = net.ParseIP(testInstancePublicIP)
-	testInstanceSSHKey                    = new(clientTestSuite).randomString(10)
-	testInstanceSecurityGroupID           = new(clientTestSuite).randomID()
-	testInstanceSnapshotID                = new(clientTestSuite).randomID()
-	testInstanceStartRescueProfile        = new(clientTestSuite).randomString(10)
+	testInstanceSSHKey                    = new(testSuite).randomString(10)
+	testInstanceSecurityGroupID           = new(testSuite).randomID()
+	testInstanceSnapshotID                = new(testSuite).randomID()
+	testInstanceStartRescueProfile        = new(testSuite).randomString(10)
 	testInstanceState                     = oapi.InstanceStateRunning
-	testInstanceTemplateID                = new(clientTestSuite).randomID()
+	testInstanceTemplateID                = new(testSuite).randomID()
 	testInstanceUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 )
 
-func (ts *clientTestSuite) TestClient_AttachInstanceToElasticIP() {
+func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		attached           = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/elastic-ip/%s:attach", testInstanceElasticIPID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"AttachInstanceToElasticIpWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.AttachInstanceToElasticIpJSONRequestBody{Instance: oapi.Instance{Id: &testInstanceID}},
+				args.Get(2),
+			)
 			attached = true
+		}).
+		Return(
+			&oapi.AttachInstanceToElasticIpResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.AttachInstanceToElasticIpJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.AttachInstanceToElasticIpJSONRequestBody{
-				Instance: oapi.Instance{Id: &testInstanceID},
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.AttachInstanceToElasticIP(
@@ -85,7 +87,7 @@ func (ts *clientTestSuite) TestClient_AttachInstanceToElasticIP() {
 	ts.Require().True(attached)
 }
 
-func (ts *clientTestSuite) TestClient_AttachInstanceToPrivateNetwork() {
+func (ts *testSuite) TestClient_AttachInstanceToPrivateNetwork() {
 	var (
 		testOperationID      = ts.randomID()
 		testOperationState   = oapi.OperationStateSuccess
@@ -93,36 +95,40 @@ func (ts *clientTestSuite) TestClient_AttachInstanceToPrivateNetwork() {
 		attached             = false
 	)
 
-	httpmock.RegisterResponder("PUT",
-		fmt.Sprintf("/private-network/%s:attach", testInstancePrivateNetworkID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"AttachInstanceToPrivateNetworkWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.AttachInstanceToPrivateNetworkJSONRequestBody{
+					Instance: oapi.Instance{Id: &testInstanceID},
+					Ip:       func() *string { ip := testPrivateIPAddress.String(); return &ip }(),
+				},
+				args.Get(2),
+			)
 			attached = true
+		}).
+		Return(
+			&oapi.AttachInstanceToPrivateNetworkResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.AttachInstanceToPrivateNetworkJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.AttachInstanceToPrivateNetworkJSONRequestBody{
-				Instance: oapi.Instance{Id: &testInstanceID},
-				Ip:       func() *string { ip := testPrivateIPAddress.String(); return &ip }(),
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.AttachInstanceToPrivateNetwork(
@@ -135,42 +141,44 @@ func (ts *clientTestSuite) TestClient_AttachInstanceToPrivateNetwork() {
 	ts.Require().True(attached)
 }
 
-func (ts *clientTestSuite) TestClient_AttachInstanceToSecurityGroup() {
+func (ts *testSuite) TestClient_AttachInstanceToSecurityGroup() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		attached           = false
 	)
 
-	httpmock.RegisterResponder("PUT",
-		fmt.Sprintf("/security-group/%s:attach", testInstanceSecurityGroupID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"AttachInstanceToSecurityGroupWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.AttachInstanceToSecurityGroupJSONRequestBody{Instance: oapi.Instance{Id: &testInstanceID}},
+				args.Get(2),
+			)
 			attached = true
+		}).
+		Return(
+			&oapi.AttachInstanceToSecurityGroupResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.AttachInstanceToSecurityGroupJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.AttachInstanceToSecurityGroupJSONRequestBody{
-				Instance: oapi.Instance{Id: &testInstanceID},
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.AttachInstanceToSecurityGroup(
@@ -182,69 +190,83 @@ func (ts *clientTestSuite) TestClient_AttachInstanceToSecurityGroup() {
 	ts.Require().True(attached)
 }
 
-func (ts *clientTestSuite) TestClient_CreateInstance() {
+func (ts *testSuite) TestClient_CreateInstance() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 	)
 
-	httpmock.RegisterResponder("POST", "/instance",
-		func(req *http.Request) (*http.Response, error) {
-			var actual oapi.CreateInstanceJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
+	ts.mock().
+		On(
+			"CreateInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.CreateInstanceJSONRequestBody{
+					AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstanceAntiAffinityGroupID}},
+					DiskSize:           testInstanceDiskSize,
+					InstanceType:       oapi.InstanceType{Id: &testInstanceInstanceTypeID},
+					Ipv6Enabled:        &testInstanceIPv6Enabled,
+					Labels:             &oapi.Labels{AdditionalProperties: testInstanceLabels},
+					Name:               &testInstanceName,
+					SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
+					SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
+					Template:           oapi.Template{Id: &testInstanceTemplateID},
+					UserData:           &testInstanceUserData,
+				},
+				args.Get(1),
+			)
+		}).
+		Return(
+			&oapi.CreateInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			expected := oapi.CreateInstanceJSONRequestBody{
-				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstanceAntiAffinityGroupID}},
-				DiskSize:           testInstanceDiskSize,
-				InstanceType:       oapi.InstanceType{Id: &testInstanceInstanceTypeID},
-				Ipv6Enabled:        &testInstanceIPv6Enabled,
-				Labels:             &oapi.Labels{AdditionalProperties: testInstanceLabels},
-				Name:               &testInstanceName,
-				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
-				SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
-				Template:           oapi.Template{Id: &testInstanceTemplateID},
-				UserData:           &testInstanceUserData,
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/instance/%s", testInstanceID), oapi.Instance{
-		AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstanceAntiAffinityGroupID}},
-		CreatedAt:          &testInstanceCreatedAt,
-		DiskSize:           &testInstanceDiskSize,
-		ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstanceElasticIPID}},
-		Id:                 &testInstanceID,
-		InstanceType:       &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
-		Ipv6Address:        &testInstanceIPv6Address,
-		Labels:             &oapi.Labels{AdditionalProperties: testInstanceLabels},
-		Manager:            &oapi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
-		Name:               &testInstanceName,
-		PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
-		PublicIp:           &testInstancePublicIP,
-		SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
-		Snapshots:          &[]oapi.Snapshot{{Id: &testInstanceSnapshotID}},
-		SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
-		State:              &testInstanceState,
-		Template:           &oapi.Template{Id: &testInstanceTemplateID},
-		UserData:           &testInstanceUserData,
-	})
+	ts.mock().
+		On("GetInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetInstanceResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.Instance{
+				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstanceAntiAffinityGroupID}},
+				CreatedAt:          &testInstanceCreatedAt,
+				DiskSize:           &testInstanceDiskSize,
+				ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstanceElasticIPID}},
+				Id:                 &testInstanceID,
+				InstanceType:       &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
+				Ipv6Address:        &testInstanceIPv6Address,
+				Labels:             &oapi.Labels{AdditionalProperties: testInstanceLabels},
+				Manager:            &oapi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
+				Name:               &testInstanceName,
+				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
+				PublicIp:           &testInstancePublicIP,
+				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
+				Snapshots:          &[]oapi.Snapshot{{Id: &testInstanceSnapshotID}},
+				SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
+				State:              &testInstanceState,
+				Template:           &oapi.Template{Id: &testInstanceTemplateID},
+				UserData:           &testInstanceUserData,
+			},
+		}, nil)
 
 	expected := &Instance{
 		AntiAffinityGroupIDs: &[]string{testInstanceAntiAffinityGroupID},
@@ -294,31 +316,56 @@ func (ts *clientTestSuite) TestClient_CreateInstance() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_CreateInstanceSnapshot() {
+func (ts *testSuite) TestClient_CreateInstanceSnapshot() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 	)
 
-	ts.mockAPIRequest("POST", fmt.Sprintf("/instance/%s:create-snapshot", testInstanceID), oapi.Operation{
+	ts.mock().
+		On(
+			"CreateSnapshotWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+		}).
+		Return(
+			&oapi.CreateSnapshotResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testSnapshotID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
+
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testSnapshotID},
+		State:     &testOperationState,
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &oapi.Reference{Id: &testSnapshotID},
-	})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/snapshot/%s", testSnapshotID), oapi.Snapshot{
-		CreatedAt: &testSnapshotCreatedAt,
-		Id:        &testSnapshotID,
-		Instance:  &oapi.Instance{Id: &testInstanceID},
-		Name:      &testSnapshotName,
-		State:     &testSnapshotState,
-	})
+	ts.mock().
+		On("GetSnapshotWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetSnapshotResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.Snapshot{
+				CreatedAt: &testSnapshotCreatedAt,
+				Id:        &testSnapshotID,
+				Instance:  &oapi.Instance{Id: &testInstanceID},
+				Name:      &testSnapshotName,
+				State:     &testSnapshotState,
+			},
+		}, nil)
 
 	expected := &Snapshot{
 		CreatedAt:  &testSnapshotCreatedAt,
@@ -338,74 +385,84 @@ func (ts *clientTestSuite) TestClient_CreateInstanceSnapshot() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_DeleteInstance() {
+func (ts *testSuite) TestClient_DeleteInstance() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
-	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/instance/%s", testInstanceID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"DeleteInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
 			deleted = true
+		}).
+		Return(
+			&oapi.DeleteInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeleteInstance(context.Background(), testZone, &Instance{ID: &testInstanceID}))
 	ts.Require().True(deleted)
 }
 
-func (ts *clientTestSuite) TestClient_DetachInstanceFromElasticIP() {
+func (ts *testSuite) TestClient_DetachInstanceFromElasticIP() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		detached           = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/elastic-ip/%s:detach", testInstanceElasticIPID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"DetachInstanceFromElasticIpWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.DetachInstanceFromElasticIpJSONRequestBody{Instance: oapi.Instance{Id: &testInstanceID}},
+				args.Get(2),
+			)
 			detached = true
+		}).
+		Return(
+			&oapi.DetachInstanceFromElasticIpResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.DetachInstanceFromElasticIpJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.DetachInstanceFromElasticIpJSONRequestBody{
-				Instance: oapi.Instance{Id: &testInstanceID},
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DetachInstanceFromElasticIP(
@@ -417,42 +474,44 @@ func (ts *clientTestSuite) TestClient_DetachInstanceFromElasticIP() {
 	ts.Require().True(detached)
 }
 
-func (ts *clientTestSuite) TestClient_DetachInstanceFromPrivateNetwork() {
+func (ts *testSuite) TestClient_DetachInstanceFromPrivateNetwork() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
-		attached           = false
+		detached           = false
 	)
 
-	httpmock.RegisterResponder("PUT",
-		fmt.Sprintf("/private-network/%s:detach", testInstancePrivateNetworkID),
-		func(req *http.Request) (*http.Response, error) {
-			attached = true
+	ts.mock().
+		On(
+			"DetachInstanceFromPrivateNetworkWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.DetachInstanceFromPrivateNetworkJSONRequestBody{Instance: oapi.Instance{Id: &testInstanceID}},
+				args.Get(2),
+			)
+			detached = true
+		}).
+		Return(
+			&oapi.DetachInstanceFromPrivateNetworkResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.DetachInstanceFromPrivateNetworkJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.DetachInstanceFromPrivateNetworkJSONRequestBody{
-				Instance: oapi.Instance{Id: &testInstanceID},
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DetachInstanceFromPrivateNetwork(
@@ -461,45 +520,47 @@ func (ts *clientTestSuite) TestClient_DetachInstanceFromPrivateNetwork() {
 		&Instance{ID: &testInstanceID},
 		&PrivateNetwork{ID: &testInstancePrivateNetworkID},
 	))
-	ts.Require().True(attached)
+	ts.Require().True(detached)
 }
 
-func (ts *clientTestSuite) TestClient_DetachInstanceFromSecurityGroup() {
+func (ts *testSuite) TestClient_DetachInstanceFromSecurityGroup() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
-		attached           = false
+		detached           = false
 	)
 
-	httpmock.RegisterResponder("PUT",
-		fmt.Sprintf("/security-group/%s:detach", testInstanceSecurityGroupID),
-		func(req *http.Request) (*http.Response, error) {
-			attached = true
+	ts.mock().
+		On(
+			"DetachInstanceFromSecurityGroupWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.DetachInstanceFromSecurityGroupJSONRequestBody{Instance: oapi.Instance{Id: &testInstanceID}},
+				args.Get(2),
+			)
+			detached = true
+		}).
+		Return(
+			&oapi.DetachInstanceFromSecurityGroupResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.DetachInstanceFromSecurityGroupJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.DetachInstanceFromSecurityGroupJSONRequestBody{
-				Instance: oapi.Instance{Id: &testInstanceID},
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DetachInstanceFromSecurityGroup(
@@ -508,29 +569,130 @@ func (ts *clientTestSuite) TestClient_DetachInstanceFromSecurityGroup() {
 		&Instance{ID: &testInstanceID},
 		&SecurityGroup{ID: &testInstanceSecurityGroupID},
 	))
-	ts.Require().True(attached)
+	ts.Require().True(detached)
 }
 
-func (ts *clientTestSuite) TestClient_GetInstance() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/instance/%s", testInstanceID), oapi.Instance{
-		AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstanceAntiAffinityGroupID}},
-		CreatedAt:          &testInstanceCreatedAt,
-		DiskSize:           &testInstanceDiskSize,
-		ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstanceElasticIPID}},
-		Id:                 &testInstanceID,
-		InstanceType:       &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
-		Ipv6Address:        &testInstanceIPv6Address,
-		Manager:            &oapi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
-		Name:               &testInstanceName,
-		PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
-		PublicIp:           &testInstancePublicIP,
-		SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
-		Snapshots:          &[]oapi.Snapshot{{Id: &testInstanceSnapshotID}},
-		SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
-		State:              &testInstanceState,
-		Template:           &oapi.Template{Id: &testInstanceTemplateID},
-		UserData:           &testInstanceUserData,
-	})
+func (ts *testSuite) TestClient_FindInstance() {
+	ts.mock().
+		On("ListInstancesWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // params
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListInstancesResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				Instances *[]oapi.Instance `json:"instances,omitempty"`
+			}{
+				Instances: &[]oapi.Instance{
+					{
+						CreatedAt:    &testInstanceCreatedAt,
+						DiskSize:     &testInstanceDiskSize,
+						Id:           &testInstanceID,
+						InstanceType: &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
+						Name:         &testInstanceName,
+						State:        &testInstanceState,
+						Template:     &oapi.Template{Id: &testInstanceTemplateID},
+					},
+					{
+						CreatedAt:    &testInstanceCreatedAt,
+						DiskSize:     &testInstanceDiskSize,
+						Id:           func() *string { id := ts.randomID(); return &id }(),
+						InstanceType: &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
+						Name:         func() *string { name := "dup"; return &name }(),
+						State:        &testInstanceState,
+						Template:     &oapi.Template{Id: &testInstanceTemplateID},
+					},
+					{
+						CreatedAt:    &testInstanceCreatedAt,
+						DiskSize:     &testInstanceDiskSize,
+						Id:           func() *string { id := ts.randomID(); return &id }(),
+						InstanceType: &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
+						Name:         func() *string { name := "dup"; return &name }(),
+						State:        &testInstanceState,
+						Template:     &oapi.Template{Id: &testInstanceTemplateID},
+					},
+				},
+			},
+		}, nil)
+
+	ts.mock().
+		On("GetInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+		}).
+		Return(&oapi.GetInstanceResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.Instance{
+				CreatedAt:    &testInstanceCreatedAt,
+				DiskSize:     &testInstanceDiskSize,
+				Id:           &testInstanceID,
+				InstanceType: &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
+				Name:         &testInstanceName,
+				State:        &testInstanceState,
+				Template:     &oapi.Template{Id: &testInstanceTemplateID},
+			},
+		}, nil)
+
+	expected := &Instance{
+		CreatedAt:      &testInstanceCreatedAt,
+		DiskSize:       &testInstanceDiskSize,
+		ID:             &testInstanceID,
+		InstanceTypeID: &testInstanceInstanceTypeID,
+		Name:           &testInstanceName,
+		State:          (*string)(&testInstanceState),
+		TemplateID:     &testInstanceTemplateID,
+		Zone:           &testZone,
+	}
+
+	actual, err := ts.client.FindInstance(context.Background(), testZone, *expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindInstance(context.Background(), testZone, *expected.Name)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	_, err = ts.client.FindInstance(context.Background(), testZone, "dup")
+	ts.Require().EqualError(err, apiv2.ErrTooManyFound.Error())
+}
+
+func (ts *testSuite) TestClient_GetInstance() {
+	ts.mock().
+		On("GetInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+		}).
+		Return(&oapi.GetInstanceResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.Instance{
+				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstanceAntiAffinityGroupID}},
+				CreatedAt:          &testInstanceCreatedAt,
+				DiskSize:           &testInstanceDiskSize,
+				ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstanceElasticIPID}},
+				Id:                 &testInstanceID,
+				InstanceType:       &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
+				Ipv6Address:        &testInstanceIPv6Address,
+				Manager:            &oapi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
+				Name:               &testInstanceName,
+				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
+				PublicIp:           &testInstancePublicIP,
+				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
+				Snapshots:          &[]oapi.Snapshot{{Id: &testInstanceSnapshotID}},
+				SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
+				State:              &testInstanceState,
+				Template:           &oapi.Template{Id: &testInstanceTemplateID},
+				UserData:           &testInstanceUserData,
+			},
+		}, nil)
 
 	expected := &Instance{
 		AntiAffinityGroupIDs: &[]string{testInstanceAntiAffinityGroupID},
@@ -559,98 +721,39 @@ func (ts *clientTestSuite) TestClient_GetInstance() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_FindInstance() {
-	ts.mockAPIRequest("GET", "/instance", struct {
-		Instances *[]oapi.Instance `json:"instances,omitempty"`
-	}{
-		Instances: &[]oapi.Instance{
-			{
-				CreatedAt:    &testInstanceCreatedAt,
-				DiskSize:     &testInstanceDiskSize,
-				Id:           &testInstanceID,
-				InstanceType: &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
-				Name:         &testInstanceName,
-				State:        &testInstanceState,
-				Template:     &oapi.Template{Id: &testInstanceTemplateID},
+func (ts *testSuite) TestClient_ListInstances() {
+	ts.mock().
+		On("ListInstancesWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // params
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListInstancesResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				Instances *[]oapi.Instance `json:"instances,omitempty"`
+			}{
+				Instances: &[]oapi.Instance{{
+					AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstanceAntiAffinityGroupID}},
+					CreatedAt:          &testInstanceCreatedAt,
+					DiskSize:           &testInstanceDiskSize,
+					ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstanceElasticIPID}},
+					Id:                 &testInstanceID,
+					InstanceType:       &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
+					Ipv6Address:        &testInstanceIPv6Address,
+					Manager:            &oapi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
+					Name:               &testInstanceName,
+					PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
+					PublicIp:           &testInstancePublicIP,
+					SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
+					Snapshots:          &[]oapi.Snapshot{{Id: &testInstanceSnapshotID}},
+					SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
+					State:              &testInstanceState,
+					Template:           &oapi.Template{Id: &testInstanceTemplateID},
+					UserData:           &testInstanceUserData,
+				}},
 			},
-			{
-				CreatedAt:    &testInstanceCreatedAt,
-				DiskSize:     &testInstanceDiskSize,
-				Id:           func() *string { id := ts.randomID(); return &id }(),
-				InstanceType: &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
-				Name:         func() *string { name := "dup"; return &name }(),
-				State:        &testInstanceState,
-				Template:     &oapi.Template{Id: &testInstanceTemplateID},
-			},
-			{
-				CreatedAt:    &testInstanceCreatedAt,
-				DiskSize:     &testInstanceDiskSize,
-				Id:           func() *string { id := ts.randomID(); return &id }(),
-				InstanceType: &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
-				Name:         func() *string { name := "dup"; return &name }(),
-				State:        &testInstanceState,
-				Template:     &oapi.Template{Id: &testInstanceTemplateID},
-			},
-		},
-	})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/instance/%s", testInstanceID), oapi.Instance{
-		CreatedAt:    &testInstanceCreatedAt,
-		DiskSize:     &testInstanceDiskSize,
-		Id:           &testInstanceID,
-		InstanceType: &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
-		Name:         &testInstanceName,
-		State:        &testInstanceState,
-		Template:     &oapi.Template{Id: &testInstanceTemplateID},
-	})
-
-	expected := &Instance{
-		CreatedAt:      &testInstanceCreatedAt,
-		DiskSize:       &testInstanceDiskSize,
-		ID:             &testInstanceID,
-		InstanceTypeID: &testInstanceInstanceTypeID,
-		Name:           &testInstanceName,
-		State:          (*string)(&testInstanceState),
-		TemplateID:     &testInstanceTemplateID,
-		Zone:           &testZone,
-	}
-
-	actual, err := ts.client.FindInstance(context.Background(), testZone, *expected.ID)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-
-	actual, err = ts.client.FindInstance(context.Background(), testZone, *expected.Name)
-	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
-
-	_, err = ts.client.FindInstance(context.Background(), testZone, "dup")
-	ts.Require().EqualError(err, apiv2.ErrTooManyFound.Error())
-}
-
-func (ts *clientTestSuite) TestClient_ListInstances() {
-	ts.mockAPIRequest("GET", "/instance", struct {
-		Instances *[]oapi.Instance `json:"instances,omitempty"`
-	}{
-		Instances: &[]oapi.Instance{{
-			AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstanceAntiAffinityGroupID}},
-			CreatedAt:          &testInstanceCreatedAt,
-			DiskSize:           &testInstanceDiskSize,
-			ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstanceElasticIPID}},
-			Id:                 &testInstanceID,
-			InstanceType:       &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
-			Ipv6Address:        &testInstanceIPv6Address,
-			Manager:            &oapi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
-			Name:               &testInstanceName,
-			PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
-			PublicIp:           &testInstancePublicIP,
-			SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
-			Snapshots:          &[]oapi.Snapshot{{Id: &testInstanceSnapshotID}},
-			SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
-			State:              &testInstanceState,
-			Template:           &oapi.Template{Id: &testInstanceTemplateID},
-			UserData:           &testInstanceUserData,
-		}},
-	})
+		}, nil)
 
 	expected := []*Instance{{
 		AntiAffinityGroupIDs: &[]string{testInstanceAntiAffinityGroupID},
@@ -679,40 +782,47 @@ func (ts *clientTestSuite) TestClient_ListInstances() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_RebootInstance() {
+func (ts *testSuite) TestClient_RebootInstance() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
-		started            = false
+		rebooted           = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:reboot", testInstanceID),
-		func(req *http.Request) (*http.Response, error) {
-			started = true
+	ts.mock().
+		On(
+			"RebootInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+			rebooted = true
+		}).
+		Return(
+			&oapi.RebootInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.RebootInstance(context.Background(), testZone, &Instance{ID: &testInstanceID}))
-	ts.Require().True(started)
+	ts.Require().True(rebooted)
 }
 
-func (ts *clientTestSuite) TestClient_ResetInstance() {
+func (ts *testSuite) TestClient_ResetInstance() {
 	var (
 		testResetDiskSize   int64 = 50
 		testResetTemplateID       = ts.randomID()
@@ -721,35 +831,38 @@ func (ts *clientTestSuite) TestClient_ResetInstance() {
 		reset                     = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:reset", testInstanceID),
-		func(req *http.Request) (*http.Response, error) {
-			reset = true
-
-			var actual oapi.ResetInstanceJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.ResetInstanceJSONRequestBody{
+	ts.mock().
+		On(
+			"ResetInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+			ts.Require().Equal(oapi.ResetInstanceJSONRequestBody{
 				DiskSize: &testResetDiskSize,
 				Template: &oapi.Template{Id: &testResetTemplateID},
-			}
-			ts.Require().Equal(expected, actual)
+			}, args.Get(2))
+			reset = true
+		}).
+		Return(
+			&oapi.ResetInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
+		Reference: &oapi.Reference{Id: &testInstanceID},
 		State:     &testOperationState,
-		Reference: &oapi.Reference{Id: &testSnapshotID},
 	})
 
 	ts.Require().NoError(ts.client.ResetInstance(
@@ -762,7 +875,7 @@ func (ts *clientTestSuite) TestClient_ResetInstance() {
 	ts.Require().True(reset)
 }
 
-func (ts *clientTestSuite) TestClient_ResizeInstanceDisk() {
+func (ts *testSuite) TestClient_ResizeInstanceDisk() {
 	var (
 		testResizeDiskSize int64 = 50
 		testOperationID          = ts.randomID()
@@ -770,34 +883,35 @@ func (ts *clientTestSuite) TestClient_ResizeInstanceDisk() {
 		resized                  = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:resize-disk", testInstanceID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"ResizeInstanceDiskWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+			ts.Require().Equal(oapi.ResizeInstanceDiskJSONRequestBody{DiskSize: testResizeDiskSize}, args.Get(2))
 			resized = true
+		}).
+		Return(
+			&oapi.ResizeInstanceDiskResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.ResizeInstanceDiskJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.ResizeInstanceDiskJSONRequestBody{
-				DiskSize: testResizeDiskSize,
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
+		Reference: &oapi.Reference{Id: &testInstanceID},
 		State:     &testOperationState,
-		Reference: &oapi.Reference{Id: &testSnapshotID},
 	})
 
 	ts.Require().NoError(ts.client.ResizeInstanceDisk(
@@ -809,39 +923,42 @@ func (ts *clientTestSuite) TestClient_ResizeInstanceDisk() {
 	ts.Require().True(resized)
 }
 
-func (ts *clientTestSuite) TestClient_RevertInstanceToSnapshot() {
+func (ts *testSuite) TestClient_RevertInstanceToSnapshot() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		reverted           = false
 	)
 
-	httpmock.RegisterResponder("POST", fmt.Sprintf("/instance/%s:revert-snapshot", testInstanceID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"RevertInstanceToSnapshotWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+			ts.Require().Equal(oapi.RevertInstanceToSnapshotJSONRequestBody{Id: testSnapshotID}, args.Get(2))
 			reverted = true
+		}).
+		Return(
+			&oapi.RevertInstanceToSnapshotResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.RevertInstanceToSnapshotJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.RevertInstanceToSnapshotJSONRequestBody{Id: testSnapshotID}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
+		Reference: &oapi.Reference{Id: &testInstanceID},
 		State:     &testOperationState,
-		Reference: &oapi.Reference{Id: &testSnapshotID},
 	})
 
 	snapshot := &Snapshot{
@@ -858,7 +975,7 @@ func (ts *clientTestSuite) TestClient_RevertInstanceToSnapshot() {
 	ts.Require().True(reverted)
 }
 
-func (ts *clientTestSuite) TestClient_ScaleInstance() {
+func (ts *testSuite) TestClient_ScaleInstance() {
 	var (
 		testScaleInstanceTypeID = ts.randomID()
 		testOperationID         = ts.randomID()
@@ -866,34 +983,37 @@ func (ts *clientTestSuite) TestClient_ScaleInstance() {
 		scaled                  = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:scale", testInstanceID),
-		func(req *http.Request) (*http.Response, error) {
-			scaled = true
-
-			var actual oapi.ScaleInstanceJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.ScaleInstanceJSONRequestBody{
+	ts.mock().
+		On(
+			"ScaleInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+			ts.Require().Equal(oapi.ScaleInstanceJSONRequestBody{
 				InstanceType: oapi.InstanceType{Id: &testScaleInstanceTypeID},
-			}
-			ts.Require().Equal(expected, actual)
+			}, args.Get(2))
+			scaled = true
+		}).
+		Return(
+			&oapi.ScaleInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
+		Reference: &oapi.Reference{Id: &testInstanceID},
 		State:     &testOperationState,
-		Reference: &oapi.Reference{Id: &testSnapshotID},
 	})
 
 	ts.Require().NoError(ts.client.ScaleInstance(
@@ -905,41 +1025,44 @@ func (ts *clientTestSuite) TestClient_ScaleInstance() {
 	ts.Require().True(scaled)
 }
 
-func (ts *clientTestSuite) TestClient_StartInstance() {
+func (ts *testSuite) TestClient_StartInstance() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		started            = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:start", testInstanceID),
-		func(req *http.Request) (*http.Response, error) {
-			started = true
-
-			var actual oapi.StartInstanceJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.StartInstanceJSONRequestBody{
+	ts.mock().
+		On(
+			"StartInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+			ts.Require().Equal(oapi.StartInstanceJSONRequestBody{
 				RescueProfile: (*oapi.StartInstanceJSONBodyRescueProfile)(&testInstanceStartRescueProfile),
-			}
-			ts.Require().Equal(expected, actual)
+			}, args.Get(2))
+			started = true
+		}).
+		Return(
+			&oapi.StartInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.StartInstance(
@@ -951,40 +1074,47 @@ func (ts *clientTestSuite) TestClient_StartInstance() {
 	ts.Require().True(started)
 }
 
-func (ts *clientTestSuite) TestClient_StopInstance() {
+func (ts *testSuite) TestClient_StopInstance() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		stopped            = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s:stop", testInstanceID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"StopInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
 			stopped = true
+		}).
+		Return(
+			&oapi.StopInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.StopInstance(context.Background(), testZone, &Instance{ID: &testInstanceID}))
 	ts.Require().True(stopped)
 }
 
-func (ts *clientTestSuite) TestClient_UpdateInstance() {
+func (ts *testSuite) TestClient_UpdateInstance() {
 	var (
 		testInstanceLabelsUpdated   = map[string]string{"k3": "v3"}
 		testInstanceNameUpdated     = testInstanceName + "-updated"
@@ -994,36 +1124,42 @@ func (ts *clientTestSuite) TestClient_UpdateInstance() {
 		updated                     = false
 	)
 
-	httpmock.RegisterResponder("PUT", fmt.Sprintf("/instance/%s", testInstanceID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"UpdateInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+			ts.Require().Equal(
+				oapi.UpdateInstanceJSONRequestBody{
+					Labels:   &oapi.Labels{AdditionalProperties: testInstanceLabelsUpdated},
+					Name:     &testInstanceNameUpdated,
+					UserData: &testInstanceUserDataUpdated,
+				},
+				args.Get(2),
+			)
 			updated = true
+		}).
+		Return(
+			&oapi.UpdateInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testInstanceID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			var actual oapi.UpdateInstanceJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
-
-			expected := oapi.UpdateInstanceJSONRequestBody{
-				Labels:   &oapi.Labels{AdditionalProperties: testInstanceLabelsUpdated},
-				Name:     &testInstanceNameUpdated,
-				UserData: &testInstanceUserDataUpdated,
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testInstanceID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testInstanceID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpdateInstance(context.Background(), testZone, &Instance{

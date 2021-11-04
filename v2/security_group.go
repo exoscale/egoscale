@@ -99,6 +99,39 @@ func securityGroupFromAPI(s *oapi.SecurityGroup) *SecurityGroup {
 	}
 }
 
+// AddExternalSourceToSecurityGroup adds a new external source to a
+// Security Group. This operation is idempotent.
+func (c *Client) AddExternalSourceToSecurityGroup(
+	ctx context.Context,
+	zone string,
+	securityGroup *SecurityGroup,
+	cidr string,
+) error {
+	if err := validateOperationParams(securityGroup, "update"); err != nil {
+		return err
+	}
+
+	resp, err := c.AddExternalSourceToSecurityGroupWithResponse(
+		apiv2.WithZone(ctx, zone),
+		*securityGroup.ID,
+		oapi.AddExternalSourceToSecurityGroupJSONRequestBody{
+			Cidr: cidr,
+		})
+	if err != nil {
+		return err
+	}
+
+	_, err = oapi.NewPoller().
+		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
+		Poll(ctx, oapi.OperationPoller(c, zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateSecurityGroup creates a Security Group.
 func (c *Client) CreateSecurityGroup(
 	ctx context.Context,
@@ -120,7 +153,7 @@ func (c *Client) CreateSecurityGroup(
 	res, err := oapi.NewPoller().
 		WithTimeout(c.timeout).
 		WithInterval(c.pollInterval).
-		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
+		Poll(ctx, oapi.OperationPoller(c, zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +246,7 @@ func (c *Client) CreateSecurityGroupRule(
 	res, err := oapi.NewPoller().
 		WithTimeout(c.timeout).
 		WithInterval(c.pollInterval).
-		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
+		Poll(ctx, oapi.OperationPoller(c, zone, *resp.JSON200.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +280,7 @@ func (c *Client) DeleteSecurityGroup(ctx context.Context, zone string, securityG
 	_, err = oapi.NewPoller().
 		WithTimeout(c.timeout).
 		WithInterval(c.pollInterval).
-		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
+		Poll(ctx, oapi.OperationPoller(c, zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
 	}
@@ -277,7 +310,7 @@ func (c *Client) DeleteSecurityGroupRule(
 	_, err = oapi.NewPoller().
 		WithTimeout(c.timeout).
 		WithInterval(c.pollInterval).
-		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
+		Poll(ctx, oapi.OperationPoller(c, zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
 	}
@@ -329,39 +362,6 @@ func (c *Client) ListSecurityGroups(ctx context.Context, zone string) ([]*Securi
 	return list, nil
 }
 
-// AddExternalSourceToSecurityGroup adds a new external source to a
-// Security Group. This operation is idempotent.
-func (c *Client) AddExternalSourceToSecurityGroup(
-	ctx context.Context,
-	zone string,
-	securityGroup *SecurityGroup,
-	cidr string,
-) error {
-	if err := validateOperationParams(securityGroup, "update"); err != nil {
-		return err
-	}
-
-	resp, err := c.AddExternalSourceToSecurityGroupWithResponse(
-		apiv2.WithZone(ctx, zone),
-		*securityGroup.ID,
-		oapi.AddExternalSourceToSecurityGroupJSONRequestBody{
-			Cidr: cidr,
-		})
-	if err != nil {
-		return err
-	}
-
-	_, err = oapi.NewPoller().
-		WithTimeout(c.timeout).
-		WithInterval(c.pollInterval).
-		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // RemoveExternalSourceFromSecurityGroup removes an external source from
 // a Security Group. This operation is idempotent.
 func (c *Client) RemoveExternalSourceFromSecurityGroup(
@@ -387,7 +387,7 @@ func (c *Client) RemoveExternalSourceFromSecurityGroup(
 	_, err = oapi.NewPoller().
 		WithTimeout(c.timeout).
 		WithInterval(c.pollInterval).
-		Poll(ctx, c.OperationPoller(zone, *resp.JSON200.Id))
+		Poll(ctx, oapi.OperationPoller(c, zone, *resp.JSON200.Id))
 	if err != nil {
 		return err
 	}

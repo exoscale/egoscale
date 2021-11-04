@@ -1,71 +1,75 @@
 package api
 
 import (
-	"errors"
 	"io/ioutil"
 	"net/http"
-	"strings"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/require"
 )
 
+type testHandler struct {
+	resStatus int
+	resText   string
+}
+
+func (h *testHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(h.resStatus)
+	_, _ = w.Write([]byte(h.resText))
+}
+
 func TestErrorHandlerMiddleware_RoundTrip(t *testing.T) {
-	client := http.DefaultClient
+	tests := []struct {
+		name     string
+		handler  *testHandler
+		testFunc func(t *testing.T, res *http.Response, err error)
+	}{
+		{
+			name:    "ErrNotFound",
+			handler: &testHandler{resStatus: http.StatusNotFound},
+			testFunc: func(t *testing.T, res *http.Response, err error) {
+				require.ErrorIs(t, err, ErrNotFound)
+				require.Nil(t, res)
+			},
+		},
+		{
+			name:    "ErrInvalidRequest",
+			handler: &testHandler{resStatus: http.StatusBadRequest},
+			testFunc: func(t *testing.T, res *http.Response, err error) {
+				require.ErrorIs(t, err, ErrInvalidRequest)
+				require.Nil(t, res)
+			},
+		},
+		{
+			name:    "ErrAPIError",
+			handler: &testHandler{resStatus: http.StatusInternalServerError},
+			testFunc: func(t *testing.T, res *http.Response, err error) {
+				require.ErrorIs(t, err, ErrAPIError)
+				require.Nil(t, res)
+			},
+		},
+		{
+			name:    "OK",
+			handler: &testHandler{resStatus: http.StatusOK, resText: "test"},
+			testFunc: func(t *testing.T, res *http.Response, err error) {
+				require.NoError(t, err)
+				actual, _ := ioutil.ReadAll(res.Body)
+				require.Equal(t, []byte("test"), actual)
+			},
+		},
+	}
 
-	httpmock.ActivateNonDefault(client)
-	defer httpmock.DeactivateAndReset()
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testServer := httptest.NewServer(test.handler)
+			defer testServer.Close()
 
-	httpmock.RegisterResponder(http.MethodGet, "/",
-		func(_ *http.Request) (*http.Response, error) {
-			return httpmock.NewStringResponse(http.StatusNotFound, ""), nil
+			testClient := testServer.Client()
+			testClient.Transport = &ErrorHandlerMiddleware{next: testClient.Transport}
+
+			res, err := testClient.Get(testServer.URL)
+			test.testFunc(t, res, err)
 		})
-
-	httpmock.RegisterResponder(http.MethodPost, "/",
-		func(_ *http.Request) (*http.Response, error) {
-			return httpmock.NewStringResponse(http.StatusBadRequest, `{"message":"not this way"}`), nil
-		})
-
-	httpmock.RegisterResponder(http.MethodPost, "/broken",
-		func(_ *http.Request) (*http.Response, error) {
-			return httpmock.NewStringResponse(http.StatusInternalServerError, "API is broken"), nil
-		})
-
-	httpmock.RegisterResponder(http.MethodGet, "/ok",
-		func(_ *http.Request) (*http.Response, error) {
-			return httpmock.NewStringResponse(http.StatusOK, "test"), nil
-		})
-
-	client.Transport = NewAPIErrorHandlerMiddleware(client.Transport)
-
-	// Test for ErrNotFound when receiving a http.StatusNotFound status
-	req, err := http.NewRequest(http.MethodGet, "http://example.net/", nil)
-	require.NoError(t, err)
-	resp, err := client.Do(req)
-	require.True(t, errors.Is(err, ErrNotFound))
-	require.Nil(t, resp)
-
-	// Test for ErrInvalidRequest when receiving a http.StatusBadRequest status
-	req, err = http.NewRequest(http.MethodPost, "http://example.net/", nil)
-	require.NoError(t, err)
-	resp, err = client.Do(req)
-	require.True(t, errors.Is(err, ErrInvalidRequest))
-	require.True(t, strings.Contains(err.Error(), "not this way"))
-	require.Nil(t, resp)
-
-	// Test for ErrAPIError when receiving a http.StatusInternalServerError status
-	req, err = http.NewRequest(http.MethodPost, "http://example.net/broken", nil)
-	require.NoError(t, err)
-	resp, err = client.Do(req)
-	require.True(t, errors.Is(err, ErrAPIError))
-	require.Nil(t, resp)
-
-	// Test for successful request
-	req, err = http.NewRequest(http.MethodGet, "http://example.net/ok", nil)
-	require.NoError(t, err)
-	resp, err = client.Do(req)
-	require.NoError(t, err)
-	actual, _ := ioutil.ReadAll(resp.Body)
-	require.Equal(t, []byte("test"), actual)
+	}
 }

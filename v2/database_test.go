@@ -2,12 +2,11 @@ package v2
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/exoscale/egoscale/v2/oapi"
-	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -22,7 +21,7 @@ var (
 	testDatabasePlanNodeMemory               int64 = 2147483648
 	testDatabaseServiceCreatedAt, _                = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 	testDatabaseServiceDiskSize              int64 = 10995116277760
-	testDatabaseServiceName                        = new(clientTestSuite).randomString(10)
+	testDatabaseServiceName                        = new(testSuite).randomString(10)
 	testDatabaseServiceNodeCPUCount          int64 = 2
 	testDatabaseServiceNodeCount             int64 = 1
 	testDatabaseServiceNodeMemory            int64 = 2199023255552
@@ -30,40 +29,33 @@ var (
 	testDatabaseServiceTerminationProtection       = true
 	testDatabaseServiceType                        = oapi.DbaasServiceTypeName("pg")
 	testDatabaseServiceTypeDefaultVersion          = "13"
-	testDatabaseServiceTypeDescription             = new(clientTestSuite).randomString(10)
+	testDatabaseServiceTypeDescription             = new(testSuite).randomString(10)
 	testDatabaseServiceTypeLatestVersion           = "13.3"
 	testDatabaseServiceTypeName                    = oapi.DbaasServiceTypeName("pg")
 	testDatabaseServiceUpdatedAt, _                = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 )
 
-func (ts *clientTestSuite) TestClient_DeleteDatabaseService() {
-	var (
-		testOperationID    = ts.randomID()
-		testOperationState = oapi.OperationStateSuccess
-		deleted            = false
-	)
+func (ts *testSuite) TestClient_DeleteDatabaseService() {
+	deleted := false
 
-	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/dbaas-service/%s", testDatabaseServiceName),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"DeleteDbaasServiceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // name
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testDatabaseServiceName, args.Get(1))
 			deleted = true
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testDatabaseServiceName},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
-		Id:        &testOperationID,
-		State:     &testOperationState,
-		Reference: &oapi.Reference{Id: &testDatabaseServiceName},
-	})
+		}).
+		Return(
+			&oapi.DeleteDbaasServiceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200:      new(oapi.DbaasServiceCommon),
+			},
+			nil,
+		)
 
 	ts.Require().NoError(ts.client.DeleteDatabaseService(
 		context.Background(),
@@ -73,46 +65,67 @@ func (ts *clientTestSuite) TestClient_DeleteDatabaseService() {
 	ts.Require().True(deleted)
 }
 
-func (ts *clientTestSuite) TestClient_GetDatabaseCACertificate() {
+func (ts *testSuite) TestClient_GetDatabaseCACertificate() {
 	testCACertificate := `-----BEGIN CERTIFICATE-----
 ` + ts.randomString(1000) +
 		`-----END CERTIFICATE-----
 `
 
-	ts.mockAPIRequest("GET", "/dbaas-ca-certificate", struct {
-		Certificate *string "json:\"certificate,omitempty\""
-	}{
-		Certificate: &testCACertificate,
-	})
+	ts.mock().
+		On(
+			"GetDbaasCaCertificateWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(
+			&oapi.GetDbaasCaCertificateResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &struct {
+					Certificate *string "json:\"certificate,omitempty\""
+				}{
+					Certificate: &testCACertificate,
+				},
+			},
+			nil,
+		)
 
 	actual, err := ts.client.GetDatabaseCACertificate(context.Background(), testZone)
 	ts.Require().NoError(err)
 	ts.Require().Equal(testCACertificate, actual)
 }
 
-func (ts *clientTestSuite) TestClient_GetDatabaseServiceType() {
-	ts.mockAPIRequest("GET",
-		fmt.Sprintf("/dbaas-service-type/%s", testDatabaseServiceTypeName),
-		oapi.DbaasServiceType{
-			DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
-			Description:    &testDatabaseServiceTypeDescription,
-			LatestVersion:  &testDatabaseServiceTypeLatestVersion,
-			Name:           &testDatabaseServiceTypeName,
-			Plans: &[]oapi.DbaasPlan{{
-				Authorized: &testDatabasePlanAuthorized,
-				BackupConfig: &oapi.DbaasBackupConfig{
-					Interval:     &testDatabasePlanBackupConfigInterval,
-					MaxCount:     &testDatabasePlanBackupConfigMaxCount,
-					RecoveryMode: &testDatabasePlanBackupConfigRecoveryMode,
-				},
-				DiskSpace:    &testDatabasePlanDiskSpace,
-				Name:         &testDatabasePlanName,
-				NodeCount:    &testDatabasePlanNodeCount,
-				NodeCpuCount: &testDatabasePlanNodeCPUCount,
-				NodeMemory:   &testDatabasePlanNodeMemory,
-			}},
-			UserConfigSchema: &map[string]interface{}{"k": "v"},
-		})
+func (ts *testSuite) TestClient_GetDatabaseServiceType() {
+	ts.mock().
+		On("GetDbaasServiceTypeWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // name
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(string(testDatabaseServiceTypeName), args.Get(1))
+		}).
+		Return(&oapi.GetDbaasServiceTypeResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.DbaasServiceType{
+				DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
+				Description:    &testDatabaseServiceTypeDescription,
+				LatestVersion:  &testDatabaseServiceTypeLatestVersion,
+				Name:           &testDatabaseServiceTypeName,
+				Plans: &[]oapi.DbaasPlan{{
+					Authorized: &testDatabasePlanAuthorized,
+					BackupConfig: &oapi.DbaasBackupConfig{
+						Interval:     &testDatabasePlanBackupConfigInterval,
+						MaxCount:     &testDatabasePlanBackupConfigMaxCount,
+						RecoveryMode: &testDatabasePlanBackupConfigRecoveryMode,
+					},
+					DiskSpace:    &testDatabasePlanDiskSpace,
+					Name:         &testDatabasePlanName,
+					NodeCount:    &testDatabasePlanNodeCount,
+					NodeCpuCount: &testDatabasePlanNodeCPUCount,
+					NodeMemory:   &testDatabasePlanNodeMemory,
+				}},
+			},
+		}, nil)
 
 	expected := &DatabaseServiceType{
 		DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
@@ -139,31 +152,38 @@ func (ts *clientTestSuite) TestClient_GetDatabaseServiceType() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_ListDatabaseServiceTypes() {
-	ts.mockAPIRequest("GET", "/dbaas-service-type", struct {
-		DatabaseServiceTypes *[]oapi.DbaasServiceType `json:"dbaas-service-types,omitempty"`
-	}{
-		DatabaseServiceTypes: &[]oapi.DbaasServiceType{{
-			DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
-			Description:    &testDatabaseServiceTypeDescription,
-			LatestVersion:  &testDatabaseServiceTypeLatestVersion,
-			Name:           &testDatabaseServiceTypeName,
-			Plans: &[]oapi.DbaasPlan{{
-				Authorized: &testDatabasePlanAuthorized,
-				BackupConfig: &oapi.DbaasBackupConfig{
-					Interval:     &testDatabasePlanBackupConfigInterval,
-					MaxCount:     &testDatabasePlanBackupConfigMaxCount,
-					RecoveryMode: &testDatabasePlanBackupConfigRecoveryMode,
-				},
-				DiskSpace:    &testDatabasePlanDiskSpace,
-				Name:         &testDatabasePlanName,
-				NodeCount:    &testDatabasePlanNodeCount,
-				NodeCpuCount: &testDatabasePlanNodeCPUCount,
-				NodeMemory:   &testDatabasePlanNodeMemory,
-			}},
-			UserConfigSchema: &map[string]interface{}{"k": "v"},
-		}},
-	})
+func (ts *testSuite) TestClient_ListDatabaseServiceTypes() {
+	ts.mock().
+		On("ListDbaasServiceTypesWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListDbaasServiceTypesResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				DbaasServiceTypes *[]oapi.DbaasServiceType `json:"dbaas-service-types,omitempty"`
+			}{
+				DbaasServiceTypes: &[]oapi.DbaasServiceType{{
+					DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
+					Description:    &testDatabaseServiceTypeDescription,
+					LatestVersion:  &testDatabaseServiceTypeLatestVersion,
+					Name:           &testDatabaseServiceTypeName,
+					Plans: &[]oapi.DbaasPlan{{
+						Authorized: &testDatabasePlanAuthorized,
+						BackupConfig: &oapi.DbaasBackupConfig{
+							Interval:     &testDatabasePlanBackupConfigInterval,
+							MaxCount:     &testDatabasePlanBackupConfigMaxCount,
+							RecoveryMode: &testDatabasePlanBackupConfigRecoveryMode,
+						},
+						DiskSpace:    &testDatabasePlanDiskSpace,
+						Name:         &testDatabasePlanName,
+						NodeCount:    &testDatabasePlanNodeCount,
+						NodeCpuCount: &testDatabasePlanNodeCPUCount,
+						NodeMemory:   &testDatabasePlanNodeMemory,
+					}},
+				}},
+			},
+		}, nil)
 
 	expected := []*DatabaseServiceType{{
 		DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
@@ -190,25 +210,33 @@ func (ts *clientTestSuite) TestClient_ListDatabaseServiceTypes() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_ListDatabaseServices() {
-	ts.mockAPIRequest("GET", "/dbaas-service", struct {
-		DatabaseServices *[]oapi.DbaasServiceCommon `json:"dbaas-services,omitempty"`
-	}{
-		DatabaseServices: &[]oapi.DbaasServiceCommon{{
-			CreatedAt:             &testDatabaseServiceCreatedAt,
-			DiskSize:              &testDatabaseServiceDiskSize,
-			Name:                  oapi.DbaasServiceName(testDatabaseServiceName),
-			NodeCount:             &testDatabaseServiceNodeCount,
-			NodeCpuCount:          &testDatabaseServiceNodeCPUCount,
-			NodeMemory:            &testDatabaseServiceNodeMemory,
-			Notifications:         &[]oapi.DbaasServiceNotification{},
-			Plan:                  testDatabasePlanName,
-			State:                 &testDatabaseServiceState,
-			TerminationProtection: &testDatabaseServiceTerminationProtection,
-			Type:                  testDatabaseServiceType,
-			UpdatedAt:             &testDatabaseServiceUpdatedAt,
-		}},
-	})
+func (ts *testSuite) TestClient_ListDatabaseServices() {
+	ts.mock().
+		On("ListDbaasServicesWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListDbaasServicesResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				DbaasServices *[]oapi.DbaasServiceCommon `json:"dbaas-services,omitempty"`
+			}{
+				DbaasServices: &[]oapi.DbaasServiceCommon{{
+					CreatedAt:             &testDatabaseServiceCreatedAt,
+					DiskSize:              &testDatabaseServiceDiskSize,
+					Name:                  oapi.DbaasServiceName(testDatabaseServiceName),
+					NodeCount:             &testDatabaseServiceNodeCount,
+					NodeCpuCount:          &testDatabaseServiceNodeCPUCount,
+					NodeMemory:            &testDatabaseServiceNodeMemory,
+					Notifications:         &[]oapi.DbaasServiceNotification{},
+					Plan:                  testDatabasePlanName,
+					State:                 (*oapi.EnumServiceState)(&testDatabaseServiceState),
+					TerminationProtection: &testDatabaseServiceTerminationProtection,
+					Type:                  testDatabaseServiceType,
+					UpdatedAt:             &testDatabaseServiceUpdatedAt,
+				}},
+			},
+		}, nil)
 
 	expected := []*DatabaseService{{
 		CreatedAt:             &testDatabaseServiceCreatedAt,

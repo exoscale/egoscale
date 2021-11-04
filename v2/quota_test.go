@@ -2,9 +2,10 @@ package v2
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 
 	"github.com/exoscale/egoscale/v2/oapi"
+	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -13,16 +14,24 @@ var (
 	testQuotaUsage    int64 = 1
 )
 
-func (ts *clientTestSuite) TestClient_ListQuotas() {
-	ts.mockAPIRequest("GET", "/quota", struct {
-		Quotas *[]oapi.Quota `json:"quotas,omitempty"`
-	}{
-		Quotas: &[]oapi.Quota{{
-			Limit:    &testQuotaLimit,
-			Resource: &testQuotaResource,
-			Usage:    &testQuotaUsage,
-		}},
-	})
+func (ts *testSuite) TestClient_ListQuotas() {
+	ts.mock().
+		On("ListQuotasWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListQuotasResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				Quotas *[]oapi.Quota `json:"quotas,omitempty"`
+			}{
+				Quotas: &[]oapi.Quota{{
+					Limit:    &testQuotaLimit,
+					Resource: &testQuotaResource,
+					Usage:    &testQuotaUsage,
+				}},
+			},
+		}, nil)
 
 	expected := []*Quota{{
 		Resource: &testQuotaResource,
@@ -35,12 +44,21 @@ func (ts *clientTestSuite) TestClient_ListQuotas() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_GetQuota() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/quota/%s", testQuotaResource), oapi.Quota{
-		Limit:    &testQuotaLimit,
-		Resource: &testQuotaResource,
-		Usage:    &testQuotaUsage,
-	})
+func (ts *testSuite) TestClient_GetQuota() {
+	ts.mock().
+		On("GetQuotaWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetQuotaResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.Quota{
+				Limit:    &testQuotaLimit,
+				Resource: &testQuotaResource,
+				Usage:    &testQuotaUsage,
+			},
+		}, nil)
 
 	expected := &Quota{
 		Resource: &testQuotaResource,

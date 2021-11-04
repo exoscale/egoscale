@@ -6,53 +6,61 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/stretchr/testify/mock"
+
 	"github.com/exoscale/egoscale/v2/oapi"
-	"github.com/jarcoal/httpmock"
 )
 
 var (
 	testSnapshotCreatedAt, _       = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
-	testSnapshotID                 = new(clientTestSuite).randomID()
-	testSnapshotInstanceID         = new(clientTestSuite).randomID()
-	testSnapshotName               = new(clientTestSuite).randomString(10)
+	testSnapshotID                 = new(testSuite).randomID()
+	testSnapshotInstanceID         = new(testSuite).randomID()
+	testSnapshotName               = new(testSuite).randomString(10)
 	testSnapshotSize         int64 = 10
 	testSnapshotState              = oapi.SnapshotStateExported
 )
 
-func (ts *clientTestSuite) TestClient_DeleteSnapshot() {
+func (ts *testSuite) TestClient_DeleteSnapshot() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
-	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/snapshot/%s", testSnapshotID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"DeleteSnapshotWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testSnapshotID, args.Get(1))
 			deleted = true
+		}).
+		Return(
+			&oapi.DeleteSnapshotResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testSnapshotID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testSnapshotID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testSnapshotID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeleteSnapshot(context.Background(), testZone, &Snapshot{ID: &testSnapshotID}))
 	ts.Require().True(deleted)
 }
 
-func (ts *clientTestSuite) TestClient_ExportSnapshot() {
+func (ts *testSuite) TestClient_ExportSnapshot() {
 	var (
 		testSnapshotExportMD5Sum       = "c9887de796993c2519b463bcd9509e08"
 		testSnapshotExportPresignedURL = fmt.Sprintf("https://sos-%s.exo.io/test/%s/%s",
@@ -64,42 +72,58 @@ func (ts *clientTestSuite) TestClient_ExportSnapshot() {
 		exported           = false
 	)
 
-	httpmock.RegisterResponder("POST", fmt.Sprintf("/snapshot/%s:export", testSnapshotID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"ExportSnapshotWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testSnapshotID, args.Get(1))
 			exported = true
+		}).
+		Return(
+			&oapi.ExportSnapshotResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testSnapshotID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testSnapshotID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testSnapshotID},
+		State:     &testOperationState,
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/snapshot/%s", testSnapshotID), oapi.Snapshot{
-		CreatedAt: &testSnapshotCreatedAt,
-		Export: &struct {
-			Md5sum       *string `json:"md5sum,omitempty"`
-			PresignedUrl *string `json:"presigned-url,omitempty"` // nolint:revive
-		}{
-			Md5sum:       &testSnapshotExportMD5Sum,
-			PresignedUrl: &testSnapshotExportPresignedURL,
-		},
-		Id:       &testSnapshotID,
-		Instance: &oapi.Instance{Id: &testSnapshotInstanceID},
-		Name:     &testSnapshotName,
-		State:    &testSnapshotState,
-	})
+	ts.mock().
+		On("GetSnapshotWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetSnapshotResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.Snapshot{
+				CreatedAt: &testSnapshotCreatedAt,
+				Export: &struct {
+					Md5sum       *string `json:"md5sum,omitempty"`
+					PresignedUrl *string `json:"presigned-url,omitempty"` // nolint:revive
+				}{
+					Md5sum:       &testSnapshotExportMD5Sum,
+					PresignedUrl: &testSnapshotExportPresignedURL,
+				},
+				Id:       &testSnapshotID,
+				Instance: &oapi.Instance{Id: &testSnapshotInstanceID},
+				Name:     &testSnapshotName,
+				State:    &testSnapshotState,
+			},
+		}, nil)
 
 	expected := &SnapshotExport{
 		MD5sum:       &testSnapshotExportMD5Sum,
@@ -112,19 +136,27 @@ func (ts *clientTestSuite) TestClient_ExportSnapshot() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_ListSnapshots() {
-	ts.mockAPIRequest("GET", "/snapshot", struct {
-		Snapshots *[]oapi.Snapshot `json:"snapshots,omitempty"`
-	}{
-		Snapshots: &[]oapi.Snapshot{{
-			CreatedAt: &testSnapshotCreatedAt,
-			Id:        &testSnapshotID,
-			Instance:  &oapi.Instance{Id: &testSnapshotInstanceID},
-			Name:      &testSnapshotName,
-			Size:      &testSnapshotSize,
-			State:     &testSnapshotState,
-		}},
-	})
+func (ts *testSuite) TestClient_ListSnapshots() {
+	ts.mock().
+		On("ListSnapshotsWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListSnapshotsResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				Snapshots *[]oapi.Snapshot `json:"snapshots,omitempty"`
+			}{
+				Snapshots: &[]oapi.Snapshot{{
+					CreatedAt: &testSnapshotCreatedAt,
+					Id:        &testSnapshotID,
+					Instance:  &oapi.Instance{Id: &testSnapshotInstanceID},
+					Name:      &testSnapshotName,
+					Size:      &testSnapshotSize,
+					State:     &testSnapshotState,
+				}},
+			},
+		}, nil)
 
 	expected := []*Snapshot{{
 		CreatedAt:  &testSnapshotCreatedAt,
@@ -141,15 +173,27 @@ func (ts *clientTestSuite) TestClient_ListSnapshots() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_GetSnapshot() {
-	ts.mockAPIRequest("GET", fmt.Sprintf("/snapshot/%s", testSnapshotID), oapi.Snapshot{
-		CreatedAt: &testSnapshotCreatedAt,
-		Id:        &testSnapshotID,
-		Instance:  &oapi.Instance{Id: &testSnapshotInstanceID},
-		Name:      &testSnapshotName,
-		Size:      &testSnapshotSize,
-		State:     &testSnapshotState,
-	})
+func (ts *testSuite) TestClient_GetSnapshot() {
+	ts.mock().
+		On("GetSnapshotWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testSnapshotID, args.Get(1))
+		}).
+		Return(&oapi.GetSnapshotResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.Snapshot{
+				CreatedAt: &testSnapshotCreatedAt,
+				Id:        &testSnapshotID,
+				Instance:  &oapi.Instance{Id: &testSnapshotInstanceID},
+				Name:      &testSnapshotName,
+				Size:      &testSnapshotSize,
+				State:     &testSnapshotState,
+			},
+		}, nil)
 
 	expected := &Snapshot{
 		CreatedAt:  &testSnapshotCreatedAt,

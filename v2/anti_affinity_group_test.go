@@ -2,61 +2,74 @@ package v2
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
-	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var (
-	testAntiAffinityGroupDescription = new(clientTestSuite).randomString(10)
-	testAntiAffinityGroupID          = new(clientTestSuite).randomID()
-	testAntiAffinityGroupInstanceID  = new(clientTestSuite).randomID()
-	testAntiAffinityGroupName        = new(clientTestSuite).randomString(10)
+	testAntiAffinityGroupDescription = new(testSuite).randomString(10)
+	testAntiAffinityGroupID          = new(testSuite).randomID()
+	testAntiAffinityGroupInstanceID  = new(testSuite).randomID()
+	testAntiAffinityGroupName        = new(testSuite).randomString(10)
 )
 
-func (ts *clientTestSuite) TestClient_CreateAntiAffinityGroup() {
+func (ts *testSuite) TestClient_CreateAntiAffinityGroup() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 	)
 
-	httpmock.RegisterResponder("POST", "/anti-affinity-group",
-		func(req *http.Request) (*http.Response, error) {
-			var actual oapi.CreateAntiAffinityGroupJSONRequestBody
-			ts.unmarshalJSONRequestBody(req, &actual)
+	ts.mock().
+		On(
+			"CreateAntiAffinityGroupWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.CreateAntiAffinityGroupJSONRequestBody{
+					Description: &testAntiAffinityGroupDescription,
+					Name:        testAntiAffinityGroupName,
+				},
+				args.Get(1),
+			)
+		}).
+		Return(
+			&oapi.CreateAntiAffinityGroupResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			expected := oapi.CreateAntiAffinityGroupJSONRequestBody{
-				Description: &testAntiAffinityGroupDescription,
-				Name:        testAntiAffinityGroupName,
-			}
-			ts.Require().Equal(expected, actual)
-
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
+		State:     &testOperationState,
 	})
 
-	ts.mockAPIRequest("GET", fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID), oapi.AntiAffinityGroup{
-		Description: &testAntiAffinityGroupDescription,
-		Id:          &testAntiAffinityGroupID,
-		Name:        &testAntiAffinityGroupName,
-	})
+	ts.mock().
+		On("GetAntiAffinityGroupWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetAntiAffinityGroupResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.AntiAffinityGroup{
+				Description: &testAntiAffinityGroupDescription,
+				Id:          &testAntiAffinityGroupID,
+				Name:        &testAntiAffinityGroupName,
+			},
+		}, nil)
 
 	expected := &AntiAffinityGroup{
 		Description: &testAntiAffinityGroupDescription,
@@ -73,33 +86,40 @@ func (ts *clientTestSuite) TestClient_CreateAntiAffinityGroup() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_DeleteAntiAffinityGroup() {
+func (ts *testSuite) TestClient_DeleteAntiAffinityGroup() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 		deleted            = false
 	)
 
-	httpmock.RegisterResponder("DELETE", fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
-		func(req *http.Request) (*http.Response, error) {
+	ts.mock().
+		On(
+			"DeleteAntiAffinityGroupWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testAntiAffinityGroupID, args.Get(1))
 			deleted = true
+		}).
+		Return(
+			&oapi.DeleteAntiAffinityGroupResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
 
-			resp, err := httpmock.NewJsonResponse(http.StatusOK, oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
-			})
-			if err != nil {
-				ts.T().Fatalf("error initializing mock HTTP responder: %s", err)
-			}
-
-			return resp, nil
-		})
-
-	ts.mockAPIRequest("GET", fmt.Sprintf("/operation/%s", testOperationID), oapi.Operation{
+	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		State:     &testOperationState,
 		Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeleteAntiAffinityGroup(
@@ -110,26 +130,43 @@ func (ts *clientTestSuite) TestClient_DeleteAntiAffinityGroup() {
 	ts.Require().True(deleted)
 }
 
-func (ts *clientTestSuite) TestClient_FindAntiAffinityGroup() {
-	ts.mockAPIRequest("GET", "/anti-affinity-group", struct {
-		AntiAffinityGroups *[]oapi.AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
-	}{
-		AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{
-			Description: &testAntiAffinityGroupDescription,
-			Id:          &testAntiAffinityGroupID,
-			Name:        &testAntiAffinityGroupName,
-		}},
-	})
+func (ts *testSuite) TestClient_FindAntiAffinityGroup() {
+	ts.mock().
+		On("ListAntiAffinityGroupsWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListAntiAffinityGroupsResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				AntiAffinityGroups *[]oapi.AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+			}{
+				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{
+					Description: &testAntiAffinityGroupDescription,
+					Id:          &testAntiAffinityGroupID,
+					Name:        &testAntiAffinityGroupName,
+				}},
+			},
+		}, nil)
 
-	ts.mockAPIRequest(
-		"GET",
-		fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
-		oapi.AntiAffinityGroup{
-			Description: &testAntiAffinityGroupDescription,
-			Id:          &testAntiAffinityGroupID,
-			Instances:   &[]oapi.Instance{{Id: &testAntiAffinityGroupInstanceID}},
-			Name:        &testAntiAffinityGroupName,
-		})
+	ts.mock().
+		On("GetAntiAffinityGroupWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testAntiAffinityGroupID, args.Get(1))
+		}).
+		Return(&oapi.GetAntiAffinityGroupResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.AntiAffinityGroup{
+				Description: &testAntiAffinityGroupDescription,
+				Id:          &testAntiAffinityGroupID,
+				Instances:   &[]oapi.Instance{{Id: &testAntiAffinityGroupInstanceID}},
+				Name:        &testAntiAffinityGroupName,
+			},
+		}, nil)
 
 	expected := &AntiAffinityGroup{
 		Description: &testAntiAffinityGroupDescription,
@@ -147,16 +184,25 @@ func (ts *clientTestSuite) TestClient_FindAntiAffinityGroup() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_GetAntiAffinityGroup() {
-	ts.mockAPIRequest(
-		"GET",
-		fmt.Sprintf("/anti-affinity-group/%s", testAntiAffinityGroupID),
-		oapi.AntiAffinityGroup{
-			Description: &testAntiAffinityGroupDescription,
-			Id:          &testAntiAffinityGroupID,
-			Instances:   &[]oapi.Instance{{Id: &testAntiAffinityGroupInstanceID}},
-			Name:        &testAntiAffinityGroupName,
-		})
+func (ts *testSuite) TestClient_GetAntiAffinityGroup() {
+	ts.mock().
+		On("GetAntiAffinityGroupWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testAntiAffinityGroupID, args.Get(1))
+		}).
+		Return(&oapi.GetAntiAffinityGroupResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.AntiAffinityGroup{
+				Description: &testAntiAffinityGroupDescription,
+				Id:          &testAntiAffinityGroupID,
+				Instances:   &[]oapi.Instance{{Id: &testAntiAffinityGroupInstanceID}},
+				Name:        &testAntiAffinityGroupName,
+			},
+		}, nil)
 
 	expected := &AntiAffinityGroup{
 		Description: &testAntiAffinityGroupDescription,
@@ -170,17 +216,25 @@ func (ts *clientTestSuite) TestClient_GetAntiAffinityGroup() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_ListAntiAffinityGroups() {
-	ts.mockAPIRequest("GET", "/anti-affinity-group", struct {
-		AntiAffinityGroups *[]oapi.AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
-	}{
-		AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{
-			Description: &testAntiAffinityGroupDescription,
-			Id:          &testAntiAffinityGroupID,
-			Instances:   &[]oapi.Instance{{Id: &testAntiAffinityGroupInstanceID}},
-			Name:        &testAntiAffinityGroupName,
-		}},
-	})
+func (ts *testSuite) TestClient_ListAntiAffinityGroups() {
+	ts.mock().
+		On("ListAntiAffinityGroupsWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListAntiAffinityGroupsResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				AntiAffinityGroups *[]oapi.AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+			}{
+				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{
+					Description: &testAntiAffinityGroupDescription,
+					Id:          &testAntiAffinityGroupID,
+					Instances:   &[]oapi.Instance{{Id: &testAntiAffinityGroupInstanceID}},
+					Name:        &testAntiAffinityGroupName,
+				}},
+			},
+		}, nil)
 
 	expected := []*AntiAffinityGroup{{
 		Description: &testAntiAffinityGroupDescription,

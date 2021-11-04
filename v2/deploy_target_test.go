@@ -2,45 +2,58 @@ package v2
 
 import (
 	"context"
-	"fmt"
+	"net/http"
+
+	"github.com/stretchr/testify/mock"
 
 	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var (
-	testDeployTargetDescription = new(clientTestSuite).randomString(10)
-	testDeployTargetID          = new(clientTestSuite).randomID()
-	testDeployTargetName        = new(clientTestSuite).randomString(10)
+	testDeployTargetDescription = new(testSuite).randomString(10)
+	testDeployTargetID          = new(testSuite).randomID()
+	testDeployTargetName        = new(testSuite).randomString(10)
 	testDeployTargetType        = "dedicated"
 )
 
-func (ts *clientTestSuite) TestClient_FindDeployTarget() {
-	ts.mockAPIRequest("GET", "/deploy-target", struct {
-		DeployTargets *[]oapi.DeployTarget `json:"deploy-targets,omitempty"`
-	}{
-		DeployTargets: &[]oapi.DeployTarget{{
-			Description: &testDeployTargetDescription,
-			Id:          &testDeployTargetID,
-			Name:        &testDeployTargetName,
-			Type: func() *oapi.DeployTargetType {
-				v := oapi.DeployTargetType(testDeployTargetType)
-				return &v
-			}(),
-		}},
-	})
+func (ts *testSuite) TestClient_FindDeployTarget() {
+	ts.mock().
+		On("ListDeployTargetsWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListDeployTargetsResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				DeployTargets *[]oapi.DeployTarget `json:"deploy-targets,omitempty"`
+			}{
+				DeployTargets: &[]oapi.DeployTarget{{
+					Description: &testDeployTargetDescription,
+					Id:          &testDeployTargetID,
+					Name:        &testDeployTargetName,
+					Type:        (*oapi.DeployTargetType)(&testDeployTargetType),
+				}},
+			},
+		}, nil)
 
-	ts.mockAPIRequest(
-		"GET",
-		fmt.Sprintf("/deploy-target/%s", testDeployTargetID),
-		oapi.DeployTarget{
-			Description: &testDeployTargetDescription,
-			Id:          &testDeployTargetID,
-			Name:        &testDeployTargetName,
-			Type: func() *oapi.DeployTargetType {
-				v := oapi.DeployTargetType(testDeployTargetType)
-				return &v
-			}(),
-		})
+	ts.mock().
+		On("GetDeployTargetWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testDeployTargetID, args.Get(1))
+		}).
+		Return(&oapi.GetDeployTargetResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.DeployTarget{
+				Description: &testDeployTargetDescription,
+				Id:          &testDeployTargetID,
+				Name:        &testDeployTargetName,
+				Type:        (*oapi.DeployTargetType)(&testDeployTargetType),
+			},
+		}, nil)
 
 	expected := &DeployTarget{
 		Description: &testDeployTargetDescription,
@@ -59,19 +72,25 @@ func (ts *clientTestSuite) TestClient_FindDeployTarget() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_GetDeployTarget() {
-	ts.mockAPIRequest(
-		"GET",
-		fmt.Sprintf("/deploy-target/%s", testDeployTargetID),
-		oapi.DeployTarget{
-			Description: &testDeployTargetDescription,
-			Id:          &testDeployTargetID,
-			Name:        &testDeployTargetName,
-			Type: func() *oapi.DeployTargetType {
-				v := oapi.DeployTargetType(testDeployTargetType)
-				return &v
-			}(),
-		})
+func (ts *testSuite) TestClient_GetDeployTarget() {
+	ts.mock().
+		On("GetDeployTargetWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testDeployTargetID, args.Get(1))
+		}).
+		Return(&oapi.GetDeployTargetResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.DeployTarget{
+				Description: &testDeployTargetDescription,
+				Id:          &testDeployTargetID,
+				Name:        &testDeployTargetName,
+				Type:        (*oapi.DeployTargetType)(&testDeployTargetType),
+			},
+		}, nil)
 
 	expected := &DeployTarget{
 		Description: &testDeployTargetDescription,
@@ -86,20 +105,25 @@ func (ts *clientTestSuite) TestClient_GetDeployTarget() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *clientTestSuite) TestClient_ListDeployTargets() {
-	ts.mockAPIRequest("GET", "/deploy-target", struct {
-		DeployTargets *[]oapi.DeployTarget `json:"deploy-targets,omitempty"`
-	}{
-		DeployTargets: &[]oapi.DeployTarget{{
-			Description: &testDeployTargetDescription,
-			Id:          &testDeployTargetID,
-			Name:        &testDeployTargetName,
-			Type: func() *oapi.DeployTargetType {
-				v := oapi.DeployTargetType(testDeployTargetType)
-				return &v
-			}(),
-		}},
-	})
+func (ts *testSuite) TestClient_ListDeployTargets() {
+	ts.mock().
+		On("ListDeployTargetsWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListDeployTargetsResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				DeployTargets *[]oapi.DeployTarget `json:"deploy-targets,omitempty"`
+			}{
+				DeployTargets: &[]oapi.DeployTarget{{
+					Description: &testDeployTargetDescription,
+					Id:          &testDeployTargetID,
+					Name:        &testDeployTargetName,
+					Type:        (*oapi.DeployTargetType)(&testDeployTargetType),
+				}},
+			},
+		}, nil)
 
 	expected := []*DeployTarget{{
 		Description: &testDeployTargetDescription,

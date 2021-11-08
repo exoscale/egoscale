@@ -196,7 +196,7 @@ func (c *Client) UpdateElasticIP(ctx context.Context, zone string, elasticIP *El
 		apiv2.WithZone(ctx, zone),
 		*elasticIP.ID,
 		oapi.UpdateElasticIpJSONRequestBody{
-			Description: elasticIP.Description,
+			Description: oapi.NilableString(elasticIP.Description),
 			Healthcheck: func() *oapi.ElasticIpHealthcheck {
 				if hc := elasticIP.Healthcheck; hc != nil {
 					port := int64(*hc.Port)

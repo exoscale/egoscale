@@ -212,7 +212,7 @@ func (c *Client) UpdatePrivateNetwork(ctx context.Context, zone string, privateN
 		apiv2.WithZone(ctx, zone),
 		*privateNetwork.ID,
 		oapi.UpdatePrivateNetworkJSONRequestBody{
-			Description: privateNetwork.Description,
+			Description: oapi.NilableString(privateNetwork.Description),
 			EndIp: func() (ip *string) {
 				if privateNetwork.EndIP != nil {
 					v := privateNetwork.EndIP.String()

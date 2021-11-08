@@ -728,6 +728,15 @@ func (ts *testSuite) TestClient_ListInstances() {
 			mock.Anything,                 // params
 			([]oapi.RequestEditorFn)(nil), // reqEditors
 		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				&oapi.ListInstancesParams{
+					ManagerId:   &testInstanceManagerID,
+					ManagerType: (*oapi.ListInstancesParamsManagerType)(&testInstanceManagerType),
+				},
+				args.Get(1),
+			)
+		}).
 		Return(&oapi.ListInstancesResponse{
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &struct {
@@ -777,7 +786,12 @@ func (ts *testSuite) TestClient_ListInstances() {
 		Zone:                 &testZone,
 	}}
 
-	actual, err := ts.client.ListInstances(context.Background(), testZone)
+	actual, err := ts.client.ListInstances(
+		context.Background(),
+		testZone,
+		ListInstancesByManagerID(testInstanceManagerID),
+		ListInstancesByManagerType(string(testInstanceManagerType)),
+	)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }

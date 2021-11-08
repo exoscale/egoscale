@@ -54,6 +54,27 @@ func AttachInstanceToPrivateNetworkWithIPAddress(v net.IP) AttachInstanceToPriva
 	}
 }
 
+// ListInstancesOpt represents a ListInstances operation option.
+type ListInstancesOpt func(params *oapi.ListInstancesParams)
+
+// ListInstancesByManagerID sets a Compute instances listing filter based on a manager ID.
+func ListInstancesByManagerID(v string) ListInstancesOpt {
+	return func(p *oapi.ListInstancesParams) {
+		if v != "" {
+			p.ManagerId = &v
+		}
+	}
+}
+
+// ListInstancesByManagerType sets a Compute instances listing filter based on a manager type.
+func ListInstancesByManagerType(v string) ListInstancesOpt {
+	return func(p *oapi.ListInstancesParams) {
+		if v != "" {
+			p.ManagerType = (*oapi.ListInstancesParamsManagerType)(&v)
+		}
+	}
+}
+
 // ResetInstanceOpt represents a ResetInstance operation option.
 type ResetInstanceOpt func(*oapi.ResetInstanceJSONRequestBody)
 
@@ -560,10 +581,15 @@ func (c *Client) GetInstance(ctx context.Context, zone, id string) (*Instance, e
 }
 
 // ListInstances returns the list of existing Compute instances.
-func (c *Client) ListInstances(ctx context.Context, zone string) ([]*Instance, error) {
+func (c *Client) ListInstances(ctx context.Context, zone string, opts ...ListInstancesOpt) ([]*Instance, error) {
 	list := make([]*Instance, 0)
 
-	resp, err := c.ListInstancesWithResponse(apiv2.WithZone(ctx, zone), &oapi.ListInstancesParams{})
+	var params oapi.ListInstancesParams
+	for _, opt := range opts {
+		opt(&params)
+	}
+
+	resp, err := c.ListInstancesWithResponse(apiv2.WithZone(ctx, zone), &params)
 	if err != nil {
 		return nil, err
 	}

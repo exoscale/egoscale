@@ -198,7 +198,7 @@ func (c *Client) UpdateTemplate(ctx context.Context, zone string, template *Temp
 		apiv2.WithZone(ctx, zone),
 		*template.ID,
 		oapi.UpdateTemplateJSONRequestBody{
-			Description: template.Description,
+			Description: oapi.NilableString(template.Description),
 			Name:        template.Name,
 		})
 	if err != nil {

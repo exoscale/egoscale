@@ -652,7 +652,7 @@ func (c *Client) UpdateSKSCluster(ctx context.Context, zone string, cluster *SKS
 		*cluster.ID,
 		oapi.UpdateSksClusterJSONRequestBody{
 			AutoUpgrade: cluster.AutoUpgrade,
-			Description: cluster.Description,
+			Description: oapi.NilableString(cluster.Description),
 			Labels: func() (v *oapi.Labels) {
 				if cluster.Labels != nil {
 					v = &oapi.Labels{AdditionalProperties: *cluster.Labels}
@@ -712,7 +712,7 @@ func (c *Client) UpdateSKSNodepool(
 				}
 				return
 			}(),
-			Description:    nodepool.Description,
+			Description:    oapi.NilableString(nodepool.Description),
 			DiskSize:       nodepool.DiskSize,
 			InstancePrefix: nodepool.InstancePrefix,
 			InstanceType: func() (v *oapi.InstanceType) {

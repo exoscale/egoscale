@@ -373,7 +373,7 @@ func (c *Client) UpdateNetworkLoadBalancer(ctx context.Context, zone string, nlb
 		apiv2.WithZone(ctx, zone),
 		*nlb.ID,
 		oapi.UpdateLoadBalancerJSONRequestBody{
-			Description: nlb.Description,
+			Description: oapi.NilableString(nlb.Description),
 			Labels: func() (v *oapi.Labels) {
 				if nlb.Labels != nil {
 					v = &oapi.Labels{AdditionalProperties: *nlb.Labels}
@@ -418,7 +418,7 @@ func (c *Client) UpdateNetworkLoadBalancerService(
 		*nlb.ID,
 		*service.ID,
 		oapi.UpdateLoadBalancerServiceJSONRequestBody{
-			Description: service.Description,
+			Description: oapi.NilableString(service.Description),
 			Healthcheck: &oapi.LoadBalancerServiceHealthcheck{
 				Interval: func() (v *int64) {
 					if service.Healthcheck.Interval != nil {

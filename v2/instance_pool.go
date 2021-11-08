@@ -383,7 +383,7 @@ func (c *Client) UpdateInstancePool(ctx context.Context, zone string, instancePo
 				}
 				return
 			}(),
-			Description: instancePool.Description,
+			Description: oapi.NilableString(instancePool.Description),
 			DiskSize:    instancePool.DiskSize,
 			ElasticIps: func() (v *[]oapi.ElasticIp) {
 				if instancePool.ElasticIPIDs != nil {
@@ -445,7 +445,7 @@ func (c *Client) UpdateInstancePool(ctx context.Context, zone string, instancePo
 				}
 				return
 			}(),
-			UserData: instancePool.UserData,
+			UserData: oapi.NilableString(instancePool.UserData),
 		})
 	if err != nil {
 		return err

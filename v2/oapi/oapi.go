@@ -30,3 +30,13 @@ func OptionalInt64(v *int64) int64 {
 
 	return 0
 }
+
+// NilableString returns the input string pointer v if the dereferenced string is non-empty, otherwise nil.
+// This helper is intended for use with OAPI types containing nilable string properties.
+func NilableString(v *string) *string {
+	if v != nil && *v == "" {
+		return nil
+	}
+
+	return v
+}

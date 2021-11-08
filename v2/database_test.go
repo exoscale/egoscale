@@ -30,7 +30,7 @@ var (
 	testDatabaseServiceType                        = oapi.DbaasServiceTypeName("pg")
 	testDatabaseServiceTypeDefaultVersion          = "13"
 	testDatabaseServiceTypeDescription             = new(testSuite).randomString(10)
-	testDatabaseServiceTypeLatestVersion           = "13.3"
+	testDatabaseServiceTypeAvailableVersions       = []string{"12", "13"}
 	testDatabaseServiceTypeName                    = oapi.DbaasServiceTypeName("pg")
 	testDatabaseServiceUpdatedAt, _                = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
 )
@@ -107,10 +107,10 @@ func (ts *testSuite) TestClient_GetDatabaseServiceType() {
 		Return(&oapi.GetDbaasServiceTypeResponse{
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.DbaasServiceType{
-				DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
-				Description:    &testDatabaseServiceTypeDescription,
-				LatestVersion:  &testDatabaseServiceTypeLatestVersion,
-				Name:           &testDatabaseServiceTypeName,
+				AvailableVersions: &testDatabaseServiceTypeAvailableVersions,
+				DefaultVersion:    &testDatabaseServiceTypeDefaultVersion,
+				Description:       &testDatabaseServiceTypeDescription,
+				Name:              &testDatabaseServiceTypeName,
 				Plans: &[]oapi.DbaasPlan{{
 					Authorized: &testDatabasePlanAuthorized,
 					BackupConfig: &oapi.DbaasBackupConfig{
@@ -128,10 +128,10 @@ func (ts *testSuite) TestClient_GetDatabaseServiceType() {
 		}, nil)
 
 	expected := &DatabaseServiceType{
-		DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
-		Description:    &testDatabaseServiceTypeDescription,
-		LatestVersion:  &testDatabaseServiceTypeLatestVersion,
-		Name:           (*string)(&testDatabaseServiceTypeName),
+		AvailableVersions: &testDatabaseServiceTypeAvailableVersions,
+		DefaultVersion:    &testDatabaseServiceTypeDefaultVersion,
+		Description:       &testDatabaseServiceTypeDescription,
+		Name:              (*string)(&testDatabaseServiceTypeName),
 		Plans: []*DatabasePlan{{
 			Authorized: &testDatabasePlanAuthorized,
 			BackupConfig: &DatabaseBackupConfig{
@@ -164,10 +164,10 @@ func (ts *testSuite) TestClient_ListDatabaseServiceTypes() {
 				DbaasServiceTypes *[]oapi.DbaasServiceType `json:"dbaas-service-types,omitempty"`
 			}{
 				DbaasServiceTypes: &[]oapi.DbaasServiceType{{
-					DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
-					Description:    &testDatabaseServiceTypeDescription,
-					LatestVersion:  &testDatabaseServiceTypeLatestVersion,
-					Name:           &testDatabaseServiceTypeName,
+					AvailableVersions: &testDatabaseServiceTypeAvailableVersions,
+					DefaultVersion:    &testDatabaseServiceTypeDefaultVersion,
+					Description:       &testDatabaseServiceTypeDescription,
+					Name:              &testDatabaseServiceTypeName,
 					Plans: &[]oapi.DbaasPlan{{
 						Authorized: &testDatabasePlanAuthorized,
 						BackupConfig: &oapi.DbaasBackupConfig{
@@ -186,10 +186,10 @@ func (ts *testSuite) TestClient_ListDatabaseServiceTypes() {
 		}, nil)
 
 	expected := []*DatabaseServiceType{{
-		DefaultVersion: &testDatabaseServiceTypeDefaultVersion,
-		Description:    &testDatabaseServiceTypeDescription,
-		LatestVersion:  &testDatabaseServiceTypeLatestVersion,
-		Name:           (*string)(&testDatabaseServiceTypeName),
+		AvailableVersions: &testDatabaseServiceTypeAvailableVersions,
+		DefaultVersion:    &testDatabaseServiceTypeDefaultVersion,
+		Description:       &testDatabaseServiceTypeDescription,
+		Name:              (*string)(&testDatabaseServiceTypeName),
 		Plans: []*DatabasePlan{{
 			Authorized: &testDatabasePlanAuthorized,
 			BackupConfig: &DatabaseBackupConfig{
@@ -230,7 +230,7 @@ func (ts *testSuite) TestClient_ListDatabaseServices() {
 					NodeMemory:            &testDatabaseServiceNodeMemory,
 					Notifications:         &[]oapi.DbaasServiceNotification{},
 					Plan:                  testDatabasePlanName,
-					State:                 (*oapi.EnumServiceState)(&testDatabaseServiceState),
+					State:                 &testDatabaseServiceState,
 					TerminationProtection: &testDatabaseServiceTerminationProtection,
 					Type:                  testDatabaseServiceType,
 					UpdatedAt:             &testDatabaseServiceUpdatedAt,

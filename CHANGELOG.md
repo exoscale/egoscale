@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.82.0
+------
+
+- feature: v2: add support for IAM access keys management
+- feature: v2: add support for SKS Cluster OIDC configuration via `CreateSKSClusterOpt` options
+- feature: v2: add `ListInstancesOpt` options
+
 0.81.0
 ------
 

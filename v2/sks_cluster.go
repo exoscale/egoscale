@@ -9,7 +9,44 @@ import (
 	"github.com/exoscale/egoscale/v2/oapi"
 )
 
-// ListSKSClusterVersionsOpt represents an ListSKSClusterVersions operation option.
+// SKSClusterOIDCConfig represents an SKS cluster OpenID Connect configuration.
+type SKSClusterOIDCConfig struct {
+	ClientID       *string `req-for:"create"`
+	GroupsClaim    *string
+	GroupsPrefix   *string
+	IssuerURL      *string `req-for:"create"`
+	RequiredClaim  *string
+	UsernameClaim  *string
+	UsernamePrefix *string
+}
+
+// CreateSKSClusterOpt represents a CreateSKSCluster operation option.
+type CreateSKSClusterOpt func(body *oapi.CreateSksClusterJSONRequestBody) error
+
+// CreateSKSClusterWithOIDC sets the OpenID Connect configuration to provide to the Kubernetes API Server.
+func CreateSKSClusterWithOIDC(v *SKSClusterOIDCConfig) CreateSKSClusterOpt {
+	return func(b *oapi.CreateSksClusterJSONRequestBody) error {
+		if err := validateOperationParams(v, "create"); err != nil {
+			return err
+		}
+
+		if v != nil {
+			b.Oidc = &oapi.SksOidc{
+				ClientId:       *v.ClientID,
+				GroupsClaim:    v.GroupsClaim,
+				GroupsPrefix:   v.GroupsPrefix,
+				IssuerUrl:      *v.IssuerURL,
+				RequiredClaim:  v.RequiredClaim,
+				UsernameClaim:  v.UsernameClaim,
+				UsernamePrefix: v.UsernamePrefix,
+			}
+		}
+
+		return nil
+	}
+}
+
+// ListSKSClusterVersionsOpt represents a ListSKSClusterVersions operation option.
 type ListSKSClusterVersionsOpt func(params *oapi.ListSksClusterVersionsParams)
 
 // ListSKSClusterVersionsWithDeprecated includes deprecated results when listing SKS Cluster versions
@@ -84,37 +121,48 @@ func sksClusterFromAPI(c *oapi.SksCluster, zone string) *SKSCluster {
 }
 
 // CreateSKSCluster creates an SKS cluster.
-func (c *Client) CreateSKSCluster(ctx context.Context, zone string, cluster *SKSCluster) (*SKSCluster, error) {
+func (c *Client) CreateSKSCluster(
+	ctx context.Context,
+	zone string,
+	cluster *SKSCluster,
+	opts ...CreateSKSClusterOpt,
+) (*SKSCluster, error) {
 	if err := validateOperationParams(cluster, "create"); err != nil {
 		return nil, err
 	}
 
-	resp, err := c.CreateSksClusterWithResponse(
-		apiv2.WithZone(ctx, zone),
-		oapi.CreateSksClusterJSONRequestBody{
-			Addons: func() (v *[]oapi.CreateSksClusterJSONBodyAddons) {
-				if cluster.AddOns != nil {
-					addOns := make([]oapi.CreateSksClusterJSONBodyAddons, len(*cluster.AddOns))
-					for i, a := range *cluster.AddOns {
-						addOns[i] = oapi.CreateSksClusterJSONBodyAddons(a)
-					}
-					v = &addOns
+	body := oapi.CreateSksClusterJSONRequestBody{
+		Addons: func() (v *[]oapi.CreateSksClusterJSONBodyAddons) {
+			if cluster.AddOns != nil {
+				addOns := make([]oapi.CreateSksClusterJSONBodyAddons, len(*cluster.AddOns))
+				for i, a := range *cluster.AddOns {
+					addOns[i] = oapi.CreateSksClusterJSONBodyAddons(a)
 				}
-				return
-			}(),
-			AutoUpgrade: cluster.AutoUpgrade,
-			Cni:         (*oapi.CreateSksClusterJSONBodyCni)(cluster.CNI),
-			Description: cluster.Description,
-			Labels: func() (v *oapi.Labels) {
-				if cluster.Labels != nil {
-					v = &oapi.Labels{AdditionalProperties: *cluster.Labels}
-				}
-				return
-			}(),
-			Level:   oapi.CreateSksClusterJSONBodyLevel(*cluster.ServiceLevel),
-			Name:    *cluster.Name,
-			Version: *cluster.Version,
-		})
+				v = &addOns
+			}
+			return
+		}(),
+		AutoUpgrade: cluster.AutoUpgrade,
+		Cni:         (*oapi.CreateSksClusterJSONBodyCni)(cluster.CNI),
+		Description: cluster.Description,
+		Labels: func() (v *oapi.Labels) {
+			if cluster.Labels != nil {
+				v = &oapi.Labels{AdditionalProperties: *cluster.Labels}
+			}
+			return
+		}(),
+		Level:   oapi.CreateSksClusterJSONBodyLevel(*cluster.ServiceLevel),
+		Name:    *cluster.Name,
+		Version: *cluster.Version,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&body); err != nil {
+			return nil, err
+		}
+	}
+
+	resp, err := c.CreateSksClusterWithResponse(apiv2.WithZone(ctx, zone), body)
 	if err != nil {
 		return nil, err
 	}

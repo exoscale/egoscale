@@ -91,6 +91,15 @@ func (m *oapiClientMock) CreateElasticIpWithResponse( // nolint:revive
 	return args.Get(0).(*oapi.CreateElasticIpResponse), args.Error(1)
 }
 
+func (m *oapiClientMock) CreateAccessKeyWithResponse(
+	ctx context.Context,
+	body oapi.CreateAccessKeyJSONRequestBody,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.CreateAccessKeyResponse, error) {
+	args := m.Called(ctx, body, reqEditors)
+	return args.Get(0).(*oapi.CreateAccessKeyResponse), args.Error(1)
+}
+
 func (m *oapiClientMock) CreateInstanceWithResponse(
 	ctx context.Context,
 	body oapi.CreateInstanceJSONRequestBody,
@@ -425,6 +434,15 @@ func (m *oapiClientMock) GetElasticIpWithResponse( // nolint:revive
 	return args.Get(0).(*oapi.GetElasticIpResponse), args.Error(1)
 }
 
+func (m *oapiClientMock) GetAccessKeyWithResponse(
+	ctx context.Context,
+	key string,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.GetAccessKeyResponse, error) {
+	args := m.Called(ctx, key, reqEditors)
+	return args.Get(0).(*oapi.GetAccessKeyResponse), args.Error(1)
+}
+
 func (m *oapiClientMock) GetInstanceWithResponse(
 	ctx context.Context,
 	id string,
@@ -551,6 +569,30 @@ func (m *oapiClientMock) GetOperationWithResponse(
 ) (*oapi.GetOperationResponse, error) {
 	args := m.Called(ctx, id, reqEditors)
 	return args.Get(0).(*oapi.GetOperationResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) ListAccessKeyKnownOperationsWithResponse(
+	ctx context.Context,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.ListAccessKeyKnownOperationsResponse, error) {
+	args := m.Called(ctx, reqEditors)
+	return args.Get(0).(*oapi.ListAccessKeyKnownOperationsResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) ListAccessKeyOperationsWithResponse(
+	ctx context.Context,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.ListAccessKeyOperationsResponse, error) {
+	args := m.Called(ctx, reqEditors)
+	return args.Get(0).(*oapi.ListAccessKeyOperationsResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) ListAccessKeysWithResponse(
+	ctx context.Context,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.ListAccessKeysResponse, error) {
+	args := m.Called(ctx, reqEditors)
+	return args.Get(0).(*oapi.ListAccessKeysResponse), args.Error(1)
 }
 
 func (m *oapiClientMock) ListAntiAffinityGroupsWithResponse(
@@ -765,6 +807,15 @@ func (m *oapiClientMock) RevertInstanceToSnapshotWithResponse(
 ) (*oapi.RevertInstanceToSnapshotResponse, error) {
 	args := m.Called(ctx, instanceId, body, reqEditors)
 	return args.Get(0).(*oapi.RevertInstanceToSnapshotResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) RevokeAccessKeyWithResponse(
+	ctx context.Context,
+	key string,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.RevokeAccessKeyResponse, error) {
+	args := m.Called(ctx, key, reqEditors)
+	return args.Get(0).(*oapi.RevokeAccessKeyResponse), args.Error(1)
 }
 
 func (m *oapiClientMock) RotateSksCcmCredentialsWithResponse(

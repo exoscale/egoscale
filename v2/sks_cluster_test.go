@@ -13,18 +13,25 @@ import (
 )
 
 var (
-	testSKSClusterAddons       = []oapi.SksClusterAddons{oapi.SksClusterAddonsExoscaleCloudController}
-	testSKSClusterAutoUpgrade  = true
-	testSKSClusterCNI          = "calico"
-	testSKSClusterCreatedAt, _ = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
-	testSKSClusterDescription  = new(testSuite).randomString(10)
-	testSKSClusterEndpoint     = fmt.Sprintf("%s.sks-%s.exo.io", testSKSClusterID, testZone)
-	testSKSClusterID           = new(testSuite).randomID()
-	testSKSClusterLabels       = map[string]string{"k1": "v1", "k2": "v2"}
-	testSKSClusterName         = new(testSuite).randomString(10)
-	testSKSClusterServiceLevel = oapi.SksClusterLevelPro
-	testSKSClusterState        = oapi.SksClusterStateRunning
-	testSKSClusterVersion      = "1.18.6"
+	testSKSClusterAddons             = []oapi.SksClusterAddons{oapi.SksClusterAddonsExoscaleCloudController}
+	testSKSClusterAutoUpgrade        = true
+	testSKSClusterCNI                = "calico"
+	testSKSClusterCreatedAt, _       = time.Parse(iso8601Format, "2020-11-16T10:41:58Z")
+	testSKSClusterDescription        = new(testSuite).randomString(10)
+	testSKSClusterEndpoint           = fmt.Sprintf("%s.sks-%s.exo.io", testSKSClusterID, testZone)
+	testSKSClusterID                 = new(testSuite).randomID()
+	testSKSClusterLabels             = map[string]string{"k1": "v1", "k2": "v2"}
+	testSKSClusterName               = new(testSuite).randomString(10)
+	testSKSClusterOIDCClientID       = new(testSuite).randomString(10)
+	testSKSClusterOIDCGroupsClaim    = new(testSuite).randomString(10)
+	testSKSClusterOIDCGroupsPrefix   = new(testSuite).randomString(10)
+	testSKSClusterOIDCIssuerURL      = new(testSuite).randomString(10)
+	testSKSClusterOIDCRequiredClaim  = new(testSuite).randomString(10)
+	testSKSClusterOIDCUsernameClaim  = new(testSuite).randomString(10)
+	testSKSClusterOIDCUsernamePrefix = new(testSuite).randomString(10)
+	testSKSClusterServiceLevel       = oapi.SksClusterLevelPro
+	testSKSClusterState              = oapi.SksClusterStateRunning
+	testSKSClusterVersion            = "1.18.6"
 )
 
 func (ts *testSuite) TestClient_CreateSKSCluster() {
@@ -52,7 +59,16 @@ func (ts *testSuite) TestClient_CreateSKSCluster() {
 					Labels:      &oapi.Labels{AdditionalProperties: testSKSClusterLabels},
 					Level:       oapi.CreateSksClusterJSONBodyLevel(testSKSClusterServiceLevel),
 					Name:        testSKSClusterName,
-					Version:     testSKSClusterVersion,
+					Oidc: &oapi.SksOidc{
+						ClientId:       testSKSClusterOIDCClientID,
+						GroupsClaim:    &testSKSClusterOIDCGroupsClaim,
+						GroupsPrefix:   &testSKSClusterOIDCGroupsPrefix,
+						IssuerUrl:      testSKSClusterOIDCIssuerURL,
+						RequiredClaim:  &testSKSClusterOIDCRequiredClaim,
+						UsernameClaim:  &testSKSClusterOIDCUsernameClaim,
+						UsernamePrefix: &testSKSClusterOIDCUsernamePrefix,
+					},
+					Version: testSKSClusterVersion,
 				},
 				args.Get(1),
 			)
@@ -125,7 +141,16 @@ func (ts *testSuite) TestClient_CreateSKSCluster() {
 		Name:         &testSKSClusterName,
 		ServiceLevel: (*string)(&testSKSClusterServiceLevel),
 		Version:      &testSKSClusterVersion,
-	})
+	},
+		CreateSKSClusterWithOIDC(&SKSClusterOIDCConfig{
+			ClientID:       &testSKSClusterOIDCClientID,
+			GroupsClaim:    &testSKSClusterOIDCGroupsClaim,
+			GroupsPrefix:   &testSKSClusterOIDCGroupsPrefix,
+			IssuerURL:      &testSKSClusterOIDCIssuerURL,
+			RequiredClaim:  &testSKSClusterOIDCRequiredClaim,
+			UsernameClaim:  &testSKSClusterOIDCUsernameClaim,
+			UsernamePrefix: &testSKSClusterOIDCUsernamePrefix,
+		}))
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }

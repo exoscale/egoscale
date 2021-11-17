@@ -12,6 +12,9 @@ var (
 	testIAMAccessKeyKey                  = new(testSuite).randomString(10)
 	testIAMAccessKeyName                 = new(testSuite).randomString(10)
 	testIAMAccessKeyOperationName        = new(testSuite).randomString(10)
+	testIAMAccessKeyResourceDomain       = oapi.AccessKeyResourceDomainSos
+	testIAMAccessKeyResourceName         = new(testSuite).randomString(10)
+	testIAMAccessKeyResourceType         = oapi.AccessKeyResourceResourceTypeBucket
 	testIAMAccessKeyRestrictedOperations = []string{
 		new(testSuite).randomString(10),
 		new(testSuite).randomString(10),
@@ -38,7 +41,12 @@ func (ts *testSuite) TestClient_CreateIAMAccessKey() {
 				oapi.CreateAccessKeyJSONRequestBody{
 					Name:       &testIAMAccessKeyName,
 					Operations: &testIAMAccessKeyRestrictedOperations,
-					Tags:       &testIAMAccessKeyRestrictedTags,
+					Resources: &[]oapi.AccessKeyResource{{
+						Domain:       &testIAMAccessKeyResourceDomain,
+						ResourceName: &testIAMAccessKeyResourceName,
+						ResourceType: &testIAMAccessKeyResourceType,
+					}},
+					Tags: &testIAMAccessKeyRestrictedTags,
 				},
 				args.Get(1),
 			)
@@ -50,10 +58,15 @@ func (ts *testSuite) TestClient_CreateIAMAccessKey() {
 					Key:        &testIAMAccessKeyKey,
 					Name:       &testIAMAccessKeyName,
 					Operations: &testIAMAccessKeyRestrictedOperations,
-					Secret:     &testIAMAccessKeySecret,
-					Tags:       &testIAMAccessKeyRestrictedTags,
-					Type:       &testIAMAccessKeyType,
-					Version:    &testIAMAccessKeyVersion,
+					Resources: &[]oapi.AccessKeyResource{{
+						Domain:       &testIAMAccessKeyResourceDomain,
+						ResourceName: &testIAMAccessKeyResourceName,
+						ResourceType: &testIAMAccessKeyResourceType,
+					}},
+					Secret:  &testIAMAccessKeySecret,
+					Tags:    &testIAMAccessKeyRestrictedTags,
+					Type:    &testIAMAccessKeyType,
+					Version: &testIAMAccessKeyVersion,
 				},
 			},
 			nil,
@@ -63,10 +76,15 @@ func (ts *testSuite) TestClient_CreateIAMAccessKey() {
 		Key:        &testIAMAccessKeyKey,
 		Name:       &testIAMAccessKeyName,
 		Operations: &testIAMAccessKeyRestrictedOperations,
-		Secret:     &testIAMAccessKeySecret,
-		Tags:       &testIAMAccessKeyRestrictedTags,
-		Type:       (*string)(&testIAMAccessKeyType),
-		Version:    (*string)(&testIAMAccessKeyVersion),
+		Resources: &[]IAMAccessKeyResource{{
+			Domain:       string(testIAMAccessKeyResourceDomain),
+			ResourceName: testIAMAccessKeyResourceName,
+			ResourceType: string(testIAMAccessKeyResourceType),
+		}},
+		Secret:  &testIAMAccessKeySecret,
+		Tags:    &testIAMAccessKeyRestrictedTags,
+		Type:    (*string)(&testIAMAccessKeyType),
+		Version: (*string)(&testIAMAccessKeyVersion),
 	}
 
 	actual, err := ts.client.CreateIAMAccessKey(
@@ -75,6 +93,11 @@ func (ts *testSuite) TestClient_CreateIAMAccessKey() {
 		testIAMAccessKeyName,
 		CreateIAMAccessKeyWithOperations(testIAMAccessKeyRestrictedOperations),
 		CreateIAMAccessKeyWithTags(testIAMAccessKeyRestrictedTags),
+		CreateIAMAccessKeyWithResources([]IAMAccessKeyResource{{
+			Domain:       string(testIAMAccessKeyResourceDomain),
+			ResourceName: testIAMAccessKeyResourceName,
+			ResourceType: string(testIAMAccessKeyResourceType),
+		}}),
 	)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
@@ -96,9 +119,14 @@ func (ts *testSuite) TestClient_GetIAMAccessKey() {
 				Key:        &testIAMAccessKeyKey,
 				Name:       &testIAMAccessKeyName,
 				Operations: &testIAMAccessKeyRestrictedOperations,
-				Tags:       &testIAMAccessKeyRestrictedTags,
-				Type:       &testIAMAccessKeyType,
-				Version:    &testIAMAccessKeyVersion,
+				Resources: &[]oapi.AccessKeyResource{{
+					Domain:       &testIAMAccessKeyResourceDomain,
+					ResourceName: &testIAMAccessKeyResourceName,
+					ResourceType: &testIAMAccessKeyResourceType,
+				}},
+				Tags:    &testIAMAccessKeyRestrictedTags,
+				Type:    &testIAMAccessKeyType,
+				Version: &testIAMAccessKeyVersion,
 			},
 		}, nil)
 
@@ -106,9 +134,14 @@ func (ts *testSuite) TestClient_GetIAMAccessKey() {
 		Key:        &testIAMAccessKeyKey,
 		Name:       &testIAMAccessKeyName,
 		Operations: &testIAMAccessKeyRestrictedOperations,
-		Tags:       &testIAMAccessKeyRestrictedTags,
-		Type:       (*string)(&testIAMAccessKeyType),
-		Version:    (*string)(&testIAMAccessKeyVersion),
+		Resources: &[]IAMAccessKeyResource{{
+			Domain:       string(testIAMAccessKeyResourceDomain),
+			ResourceName: testIAMAccessKeyResourceName,
+			ResourceType: string(testIAMAccessKeyResourceType),
+		}},
+		Tags:    &testIAMAccessKeyRestrictedTags,
+		Type:    (*string)(&testIAMAccessKeyType),
+		Version: (*string)(&testIAMAccessKeyVersion),
 	}
 
 	actual, err := ts.client.GetIAMAccessKey(context.Background(), testZone, *expected.Key)
@@ -159,9 +192,14 @@ func (ts *testSuite) TestClient_ListIAMAccessKeys() {
 					Key:        &testIAMAccessKeyKey,
 					Name:       &testIAMAccessKeyName,
 					Operations: &testIAMAccessKeyRestrictedOperations,
-					Tags:       &testIAMAccessKeyRestrictedTags,
-					Type:       &testIAMAccessKeyType,
-					Version:    &testIAMAccessKeyVersion,
+					Resources: &[]oapi.AccessKeyResource{{
+						Domain:       &testIAMAccessKeyResourceDomain,
+						ResourceName: &testIAMAccessKeyResourceName,
+						ResourceType: &testIAMAccessKeyResourceType,
+					}},
+					Tags:    &testIAMAccessKeyRestrictedTags,
+					Type:    &testIAMAccessKeyType,
+					Version: &testIAMAccessKeyVersion,
 				}},
 			},
 		}, nil)
@@ -170,9 +208,14 @@ func (ts *testSuite) TestClient_ListIAMAccessKeys() {
 		Key:        &testIAMAccessKeyKey,
 		Name:       &testIAMAccessKeyName,
 		Operations: &testIAMAccessKeyRestrictedOperations,
-		Tags:       &testIAMAccessKeyRestrictedTags,
-		Type:       (*string)(&testIAMAccessKeyType),
-		Version:    (*string)(&testIAMAccessKeyVersion),
+		Resources: &[]IAMAccessKeyResource{{
+			Domain:       string(testIAMAccessKeyResourceDomain),
+			ResourceName: testIAMAccessKeyResourceName,
+			ResourceType: string(testIAMAccessKeyResourceType),
+		}},
+		Tags:    &testIAMAccessKeyRestrictedTags,
+		Type:    (*string)(&testIAMAccessKeyType),
+		Version: (*string)(&testIAMAccessKeyVersion),
 	}}
 
 	actual, err := ts.client.ListIAMAccessKeys(context.Background(), testZone)

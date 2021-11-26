@@ -205,6 +205,13 @@ const (
 	EnumServiceStateRunning EnumServiceState = "running"
 )
 
+// Defines values for EnumSortOrder.
+const (
+	EnumSortOrderAsc EnumSortOrder = "asc"
+
+	EnumSortOrderDesc EnumSortOrder = "desc"
+)
+
 // Defines values for InstanceState.
 const (
 	InstanceStateDestroyed InstanceState = "destroyed"
@@ -650,6 +657,9 @@ type DbaasIntegration struct {
 	// Source service name
 	Source *string `json:"source,omitempty"`
 
+	// Integration status
+	Status *string `json:"status,omitempty"`
+
 	// Integration type
 	Type *string `json:"type,omitempty"`
 }
@@ -771,8 +781,11 @@ type DbaasServiceCommon struct {
 	CreatedAt *time.Time `json:"created-at,omitempty"`
 
 	// TODO UNIT disk space for data storage
-	DiskSize *int64           `json:"disk-size,omitempty"`
-	Name     DbaasServiceName `json:"name"`
+	DiskSize *int64 `json:"disk-size,omitempty"`
+
+	// Service integrations
+	Integrations *[]DbaasIntegration `json:"integrations,omitempty"`
+	Name         DbaasServiceName    `json:"name"`
 
 	// Number of service nodes in the active plan
 	NodeCount *int64 `json:"node-count,omitempty"`
@@ -899,6 +912,9 @@ type DbaasServiceKafka struct {
 	// TODO UNIT disk space for data storage
 	DiskSize *int64 `json:"disk-size,omitempty"`
 
+	// Service integrations
+	Integrations *[]DbaasIntegration `json:"integrations,omitempty"`
+
 	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
 	IpFilter *[]string `json:"ip-filter,omitempty"`
 
@@ -973,6 +989,18 @@ type DbaasServiceKafka struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// DbaasServiceLogs defines model for dbaas-service-logs.
+type DbaasServiceLogs struct {
+	FirstLogOffset *string `json:"first-log-offset,omitempty"`
+	Logs           *[]struct {
+		Message *string `json:"message,omitempty"`
+		Node    *string `json:"node,omitempty"`
+		Time    *string `json:"time,omitempty"`
+		Unit    *string `json:"unit,omitempty"`
+	} `json:"logs,omitempty"`
+	Offset *string `json:"offset,omitempty"`
+}
+
 // Automatic maintenance settings
 type DbaasServiceMaintenance struct {
 	// Day of week for installing updates
@@ -1030,6 +1058,9 @@ type DbaasServiceMysql struct {
 
 	// TODO UNIT disk space for data storage
 	DiskSize *int64 `json:"disk-size,omitempty"`
+
+	// Service integrations
+	Integrations *[]DbaasIntegration `json:"integrations,omitempty"`
 
 	// Allowed CIDR address blocks for incoming connections
 	IpFilter *[]string `json:"ip-filter,omitempty"`
@@ -1172,6 +1203,9 @@ type DbaasServicePg struct {
 	// TODO UNIT disk space for data storage
 	DiskSize *int64 `json:"disk-size,omitempty"`
 
+	// Service integrations
+	Integrations *[]DbaasIntegration `json:"integrations,omitempty"`
+
 	// Allowed CIDR address blocks for incoming connections
 	IpFilter *[]string `json:"ip-filter,omitempty"`
 
@@ -1280,6 +1314,9 @@ type DbaasServiceRedis struct {
 
 	// TODO UNIT disk space for data storage
 	DiskSize *int64 `json:"disk-size,omitempty"`
+
+	// Service integrations
+	Integrations *[]DbaasIntegration `json:"integrations,omitempty"`
 
 	// Allowed CIDR address blocks for incoming connections
 	IpFilter *[]string `json:"ip-filter,omitempty"`
@@ -1505,6 +1542,9 @@ type EnumPgVariant string
 
 // EnumServiceState defines model for enum-service-state.
 type EnumServiceState string
+
+// EnumSortOrder defines model for enum-sort-order.
+type EnumSortOrder string
 
 // A notable event which happened on the infrastructure
 type Event struct {
@@ -2263,6 +2303,12 @@ type CreateDbaasIntegrationJSONBody struct {
 	SourceService string `json:"source-service"`
 }
 
+// UpdateDbaasIntegrationJSONBody defines parameters for UpdateDbaasIntegration.
+type UpdateDbaasIntegrationJSONBody struct {
+	// Integration settings
+	Settings map[string]interface{} `json:"settings"`
+}
+
 // CreateDbaasServiceKafkaJSONBody defines parameters for CreateDbaasServiceKafka.
 type CreateDbaasServiceKafkaJSONBody struct {
 	// Kafka authentication methods
@@ -2690,6 +2736,25 @@ type CreateDbaasServiceJSONBody struct {
 
 // CreateDbaasServiceJSONBodyMaintenanceDow defines parameters for CreateDbaasService.
 type CreateDbaasServiceJSONBodyMaintenanceDow string
+
+// GetDbaasServiceLogsJSONBody defines parameters for GetDbaasServiceLogs.
+type GetDbaasServiceLogsJSONBody struct {
+	// How many log entries to receive at most, up to 500 (default: 100)
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Opaque offset identifier
+	Offset    *string        `json:"offset,omitempty"`
+	SortOrder *EnumSortOrder `json:"sort-order,omitempty"`
+}
+
+// GetDbaasServiceMetricsJSONBody defines parameters for GetDbaasServiceMetrics.
+type GetDbaasServiceMetricsJSONBody struct {
+	// Metrics time period (default: hour)
+	Period *GetDbaasServiceMetricsJSONBodyPeriod `json:"period,omitempty"`
+}
+
+// GetDbaasServiceMetricsJSONBodyPeriod defines parameters for GetDbaasServiceMetrics.
+type GetDbaasServiceMetricsJSONBodyPeriod string
 
 // UpdateDbaasServiceJSONBody defines parameters for UpdateDbaasService.
 type UpdateDbaasServiceJSONBody struct {
@@ -3428,6 +3493,9 @@ type CreateAntiAffinityGroupJSONRequestBody CreateAntiAffinityGroupJSONBody
 // CreateDbaasIntegrationJSONRequestBody defines body for CreateDbaasIntegration for application/json ContentType.
 type CreateDbaasIntegrationJSONRequestBody CreateDbaasIntegrationJSONBody
 
+// UpdateDbaasIntegrationJSONRequestBody defines body for UpdateDbaasIntegration for application/json ContentType.
+type UpdateDbaasIntegrationJSONRequestBody UpdateDbaasIntegrationJSONBody
+
 // CreateDbaasServiceKafkaJSONRequestBody defines body for CreateDbaasServiceKafka for application/json ContentType.
 type CreateDbaasServiceKafkaJSONRequestBody CreateDbaasServiceKafkaJSONBody
 
@@ -3454,6 +3522,12 @@ type UpdateDbaasServiceRedisJSONRequestBody UpdateDbaasServiceRedisJSONBody
 
 // CreateDbaasServiceJSONRequestBody defines body for CreateDbaasService for application/json ContentType.
 type CreateDbaasServiceJSONRequestBody CreateDbaasServiceJSONBody
+
+// GetDbaasServiceLogsJSONRequestBody defines body for GetDbaasServiceLogs for application/json ContentType.
+type GetDbaasServiceLogsJSONRequestBody GetDbaasServiceLogsJSONBody
+
+// GetDbaasServiceMetricsJSONRequestBody defines body for GetDbaasServiceMetrics for application/json ContentType.
+type GetDbaasServiceMetricsJSONRequestBody GetDbaasServiceMetricsJSONBody
 
 // UpdateDbaasServiceJSONRequestBody defines body for UpdateDbaasService for application/json ContentType.
 type UpdateDbaasServiceJSONRequestBody UpdateDbaasServiceJSONBody
@@ -3814,8 +3888,16 @@ type ClientInterface interface {
 	// ListDbaasIntegrationTypes request
 	ListDbaasIntegrationTypes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// DeleteDbaasIntegration request
+	DeleteDbaasIntegration(ctx context.Context, integrationUuid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetDbaasIntegration request
-	GetDbaasIntegration(ctx context.Context, integrationId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetDbaasIntegration(ctx context.Context, integrationUuid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateDbaasIntegration request with any body
+	UpdateDbaasIntegrationWithBody(ctx context.Context, integrationUuid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateDbaasIntegration(ctx context.Context, integrationUuid string, body UpdateDbaasIntegrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDbaasServiceKafka request
 	GetDbaasServiceKafka(ctx context.Context, name DbaasServiceName, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3876,6 +3958,16 @@ type ClientInterface interface {
 	CreateDbaasServiceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	CreateDbaasService(ctx context.Context, body CreateDbaasServiceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetDbaasServiceLogs request with any body
+	GetDbaasServiceLogsWithBody(ctx context.Context, serviceName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GetDbaasServiceLogs(ctx context.Context, serviceName string, body GetDbaasServiceLogsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetDbaasServiceMetrics request with any body
+	GetDbaasServiceMetricsWithBody(ctx context.Context, serviceName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	GetDbaasServiceMetrics(ctx context.Context, serviceName string, body GetDbaasServiceMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDbaasServiceTypes request
 	ListDbaasServiceTypes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4521,8 +4613,44 @@ func (c *Client) ListDbaasIntegrationTypes(ctx context.Context, reqEditors ...Re
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetDbaasIntegration(ctx context.Context, integrationId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetDbaasIntegrationRequest(c.Server, integrationId)
+func (c *Client) DeleteDbaasIntegration(ctx context.Context, integrationUuid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDbaasIntegrationRequest(c.Server, integrationUuid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDbaasIntegration(ctx context.Context, integrationUuid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDbaasIntegrationRequest(c.Server, integrationUuid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateDbaasIntegrationWithBody(ctx context.Context, integrationUuid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateDbaasIntegrationRequestWithBody(c.Server, integrationUuid, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateDbaasIntegration(ctx context.Context, integrationUuid string, body UpdateDbaasIntegrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateDbaasIntegrationRequest(c.Server, integrationUuid, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4799,6 +4927,54 @@ func (c *Client) CreateDbaasServiceWithBody(ctx context.Context, contentType str
 
 func (c *Client) CreateDbaasService(ctx context.Context, body CreateDbaasServiceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateDbaasServiceRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDbaasServiceLogsWithBody(ctx context.Context, serviceName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDbaasServiceLogsRequestWithBody(c.Server, serviceName, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDbaasServiceLogs(ctx context.Context, serviceName string, body GetDbaasServiceLogsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDbaasServiceLogsRequest(c.Server, serviceName, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDbaasServiceMetricsWithBody(ctx context.Context, serviceName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDbaasServiceMetricsRequestWithBody(c.Server, serviceName, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDbaasServiceMetrics(ctx context.Context, serviceName string, body GetDbaasServiceMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDbaasServiceMetricsRequest(c.Server, serviceName, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7207,13 +7383,47 @@ func NewListDbaasIntegrationTypesRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetDbaasIntegrationRequest generates requests for GetDbaasIntegration
-func NewGetDbaasIntegrationRequest(server string, integrationId string) (*http.Request, error) {
+// NewDeleteDbaasIntegrationRequest generates requests for DeleteDbaasIntegration
+func NewDeleteDbaasIntegrationRequest(server string, integrationUuid string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "integration-id", runtime.ParamLocationPath, integrationId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "integration-uuid", runtime.ParamLocationPath, integrationUuid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-integration/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetDbaasIntegrationRequest generates requests for GetDbaasIntegration
+func NewGetDbaasIntegrationRequest(server string, integrationUuid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "integration-uuid", runtime.ParamLocationPath, integrationUuid)
 	if err != nil {
 		return nil, err
 	}
@@ -7237,6 +7447,53 @@ func NewGetDbaasIntegrationRequest(server string, integrationId string) (*http.R
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewUpdateDbaasIntegrationRequest calls the generic UpdateDbaasIntegration builder with application/json body
+func NewUpdateDbaasIntegrationRequest(server string, integrationUuid string, body UpdateDbaasIntegrationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateDbaasIntegrationRequestWithBody(server, integrationUuid, "application/json", bodyReader)
+}
+
+// NewUpdateDbaasIntegrationRequestWithBody generates requests for UpdateDbaasIntegration with any type of body
+func NewUpdateDbaasIntegrationRequestWithBody(server string, integrationUuid string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "integration-uuid", runtime.ParamLocationPath, integrationUuid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-integration/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -7801,6 +8058,100 @@ func NewCreateDbaasServiceRequestWithBody(server string, contentType string, bod
 	}
 
 	operationPath := fmt.Sprintf("/dbaas-service")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetDbaasServiceLogsRequest calls the generic GetDbaasServiceLogs builder with application/json body
+func NewGetDbaasServiceLogsRequest(server string, serviceName string, body GetDbaasServiceLogsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGetDbaasServiceLogsRequestWithBody(server, serviceName, "application/json", bodyReader)
+}
+
+// NewGetDbaasServiceLogsRequestWithBody generates requests for GetDbaasServiceLogs with any type of body
+func NewGetDbaasServiceLogsRequestWithBody(server string, serviceName string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-name", runtime.ParamLocationPath, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-service-logs/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetDbaasServiceMetricsRequest calls the generic GetDbaasServiceMetrics builder with application/json body
+func NewGetDbaasServiceMetricsRequest(server string, serviceName string, body GetDbaasServiceMetricsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewGetDbaasServiceMetricsRequestWithBody(server, serviceName, "application/json", bodyReader)
+}
+
+// NewGetDbaasServiceMetricsRequestWithBody generates requests for GetDbaasServiceMetrics with any type of body
+func NewGetDbaasServiceMetricsRequestWithBody(server string, serviceName string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-name", runtime.ParamLocationPath, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-service-metrics/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -12539,8 +12890,16 @@ type ClientWithResponsesInterface interface {
 	// ListDbaasIntegrationTypes request
 	ListDbaasIntegrationTypesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDbaasIntegrationTypesResponse, error)
 
+	// DeleteDbaasIntegration request
+	DeleteDbaasIntegrationWithResponse(ctx context.Context, integrationUuid string, reqEditors ...RequestEditorFn) (*DeleteDbaasIntegrationResponse, error)
+
 	// GetDbaasIntegration request
-	GetDbaasIntegrationWithResponse(ctx context.Context, integrationId string, reqEditors ...RequestEditorFn) (*GetDbaasIntegrationResponse, error)
+	GetDbaasIntegrationWithResponse(ctx context.Context, integrationUuid string, reqEditors ...RequestEditorFn) (*GetDbaasIntegrationResponse, error)
+
+	// UpdateDbaasIntegration request with any body
+	UpdateDbaasIntegrationWithBodyWithResponse(ctx context.Context, integrationUuid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDbaasIntegrationResponse, error)
+
+	UpdateDbaasIntegrationWithResponse(ctx context.Context, integrationUuid string, body UpdateDbaasIntegrationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDbaasIntegrationResponse, error)
 
 	// GetDbaasServiceKafka request
 	GetDbaasServiceKafkaWithResponse(ctx context.Context, name DbaasServiceName, reqEditors ...RequestEditorFn) (*GetDbaasServiceKafkaResponse, error)
@@ -12601,6 +12960,16 @@ type ClientWithResponsesInterface interface {
 	CreateDbaasServiceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDbaasServiceResponse, error)
 
 	CreateDbaasServiceWithResponse(ctx context.Context, body CreateDbaasServiceJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDbaasServiceResponse, error)
+
+	// GetDbaasServiceLogs request with any body
+	GetDbaasServiceLogsWithBodyWithResponse(ctx context.Context, serviceName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetDbaasServiceLogsResponse, error)
+
+	GetDbaasServiceLogsWithResponse(ctx context.Context, serviceName string, body GetDbaasServiceLogsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetDbaasServiceLogsResponse, error)
+
+	// GetDbaasServiceMetrics request with any body
+	GetDbaasServiceMetricsWithBodyWithResponse(ctx context.Context, serviceName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetDbaasServiceMetricsResponse, error)
+
+	GetDbaasServiceMetricsWithResponse(ctx context.Context, serviceName string, body GetDbaasServiceMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetDbaasServiceMetricsResponse, error)
 
 	// ListDbaasServiceTypes request
 	ListDbaasServiceTypesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDbaasServiceTypesResponse, error)
@@ -13370,6 +13739,28 @@ func (r ListDbaasIntegrationTypesResponse) StatusCode() int {
 	return 0
 }
 
+type DeleteDbaasIntegrationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DbaasIntegration
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteDbaasIntegrationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteDbaasIntegrationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetDbaasIntegrationResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -13386,6 +13777,28 @@ func (r GetDbaasIntegrationResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetDbaasIntegrationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateDbaasIntegrationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DbaasIntegration
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateDbaasIntegrationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateDbaasIntegrationResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -13696,6 +14109,52 @@ func (r CreateDbaasServiceResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r CreateDbaasServiceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetDbaasServiceLogsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DbaasServiceLogs
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDbaasServiceLogsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDbaasServiceLogsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetDbaasServiceMetricsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Metrics *map[string]interface{} `json:"metrics,omitempty"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDbaasServiceMetricsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDbaasServiceMetricsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -16556,13 +17015,39 @@ func (c *ClientWithResponses) ListDbaasIntegrationTypesWithResponse(ctx context.
 	return ParseListDbaasIntegrationTypesResponse(rsp)
 }
 
+// DeleteDbaasIntegrationWithResponse request returning *DeleteDbaasIntegrationResponse
+func (c *ClientWithResponses) DeleteDbaasIntegrationWithResponse(ctx context.Context, integrationUuid string, reqEditors ...RequestEditorFn) (*DeleteDbaasIntegrationResponse, error) {
+	rsp, err := c.DeleteDbaasIntegration(ctx, integrationUuid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteDbaasIntegrationResponse(rsp)
+}
+
 // GetDbaasIntegrationWithResponse request returning *GetDbaasIntegrationResponse
-func (c *ClientWithResponses) GetDbaasIntegrationWithResponse(ctx context.Context, integrationId string, reqEditors ...RequestEditorFn) (*GetDbaasIntegrationResponse, error) {
-	rsp, err := c.GetDbaasIntegration(ctx, integrationId, reqEditors...)
+func (c *ClientWithResponses) GetDbaasIntegrationWithResponse(ctx context.Context, integrationUuid string, reqEditors ...RequestEditorFn) (*GetDbaasIntegrationResponse, error) {
+	rsp, err := c.GetDbaasIntegration(ctx, integrationUuid, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseGetDbaasIntegrationResponse(rsp)
+}
+
+// UpdateDbaasIntegrationWithBodyWithResponse request with arbitrary body returning *UpdateDbaasIntegrationResponse
+func (c *ClientWithResponses) UpdateDbaasIntegrationWithBodyWithResponse(ctx context.Context, integrationUuid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDbaasIntegrationResponse, error) {
+	rsp, err := c.UpdateDbaasIntegrationWithBody(ctx, integrationUuid, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateDbaasIntegrationResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateDbaasIntegrationWithResponse(ctx context.Context, integrationUuid string, body UpdateDbaasIntegrationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDbaasIntegrationResponse, error) {
+	rsp, err := c.UpdateDbaasIntegration(ctx, integrationUuid, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateDbaasIntegrationResponse(rsp)
 }
 
 // GetDbaasServiceKafkaWithResponse request returning *GetDbaasServiceKafkaResponse
@@ -16761,6 +17246,40 @@ func (c *ClientWithResponses) CreateDbaasServiceWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseCreateDbaasServiceResponse(rsp)
+}
+
+// GetDbaasServiceLogsWithBodyWithResponse request with arbitrary body returning *GetDbaasServiceLogsResponse
+func (c *ClientWithResponses) GetDbaasServiceLogsWithBodyWithResponse(ctx context.Context, serviceName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetDbaasServiceLogsResponse, error) {
+	rsp, err := c.GetDbaasServiceLogsWithBody(ctx, serviceName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDbaasServiceLogsResponse(rsp)
+}
+
+func (c *ClientWithResponses) GetDbaasServiceLogsWithResponse(ctx context.Context, serviceName string, body GetDbaasServiceLogsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetDbaasServiceLogsResponse, error) {
+	rsp, err := c.GetDbaasServiceLogs(ctx, serviceName, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDbaasServiceLogsResponse(rsp)
+}
+
+// GetDbaasServiceMetricsWithBodyWithResponse request with arbitrary body returning *GetDbaasServiceMetricsResponse
+func (c *ClientWithResponses) GetDbaasServiceMetricsWithBodyWithResponse(ctx context.Context, serviceName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GetDbaasServiceMetricsResponse, error) {
+	rsp, err := c.GetDbaasServiceMetricsWithBody(ctx, serviceName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDbaasServiceMetricsResponse(rsp)
+}
+
+func (c *ClientWithResponses) GetDbaasServiceMetricsWithResponse(ctx context.Context, serviceName string, body GetDbaasServiceMetricsJSONRequestBody, reqEditors ...RequestEditorFn) (*GetDbaasServiceMetricsResponse, error) {
+	rsp, err := c.GetDbaasServiceMetrics(ctx, serviceName, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDbaasServiceMetricsResponse(rsp)
 }
 
 // ListDbaasServiceTypesWithResponse request returning *ListDbaasServiceTypesResponse
@@ -18552,6 +19071,32 @@ func ParseListDbaasIntegrationTypesResponse(rsp *http.Response) (*ListDbaasInteg
 	return response, nil
 }
 
+// ParseDeleteDbaasIntegrationResponse parses an HTTP response from a DeleteDbaasIntegrationWithResponse call
+func ParseDeleteDbaasIntegrationResponse(rsp *http.Response) (*DeleteDbaasIntegrationResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteDbaasIntegrationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DbaasIntegration
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetDbaasIntegrationResponse parses an HTTP response from a GetDbaasIntegrationWithResponse call
 func ParseGetDbaasIntegrationResponse(rsp *http.Response) (*GetDbaasIntegrationResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -18561,6 +19106,32 @@ func ParseGetDbaasIntegrationResponse(rsp *http.Response) (*GetDbaasIntegrationR
 	}
 
 	response := &GetDbaasIntegrationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DbaasIntegration
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateDbaasIntegrationResponse parses an HTTP response from a UpdateDbaasIntegrationWithResponse call
+func ParseUpdateDbaasIntegrationResponse(rsp *http.Response) (*UpdateDbaasIntegrationResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateDbaasIntegrationResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -18934,6 +19505,60 @@ func ParseCreateDbaasServiceResponse(rsp *http.Response) (*CreateDbaasServiceRes
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest DbaasServiceCommon
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetDbaasServiceLogsResponse parses an HTTP response from a GetDbaasServiceLogsWithResponse call
+func ParseGetDbaasServiceLogsResponse(rsp *http.Response) (*GetDbaasServiceLogsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDbaasServiceLogsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DbaasServiceLogs
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetDbaasServiceMetricsResponse parses an HTTP response from a GetDbaasServiceMetricsWithResponse call
+func ParseGetDbaasServiceMetricsResponse(rsp *http.Response) (*GetDbaasServiceMetricsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDbaasServiceMetricsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Metrics *map[string]interface{} `json:"metrics,omitempty"`
+		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

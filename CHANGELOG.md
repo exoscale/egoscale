@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.83.2
+------
+
+- change: v2: refresh code generated from public API spec
+
 0.83.1
 ------
 

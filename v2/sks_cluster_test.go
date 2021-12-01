@@ -26,7 +26,7 @@ var (
 	testSKSClusterOIDCGroupsClaim    = new(testSuite).randomString(10)
 	testSKSClusterOIDCGroupsPrefix   = new(testSuite).randomString(10)
 	testSKSClusterOIDCIssuerURL      = new(testSuite).randomString(10)
-	testSKSClusterOIDCRequiredClaim  = new(testSuite).randomString(10)
+	testSKSClusterOIDCRequiredClaim  = map[string]string{"test": new(testSuite).randomString(10)}
 	testSKSClusterOIDCUsernameClaim  = new(testSuite).randomString(10)
 	testSKSClusterOIDCUsernamePrefix = new(testSuite).randomString(10)
 	testSKSClusterServiceLevel       = oapi.SksClusterLevelPro
@@ -60,11 +60,13 @@ func (ts *testSuite) TestClient_CreateSKSCluster() {
 					Level:       oapi.CreateSksClusterJSONBodyLevel(testSKSClusterServiceLevel),
 					Name:        testSKSClusterName,
 					Oidc: &oapi.SksOidc{
-						ClientId:       testSKSClusterOIDCClientID,
-						GroupsClaim:    &testSKSClusterOIDCGroupsClaim,
-						GroupsPrefix:   &testSKSClusterOIDCGroupsPrefix,
-						IssuerUrl:      testSKSClusterOIDCIssuerURL,
-						RequiredClaim:  &testSKSClusterOIDCRequiredClaim,
+						ClientId:     testSKSClusterOIDCClientID,
+						GroupsClaim:  &testSKSClusterOIDCGroupsClaim,
+						GroupsPrefix: &testSKSClusterOIDCGroupsPrefix,
+						IssuerUrl:    testSKSClusterOIDCIssuerURL,
+						RequiredClaim: &oapi.SksOidc_RequiredClaim{
+							AdditionalProperties: testSKSClusterOIDCRequiredClaim,
+						},
 						UsernameClaim:  &testSKSClusterOIDCUsernameClaim,
 						UsernamePrefix: &testSKSClusterOIDCUsernamePrefix,
 					},

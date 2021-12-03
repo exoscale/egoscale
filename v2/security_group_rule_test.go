@@ -28,8 +28,9 @@ var (
 
 func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 	var (
-		testOperationID    = ts.randomID()
-		testOperationState = oapi.OperationStateSuccess
+		testOperationID                        = ts.randomID()
+		testOperationState                     = oapi.OperationStateSuccess
+		testAlreadyExistingSecurityGroupRuleID = ts.randomID()
 	)
 
 	ts.mock().
@@ -89,23 +90,77 @@ func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 				Description: &testSecurityGroupDescription,
 				Id:          &testSecurityGroupID,
 				Name:        &testSecurityGroupName,
-				Rules: &[]oapi.SecurityGroupRule{{
-					Description:   &testSecurityGroupRuleDescription,
-					EndPort:       func() *int64 { v := int64(testSecurityGroupRuleEndPort); return &v }(),
-					FlowDirection: &testSecurityGroupRuleFlowDirection,
-					Icmp: &struct {
-						Code *int64 `json:"code,omitempty"`
-						Type *int64 `json:"type,omitempty"`
-					}{
-						Code: &testSecurityGroupRuleICMPCode,
-						Type: &testSecurityGroupRuleICMPType,
+				Rules: &[]oapi.SecurityGroupRule{
+					{
+						Description:   &testSecurityGroupRuleDescription,
+						EndPort:       func() *int64 { v := int64(testSecurityGroupRuleEndPort - 1); return &v }(),
+						FlowDirection: &testSecurityGroupRuleFlowDirection,
+						Icmp: &struct {
+							Code *int64 `json:"code,omitempty"`
+							Type *int64 `json:"type,omitempty"`
+						}{
+							Code: &testSecurityGroupRuleICMPCode,
+							Type: &testSecurityGroupRuleICMPType,
+						},
+						Id:            &testAlreadyExistingSecurityGroupRuleID,
+						Network:       &testSecurityGroupRuleNetwork,
+						Protocol:      &testSecurityGroupRuleProtocol,
+						SecurityGroup: &oapi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
+						StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 					},
-					Id:            &testSecurityGroupRuleID,
-					Network:       &testSecurityGroupRuleNetwork,
-					Protocol:      &testSecurityGroupRuleProtocol,
-					SecurityGroup: &oapi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
-					StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
-				}},
+				},
+			},
+		}, nil).
+		Once()
+
+	ts.mock().
+		On("GetSecurityGroupWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetSecurityGroupResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.SecurityGroup{
+				Description: &testSecurityGroupDescription,
+				Id:          &testSecurityGroupID,
+				Name:        &testSecurityGroupName,
+				Rules: &[]oapi.SecurityGroupRule{
+					{
+						Description:   &testSecurityGroupRuleDescription,
+						EndPort:       func() *int64 { v := int64(testSecurityGroupRuleEndPort - 1); return &v }(),
+						FlowDirection: &testSecurityGroupRuleFlowDirection,
+						Icmp: &struct {
+							Code *int64 `json:"code,omitempty"`
+							Type *int64 `json:"type,omitempty"`
+						}{
+							Code: &testSecurityGroupRuleICMPCode,
+							Type: &testSecurityGroupRuleICMPType,
+						},
+						Id:            &testAlreadyExistingSecurityGroupRuleID,
+						Network:       &testSecurityGroupRuleNetwork,
+						Protocol:      &testSecurityGroupRuleProtocol,
+						SecurityGroup: &oapi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
+						StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
+					},
+					{
+						Description:   &testSecurityGroupRuleDescription,
+						EndPort:       func() *int64 { v := int64(testSecurityGroupRuleEndPort); return &v }(),
+						FlowDirection: &testSecurityGroupRuleFlowDirection,
+						Icmp: &struct {
+							Code *int64 `json:"code,omitempty"`
+							Type *int64 `json:"type,omitempty"`
+						}{
+							Code: &testSecurityGroupRuleICMPCode,
+							Type: &testSecurityGroupRuleICMPType,
+						},
+						Id:            &testSecurityGroupRuleID,
+						Network:       &testSecurityGroupRuleNetwork,
+						Protocol:      &testSecurityGroupRuleProtocol,
+						SecurityGroup: &oapi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
+						StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
+					},
+				},
 			},
 		}, nil)
 

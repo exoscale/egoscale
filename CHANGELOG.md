@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.84.1
+------
+
+- fix: v2: fix `CreateSecurityGroupRule()` method (#547)
+
 0.84.0
 ------
 

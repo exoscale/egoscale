@@ -1313,9 +1313,9 @@ type DbaasServiceRedis struct {
 
 	// Redis connection information properties
 	ConnectionInfo *struct {
-		Password *string                   `json:"password,omitempty"`
-		Slave    *[]map[string]interface{} `json:"slave,omitempty"`
-		Uri      *[]string                 `json:"uri,omitempty"`
+		Password *string   `json:"password,omitempty"`
+		Slave    *[]string `json:"slave,omitempty"`
+		Uri      *[]string `json:"uri,omitempty"`
 	} `json:"connection-info,omitempty"`
 
 	// Service creation timestamp (ISO 8601)
@@ -14003,7 +14003,7 @@ func (r GetDbaasServiceMysqlResponse) StatusCode() int {
 type CreateDbaasServiceMysqlResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *DbaasServicePg
+	JSON200      *DbaasServiceMysql
 }
 
 // Status returns HTTPResponse.Status
@@ -19375,7 +19375,7 @@ func ParseCreateDbaasServiceMysqlResponse(rsp *http.Response) (*CreateDbaasServi
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DbaasServicePg
+		var dest DbaasServiceMysql
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

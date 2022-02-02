@@ -2192,22 +2192,9 @@ type SksClusterLevel string
 // Cluster state
 type SksClusterState string
 
-// SKS Cluster deprecated resource
+// SksClusterDeprecatedResource defines model for sks-cluster-deprecated-resource.
 type SksClusterDeprecatedResource struct {
-	// kubernetes group
-	Group *string `json:"group,omitempty"`
-
-	// kubernetes version to be removed
-	RemovedRelease *string `json:"removed-release,omitempty"`
-
-	// kubernetes resource name
-	Resource *string `json:"resource,omitempty"`
-
-	// kubernetes subresource name
-	Subresource *string `json:"subresource,omitempty"`
-
-	// kubernetes resource version
-	Version *string `json:"version,omitempty"`
+	AdditionalProperties map[string]string `json:"-"`
 }
 
 // Kubeconfig request for a SKS cluster
@@ -4136,6 +4123,59 @@ func (a Labels) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// Getter for additional properties for SksClusterDeprecatedResource. Returns the specified
+// element and whether it was found
+func (a SksClusterDeprecatedResource) Get(fieldName string) (value string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for SksClusterDeprecatedResource
+func (a *SksClusterDeprecatedResource) Set(fieldName string, value string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for SksClusterDeprecatedResource to handle AdditionalProperties
+func (a *SksClusterDeprecatedResource) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for SksClusterDeprecatedResource to handle AdditionalProperties
+func (a SksClusterDeprecatedResource) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
 // Getter for additional properties for SksNodepoolTaints. Returns the specified
 // element and whether it was found
 func (a SksNodepoolTaints) Get(fieldName string) (value SksNodepoolTaint, found bool) {
@@ -4741,8 +4781,8 @@ type ClientInterface interface {
 
 	CreateSksCluster(ctx context.Context, body CreateSksClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListSksClusterDeprecatedResource request
-	ListSksClusterDeprecatedResource(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListSksClusterDeprecatedResources request
+	ListSksClusterDeprecatedResources(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GenerateSksClusterKubeconfig request with any body
 	GenerateSksClusterKubeconfigWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6758,8 +6798,8 @@ func (c *Client) CreateSksCluster(ctx context.Context, body CreateSksClusterJSON
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListSksClusterDeprecatedResource(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListSksClusterDeprecatedResourceRequest(c.Server, id)
+func (c *Client) ListSksClusterDeprecatedResources(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListSksClusterDeprecatedResourcesRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -11652,8 +11692,8 @@ func NewCreateSksClusterRequestWithBody(server string, contentType string, body 
 	return req, nil
 }
 
-// NewListSksClusterDeprecatedResourceRequest generates requests for ListSksClusterDeprecatedResource
-func NewListSksClusterDeprecatedResourceRequest(server string, id string) (*http.Request, error) {
+// NewListSksClusterDeprecatedResourcesRequest generates requests for ListSksClusterDeprecatedResources
+func NewListSksClusterDeprecatedResourcesRequest(server string, id string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -11668,7 +11708,7 @@ func NewListSksClusterDeprecatedResourceRequest(server string, id string) (*http
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/sks-cluster-deprecated-resource/%s", pathParam0)
+	operationPath := fmt.Sprintf("/sks-cluster-deprecated-resources/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -13591,8 +13631,8 @@ type ClientWithResponsesInterface interface {
 
 	CreateSksClusterWithResponse(ctx context.Context, body CreateSksClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateSksClusterResponse, error)
 
-	// ListSksClusterDeprecatedResource request
-	ListSksClusterDeprecatedResourceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ListSksClusterDeprecatedResourceResponse, error)
+	// ListSksClusterDeprecatedResources request
+	ListSksClusterDeprecatedResourcesWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ListSksClusterDeprecatedResourcesResponse, error)
 
 	// GenerateSksClusterKubeconfig request with any body
 	GenerateSksClusterKubeconfigWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*GenerateSksClusterKubeconfigResponse, error)
@@ -16326,16 +16366,14 @@ func (r CreateSksClusterResponse) StatusCode() int {
 	return 0
 }
 
-type ListSksClusterDeprecatedResourceResponse struct {
+type ListSksClusterDeprecatedResourcesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		DeprecatedResources *[]SksClusterDeprecatedResource `json:"deprecated-resources,omitempty"`
-	}
+	JSON200      *[]SksClusterDeprecatedResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ListSksClusterDeprecatedResourceResponse) Status() string {
+func (r ListSksClusterDeprecatedResourcesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -16343,7 +16381,7 @@ func (r ListSksClusterDeprecatedResourceResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListSksClusterDeprecatedResourceResponse) StatusCode() int {
+func (r ListSksClusterDeprecatedResourcesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -18504,13 +18542,13 @@ func (c *ClientWithResponses) CreateSksClusterWithResponse(ctx context.Context, 
 	return ParseCreateSksClusterResponse(rsp)
 }
 
-// ListSksClusterDeprecatedResourceWithResponse request returning *ListSksClusterDeprecatedResourceResponse
-func (c *ClientWithResponses) ListSksClusterDeprecatedResourceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ListSksClusterDeprecatedResourceResponse, error) {
-	rsp, err := c.ListSksClusterDeprecatedResource(ctx, id, reqEditors...)
+// ListSksClusterDeprecatedResourcesWithResponse request returning *ListSksClusterDeprecatedResourcesResponse
+func (c *ClientWithResponses) ListSksClusterDeprecatedResourcesWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*ListSksClusterDeprecatedResourcesResponse, error) {
+	rsp, err := c.ListSksClusterDeprecatedResources(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListSksClusterDeprecatedResourceResponse(rsp)
+	return ParseListSksClusterDeprecatedResourcesResponse(rsp)
 }
 
 // GenerateSksClusterKubeconfigWithBodyWithResponse request with arbitrary body returning *GenerateSksClusterKubeconfigResponse
@@ -21974,24 +22012,22 @@ func ParseCreateSksClusterResponse(rsp *http.Response) (*CreateSksClusterRespons
 	return response, nil
 }
 
-// ParseListSksClusterDeprecatedResourceResponse parses an HTTP response from a ListSksClusterDeprecatedResourceWithResponse call
-func ParseListSksClusterDeprecatedResourceResponse(rsp *http.Response) (*ListSksClusterDeprecatedResourceResponse, error) {
+// ParseListSksClusterDeprecatedResourcesResponse parses an HTTP response from a ListSksClusterDeprecatedResourcesWithResponse call
+func ParseListSksClusterDeprecatedResourcesResponse(rsp *http.Response) (*ListSksClusterDeprecatedResourcesResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListSksClusterDeprecatedResourceResponse{
+	response := &ListSksClusterDeprecatedResourcesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			DeprecatedResources *[]SksClusterDeprecatedResource `json:"deprecated-resources,omitempty"`
-		}
+		var dest []SksClusterDeprecatedResource
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

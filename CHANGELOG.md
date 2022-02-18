@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.85.0
+------
+
+- feature: v2: add support for listing of SKS Cluster deprecated resources via `ListSKSClusterDeprecatedResources`
+
 0.84.3
 ------
 

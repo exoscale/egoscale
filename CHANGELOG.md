@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.85.0
+0.86.0
 ------
 
 - feature: v2: DBaaS: implement migration status command

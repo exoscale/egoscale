@@ -33,6 +33,14 @@ var (
 	testDatabaseServiceTypeAvailableVersions       = []string{"12", "13"}
 	testDatabaseServiceTypeName                    = oapi.DbaasServiceTypeName("pg")
 	testDatabaseServiceUpdatedAt, _                = time.Parse(iso8601Format, "2020-08-12T11:12:36Z")
+	testDatabaseServiceMigrationMethod             = "replication"
+	testDatabaseMigrationError                     = "Failed to run query on source db: 'connection refused'"
+	testDatabaseMigrationDetailsStatusOapi         = oapi.EnumMigrationStatusFailed
+	testDatabaseMigrationDetailsStatus             = DatabaseMigrationStatusFailed
+	testDatabaseMigrationStatus                    = "failed"
+	testDatabaseMasterLastIoSecondsAgo             = int64(12)
+	testDatabaseMasterLinkStatusOapi               = oapi.EnumMasterLinkStatusUp
+	testDatabaseMasterLinkStatus                   = MasterLinkStatusUp
 )
 
 func (ts *testSuite) TestClient_DeleteDatabaseService() {
@@ -255,6 +263,57 @@ func (ts *testSuite) TestClient_ListDatabaseServices() {
 	}}
 
 	actual, err := ts.client.ListDatabaseServices(context.Background(), testZone)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *testSuite) TestClient_GetDatabaseMigrationStatus() {
+	ts.mock().
+		On("GetDbaasMigrationStatusWithResponse",
+			mock.Anything, // ctx
+			oapi.DbaasServiceName(testDatabaseServiceName),
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetDbaasMigrationStatusResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.DbaasMigrationStatus{
+				Details: &[]struct {
+					Dbname *string                   `json:"dbname,omitempty"`
+					Error  *string                   `json:"error,omitempty"`
+					Method *string                   `json:"method,omitempty"`
+					Status *oapi.EnumMigrationStatus `json:"status,omitempty"`
+				}{{
+					Dbname: &testDatabaseServiceName,
+					Error:  &testDatabaseMigrationError,
+					Method: &testDatabaseServiceMigrationMethod,
+					Status: &testDatabaseMigrationDetailsStatusOapi,
+				}},
+
+				Error:                  &testDatabaseMigrationError,
+				MasterLastIoSecondsAgo: &testDatabaseMasterLastIoSecondsAgo,
+				MasterLinkStatus:       &testDatabaseMasterLinkStatusOapi,
+				Method:                 &testDatabaseServiceMigrationMethod,
+				Status:                 &testDatabaseMigrationStatus,
+			},
+		}, nil)
+
+	expected := &DatabaseMigrationStatus{
+		Details: []DatabaseMigrationStatusDetails{
+			{
+				DBName: &testDatabaseServiceName,
+				Error:  &testDatabaseMigrationError,
+				Method: &testDatabaseServiceMigrationMethod,
+				Status: &testDatabaseMigrationDetailsStatus,
+			},
+		},
+		Error:                  &testDatabaseMigrationError,
+		MasterLastIOSecondsAgo: &testDatabaseMasterLastIoSecondsAgo,
+		MasterLinkStatus:       &testDatabaseMasterLinkStatus,
+		Method:                 &testDatabaseServiceMigrationMethod,
+		Status:                 &testDatabaseMigrationStatus,
+	}
+
+	actual, err := ts.client.GetDatabaseMigrationStatus(context.Background(), testZone, testDatabaseServiceName)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }

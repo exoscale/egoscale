@@ -300,14 +300,14 @@ func (ts *testSuite) TestClient_GetDatabaseMigrationStatus() {
 	expected := &DatabaseMigrationStatus{
 		Details: []DatabaseMigrationStatusDetails{
 			{
-				DBname: &testDatabaseServiceName,
+				DBName: &testDatabaseServiceName,
 				Error:  &testDatabaseMigrationError,
 				Method: &testDatabaseServiceMigrationMethod,
 				Status: &testDatabaseMigrationDetailsStatus,
 			},
 		},
 		Error:                  &testDatabaseMigrationError,
-		MasterLastIoSecondsAgo: &testDatabaseMasterLastIoSecondsAgo,
+		MasterLastIOSecondsAgo: &testDatabaseMasterLastIoSecondsAgo,
 		MasterLinkStatus:       &testDatabaseMasterLinkStatus,
 		Method:                 &testDatabaseServiceMigrationMethod,
 		Status:                 &testDatabaseMigrationStatus,

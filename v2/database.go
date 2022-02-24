@@ -238,7 +238,7 @@ const (
 
 type DatabaseMigrationStatusDetails struct {
 	// Migrated db name (PG) or number (Redis)
-	DBname *string
+	DBName *string
 
 	// Error message in case that migration has failed
 	Error *string
@@ -256,7 +256,7 @@ type DatabaseMigrationStatus struct {
 	Error *string
 
 	// Redis only: how many seconds since last I/O with redis master
-	MasterLastIoSecondsAgo *int64
+	MasterLastIOSecondsAgo *int64
 	MasterLinkStatus       *DatabaseMigrationRedisMasterLinkStatus
 
 	// Migration method. Empty in case of multiple methods or error
@@ -274,7 +274,7 @@ func databaseMigrationStatusFromAPI(in *oapi.DbaasMigrationStatus) *DatabaseMigr
 	out := &DatabaseMigrationStatus{
 		Details:                []DatabaseMigrationStatusDetails{},
 		Error:                  in.Error,
-		MasterLastIoSecondsAgo: in.MasterLastIoSecondsAgo,
+		MasterLastIOSecondsAgo: in.MasterLastIoSecondsAgo,
 		MasterLinkStatus:       (*DatabaseMigrationRedisMasterLinkStatus)(in.MasterLinkStatus),
 		Method:                 in.Method,
 		Status:                 in.Status,
@@ -283,7 +283,7 @@ func databaseMigrationStatusFromAPI(in *oapi.DbaasMigrationStatus) *DatabaseMigr
 	if in.Details != nil {
 		for _, d := range *in.Details {
 			out.Details = append(out.Details, DatabaseMigrationStatusDetails{
-				DBname: d.Dbname,
+				DBName: d.Dbname,
 				Error:  d.Error,
 				Method: d.Method,
 				Status: (*DatabaseMigrationStatusDetailsStatus)(d.Status),

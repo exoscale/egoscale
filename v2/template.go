@@ -95,7 +95,7 @@ func (c *Client) CopyTemplate(ctx context.Context, zone string, template *Templa
 
 	return c.GetTemplate(ctx, dstZone, *res.(*struct {
 		Command *string `json:"command,omitempty"`
-		Id      *string `json:"id,omitempty"`
+		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id)
 }
@@ -191,7 +191,7 @@ func (c *Client) RegisterTemplate(ctx context.Context, zone string, template *Te
 
 	return c.GetTemplate(ctx, zone, *res.(*struct {
 		Command *string `json:"command,omitempty"`
-		Id      *string `json:"id,omitempty"`
+		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id)
 }

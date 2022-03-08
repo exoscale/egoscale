@@ -276,7 +276,7 @@ func (ts *testSuite) TestClient_RevokeIAMAccessKey() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testIAMAccessKeyKey},
 					State: &testOperationState,
@@ -289,7 +289,7 @@ func (ts *testSuite) TestClient_RevokeIAMAccessKey() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testIAMAccessKeyName},
 		State: &testOperationState,

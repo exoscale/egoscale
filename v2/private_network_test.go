@@ -58,7 +58,7 @@ func (ts *testSuite) TestClient_CreatePrivateNetwork() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testPrivateNetworkID},
 					State: &testOperationState,
@@ -71,7 +71,7 @@ func (ts *testSuite) TestClient_CreatePrivateNetwork() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testPrivateNetworkID},
 		State: &testOperationState,
@@ -142,7 +142,7 @@ func (ts *testSuite) TestClient_DeletePrivateNetwork() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testPrivateNetworkID},
 					State: &testOperationState,
@@ -155,7 +155,7 @@ func (ts *testSuite) TestClient_DeletePrivateNetwork() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testPrivateNetworkID},
 		State: &testOperationState,
@@ -365,7 +365,7 @@ func (ts *testSuite) TestClient_UpdatePrivateNetwork() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testPrivateNetworkID},
 					State: &testOperationState,
@@ -378,7 +378,7 @@ func (ts *testSuite) TestClient_UpdatePrivateNetwork() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testPrivateNetworkID},
 		State: &testOperationState,
@@ -427,7 +427,7 @@ func (ts *testSuite) TestClient_UpdatePrivateNetworkInstanceIPAddress() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testPrivateNetworkID},
 					State: &testOperationState,
@@ -440,7 +440,7 @@ func (ts *testSuite) TestClient_UpdatePrivateNetworkInstanceIPAddress() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testPrivateNetworkID},
 		State: &testOperationState,

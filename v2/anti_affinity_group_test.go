@@ -45,7 +45,7 @@ func (ts *testSuite) TestClient_CreateAntiAffinityGroup() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testAntiAffinityGroupID},
 					State: &testOperationState,
@@ -58,7 +58,7 @@ func (ts *testSuite) TestClient_CreateAntiAffinityGroup() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testAntiAffinityGroupID},
 		State: &testOperationState,
@@ -119,7 +119,7 @@ func (ts *testSuite) TestClient_DeleteAntiAffinityGroup() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testAntiAffinityGroupID},
 					State: &testOperationState,
@@ -132,7 +132,7 @@ func (ts *testSuite) TestClient_DeleteAntiAffinityGroup() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testAntiAffinityGroupID},
 		State: &testOperationState,

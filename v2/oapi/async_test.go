@@ -129,7 +129,7 @@ func (ts *testSuite) TestOperationPoller() {
 				State: &operationStatePending,
 				Reference: &struct {
 					Command *string `json:"command,omitempty"`
-					Id      *string `json:"id,omitempty"`
+					Id      *string `json:"id,omitempty"` // revive:disable-line
 					Link    *string `json:"link,omitempty"`
 				}{Id: &operationReferenceID},
 			},
@@ -146,7 +146,7 @@ func (ts *testSuite) TestOperationPoller() {
 				State: &operationStateSuccess,
 				Reference: &struct {
 					Command *string `json:"command,omitempty"`
-					Id      *string `json:"id,omitempty"`
+					Id      *string `json:"id,omitempty"` // revive:disable-line
 					Link    *string `json:"link,omitempty"`
 				}{Id: &operationReferenceID},
 			},
@@ -154,7 +154,7 @@ func (ts *testSuite) TestOperationPoller() {
 				ts.Require().NoError(err)
 				ts.Require().Equal(&struct {
 					Command *string `json:"command,omitempty"`
-					Id      *string `json:"id,omitempty"`
+					Id      *string `json:"id,omitempty"` // revive:disable-line
 					Link    *string `json:"link,omitempty"`
 				}{Id: &operationReferenceID}, res)
 				ts.Require().True(done)
@@ -168,7 +168,7 @@ func (ts *testSuite) TestOperationPoller() {
 				State: &operationStateFailure,
 				Reference: &struct {
 					Command *string `json:"command,omitempty"`
-					Id      *string `json:"id,omitempty"`
+					Id      *string `json:"id,omitempty"` // revive:disable-line
 					Link    *string `json:"link,omitempty"`
 				}{Id: &operationReferenceID},
 			},
@@ -185,7 +185,7 @@ func (ts *testSuite) TestOperationPoller() {
 				State: &operationStateTimeout,
 				Reference: &struct {
 					Command *string `json:"command,omitempty"`
-					Id      *string `json:"id,omitempty"`
+					Id      *string `json:"id,omitempty"` // revive:disable-line
 					Link    *string `json:"link,omitempty"`
 				}{Id: &operationReferenceID},
 			},

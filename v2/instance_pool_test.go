@@ -76,7 +76,7 @@ func (ts *testSuite) TestClient_CreateInstancePool() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstancePoolID},
 					State: &testOperationState,
@@ -89,7 +89,7 @@ func (ts *testSuite) TestClient_CreateInstancePool() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstancePoolID},
 		State: &testOperationState,
@@ -198,7 +198,7 @@ func (ts *testSuite) TestClient_DeleteInstancePool() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstancePoolID},
 					State: &testOperationState,
@@ -211,7 +211,7 @@ func (ts *testSuite) TestClient_DeleteInstancePool() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstancePoolID},
 		State: &testOperationState,
@@ -260,7 +260,7 @@ func (ts *testSuite) TestClient_EvictInstancePooltMembers() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstancePoolID},
 					State: &testOperationState,
@@ -273,7 +273,7 @@ func (ts *testSuite) TestClient_EvictInstancePooltMembers() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstancePoolID},
 		State: &testOperationState,
@@ -520,7 +520,7 @@ func (ts *testSuite) TestClient_ScaleInstancePool() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstancePoolID},
 					State: &testOperationState,
@@ -533,7 +533,7 @@ func (ts *testSuite) TestClient_ScaleInstancePool() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstancePoolID},
 		State: &testOperationState,
@@ -604,7 +604,7 @@ func (ts *testSuite) TestClient_UpdateInstancePool() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstancePoolID},
 					State: &testOperationState,
@@ -617,7 +617,7 @@ func (ts *testSuite) TestClient_UpdateInstancePool() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstancePoolID},
 		State: &testOperationState,

@@ -80,7 +80,7 @@ func (c *Client) ExportSnapshot(ctx context.Context, zone string, snapshot *Snap
 
 	expSnapshot, err := c.GetSnapshotWithResponse(apiv2.WithZone(ctx, zone), *res.(*struct {
 		Command *string `json:"command,omitempty"`
-		Id      *string `json:"id,omitempty"`
+		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id)
 	if err != nil {

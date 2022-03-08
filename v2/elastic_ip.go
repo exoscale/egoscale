@@ -114,7 +114,7 @@ func (c *Client) CreateElasticIP(ctx context.Context, zone string, elasticIP *El
 
 	return c.GetElasticIP(ctx, zone, *res.(*struct {
 		Command *string `json:"command,omitempty"`
-		Id      *string `json:"id,omitempty"`
+		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id)
 }

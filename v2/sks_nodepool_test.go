@@ -85,7 +85,7 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSNodepoolID},
 					State: &testOperationState,
@@ -98,7 +98,7 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSNodepoolID},
 		State: &testOperationState,
@@ -206,7 +206,7 @@ func (ts *testSuite) TestClient_DeleteSKSNodepool() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSNodepoolID},
 					State: &testOperationState,
@@ -219,7 +219,7 @@ func (ts *testSuite) TestClient_DeleteSKSNodepool() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSNodepoolID},
 		State: &testOperationState,
@@ -277,7 +277,7 @@ func (ts *testSuite) TestClient_EvictSKSNodepoolMembers() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSNodepoolID},
 					State: &testOperationState,
@@ -290,7 +290,7 @@ func (ts *testSuite) TestClient_EvictSKSNodepoolMembers() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSNodepoolID},
 		State: &testOperationState,
@@ -341,7 +341,7 @@ func (ts *testSuite) TestClient_ScaleSKSNodepool() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSNodepoolID},
 					State: &testOperationState,
@@ -354,7 +354,7 @@ func (ts *testSuite) TestClient_ScaleSKSNodepool() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSNodepoolID},
 		State: &testOperationState,
@@ -445,7 +445,7 @@ func (ts *testSuite) TestClient_UpdateSKSNodepool() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSNodepoolID},
 					State: &testOperationState,
@@ -458,7 +458,7 @@ func (ts *testSuite) TestClient_UpdateSKSNodepool() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSNodepoolID},
 		State: &testOperationState,

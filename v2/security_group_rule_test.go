@@ -67,7 +67,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSecurityGroupID},
 					State: &testOperationState,
@@ -80,7 +80,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSecurityGroupID},
 		State: &testOperationState,
@@ -223,7 +223,7 @@ func (ts *testSuite) TestClient_DeleteSecurityGroupRule() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSecurityGroupID},
 					State: &testOperationState,
@@ -236,7 +236,7 @@ func (ts *testSuite) TestClient_DeleteSecurityGroupRule() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSecurityGroupID},
 		State: &testOperationState,

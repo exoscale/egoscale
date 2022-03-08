@@ -82,7 +82,7 @@ func (ts *testSuite) TestClient_CreateSKSCluster() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSClusterID},
 					State: &testOperationState,
@@ -95,7 +95,7 @@ func (ts *testSuite) TestClient_CreateSKSCluster() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSClusterID},
 		State: &testOperationState,
@@ -190,7 +190,7 @@ func (ts *testSuite) TestClient_DeleteSKSCluster() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSClusterID},
 					State: &testOperationState,
@@ -203,7 +203,7 @@ func (ts *testSuite) TestClient_DeleteSKSCluster() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSClusterID},
 		State: &testOperationState,
@@ -640,7 +640,7 @@ func (ts *testSuite) TestClient_RotateSKSClusterCCMCredentials() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSClusterID},
 					State: &testOperationState,
@@ -653,7 +653,7 @@ func (ts *testSuite) TestClient_RotateSKSClusterCCMCredentials() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSClusterID},
 		State: &testOperationState,
@@ -701,7 +701,7 @@ func (ts *testSuite) TestClient_UpdateSKSCluster() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSClusterID},
 					State: &testOperationState,
@@ -714,7 +714,7 @@ func (ts *testSuite) TestClient_UpdateSKSCluster() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSClusterID},
 		State: &testOperationState,
@@ -760,7 +760,7 @@ func (ts *testSuite) TestClient_UpgradeSKSCluster() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSClusterID},
 					State: &testOperationState,
@@ -773,7 +773,7 @@ func (ts *testSuite) TestClient_UpgradeSKSCluster() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSClusterID},
 		State: &testOperationState,
@@ -812,7 +812,7 @@ func (ts *testSuite) TestClient_UpgradeSKSClusterServiceLevel() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSKSClusterID},
 					State: &testOperationState,
@@ -825,7 +825,7 @@ func (ts *testSuite) TestClient_UpgradeSKSClusterServiceLevel() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSKSClusterID},
 		State: &testOperationState,

@@ -394,7 +394,7 @@ func (c *Client) CreateInstance(ctx context.Context, zone string, instance *Inst
 
 	return c.GetInstance(ctx, zone, *res.(*struct {
 		Command *string `json:"command,omitempty"`
-		Id      *string `json:"id,omitempty"`
+		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id)
 }
@@ -420,7 +420,7 @@ func (c *Client) CreateInstanceSnapshot(ctx context.Context, zone string, instan
 
 	return c.GetSnapshot(ctx, zone, *res.(*struct {
 		Command *string `json:"command,omitempty"`
-		Id      *string `json:"id,omitempty"`
+		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id)
 }

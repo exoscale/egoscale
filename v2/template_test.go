@@ -56,7 +56,7 @@ func (ts *testSuite) TestClient_CopyTemplate() {
 				State: &testOperationState,
 				Reference: &struct {
 					Command *string `json:"command,omitempty"`
-					Id      *string `json:"id,omitempty"`
+					Id      *string `json:"id,omitempty"` // revive:disable-line
 					Link    *string `json:"link,omitempty"`
 				}{Id: &testTemplateID},
 			},
@@ -66,7 +66,7 @@ func (ts *testSuite) TestClient_CopyTemplate() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testTemplateID},
 		State: &testOperationState,
@@ -145,7 +145,7 @@ func (ts *testSuite) TestClient_DeleteTemplate() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testTemplateID},
 					State: &testOperationState,
@@ -158,7 +158,7 @@ func (ts *testSuite) TestClient_DeleteTemplate() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testTemplateID},
 		State: &testOperationState,
@@ -328,7 +328,7 @@ func (ts *testSuite) TestClient_RegisterTemplate() {
 				State: &testOperationState,
 				Reference: &struct {
 					Command *string `json:"command,omitempty"`
-					Id      *string `json:"id,omitempty"`
+					Id      *string `json:"id,omitempty"` // revive:disable-line
 					Link    *string `json:"link,omitempty"`
 				}{Id: &testTemplateID},
 			},
@@ -338,7 +338,7 @@ func (ts *testSuite) TestClient_RegisterTemplate() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testTemplateID},
 		State: &testOperationState,
@@ -435,7 +435,7 @@ func (ts *testSuite) TestClient_UpdateTemplate() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testTemplateID},
 					State: &testOperationState,
@@ -448,7 +448,7 @@ func (ts *testSuite) TestClient_UpdateTemplate() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testTemplateID},
 		State: &testOperationState,

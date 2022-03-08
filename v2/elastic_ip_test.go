@@ -68,7 +68,7 @@ func (ts *testSuite) TestClient_CreateElasticIP() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testElasticIPID},
 					State: &testOperationState,
@@ -81,7 +81,7 @@ func (ts *testSuite) TestClient_CreateElasticIP() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testElasticIPID},
 		State: &testOperationState,
@@ -175,7 +175,7 @@ func (ts *testSuite) TestClient_DeleteElasticIP() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testElasticIPID},
 					State: &testOperationState,
@@ -188,7 +188,7 @@ func (ts *testSuite) TestClient_DeleteElasticIP() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testElasticIPID},
 		State: &testOperationState,
@@ -404,7 +404,7 @@ func (ts *testSuite) TestClient_UpdateElasticIP() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testElasticIPID},
 					State: &testOperationState,
@@ -417,7 +417,7 @@ func (ts *testSuite) TestClient_UpdateElasticIP() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testElasticIPID},
 		State: &testOperationState,

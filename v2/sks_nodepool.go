@@ -234,7 +234,7 @@ func (c *Client) CreateSKSNodepool(
 
 	nodepoolRes, err := c.GetSksNodepoolWithResponse(ctx, *cluster.ID, *res.(*struct {
 		Command *string `json:"command,omitempty"`
-		Id      *string `json:"id,omitempty"`
+		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id)
 	if err != nil {

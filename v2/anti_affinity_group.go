@@ -63,7 +63,7 @@ func (c *Client) CreateAntiAffinityGroup(
 
 	return c.GetAntiAffinityGroup(ctx, zone, *res.(*struct {
 		Command *string `json:"command,omitempty"`
-		Id      *string `json:"id,omitempty"`
+		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id)
 }

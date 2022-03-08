@@ -83,7 +83,7 @@ func (ts *testSuite) TestClient_CreateNetworkLoadBalancerService() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testNLBID},
 					State: &testOperationState,
@@ -96,7 +96,7 @@ func (ts *testSuite) TestClient_CreateNetworkLoadBalancerService() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testNLBID},
 		State: &testOperationState,
@@ -223,7 +223,7 @@ func (ts *testSuite) TestClient_DeleteNetworkLoadBalancerService() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testNLBID},
 					State: &testOperationState,
@@ -236,7 +236,7 @@ func (ts *testSuite) TestClient_DeleteNetworkLoadBalancerService() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testNLBID},
 		State: &testOperationState,
@@ -320,7 +320,7 @@ func (ts *testSuite) TestClient_UpdateNetworkLoadBalancerService() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testNLBID},
 					State: &testOperationState,
@@ -333,7 +333,7 @@ func (ts *testSuite) TestClient_UpdateNetworkLoadBalancerService() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testNLBID},
 		State: &testOperationState,

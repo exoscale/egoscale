@@ -44,7 +44,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroup() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSecurityGroupID},
 					State: &testOperationState,
@@ -57,7 +57,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroup() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSecurityGroupID},
 		State: &testOperationState,
@@ -124,7 +124,7 @@ func (ts *testSuite) TestClient_AddExternalSourceToSecurityGroup() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSecurityGroupID},
 					State: &testOperationState,
@@ -137,7 +137,7 @@ func (ts *testSuite) TestClient_AddExternalSourceToSecurityGroup() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSecurityGroupID},
 		State: &testOperationState,
@@ -183,7 +183,7 @@ func (ts *testSuite) TestClient_DeleteSecurityGroup() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSecurityGroupID},
 					State: &testOperationState,
@@ -196,7 +196,7 @@ func (ts *testSuite) TestClient_DeleteSecurityGroup() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSecurityGroupID},
 		State: &testOperationState,
@@ -413,7 +413,7 @@ func (ts *testSuite) TestClient_RemoveExternalSourceFromSecurityGroup() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSecurityGroupID},
 					State: &testOperationState,
@@ -426,7 +426,7 @@ func (ts *testSuite) TestClient_RemoveExternalSourceFromSecurityGroup() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSecurityGroupID},
 		State: &testOperationState,

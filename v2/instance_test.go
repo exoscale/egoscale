@@ -67,7 +67,7 @@ func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -80,7 +80,7 @@ func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -128,7 +128,7 @@ func (ts *testSuite) TestClient_AttachInstanceToPrivateNetwork() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -141,7 +141,7 @@ func (ts *testSuite) TestClient_AttachInstanceToPrivateNetwork() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -186,7 +186,7 @@ func (ts *testSuite) TestClient_AttachInstanceToSecurityGroup() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -199,7 +199,7 @@ func (ts *testSuite) TestClient_AttachInstanceToSecurityGroup() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -251,7 +251,7 @@ func (ts *testSuite) TestClient_CreateInstance() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -264,7 +264,7 @@ func (ts *testSuite) TestClient_CreateInstance() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -371,7 +371,7 @@ func (ts *testSuite) TestClient_CreateInstanceSnapshot() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testSnapshotID},
 					State: &testOperationState,
@@ -384,7 +384,7 @@ func (ts *testSuite) TestClient_CreateInstanceSnapshot() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testSnapshotID},
 		State: &testOperationState,
@@ -450,7 +450,7 @@ func (ts *testSuite) TestClient_DeleteInstance() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -463,7 +463,7 @@ func (ts *testSuite) TestClient_DeleteInstance() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -502,7 +502,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromElasticIP() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -515,7 +515,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromElasticIP() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -559,7 +559,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromPrivateNetwork() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -572,7 +572,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromPrivateNetwork() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -616,7 +616,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromSecurityGroup() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -629,7 +629,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromSecurityGroup() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -893,7 +893,7 @@ func (ts *testSuite) TestClient_RebootInstance() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -906,7 +906,7 @@ func (ts *testSuite) TestClient_RebootInstance() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -948,7 +948,7 @@ func (ts *testSuite) TestClient_ResetInstance() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -961,7 +961,7 @@ func (ts *testSuite) TestClient_ResetInstance() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -1005,7 +1005,7 @@ func (ts *testSuite) TestClient_ResizeInstanceDisk() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -1018,7 +1018,7 @@ func (ts *testSuite) TestClient_ResizeInstanceDisk() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -1060,7 +1060,7 @@ func (ts *testSuite) TestClient_RevertInstanceToSnapshot() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -1073,7 +1073,7 @@ func (ts *testSuite) TestClient_RevertInstanceToSnapshot() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -1123,7 +1123,7 @@ func (ts *testSuite) TestClient_ScaleInstance() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -1136,7 +1136,7 @@ func (ts *testSuite) TestClient_ScaleInstance() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -1180,7 +1180,7 @@ func (ts *testSuite) TestClient_StartInstance() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -1193,7 +1193,7 @@ func (ts *testSuite) TestClient_StartInstance() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -1233,7 +1233,7 @@ func (ts *testSuite) TestClient_StopInstance() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -1246,7 +1246,7 @@ func (ts *testSuite) TestClient_StopInstance() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,
@@ -1293,7 +1293,7 @@ func (ts *testSuite) TestClient_UpdateInstance() {
 					Id: &testOperationID,
 					Reference: &struct {
 						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"`
+						Id      *string `json:"id,omitempty"` // revive:disable-line
 						Link    *string `json:"link,omitempty"`
 					}{Id: &testInstanceID},
 					State: &testOperationState,
@@ -1306,7 +1306,7 @@ func (ts *testSuite) TestClient_UpdateInstance() {
 		Id: &testOperationID,
 		Reference: &struct {
 			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"`
+			Id      *string `json:"id,omitempty"` // revive:disable-line
 			Link    *string `json:"link,omitempty"`
 		}{Id: &testInstanceID},
 		State: &testOperationState,

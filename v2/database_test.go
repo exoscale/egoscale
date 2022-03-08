@@ -60,7 +60,7 @@ func (ts *testSuite) TestClient_DeleteDatabaseService() {
 		Return(
 			&oapi.DeleteDbaasServiceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
-				JSON200:      new(oapi.DbaasServiceCommon),
+				JSON200:      new(oapi.Operation),
 			},
 			nil,
 		)

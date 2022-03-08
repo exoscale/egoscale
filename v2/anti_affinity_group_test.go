@@ -42,18 +42,26 @@ func (ts *testSuite) TestClient_CreateAntiAffinityGroup() {
 			&oapi.CreateAntiAffinityGroupResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testAntiAffinityGroupID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testAntiAffinityGroupID},
+		State: &testOperationState,
 	})
 
 	ts.mock().
@@ -108,18 +116,26 @@ func (ts *testSuite) TestClient_DeleteAntiAffinityGroup() {
 			&oapi.DeleteAntiAffinityGroupResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testAntiAffinityGroupID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testAntiAffinityGroupID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeleteAntiAffinityGroup(

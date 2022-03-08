@@ -82,18 +82,26 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 			&oapi.CreateSksNodepoolResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSNodepoolID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testSKSNodepoolID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testSKSNodepoolID},
+		State: &testOperationState,
 	})
 
 	ts.mock().
@@ -195,18 +203,26 @@ func (ts *testSuite) TestClient_DeleteSKSNodepool() {
 			&oapi.DeleteSksNodepoolResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSNodepoolID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testSKSNodepoolID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testSKSNodepoolID},
+		State: &testOperationState,
 	})
 
 	cluster := &SKSCluster{
@@ -258,18 +274,26 @@ func (ts *testSuite) TestClient_EvictSKSNodepoolMembers() {
 			&oapi.EvictSksNodepoolMembersResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSNodepoolID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testSKSNodepoolID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testSKSNodepoolID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.EvictSKSNodepoolMembers(
@@ -314,18 +338,26 @@ func (ts *testSuite) TestClient_ScaleSKSNodepool() {
 			&oapi.ScaleSksNodepoolResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSNodepoolID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testSKSNodepoolID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testSKSNodepoolID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.ScaleSKSNodepool(
@@ -410,18 +442,26 @@ func (ts *testSuite) TestClient_UpdateSKSNodepool() {
 			&oapi.UpdateSksNodepoolResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSNodepoolID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testSKSNodepoolID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testSKSNodepoolID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpdateSKSNodepool(context.Background(), testZone, cluster, &SKSNodepool{

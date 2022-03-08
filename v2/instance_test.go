@@ -64,18 +64,26 @@ func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
 			&oapi.AttachInstanceToElasticIpResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.AttachInstanceToElasticIP(
@@ -117,18 +125,26 @@ func (ts *testSuite) TestClient_AttachInstanceToPrivateNetwork() {
 			&oapi.AttachInstanceToPrivateNetworkResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.AttachInstanceToPrivateNetwork(
@@ -167,18 +183,26 @@ func (ts *testSuite) TestClient_AttachInstanceToSecurityGroup() {
 			&oapi.AttachInstanceToSecurityGroupResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.AttachInstanceToSecurityGroup(
@@ -224,18 +248,26 @@ func (ts *testSuite) TestClient_CreateInstance() {
 			&oapi.CreateInstanceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.mock().
@@ -336,18 +368,26 @@ func (ts *testSuite) TestClient_CreateInstanceSnapshot() {
 			&oapi.CreateSnapshotResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSnapshotID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testSnapshotID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSnapshotID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testSnapshotID},
+		State: &testOperationState,
 	})
 
 	ts.mock().
@@ -407,18 +447,26 @@ func (ts *testSuite) TestClient_DeleteInstance() {
 			&oapi.DeleteInstanceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeleteInstance(context.Background(), testZone, &Instance{ID: &testInstanceID}))
@@ -451,18 +499,26 @@ func (ts *testSuite) TestClient_DetachInstanceFromElasticIP() {
 			&oapi.DetachInstanceFromElasticIpResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DetachInstanceFromElasticIP(
@@ -500,18 +556,26 @@ func (ts *testSuite) TestClient_DetachInstanceFromPrivateNetwork() {
 			&oapi.DetachInstanceFromPrivateNetworkResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DetachInstanceFromPrivateNetwork(
@@ -549,18 +613,26 @@ func (ts *testSuite) TestClient_DetachInstanceFromSecurityGroup() {
 			&oapi.DetachInstanceFromSecurityGroupResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DetachInstanceFromSecurityGroup(
@@ -818,18 +890,26 @@ func (ts *testSuite) TestClient_RebootInstance() {
 			&oapi.RebootInstanceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.RebootInstance(context.Background(), testZone, &Instance{ID: &testInstanceID}))
@@ -865,18 +945,26 @@ func (ts *testSuite) TestClient_ResetInstance() {
 			&oapi.ResetInstanceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.ResetInstance(
@@ -914,18 +1002,26 @@ func (ts *testSuite) TestClient_ResizeInstanceDisk() {
 			&oapi.ResizeInstanceDiskResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.ResizeInstanceDisk(
@@ -961,18 +1057,26 @@ func (ts *testSuite) TestClient_RevertInstanceToSnapshot() {
 			&oapi.RevertInstanceToSnapshotResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	snapshot := &Snapshot{
@@ -1016,18 +1120,26 @@ func (ts *testSuite) TestClient_ScaleInstance() {
 			&oapi.ScaleInstanceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.ScaleInstance(
@@ -1065,18 +1177,26 @@ func (ts *testSuite) TestClient_StartInstance() {
 			&oapi.StartInstanceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.StartInstance(
@@ -1110,18 +1230,26 @@ func (ts *testSuite) TestClient_StopInstance() {
 			&oapi.StopInstanceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.StopInstance(context.Background(), testZone, &Instance{ID: &testInstanceID}))
@@ -1162,18 +1290,26 @@ func (ts *testSuite) TestClient_UpdateInstance() {
 			&oapi.UpdateInstanceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testInstanceID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testInstanceID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpdateInstance(context.Background(), testZone, &Instance{

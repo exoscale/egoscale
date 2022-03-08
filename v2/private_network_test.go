@@ -55,18 +55,26 @@ func (ts *testSuite) TestClient_CreatePrivateNetwork() {
 			&oapi.CreatePrivateNetworkResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testPrivateNetworkID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testPrivateNetworkID},
+		State: &testOperationState,
 	})
 
 	ts.mock().
@@ -131,18 +139,26 @@ func (ts *testSuite) TestClient_DeletePrivateNetwork() {
 			&oapi.DeletePrivateNetworkResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testPrivateNetworkID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testPrivateNetworkID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeletePrivateNetwork(
@@ -346,18 +362,26 @@ func (ts *testSuite) TestClient_UpdatePrivateNetwork() {
 			&oapi.UpdatePrivateNetworkResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testPrivateNetworkID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testPrivateNetworkID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpdatePrivateNetwork(context.Background(), testZone, &PrivateNetwork{
@@ -400,18 +424,26 @@ func (ts *testSuite) TestClient_UpdatePrivateNetworkInstanceIPAddress() {
 			&oapi.UpdatePrivateNetworkInstanceIpResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testPrivateNetworkID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testPrivateNetworkID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpdatePrivateNetworkInstanceIPAddress(

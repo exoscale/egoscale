@@ -52,16 +52,24 @@ func (ts *testSuite) TestClient_CopyTemplate() {
 		Return(&oapi.CopyTemplateResponse{
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testTemplateID},
+				Id:    &testOperationID,
+				State: &testOperationState,
+				Reference: &struct {
+					Command *string `json:"command,omitempty"`
+					Id      *string `json:"id,omitempty"`
+					Link    *string `json:"link,omitempty"`
+				}{Id: &testTemplateID},
 			},
 		}, nil)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testTemplateID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testTemplateID},
+		State: &testOperationState,
 	})
 
 	ts.mock().
@@ -134,18 +142,26 @@ func (ts *testSuite) TestClient_DeleteTemplate() {
 			&oapi.DeleteTemplateResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testTemplateID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testTemplateID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testTemplateID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testTemplateID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeleteTemplate(context.Background(), testZone, &Template{ID: &testTemplateID}))
@@ -308,16 +324,24 @@ func (ts *testSuite) TestClient_RegisterTemplate() {
 		Return(&oapi.RegisterTemplateResponse{
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.Operation{
-				Id:        &testOperationID,
-				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testTemplateID},
+				Id:    &testOperationID,
+				State: &testOperationState,
+				Reference: &struct {
+					Command *string `json:"command,omitempty"`
+					Id      *string `json:"id,omitempty"`
+					Link    *string `json:"link,omitempty"`
+				}{Id: &testTemplateID},
 			},
 		}, nil)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testTemplateID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testTemplateID},
+		State: &testOperationState,
 	})
 
 	ts.mock().
@@ -408,18 +432,26 @@ func (ts *testSuite) TestClient_UpdateTemplate() {
 			&oapi.UpdateTemplateResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testTemplateID},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testTemplateID},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testTemplateID},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testTemplateID},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpdateTemplate(context.Background(), testZone, &Template{

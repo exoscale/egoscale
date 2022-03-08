@@ -125,9 +125,13 @@ func (ts *testSuite) TestOperationPoller() {
 			name:               "pending",
 			httpResponseStatus: http.StatusOK,
 			operationResponse: &Operation{
-				Id:        &operationID,
-				State:     &operationStatePending,
-				Reference: &Reference{Id: &operationReferenceID},
+				Id:    &operationID,
+				State: &operationStatePending,
+				Reference: &struct {
+					Command *string `json:"command,omitempty"`
+					Id      *string `json:"id,omitempty"`
+					Link    *string `json:"link,omitempty"`
+				}{Id: &operationReferenceID},
 			},
 			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
 				ts.Require().NoError(err)
@@ -138,13 +142,21 @@ func (ts *testSuite) TestOperationPoller() {
 			name:               "success",
 			httpResponseStatus: http.StatusOK,
 			operationResponse: &Operation{
-				Id:        &operationID,
-				State:     &operationStateSuccess,
-				Reference: &Reference{Id: &operationReferenceID},
+				Id:    &operationID,
+				State: &operationStateSuccess,
+				Reference: &struct {
+					Command *string `json:"command,omitempty"`
+					Id      *string `json:"id,omitempty"`
+					Link    *string `json:"link,omitempty"`
+				}{Id: &operationReferenceID},
 			},
 			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
 				ts.Require().NoError(err)
-				ts.Require().Equal(&Reference{Id: &operationReferenceID}, res)
+				ts.Require().Equal(&struct {
+					Command *string `json:"command,omitempty"`
+					Id      *string `json:"id,omitempty"`
+					Link    *string `json:"link,omitempty"`
+				}{Id: &operationReferenceID}, res)
 				ts.Require().True(done)
 			},
 		},
@@ -152,9 +164,13 @@ func (ts *testSuite) TestOperationPoller() {
 			name:               "failure",
 			httpResponseStatus: http.StatusOK,
 			operationResponse: &Operation{
-				Id:        &operationID,
-				State:     &operationStateFailure,
-				Reference: &Reference{Id: &operationReferenceID},
+				Id:    &operationID,
+				State: &operationStateFailure,
+				Reference: &struct {
+					Command *string `json:"command,omitempty"`
+					Id      *string `json:"id,omitempty"`
+					Link    *string `json:"link,omitempty"`
+				}{Id: &operationReferenceID},
 			},
 			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
 				ts.Require().Error(err)
@@ -165,9 +181,13 @@ func (ts *testSuite) TestOperationPoller() {
 			name:               "timeout",
 			httpResponseStatus: http.StatusOK,
 			operationResponse: &Operation{
-				Id:        &operationID,
-				State:     &operationStateTimeout,
-				Reference: &Reference{Id: &operationReferenceID},
+				Id:    &operationID,
+				State: &operationStateTimeout,
+				Reference: &struct {
+					Command *string `json:"command,omitempty"`
+					Id      *string `json:"id,omitempty"`
+					Link    *string `json:"link,omitempty"`
+				}{Id: &operationReferenceID},
 			},
 			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
 				ts.Require().Error(err)

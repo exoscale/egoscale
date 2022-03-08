@@ -229,7 +229,11 @@ func (c *Client) CreateInstancePool(
 		return nil, err
 	}
 
-	return c.GetInstancePool(ctx, zone, *res.(*oapi.Reference).Id)
+	return c.GetInstancePool(ctx, zone, *res.(*struct {
+		Command *string `json:"command,omitempty"`
+		Id      *string `json:"id,omitempty"`
+		Link    *string `json:"link,omitempty"`
+	}).Id)
 }
 
 // DeleteInstancePool deletes an Instance Pool.

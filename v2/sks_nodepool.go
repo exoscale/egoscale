@@ -232,7 +232,11 @@ func (c *Client) CreateSKSNodepool(
 		return nil, err
 	}
 
-	nodepoolRes, err := c.GetSksNodepoolWithResponse(ctx, *cluster.ID, *res.(*oapi.Reference).Id)
+	nodepoolRes, err := c.GetSksNodepoolWithResponse(ctx, *cluster.ID, *res.(*struct {
+		Command *string `json:"command,omitempty"`
+		Id      *string `json:"id,omitempty"`
+		Link    *string `json:"link,omitempty"`
+	}).Id)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve Nodepool: %s", err)
 	}

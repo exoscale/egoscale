@@ -37,18 +37,26 @@ func (ts *testSuite) TestClient_DeleteSSHKey() {
 			&oapi.DeleteSshKeyResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSSHKeyName},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testSSHKeyName},
+					State: &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSSHKeyName},
-		State:     &testOperationState,
+		Id: &testOperationID,
+		Reference: &struct {
+			Command *string `json:"command,omitempty"`
+			Id      *string `json:"id,omitempty"`
+			Link    *string `json:"link,omitempty"`
+		}{Id: &testSSHKeyName},
+		State: &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeleteSSHKey(context.Background(), testZone, &SSHKey{Name: &testSSHKeyName}))
@@ -137,9 +145,13 @@ func (ts *testSuite) TestClient_RegisterSSHKey() {
 			&oapi.RegisterSshKeyResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSSHKeyName},
-					State:     &testOperationState,
+					Id: &testOperationID,
+					Reference: &struct {
+						Command *string `json:"command,omitempty"`
+						Id      *string `json:"id,omitempty"`
+						Link    *string `json:"link,omitempty"`
+					}{Id: &testSSHKeyName},
+					State: &testOperationState,
 				},
 			},
 			nil,

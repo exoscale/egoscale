@@ -41,26 +41,18 @@ func (ts *testSuite) TestClient_CreateSecurityGroup() {
 			&oapi.CreateSecurityGroupResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSecurityGroupID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSecurityGroupID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.mock().
@@ -121,26 +113,18 @@ func (ts *testSuite) TestClient_AddExternalSourceToSecurityGroup() {
 			&oapi.AddExternalSourceToSecurityGroupResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSecurityGroupID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSecurityGroupID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+		State:     &testOperationState,
 	})
 
 	securityGroup := &SecurityGroup{
@@ -180,26 +164,18 @@ func (ts *testSuite) TestClient_DeleteSecurityGroup() {
 			&oapi.DeleteSecurityGroupResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSecurityGroupID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSecurityGroupID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeleteSecurityGroup(
@@ -410,26 +386,18 @@ func (ts *testSuite) TestClient_RemoveExternalSourceFromSecurityGroup() {
 			&oapi.RemoveExternalSourceFromSecurityGroupResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSecurityGroupID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSecurityGroupID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+		State:     &testOperationState,
 	})
 
 	securityGroup := &SecurityGroup{

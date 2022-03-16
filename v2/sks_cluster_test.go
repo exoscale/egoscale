@@ -79,26 +79,18 @@ func (ts *testSuite) TestClient_CreateSKSCluster() {
 			&oapi.CreateSksClusterResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSKSClusterID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSKSClusterID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.mock().
@@ -187,26 +179,18 @@ func (ts *testSuite) TestClient_DeleteSKSCluster() {
 			&oapi.DeleteSksClusterResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSKSClusterID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSKSClusterID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.DeleteSKSCluster(
@@ -637,26 +621,18 @@ func (ts *testSuite) TestClient_RotateSKSClusterCCMCredentials() {
 			&oapi.RotateSksCcmCredentialsResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSKSClusterID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSKSClusterID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.RotateSKSClusterCCMCredentials(context.Background(), testZone, cluster))
@@ -698,26 +674,18 @@ func (ts *testSuite) TestClient_UpdateSKSCluster() {
 			&oapi.UpdateSksClusterResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSKSClusterID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSKSClusterID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpdateSKSCluster(context.Background(), testZone, &SKSCluster{
@@ -757,26 +725,18 @@ func (ts *testSuite) TestClient_UpgradeSKSCluster() {
 			&oapi.UpgradeSksClusterResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSKSClusterID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSKSClusterID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpgradeSKSCluster(
@@ -809,26 +769,18 @@ func (ts *testSuite) TestClient_UpgradeSKSClusterServiceLevel() {
 			&oapi.UpgradeSksClusterServiceLevelResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSKSClusterID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSKSClusterID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpgradeSKSClusterServiceLevel(

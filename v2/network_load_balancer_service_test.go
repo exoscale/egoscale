@@ -80,26 +80,18 @@ func (ts *testSuite) TestClient_CreateNetworkLoadBalancerService() {
 			&oapi.AddServiceToLoadBalancerResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testNLBID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testNLBID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testNLBID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testNLBID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.mock().
@@ -220,26 +212,18 @@ func (ts *testSuite) TestClient_DeleteNetworkLoadBalancerService() {
 			&oapi.DeleteLoadBalancerServiceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testNLBID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testNLBID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testNLBID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testNLBID, nil),
+		State:     &testOperationState,
 	})
 
 	nlb := &NetworkLoadBalancer{
@@ -317,26 +301,18 @@ func (ts *testSuite) TestClient_UpdateNetworkLoadBalancerService() {
 			&oapi.UpdateLoadBalancerServiceResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testNLBID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testNLBID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testNLBID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testNLBID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.Require().NoError(ts.client.UpdateNetworkLoadBalancerService(context.Background(), testZone, nlb,

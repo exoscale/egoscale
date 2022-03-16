@@ -64,26 +64,18 @@ func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 			&oapi.AddRuleToSecurityGroupResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSecurityGroupID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSecurityGroupID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+		State:     &testOperationState,
 	})
 
 	ts.mock().
@@ -220,26 +212,18 @@ func (ts *testSuite) TestClient_DeleteSecurityGroupRule() {
 			&oapi.DeleteRuleFromSecurityGroupResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
-					Id: &testOperationID,
-					Reference: &struct {
-						Command *string `json:"command,omitempty"`
-						Id      *string `json:"id,omitempty"` // revive:disable-line
-						Link    *string `json:"link,omitempty"`
-					}{Id: &testSecurityGroupID},
-					State: &testOperationState,
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+					State:     &testOperationState,
 				},
 			},
 			nil,
 		)
 
 	ts.mockGetOperation(&oapi.Operation{
-		Id: &testOperationID,
-		Reference: &struct {
-			Command *string `json:"command,omitempty"`
-			Id      *string `json:"id,omitempty"` // revive:disable-line
-			Link    *string `json:"link,omitempty"`
-		}{Id: &testSecurityGroupID},
-		State: &testOperationState,
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
+		State:     &testOperationState,
 	})
 
 	securityGroup := &SecurityGroup{

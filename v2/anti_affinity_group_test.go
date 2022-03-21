@@ -43,7 +43,7 @@ func (ts *testSuite) TestClient_CreateAntiAffinityGroup() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
+					Reference: oapi.NewReference(nil, &testAntiAffinityGroupID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -52,7 +52,7 @@ func (ts *testSuite) TestClient_CreateAntiAffinityGroup() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
+		Reference: oapi.NewReference(nil, &testAntiAffinityGroupID, nil),
 		State:     &testOperationState,
 	})
 
@@ -109,7 +109,7 @@ func (ts *testSuite) TestClient_DeleteAntiAffinityGroup() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
+					Reference: oapi.NewReference(nil, &testAntiAffinityGroupID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -118,7 +118,7 @@ func (ts *testSuite) TestClient_DeleteAntiAffinityGroup() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testAntiAffinityGroupID},
+		Reference: oapi.NewReference(nil, &testAntiAffinityGroupID, nil),
 		State:     &testOperationState,
 	})
 

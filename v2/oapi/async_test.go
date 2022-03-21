@@ -127,7 +127,7 @@ func (ts *testSuite) TestOperationPoller() {
 			operationResponse: &Operation{
 				Id:        &operationID,
 				State:     &operationStatePending,
-				Reference: &Reference{Id: &operationReferenceID},
+				Reference: NewReference(nil, &operationReferenceID, nil),
 			},
 			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
 				ts.Require().NoError(err)
@@ -140,11 +140,11 @@ func (ts *testSuite) TestOperationPoller() {
 			operationResponse: &Operation{
 				Id:        &operationID,
 				State:     &operationStateSuccess,
-				Reference: &Reference{Id: &operationReferenceID},
+				Reference: NewReference(nil, &operationReferenceID, nil),
 			},
 			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
 				ts.Require().NoError(err)
-				ts.Require().Equal(&Reference{Id: &operationReferenceID}, res)
+				ts.Require().Equal(NewReference(nil, &operationReferenceID, nil), res)
 				ts.Require().True(done)
 			},
 		},
@@ -154,7 +154,7 @@ func (ts *testSuite) TestOperationPoller() {
 			operationResponse: &Operation{
 				Id:        &operationID,
 				State:     &operationStateFailure,
-				Reference: &Reference{Id: &operationReferenceID},
+				Reference: NewReference(nil, &operationReferenceID, nil),
 			},
 			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
 				ts.Require().Error(err)
@@ -167,7 +167,7 @@ func (ts *testSuite) TestOperationPoller() {
 			operationResponse: &Operation{
 				Id:        &operationID,
 				State:     &operationStateTimeout,
-				Reference: &Reference{Id: &operationReferenceID},
+				Reference: NewReference(nil, &operationReferenceID, nil),
 			},
 			testFunc: func(ts *testSuite, done bool, res interface{}, err error) {
 				ts.Require().Error(err)

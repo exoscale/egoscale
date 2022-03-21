@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+------
+
+- v2: refresh openapi generated code + fix missing type oapi.Reference
+
 0.86.0
 ------
 

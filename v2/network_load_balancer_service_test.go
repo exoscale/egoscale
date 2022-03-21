@@ -81,7 +81,7 @@ func (ts *testSuite) TestClient_CreateNetworkLoadBalancerService() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testNLBID},
+					Reference: oapi.NewReference(nil, &testNLBID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -90,7 +90,7 @@ func (ts *testSuite) TestClient_CreateNetworkLoadBalancerService() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testNLBID},
+		Reference: oapi.NewReference(nil, &testNLBID, nil),
 		State:     &testOperationState,
 	})
 
@@ -213,7 +213,7 @@ func (ts *testSuite) TestClient_DeleteNetworkLoadBalancerService() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testNLBID},
+					Reference: oapi.NewReference(nil, &testNLBID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -222,7 +222,7 @@ func (ts *testSuite) TestClient_DeleteNetworkLoadBalancerService() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testNLBID},
+		Reference: oapi.NewReference(nil, &testNLBID, nil),
 		State:     &testOperationState,
 	})
 
@@ -302,7 +302,7 @@ func (ts *testSuite) TestClient_UpdateNetworkLoadBalancerService() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testNLBID},
+					Reference: oapi.NewReference(nil, &testNLBID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -311,7 +311,7 @@ func (ts *testSuite) TestClient_UpdateNetworkLoadBalancerService() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testNLBID},
+		Reference: oapi.NewReference(nil, &testNLBID, nil),
 		State:     &testOperationState,
 	})
 

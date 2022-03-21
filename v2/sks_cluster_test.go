@@ -80,7 +80,7 @@ func (ts *testSuite) TestClient_CreateSKSCluster() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSClusterID},
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -89,7 +89,7 @@ func (ts *testSuite) TestClient_CreateSKSCluster() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSClusterID},
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 		State:     &testOperationState,
 	})
 
@@ -180,7 +180,7 @@ func (ts *testSuite) TestClient_DeleteSKSCluster() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSClusterID},
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -189,7 +189,7 @@ func (ts *testSuite) TestClient_DeleteSKSCluster() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSClusterID},
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 		State:     &testOperationState,
 	})
 
@@ -622,7 +622,7 @@ func (ts *testSuite) TestClient_RotateSKSClusterCCMCredentials() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSClusterID},
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -631,7 +631,7 @@ func (ts *testSuite) TestClient_RotateSKSClusterCCMCredentials() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSClusterID},
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 		State:     &testOperationState,
 	})
 
@@ -675,7 +675,7 @@ func (ts *testSuite) TestClient_UpdateSKSCluster() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSClusterID},
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -684,7 +684,7 @@ func (ts *testSuite) TestClient_UpdateSKSCluster() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSClusterID},
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 		State:     &testOperationState,
 	})
 
@@ -726,7 +726,7 @@ func (ts *testSuite) TestClient_UpgradeSKSCluster() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSClusterID},
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -735,7 +735,7 @@ func (ts *testSuite) TestClient_UpgradeSKSCluster() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSClusterID},
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 		State:     &testOperationState,
 	})
 
@@ -770,7 +770,7 @@ func (ts *testSuite) TestClient_UpgradeSKSClusterServiceLevel() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSClusterID},
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -779,7 +779,7 @@ func (ts *testSuite) TestClient_UpgradeSKSClusterServiceLevel() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSClusterID},
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
 		State:     &testOperationState,
 	})
 

@@ -74,7 +74,7 @@ func (ts *testSuite) TestClient_CreateInstancePool() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstancePoolID},
+					Reference: oapi.NewReference(nil, &testInstancePoolID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -83,7 +83,7 @@ func (ts *testSuite) TestClient_CreateInstancePool() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstancePoolID},
+		Reference: oapi.NewReference(nil, &testInstancePoolID, nil),
 		State:     &testOperationState,
 	})
 
@@ -188,7 +188,7 @@ func (ts *testSuite) TestClient_DeleteInstancePool() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstancePoolID},
+					Reference: oapi.NewReference(nil, &testInstancePoolID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -197,7 +197,7 @@ func (ts *testSuite) TestClient_DeleteInstancePool() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstancePoolID},
+		Reference: oapi.NewReference(nil, &testInstancePoolID, nil),
 		State:     &testOperationState,
 	})
 
@@ -242,7 +242,7 @@ func (ts *testSuite) TestClient_EvictInstancePooltMembers() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstancePoolID},
+					Reference: oapi.NewReference(nil, &testInstancePoolID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -251,7 +251,7 @@ func (ts *testSuite) TestClient_EvictInstancePooltMembers() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstancePoolID},
+		Reference: oapi.NewReference(nil, &testInstancePoolID, nil),
 		State:     &testOperationState,
 	})
 
@@ -494,7 +494,7 @@ func (ts *testSuite) TestClient_ScaleInstancePool() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstancePoolID},
+					Reference: oapi.NewReference(nil, &testInstancePoolID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -503,7 +503,7 @@ func (ts *testSuite) TestClient_ScaleInstancePool() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstancePoolID},
+		Reference: oapi.NewReference(nil, &testInstancePoolID, nil),
 		State:     &testOperationState,
 	})
 
@@ -570,7 +570,7 @@ func (ts *testSuite) TestClient_UpdateInstancePool() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstancePoolID},
+					Reference: oapi.NewReference(nil, &testInstancePoolID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -579,7 +579,7 @@ func (ts *testSuite) TestClient_UpdateInstancePool() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstancePoolID},
+		Reference: oapi.NewReference(nil, &testInstancePoolID, nil),
 		State:     &testOperationState,
 	})
 

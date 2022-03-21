@@ -38,7 +38,7 @@ func (ts *testSuite) TestClient_DeleteSSHKey() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSSHKeyName},
+					Reference: oapi.NewReference(nil, &testSSHKeyName, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -47,7 +47,7 @@ func (ts *testSuite) TestClient_DeleteSSHKey() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSSHKeyName},
+		Reference: oapi.NewReference(nil, &testSSHKeyName, nil),
 		State:     &testOperationState,
 	})
 
@@ -138,7 +138,7 @@ func (ts *testSuite) TestClient_RegisterSSHKey() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSSHKeyName},
+					Reference: oapi.NewReference(nil, &testSSHKeyName, nil),
 					State:     &testOperationState,
 				},
 			},

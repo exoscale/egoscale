@@ -65,7 +65,7 @@ func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -74,7 +74,7 @@ func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -118,7 +118,7 @@ func (ts *testSuite) TestClient_AttachInstanceToPrivateNetwork() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -127,7 +127,7 @@ func (ts *testSuite) TestClient_AttachInstanceToPrivateNetwork() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -168,7 +168,7 @@ func (ts *testSuite) TestClient_AttachInstanceToSecurityGroup() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -177,7 +177,7 @@ func (ts *testSuite) TestClient_AttachInstanceToSecurityGroup() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -225,7 +225,7 @@ func (ts *testSuite) TestClient_CreateInstance() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -234,7 +234,7 @@ func (ts *testSuite) TestClient_CreateInstance() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -337,7 +337,7 @@ func (ts *testSuite) TestClient_CreateInstanceSnapshot() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSnapshotID},
+					Reference: oapi.NewReference(nil, &testSnapshotID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -346,7 +346,7 @@ func (ts *testSuite) TestClient_CreateInstanceSnapshot() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSnapshotID},
+		Reference: oapi.NewReference(nil, &testSnapshotID, nil),
 		State:     &testOperationState,
 	})
 
@@ -408,7 +408,7 @@ func (ts *testSuite) TestClient_DeleteInstance() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -417,7 +417,7 @@ func (ts *testSuite) TestClient_DeleteInstance() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -452,7 +452,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromElasticIP() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -461,7 +461,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromElasticIP() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -501,7 +501,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromPrivateNetwork() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -510,7 +510,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromPrivateNetwork() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -550,7 +550,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromSecurityGroup() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -559,7 +559,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromSecurityGroup() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -819,7 +819,7 @@ func (ts *testSuite) TestClient_RebootInstance() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -828,7 +828,7 @@ func (ts *testSuite) TestClient_RebootInstance() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -866,7 +866,7 @@ func (ts *testSuite) TestClient_ResetInstance() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -875,7 +875,7 @@ func (ts *testSuite) TestClient_ResetInstance() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -915,7 +915,7 @@ func (ts *testSuite) TestClient_ResizeInstanceDisk() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -924,7 +924,7 @@ func (ts *testSuite) TestClient_ResizeInstanceDisk() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -962,7 +962,7 @@ func (ts *testSuite) TestClient_RevertInstanceToSnapshot() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -971,7 +971,7 @@ func (ts *testSuite) TestClient_RevertInstanceToSnapshot() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -1017,7 +1017,7 @@ func (ts *testSuite) TestClient_ScaleInstance() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -1026,7 +1026,7 @@ func (ts *testSuite) TestClient_ScaleInstance() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -1066,7 +1066,7 @@ func (ts *testSuite) TestClient_StartInstance() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -1075,7 +1075,7 @@ func (ts *testSuite) TestClient_StartInstance() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -1111,7 +1111,7 @@ func (ts *testSuite) TestClient_StopInstance() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -1120,7 +1120,7 @@ func (ts *testSuite) TestClient_StopInstance() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 
@@ -1163,7 +1163,7 @@ func (ts *testSuite) TestClient_UpdateInstance() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testInstanceID},
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -1172,7 +1172,7 @@ func (ts *testSuite) TestClient_UpdateInstance() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testInstanceID},
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
 		State:     &testOperationState,
 	})
 

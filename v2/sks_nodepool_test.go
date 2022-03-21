@@ -83,7 +83,7 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSNodepoolID},
+					Reference: oapi.NewReference(nil, &testSKSNodepoolID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -92,7 +92,7 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
+		Reference: oapi.NewReference(nil, &testSKSNodepoolID, nil),
 		State:     &testOperationState,
 	})
 
@@ -196,7 +196,7 @@ func (ts *testSuite) TestClient_DeleteSKSNodepool() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSNodepoolID},
+					Reference: oapi.NewReference(nil, &testSKSNodepoolID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -205,7 +205,7 @@ func (ts *testSuite) TestClient_DeleteSKSNodepool() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
+		Reference: oapi.NewReference(nil, &testSKSNodepoolID, nil),
 		State:     &testOperationState,
 	})
 
@@ -259,7 +259,7 @@ func (ts *testSuite) TestClient_EvictSKSNodepoolMembers() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSNodepoolID},
+					Reference: oapi.NewReference(nil, &testSKSNodepoolID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -268,7 +268,7 @@ func (ts *testSuite) TestClient_EvictSKSNodepoolMembers() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
+		Reference: oapi.NewReference(nil, &testSKSNodepoolID, nil),
 		State:     &testOperationState,
 	})
 
@@ -315,7 +315,7 @@ func (ts *testSuite) TestClient_ScaleSKSNodepool() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSNodepoolID},
+					Reference: oapi.NewReference(nil, &testSKSNodepoolID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -324,7 +324,7 @@ func (ts *testSuite) TestClient_ScaleSKSNodepool() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
+		Reference: oapi.NewReference(nil, &testSKSNodepoolID, nil),
 		State:     &testOperationState,
 	})
 
@@ -411,7 +411,7 @@ func (ts *testSuite) TestClient_UpdateSKSNodepool() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSKSNodepoolID},
+					Reference: oapi.NewReference(nil, &testSKSNodepoolID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -420,7 +420,7 @@ func (ts *testSuite) TestClient_UpdateSKSNodepool() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSKSNodepoolID},
+		Reference: oapi.NewReference(nil, &testSKSNodepoolID, nil),
 		State:     &testOperationState,
 	})
 

@@ -42,7 +42,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroup() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSecurityGroupID},
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -51,7 +51,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroup() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSecurityGroupID},
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 		State:     &testOperationState,
 	})
 
@@ -114,7 +114,7 @@ func (ts *testSuite) TestClient_AddExternalSourceToSecurityGroup() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSecurityGroupID},
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -123,7 +123,7 @@ func (ts *testSuite) TestClient_AddExternalSourceToSecurityGroup() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSecurityGroupID},
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 		State:     &testOperationState,
 	})
 
@@ -165,7 +165,7 @@ func (ts *testSuite) TestClient_DeleteSecurityGroup() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSecurityGroupID},
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -174,7 +174,7 @@ func (ts *testSuite) TestClient_DeleteSecurityGroup() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSecurityGroupID},
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 		State:     &testOperationState,
 	})
 
@@ -387,7 +387,7 @@ func (ts *testSuite) TestClient_RemoveExternalSourceFromSecurityGroup() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSecurityGroupID},
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -396,7 +396,7 @@ func (ts *testSuite) TestClient_RemoveExternalSourceFromSecurityGroup() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSecurityGroupID},
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 		State:     &testOperationState,
 	})
 

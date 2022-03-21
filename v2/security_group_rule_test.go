@@ -65,7 +65,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSecurityGroupID},
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -74,7 +74,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSecurityGroupID},
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 		State:     &testOperationState,
 	})
 
@@ -213,7 +213,7 @@ func (ts *testSuite) TestClient_DeleteSecurityGroupRule() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSecurityGroupID},
+					Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -222,7 +222,7 @@ func (ts *testSuite) TestClient_DeleteSecurityGroupRule() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSecurityGroupID},
+		Reference: oapi.NewReference(nil, &testSecurityGroupID, nil),
 		State:     &testOperationState,
 	})
 

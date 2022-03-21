@@ -274,7 +274,7 @@ func (ts *testSuite) TestClient_RevokeIAMAccessKey() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testIAMAccessKeyKey},
+					Reference: oapi.NewReference(nil, &testIAMAccessKeyKey, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -283,7 +283,7 @@ func (ts *testSuite) TestClient_RevokeIAMAccessKey() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testIAMAccessKeyName},
+		Reference: oapi.NewReference(nil, &testIAMAccessKeyName, nil),
 		State:     &testOperationState,
 	})
 

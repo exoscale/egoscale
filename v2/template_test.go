@@ -54,13 +54,13 @@ func (ts *testSuite) TestClient_CopyTemplate() {
 			JSON200: &oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testTemplateID},
+				Reference: oapi.NewReference(nil, &testTemplateID, nil),
 			},
 		}, nil)
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testTemplateID},
+		Reference: oapi.NewReference(nil, &testTemplateID, nil),
 		State:     &testOperationState,
 	})
 
@@ -135,7 +135,7 @@ func (ts *testSuite) TestClient_DeleteTemplate() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testTemplateID},
+					Reference: oapi.NewReference(nil, &testTemplateID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -144,7 +144,7 @@ func (ts *testSuite) TestClient_DeleteTemplate() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testTemplateID},
+		Reference: oapi.NewReference(nil, &testTemplateID, nil),
 		State:     &testOperationState,
 	})
 
@@ -310,13 +310,13 @@ func (ts *testSuite) TestClient_RegisterTemplate() {
 			JSON200: &oapi.Operation{
 				Id:        &testOperationID,
 				State:     &testOperationState,
-				Reference: &oapi.Reference{Id: &testTemplateID},
+				Reference: oapi.NewReference(nil, &testTemplateID, nil),
 			},
 		}, nil)
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testTemplateID},
+		Reference: oapi.NewReference(nil, &testTemplateID, nil),
 		State:     &testOperationState,
 	})
 
@@ -409,7 +409,7 @@ func (ts *testSuite) TestClient_UpdateTemplate() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testTemplateID},
+					Reference: oapi.NewReference(nil, &testTemplateID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -418,7 +418,7 @@ func (ts *testSuite) TestClient_UpdateTemplate() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testTemplateID},
+		Reference: oapi.NewReference(nil, &testTemplateID, nil),
 		State:     &testOperationState,
 	})
 

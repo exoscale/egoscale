@@ -66,7 +66,7 @@ func (ts *testSuite) TestClient_CreateElasticIP() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testElasticIPID},
+					Reference: oapi.NewReference(nil, &testElasticIPID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -75,7 +75,7 @@ func (ts *testSuite) TestClient_CreateElasticIP() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testElasticIPID},
+		Reference: oapi.NewReference(nil, &testElasticIPID, nil),
 		State:     &testOperationState,
 	})
 
@@ -165,7 +165,7 @@ func (ts *testSuite) TestClient_DeleteElasticIP() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testElasticIPID},
+					Reference: oapi.NewReference(nil, &testElasticIPID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -174,7 +174,7 @@ func (ts *testSuite) TestClient_DeleteElasticIP() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testElasticIPID},
+		Reference: oapi.NewReference(nil, &testElasticIPID, nil),
 		State:     &testOperationState,
 	})
 
@@ -386,7 +386,7 @@ func (ts *testSuite) TestClient_UpdateElasticIP() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testElasticIPID},
+					Reference: oapi.NewReference(nil, &testElasticIPID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -395,7 +395,7 @@ func (ts *testSuite) TestClient_UpdateElasticIP() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testElasticIPID},
+		Reference: oapi.NewReference(nil, &testElasticIPID, nil),
 		State:     &testOperationState,
 	})
 

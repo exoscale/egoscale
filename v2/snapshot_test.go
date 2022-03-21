@@ -43,7 +43,7 @@ func (ts *testSuite) TestClient_DeleteSnapshot() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSnapshotID},
+					Reference: oapi.NewReference(nil, &testSnapshotID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -52,7 +52,7 @@ func (ts *testSuite) TestClient_DeleteSnapshot() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSnapshotID},
+		Reference: oapi.NewReference(nil, &testSnapshotID, nil),
 		State:     &testOperationState,
 	})
 
@@ -88,7 +88,7 @@ func (ts *testSuite) TestClient_ExportSnapshot() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testSnapshotID},
+					Reference: oapi.NewReference(nil, &testSnapshotID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -97,7 +97,7 @@ func (ts *testSuite) TestClient_ExportSnapshot() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testSnapshotID},
+		Reference: oapi.NewReference(nil, &testSnapshotID, nil),
 		State:     &testOperationState,
 	})
 

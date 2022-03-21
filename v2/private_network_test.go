@@ -56,7 +56,7 @@ func (ts *testSuite) TestClient_CreatePrivateNetwork() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+					Reference: oapi.NewReference(nil, &testPrivateNetworkID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -65,7 +65,7 @@ func (ts *testSuite) TestClient_CreatePrivateNetwork() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+		Reference: oapi.NewReference(nil, &testPrivateNetworkID, nil),
 		State:     &testOperationState,
 	})
 
@@ -132,7 +132,7 @@ func (ts *testSuite) TestClient_DeletePrivateNetwork() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+					Reference: oapi.NewReference(nil, &testPrivateNetworkID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -141,7 +141,7 @@ func (ts *testSuite) TestClient_DeletePrivateNetwork() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+		Reference: oapi.NewReference(nil, &testPrivateNetworkID, nil),
 		State:     &testOperationState,
 	})
 
@@ -347,7 +347,7 @@ func (ts *testSuite) TestClient_UpdatePrivateNetwork() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+					Reference: oapi.NewReference(nil, &testPrivateNetworkID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -356,7 +356,7 @@ func (ts *testSuite) TestClient_UpdatePrivateNetwork() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+		Reference: oapi.NewReference(nil, &testPrivateNetworkID, nil),
 		State:     &testOperationState,
 	})
 
@@ -401,7 +401,7 @@ func (ts *testSuite) TestClient_UpdatePrivateNetworkInstanceIPAddress() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+					Reference: oapi.NewReference(nil, &testPrivateNetworkID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -410,7 +410,7 @@ func (ts *testSuite) TestClient_UpdatePrivateNetworkInstanceIPAddress() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: &oapi.Reference{Id: &testPrivateNetworkID},
+		Reference: oapi.NewReference(nil, &testPrivateNetworkID, nil),
 		State:     &testOperationState,
 	})
 

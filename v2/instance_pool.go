@@ -231,7 +231,7 @@ func (c *Client) CreateInstancePool(
 
 	instancePoolID := *res.(*struct {
 		Command *string `json:"command,omitempty"`
-		Id *string `json:"id,omitempty"` // revive:disable-line
+		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id
 

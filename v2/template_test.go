@@ -19,12 +19,13 @@ var (
 	testTemplateDescription           = new(testSuite).randomString(10)
 	testTemplateFamily                = new(testSuite).randomString(10)
 	testTemplateID                    = new(testSuite).randomID()
+	testTemplateMaintainer            = new(testSuite).randomString(10)
 	testTemplateName                  = new(testSuite).randomString(10)
 	testTemplatePasswordEnabled       = true
 	testTemplateSize            int64 = 10737418240
 	testTemplateSSHKeyEnabled         = true
 	testTemplateURL                   = "https://example.net/test.qcow2"
-	testTemplateVersion               = "1"
+	testTemplateVersion               = new(testSuite).randomString(10)
 	testTemplateVisibility            = "public"
 )
 
@@ -77,32 +78,38 @@ func (ts *testSuite) TestClient_CopyTemplate() {
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.Template{
 				BootMode:        (*oapi.TemplateBootMode)(&testTemplateBootMode),
+				Build:           &testTemplateBuild,
 				Checksum:        &testTemplateChecksum,
 				CreatedAt:       &testTemplateCreatedAt,
 				DefaultUser:     &testTemplateDefaultUser,
 				Description:     &testTemplateDescription,
 				Id:              &testTemplateID,
+				Maintainer:      &testTemplateMaintainer,
 				Name:            &testTemplateName,
 				PasswordEnabled: &testTemplatePasswordEnabled,
 				Size:            &testTemplateSize,
 				SshKeyEnabled:   &testTemplateSSHKeyEnabled,
 				Url:             &testTemplateURL,
+				Version:         &testTemplateVersion,
 				Visibility:      (*oapi.TemplateVisibility)(&templateVisibility),
 			},
 		}, nil)
 
 	expected := &Template{
 		BootMode:        &testTemplateBootMode,
+		Build:           &testTemplateBuild,
 		Checksum:        &testTemplateChecksum,
 		CreatedAt:       &testTemplateCreatedAt,
 		DefaultUser:     &testTemplateDefaultUser,
 		Description:     &testTemplateDescription,
 		ID:              &testTemplateID,
+		Maintainer:      &testTemplateMaintainer,
 		Name:            &testTemplateName,
 		PasswordEnabled: &testTemplatePasswordEnabled,
 		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
 		Size:            &testTemplateSize,
 		URL:             &testTemplateURL,
+		Version:         &testTemplateVersion,
 		Visibility:      &templateVisibility,
 		Zone:            &dstZone,
 	}
@@ -173,6 +180,7 @@ func (ts *testSuite) TestClient_GetTemplate() {
 				Description:     &testTemplateDescription,
 				Family:          &testTemplateFamily,
 				Id:              &testTemplateID,
+				Maintainer:      &testTemplateMaintainer,
 				Name:            &testTemplateName,
 				PasswordEnabled: &testTemplatePasswordEnabled,
 				Size:            &testTemplateSize,
@@ -192,6 +200,7 @@ func (ts *testSuite) TestClient_GetTemplate() {
 		Description:     &testTemplateDescription,
 		Family:          &testTemplateFamily,
 		ID:              &testTemplateID,
+		Maintainer:      &testTemplateMaintainer,
 		Name:            &testTemplateName,
 		PasswordEnabled: &testTemplatePasswordEnabled,
 		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
@@ -237,6 +246,7 @@ func (ts *testSuite) TestClient_ListTemplates() {
 					Description:     &testTemplateDescription,
 					Family:          &testTemplateFamily,
 					Id:              &testTemplateID,
+					Maintainer:      &testTemplateMaintainer,
 					Name:            &testTemplateName,
 					PasswordEnabled: &testTemplatePasswordEnabled,
 					Size:            &testTemplateSize,
@@ -257,6 +267,7 @@ func (ts *testSuite) TestClient_ListTemplates() {
 		Description:     &testTemplateDescription,
 		Family:          &testTemplateFamily,
 		ID:              &testTemplateID,
+		Maintainer:      &testTemplateMaintainer,
 		Name:            &testTemplateName,
 		PasswordEnabled: &testTemplatePasswordEnabled,
 		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
@@ -294,13 +305,16 @@ func (ts *testSuite) TestClient_RegisterTemplate() {
 			ts.Require().Equal(
 				oapi.RegisterTemplateJSONRequestBody{
 					BootMode:        (*oapi.RegisterTemplateJSONBodyBootMode)(&testTemplateBootMode),
+					Build:           &testTemplateBuild,
 					Checksum:        testTemplateChecksum,
 					DefaultUser:     &testTemplateDefaultUser,
 					Description:     &testTemplateDescription,
+					Maintainer:      &testTemplateMaintainer,
 					Name:            testTemplateName,
 					PasswordEnabled: testTemplatePasswordEnabled,
 					SshKeyEnabled:   testTemplateSSHKeyEnabled,
 					Url:             testTemplateURL,
+					Version:         &testTemplateVersion,
 				},
 				args.Get(1),
 			)
@@ -333,45 +347,54 @@ func (ts *testSuite) TestClient_RegisterTemplate() {
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.Template{
 				BootMode:        (*oapi.TemplateBootMode)(&testTemplateBootMode),
+				Build:           &testTemplateBuild,
 				Checksum:        &testTemplateChecksum,
 				CreatedAt:       &testTemplateCreatedAt,
 				DefaultUser:     &testTemplateDefaultUser,
 				Description:     &testTemplateDescription,
 				Id:              &testTemplateID,
+				Maintainer:      &testTemplateMaintainer,
 				Name:            &testTemplateName,
 				PasswordEnabled: &testTemplatePasswordEnabled,
 				Size:            &testTemplateSize,
 				SshKeyEnabled:   &testTemplateSSHKeyEnabled,
 				Url:             &testTemplateURL,
+				Version:         &testTemplateVersion,
 				Visibility:      (*oapi.TemplateVisibility)(&templateVisibility),
 			},
 		}, nil)
 
 	expected := &Template{
 		BootMode:        &testTemplateBootMode,
+		Build:           &testTemplateBuild,
 		Checksum:        &testTemplateChecksum,
 		CreatedAt:       &testTemplateCreatedAt,
 		DefaultUser:     &testTemplateDefaultUser,
 		Description:     &testTemplateDescription,
 		ID:              &testTemplateID,
+		Maintainer:      &testTemplateMaintainer,
 		Name:            &testTemplateName,
 		PasswordEnabled: &testTemplatePasswordEnabled,
 		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
 		Size:            &testTemplateSize,
 		URL:             &testTemplateURL,
+		Version:         &testTemplateVersion,
 		Visibility:      &templateVisibility,
 		Zone:            &testZone,
 	}
 
 	actual, err := ts.client.RegisterTemplate(context.Background(), testZone, &Template{
 		BootMode:        &testTemplateBootMode,
+		Build:           &testTemplateBuild,
 		Checksum:        &testTemplateChecksum,
 		DefaultUser:     &testTemplateDefaultUser,
 		Description:     &testTemplateDescription,
+		Maintainer:      &testTemplateMaintainer,
 		Name:            &testTemplateName,
 		PasswordEnabled: &testTemplatePasswordEnabled,
 		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
 		URL:             &testTemplateURL,
+		Version:         &testTemplateVersion,
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)

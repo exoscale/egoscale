@@ -8,54 +8,54 @@ import (
 	"github.com/exoscale/egoscale/v2/oapi"
 )
 
-// DnsDomain represents a DNS domain.
-type DnsDomain struct {
+// DNSDomain represents a DNS domain.
+type DNSDomain struct {
 	CreatedAt   *time.Time
 	ID          *string `req-for:"delete"`
 	UnicodeName *string `req-for:"create"`
 }
 
-// DnsDomainRecord represents a DNS record.
-type DnsDomainRecord struct {
+// DNSDomainRecord represents a DNS record.
+type DNSDomainRecord struct {
 	Content   *string `req-for:"create"`
 	CreatedAt *time.Time
 	ID        *string `req-for:"delete,update"`
 	Name      *string `req-for:"create"`
 	Priority  *int64
-	Ttl       *int64
+	TTL       *int64
 	Type      *string `req-for:"create"`
 	UpdatedAt *time.Time
 }
 
-func dnsDomainFromAPI(d *oapi.DnsDomain) *DnsDomain {
-	return &DnsDomain{
+func dnsDomainFromAPI(d *oapi.DnsDomain) *DNSDomain {
+	return &DNSDomain{
 		CreatedAt:   d.CreatedAt,
 		ID:          d.Id,
 		UnicodeName: d.UnicodeName,
 	}
 }
 
-func dnsDomainRecordFromAPI(d *oapi.DnsDomainRecord) *DnsDomainRecord {
+func dnsDomainRecordFromAPI(d *oapi.DnsDomainRecord) *DNSDomainRecord {
 	var t *string
 	if d.Type != nil {
 		x := string(*d.Type)
 		t = &x
 	}
-	return &DnsDomainRecord{
+	return &DNSDomainRecord{
 		Content:   d.Content,
 		CreatedAt: d.CreatedAt,
 		ID:        d.Id,
 		Name:      d.Name,
 		Priority:  d.Priority,
-		Ttl:       d.Ttl,
+		TTL:       d.Ttl,
 		Type:      t,
 		UpdatedAt: d.UpdatedAt,
 	}
 }
 
-// ListDnsDomains returns the list of DNS domains.
-func (c *Client) ListDnsDomains(ctx context.Context, zone string) ([]DnsDomain, error) {
-	var list []DnsDomain
+// ListDNSDomains returns the list of DNS domains.
+func (c *Client) ListDNSDomains(ctx context.Context, zone string) ([]DNSDomain, error) {
+	var list []DNSDomain
 
 	resp, err := c.ListDnsDomainsWithResponse(apiv2.WithZone(ctx, zone))
 	if err != nil {
@@ -71,8 +71,8 @@ func (c *Client) ListDnsDomains(ctx context.Context, zone string) ([]DnsDomain, 
 	return list, nil
 }
 
-// GetDnsDomain returns DNS domain details.
-func (c *Client) GetDnsDomain(ctx context.Context, zone, id string) (*DnsDomain, error) {
+// GetDNSDomain returns DNS domain details.
+func (c *Client) GetDNSDomain(ctx context.Context, zone, id string) (*DNSDomain, error) {
 	resp, err := c.GetDnsDomainWithResponse(apiv2.WithZone(ctx, zone), id)
 	if err != nil {
 		return nil, err
@@ -81,8 +81,8 @@ func (c *Client) GetDnsDomain(ctx context.Context, zone, id string) (*DnsDomain,
 	return dnsDomainFromAPI(resp.JSON200), nil
 }
 
-// DeleteDnsDomain deletes a DNS domain.
-func (c *Client) DeleteDnsDomain(ctx context.Context, zone string, domain *DnsDomain) error {
+// DeleteDNSDomain deletes a DNS domain.
+func (c *Client) DeleteDNSDomain(ctx context.Context, zone string, domain *DNSDomain) error {
 	if err := validateOperationParams(domain, "delete"); err != nil {
 		return err
 	}
@@ -103,12 +103,12 @@ func (c *Client) DeleteDnsDomain(ctx context.Context, zone string, domain *DnsDo
 	return nil
 }
 
-// CreateDnsDomain adds a new DNS domain.
-func (c *Client) CreateDnsDomain(
+// CreateDNSDomain adds a new DNS domain.
+func (c *Client) CreateDNSDomain(
 	ctx context.Context,
 	zone string,
-	domain *DnsDomain,
-) (*DnsDomain, error) {
+	domain *DNSDomain,
+) (*DNSDomain, error) {
 	if err := validateOperationParams(domain, "create"); err != nil {
 		return nil, err
 	}
@@ -128,15 +128,15 @@ func (c *Client) CreateDnsDomain(
 		return nil, err
 	}
 
-	return c.GetDnsDomain(ctx, zone, *r.(*struct {
+	return c.GetDNSDomain(ctx, zone, *r.(*struct {
 		Command *string `json:"command,omitempty"`
 		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id)
 }
 
-// GetDnsDomainZoneFile returns zone file of a DNS domain.
-func (c *Client) GetDnsDomainZoneFile(ctx context.Context, zone, id string) ([]byte, error) {
+// GetDNSDomainZoneFile returns zone file of a DNS domain.
+func (c *Client) GetDNSDomainZoneFile(ctx context.Context, zone, id string) ([]byte, error) {
 	resp, err := c.GetDnsDomainZoneFileWithResponse(apiv2.WithZone(ctx, zone), id)
 	if err != nil {
 		return nil, err
@@ -145,9 +145,9 @@ func (c *Client) GetDnsDomainZoneFile(ctx context.Context, zone, id string) ([]b
 	return resp.Body, nil
 }
 
-// ListDnsDomainRecords returns the list of records for DNS domain.
-func (c *Client) ListDnsDomainRecords(ctx context.Context, zone, id string) ([]DnsDomainRecord, error) {
-	var list []DnsDomainRecord
+// ListDNSDomainRecords returns the list of records for DNS domain.
+func (c *Client) ListDNSDomainRecords(ctx context.Context, zone, id string) ([]DNSDomainRecord, error) {
+	var list []DNSDomainRecord
 
 	resp, err := c.ListDnsDomainRecordsWithResponse(apiv2.WithZone(ctx, zone), id)
 	if err != nil {
@@ -163,8 +163,8 @@ func (c *Client) ListDnsDomainRecords(ctx context.Context, zone, id string) ([]D
 	return list, nil
 }
 
-// GetDnsDomainRecord returns a single DNS domain record.
-func (c *Client) GetDnsDomainRecord(ctx context.Context, zone, domainID, recordID string) (*DnsDomainRecord, error) {
+// GetDNSDomainRecord returns a single DNS domain record.
+func (c *Client) GetDNSDomainRecord(ctx context.Context, zone, domainID, recordID string) (*DNSDomainRecord, error) {
 	resp, err := c.GetDnsDomainRecordWithResponse(apiv2.WithZone(ctx, zone), domainID, recordID)
 	if err != nil {
 		return nil, err
@@ -173,13 +173,13 @@ func (c *Client) GetDnsDomainRecord(ctx context.Context, zone, domainID, recordI
 	return dnsDomainRecordFromAPI(resp.JSON200), nil
 }
 
-// CreateDnsDomainRecord adds a new DNS record for domain.
-func (c *Client) CreateDnsDomainRecord(
+// CreateDNSDomainRecord adds a new DNS record for domain.
+func (c *Client) CreateDNSDomainRecord(
 	ctx context.Context,
 	zone string,
 	domainID string,
-	record *DnsDomainRecord,
-) (*DnsDomainRecord, error) {
+	record *DNSDomainRecord,
+) (*DNSDomainRecord, error) {
 	if err := validateOperationParams(record, "create"); err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (c *Client) CreateDnsDomainRecord(
 		Content:  *record.Content,
 		Name:     *record.Name,
 		Priority: record.Priority,
-		Ttl:      record.Ttl,
+		Ttl:      record.TTL,
 		Type:     oapi.CreateDnsDomainRecordJSONBodyType(*record.Type),
 	})
 	if err != nil {
@@ -203,15 +203,15 @@ func (c *Client) CreateDnsDomainRecord(
 		return nil, err
 	}
 
-	return c.GetDnsDomainRecord(ctx, zone, domainID, *r.(*struct {
+	return c.GetDNSDomainRecord(ctx, zone, domainID, *r.(*struct {
 		Command *string `json:"command,omitempty"`
 		Id      *string `json:"id,omitempty"` // revive:disable-line
 		Link    *string `json:"link,omitempty"`
 	}).Id)
 }
 
-// DeleteDnsDomainRecord deletes a DNS domain record.
-func (c *Client) DeleteDnsDomainRecord(ctx context.Context, zone, domainID string, record *DnsDomainRecord) error {
+// DeleteDNSDomainRecord deletes a DNS domain record.
+func (c *Client) DeleteDNSDomainRecord(ctx context.Context, zone, domainID string, record *DNSDomainRecord) error {
 	if err := validateOperationParams(record, "delete"); err != nil {
 		return err
 	}
@@ -232,8 +232,8 @@ func (c *Client) DeleteDnsDomainRecord(ctx context.Context, zone, domainID strin
 	return nil
 }
 
-// UpdateDnsDomainRecord updates existing DNS domain record.
-func (c *Client) UpdateDnsDomainRecord(ctx context.Context, zone, domainID string, record *DnsDomainRecord) error {
+// UpdateDNSDomainRecord updates existing DNS domain record.
+func (c *Client) UpdateDNSDomainRecord(ctx context.Context, zone, domainID string, record *DNSDomainRecord) error {
 	if err := validateOperationParams(record, "update"); err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func (c *Client) UpdateDnsDomainRecord(ctx context.Context, zone, domainID strin
 		Content:  record.Content,
 		Name:     record.Name,
 		Priority: record.Priority,
-		Ttl:      record.Ttl,
+		Ttl:      record.TTL,
 	})
 	if err != nil {
 		return err

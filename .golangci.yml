@@ -29,12 +29,6 @@ linters:
 issues:
   exclude-rules:
     # stop revive from complaining about naming issues that originate from oapi generated code.
-    - path: v2/dns.go
-      linters:
-        - revive
-    - path: v2/dns_test.go
-      linters:
-        - revive
     - path: v2/client_mock.go
       linters:
         - revive

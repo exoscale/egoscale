@@ -11,29 +11,29 @@ import (
 )
 
 var (
-	testDnsDomainCreatedAt, _ = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
-	testDnsDomainId           = new(testSuite).randomID()
-	testDnsDomainUnicodeName  = "test.domain"
+	testDNSDomainCreatedAt, _ = time.Parse(iso8601Format, "2020-05-26T12:09:42Z")
+	testDNSDomainID           = new(testSuite).randomID()
+	testDNSDomainUnicodeName  = "test.domain"
 
-	testDnsDomainRecordContent            = new(testSuite).randomString(10)
-	testDnsDomainRecordCreatedAt, _       = time.Parse(iso8601Format, "2021-04-27T12:09:42Z")
-	testDnsDomainRecordId                 = new(testSuite).randomID()
-	testDnsDomainRecordName               = new(testSuite).randomString(10)
-	testDnsDomainRecordPriority     int64 = 5
-	testDnsDomainRecordTtl          int64 = 1800
-	testDnsDomainRecordType               = "CNAME"
-	testDnsDomainRecordUpdatedAt, _       = time.Parse(iso8601Format, "2021-06-27T12:09:42Z")
+	testDNSDomainRecordContent            = new(testSuite).randomString(10)
+	testDNSDomainRecordCreatedAt, _       = time.Parse(iso8601Format, "2021-04-27T12:09:42Z")
+	testDNSDomainRecordID                 = new(testSuite).randomID()
+	testDNSDomainRecordName               = new(testSuite).randomString(10)
+	testDNSDomainRecordPriority     int64 = 5
+	testDNSDomainRecordTTL          int64 = 1800
+	testDNSDomainRecordType               = "CNAME"
+	testDNSDomainRecordUpdatedAt, _       = time.Parse(iso8601Format, "2021-06-27T12:09:42Z")
 )
 
 func (ts *testSuite) TestClient_ListDnsDomains() {
 	domains := struct {
-		DnsDomains *[]oapi.DnsDomain `json:"dns-domains,omitempty"`
+		DnsDomains *[]oapi.DnsDomain `json:"dns-domains,omitempty"` //nolint: revive
 	}{
-		DnsDomains: &[]oapi.DnsDomain{
+		&[]oapi.DnsDomain{
 			oapi.DnsDomain{
-				CreatedAt:   &testDnsDomainCreatedAt,
-				Id:          &testDnsDomainId,
-				UnicodeName: &testDnsDomainUnicodeName,
+				CreatedAt:   &testDNSDomainCreatedAt,
+				Id:          &testDNSDomainID,
+				UnicodeName: &testDNSDomainUnicodeName,
 			},
 		},
 	}
@@ -51,20 +51,20 @@ func (ts *testSuite) TestClient_ListDnsDomains() {
 			nil,
 		)
 
-	expected := []DnsDomain{
+	expected := []DNSDomain{
 		{
-			CreatedAt:   &testDnsDomainCreatedAt,
-			ID:          &testDnsDomainId,
-			UnicodeName: &testDnsDomainUnicodeName,
+			CreatedAt:   &testDNSDomainCreatedAt,
+			ID:          &testDNSDomainID,
+			UnicodeName: &testDNSDomainUnicodeName,
 		},
 	}
 
-	actual, err := ts.client.ListDnsDomains(context.Background(), testZone)
+	actual, err := ts.client.ListDNSDomains(context.Background(), testZone)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *testSuite) TestClient_GetDnsDomain() {
+func (ts *testSuite) TestClient_GetDNSDomain() {
 	ts.mock().
 		On(
 			"GetDnsDomainWithResponse",
@@ -74,7 +74,7 @@ func (ts *testSuite) TestClient_GetDnsDomain() {
 		).
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
-				testDnsDomainId,
+				testDNSDomainID,
 				args.Get(1),
 			)
 		}).
@@ -82,26 +82,26 @@ func (ts *testSuite) TestClient_GetDnsDomain() {
 			&oapi.GetDnsDomainResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.DnsDomain{
-					CreatedAt:   &testDnsDomainCreatedAt,
-					Id:          &testDnsDomainId,
-					UnicodeName: &testDnsDomainUnicodeName,
+					CreatedAt:   &testDNSDomainCreatedAt,
+					Id:          &testDNSDomainID,
+					UnicodeName: &testDNSDomainUnicodeName,
 				},
 			},
 			nil,
 		)
 
-	expected := &DnsDomain{
-		CreatedAt:   &testDnsDomainCreatedAt,
-		ID:          &testDnsDomainId,
-		UnicodeName: &testDnsDomainUnicodeName,
+	expected := &DNSDomain{
+		CreatedAt:   &testDNSDomainCreatedAt,
+		ID:          &testDNSDomainID,
+		UnicodeName: &testDNSDomainUnicodeName,
 	}
 
-	actual, err := ts.client.GetDnsDomain(context.Background(), testZone, testDnsDomainId)
+	actual, err := ts.client.GetDNSDomain(context.Background(), testZone, testDNSDomainID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *testSuite) TestClient_CreateDnsDomain() {
+func (ts *testSuite) TestClient_CreateDNSDomain() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
@@ -117,7 +117,7 @@ func (ts *testSuite) TestClient_CreateDnsDomain() {
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
 				oapi.CreateDnsDomainJSONRequestBody{
-					UnicodeName: &testDnsDomainUnicodeName,
+					UnicodeName: &testDNSDomainUnicodeName,
 				},
 				args.Get(1),
 			)
@@ -134,7 +134,7 @@ func (ts *testSuite) TestClient_CreateDnsDomain() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: oapi.NewReference(nil, &testDnsDomainId, nil),
+		Reference: oapi.NewReference(nil, &testDNSDomainID, nil),
 		State:     &testOperationState,
 	})
 
@@ -147,20 +147,20 @@ func (ts *testSuite) TestClient_CreateDnsDomain() {
 		Return(&oapi.GetDnsDomainResponse{
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.DnsDomain{
-				CreatedAt:   &testDnsDomainCreatedAt,
-				Id:          &testDnsDomainId,
-				UnicodeName: &testDnsDomainUnicodeName,
+				CreatedAt:   &testDNSDomainCreatedAt,
+				Id:          &testDNSDomainID,
+				UnicodeName: &testDNSDomainUnicodeName,
 			},
 		}, nil)
 
-	expected := &DnsDomain{
-		CreatedAt:   &testDnsDomainCreatedAt,
-		ID:          &testDnsDomainId,
-		UnicodeName: &testDnsDomainUnicodeName,
+	expected := &DNSDomain{
+		CreatedAt:   &testDNSDomainCreatedAt,
+		ID:          &testDNSDomainID,
+		UnicodeName: &testDNSDomainUnicodeName,
 	}
 
-	actual, err := ts.client.CreateDnsDomain(context.Background(), testZone, &DnsDomain{
-		UnicodeName: &testDnsDomainUnicodeName,
+	actual, err := ts.client.CreateDNSDomain(context.Background(), testZone, &DNSDomain{
+		UnicodeName: &testDNSDomainUnicodeName,
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
@@ -181,7 +181,7 @@ func (ts *testSuite) TestClient_DeleteDnsDomain() {
 		).
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
-				testDnsDomainId,
+				testDNSDomainID,
 				args.Get(1),
 			)
 		}).
@@ -190,7 +190,7 @@ func (ts *testSuite) TestClient_DeleteDnsDomain() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: oapi.NewReference(nil, &testDnsDomainId, nil),
+					Reference: oapi.NewReference(nil, &testDNSDomainID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -199,16 +199,16 @@ func (ts *testSuite) TestClient_DeleteDnsDomain() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: oapi.NewReference(nil, &testDnsDomainId, nil),
+		Reference: oapi.NewReference(nil, &testDNSDomainID, nil),
 		State:     &testOperationState,
 	})
 
-	err := ts.client.DeleteDnsDomain(context.Background(), testZone, &DnsDomain{ID: &testDnsDomainId})
+	err := ts.client.DeleteDNSDomain(context.Background(), testZone, &DNSDomain{ID: &testDNSDomainID})
 	ts.Require().NoError(err)
 }
 
-func (ts *testSuite) TestClient_GetDnsDomainZoneFile() {
-	var expected string = `$ORIGIN example.com.
+func (ts *testSuite) TestClient_GetDNSDomainZoneFile() {
+	var expected = `$ORIGIN example.com.
 $TTL 1h
 example.com. 3600 IN SOA ns1.exoscale.ch. admin.dnsimple.com. 1654788358 86400 7200 604800 300
 example.com. 3600 IN NS ns1.exoscale.ch.
@@ -225,7 +225,7 @@ example.com. 3600 IN NS ns1.exoscale.net.`
 		).
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
-				testDnsDomainId,
+				testDNSDomainID,
 				args.Get(1),
 			)
 		}).
@@ -237,26 +237,26 @@ example.com. 3600 IN NS ns1.exoscale.net.`
 			nil,
 		)
 
-	actual, err := ts.client.GetDnsDomainZoneFile(context.Background(), testZone, testDnsDomainId)
+	actual, err := ts.client.GetDNSDomainZoneFile(context.Background(), testZone, testDNSDomainID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(actual, []byte(expected))
 }
 
-func (ts *testSuite) TestClient_ListDnsDomainRecords() {
-	tp := oapi.DnsDomainRecordType(testDnsDomainRecordType)
+func (ts *testSuite) TestClient_ListDNSDomainRecords() {
+	tp := oapi.DnsDomainRecordType(testDNSDomainRecordType)
 	records := struct {
-		DnsDomainRecords *[]oapi.DnsDomainRecord `json:"dns-domain-records,omitempty"`
+		DnsDomainRecords *[]oapi.DnsDomainRecord `json:"dns-domain-records,omitempty"` //nolint: revive
 	}{
 		&[]oapi.DnsDomainRecord{
 			oapi.DnsDomainRecord{
-				Content:   &testDnsDomainRecordContent,
-				CreatedAt: &testDnsDomainRecordCreatedAt,
-				Id:        &testDnsDomainRecordId,
-				Name:      &testDnsDomainRecordName,
-				Priority:  &testDnsDomainRecordPriority,
-				Ttl:       &testDnsDomainRecordTtl,
+				Content:   &testDNSDomainRecordContent,
+				CreatedAt: &testDNSDomainRecordCreatedAt,
+				Id:        &testDNSDomainRecordID,
+				Name:      &testDNSDomainRecordName,
+				Priority:  &testDNSDomainRecordPriority,
+				Ttl:       &testDNSDomainRecordTTL,
 				Type:      &tp,
-				UpdatedAt: &testDnsDomainRecordUpdatedAt,
+				UpdatedAt: &testDNSDomainRecordUpdatedAt,
 			},
 		},
 	}
@@ -275,26 +275,26 @@ func (ts *testSuite) TestClient_ListDnsDomainRecords() {
 			nil,
 		)
 
-	expected := []DnsDomainRecord{
+	expected := []DNSDomainRecord{
 		{
-			Content:   &testDnsDomainRecordContent,
-			CreatedAt: &testDnsDomainRecordCreatedAt,
-			ID:        &testDnsDomainRecordId,
-			Name:      &testDnsDomainRecordName,
-			Priority:  &testDnsDomainRecordPriority,
-			Ttl:       &testDnsDomainRecordTtl,
-			Type:      &testDnsDomainRecordType,
-			UpdatedAt: &testDnsDomainRecordUpdatedAt,
+			Content:   &testDNSDomainRecordContent,
+			CreatedAt: &testDNSDomainRecordCreatedAt,
+			ID:        &testDNSDomainRecordID,
+			Name:      &testDNSDomainRecordName,
+			Priority:  &testDNSDomainRecordPriority,
+			TTL:       &testDNSDomainRecordTTL,
+			Type:      &testDNSDomainRecordType,
+			UpdatedAt: &testDNSDomainRecordUpdatedAt,
 		},
 	}
 
-	actual, err := ts.client.ListDnsDomainRecords(context.Background(), testZone, testDnsDomainId)
+	actual, err := ts.client.ListDNSDomainRecords(context.Background(), testZone, testDNSDomainID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *testSuite) TestClient_GetDnsDomainRecord() {
-	tp := oapi.DnsDomainRecordType(testDnsDomainRecordType)
+func (ts *testSuite) TestClient_GetDNSDomainRecord() {
+	tp := oapi.DnsDomainRecordType(testDNSDomainRecordType)
 	ts.mock().
 		On(
 			"GetDnsDomainRecordWithResponse",
@@ -305,11 +305,11 @@ func (ts *testSuite) TestClient_GetDnsDomainRecord() {
 		).
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
-				testDnsDomainId,
+				testDNSDomainID,
 				args.Get(1),
 			)
 			ts.Require().Equal(
-				testDnsDomainRecordId,
+				testDNSDomainRecordID,
 				args.Get(2),
 			)
 		}).
@@ -317,41 +317,41 @@ func (ts *testSuite) TestClient_GetDnsDomainRecord() {
 			&oapi.GetDnsDomainRecordResponse{
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.DnsDomainRecord{
-					Content:   &testDnsDomainRecordContent,
-					CreatedAt: &testDnsDomainRecordCreatedAt,
-					Id:        &testDnsDomainRecordId,
-					Name:      &testDnsDomainRecordName,
-					Priority:  &testDnsDomainRecordPriority,
-					Ttl:       &testDnsDomainRecordTtl,
+					Content:   &testDNSDomainRecordContent,
+					CreatedAt: &testDNSDomainRecordCreatedAt,
+					Id:        &testDNSDomainRecordID,
+					Name:      &testDNSDomainRecordName,
+					Priority:  &testDNSDomainRecordPriority,
+					Ttl:       &testDNSDomainRecordTTL,
 					Type:      &tp,
-					UpdatedAt: &testDnsDomainRecordUpdatedAt,
+					UpdatedAt: &testDNSDomainRecordUpdatedAt,
 				},
 			},
 			nil,
 		)
 
-	expected := &DnsDomainRecord{
-		Content:   &testDnsDomainRecordContent,
-		CreatedAt: &testDnsDomainRecordCreatedAt,
-		ID:        &testDnsDomainRecordId,
-		Name:      &testDnsDomainRecordName,
-		Priority:  &testDnsDomainRecordPriority,
-		Ttl:       &testDnsDomainRecordTtl,
-		Type:      &testDnsDomainRecordType,
-		UpdatedAt: &testDnsDomainRecordUpdatedAt,
+	expected := &DNSDomainRecord{
+		Content:   &testDNSDomainRecordContent,
+		CreatedAt: &testDNSDomainRecordCreatedAt,
+		ID:        &testDNSDomainRecordID,
+		Name:      &testDNSDomainRecordName,
+		Priority:  &testDNSDomainRecordPriority,
+		TTL:       &testDNSDomainRecordTTL,
+		Type:      &testDNSDomainRecordType,
+		UpdatedAt: &testDNSDomainRecordUpdatedAt,
 	}
 
-	actual, err := ts.client.GetDnsDomainRecord(context.Background(), testZone, testDnsDomainId, testDnsDomainRecordId)
+	actual, err := ts.client.GetDNSDomainRecord(context.Background(), testZone, testDNSDomainID, testDNSDomainRecordID)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *testSuite) TestClient_CreateDnsDomainRecord() {
+func (ts *testSuite) TestClient_CreateDNSDomainRecord() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
 	)
-	tp := oapi.DnsDomainRecordType(testDnsDomainRecordType)
+	tp := oapi.DnsDomainRecordType(testDNSDomainRecordType)
 
 	ts.mock().
 		On(
@@ -363,16 +363,16 @@ func (ts *testSuite) TestClient_CreateDnsDomainRecord() {
 		).
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
-				testDnsDomainId,
+				testDNSDomainID,
 				args.Get(1),
 			)
 			ts.Require().Equal(
 				oapi.CreateDnsDomainRecordJSONRequestBody{
-					Content:  testDnsDomainRecordContent,
-					Name:     testDnsDomainRecordName,
-					Priority: &testDnsDomainRecordPriority,
-					Ttl:      &testDnsDomainRecordTtl,
-					Type:     oapi.CreateDnsDomainRecordJSONBodyType(testDnsDomainRecordType),
+					Content:  testDNSDomainRecordContent,
+					Name:     testDNSDomainRecordName,
+					Priority: &testDNSDomainRecordPriority,
+					Ttl:      &testDNSDomainRecordTTL,
+					Type:     oapi.CreateDnsDomainRecordJSONBodyType(testDNSDomainRecordType),
 				},
 				args.Get(2),
 			)
@@ -382,7 +382,7 @@ func (ts *testSuite) TestClient_CreateDnsDomainRecord() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: oapi.NewReference(nil, &testDnsDomainRecordId, nil),
+					Reference: oapi.NewReference(nil, &testDNSDomainRecordID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -391,7 +391,7 @@ func (ts *testSuite) TestClient_CreateDnsDomainRecord() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: oapi.NewReference(nil, &testDnsDomainRecordId, nil),
+		Reference: oapi.NewReference(nil, &testDNSDomainRecordID, nil),
 		State:     &testOperationState,
 	})
 
@@ -405,40 +405,40 @@ func (ts *testSuite) TestClient_CreateDnsDomainRecord() {
 		Return(&oapi.GetDnsDomainRecordResponse{
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.DnsDomainRecord{
-				Content:   &testDnsDomainRecordContent,
-				CreatedAt: &testDnsDomainRecordCreatedAt,
-				Id:        &testDnsDomainRecordId,
-				Name:      &testDnsDomainRecordName,
-				Priority:  &testDnsDomainRecordPriority,
-				Ttl:       &testDnsDomainRecordTtl,
+				Content:   &testDNSDomainRecordContent,
+				CreatedAt: &testDNSDomainRecordCreatedAt,
+				Id:        &testDNSDomainRecordID,
+				Name:      &testDNSDomainRecordName,
+				Priority:  &testDNSDomainRecordPriority,
+				Ttl:       &testDNSDomainRecordTTL,
 				Type:      &tp,
-				UpdatedAt: &testDnsDomainRecordUpdatedAt,
+				UpdatedAt: &testDNSDomainRecordUpdatedAt,
 			},
 		}, nil)
 
-	expected := &DnsDomainRecord{
-		Content:   &testDnsDomainRecordContent,
-		CreatedAt: &testDnsDomainRecordCreatedAt,
-		ID:        &testDnsDomainRecordId,
-		Name:      &testDnsDomainRecordName,
-		Priority:  &testDnsDomainRecordPriority,
-		Ttl:       &testDnsDomainRecordTtl,
-		Type:      &testDnsDomainRecordType,
-		UpdatedAt: &testDnsDomainRecordUpdatedAt,
+	expected := &DNSDomainRecord{
+		Content:   &testDNSDomainRecordContent,
+		CreatedAt: &testDNSDomainRecordCreatedAt,
+		ID:        &testDNSDomainRecordID,
+		Name:      &testDNSDomainRecordName,
+		Priority:  &testDNSDomainRecordPriority,
+		TTL:       &testDNSDomainRecordTTL,
+		Type:      &testDNSDomainRecordType,
+		UpdatedAt: &testDNSDomainRecordUpdatedAt,
 	}
 
-	actual, err := ts.client.CreateDnsDomainRecord(context.Background(), testZone, testDnsDomainId, &DnsDomainRecord{
-		Content:  &testDnsDomainRecordContent,
-		Name:     &testDnsDomainRecordName,
-		Priority: &testDnsDomainRecordPriority,
-		Ttl:      &testDnsDomainRecordTtl,
-		Type:     &testDnsDomainRecordType,
+	actual, err := ts.client.CreateDNSDomainRecord(context.Background(), testZone, testDNSDomainID, &DNSDomainRecord{
+		Content:  &testDNSDomainRecordContent,
+		Name:     &testDNSDomainRecordName,
+		Priority: &testDNSDomainRecordPriority,
+		TTL:      &testDNSDomainRecordTTL,
+		Type:     &testDNSDomainRecordType,
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *testSuite) TestClient_DeleteDnsDomainRecord() {
+func (ts *testSuite) TestClient_DeleteDNSDomainRecord() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
@@ -454,11 +454,11 @@ func (ts *testSuite) TestClient_DeleteDnsDomainRecord() {
 		).
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
-				testDnsDomainId,
+				testDNSDomainID,
 				args.Get(1),
 			)
 			ts.Require().Equal(
-				testDnsDomainRecordId,
+				testDNSDomainRecordID,
 				args.Get(2),
 			)
 		}).
@@ -467,7 +467,7 @@ func (ts *testSuite) TestClient_DeleteDnsDomainRecord() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: oapi.NewReference(nil, &testDnsDomainRecordId, nil),
+					Reference: oapi.NewReference(nil, &testDNSDomainRecordID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -476,15 +476,15 @@ func (ts *testSuite) TestClient_DeleteDnsDomainRecord() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: oapi.NewReference(nil, &testDnsDomainRecordId, nil),
+		Reference: oapi.NewReference(nil, &testDNSDomainRecordID, nil),
 		State:     &testOperationState,
 	})
 
-	err := ts.client.DeleteDnsDomainRecord(context.Background(), testZone, testDnsDomainId, &DnsDomainRecord{ID: &testDnsDomainRecordId})
+	err := ts.client.DeleteDNSDomainRecord(context.Background(), testZone, testDNSDomainID, &DNSDomainRecord{ID: &testDNSDomainRecordID})
 	ts.Require().NoError(err)
 }
 
-func (ts *testSuite) TestClient_UpdateDnsDomainRecord() {
+func (ts *testSuite) TestClient_UpdateDNSDomainRecord() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
@@ -501,19 +501,19 @@ func (ts *testSuite) TestClient_UpdateDnsDomainRecord() {
 		).
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
-				testDnsDomainId,
+				testDNSDomainID,
 				args.Get(1),
 			)
 			ts.Require().Equal(
-				testDnsDomainRecordId,
+				testDNSDomainRecordID,
 				args.Get(2),
 			)
 			ts.Require().Equal(
 				oapi.UpdateDnsDomainRecordJSONRequestBody{
-					Content:  &testDnsDomainRecordContent,
-					Name:     &testDnsDomainRecordName,
-					Priority: &testDnsDomainRecordPriority,
-					Ttl:      &testDnsDomainRecordTtl,
+					Content:  &testDNSDomainRecordContent,
+					Name:     &testDNSDomainRecordName,
+					Priority: &testDNSDomainRecordPriority,
+					Ttl:      &testDNSDomainRecordTTL,
 				},
 				args.Get(3),
 			)
@@ -523,7 +523,7 @@ func (ts *testSuite) TestClient_UpdateDnsDomainRecord() {
 				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 				JSON200: &oapi.Operation{
 					Id:        &testOperationID,
-					Reference: oapi.NewReference(nil, &testDnsDomainRecordId, nil),
+					Reference: oapi.NewReference(nil, &testDNSDomainRecordID, nil),
 					State:     &testOperationState,
 				},
 			},
@@ -532,17 +532,17 @@ func (ts *testSuite) TestClient_UpdateDnsDomainRecord() {
 
 	ts.mockGetOperation(&oapi.Operation{
 		Id:        &testOperationID,
-		Reference: oapi.NewReference(nil, &testDnsDomainRecordId, nil),
+		Reference: oapi.NewReference(nil, &testDNSDomainRecordID, nil),
 		State:     &testOperationState,
 	})
 
-	err := ts.client.UpdateDnsDomainRecord(context.Background(), testZone, testDnsDomainId, &DnsDomainRecord{
-		ID:       &testDnsDomainRecordId,
-		Content:  &testDnsDomainRecordContent,
-		Name:     &testDnsDomainRecordName,
-		Priority: &testDnsDomainRecordPriority,
-		Ttl:      &testDnsDomainRecordTtl,
-		Type:     &testDnsDomainRecordType,
+	err := ts.client.UpdateDNSDomainRecord(context.Background(), testZone, testDNSDomainID, &DNSDomainRecord{
+		ID:       &testDNSDomainRecordID,
+		Content:  &testDNSDomainRecordContent,
+		Name:     &testDNSDomainRecordName,
+		Priority: &testDNSDomainRecordPriority,
+		TTL:      &testDNSDomainRecordTTL,
+		Type:     &testDNSDomainRecordType,
 	})
 	ts.Require().NoError(err)
 }

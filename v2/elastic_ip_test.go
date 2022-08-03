@@ -14,8 +14,12 @@ import (
 var (
 	testElasticIPDescription                     = new(testSuite).randomString(10)
 	testElasticIPID                              = new(testSuite).randomID()
-	testElasticIPAddress                         = "1.2.3.4"
-	testElasticIPAddressP                        = net.ParseIP(testElasticIPAddress)
+	testElasticIPAddressV4                       = "1.2.3.4"
+	testElasticIPAddressV6                       = "2001:db8::ff00:42:8329"
+	testElasticIPAddressV4P                      = net.ParseIP(testElasticIPAddressV4)
+	testElasticIPAddressV6P                      = net.ParseIP(testElasticIPAddressV6)
+	testElasticIPAddressFamilyV4                 = "inet4"
+	testElasticIPAddressFamilyV6                 = "inet6"
 	testElasticIPHealthcheckMode                 = "https"
 	testElasticIPHealthcheckPort          uint16 = 8080
 	testElasticIPHealthcheckInterval      int64  = 10
@@ -29,7 +33,7 @@ var (
 	testElasticIPHealthcheckTLSSkipVerify        = true
 )
 
-func (ts *testSuite) TestClient_CreateElasticIP() {
+func (ts *testSuite) TestClient_CreateElasticIPV4() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess
@@ -88,7 +92,8 @@ func (ts *testSuite) TestClient_CreateElasticIP() {
 		Return(&oapi.GetElasticIpResponse{
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.ElasticIp{
-				Description: &testElasticIPDescription,
+				Addressfamily: (*oapi.ElasticIpAddressfamily)(&testElasticIPAddressFamilyV4),
+				Description:   &testElasticIPDescription,
 				Healthcheck: &oapi.ElasticIpHealthcheck{
 					Interval:      &testElasticIPHealthcheckInterval,
 					Mode:          oapi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
@@ -101,12 +106,13 @@ func (ts *testSuite) TestClient_CreateElasticIP() {
 					Uri:           &testElasticIPHealthcheckURI,
 				},
 				Id: &testElasticIPID,
-				Ip: &testElasticIPAddress,
+				Ip: &testElasticIPAddressV4,
 			},
 		}, nil)
 
 	expected := &ElasticIP{
-		Description: &testElasticIPDescription,
+		AddressFamily: &testElasticIPAddressFamilyV4,
+		Description:   &testElasticIPDescription,
 		Healthcheck: &ElasticIPHealthcheck{
 			Interval:      &testElasticIPHealthcheckIntervalD,
 			Mode:          &testElasticIPHealthcheckMode,
@@ -119,12 +125,129 @@ func (ts *testSuite) TestClient_CreateElasticIP() {
 			URI:           &testElasticIPHealthcheckURI,
 		},
 		ID:        &testElasticIPID,
-		IPAddress: &testElasticIPAddressP,
+		IPAddress: &testElasticIPAddressV4P,
 		Zone:      &testZone,
 	}
 
 	actual, err := ts.client.CreateElasticIP(context.Background(), testZone, &ElasticIP{
 		Description: &testElasticIPDescription,
+		Healthcheck: &ElasticIPHealthcheck{
+			Interval:      &testElasticIPHealthcheckIntervalD,
+			Mode:          &testElasticIPHealthcheckMode,
+			Port:          &testElasticIPHealthcheckPort,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
+			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
+			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Timeout:       &testElasticIPHealthcheckTimeoutD,
+			URI:           &testElasticIPHealthcheckURI,
+		},
+		ID: &testElasticIPID,
+	})
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *testSuite) TestClient_CreateElasticIPV6() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = oapi.OperationStateSuccess
+	)
+
+	ts.mock().
+		On(
+			"CreateElasticIpWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.CreateElasticIpJSONRequestBody{
+					Addressfamily: (*oapi.CreateElasticIpJSONBodyAddressfamily)(&testElasticIPAddressFamilyV6),
+					Description:   &testElasticIPDescription,
+					Healthcheck: &oapi.ElasticIpHealthcheck{
+						Interval:      &testElasticIPHealthcheckInterval,
+						Mode:          oapi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
+						Port:          int64(testElasticIPHealthcheckPort),
+						StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+						StrikesOk:     &testElasticIPHealthcheckStrikesOK,
+						Timeout:       &testElasticIPHealthcheckTimeout,
+						TlsSni:        &testElasticIPHealthcheckTLSSNI,
+						TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+						Uri:           &testElasticIPHealthcheckURI,
+					},
+				},
+				args.Get(1),
+			)
+		}).
+		Return(
+			&oapi.CreateElasticIpResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testElasticIPID, nil),
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
+
+	ts.mockGetOperation(&oapi.Operation{
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testElasticIPID, nil),
+		State:     &testOperationState,
+	})
+
+	ts.mock().
+		On("GetElasticIpWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetElasticIpResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.ElasticIp{
+				Addressfamily: (*oapi.ElasticIpAddressfamily)(&testElasticIPAddressFamilyV6),
+				Description:   &testElasticIPDescription,
+				Healthcheck: &oapi.ElasticIpHealthcheck{
+					Interval:      &testElasticIPHealthcheckInterval,
+					Mode:          oapi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
+					Port:          int64(testElasticIPHealthcheckPort),
+					StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+					StrikesOk:     &testElasticIPHealthcheckStrikesOK,
+					Timeout:       &testElasticIPHealthcheckTimeout,
+					TlsSni:        &testElasticIPHealthcheckTLSSNI,
+					TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+					Uri:           &testElasticIPHealthcheckURI,
+				},
+				Id: &testElasticIPID,
+				Ip: &testElasticIPAddressV6,
+			},
+		}, nil)
+
+	expected := &ElasticIP{
+		AddressFamily: &testElasticIPAddressFamilyV6,
+		Description:   &testElasticIPDescription,
+		Healthcheck: &ElasticIPHealthcheck{
+			Interval:      &testElasticIPHealthcheckIntervalD,
+			Mode:          &testElasticIPHealthcheckMode,
+			Port:          &testElasticIPHealthcheckPort,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
+			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
+			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Timeout:       &testElasticIPHealthcheckTimeoutD,
+			URI:           &testElasticIPHealthcheckURI,
+		},
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressV6P,
+		Zone:      &testZone,
+	}
+
+	actual, err := ts.client.CreateElasticIP(context.Background(), testZone, &ElasticIP{
+		Description:   &testElasticIPDescription,
+		AddressFamily: &testElasticIPAddressFamilyV6,
 		Healthcheck: &ElasticIPHealthcheck{
 			Interval:      &testElasticIPHealthcheckIntervalD,
 			Mode:          &testElasticIPHealthcheckMode,
@@ -182,7 +305,7 @@ func (ts *testSuite) TestClient_DeleteElasticIP() {
 	ts.Require().True(deleted)
 }
 
-func (ts *testSuite) TestClient_FindElasticIP() {
+func (ts *testSuite) TestClient_FindElasticIPV4() {
 	ts.mock().
 		On("ListElasticIpsWithResponse",
 			mock.Anything,                 // ctx
@@ -195,7 +318,7 @@ func (ts *testSuite) TestClient_FindElasticIP() {
 			}{
 				ElasticIps: &[]oapi.ElasticIp{{
 					Id: &testElasticIPID,
-					Ip: &testElasticIPAddress,
+					Ip: &testElasticIPAddressV4,
 				}},
 			},
 		}, nil)
@@ -213,13 +336,13 @@ func (ts *testSuite) TestClient_FindElasticIP() {
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.ElasticIp{
 				Id: &testElasticIPID,
-				Ip: &testElasticIPAddress,
+				Ip: &testElasticIPAddressV4,
 			},
 		}, nil)
 
 	expected := &ElasticIP{
 		ID:        &testElasticIPID,
-		IPAddress: &testElasticIPAddressP,
+		IPAddress: &testElasticIPAddressV4P,
 		Zone:      &testZone,
 	}
 
@@ -232,7 +355,24 @@ func (ts *testSuite) TestClient_FindElasticIP() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *testSuite) TestClient_GetElasticIP() {
+func (ts *testSuite) TestClient_FindElasticIPV6() {
+	ts.mock().
+		On("ListElasticIpsWithResponse",
+			mock.Anything,                 // ctx
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.ListElasticIpsResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				ElasticIps *[]oapi.ElasticIp `json:"elastic-ips,omitempty"`
+			}{
+				ElasticIps: &[]oapi.ElasticIp{{
+					Id: &testElasticIPID,
+					Ip: &testElasticIPAddressV6,
+				}},
+			},
+		}, nil)
+
 	ts.mock().
 		On("GetElasticIpWithResponse",
 			mock.Anything,                 // ctx
@@ -245,7 +385,41 @@ func (ts *testSuite) TestClient_GetElasticIP() {
 		Return(&oapi.GetElasticIpResponse{
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.ElasticIp{
-				Description: &testElasticIPDescription,
+				Id: &testElasticIPID,
+				Ip: &testElasticIPAddressV6,
+			},
+		}, nil)
+
+	expected := &ElasticIP{
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressV6P,
+		Zone:      &testZone,
+	}
+
+	actual, err := ts.client.FindElasticIP(context.Background(), testZone, *expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+
+	actual, err = ts.client.FindElasticIP(context.Background(), testZone, expected.IPAddress.String())
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *testSuite) TestClient_GetElasticIPV4() {
+	ts.mock().
+		On("GetElasticIpWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testElasticIPID, args.Get(1))
+		}).
+		Return(&oapi.GetElasticIpResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.ElasticIp{
+				Description:   &testElasticIPDescription,
+				Addressfamily: (*oapi.ElasticIpAddressfamily)(&testElasticIPAddressFamilyV4),
 				Healthcheck: &oapi.ElasticIpHealthcheck{
 					Interval:      &testElasticIPHealthcheckInterval,
 					Mode:          oapi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
@@ -258,12 +432,13 @@ func (ts *testSuite) TestClient_GetElasticIP() {
 					Uri:           &testElasticIPHealthcheckURI,
 				},
 				Id: &testElasticIPID,
-				Ip: &testElasticIPAddress,
+				Ip: &testElasticIPAddressV4,
 			},
 		}, nil)
 
 	expected := &ElasticIP{
-		Description: &testElasticIPDescription,
+		Description:   &testElasticIPDescription,
+		AddressFamily: &testElasticIPAddressFamilyV4,
 		Healthcheck: &ElasticIPHealthcheck{
 			Interval:      &testElasticIPHealthcheckIntervalD,
 			Mode:          &testElasticIPHealthcheckMode,
@@ -276,7 +451,62 @@ func (ts *testSuite) TestClient_GetElasticIP() {
 			URI:           &testElasticIPHealthcheckURI,
 		},
 		ID:        &testElasticIPID,
-		IPAddress: &testElasticIPAddressP,
+		IPAddress: &testElasticIPAddressV4P,
+		Zone:      &testZone,
+	}
+
+	actual, err := ts.client.GetElasticIP(context.Background(), testZone, *expected.ID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *testSuite) TestClient_GetElasticIPV6() {
+	ts.mock().
+		On("GetElasticIpWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testElasticIPID, args.Get(1))
+		}).
+		Return(&oapi.GetElasticIpResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.ElasticIp{
+				Description:   &testElasticIPDescription,
+				Addressfamily: (*oapi.ElasticIpAddressfamily)(&testElasticIPAddressFamilyV6),
+				Healthcheck: &oapi.ElasticIpHealthcheck{
+					Interval:      &testElasticIPHealthcheckInterval,
+					Mode:          oapi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
+					Port:          int64(testElasticIPHealthcheckPort),
+					StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+					StrikesOk:     &testElasticIPHealthcheckStrikesOK,
+					Timeout:       &testElasticIPHealthcheckTimeout,
+					TlsSni:        &testElasticIPHealthcheckTLSSNI,
+					TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+					Uri:           &testElasticIPHealthcheckURI,
+				},
+				Id: &testElasticIPID,
+				Ip: &testElasticIPAddressV6,
+			},
+		}, nil)
+
+	expected := &ElasticIP{
+		Description:   &testElasticIPDescription,
+		AddressFamily: &testElasticIPAddressFamilyV6,
+		Healthcheck: &ElasticIPHealthcheck{
+			Interval:      &testElasticIPHealthcheckIntervalD,
+			Mode:          &testElasticIPHealthcheckMode,
+			Port:          &testElasticIPHealthcheckPort,
+			StrikesFail:   &testElasticIPHealthcheckStrikesFail,
+			StrikesOK:     &testElasticIPHealthcheckStrikesOK,
+			TLSSNI:        &testElasticIPHealthcheckTLSSNI,
+			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
+			Timeout:       &testElasticIPHealthcheckTimeoutD,
+			URI:           &testElasticIPHealthcheckURI,
+		},
+		ID:        &testElasticIPID,
+		IPAddress: &testElasticIPAddressV6P,
 		Zone:      &testZone,
 	}
 
@@ -297,7 +527,8 @@ func (ts *testSuite) TestClient_ListElasticIPs() {
 				ElasticIps *[]oapi.ElasticIp `json:"elastic-ips,omitempty"`
 			}{
 				ElasticIps: &[]oapi.ElasticIp{{
-					Description: &testElasticIPDescription,
+					Addressfamily: (*oapi.ElasticIpAddressfamily)(&testElasticIPAddressFamilyV4),
+					Description:   &testElasticIPDescription,
 					Healthcheck: &oapi.ElasticIpHealthcheck{
 						Interval:      &testElasticIPHealthcheckInterval,
 						Mode:          oapi.ElasticIpHealthcheckMode(testElasticIPHealthcheckMode),
@@ -310,13 +541,14 @@ func (ts *testSuite) TestClient_ListElasticIPs() {
 						Uri:           &testElasticIPHealthcheckURI,
 					},
 					Id: &testElasticIPID,
-					Ip: &testElasticIPAddress,
+					Ip: &testElasticIPAddressV4,
 				}},
 			},
 		}, nil)
 
 	expected := []*ElasticIP{{
-		Description: &testElasticIPDescription,
+		AddressFamily: &testElasticIPAddressFamilyV4,
+		Description:   &testElasticIPDescription,
 		Healthcheck: &ElasticIPHealthcheck{
 			Interval:      &testElasticIPHealthcheckIntervalD,
 			Mode:          &testElasticIPHealthcheckMode,
@@ -329,7 +561,7 @@ func (ts *testSuite) TestClient_ListElasticIPs() {
 			URI:           &testElasticIPHealthcheckURI,
 		},
 		ID:        &testElasticIPID,
-		IPAddress: &testElasticIPAddressP,
+		IPAddress: &testElasticIPAddressV4P,
 		Zone:      &testZone,
 	}}
 
@@ -411,7 +643,7 @@ func (ts *testSuite) TestClient_UpdateElasticIP() {
 			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerifyUpdated,
 		},
 		ID:        &testElasticIPID,
-		IPAddress: &testElasticIPAddressP,
+		IPAddress: &testElasticIPAddressV4P,
 		Zone:      &testZone,
 	}))
 	ts.Require().True(updated)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -206,11 +207,18 @@ func (c *Client) SetTrace(enabled bool) {
 
 // setEndpointFromContext is an HTTP client request interceptor that overrides the "Host" header
 // with information from a request endpoint optionally set in the context instance. If none is
-// found, the request is left untouched.
+// found or host is IP address, the request is left untouched.
 func setEndpointFromContext(ctx context.Context, req *http.Request) error {
-	if v, ok := ctx.Value(api.ReqEndpoint{}).(api.ReqEndpoint); ok {
-		req.Host = v.Host()
-		req.URL.Host = v.Host()
+	h, _, err := net.SplitHostPort(req.Host)
+	if err != nil {
+		h = req.Host
+	}
+	if net.ParseIP(h) == nil {
+		v, ok := ctx.Value(api.ReqEndpoint{}).(api.ReqEndpoint)
+		if ok {
+			req.Host = v.Host()
+			req.URL.Host = v.Host()
+		}
 	}
 
 	return nil

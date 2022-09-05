@@ -177,19 +177,29 @@ func (ts *testSuite) TestClient_fetchfromIDs() {
 	}
 }
 
-func (ts *testSuite) TestDefaultTransport_RoundTrip() {
-	testServer := httptest.NewServer(nil)
+func TestDefaultClient_Retry(t *testing.T) {
+	n := 0
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if n < 2 {
+			n++
+			w.WriteHeader(500)
+		}
+	}))
 	defer testServer.Close()
 
-	testClient := testServer.Client()
-	testClient.Transport = &defaultTransport{next: testClient.Transport}
+	testClient, err := NewClient(
+		"EXOxxxxxxxxxxxxxxxxxxxxxxxx",
+		"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+		ClientOptWithAPIEndpoint(testServer.URL),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	req, err := http.NewRequest(http.MethodGet, testServer.URL, nil)
-	ts.Require().NoError(err)
-
-	_, err = testClient.Do(req)
-	ts.Require().NoError(err)
-	ts.Require().Equal(UserAgent, req.Header.Get("User-Agent"))
+	_, err = testClient.httpClient.Get(testServer.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestSetEndpointFromContext(t *testing.T) {

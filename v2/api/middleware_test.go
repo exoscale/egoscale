@@ -1,7 +1,7 @@
 package api
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -54,7 +54,7 @@ func TestErrorHandlerMiddleware_RoundTrip(t *testing.T) {
 			handler: &testHandler{resStatus: http.StatusOK, resText: "test"},
 			testFunc: func(t *testing.T, res *http.Response, err error) {
 				require.NoError(t, err)
-				actual, _ := ioutil.ReadAll(res.Body)
+				actual, _ := io.ReadAll(res.Body)
 				require.Equal(t, []byte("test"), actual)
 			},
 		},

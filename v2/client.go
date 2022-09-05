@@ -14,6 +14,7 @@ import (
 	"github.com/exoscale/egoscale/v2/api"
 	"github.com/exoscale/egoscale/v2/oapi"
 	"github.com/exoscale/egoscale/version"
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 const (
@@ -28,16 +29,9 @@ var UserAgent = fmt.Sprintf("egoscale/%s (%s; %s/%s)",
 	runtime.GOOS,
 	runtime.GOARCH)
 
-// defaultTransport is the default HTTP client transport.
-type defaultTransport struct {
-	next http.RoundTripper
-}
-
-// RoundTrip executes a single HTTP transaction, returning a Response for the provided Request.
-func (t *defaultTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Add("User-Agent", UserAgent)
-	return t.next.RoundTrip(req)
-}
+// defaultHTTPClient is HTTP client with retry logic.
+// Default retry configuration can be found in go-retryablehttp repo.
+var defaultHTTPClient = retryablehttp.NewClient().StandardClient()
 
 // ClientOpt represents a function setting Exoscale API client option.
 type ClientOpt func(*Client) error
@@ -134,12 +128,16 @@ type Client struct {
 }
 
 // NewClient returns a new Exoscale API client, or an error if one couldn't be initialized.
+// Default HTTP client is [go-retryablehttp] with static retry configuration.
+// To change retry configuration, build new HTTP client and pass it using ClientOptWithHTTPClient.
+//
+// [go-retryablehttp]: https://github.com/hashicorp/go-retryablehttp
 func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 	client := Client{
 		apiKey:       apiKey,
 		apiSecret:    apiSecret,
 		apiEndpoint:  api.EndpointURL,
-		httpClient:   &http.Client{Transport: &defaultTransport{http.DefaultTransport}},
+		httpClient:   defaultHTTPClient,
 		timeout:      defaultTimeout,
 		pollInterval: defaultPollInterval,
 	}
@@ -177,6 +175,7 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 		oapi.WithHTTPClient(client.httpClient),
 		oapi.WithRequestEditorFn(
 			oapi.MultiRequestsEditor(
+				setUserAgent,
 				apiSecurityProvider.Intercept,
 				setEndpointFromContext,
 			),
@@ -203,6 +202,13 @@ func (c *Client) SetTimeout(v time.Duration) {
 // SetTrace enables or disables HTTP request/response tracing.
 func (c *Client) SetTrace(enabled bool) {
 	c.trace = enabled
+}
+
+// setUserAgent is an HTTP client request interceptor that adds the "User-Agent" header
+func setUserAgent(ctx context.Context, req *http.Request) error {
+	req.Header.Add("User-Agent", UserAgent)
+
+	return nil
 }
 
 // setEndpointFromContext is an HTTP client request interceptor that overrides the "Host" header

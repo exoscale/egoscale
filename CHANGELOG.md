@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.90.1
+------
+
+- feature: v2: retryable HTTP client by default
+- change: no HOST header override for IP address endpoints
+
 0.90.0
 ------
 

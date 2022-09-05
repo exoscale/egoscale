@@ -14,6 +14,7 @@ import (
 	"github.com/exoscale/egoscale/v2/api"
 	"github.com/exoscale/egoscale/v2/oapi"
 	"github.com/exoscale/egoscale/version"
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 const (
@@ -28,16 +29,8 @@ var UserAgent = fmt.Sprintf("egoscale/%s (%s; %s/%s)",
 	runtime.GOOS,
 	runtime.GOARCH)
 
-// defaultTransport is the default HTTP client transport.
-type defaultTransport struct {
-	next http.RoundTripper
-}
-
-// RoundTrip executes a single HTTP transaction, returning a Response for the provided Request.
-func (t *defaultTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Add("User-Agent", UserAgent)
-	return t.next.RoundTrip(req)
-}
+// defaultHTTPClient is HTTP client with retry logic.
+var defaultHTTPClient = retryablehttp.NewClient().StandardClient()
 
 // ClientOpt represents a function setting Exoscale API client option.
 type ClientOpt func(*Client) error
@@ -139,7 +132,7 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 		apiKey:       apiKey,
 		apiSecret:    apiSecret,
 		apiEndpoint:  api.EndpointURL,
-		httpClient:   &http.Client{Transport: &defaultTransport{http.DefaultTransport}},
+		httpClient:   defaultHTTPClient,
 		timeout:      defaultTimeout,
 		pollInterval: defaultPollInterval,
 	}
@@ -177,6 +170,7 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 		oapi.WithHTTPClient(client.httpClient),
 		oapi.WithRequestEditorFn(
 			oapi.MultiRequestsEditor(
+				setUserAgent,
 				apiSecurityProvider.Intercept,
 				setEndpointFromContext,
 			),
@@ -203,6 +197,12 @@ func (c *Client) SetTimeout(v time.Duration) {
 // SetTrace enables or disables HTTP request/response tracing.
 func (c *Client) SetTrace(enabled bool) {
 	c.trace = enabled
+}
+
+func setUserAgent(ctx context.Context, req *http.Request) error {
+	req.Header.Add("User-Agent", UserAgent)
+
+	return nil
 }
 
 // setEndpointFromContext is an HTTP client request interceptor that overrides the "Host" header

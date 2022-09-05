@@ -30,6 +30,7 @@ var UserAgent = fmt.Sprintf("egoscale/%s (%s; %s/%s)",
 	runtime.GOARCH)
 
 // defaultHTTPClient is HTTP client with retry logic.
+// Default retry configuration can be found in go-retryablehttp repo.
 var defaultHTTPClient = retryablehttp.NewClient().StandardClient()
 
 // ClientOpt represents a function setting Exoscale API client option.
@@ -127,6 +128,10 @@ type Client struct {
 }
 
 // NewClient returns a new Exoscale API client, or an error if one couldn't be initialized.
+// Default HTTP client is [go-retryablehttp] with static retry configuration.
+// To change retry configuration, build new HTTP client and pass it using ClientOptWithHTTPClient.
+//
+// [go-retryablehttp]: https://github.com/hashicorp/go-retryablehttp
 func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 	client := Client{
 		apiKey:       apiKey,
@@ -199,6 +204,7 @@ func (c *Client) SetTrace(enabled bool) {
 	c.trace = enabled
 }
 
+// setUserAgent is an HTTP client request interceptor that adds the "User-Agent" header
 func setUserAgent(ctx context.Context, req *http.Request) error {
 	req.Header.Add("User-Agent", UserAgent)
 

@@ -56,7 +56,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 				},
 				Network:       &testSecurityGroupRuleNetwork,
 				Protocol:      oapi.AddRuleToSecurityGroupJSONBodyProtocol(testSecurityGroupRuleProtocol),
-				SecurityGroup: &oapi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
+				SecurityGroup: &oapi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
 				StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 			}, args.Get(2))
 		}).
@@ -105,7 +105,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 						Id:            &testAlreadyExistingSecurityGroupRuleID,
 						Network:       &testSecurityGroupRuleNetwork,
 						Protocol:      &testSecurityGroupRuleProtocol,
-						SecurityGroup: &oapi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
+						SecurityGroup: &oapi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
 						StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 					},
 				},
@@ -140,7 +140,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 						Id:            &testAlreadyExistingSecurityGroupRuleID,
 						Network:       &testSecurityGroupRuleNetwork,
 						Protocol:      &testSecurityGroupRuleProtocol,
-						SecurityGroup: &oapi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
+						SecurityGroup: &oapi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
 						StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 					},
 					{
@@ -157,7 +157,7 @@ func (ts *testSuite) TestClient_CreateSecurityGroupRule() {
 						Id:            &testSecurityGroupRuleID,
 						Network:       &testSecurityGroupRuleNetwork,
 						Protocol:      &testSecurityGroupRuleProtocol,
-						SecurityGroup: &oapi.SecurityGroupResource{Id: testSecurityGroupRuleSecurityGroupID},
+						SecurityGroup: &oapi.SecurityGroupResource{Id: &testSecurityGroupRuleSecurityGroupID},
 						StartPort:     func() *int64 { v := int64(testSecurityGroupRuleStartPort); return &v }(),
 					},
 				},

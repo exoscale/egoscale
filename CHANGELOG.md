@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.90.3 (NOT YET RELEASED)
+------
+
+- feature: v2: add labels support for Elastic IPs
+
 0.90.2
 ------
 

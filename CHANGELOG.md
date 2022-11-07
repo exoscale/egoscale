@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.90.4
+------
+
+- fix: v2: seg fault when listing security groups
+
 0.90.3
 ------
 

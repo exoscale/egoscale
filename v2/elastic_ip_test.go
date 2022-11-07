@@ -31,6 +31,7 @@ var (
 	testElasticIPHealthcheckURI                  = new(testSuite).randomString(10)
 	testElasticIPHealthcheckTLSSNI               = new(testSuite).randomString(10)
 	testElasticIPHealthcheckTLSSkipVerify        = true
+	testElasticIPLabels                          = map[string]string{"k1": "v1", "k2": "v2"}
 )
 
 func (ts *testSuite) TestClient_CreateElasticIPV4() {
@@ -61,6 +62,7 @@ func (ts *testSuite) TestClient_CreateElasticIPV4() {
 						TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
 						Uri:           &testElasticIPHealthcheckURI,
 					},
+					Labels: &oapi.Labels{AdditionalProperties: testElasticIPLabels},
 				},
 				args.Get(1),
 			)
@@ -105,8 +107,9 @@ func (ts *testSuite) TestClient_CreateElasticIPV4() {
 					TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
 					Uri:           &testElasticIPHealthcheckURI,
 				},
-				Id: &testElasticIPID,
-				Ip: &testElasticIPAddressV4,
+				Labels: &oapi.Labels{AdditionalProperties: testElasticIPLabels},
+				Id:     &testElasticIPID,
+				Ip:     &testElasticIPAddressV4,
 			},
 		}, nil)
 
@@ -124,6 +127,7 @@ func (ts *testSuite) TestClient_CreateElasticIPV4() {
 			Timeout:       &testElasticIPHealthcheckTimeoutD,
 			URI:           &testElasticIPHealthcheckURI,
 		},
+		Labels:    &testElasticIPLabels,
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressV4P,
 		Zone:      &testZone,
@@ -142,7 +146,8 @@ func (ts *testSuite) TestClient_CreateElasticIPV4() {
 			Timeout:       &testElasticIPHealthcheckTimeoutD,
 			URI:           &testElasticIPHealthcheckURI,
 		},
-		ID: &testElasticIPID,
+		Labels: &testElasticIPLabels,
+		ID:     &testElasticIPID,
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
@@ -177,6 +182,7 @@ func (ts *testSuite) TestClient_CreateElasticIPV6() {
 						TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
 						Uri:           &testElasticIPHealthcheckURI,
 					},
+					Labels: &oapi.Labels{AdditionalProperties: testElasticIPLabels},
 				},
 				args.Get(1),
 			)
@@ -221,8 +227,9 @@ func (ts *testSuite) TestClient_CreateElasticIPV6() {
 					TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
 					Uri:           &testElasticIPHealthcheckURI,
 				},
-				Id: &testElasticIPID,
-				Ip: &testElasticIPAddressV6,
+				Labels: &oapi.Labels{AdditionalProperties: testElasticIPLabels},
+				Id:     &testElasticIPID,
+				Ip:     &testElasticIPAddressV6,
 			},
 		}, nil)
 
@@ -240,6 +247,7 @@ func (ts *testSuite) TestClient_CreateElasticIPV6() {
 			Timeout:       &testElasticIPHealthcheckTimeoutD,
 			URI:           &testElasticIPHealthcheckURI,
 		},
+		Labels:    &testElasticIPLabels,
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressV6P,
 		Zone:      &testZone,
@@ -259,7 +267,8 @@ func (ts *testSuite) TestClient_CreateElasticIPV6() {
 			Timeout:       &testElasticIPHealthcheckTimeoutD,
 			URI:           &testElasticIPHealthcheckURI,
 		},
-		ID: &testElasticIPID,
+		Labels: &testElasticIPLabels,
+		ID:     &testElasticIPID,
 	})
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)
@@ -431,8 +440,9 @@ func (ts *testSuite) TestClient_GetElasticIPV4() {
 					TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
 					Uri:           &testElasticIPHealthcheckURI,
 				},
-				Id: &testElasticIPID,
-				Ip: &testElasticIPAddressV4,
+				Labels: &oapi.Labels{AdditionalProperties: testElasticIPLabels},
+				Id:     &testElasticIPID,
+				Ip:     &testElasticIPAddressV4,
 			},
 		}, nil)
 
@@ -450,6 +460,7 @@ func (ts *testSuite) TestClient_GetElasticIPV4() {
 			Timeout:       &testElasticIPHealthcheckTimeoutD,
 			URI:           &testElasticIPHealthcheckURI,
 		},
+		Labels:    &testElasticIPLabels,
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressV4P,
 		Zone:      &testZone,
@@ -486,8 +497,9 @@ func (ts *testSuite) TestClient_GetElasticIPV6() {
 					TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
 					Uri:           &testElasticIPHealthcheckURI,
 				},
-				Id: &testElasticIPID,
-				Ip: &testElasticIPAddressV6,
+				Labels: &oapi.Labels{AdditionalProperties: testElasticIPLabels},
+				Id:     &testElasticIPID,
+				Ip:     &testElasticIPAddressV6,
 			},
 		}, nil)
 
@@ -505,6 +517,7 @@ func (ts *testSuite) TestClient_GetElasticIPV6() {
 			Timeout:       &testElasticIPHealthcheckTimeoutD,
 			URI:           &testElasticIPHealthcheckURI,
 		},
+		Labels:    &testElasticIPLabels,
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressV6P,
 		Zone:      &testZone,
@@ -540,8 +553,9 @@ func (ts *testSuite) TestClient_ListElasticIPs() {
 						TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerify,
 						Uri:           &testElasticIPHealthcheckURI,
 					},
-					Id: &testElasticIPID,
-					Ip: &testElasticIPAddressV4,
+					Labels: &oapi.Labels{AdditionalProperties: testElasticIPLabels},
+					Id:     &testElasticIPID,
+					Ip:     &testElasticIPAddressV4,
 				}},
 			},
 		}, nil)
@@ -560,6 +574,7 @@ func (ts *testSuite) TestClient_ListElasticIPs() {
 			Timeout:       &testElasticIPHealthcheckTimeoutD,
 			URI:           &testElasticIPHealthcheckURI,
 		},
+		Labels:    &testElasticIPLabels,
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressV4P,
 		Zone:      &testZone,
@@ -582,6 +597,7 @@ func (ts *testSuite) TestClient_UpdateElasticIP() {
 		testElasticIPHealthcheckStrikesFailUpdated   = testElasticIPHealthcheckStrikesFail + 1
 		testElasticIPHealthcheckStrikesOKUpdated     = testElasticIPHealthcheckStrikesOK + 1
 		testElasticIPHealthcheckTLSSkipVerifyUpdated = false
+		testElasticIPLabelsUpdated                   = map[string]string{"k3": "v3"}
 		testOperationID                              = ts.randomID()
 		testOperationState                           = oapi.OperationStateSuccess
 		updated                                      = false
@@ -608,6 +624,7 @@ func (ts *testSuite) TestClient_UpdateElasticIP() {
 						Timeout:       &testElasticIPHealthcheckTimeoutUpdated,
 						TlsSkipVerify: &testElasticIPHealthcheckTLSSkipVerifyUpdated,
 					},
+					Labels: &oapi.Labels{AdditionalProperties: testElasticIPLabelsUpdated},
 				},
 				args.Get(2),
 			)
@@ -642,6 +659,7 @@ func (ts *testSuite) TestClient_UpdateElasticIP() {
 			Timeout:       &testElasticIPHealthcheckTimeoutDUpdated,
 			TLSSkipVerify: &testElasticIPHealthcheckTLSSkipVerifyUpdated,
 		},
+		Labels:    &testElasticIPLabelsUpdated,
 		ID:        &testElasticIPID,
 		IPAddress: &testElasticIPAddressV4P,
 		Zone:      &testZone,

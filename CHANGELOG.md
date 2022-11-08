@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.91.0
+------
+
+- feature: v2: add `Client.FindDatabaseService()` method
+
 0.90.4
 ------
 

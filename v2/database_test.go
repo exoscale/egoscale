@@ -246,7 +246,7 @@ func (ts *testSuite) TestClient_ListDatabaseServices() {
 			},
 		}, nil)
 
-	expected := []*DatabaseService{{
+	expected := DatabaseService{
 		CreatedAt:             &testDatabaseServiceCreatedAt,
 		DiskSize:              &testDatabaseServiceDiskSize,
 		Name:                  &testDatabaseServiceName,
@@ -260,11 +260,15 @@ func (ts *testSuite) TestClient_ListDatabaseServices() {
 		Type:                  (*string)(&testDatabaseServiceType),
 		UpdatedAt:             &testDatabaseServiceUpdatedAt,
 		Zone:                  &testZone,
-	}}
+	}
 
-	actual, err := ts.client.ListDatabaseServices(context.Background(), testZone)
+	list, err := ts.client.ListDatabaseServices(context.Background(), testZone)
 	ts.Require().NoError(err)
-	ts.Require().Equal(expected, actual)
+	ts.Require().Equal([]*DatabaseService{&expected}, list)
+
+	found, err := ts.client.FindDatabaseService(context.Background(), testZone, testDatabaseServiceName)
+	ts.Require().NoError(err)
+	ts.Require().Equal(&expected, found)
 }
 
 func (ts *testSuite) TestClient_GetDatabaseMigrationStatus() {

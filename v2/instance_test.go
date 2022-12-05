@@ -36,6 +36,7 @@ var (
 	testInstanceState                     = oapi.InstanceStateRunning
 	testInstanceTemplateID                = new(testSuite).randomID()
 	testInstanceUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
+	testPublicIpAssignment                = "none"
 )
 
 func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
@@ -305,6 +306,136 @@ func (ts *testSuite) TestClient_CreateInstance() {
 		Name:                 &testInstanceName,
 		PrivateNetworkIDs:    &[]string{testInstancePrivateNetworkID},
 		PublicIPAddress:      &testInstancePublicIPP,
+		SSHKey:               &testInstanceSSHKey,
+		SecurityGroupIDs:     &[]string{testInstanceSecurityGroupID},
+		SnapshotIDs:          &[]string{testInstanceSnapshotID},
+		State:                (*string)(&testInstanceState),
+		TemplateID:           &testInstanceTemplateID,
+		UserData:             &testInstanceUserData,
+	})
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *testSuite) TestClient_CreatePrivateInstance() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = oapi.OperationStateSuccess
+	)
+
+	ts.mock().
+		On(
+			"CreateInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				oapi.CreateInstanceJSONRequestBody{
+					AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstanceAntiAffinityGroupID}},
+					DiskSize:           testInstanceDiskSize,
+					InstanceType:       oapi.InstanceType{Id: &testInstanceInstanceTypeID},
+					Ipv6Enabled:        &testInstanceIPv6Enabled,
+					Labels:             &oapi.Labels{AdditionalProperties: testInstanceLabels},
+					Name:               &testInstanceName,
+					SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
+					SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
+					Template:           oapi.Template{Id: &testInstanceTemplateID},
+					UserData:           &testInstanceUserData,
+					PublicIpAssignment: (*oapi.PublicIpAssignment)(&testPublicIpAssignment),
+				},
+				args.Get(1),
+			)
+		}).
+		Return(
+			&oapi.CreateInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
+
+	ts.mockGetOperation(&oapi.Operation{
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
+		State:     &testOperationState,
+	})
+
+	ts.mock().
+		On("GetInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Return(&oapi.GetInstanceResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.Instance{
+				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstanceAntiAffinityGroupID}},
+				CreatedAt:          &testInstanceCreatedAt,
+				DiskSize:           &testInstanceDiskSize,
+				ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstanceElasticIPID}},
+				Id:                 &testInstanceID,
+				InstanceType:       &oapi.InstanceType{Id: &testInstanceInstanceTypeID},
+				Ipv6Address:        &testInstanceIPv6Address,
+				Labels:             &oapi.Labels{AdditionalProperties: testInstanceLabels},
+				Manager:            &oapi.Manager{Id: &testInstanceManagerID, Type: &testInstanceManagerType},
+				Name:               &testInstanceName,
+				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
+				PublicIp:           &testInstancePublicIP,
+				PublicIpAssignment: (*oapi.PublicIpAssignment)(&testPublicIpAssignment),
+				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
+				Snapshots:          &[]oapi.Snapshot{{Id: &testInstanceSnapshotID}},
+				SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
+				State:              &testInstanceState,
+				Template:           &oapi.Template{Id: &testInstanceTemplateID},
+				UserData:           &testInstanceUserData,
+			},
+		}, nil)
+
+	expected := &Instance{
+		AntiAffinityGroupIDs: &[]string{testInstanceAntiAffinityGroupID},
+		CreatedAt:            &testInstanceCreatedAt,
+		DiskSize:             &testInstanceDiskSize,
+		ElasticIPIDs:         &[]string{testInstanceElasticIPID},
+		ID:                   &testInstanceID,
+		IPv6Address:          &testInstanceIPv6AddressP,
+		IPv6Enabled:          &testInstanceIPv6Enabled,
+		InstanceTypeID:       &testInstanceInstanceTypeID,
+		Labels:               &testInstanceLabels,
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
+		Name:                 &testInstanceName,
+		PrivateNetworkIDs:    &[]string{testInstancePrivateNetworkID},
+		PublicIPAddress:      &testInstancePublicIPP,
+		PublicIpAssignment:   &testPublicIpAssignment,
+		SSHKey:               &testInstanceSSHKey,
+		SecurityGroupIDs:     &[]string{testInstanceSecurityGroupID},
+		SnapshotIDs:          &[]string{testInstanceSnapshotID},
+		State:                (*string)(&testInstanceState),
+		TemplateID:           &testInstanceTemplateID,
+		UserData:             &testInstanceUserData,
+		Zone:                 &testZone,
+	}
+
+	actual, err := ts.client.CreateInstance(context.Background(), testZone, &Instance{
+		AntiAffinityGroupIDs: &[]string{testInstanceAntiAffinityGroupID},
+		CreatedAt:            &testInstanceCreatedAt,
+		DiskSize:             &testInstanceDiskSize,
+		ElasticIPIDs:         &[]string{testInstanceElasticIPID},
+		ID:                   &testInstanceID,
+		IPv6Address:          &testInstanceIPv6AddressP,
+		IPv6Enabled:          &testInstanceIPv6Enabled,
+		InstanceTypeID:       &testInstanceInstanceTypeID,
+		Labels:               &testInstanceLabels,
+		Manager:              &InstanceManager{ID: testInstanceManagerID, Type: string(testInstanceManagerType)},
+		Name:                 &testInstanceName,
+		PrivateNetworkIDs:    &[]string{testInstancePrivateNetworkID},
+		PublicIPAddress:      &testInstancePublicIPP,
+		PublicIpAssignment:   &testPublicIpAssignment,
 		SSHKey:               &testInstanceSSHKey,
 		SecurityGroupIDs:     &[]string{testInstanceSecurityGroupID},
 		SnapshotIDs:          &[]string{testInstanceSnapshotID},

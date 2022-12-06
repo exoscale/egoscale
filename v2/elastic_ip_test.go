@@ -32,6 +32,7 @@ var (
 	testElasticIPHealthcheckTLSSNI               = new(testSuite).randomString(10)
 	testElasticIPHealthcheckTLSSkipVerify        = true
 	testElasticIPLabels                          = map[string]string{"k1": "v1", "k2": "v2"}
+	testElasticIPReverseDNSDomain = "example.net"
 )
 
 func (ts *testSuite) TestClient_CreateElasticIPV4() {
@@ -664,5 +665,123 @@ func (ts *testSuite) TestClient_UpdateElasticIP() {
 		IPAddress: &testElasticIPAddressV4P,
 		Zone:      &testZone,
 	}))
+	ts.Require().True(updated)
+}
+
+func (ts *testSuite) TestClient_GetElasticIPReverseDNS() {
+	ts.mock().
+		On("GetReverseDnsElasticIpWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testElasticIPID, args.Get(1))
+		}).
+		Return(&oapi.GetReverseDnsElasticIpResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.ReverseDnsRecord{
+				DomainName: (*oapi.DomainName)(&testElasticIPReverseDNSDomain),
+			},
+		}, nil)
+
+	expected := testElasticIPReverseDNSDomain
+
+	actual, err := ts.client.GetElasticIPReverseDNS(context.Background(), testZone, testElasticIPID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *testSuite) TestClient_DeleteElasticIPReverseDNS() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = oapi.OperationStateSuccess
+		deleted            = false
+	)
+
+	ts.mock().
+		On("DeleteReverseDnsElasticIpWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testElasticIPID, args.Get(1))
+			deleted = true
+		}).
+		Return(
+			&oapi.DeleteReverseDnsElasticIpResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testElasticIPID, nil),
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
+
+	ts.mockGetOperation(&oapi.Operation{
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testElasticIPID, nil),
+		State:     &testOperationState,
+	})
+
+	ts.Require().NoError(ts.client.DeleteElasticIPReverseDNS(
+		context.Background(), 
+		testZone,
+		testElasticIPID,
+	))
+	ts.Require().True(deleted)
+}
+
+func (ts *testSuite) TestClient_UpdateElasticIPReverseDNS() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = oapi.OperationStateSuccess
+		updated            = false
+	)
+
+	ts.mock().
+		On("UpdateReverseDnsElasticIpWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testElasticIPID, args.Get(1))
+			ts.Require().Equal(
+				oapi.UpdateReverseDnsElasticIpJSONRequestBody{
+					DomainName: &testElasticIPReverseDNSDomain,
+				}, 
+				args.Get(2),
+			)
+			updated = true
+		}).
+		Return(
+			&oapi.UpdateReverseDnsElasticIpResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testElasticIPID, nil),
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
+
+	ts.mockGetOperation(&oapi.Operation{
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testElasticIPID, nil),
+		State:     &testOperationState,
+	})
+
+	ts.Require().NoError(ts.client.UpdateElasticIPReverseDNS(
+		context.Background(),
+		testZone,
+		testElasticIPID,
+		testElasticIPReverseDNSDomain,
+	))
 	ts.Require().True(updated)
 }

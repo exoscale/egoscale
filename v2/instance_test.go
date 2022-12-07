@@ -36,7 +36,7 @@ var (
 	testInstanceState                     = oapi.InstanceStateRunning
 	testInstanceTemplateID                = new(testSuite).randomID()
 	testInstanceUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
-	testInstanceReverseDNSDomain = "example.net"
+	testInstanceReverseDNSDomain          = "example.net"
 )
 
 func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
@@ -1246,7 +1246,7 @@ func (ts *testSuite) TestClient_DeleteInstanceReverseDNS() {
 	})
 
 	ts.Require().NoError(ts.client.DeleteInstanceReverseDNS(
-		context.Background(), 
+		context.Background(),
 		testZone,
 		testInstanceID,
 	))
@@ -1272,7 +1272,7 @@ func (ts *testSuite) TestClient_UpdateInstanceReverseDNS() {
 			ts.Require().Equal(
 				oapi.UpdateReverseDnsInstanceJSONRequestBody{
 					DomainName: &testInstanceReverseDNSDomain,
-				}, 
+				},
 				args.Get(2),
 			)
 			updated = true

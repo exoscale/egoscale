@@ -32,7 +32,7 @@ var (
 	testElasticIPHealthcheckTLSSNI               = new(testSuite).randomString(10)
 	testElasticIPHealthcheckTLSSkipVerify        = true
 	testElasticIPLabels                          = map[string]string{"k1": "v1", "k2": "v2"}
-	testElasticIPReverseDNSDomain = "example.net"
+	testElasticIPReverseDNSDomain                = "example.net"
 )
 
 func (ts *testSuite) TestClient_CreateElasticIPV4() {
@@ -728,7 +728,7 @@ func (ts *testSuite) TestClient_DeleteElasticIPReverseDNS() {
 	})
 
 	ts.Require().NoError(ts.client.DeleteElasticIPReverseDNS(
-		context.Background(), 
+		context.Background(),
 		testZone,
 		testElasticIPID,
 	))
@@ -754,7 +754,7 @@ func (ts *testSuite) TestClient_UpdateElasticIPReverseDNS() {
 			ts.Require().Equal(
 				oapi.UpdateReverseDnsElasticIpJSONRequestBody{
 					DomainName: &testElasticIPReverseDNSDomain,
-				}, 
+				},
 				args.Get(2),
 			)
 			updated = true

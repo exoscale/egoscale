@@ -860,7 +860,7 @@ func (c *Client) DeleteInstanceReverseDNS(ctx context.Context, zone string, id s
 	return nil
 }
 
-// UpdateInstanceReverseDNS for a Reverse DNS record for a Compute Instance.
+// UpdateInstanceReverseDNS updates a Reverse DNS record for a Compute Instance.
 func (c *Client) UpdateInstanceReverseDNS(ctx context.Context, zone, id, domain string) error {
 	resp, err := c.UpdateReverseDnsInstanceWithResponse(
 		apiv2.WithZone(ctx, zone),

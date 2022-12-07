@@ -308,7 +308,7 @@ func (c *Client) DeleteElasticIPReverseDNS(ctx context.Context, zone string, id 
 	return nil
 }
 
-// UpdateElasticIPReverseDNS for a Reverse DNS record for a ElasticIP.
+// UpdateElasticIPReverseDNS updates a Reverse DNS record for a ElasticIP.
 func (c *Client) UpdateElasticIPReverseDNS(ctx context.Context, zone, id, domain string) error {
 	resp, err := c.UpdateReverseDnsElasticIpWithResponse(
 		apiv2.WithZone(ctx, zone),

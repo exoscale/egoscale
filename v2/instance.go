@@ -31,7 +31,7 @@ type Instance struct {
 	Name                 *string `req-for:"create"`
 	PrivateNetworkIDs    *[]string
 	PublicIPAddress      *net.IP
-	PublicIpAssignment   *string
+	PublicIPAssignment   *string
 	SSHKey               *string
 	SecurityGroupIDs     *[]string
 	SnapshotIDs          *[]string
@@ -188,7 +188,7 @@ func instanceFromAPI(i *oapi.Instance, zone string) *Instance {
 			}
 			return
 		}(),
-		PublicIpAssignment: (*string)(i.PublicIpAssignment),
+		PublicIPAssignment: (*string)(i.PublicIpAssignment),
 		SSHKey: func() (v *string) {
 			if i.SshKey != nil {
 				v = i.SshKey.Name
@@ -362,7 +362,7 @@ func (c *Client) CreateInstance(ctx context.Context, zone string, instance *Inst
 				return
 			}(),
 			Name:               instance.Name,
-			PublicIpAssignment: (*oapi.PublicIpAssignment)(instance.PublicIpAssignment),
+			PublicIpAssignment: (*oapi.PublicIpAssignment)(instance.PublicIPAssignment),
 			SecurityGroups: func() (v *[]oapi.SecurityGroup) {
 				if instance.SecurityGroupIDs != nil {
 					ids := make([]oapi.SecurityGroup, len(*instance.SecurityGroupIDs))

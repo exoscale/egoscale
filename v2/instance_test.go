@@ -36,7 +36,7 @@ var (
 	testInstanceState                     = oapi.InstanceStateRunning
 	testInstanceTemplateID                = new(testSuite).randomID()
 	testInstanceUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
-	testPublicIpAssignment                = "none"
+	testPublicIPAssignment                = "none"
 )
 
 func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
@@ -343,7 +343,7 @@ func (ts *testSuite) TestClient_CreatePrivateInstance() {
 					SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
 					Template:           oapi.Template{Id: &testInstanceTemplateID},
 					UserData:           &testInstanceUserData,
-					PublicIpAssignment: (*oapi.PublicIpAssignment)(&testPublicIpAssignment),
+					PublicIpAssignment: (*oapi.PublicIpAssignment)(&testPublicIPAssignment),
 				},
 				args.Get(1),
 			)
@@ -387,7 +387,7 @@ func (ts *testSuite) TestClient_CreatePrivateInstance() {
 				Name:               &testInstanceName,
 				PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testInstancePrivateNetworkID}},
 				PublicIp:           &testInstancePublicIP,
-				PublicIpAssignment: (*oapi.PublicIpAssignment)(&testPublicIpAssignment),
+				PublicIpAssignment: (*oapi.PublicIpAssignment)(&testPublicIPAssignment),
 				SecurityGroups:     &[]oapi.SecurityGroup{{Id: &testInstanceSecurityGroupID}},
 				Snapshots:          &[]oapi.Snapshot{{Id: &testInstanceSnapshotID}},
 				SshKey:             &oapi.SshKey{Name: &testInstanceSSHKey},
@@ -411,7 +411,7 @@ func (ts *testSuite) TestClient_CreatePrivateInstance() {
 		Name:                 &testInstanceName,
 		PrivateNetworkIDs:    &[]string{testInstancePrivateNetworkID},
 		PublicIPAddress:      &testInstancePublicIPP,
-		PublicIpAssignment:   &testPublicIpAssignment,
+		PublicIpAssignment:   &testPublicIPAssignment,
 		SSHKey:               &testInstanceSSHKey,
 		SecurityGroupIDs:     &[]string{testInstanceSecurityGroupID},
 		SnapshotIDs:          &[]string{testInstanceSnapshotID},
@@ -435,7 +435,7 @@ func (ts *testSuite) TestClient_CreatePrivateInstance() {
 		Name:                 &testInstanceName,
 		PrivateNetworkIDs:    &[]string{testInstancePrivateNetworkID},
 		PublicIPAddress:      &testInstancePublicIPP,
-		PublicIpAssignment:   &testPublicIpAssignment,
+		PublicIpAssignment:   &testPublicIPAssignment,
 		SSHKey:               &testInstanceSSHKey,
 		SecurityGroupIDs:     &[]string{testInstanceSecurityGroupID},
 		SnapshotIDs:          &[]string{testInstanceSnapshotID},

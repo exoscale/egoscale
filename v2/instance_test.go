@@ -317,7 +317,7 @@ func (ts *testSuite) TestClient_CreateInstance() {
 	ts.Require().Equal(expected, actual)
 }
 
-func (ts *testSuite) TestClient_CreatePrivateInstance() {
+func (ts *testSuite) TestClient_CreateInstanceWithPublicIPAssignment() {
 	var (
 		testOperationID    = ts.randomID()
 		testOperationState = oapi.OperationStateSuccess

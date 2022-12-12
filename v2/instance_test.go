@@ -36,7 +36,7 @@ var (
 	testInstanceState                     = oapi.InstanceStateRunning
 	testInstanceTemplateID                = new(testSuite).randomID()
 	testInstanceUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
-	testPublicIPAssignment                = "none"
+	testPublicIPAssignment                = "inet4"
 )
 
 func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {

@@ -37,6 +37,7 @@ var (
 	testInstanceTemplateID                = new(testSuite).randomID()
 	testInstanceUserData                  = "I2Nsb3VkLWNvbmZpZwphcHRfdXBncmFkZTogdHJ1ZQ=="
 	testPublicIPAssignment                = "inet4"
+	testInstanceReverseDNSDomain          = "example.net"
 )
 
 func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
@@ -1313,5 +1314,123 @@ func (ts *testSuite) TestClient_UpdateInstance() {
 		Name:     &testInstanceNameUpdated,
 		UserData: &testInstanceUserDataUpdated,
 	}))
+	ts.Require().True(updated)
+}
+
+func (ts *testSuite) TestClient_GetInstanceReverseDNS() {
+	ts.mock().
+		On("GetReverseDnsInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+		}).
+		Return(&oapi.GetReverseDnsInstanceResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &oapi.ReverseDnsRecord{
+				DomainName: (*oapi.DomainName)(&testInstanceReverseDNSDomain),
+			},
+		}, nil)
+
+	expected := testInstanceReverseDNSDomain
+
+	actual, err := ts.client.GetInstanceReverseDNS(context.Background(), testZone, testInstanceID)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
+func (ts *testSuite) TestClient_DeleteInstanceReverseDNS() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = oapi.OperationStateSuccess
+		deleted            = false
+	)
+
+	ts.mock().
+		On("DeleteReverseDnsInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+			deleted = true
+		}).
+		Return(
+			&oapi.DeleteReverseDnsInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
+
+	ts.mockGetOperation(&oapi.Operation{
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
+		State:     &testOperationState,
+	})
+
+	ts.Require().NoError(ts.client.DeleteInstanceReverseDNS(
+		context.Background(),
+		testZone,
+		testInstanceID,
+	))
+	ts.Require().True(deleted)
+}
+
+func (ts *testSuite) TestClient_UpdateInstanceReverseDNS() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = oapi.OperationStateSuccess
+		updated            = false
+	)
+
+	ts.mock().
+		On("UpdateReverseDnsInstanceWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			mock.Anything,                 // body
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testInstanceID, args.Get(1))
+			ts.Require().Equal(
+				oapi.UpdateReverseDnsInstanceJSONRequestBody{
+					DomainName: &testInstanceReverseDNSDomain,
+				},
+				args.Get(2),
+			)
+			updated = true
+		}).
+		Return(
+			&oapi.UpdateReverseDnsInstanceResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testInstanceID, nil),
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
+
+	ts.mockGetOperation(&oapi.Operation{
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testInstanceID, nil),
+		State:     &testOperationState,
+	})
+
+	ts.Require().NoError(ts.client.UpdateInstanceReverseDNS(
+		context.Background(),
+		testZone,
+		testInstanceID,
+		testInstanceReverseDNSDomain,
+	))
 	ts.Require().True(updated)
 }

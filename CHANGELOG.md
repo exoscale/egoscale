@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.94.0
+------
+
+- feature: v2: add `Client.GetTemplateByName()` method
+- feature: v2: implement sort.Interface for []*Template by CreatedAt or by Nane
+
 0.93.0
 ------
 

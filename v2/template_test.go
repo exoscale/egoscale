@@ -216,6 +216,72 @@ func (ts *testSuite) TestClient_GetTemplate() {
 	ts.Require().Equal(expected, actual)
 }
 
+func (ts *testSuite) TestClient_GetTemplateByName() {
+	ts.mock().
+		On("ListTemplatesWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // params
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(
+				&oapi.ListTemplatesParams{
+					Visibility: (*oapi.ListTemplatesParamsVisibility)(&testTemplateVisibility),
+				},
+				args.Get(1),
+			)
+		}).
+		Return(&oapi.ListTemplatesResponse{
+			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+			JSON200: &struct {
+				Templates *[]oapi.Template `json:"templates,omitempty"`
+			}{
+				Templates: &[]oapi.Template{{
+					BootMode:        (*oapi.TemplateBootMode)(&testTemplateBootMode),
+					Build:           &testTemplateBuild,
+					Checksum:        &testTemplateChecksum,
+					CreatedAt:       &testTemplateCreatedAt,
+					DefaultUser:     &testTemplateDefaultUser,
+					Description:     &testTemplateDescription,
+					Family:          &testTemplateFamily,
+					Id:              &testTemplateID,
+					Maintainer:      &testTemplateMaintainer,
+					Name:            &testTemplateName,
+					PasswordEnabled: &testTemplatePasswordEnabled,
+					Size:            &testTemplateSize,
+					SshKeyEnabled:   &testTemplateSSHKeyEnabled,
+					Url:             &testTemplateURL,
+					Version:         &testTemplateVersion,
+					Visibility:      (*oapi.TemplateVisibility)(&testTemplateVisibility),
+				}},
+			},
+		}, nil)
+
+	expected := &Template{
+		BootMode:        &testTemplateBootMode,
+		Build:           &testTemplateBuild,
+		Checksum:        &testTemplateChecksum,
+		CreatedAt:       &testTemplateCreatedAt,
+		DefaultUser:     &testTemplateDefaultUser,
+		Description:     &testTemplateDescription,
+		Family:          &testTemplateFamily,
+		ID:              &testTemplateID,
+		Maintainer:      &testTemplateMaintainer,
+		Name:            &testTemplateName,
+		PasswordEnabled: &testTemplatePasswordEnabled,
+		SSHKeyEnabled:   &testTemplateSSHKeyEnabled,
+		Size:            &testTemplateSize,
+		URL:             &testTemplateURL,
+		Version:         &testTemplateVersion,
+		Visibility:      &testTemplateVisibility,
+		Zone:            &testZone,
+	}
+
+	actual, err := ts.client.GetTemplateByName(context.Background(), testZone, *expected.Name, *expected.Visibility)
+	ts.Require().NoError(err)
+	ts.Require().Equal(expected, actual)
+}
+
 func (ts *testSuite) TestClient_ListTemplates() {
 	ts.mock().
 		On("ListTemplatesWithResponse",

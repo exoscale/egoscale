@@ -165,7 +165,21 @@ func (c *Client) GetTemplateByName(ctx context.Context, zone string, templateNam
 		}
 	}
 
-	return nil, err
+	return nil, apiv2.ErrNotFound
+}
+
+// FindTemplate attempts to find a template by name or ID.
+// In case the identifier is a name and multiple resources match, the newest template is returned.
+func (c *Client) FindTemplate(ctx context.Context, zone, x string, visibilty string) (*Template, error) {
+	// Opportunistic shortcut in case the template is referenced by ID.
+	template, err := c.GetTemplate(ctx, zone, x)
+	if err != nil {
+		template, err = c.GetTemplateByName(ctx, zone, x, visibilty)
+		if err != nil {
+			return nil, apiv2.ErrNotFound
+		}
+	}
+	return template, nil
 }
 
 // ListTemplates returns the list of existing Templates.

@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	testSKSNodepoolAddons                    = []oapi.SksNodepoolAddons{oapi.SksNodepoolAddonsLinbit}
+	testSKSNodepoolAddons                    = []oapi.SksNodepoolAddons{oapi.SksNodepoolAddonsStorageLvm}
 	testSKSNodepoolAntiAffinityGroupID       = new(testSuite).randomID()
 	testSKSNodepoolCreatedAt, _              = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
 	testSKSNodepoolDeployTargetID            = new(testSuite).randomID()

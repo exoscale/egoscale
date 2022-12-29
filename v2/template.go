@@ -177,7 +177,7 @@ func (c *Client) FindTemplate(ctx context.Context, zone, x string, visibilty str
 	if err != nil {
 		// ErrInvalidRequest when we pass an invalid id (should be a UUID)
 		// We can check if template is referenced by Name.
-		if errors.Is(err, apiv2.ErrInvalidRequest) {
+		if errors.Is(err, apiv2.ErrInvalidRequest) || errors.Is(err, apiv2.ErrNotFound) {
 			template, err = c.GetTemplateByName(ctx, zone, x, visibilty)
 			if err == nil {
 				return template, nil

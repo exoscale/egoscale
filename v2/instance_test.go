@@ -97,6 +97,11 @@ func (ts *testSuite) TestClient_AttachInstanceToPrivateNetwork() {
 		attached             = false
 	)
 
+	attachInstReq := oapi.AttachInstanceToPrivateNetworkJSONRequestBody{
+		Ip: func() *string { ip := testPrivateIPAddress.String(); return &ip }(),
+	}
+	attachInstReq.Instance.Id = &testInstanceID
+
 	ts.mock().
 		On(
 			"AttachInstanceToPrivateNetworkWithResponse",
@@ -107,10 +112,7 @@ func (ts *testSuite) TestClient_AttachInstanceToPrivateNetwork() {
 		).
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
-				oapi.AttachInstanceToPrivateNetworkJSONRequestBody{
-					Instance: oapi.Instance{Id: &testInstanceID},
-					Ip:       func() *string { ip := testPrivateIPAddress.String(); return &ip }(),
-				},
+				attachInstReq,
 				args.Get(2),
 			)
 			attached = true
@@ -865,6 +867,7 @@ func (ts *testSuite) TestClient_ListInstances() {
 				&oapi.ListInstancesParams{
 					ManagerId:   &testInstanceManagerID,
 					ManagerType: (*oapi.ListInstancesParamsManagerType)(&testInstanceManagerType),
+					IpAddress:   &testInstancePublicIP,
 				},
 				args.Get(1),
 			)
@@ -923,6 +926,7 @@ func (ts *testSuite) TestClient_ListInstances() {
 		testZone,
 		ListInstancesByManagerID(testInstanceManagerID),
 		ListInstancesByManagerType(string(testInstanceManagerType)),
+		ListInstancesByIpAddress(testInstancePublicIP),
 	)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)

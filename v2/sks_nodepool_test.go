@@ -56,7 +56,7 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 						oapi.CreateSksNodepoolJSONBodyAddons(testSKSNodepoolAddons[0]),
 					},
 					AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
-					DeployTarget:       &oapi.DeployTarget{Id: &testSKSNodepoolDeployTargetID},
+					DeployTarget:       &oapi.DeployTarget{Id: testSKSNodepoolDeployTargetID},
 					Description:        &testSKSNodepoolDescription,
 					DiskSize:           testSKSNodepoolDiskSize,
 					InstancePrefix:     &testSKSNodepoolInstancePrefix,
@@ -109,7 +109,7 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 				Addons:             &testSKSNodepoolAddons,
 				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupID}},
 				CreatedAt:          &testSKSNodepoolCreatedAt,
-				DeployTarget:       &oapi.DeployTarget{Id: &testSKSNodepoolDeployTargetID},
+				DeployTarget:       &oapi.DeployTarget{Id: testSKSNodepoolDeployTargetID},
 				Description:        &testSKSNodepoolDescription,
 				DiskSize:           &testSKSNodepoolDiskSize,
 				Id:                 &testSKSNodepoolID,
@@ -384,7 +384,7 @@ func (ts *testSuite) TestClient_UpdateSKSNodepool() {
 			ts.Require().Equal(
 				oapi.UpdateSksNodepoolJSONRequestBody{
 					AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testSKSNodepoolAntiAffinityGroupIDUpdated}},
-					DeployTarget:       &oapi.DeployTarget{Id: &testSKSNodepoolDeployTargetIDUpdated},
+					DeployTarget:       &oapi.DeployTarget{Id: testSKSNodepoolDeployTargetIDUpdated},
 					Description:        &testSKSNodepoolDescriptionUpdated,
 					DiskSize:           &testSKSNodepoolDiskSizeUpdated,
 					InstancePrefix:     &testSKSNodepoolInstancePrefixUpdated,

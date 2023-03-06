@@ -579,7 +579,7 @@ func TestRequestWithContextTimeoutPost(t *testing.T) {
 	done := make(chan bool)
 
 	userData := make([]byte, 1<<11)
-	_, err := rand.Read(userData)
+	_, err := rand.Read(userData) //nolint:staticcheck
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -736,9 +736,7 @@ func (ts *testServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // addResponse appends new reponses to the end of the queue
 func (ts *testServer) addResponse(responses ...response) {
-	for i := range responses {
-		ts.responses = append(ts.responses, responses[i])
-	}
+	ts.responses = append(ts.responses, responses...)
 }
 
 func newSleepyServer(response string) *httptest.Server {

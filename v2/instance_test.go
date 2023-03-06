@@ -926,7 +926,7 @@ func (ts *testSuite) TestClient_ListInstances() {
 		testZone,
 		ListInstancesByManagerID(testInstanceManagerID),
 		ListInstancesByManagerType(string(testInstanceManagerType)),
-		ListInstancesByIPAddress(testInstancePublicIP),
+		ListInstancesByIpAddress(testInstancePublicIP),
 	)
 	ts.Require().NoError(err)
 	ts.Require().Equal(expected, actual)

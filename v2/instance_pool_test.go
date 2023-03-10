@@ -50,7 +50,7 @@ func (ts *testSuite) TestClient_CreateInstancePool() {
 			ts.Require().Equal(
 				oapi.CreateInstancePoolJSONRequestBody{
 					AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
-					DeployTarget:       &oapi.DeployTarget{Id: &testInstancePoolDeployTargetID},
+					DeployTarget:       &oapi.DeployTarget{Id: testInstancePoolDeployTargetID},
 					Description:        &testInstancePoolDescription,
 					DiskSize:           testInstancePoolDiskSize,
 					ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
@@ -97,7 +97,7 @@ func (ts *testSuite) TestClient_CreateInstancePool() {
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.InstancePool{
 				AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupID}},
-				DeployTarget:       &oapi.DeployTarget{Id: &testInstancePoolDeployTargetID},
+				DeployTarget:       &oapi.DeployTarget{Id: testInstancePoolDeployTargetID},
 				Description:        &testInstancePoolDescription,
 				DiskSize:           &testInstancePoolDiskSize,
 				ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstancePoolElasticIPID}},
@@ -546,7 +546,7 @@ func (ts *testSuite) TestClient_UpdateInstancePool() {
 			ts.Require().Equal(
 				oapi.UpdateInstancePoolJSONRequestBody{
 					AntiAffinityGroups: &[]oapi.AntiAffinityGroup{{Id: &testInstancePoolAntiAffinityGroupIDUpdated}},
-					DeployTarget:       &oapi.DeployTarget{Id: &testInstancePoolDeployTargetIDUpdated},
+					DeployTarget:       &oapi.DeployTarget{Id: testInstancePoolDeployTargetIDUpdated},
 					Description:        &testInstancePoolDescriptionUpdated,
 					DiskSize:           &testInstancePoolDiskSizeUpdated,
 					ElasticIps:         &[]oapi.ElasticIp{{Id: &testInstancePoolElasticIPIDUpdated}},

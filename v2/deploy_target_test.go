@@ -29,7 +29,7 @@ func (ts *testSuite) TestClient_FindDeployTarget() {
 			}{
 				DeployTargets: &[]oapi.DeployTarget{{
 					Description: &testDeployTargetDescription,
-					Id:          &testDeployTargetID,
+					Id:          testDeployTargetID,
 					Name:        &testDeployTargetName,
 					Type:        (*oapi.DeployTargetType)(&testDeployTargetType),
 				}},
@@ -49,7 +49,7 @@ func (ts *testSuite) TestClient_FindDeployTarget() {
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.DeployTarget{
 				Description: &testDeployTargetDescription,
-				Id:          &testDeployTargetID,
+				Id:          testDeployTargetID,
 				Name:        &testDeployTargetName,
 				Type:        (*oapi.DeployTargetType)(&testDeployTargetType),
 			},
@@ -86,7 +86,7 @@ func (ts *testSuite) TestClient_GetDeployTarget() {
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.DeployTarget{
 				Description: &testDeployTargetDescription,
-				Id:          &testDeployTargetID,
+				Id:          testDeployTargetID,
 				Name:        &testDeployTargetName,
 				Type:        (*oapi.DeployTargetType)(&testDeployTargetType),
 			},
@@ -118,7 +118,7 @@ func (ts *testSuite) TestClient_ListDeployTargets() {
 			}{
 				DeployTargets: &[]oapi.DeployTarget{{
 					Description: &testDeployTargetDescription,
-					Id:          &testDeployTargetID,
+					Id:          testDeployTargetID,
 					Name:        &testDeployTargetName,
 					Type:        (*oapi.DeployTargetType)(&testDeployTargetType),
 				}},

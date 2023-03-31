@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.99.0
+------
+
+- feature: v2: add RevealInstancePassword
+
 0.98.1
 ------
 

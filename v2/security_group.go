@@ -139,6 +139,22 @@ func (c *Client) FindSecurityGroup(ctx context.Context, zone, x string) (*Securi
 	return nil, apiv2.ErrNotFound
 }
 
+// FindPublicSecurityGroup attempts to find a public Security Group by name or ID.
+func (c *Client) FindPublicSecurityGroup(ctx context.Context, zone, x string) (*SecurityGroup, error) {
+	res, err := c.ListPublicSecurityGroups(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range res {
+		if *r.ID == x || *r.Name == x {
+			return c.GetSecurityGroup(ctx, zone, *r.ID)
+		}
+	}
+
+	return nil, apiv2.ErrNotFound
+}
+
 // GetSecurityGroup returns the Security Group corresponding to the specified ID.
 func (c *Client) GetSecurityGroup(ctx context.Context, zone, id string) (*SecurityGroup, error) {
 	resp, err := c.GetSecurityGroupWithResponse(apiv2.WithZone(ctx, zone), id)
@@ -151,20 +167,18 @@ func (c *Client) GetSecurityGroup(ctx context.Context, zone, id string) (*Securi
 
 // ListSecurityGroups returns the list of existing Security Groups.
 func (c *Client) ListSecurityGroups(ctx context.Context, zone string) ([]*SecurityGroup, error) {
-	list := make([]*SecurityGroup, 0)
+	params := &oapi.ListSecurityGroupsParams{}
+	return c.FindSecurityGroups(ctx, zone, params)
+}
 
-	resp, err := c.ListSecurityGroupsWithResponse(apiv2.WithZone(ctx, zone), &oapi.ListSecurityGroupsParams{})
-	if err != nil {
-		return nil, err
+// ListPublicSecurityGroups returns the list of existing public Security Groups.
+func (c *Client) ListPublicSecurityGroups(ctx context.Context, zone string) ([]*SecurityGroup, error) {
+	public := oapi.ListSecurityGroupsParamsVisibility("public")
+	params := &oapi.ListSecurityGroupsParams{
+		Visibility: &public,
 	}
 
-	if resp.JSON200.SecurityGroups != nil {
-		for i := range *resp.JSON200.SecurityGroups {
-			list = append(list, securityGroupFromAPI(&(*resp.JSON200.SecurityGroups)[i]))
-		}
-	}
-
-	return list, nil
+	return c.FindSecurityGroups(ctx, zone, params)
 }
 
 // FindSecurityGroups returns the list of existing Security Groups.

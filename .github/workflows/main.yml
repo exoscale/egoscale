@@ -13,6 +13,8 @@ on:
 jobs:
   CI:
     runs-on: ubuntu-latest
+    env:
+      GOLANGCI_LINT_CONFIG: ".golangci.yml"
     steps:
       # Setup
       - uses: actions/checkout@v3

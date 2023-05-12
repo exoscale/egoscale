@@ -22,5 +22,4 @@ jobs:
       - uses: ./go.mk/.github/actions/pre-check
 
       # Build & test
-      - run: make build
       - run: make test-verbose

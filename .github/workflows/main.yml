@@ -13,16 +13,13 @@ on:
 jobs:
   CI:
     runs-on: ubuntu-latest
+    env:
+      GOLANGCI_LINT_CONFIG: ".golangci.yml"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
-      with:
-        go-version: '~1.17'
-    - name: Lint
-      uses: golangci/golangci-lint-action@v3
-      with:
-        version: v1.51
-    - name: Tests
-      run: |
-        git submodule update --init --recursive go.mk
-        PATH=$(go env GOPATH)/bin:$PATH make test
+      - uses: actions/checkout@v3
+      - run: git submodule update --init --recursive go.mk
+      - uses: ./go.mk/.github/actions/setup
+
+      - uses: ./go.mk/.github/actions/pre-check
+
+      - run: make test-verbose

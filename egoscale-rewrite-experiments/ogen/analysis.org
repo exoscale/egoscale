@@ -1,0 +1,4 @@
+#+title: ogen Analysis
+* Missing features
+** doesn't support complex uniqueItems (not implemented)
+Unfortunately we have 56 operations that need this feature

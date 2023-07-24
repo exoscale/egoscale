@@ -16,6 +16,7 @@ var (
 	testPrivateNetworkEndIP           = "192.168.0.254"
 	testPrivateNetworkEndIPP          = net.ParseIP(testPrivateNetworkEndIP)
 	testPrivateNetworkID              = new(testSuite).randomID()
+	testPrivateNetworkLabels          = map[string]string{"k1": "v1", "k2": "v2"}
 	testPrivateNetworkName            = new(testSuite).randomString(10)
 	testPrivateNetworkNetmask         = "255.255.255.0"
 	testPrivateNetworkNetmaskP        = net.ParseIP(testPrivateNetworkNetmask)
@@ -44,6 +45,7 @@ func (ts *testSuite) TestClient_CreatePrivateNetwork() {
 				oapi.CreatePrivateNetworkJSONRequestBody{
 					Description: &testPrivateNetworkDescription,
 					EndIp:       &testPrivateNetworkEndIP,
+					Labels:      &oapi.Labels{AdditionalProperties: testPrivateNetworkLabels},
 					Name:        testPrivateNetworkName,
 					Netmask:     &testPrivateNetworkNetmask,
 					StartIp:     &testPrivateNetworkStartIP,
@@ -81,6 +83,7 @@ func (ts *testSuite) TestClient_CreatePrivateNetwork() {
 				Description: &testPrivateNetworkDescription,
 				EndIp:       &testPrivateNetworkEndIP,
 				Id:          &testPrivateNetworkID,
+				Labels:      &oapi.Labels{AdditionalProperties: testPrivateNetworkLabels},
 				Name:        &testPrivateNetworkName,
 				Netmask:     &testPrivateNetworkNetmask,
 				StartIp:     &testPrivateNetworkStartIP,
@@ -91,6 +94,7 @@ func (ts *testSuite) TestClient_CreatePrivateNetwork() {
 		Description: &testPrivateNetworkDescription,
 		EndIP:       &testPrivateNetworkEndIPP,
 		ID:          &testPrivateNetworkID,
+		Labels:      &testPrivateNetworkLabels,
 		Name:        &testPrivateNetworkName,
 		Netmask:     &testPrivateNetworkNetmaskP,
 		StartIP:     &testPrivateNetworkStartIPP,
@@ -101,6 +105,7 @@ func (ts *testSuite) TestClient_CreatePrivateNetwork() {
 		Description: &testPrivateNetworkDescription,
 		EndIP:       &testPrivateNetworkEndIPP,
 		ID:          &testPrivateNetworkID,
+		Labels:      &testPrivateNetworkLabels,
 		Name:        &testPrivateNetworkName,
 		Netmask:     &testPrivateNetworkNetmaskP,
 		StartIP:     &testPrivateNetworkStartIPP,
@@ -232,6 +237,7 @@ func (ts *testSuite) TestClient_GetPrivateNetwork() {
 				Description: &testPrivateNetworkDescription,
 				EndIp:       &testPrivateNetworkEndIP,
 				Id:          &testPrivateNetworkID,
+				Labels:      &oapi.Labels{AdditionalProperties: testPrivateNetworkLabels},
 				Name:        &testPrivateNetworkName,
 				Netmask:     &testPrivateNetworkNetmask,
 				StartIp:     &testPrivateNetworkStartIP,
@@ -246,6 +252,7 @@ func (ts *testSuite) TestClient_GetPrivateNetwork() {
 		Description: &testPrivateNetworkDescription,
 		EndIP:       &testPrivateNetworkEndIPP,
 		ID:          &testPrivateNetworkID,
+		Labels:      &testPrivateNetworkLabels,
 		Leases: []*PrivateNetworkLease{{
 			InstanceID: &testPrivateNetworkLeaseInstanceID,
 			IPAddress:  &testPrivateNetworkLeaseIPAddressP,
@@ -308,6 +315,7 @@ func (ts *testSuite) TestClient_ListPrivateNetworks() {
 
 func (ts *testSuite) TestClient_UpdatePrivateNetwork() {
 	var (
+		testPrivateNetworkLabelsUpdated      = map[string]string{"k3": "v3"}
 		testPrivateNetworkDescriptionUpdated = testPrivateNetworkDescription + "-updated"
 		testPrivateNetworkEndIPUpdated       = "172.16.254.254"
 		testPrivateNetworkEndIPPUpdated      = net.ParseIP(testPrivateNetworkEndIPUpdated)
@@ -335,6 +343,7 @@ func (ts *testSuite) TestClient_UpdatePrivateNetwork() {
 					Description: &testPrivateNetworkDescriptionUpdated,
 					EndIp:       &testPrivateNetworkEndIPUpdated,
 					Name:        &testPrivateNetworkNameUpdated,
+					Labels:      &oapi.Labels{AdditionalProperties: testPrivateNetworkLabelsUpdated},
 					Netmask:     &testPrivateNetworkNetmaskUpdated,
 					StartIp:     &testPrivateNetworkStartIPUpdated,
 				},
@@ -364,6 +373,7 @@ func (ts *testSuite) TestClient_UpdatePrivateNetwork() {
 		Description: &testPrivateNetworkDescriptionUpdated,
 		EndIP:       &testPrivateNetworkEndIPPUpdated,
 		ID:          &testPrivateNetworkID,
+		Labels:      &testPrivateNetworkLabelsUpdated,
 		Name:        &testPrivateNetworkNameUpdated,
 		Netmask:     &testPrivateNetworkNetmaskPUpdated,
 		StartIP:     &testPrivateNetworkStartIPPUpdated,

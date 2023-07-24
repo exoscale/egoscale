@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.100.2
+-------
+
+- v2: add private network labels
+
 0.100.1
 -------
 

@@ -44,6 +44,7 @@ oapigen: install-oapi-codegen
 # OpenAPI v3 codegen
 .PHONY: oapigen-v3
 oapigen-v3:
+	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
 	wget -q --show-progress --progress=dot https://openapi-v2.exoscale.com/source.json -O- > v3/oapi/source.json
 	@echo
 	go generate ./v3/oapi/oapi.go

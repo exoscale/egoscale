@@ -25,7 +25,7 @@ func (c *Credentials) Update(apiKey, apiSecret string) {
 	c.mx.Lock()
 	c.apiKey = apiKey
 	c.apiSecret = apiSecret
-	mx.Unlock()
+	c.mx.Unlock()
 }
 
 // APIKey returns API key from Credentials store.

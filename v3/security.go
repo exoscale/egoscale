@@ -32,7 +32,7 @@ func NewSecurityProvider(creds *Credentials) *SecurityProvider {
 }
 
 // Intercept will attach a header to API call.
-func (s *SecurityProviderApiKey) Intercept(ctx context.Context, req *http.Request) error {
+func (s *SecurityProvider) Intercept(ctx context.Context, req *http.Request) error {
 	var (
 		sigParts    []string
 		headerParts []string
@@ -40,7 +40,7 @@ func (s *SecurityProviderApiKey) Intercept(ctx context.Context, req *http.Reques
 
 	// Request method/URL path
 	sigParts = append(sigParts, fmt.Sprintf("%s %s", req.Method, req.URL.EscapedPath()))
-	headerParts = append(headerParts, "EXO2-HMAC-SHA256 credential="+s.apiKey)
+	headerParts = append(headerParts, "EXO2-HMAC-SHA256 credential="+s.creds.APIKey())
 
 	// Request body if present
 	body := ""
@@ -72,10 +72,10 @@ func (s *SecurityProviderApiKey) Intercept(ctx context.Context, req *http.Reques
 	sigParts = append(sigParts, "")
 
 	// Request expiration date (UNIX timestamp, no line return)
-	sigParts = append(sigParts, fmt.Sprint(expiration.Unix()))
-	headerParts = append(headerParts, "expires="+fmt.Sprint(expiration.Unix()))
+	sigParts = append(sigParts, fmt.Sprint(time.Now().Add(RequestExpire).Unix()))
+	headerParts = append(headerParts, "expires="+fmt.Sprint(time.Now().Add(RequestExpire).Unix()))
 
-	h := hmac.New(sha256.New, []byte(s.apiSecret))
+	h := hmac.New(sha256.New, []byte(s.creds.APISecret()))
 	if _, err := h.Write([]byte(strings.Join(sigParts, "\n"))); err != nil {
 		return err
 	}

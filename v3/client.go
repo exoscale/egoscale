@@ -18,7 +18,7 @@ type Client struct {
 	creds      *Credentials
 	httpClient *http.Client
 
-	oapiClient oapi.ClientWithResponses
+	oapiClient *oapi.ClientWithResponses
 }
 
 // NewClient returns a new Exoscale API V3 client, or an error if one couldn't be initialized.
@@ -51,14 +51,14 @@ func NewClient(endpoint, apiKey, apiSecret string, opts ...ClientOpt) (*Client, 
 
 	u, err := url.Parse(endpoint)
 	if err != nil {
-		return fmt.Errorf("failed to parse URL: %w", err)
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
 	}
 
-	client.oapiClient, err = oapi.NewClient(
+	client.oapiClient, err = oapi.NewClientWithResponses(
 		u.String(),
 		oapi.WithHTTPClient(client.httpClient),
 		oapi.WithRequestEditorFn(SetUserAgent),
-		oapi.WithRequestEditorFn(NewSecurityProvider(client.crends).Intercept),
+		oapi.WithRequestEditorFn(NewSecurityProvider(client.creds).Intercept),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize API client: %w", err)
@@ -68,7 +68,7 @@ func NewClient(endpoint, apiKey, apiSecret string, opts ...ClientOpt) (*Client, 
 }
 
 // OAPIClient returns configured instance of OpenAPI generated (low-level) API client.
-func (c *Client) OAPIClient() *oapi.Client {
+func (c *Client) OAPIClient() *oapi.ClientWithResponses {
 	return c.oapiClient
 }
 

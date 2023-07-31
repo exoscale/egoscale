@@ -23019,7 +23019,7 @@ type ListInstancesResponse struct {
 			SshKeys *[]SshKey `json:"ssh-keys,omitempty"`
 
 			// State Instance state
-			State *N200InstancesState `json:"state,omitempty"`
+			State *[]InstanceState `json:"state,omitempty"`
 
 			// Template Instance template
 			Template *Template `json:"template,omitempty"`
@@ -31631,7 +31631,7 @@ func ParseListInstancesResponse(rsp *http.Response) (*ListInstancesResponse, err
 				SshKeys *[]SshKey `json:"ssh-keys,omitempty"`
 
 				// State Instance state
-				State *N200InstancesState `json:"state,omitempty"`
+				State *[]InstanceState `json:"state,omitempty"`
 
 				// Template Instance template
 				Template *Template `json:"template,omitempty"`

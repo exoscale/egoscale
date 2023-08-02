@@ -18,6 +18,7 @@ type Client struct {
 
 // NewClient returns a new Exoscale API V3 client, or an error if one couldn't be initialized.
 // Client is generic (single EP) with no concept of zones/environments.
+// For zone-aware client use ZonedClient.
 // Default HTTP client is [go-retryablehttp] with static retry configuration.
 // To change retry configuration, build new HTTP client and pass it using ClientOptWithHTTPClient.
 // API credentials must be passed with ClientOptWithCredentials.

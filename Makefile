@@ -49,4 +49,6 @@ oapigen-v3:
 	@echo
 	go generate ./v3/oapi/oapi.go
 	@rm v3/oapi/source.json
+	# Running temp fix for oapi-codegen issue:
+	sed -i 's/N200InstancesState/[]InstanceState/g' v3/oapi/oapi.gen.go
 	ls -l v3/oapi/oapi.gen.go

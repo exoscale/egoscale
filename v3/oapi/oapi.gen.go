@@ -5848,6 +5848,9 @@ type ClientInterface interface {
 
 	ResetInstance(ctx context.Context, id openapi_types.UUID, body ResetInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ResetInstancePassword request
+	ResetInstancePassword(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ResizeInstanceDiskWithBody request with any body
 	ResizeInstanceDiskWithBody(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -8592,6 +8595,18 @@ func (c *Client) ResetInstanceWithBody(ctx context.Context, id openapi_types.UUI
 
 func (c *Client) ResetInstance(ctx context.Context, id openapi_types.UUID, body ResetInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewResetInstanceRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResetInstancePassword(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResetInstancePasswordRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -15775,6 +15790,40 @@ func NewResetInstanceRequestWithBody(server string, id openapi_types.UUID, conte
 	return req, nil
 }
 
+// NewResetInstancePasswordRequest generates requests for ResetInstancePassword
+func NewResetInstancePasswordRequest(server string, id openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/instance/%s:reset-password", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewResizeInstanceDiskRequest calls the generic ResizeInstanceDisk builder with application/json body
 func NewResizeInstanceDiskRequest(server string, id openapi_types.UUID, body ResizeInstanceDiskJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -19740,6 +19789,9 @@ type ClientWithResponsesInterface interface {
 
 	ResetInstanceWithResponse(ctx context.Context, id openapi_types.UUID, body ResetInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetInstanceResponse, error)
 
+	// ResetInstancePasswordWithResponse request
+	ResetInstancePasswordWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*ResetInstancePasswordResponse, error)
+
 	// ResizeInstanceDiskWithBodyWithResponse request with any body
 	ResizeInstanceDiskWithBodyWithResponse(ctx context.Context, id openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResizeInstanceDiskResponse, error)
 
@@ -23509,6 +23561,28 @@ func (r ResetInstanceResponse) StatusCode() int {
 	return 0
 }
 
+type ResetInstancePasswordResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r ResetInstancePasswordResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResetInstancePasswordResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ResizeInstanceDiskResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -27133,6 +27207,15 @@ func (c *ClientWithResponses) ResetInstanceWithResponse(ctx context.Context, id 
 		return nil, err
 	}
 	return ParseResetInstanceResponse(rsp)
+}
+
+// ResetInstancePasswordWithResponse request returning *ResetInstancePasswordResponse
+func (c *ClientWithResponses) ResetInstancePasswordWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*ResetInstancePasswordResponse, error) {
+	rsp, err := c.ResetInstancePassword(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResetInstancePasswordResponse(rsp)
 }
 
 // ResizeInstanceDiskWithBodyWithResponse request with arbitrary body returning *ResizeInstanceDiskResponse
@@ -32180,6 +32263,32 @@ func ParseResetInstanceResponse(rsp *http.Response) (*ResetInstanceResponse, err
 	}
 
 	response := &ResetInstanceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseResetInstancePasswordResponse parses an HTTP response from a ResetInstancePasswordWithResponse call
+func ParseResetInstancePasswordResponse(rsp *http.Response) (*ResetInstancePasswordResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResetInstancePasswordResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

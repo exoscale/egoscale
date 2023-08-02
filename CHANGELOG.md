@@ -1,7 +1,7 @@
 Changelog
 =========
 
-UNRELEASED
+0.100.3
 -------
 
 - v2: add validation for UUID

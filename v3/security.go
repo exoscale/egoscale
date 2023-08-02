@@ -18,21 +18,23 @@ import (
 const RequestExpire = 10 * time.Minute
 
 // SecurityProvider is an request interceptor that implements [Exoscale API Request Signature] authentication.
+// It is used by default in the Client.
 //
 // [API Request Signature]: https://openapi-v2.exoscale.com/#topic-api-request-signature
 type SecurityProvider struct {
 	creds *Credentials
 }
 
-// NewSecurityProvider creates oapi.RequestEditorFn that adds authentication header to API calls.
+// NewSecurityProvider creates a SecurityProvider interceptor using provided credentials.
+// Credentials struct is passed as a pointer as it is safe for concurrent use.
 func NewSecurityProvider(creds *Credentials) *SecurityProvider {
 	return &SecurityProvider{
 		creds: creds,
 	}
 }
 
-// Intercept will attach a header to API call.
-func (s *SecurityProvider) Intercept(ctx context.Context, req *http.Request) error {
+// Intercept is oapi.RequestEditorFn that will attach authentication header to API call.
+func (p *SecurityProvider) Intercept(ctx context.Context, req *http.Request) error {
 	var (
 		sigParts    []string
 		headerParts []string
@@ -40,7 +42,7 @@ func (s *SecurityProvider) Intercept(ctx context.Context, req *http.Request) err
 
 	// Request method/URL path
 	sigParts = append(sigParts, fmt.Sprintf("%s %s", req.Method, req.URL.EscapedPath()))
-	headerParts = append(headerParts, "EXO2-HMAC-SHA256 credential="+s.creds.APIKey())
+	headerParts = append(headerParts, "EXO2-HMAC-SHA256 credential="+p.creds.APIKey())
 
 	// Request body if present
 	body := ""
@@ -75,7 +77,7 @@ func (s *SecurityProvider) Intercept(ctx context.Context, req *http.Request) err
 	sigParts = append(sigParts, fmt.Sprint(time.Now().Add(RequestExpire).Unix()))
 	headerParts = append(headerParts, "expires="+fmt.Sprint(time.Now().Add(RequestExpire).Unix()))
 
-	h := hmac.New(sha256.New, []byte(s.creds.APISecret()))
+	h := hmac.New(sha256.New, []byte(p.creds.APISecret()))
 	if _, err := h.Write([]byte(strings.Join(sigParts, "\n"))); err != nil {
 		return err
 	}

@@ -13,13 +13,29 @@ const (
 	EnvKeyAPISecret = "EXOSCALE_API_SECRET"
 )
 
+// ClientConfig hold Client configuration options.
+type ClientConfig struct {
+	creds      *Credentials
+	httpClient *http.Client
+
+	requestEditors []oapi.RequestEditorFn
+	// TODO: implement response editors (not available in oapi, should be embeded in consumer API.
+
+	// User-Agent prefix
+	uaPrefix string
+}
+
 // ClientOpt represents a function setting Exoscale API client option.
-type ClientOpt func(*Client) error
+type ClientOpt func(*ClientConfig) error
 
 // ClientOptWithCredentials returns a ClientOpt that sets credentials.
-func ClientOptWithCredentials(apiKey, apiSecret string) ClientOpt {
-	return func(c *Client) error {
-		c.creds = NewCredentials(apiKey, apiSecret)
+// If credentials are empty, error will be returned.
+func ClientOptWithCredentials(key, secret string) ClientOpt {
+	return func(c *ClientConfig) error {
+		if key == "" || secret == "" {
+			return fmt.Errorf("Missing API credentials")
+		}
+		c.creds = NewCredentials(key, secret)
 
 		return nil
 	}
@@ -28,7 +44,7 @@ func ClientOptWithCredentials(apiKey, apiSecret string) ClientOpt {
 // ClientOptWithCredentialsFromEnv returns a ClientOpt that reads credentials from environment.
 // Returns error of any value is missing in environment.
 func ClientOptWithCredentialsFromEnv() ClientOpt {
-	return func(c *Client) error {
+	return func(c *ClientConfig) error {
 		key := os.Getenv(EnvKeyAPIKey)
 		secret := os.Getenv(EnvKeyAPISecret)
 		if key == "" || secret == "" {
@@ -47,18 +63,28 @@ func ClientOptWithCredentialsFromEnv() ClientOpt {
 //
 // [go-retryablehttp]: https://github.com/hashicorp/go-retryablehttp
 func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
-	return func(c *Client) error {
+	return func(c *ClientConfig) error {
 		c.httpClient = v
 
 		return nil
 	}
 }
 
-// ClientOptWithRequestEdotor returns a ClientOpt that adds oapi.RequestEditorFn to oapi client.
+// ClientOptWithRequestEditor returns a ClientOpt that adds oapi.RequestEditorFn to oapi client.
 // Editors run sequentialy and this function appends provided editor funtion to the end of the list.
-func ClientOptWithRequestEdotor(e oapi.RequestEditorFn) ClientOpt {
-	return func(c *Client) error {
+func ClientOptWithRequestEditor(e oapi.RequestEditorFn) ClientOpt {
+	return func(c *ClientConfig) error {
 		c.requestEditors = append(c.requestEditors, e)
+
+		return nil
+	}
+}
+
+// ClientOptWithUserAgent returns a ClientOpt that sets User-Agent string to the provided value.
+// Value provided is always suffixed with library version and host info.
+func ClientOptWithUserAgent(ua string) ClientOpt {
+	return func(c *ClientConfig) error {
+		c.uaPrefix = ua
 
 		return nil
 	}

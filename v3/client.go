@@ -3,7 +3,6 @@ package v3
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 	"os"
 
@@ -13,13 +12,7 @@ import (
 
 // Client represents Exoscale V3 API Client.
 type Client struct {
-	endpoint   string
 	creds      *Credentials
-	httpClient *http.Client
-
-	requestEditors []oapi.RequestEditorFn
-	// TODO: implement response editors (not available in oapi, should be embeded in consumer API.
-
 	oapiClient *oapi.ClientWithResponses
 }
 
@@ -34,32 +27,35 @@ func NewClient(endpoint string, opts ...ClientOpt) (*Client, error) {
 		return nil, fmt.Errorf("failed to parse URL: %w", err)
 	}
 
-	client := Client{
-		endpoint:       endpoint,
+	config := ClientConfig{
 		requestEditors: []oapi.RequestEditorFn{},
 	}
-
-	// Use retryablehttp client by default
-	rc := retryablehttp.NewClient()
-	// TODO: attach to global logger when implemented
-	rc.Logger = log.New(os.Stderr, "", 0)
-	client.httpClient = rc.StandardClient()
-
 	for _, opt := range opts {
-		if err := opt(&client); err != nil {
+		if err := opt(&config); err != nil {
 			return nil, fmt.Errorf("client configuration error: %w", err)
 		}
 	}
 
+	client := Client{
+		creds: config.creds,
+	}
+
+	// Use retryablehttp client by default
+	if config.httpClient == nil {
+		rc := retryablehttp.NewClient()
+		// TODO: attach to global logger when implemented
+		rc.Logger = log.New(os.Stderr, "", 0)
+		config.httpClient = rc.StandardClient()
+	}
+
+	// Mandatory oapi options.
 	oapiOpts := []oapi.ClientOption{
-		oapi.WithHTTPClient(client.httpClient),
-		oapi.WithRequestEditorFn(SetUserAgent),
+		oapi.WithHTTPClient(config.httpClient),
+		oapi.WithRequestEditorFn(NewUserAgentProvider(config.uaPrefix).Intercept),
 	}
 
 	// We are adding security middleware only if API credentials are specified
 	// in order to allow generic usage and local testing.
-	// In production consumers are expected to check that non-empty credentials are set
-	// before initializing client.
 	// TODO: add log line emphasizing the lack of credentials.
 	if client.creds != nil {
 		oapiOpts = append(
@@ -69,7 +65,7 @@ func NewClient(endpoint string, opts ...ClientOpt) (*Client, error) {
 	}
 
 	// Attach any custom request editors
-	for _, editor := range client.requestEditors {
+	for _, editor := range config.requestEditors {
 		oapiOpts = append(
 			oapiOpts,
 			oapi.WithRequestEditorFn(editor),
@@ -78,9 +74,7 @@ func NewClient(endpoint string, opts ...ClientOpt) (*Client, error) {
 
 	client.oapiClient, err = oapi.NewClientWithResponses(
 		u.String(),
-		oapi.WithHTTPClient(client.httpClient),
-		oapi.WithRequestEditorFn(SetUserAgent),
-		oapi.WithRequestEditorFn(NewSecurityProvider(client.creds).Intercept),
+		oapiOpts...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize API client: %w", err)

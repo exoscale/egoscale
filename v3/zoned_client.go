@@ -28,7 +28,7 @@ var (
 )
 
 // ZonedClient is a Exoscale API Client that can communicate with API servers in different zones.
-// It has the same interface as Client and uses currently seleced zone to run API calls.
+// It has the same interface as Client and uses currently selected zone to run API calls.
 // Consumer is expected to select zone before invoking API calls.
 type ZonedClient struct {
 	zones       map[oapi.ZoneName]*oapi.ClientWithResponses

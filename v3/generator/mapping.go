@@ -14,6 +14,7 @@ var APIMap = Map{
 				Fn{Name: "Create", OAPIName: "CreateIamRole"},
 				Fn{Name: "Delete", OAPIName: "DeleteIamRole"},
 				Fn{Name: "Update", OAPIName: "UpdateIamRole"},
+				Fn{Name: "UpdatePolicy", OAPIName: "UpdateIamRolePolicy"},
 			},
 		},
 	},

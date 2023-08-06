@@ -86,3 +86,17 @@ func (a *Roles) Update(ctx context.Context, id openapi_types.UUID, body oapi.Upd
 	return resp.JSON200, nil
 }
 
+func (a *Roles) UpdatePolicy(ctx context.Context, id openapi_types.UUID, body oapi.UpdateIamRolePolicyJSONRequestBody) (*oapi.Operation, error) {
+	resp, err := a.oapiClient.UpdateIamRolePolicyWithResponse(ctx, id, body)
+	if err != nil {
+		return nil, err
+	}
+
+	err = utils.ParseResponseError(resp.StatusCode(), resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.JSON200, nil
+}
+

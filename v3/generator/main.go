@@ -40,7 +40,7 @@ func main() {
 	switch os.Args[1] {
 	case "generate":
 		Generate()
-	case "list-unused":
-		//ListUnused()
+	case "list-unimplemented":
+		ListUnimplemented()
 	}
 }

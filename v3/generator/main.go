@@ -11,8 +11,12 @@ type Map map[string][]Entity
 
 // Entity represents a resource in Exoscale platform.
 type Entity struct {
+	// Mandatory
 	RootName string //struct name where API functions will attach (filename is strings.ToLower(RootName))
 	Fns      []Fn   //list of API calls
+
+	// Computed (don't set values manually)
+	OAPITypesImport bool
 }
 
 type Fn struct {
@@ -24,7 +28,7 @@ type Fn struct {
 	ResDefOverride         string //override for response definition string
 	ResPassthroughOverride string //override for response passthrough string
 
-	// Computed, don't set values manually
+	// Computed (don't set values manually)
 	OptArgsDef         string
 	OptArgsPassthrough string
 	ResDef             string

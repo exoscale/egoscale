@@ -26,12 +26,14 @@ func Generate() {
 				args := FuncOptArgs(node, fn.OAPIName)
 				if len(args) > 0 {
 					fn.OptArgsDef = strings.Join(args, ", ")
-					//
 					argKeys := make([]string, 0, len(args))
 					for _, arg := range args {
 						argKeys = append(argKeys, strings.Split(arg, " ")[0])
 					}
 					fn.OptArgsPassthrough = strings.Join(argKeys, ", ")
+					if strings.Contains(fn.OptArgsDef, "openapi_types") {
+						entity.OAPITypesImport = true
+					}
 				}
 
 				if fn.ResDefOverride != "" && fn.ResPassthroughOverride != "" {
@@ -181,6 +183,8 @@ func FuncResp(node *ast.File, name string) (resType, subpath string) {
 			switch x := f.Type.(*ast.StarExpr).X.(type) {
 			case *ast.Ident: //defined oapi type
 				resType = fmt.Sprintf("oapi.%s", x.Name)
+			case *ast.ArrayType: //slice (usually List functions)
+				resType = fmt.Sprintf("[]oapi.%s", x.Elt.(*ast.Ident).Name)
 			case *ast.StructType: //nested struct, limited support for single attribute structs
 				if len(x.Fields.List) != 1 {
 					fmt.Printf("found %s response, but has unsupported nested struct")

@@ -17,6 +17,13 @@ var APIMap = Map{
 				Fn{Name: "UpdatePolicy", OAPIName: "UpdateIamRolePolicy"},
 			},
 		},
+		{
+			RootName: "OrgPolicy",
+			Fns: []Fn{
+				Fn{Name: "Get", OAPIName: "GetIamOrganizationPolicy"},
+				Fn{Name: "Update", OAPIName: "UpdateIamOrganizationPolicy"},
+			},
+		},
 	},
 	"global": nil,
 }

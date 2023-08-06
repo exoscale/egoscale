@@ -5,8 +5,9 @@ import (
 
 	"github.com/exoscale/egoscale/v3/oapi"
 	"github.com/exoscale/egoscale/v3/utils"
-
+{{if .OAPITypesImport }}
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+{{end -}}
 )
 
 type {{.RootName}} struct {

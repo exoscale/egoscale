@@ -5,21 +5,24 @@ import (
 	"os"
 )
 
-type Map map[string][]Spec
+// Map hold all mapping information that allows us to generate Consumer API.
+// Map is split into groups (subfolder) and each group contains one or many entities.
+type Map map[string][]Entity
 
-type Spec struct {
-	RootName string
-	Fns      []Fn
+// Entity represents a resource in Exoscale platform.
+type Entity struct {
+	RootName string //struct name where API functions will attach (filename is strings.ToLower(RootName))
+	Fns      []Fn   //list of API calls
 }
 
 type Fn struct {
 	// Mandatory
-	Name     string
-	OAPIName string
+	Name     string //name of the API function
+	OAPIName string //base name of the function in oapi
 
 	// Optional
-	ResDefOverride         string
-	ResPassthroughOverride string
+	ResDefOverride         string //override for response definition string
+	ResPassthroughOverride string //override for response passthrough string
 
 	// Computed, don't set values manually
 	OptArgsDef         string

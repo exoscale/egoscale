@@ -1,10 +1,11 @@
 package main
 
+// APIMap maps oapi functions to Consumer API.
 var APIMap = Map{
 	"compute": nil,
 	"dbaas":   nil,
 	"dns":     nil,
-	"iam": []Spec{
+	"iam": []Entity{
 		{
 			RootName: "Roles",
 			Fns: []Fn{

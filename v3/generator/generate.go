@@ -10,6 +10,7 @@ import (
 	"text/template"
 )
 
+// Generate is a command the generates Consumer API according to the mapping in mapping.go file.
 func Generate() {
 	tpl := template.Must(template.ParseFiles("templates/resource.tmpl"))
 
@@ -19,12 +20,13 @@ func Generate() {
 		panic(err)
 	}
 
-	for group, specs := range APIMap {
-		for _, spec := range specs {
-			for i, fn := range spec.Fns {
+	for group, entities := range APIMap {
+		for _, entity := range entities {
+			for i, fn := range entity.Fns {
 				args := FuncOptArgs(node, fn.OAPIName)
 				if len(args) > 0 {
 					fn.OptArgsDef = strings.Join(args, ", ")
+					//
 					argKeys := make([]string, 0, len(args))
 					for _, arg := range args {
 						argKeys = append(argKeys, strings.Split(arg, " ")[0])
@@ -48,21 +50,21 @@ func Generate() {
 					}
 				}
 
-				spec.Fns[i] = fn
+				entity.Fns[i] = fn
 			}
 
 			f, err := os.Create(
 				fmt.Sprintf(
 					"../api/%s/%s.gen.go",
 					group,
-					strings.ToLower(spec.RootName),
+					strings.ToLower(entity.RootName),
 				),
 			)
 			if err != nil {
 				panic(err)
 			}
 
-			err = tpl.Execute(f, &spec)
+			err = tpl.Execute(f, &entity)
 			if err != nil {
 				panic(err)
 			}
@@ -74,7 +76,7 @@ func Generate() {
 // Default arguments are context.Context and oapi.RequestEditorsFn.
 func FuncOptArgs(node *ast.File, name string) []string {
 	params := []string{}
-	found := false
+	found := false //to print useful error if function signature is not found.
 
 	// Search function arguments
 	ast.Inspect(node, func(n ast.Node) bool {
@@ -184,14 +186,14 @@ func FuncResp(node *ast.File, name string) (resType, subpath string) {
 						switch z := y.Type.(*ast.StarExpr).X.(type) {
 						case *ast.Ident: //defined oapi type
 							resType = fmt.Sprintf("oapi.%s", z.Name)
-						case *ast.ArrayType:
+						case *ast.ArrayType: //slice (usually List functions)
 							resType = fmt.Sprintf("[]oapi.%s", z.Elt.(*ast.Ident).Name)
 						default:
-							// Panic which prints useful error message.
+							// Panic to print useful error message.
 							_ = z.(*ast.Ident)
 						}
 					default:
-						// Panic which prints useful error message.
+						// Panic to print useful error message.
 						_ = x.(*ast.Ident)
 					}
 				}

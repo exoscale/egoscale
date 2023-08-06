@@ -18,6 +18,17 @@ var APIMap = Map{
 			},
 		},
 		{
+			RootName: "AccessKey",
+			Fns: []Fn{
+				Fn{Name: "List", OAPIName: "ListAccessKeys"},
+				Fn{Name: "ListKnownOperations", OAPIName: "ListAccessKeyKnownOperations"},
+				Fn{Name: "ListOperations", OAPIName: "ListAccessKeyOperations"},
+				Fn{Name: "Get", OAPIName: "GetAccessKey"},
+				Fn{Name: "Create", OAPIName: "CreateAccessKey"},
+				Fn{Name: "Revoke", OAPIName: "RevokeAccessKey"},
+			},
+		},
+		{
 			RootName: "OrgPolicy",
 			Fns: []Fn{
 				Fn{Name: "Get", OAPIName: "GetIamOrganizationPolicy"},

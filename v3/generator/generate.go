@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/iancoleman/strcase"
 )
 
 // Generate is a command the generates Consumer API according to the mapping in mapping.go file.
@@ -59,7 +61,7 @@ func Generate() {
 				fmt.Sprintf(
 					"../api/%s/%s.gen.go",
 					group,
-					strings.ToLower(entity.RootName),
+					strcase.ToSnake(entity.RootName),
 				),
 			)
 			if err != nil {

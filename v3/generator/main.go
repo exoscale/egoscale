@@ -12,7 +12,7 @@ type Map map[string][]Entity
 // Entity represents a resource in Exoscale platform.
 type Entity struct {
 	// Mandatory
-	RootName string //struct name where API functions will attach (filename is strings.ToLower(RootName))
+	RootName string //struct name where API functions will attach (filename is strcase.ToSnake(RootName))
 	Fns      []Fn   //list of API calls
 
 	// Computed (don't set values manually)

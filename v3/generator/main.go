@@ -17,6 +17,7 @@ type Entity struct {
 
 	// Computed (don't set values manually)
 	OAPITypesImport bool
+	Package         string
 }
 
 type Fn struct {

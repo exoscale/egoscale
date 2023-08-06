@@ -17,3 +17,11 @@ func NewIAM(c *oapi.ClientWithResponses) *IAM {
 func (a *IAM) Roles() *Roles {
 	return NewRoles(a.oapiClient)
 }
+
+func (a *IAM) OrgPolicy() *OrgPolicy {
+	return NewOrgPolicy(a.oapiClient)
+}
+
+func (a *IAM) AccessKey() *AccessKey {
+	return NewAccessKey(a.oapiClient)
+}

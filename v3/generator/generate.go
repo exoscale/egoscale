@@ -24,6 +24,8 @@ func Generate() {
 
 	for group, entities := range APIMap {
 		for _, entity := range entities {
+			entity.Package = group
+
 			for i, fn := range entity.Fns {
 				args := FuncOptArgs(node, fn.OAPIName)
 				if len(args) > 0 {

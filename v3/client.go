@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/exoscale/egoscale/v3/api/dbaas"
 	"github.com/exoscale/egoscale/v3/api/iam"
 	"github.com/exoscale/egoscale/v3/oapi"
 	"github.com/hashicorp/go-retryablehttp"
@@ -92,4 +93,9 @@ func (c *Client) OAPIClient() *oapi.ClientWithResponses {
 // IAM provides access to IAM resources on Exoscale platform.
 func (c *Client) IAM() *iam.IAM {
 	return iam.NewIAM(c.oapiClient)
+}
+
+// DBaas provides access to DBaaS resources on Exoscale platform.
+func (c *Client) DBaaS() *dbaas.DBaaS {
+	return dbaas.NewDBaaS(c.oapiClient)
 }

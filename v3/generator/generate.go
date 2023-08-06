@@ -74,48 +74,49 @@ func Generate() {
 
 // FuncOptArgs looks for function signature in oapi/oapi.gen.go and returns non-default arguments.
 // Default arguments are context.Context and oapi.RequestEditorsFn.
+// It will prepend "oapi." to locally defined types.
 func FuncOptArgs(node *ast.File, name string) []string {
 	params := []string{}
 	found := false //to print useful error if function signature is not found.
 
 	// Search function arguments
 	ast.Inspect(node, func(n ast.Node) bool {
-		if fn, ok := n.(*ast.FuncDecl); ok {
-			if fn.Name.Name == name+"WithResponse" {
-				found = true
-				// Skip first (context.Context) and last (RequestEditorsFn...) parameter as they are always the same.
-				for i := 1; i < len(fn.Type.Params.List)-1; i++ {
-					param := fn.Type.Params.List[i]
-
-					switch t := param.Type.(type) {
-					case *ast.SelectorExpr: //external type
-						params = append(params, fmt.Sprintf(
-							"%s %s.%s",
-							param.Names[0].Name,
-							t.X.(*ast.Ident).Name,
-							t.Sel.Name,
-						))
-					case *ast.Ident: //internal or builtin type
-						var format string
-						if strings.HasSuffix(t.Name, "RequestBody") {
-							// internal type, append package name
-							format = "%s oapi.%s"
-						} else {
-							// builtin
-							format = "%s %s"
-						}
-						params = append(params, fmt.Sprintf(
-							format,
-							param.Names[0].Name,
-							t.Name,
-						))
-					default:
-						// We are triggering specific panic which will print useful error message.
-						_ = t.(*ast.SelectorExpr)
-					}
+		fn, ok := n.(*ast.FuncDecl)
+		if !ok {
+			return true
+		}
+		if fn.Name.Name != name+"WithResponse" {
+			return true
+		}
+		found = true
+		// Skip first (context.Context) and last (RequestEditorsFn...) parameter as they are always the same.
+		for i := 1; i < len(fn.Type.Params.List)-1; i++ {
+			param := fn.Type.Params.List[i]
+			switch t := param.Type.(type) {
+			case *ast.SelectorExpr: //external type
+				params = append(params, fmt.Sprintf(
+					"%s %s.%s",
+					param.Names[0].Name,
+					t.X.(*ast.Ident).Name,
+					t.Sel.Name,
+				))
+			case *ast.Ident: //internal or builtin type
+				var format string
+				if strings.HasSuffix(t.Name, "RequestBody") {
+					// internal type, append package name
+					format = "%s oapi.%s"
+				} else {
+					// builtin
+					format = "%s %s"
 				}
-
-				return false
+				params = append(params, fmt.Sprintf(
+					format,
+					param.Names[0].Name,
+					t.Name,
+				))
+			default:
+				// Panic to print useful error message.
+				_ = t.(*ast.Ident)
 			}
 		}
 
@@ -158,45 +159,49 @@ func FuncOptArgs(node *ast.File, name string) []string {
 func FuncResp(node *ast.File, name string) (resType, subpath string) {
 	// Search response struct
 	ast.Inspect(node, func(n ast.Node) bool {
-		if spec, ok := n.(*ast.TypeSpec); ok {
-			if str, ok := spec.Type.(*ast.StructType); ok {
-				if spec.Name.Name != name+"Response" {
-					return true
+		spec, ok := n.(*ast.TypeSpec)
+		if !ok {
+			return true
+		}
+		str, ok := spec.Type.(*ast.StructType)
+		if !ok {
+			return true
+		}
+		if spec.Name.Name != name+"Response" {
+			return true
+		}
+
+		// Go to JSON200 attribute
+		for _, f := range str.Fields.List {
+			if f.Names[0].Name != "JSON200" {
+				continue
+			}
+
+			// Supported JSON200 types:
+			switch x := f.Type.(*ast.StarExpr).X.(type) {
+			case *ast.Ident: //defined oapi type
+				resType = fmt.Sprintf("oapi.%s", x.Name)
+			case *ast.StructType: //nested struct, limited support for single attribute structs
+				if len(x.Fields.List) != 1 {
+					fmt.Printf("found %s response, but has unsupported nested struct")
+					os.Exit(1)
 				}
 
-				// Go to JSON200 attribute
-				for _, f := range str.Fields.List {
-					if f.Names[0].Name != "JSON200" {
-						continue
-					}
+				y := x.Fields.List[0]
+				subpath = y.Names[0].Name //path after JSON200
 
-					// Supported JSON200 types:
-					switch x := f.Type.(*ast.StarExpr).X.(type) {
-					case *ast.Ident: //defined oapi type
-						resType = fmt.Sprintf("oapi.%s", x.Name)
-					case *ast.StructType: //nested struct, limited support for single attribute structs
-						if len(x.Fields.List) != 1 {
-							fmt.Printf("found %s response, but has unsupported nested struct")
-							os.Exit(1)
-						}
-
-						y := x.Fields.List[0]
-						subpath = y.Names[0].Name //path after JSON200
-
-						switch z := y.Type.(*ast.StarExpr).X.(type) {
-						case *ast.Ident: //defined oapi type
-							resType = fmt.Sprintf("oapi.%s", z.Name)
-						case *ast.ArrayType: //slice (usually List functions)
-							resType = fmt.Sprintf("[]oapi.%s", z.Elt.(*ast.Ident).Name)
-						default:
-							// Panic to print useful error message.
-							_ = z.(*ast.Ident)
-						}
-					default:
-						// Panic to print useful error message.
-						_ = x.(*ast.Ident)
-					}
+				switch z := y.Type.(*ast.StarExpr).X.(type) {
+				case *ast.Ident: //defined oapi type
+					resType = fmt.Sprintf("oapi.%s", z.Name)
+				case *ast.ArrayType: //slice (usually List functions)
+					resType = fmt.Sprintf("[]oapi.%s", z.Elt.(*ast.Ident).Name)
+				default:
+					// Panic to print useful error message.
+					_ = z.(*ast.Ident)
 				}
+			default:
+				// Panic to print useful error message.
+				_ = x.(*ast.Ident)
 			}
 		}
 

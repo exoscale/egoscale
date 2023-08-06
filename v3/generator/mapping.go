@@ -48,5 +48,19 @@ var APIMap = Map{
 			},
 		},
 	},
-	"global": nil,
+	"global": []Entity{
+		{
+			RootName: "Operation",
+			Fns: []Fn{
+				{Name: "Get", OAPIName: "GetOperation"},
+			},
+		},
+		{
+			RootName: "OrgQuotas",
+			Fns: []Fn{
+				{Name: "List", OAPIName: "ListQuotas"},
+				{Name: "Get", OAPIName: "GetQuota"},
+			},
+		},
+	},
 }

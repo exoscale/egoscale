@@ -1,0 +1,34 @@
+package iam
+
+import (
+	"context"
+
+	"github.com/exoscale/egoscale/v3/oapi"
+	"github.com/exoscale/egoscale/v3/utils"
+
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+)
+
+type {{.RootName}} struct {
+	oapiClient *oapi.ClientWithResponses
+}
+
+func New{{.RootName}}(c *oapi.ClientWithResponses) *{{.RootName}} {
+	return &{{.RootName}}{c}
+}
+
+{{- range .Fns}}
+func (a *{{$.RootName}}) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{printf ", %s" .OptArgsDef}}{{end}}) ({{.ResDef}}, error) {
+	resp, err := a.oapiClient.{{.OAPIName}}WithResponse(ctx{{if .OptArgsPassthrough}}{{printf ", %s" .OptArgsPassthrough}}{{ end }})
+	if err != nil {
+		return nil, err
+	}
+
+	err = utils.ParseResponseError(resp.StatusCode(), resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return {{.ResPassthrough}}, nil
+}
+{{ end }}

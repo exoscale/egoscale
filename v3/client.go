@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/exoscale/egoscale/v3/api/iam"
 	"github.com/exoscale/egoscale/v3/oapi"
 	"github.com/hashicorp/go-retryablehttp"
 )
@@ -86,4 +87,9 @@ func NewClient(endpoint string, opts ...ClientOpt) (*Client, error) {
 // OAPIClient returns configured instance of OpenAPI generated (low-level) API client.
 func (c *Client) OAPIClient() *oapi.ClientWithResponses {
 	return c.oapiClient
+}
+
+// IAM provides access to IAM resources on Exoscale platform.
+func (c *Client) IAM() *iam.IAM {
+	return iam.NewIAM(c.oapiClient)
 }

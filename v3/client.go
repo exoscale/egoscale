@@ -10,6 +10,10 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
+const (
+	EnvKeyAPIEndpoint = "EXOSCALE_API_ENDPOINT"
+)
+
 // Client represents Exoscale V3 API Client.
 type Client struct {
 	creds      *Credentials
@@ -22,7 +26,13 @@ type Client struct {
 // Default HTTP client is [go-retryablehttp] with static retry configuration.
 // To change retry configuration, build new HTTP client and pass it using ClientOptWithHTTPClient.
 // API credentials must be passed with ClientOptWithCredentials.
+// If EXOSCALE_API_ENDPOINT environment variable is set, it replaces endpoint.
 func NewClient(endpoint string, opts ...ClientOpt) (*Client, error) {
+	// Env var override
+	if h := os.Getenv(EnvKeyAPIEndpoint); h != "" {
+		endpoint = h
+	}
+
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL: %w", err)

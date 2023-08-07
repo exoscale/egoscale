@@ -3,20 +3,25 @@ package v3
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/exoscale/egoscale/v3/oapi"
 )
 
 const (
-	defaultHostPattern = "https://api-%s.exoscale.com/v2"
+	DefaultHostPattern = "https://api-%s.exoscale.com/v2"
+
+	EnvKeyAPIEndpointPattern = "EXOSCALE_API_ENDPOINT_PATTERN"
+	EnvKeyAPIEndpointZones   = "EXOSCALE_API_ENDPOINT_ZONES"
 )
 
 var (
-	// Default zones list (available in oapi code).
+	// DefaultZones list (available in oapi code).
 	// When new zone is added or existing removed this slice needs to be updated.
 	// First zone in the slice is used as default in DefaultZonedClient.
-	defaultZones = []oapi.ZoneName{
+	DefaultZones = []oapi.ZoneName{
 		oapi.ChGva2,
 		oapi.AtVie1,
 		oapi.AtVie2,
@@ -27,7 +32,7 @@ var (
 	}
 )
 
-// ZonedClient is a Exoscale API Client that can communicate with API servers in different zones.
+// ZonedClient is an Exoscale API Client that can communicate with API servers in different zones.
 // It has the same interface as Client and uses currently selected zone to run API calls.
 // Consumer is expected to select zone before invoking API calls.
 type ZonedClient struct {
@@ -44,9 +49,23 @@ type ZonedClient struct {
 //	https://api-%s.exoscale.com/v2
 //
 // ClientOpt options will be passed down to Client as provided.
+// If EXOSCALE_API_ENDPOINT_PATTERN environment variable is set, it replaces urlPattern.
+// If EXOSCALE_API_ENDPOINT_ZONES environment variable is set (CSV format), it replaces zones.
 func NewZonedClient(urlPattern string, zones []oapi.ZoneName, opts ...ClientOpt) (*ZonedClient, error) {
 	if len(zones) == 0 {
 		return nil, errors.New("List of zones cannot be empty")
+	}
+
+	// Env overrides
+	if h := os.Getenv(EnvKeyAPIEndpointPattern); h != "" {
+		urlPattern = h
+	}
+	if z := os.Getenv(EnvKeyAPIEndpointZones); z != "" {
+		zones = []oapi.ZoneName{}
+		parts := strings.Split(z, ",")
+		for _, part := range parts {
+			zones = append(zones, oapi.ZoneName(part))
+		}
 	}
 
 	zonedClient := ZonedClient{
@@ -73,10 +92,10 @@ func NewZonedClient(urlPattern string, zones []oapi.ZoneName, opts ...ClientOpt)
 	return &zonedClient, nil
 }
 
-// DefaultZonedClient creates a ZonedClient with preset API URL pattern and zone and provided options.
+// DefaultClient creates a ZonedClient with preset API URL pattern and zone and provided options.
 // This is what should be used by default.
-func DefaultZonedClient(opts ...ClientOpt) (*ZonedClient, error) {
-	return NewZonedClient(defaultHostPattern, defaultZones, opts...)
+func DefaultClient(opts ...ClientOpt) (*ZonedClient, error) {
+	return NewZonedClient(DefaultHostPattern, DefaultZones, opts...)
 }
 
 // Zone returns the current zone identifier.
@@ -94,12 +113,17 @@ func (c *ZonedClient) SetZone(z oapi.ZoneName) {
 	c.mx.Unlock()
 }
 
-// InZone selects the current zone and returns instance of the ZonedClient so the methods may be chained:
+// InZone selects returns the instance of the Client in selected zone so the methods may be chained:
 //
 //	zonedClient.InZone(oapi.ChGva2).OAPIClient()...
-func (c *ZonedClient) InZone(z oapi.ZoneName) *ZonedClient {
-	c.SetZone(z)
-	return c
+func (c *ZonedClient) InZone(z oapi.ZoneName) *Client {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
+	return &Client{
+		creds:      c.creds,
+		oapiClient: c.zones[z],
+	}
 }
 
 // OAPIClient returns configured instance of OpenAPI generated (low-level) API client in the selected zone.

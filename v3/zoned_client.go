@@ -53,7 +53,7 @@ type ZonedClient struct {
 // If EXOSCALE_API_ENDPOINT_ZONES environment variable is set (CSV format), it replaces zones.
 func NewZonedClient(urlPattern string, zones []oapi.ZoneName, opts ...ClientOpt) (*ZonedClient, error) {
 	if len(zones) == 0 {
-		return nil, errors.New("List of zones cannot be empty")
+		return nil, errors.New("list of zones cannot be empty")
 	}
 
 	// Env overrides

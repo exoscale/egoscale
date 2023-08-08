@@ -33,7 +33,7 @@ type ClientOpt func(*ClientConfig) error
 func ClientOptWithCredentials(key, secret string) ClientOpt {
 	return func(c *ClientConfig) error {
 		if key == "" || secret == "" {
-			return fmt.Errorf("Missing API credentials")
+			return fmt.Errorf("missing API credentials")
 		}
 		c.creds = NewCredentials(key, secret)
 

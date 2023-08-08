@@ -191,7 +191,7 @@ func FuncResp(node *ast.File, name string) (resType, subpath string) {
 				resType = fmt.Sprintf("[]oapi.%s", x.Elt.(*ast.Ident).Name)
 			case *ast.StructType: //nested struct, limited support for single attribute structs
 				if len(x.Fields.List) != 1 {
-					fmt.Printf("found %s response, but has unsupported nested struct")
+					fmt.Printf("found %s response, but has unsupported nested struct\n", name)
 					os.Exit(1)
 				}
 

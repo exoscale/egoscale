@@ -1,10 +1,12 @@
 package v3
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 
@@ -18,6 +20,8 @@ import (
 
 const (
 	EnvKeyAPIEndpoint = "EXOSCALE_API_ENDPOINT"
+
+	PollingInterval = 3 * time.Second
 )
 
 // Client represents Exoscale V3 API Client.
@@ -98,6 +102,42 @@ func NewClient(endpoint string, opts ...ClientOpt) (*Client, error) {
 	}
 
 	return &client, nil
+}
+
+// Wait is a helper that waits for async operation to reach the final state.
+// Final states are one of: failure, success, timeout.
+func (c *Client) Wait(
+	ctx context.Context,
+	f func(ctx context.Context) (*oapi.Operation, error),
+) (*oapi.Operation, error) {
+	ticker := time.NewTicker(PollingInterval)
+	defer ticker.Stop()
+
+	op, err := f(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Exit right away if operation is already done.
+	if *op.State != oapi.OperationStatePending {
+		return op, nil
+	}
+
+	for {
+		select {
+		case <-ticker.C:
+			op, err := c.Global().Operations().Get(ctx, *op.Id)
+			if err != nil {
+				return nil, err
+			}
+			if *op.State != oapi.OperationStatePending {
+				continue
+			}
+
+			return op, nil
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
 }
 
 // OAPIClient returns configured instance of OpenAPI generated (low-level) API client.

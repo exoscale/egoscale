@@ -2,7 +2,17 @@ package main
 
 // APIMap maps oapi functions to Consumer API.
 var APIMap = Map{
-	"compute": nil,
+	"compute": []Entity{
+		{
+			RootName: "SSHKeys",
+			Fns: []Fn{
+				{Name: "List", OAPIName: "ListSshKeys"},
+				{Name: "Register", OAPIName: "RegisterSshKey"},
+				{Name: "Delete", OAPIName: "DeleteSshKey"},
+				{Name: "Get", OAPIName: "GetSshKey"},
+			},
+		},
+	},
 	"dbaas": []Entity{
 		{
 			RootName: "Integrations",

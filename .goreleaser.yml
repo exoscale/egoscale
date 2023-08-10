@@ -3,5 +3,5 @@ builds:
 
 release:
   github:
-    owner: exoscale
+    owner: sauterp
     name: egoscale

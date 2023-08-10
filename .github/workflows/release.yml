@@ -1,0 +1,31 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+\.[0-9]+\.[0-9]+'
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+
+    env:
+      GOLANGCI_LINT_CONFIG: ".golangci.yml"
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - run: git submodule update --init --recursive go.mk
+
+      - uses: ./go.mk/.github/actions/setup
+
+      - uses: ./go.mk/.github/actions/pre-check
+
+      - uses: ./go.mk/.github/actions/release
+        with:
+          release_github_token: ${{ secrets.GITHUB_TOKEN }}

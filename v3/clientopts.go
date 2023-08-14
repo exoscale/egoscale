@@ -17,6 +17,7 @@ const (
 type ClientConfig struct {
 	creds      *Credentials
 	httpClient *http.Client
+	logger     Logger
 
 	requestEditors []oapi.RequestEditorFn
 	// TODO: implement response editors (not available in oapi, should be embeded in consumer API.
@@ -85,6 +86,15 @@ func ClientOptWithRequestEditor(e oapi.RequestEditorFn) ClientOpt {
 func ClientOptWithUserAgent(ua string) ClientOpt {
 	return func(c *ClientConfig) error {
 		c.uaPrefix = ua
+
+		return nil
+	}
+}
+
+// ClientOptWithLogger returns ClientOpt that configures logging with provided Logger.
+func ClientOptWithLogger(logger Logger) ClientOpt {
+	return func(c *ClientConfig) error {
+		c.logger = logger
 
 		return nil
 	}

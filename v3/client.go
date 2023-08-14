@@ -3,6 +3,7 @@ package v3
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/url"
 	"os"
@@ -64,8 +65,10 @@ func NewClient(endpoint string, opts ...ClientOpt) (*Client, error) {
 	// Use retryablehttp client by default
 	if config.httpClient == nil {
 		rc := retryablehttp.NewClient()
-		// TODO: attach to global logger when implemented
-		rc.Logger = log.New(os.Stderr, "", 0)
+		rc.Logger = log.New(io.Discard, "", 0)
+		if config.logger != nil {
+			rc.Logger = config.logger
+		}
 		config.httpClient = rc.StandardClient()
 	}
 

@@ -133,7 +133,7 @@ func (c *ZonedClient) OAPIClient() *oapi.ClientWithResponses {
 
 // ForEachZone runs function f in each configured zone.
 // Argument of function f is configured Client for the zone.
-func (c *ZonedClient) ForEachZone(f func(c *Client, zone string)) {
+func (c *ZonedClient) ForEachZone(f func(c *Client, zone oapi.ZoneName)) {
 	for zone, oapiClient := range c.zones {
 		f(&Client{creds: c.creds, oapiClient: oapiClient}, zone)
 	}

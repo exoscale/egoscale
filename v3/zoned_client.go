@@ -117,9 +117,6 @@ func (c *ZonedClient) SetZone(z oapi.ZoneName) {
 //
 //	zonedClient.InZone(oapi.ChGva2).OAPIClient()...
 func (c *ZonedClient) InZone(z oapi.ZoneName) *Client {
-	c.mx.Lock()
-	defer c.mx.Unlock()
-
 	return &Client{
 		creds:      c.creds,
 		oapiClient: c.zones[z],
@@ -132,4 +129,12 @@ func (c *ZonedClient) OAPIClient() *oapi.ClientWithResponses {
 	defer c.mx.RUnlock()
 
 	return c.Client.OAPIClient()
+}
+
+// ForEachZone runs function f in each configured zone.
+// Argument of function f is configured Client for the zone.
+func (c *ZonedClient) ForEachZone(f func(c *Client, zone string)) {
+	for zone, oapiClient := range c.zones {
+		f(&Client{creds: c.creds, oapiClient: oapiClient}, zone)
+	}
 }

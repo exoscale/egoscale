@@ -18,7 +18,7 @@ func NewCompute(c *oapi.ClientWithResponses) *Compute {
 //return NewInstances(a.oapiClient)
 //}
 
-func (a *Compute) InstanceTypess() *InstanceTypes {
+func (a *Compute) InstanceTypes() *InstanceTypes {
 	return NewInstanceTypes(a.oapiClient)
 }
 

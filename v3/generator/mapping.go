@@ -12,6 +12,13 @@ var APIMap = Map{
 				{Name: "Get", OAPIName: "GetSshKey"},
 			},
 		},
+		{
+			RootName: "InstanceTypes",
+			Fns: []Fn{
+				{Name: "List", OAPIName: "ListInstanceTypes"},
+				{Name: "Get", OAPIName: "GetInstanceType"},
+			},
+		},
 	},
 	"dbaas": []Entity{
 		{

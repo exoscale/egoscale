@@ -18,6 +18,10 @@ func NewCompute(c *oapi.ClientWithResponses) *Compute {
 //return NewInstances(a.oapiClient)
 //}
 
+func (a *Compute) InstanceTypess() *InstanceTypes {
+	return NewInstanceTypes(a.oapiClient)
+}
+
 func (c *Compute) SSHKeys() *SSHKeys {
 	return NewSSHKeys(c.oapiClient)
 }

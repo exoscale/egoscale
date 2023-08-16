@@ -22,6 +22,10 @@ func (a *Compute) InstanceTypes() *InstanceTypes {
 	return NewInstanceTypes(a.oapiClient)
 }
 
+func (c *Compute) PrivateNetworks() *PrivateNetworks {
+	return NewPrivateNetworks(c.oapiClient)
+}
+
 func (c *Compute) SSHKeys() *SSHKeys {
 	return NewSSHKeys(c.oapiClient)
 }

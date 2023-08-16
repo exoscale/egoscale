@@ -4,19 +4,29 @@ package main
 var APIMap = Map{
 	"compute": []Entity{
 		{
+			RootName: "InstanceTypes",
+			Fns: []Fn{
+				{Name: "List", OAPIName: "ListInstanceTypes"},
+				{Name: "Get", OAPIName: "GetInstanceType"},
+			},
+		},
+		{
+			RootName: "PrivateNetworks",
+			Fns: []Fn{
+				{Name: "List", OAPIName: "ListPrivateNetworks"},
+				{Name: "Get", OAPIName: "GetPrivateNetwork"},
+				{Name: "Create", OAPIName: "CreatePrivateNetwork"},
+				{Name: "Update", OAPIName: "UpdatePrivateNetwork"},
+				{Name: "Delete", OAPIName: "DeletePrivateNetwork"},
+			},
+		},
+		{
 			RootName: "SSHKeys",
 			Fns: []Fn{
 				{Name: "List", OAPIName: "ListSshKeys"},
 				{Name: "Register", OAPIName: "RegisterSshKey"},
 				{Name: "Delete", OAPIName: "DeleteSshKey"},
 				{Name: "Get", OAPIName: "GetSshKey"},
-			},
-		},
-		{
-			RootName: "InstanceTypes",
-			Fns: []Fn{
-				{Name: "List", OAPIName: "ListInstanceTypes"},
-				{Name: "Get", OAPIName: "GetInstanceType"},
 			},
 		},
 	},

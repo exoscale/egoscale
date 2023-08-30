@@ -4,6 +4,19 @@ package main
 var APIMap = Map{
 	"compute": []Entity{
 		{
+			RootName: "Instance",
+			Fns: []Fn{
+				{Name: "ResetPassword", OAPIName: "ResetInstancePassword"},
+				{Name: "Get", OAPIName: "GetInstance"},
+				{
+					Name:                   "List",
+					OAPIName:               "ListInstances",
+					ResDefOverride:         "[]oapi.InstancesListElement",
+					ResPassthroughOverride: "oapi.FromListInstancesResponse(resp)",
+				},
+			},
+		},
+		{
 			RootName: "InstanceTypes",
 			Fns: []Fn{
 				{Name: "List", OAPIName: "ListInstanceTypes"},

@@ -14,9 +14,9 @@ func NewCompute(c *oapi.ClientWithResponses) *Compute {
 	return &Compute{c}
 }
 
-//func (a *Compute) Instances() *Instaces {
-//return NewInstances(a.oapiClient)
-//}
+func (a *Compute) Instance() *Instance {
+	return NewInstance(a.oapiClient)
+}
 
 func (a *Compute) InstanceTypes() *InstanceTypes {
 	return NewInstanceTypes(a.oapiClient)

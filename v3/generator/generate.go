@@ -99,14 +99,14 @@ func FuncOptArgs(node *ast.File, name string) []string {
 		for i := 1; i < len(fn.Type.Params.List)-1; i++ {
 			param := fn.Type.Params.List[i]
 			switch t := param.Type.(type) {
-			case *ast.SelectorExpr: //external type
+			case *ast.SelectorExpr: // external type
 				params = append(params, fmt.Sprintf(
 					"%s %s.%s",
 					param.Names[0].Name,
 					t.X.(*ast.Ident).Name,
 					t.Sel.Name,
 				))
-			case *ast.Ident: //internal or builtin type
+			case *ast.Ident: // internal or builtin type
 				var format string
 				if strings.HasSuffix(t.Name, "RequestBody") {
 					// internal type, append package name
@@ -119,6 +119,22 @@ func FuncOptArgs(node *ast.File, name string) []string {
 					format,
 					param.Names[0].Name,
 					t.Name,
+				))
+			case *ast.StarExpr: // type passed by pointer
+				tt := t.X.(*ast.Ident)
+				var format string
+
+				if strings.HasSuffix(tt.Name, "Params") {
+					// internal type, append package name
+					format = "%s *oapi.%s"
+				} else {
+					// builtin
+					format = "%s *%s"
+				}
+				params = append(params, fmt.Sprintf(
+					format,
+					param.Names[0].Name,
+					tt.Name,
 				))
 			default:
 				// Panic to print useful error message.

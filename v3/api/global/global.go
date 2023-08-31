@@ -19,3 +19,7 @@ func (a *Global) OrgQuotas() *OrgQuotas {
 func (a *Global) Operations() *Operation {
 	return NewOperation(a.oapiClient)
 }
+
+func (a *Global) Zones() *Zones {
+	return NewZones(a.oapiClient)
+}

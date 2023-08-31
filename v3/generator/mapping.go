@@ -89,5 +89,11 @@ var APIMap = Map{
 				{Name: "Get", OAPIName: "GetQuota"},
 			},
 		},
+		{
+			RootName: "Zones",
+			Fns: []Fn{
+				{Name: "List", OAPIName: "ListZones"},
+			},
+		},
 	},
 }

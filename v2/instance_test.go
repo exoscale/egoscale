@@ -57,7 +57,7 @@ func (ts *testSuite) TestClient_AttachInstanceToElasticIP() {
 		).
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
-				oapi.AttachInstanceToElasticIpJSONRequestBody{Instance: oapi.Instance{Id: &testInstanceID}},
+				oapi.AttachInstanceToElasticIpJSONRequestBody{Instance: oapi.InstanceTarget{Id: &testInstanceID}},
 				args.Get(2),
 			)
 			attached = true
@@ -576,7 +576,7 @@ func (ts *testSuite) TestClient_DetachInstanceFromElasticIP() {
 		).
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
-				oapi.DetachInstanceFromElasticIpJSONRequestBody{Instance: oapi.Instance{Id: &testInstanceID}},
+				oapi.DetachInstanceFromElasticIpJSONRequestBody{Instance: oapi.InstanceTarget{Id: &testInstanceID}},
 				args.Get(2),
 			)
 			detached = true

@@ -30,19 +30,19 @@ var APIMap = Map{
 			},
 		},
 	},
-	"DBaaS": []Entity{
-		{
-			RootName: "Integrations",
-			Fns: []Fn{
-				{
-					Name:                   "ListSettings",
-					OAPIName:               "ListDbaasIntegrationSettings",
-					ResDefOverride:         "*oapi.DBaaSIntegrationSettings",
-					ResPassthroughOverride: "oapi.FromListDbaasIntegrationSettingsResponse(resp)",
-				},
-			},
-		},
-	},
+	// "DBaaS": []Entity{
+	// 	{
+	// 		RootName: "Integrations",
+	// 		Fns: []Fn{
+	// 			{
+	// 				Name:                   "ListSettings",
+	// 				OAPIName:               "ListDbaasIntegrationSettings",
+	// 				ResDefOverride:         "*oapi.DBaaSIntegrationSettings",
+	// 				ResPassthroughOverride: "oapi.FromListDbaasIntegrationSettingsResponse(resp)",
+	// 			},
+	// 		},
+	// 	},
+	// },
 	"DNS": nil,
 	"IAM": []Entity{
 		{

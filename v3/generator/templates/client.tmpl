@@ -5,9 +5,26 @@ import ({{ range .Groups }}
     "github.com/exoscale/egoscale/v3/api/{{ .PackageName }}"{{ end }}
 )
 
+type ClientIface interface {
+{{ range .Groups }}
+   {{ .ResourceName }}() *{{ .PackageName }}.{{ .ResourceName }}
+{{ end }}
+}
+
 {{ range .Groups }}
 // {{ .ResourceName }} provides access to {{ .ResourceName }} resources on Exoscale platform.
-func (c *Client) {{ .ResourceName }}() *{{ .PackageName }}.{{ .ResourceName }} {
+func (c *Client) {{ .ResourceName }}() {{ .PackageName }}.{{ .ResourceName }}Iface {
 	return {{ .PackageName }}.New{{ .ResourceName }}(c.oapiClient)
 }
 {{ end }}
+
+
+// mock client
+type MockClient struct {}
+{{ range .Groups }}
+// {{ .ResourceName }} provides access to {{ .ResourceName }} resources on Exoscale platform.
+func (c *MockClient) {{ .ResourceName }}() {{ .PackageName }}.{{ .ResourceName }}Iface {
+	return {{ .PackageName }}.NewMock{{ .ResourceName }}()
+}
+{{ end }}
+

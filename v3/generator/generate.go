@@ -49,13 +49,22 @@ func Generate() {
 				} else {
 					resType, subpath := FuncResp(node, fn.OAPIName)
 					fn.ResDef = "*" + resType
+					fn.ResInitializer = fmt.Sprintf(`struct {
+		JSON200 %s
+	}{}`, fn.ResDef)
 					fn.ResPassthrough = "resp.JSON200"
 					if subpath != "" {
 						fn.ResPassthrough = fmt.Sprintf("%s.%s", fn.ResPassthrough, subpath)
+						fn.ResInitializer = fmt.Sprintf(`struct {
+		JSON200 struct {
+			%s %s
+		}
+	}{}`, subpath, fn.ResDef)
 					}
 					if strings.HasPrefix(fn.ResDef, "*[]") {
 						fn.ResPassthrough = "*" + fn.ResPassthrough
 						fn.ResDef = strings.TrimPrefix(fn.ResDef, "*")
+						// fn.ResInitializer = fmt.Sprintf("make(%s, 0)", fn.ResDef)
 					}
 				}
 

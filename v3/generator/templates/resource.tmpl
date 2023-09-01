@@ -11,11 +11,17 @@ import (
 {{end -}}
 )
 
+type {{.RootName}}Iface interface {
+{{ range .Fns}}
+   {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{printf ", %s" .OptArgsDef}}{{end}}) ({{.ResDef}}, error)
+{{ end }}
+}
+
 type {{.RootName}} struct {
 	oapiClient *oapi.ClientWithResponses
 }
 
-func New{{.RootName}}(c *oapi.ClientWithResponses) *{{.RootName}} {
+func New{{.RootName}}(c *oapi.ClientWithResponses) {{.RootName}}Iface {
 	return &{{.RootName}}{c}
 }
 {{ range .Fns}}
@@ -25,7 +31,33 @@ func (a *{{$.RootName}}) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{printf
 		return nil, err
 	}
 
+    err = utils.WriteTestdata(nil, resp.JSON200, resp.StatusCode())
+	if err != nil {
+		return nil, err
+	}
+
 	err = utils.ParseResponseError(resp.StatusCode(), resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return {{.ResPassthrough}}, nil
+}
+{{ end }}
+
+type Mock{{.RootName}} struct {
+     CallCount int
+}
+
+func NewMock{{.RootName}}() *Mock{{.RootName}} {
+	return &Mock{{.RootName}}{}
+}
+{{ range .Fns}}
+func (a *Mock{{$.RootName}}) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{printf ", %s" .OptArgsDef}}{{end}}) ({{.ResDef}}, error) {
+    a.CallCount++
+
+	resp := {{ .ResInitializer }}
+    err := utils.GetTestCall(a.CallCount, &resp.JSON200)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,10 @@ package dbaas
 
 import "github.com/exoscale/egoscale/v3/oapi"
 
-// DBaaS provides access to [Exoscale DBaaS] API resources.
+type DBaaSIface interface {
+	Integrations() *Integrations
+}
+
 //
 // [Exoscale DBaaS]: https://community.exoscale.com/documentation/dbaas/
 type DBaaS struct {
@@ -17,3 +20,14 @@ func NewDBaaS(c *oapi.ClientWithResponses) *DBaaS {
 func (a *DBaaS) Integrations() *Integrations {
 	return NewIntegrations(a.oapiClient)
 }
+
+type MockDBaaS struct {
+}
+
+func NewMockDBaaS(c *oapi.ClientWithResponses) DBaaSIface {
+	return &MockDBaaS{}
+}
+
+// func (a *MockDBaaS) Integrations() IntegrationsIface {
+// 	return NewMockIntegrations()
+// }

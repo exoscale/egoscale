@@ -2,37 +2,68 @@
 package v3
 
 import (
-    "github.com/exoscale/egoscale/v3/api/dns"
     "github.com/exoscale/egoscale/v3/api/compute"
-    "github.com/exoscale/egoscale/v3/api/dbaas"
     "github.com/exoscale/egoscale/v3/api/iam"
     "github.com/exoscale/egoscale/v3/api/global"
+    "github.com/exoscale/egoscale/v3/api/dns"
 )
 
+type ClientIface interface {
 
+   Compute() *compute.Compute
 
-// DNS provides access to DNS resources on Exoscale platform.
-func (c *Client) DNS() *dns.DNS {
-	return dns.NewDNS(c.oapiClient)
+   IAM() *iam.IAM
+
+   Global() *global.Global
+
+   DNS() *dns.DNS
+
 }
 
+
 // Compute provides access to Compute resources on Exoscale platform.
-func (c *Client) Compute() *compute.Compute {
+func (c *Client) Compute() compute.ComputeIface {
 	return compute.NewCompute(c.oapiClient)
 }
 
-// DBaaS provides access to DBaaS resources on Exoscale platform.
-func (c *Client) DBaaS() *dbaas.DBaaS {
-	return dbaas.NewDBaaS(c.oapiClient)
-}
-
 // IAM provides access to IAM resources on Exoscale platform.
-func (c *Client) IAM() *iam.IAM {
+func (c *Client) IAM() iam.IAMIface {
 	return iam.NewIAM(c.oapiClient)
 }
 
 // Global provides access to Global resources on Exoscale platform.
-func (c *Client) Global() *global.Global {
+func (c *Client) Global() global.GlobalIface {
 	return global.NewGlobal(c.oapiClient)
 }
+
+// DNS provides access to DNS resources on Exoscale platform.
+func (c *Client) DNS() dns.DNSIface {
+	return dns.NewDNS(c.oapiClient)
+}
+
+
+
+// mock client
+type MockClient struct {}
+
+// Compute provides access to Compute resources on Exoscale platform.
+func (c *MockClient) Compute() compute.ComputeIface {
+	return compute.NewMockCompute()
+}
+
+// IAM provides access to IAM resources on Exoscale platform.
+func (c *MockClient) IAM() iam.IAMIface {
+	return iam.NewMockIAM()
+}
+
+// Global provides access to Global resources on Exoscale platform.
+func (c *MockClient) Global() global.GlobalIface {
+	return global.NewMockGlobal()
+}
+
+// DNS provides access to DNS resources on Exoscale platform.
+func (c *MockClient) DNS() dns.DNSIface {
+	return dns.NewMockDNS()
+}
+
 

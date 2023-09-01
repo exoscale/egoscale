@@ -32,6 +32,7 @@ type Fn struct {
 	// Computed (don't set values manually)
 	OptArgsDef         string
 	OptArgsPassthrough string
+	ResInitializer     string
 	ResDef             string
 	ResPassthrough     string
 }

@@ -22,7 +22,33 @@ func (a *Integrations) ListSettings(ctx context.Context, integrationType string,
 		return nil, err
 	}
 
+    err = utils.WriteTestdata(nil, resp.JSON200, resp.StatusCode())
+	if err != nil {
+		return nil, err
+	}
+
 	err = utils.ParseResponseError(resp.StatusCode(), resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return oapi.FromListDbaasIntegrationSettingsResponse(resp), nil
+}
+
+
+type MockIntegrations struct {
+     CallCount int
+}
+
+func NewMockIntegrations() *MockIntegrations {
+	return &MockIntegrations{}
+}
+
+func (a *MockIntegrations) ListSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*oapi.DBaaSIntegrationSettings, error) {
+    a.CallCount++
+
+	resp := 
+    err := utils.GetTestCall(a.CallCount, &resp.JSON200)
 	if err != nil {
 		return nil, err
 	}

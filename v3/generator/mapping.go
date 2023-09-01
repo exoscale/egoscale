@@ -2,7 +2,7 @@ package main
 
 // APIMap maps oapi functions to Consumer API.
 var APIMap = Map{
-	"compute": []Entity{
+	"Compute": []Entity{
 		{
 			RootName: "InstanceTypes",
 			Fns: []Fn{
@@ -30,7 +30,7 @@ var APIMap = Map{
 			},
 		},
 	},
-	"dbaas": []Entity{
+	"DBaaS": []Entity{
 		{
 			RootName: "Integrations",
 			Fns: []Fn{
@@ -43,8 +43,8 @@ var APIMap = Map{
 			},
 		},
 	},
-	"dns": nil,
-	"iam": []Entity{
+	"DNS": nil,
+	"IAM": []Entity{
 		{
 			RootName: "Roles",
 			Fns: []Fn{
@@ -75,7 +75,7 @@ var APIMap = Map{
 			},
 		},
 	},
-	"global": []Entity{
+	"Global": []Entity{
 		{
 			RootName: "Operation",
 			Fns: []Fn{

@@ -14,6 +14,8 @@ import (
 
 // Generate is a command the generates Consumer API according to the mapping in mapping.go file.
 func Generate() {
+	clientTpl := template.Must(template.ParseFiles("templates/client.tmpl"))
+
 	tpl := template.Must(template.ParseFiles("templates/resource.tmpl"))
 
 	fset := token.NewFileSet()
@@ -23,6 +25,7 @@ func Generate() {
 	}
 
 	for group, entities := range APIMap {
+		group = strings.ToLower(group)
 		for _, entity := range entities {
 			entity.Package = group
 
@@ -75,6 +78,35 @@ func Generate() {
 				panic(err)
 			}
 		}
+
+	}
+
+	type TplData struct {
+		Groups []struct {
+			PackageName  string
+			ResourceName string
+		}
+	}
+	var tplData TplData
+
+	for group := range APIMap {
+		tplData.Groups = append(tplData.Groups, struct {
+			PackageName  string
+			ResourceName string
+		}{
+			PackageName:  strings.ToLower(group),
+			ResourceName: group,
+		})
+	}
+
+	f, err := os.Create("../client.gen.go")
+	if err != nil {
+		panic(err)
+	}
+
+	err = clientTpl.Execute(f, &tplData)
+	if err != nil {
+		panic(err)
 	}
 }
 

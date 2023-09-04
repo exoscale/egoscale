@@ -132,6 +132,7 @@ type Client struct {
 	timeout      time.Duration
 	pollInterval time.Duration
 	trace        bool
+	recordToFile string
 	httpClient   *http.Client
 }
 
@@ -175,6 +176,11 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 	// otherwise the response won't be dumped in case of an API error.
 	if client.trace {
 		client.httpClient.Transport = api.NewTraceMiddleware(client.httpClient.Transport)
+	}
+
+	client.recordToFile = "asdf"
+	if client.recordToFile != "" {
+		client.httpClient.Transport = api.NewRecordMiddleware(client.httpClient.Transport)
 	}
 
 	client.httpClient.Transport = api.NewAPIErrorHandlerMiddleware(client.httpClient.Transport)

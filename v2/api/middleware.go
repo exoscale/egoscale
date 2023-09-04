@@ -1,9 +1,11 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -94,6 +96,86 @@ func (t *TraceMiddleware) RoundTrip(req *http.Request) (*http.Response, error) {
 		if dump, err := httputil.DumpResponse(resp, true); err == nil {
 			fmt.Fprintf(os.Stderr, "<<< %s\n", dump)
 		}
+	}
+
+	return resp, err
+}
+
+// RecordMiddleware is a client HTTP middleware that dumps HTTP requests and responses content.
+type RecordMiddleware struct {
+	next http.RoundTripper
+}
+
+func NewRecordMiddleware(next http.RoundTripper) Middleware {
+	if next == nil {
+		next = http.DefaultTransport
+	}
+
+	return &RecordMiddleware{next: next}
+}
+
+func cloneReadCloser(rc io.ReadCloser) (io.ReadCloser, io.ReadCloser, error) {
+	if rc == nil {
+		return nil, nil, nil
+	}
+
+	// Read the data from the original ReadCloser
+	data, err := ioutil.ReadAll(rc)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Create a new ReadCloser from a bytes.Buffer containing the data
+	buffer := bytes.NewBuffer(data)
+	newReadCloser := ioutil.NopCloser(buffer)
+
+	// Create a new ReadCloser from the original data
+	originalReadCloser := ioutil.NopCloser(bytes.NewReader(data))
+
+	return newReadCloser, originalReadCloser, nil
+}
+
+func dumpStuff(r io.ReadCloser, prefix string) {
+	if r == nil {
+		fmt.Printf("%s: (empty)\n", prefix)
+
+		return
+	}
+
+	content := make(map[string]interface{})
+	err := json.NewDecoder(r).Decode(&content)
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		respJSON, err := json.MarshalIndent(content, " ", "    ")
+		if err != nil {
+			fmt.Println(err.Error())
+		} else {
+			fmt.Println(prefix+":", string(respJSON))
+		}
+	}
+}
+
+func (t *RecordMiddleware) RoundTrip(req *http.Request) (*http.Response, error) {
+	n, o, err := cloneReadCloser(req.Body)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	req.Body = o
+	dumpStuff(n, "req")
+
+	fmt.Println("----------------------------------------------------------------------")
+
+	resp, err := t.next.RoundTrip(req)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, ">>> %s\n", err.Error())
+	} else {
+		n, o, err := cloneReadCloser(resp.Body)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		resp.Body = o
+		dumpStuff(n, "resp")
 	}
 
 	return resp, err

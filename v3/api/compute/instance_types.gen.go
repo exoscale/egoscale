@@ -80,7 +80,13 @@ func (a *MockInstanceTypes) List(ctx context.Context) ([]oapi.InstanceType, erro
 		JSON200 struct {
 			InstanceTypes *[]oapi.InstanceType
 		}
-	}{}
+	}{
+		JSON200: struct {
+			InstanceTypes *[]oapi.InstanceType
+		} {
+			InstanceTypes: &[]oapi.InstanceType{},
+		},
+	}
     err := utils.GetTestCall(a.CallCount, &resp.JSON200)
 	if err != nil {
 		return nil, err

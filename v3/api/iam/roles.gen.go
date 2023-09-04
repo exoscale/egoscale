@@ -164,7 +164,13 @@ func (a *MockRoles) List(ctx context.Context) ([]oapi.IamRole, error) {
 		JSON200 struct {
 			IamRoles *[]oapi.IamRole
 		}
-	}{}
+	}{
+		JSON200: struct {
+			IamRoles *[]oapi.IamRole
+		} {
+			IamRoles: &[]oapi.IamRole{},
+		},
+	}
     err := utils.GetTestCall(a.CallCount, &resp.JSON200)
 	if err != nil {
 		return nil, err

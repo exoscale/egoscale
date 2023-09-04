@@ -59,12 +59,29 @@ func Generate() {
 		JSON200 struct {
 			%s %s
 		}
-	}{}`, subpath, fn.ResDef)
+	}{
+		JSON200: struct {
+			%s %s
+		} {
+			%s: %s,
+		},
+	}`, subpath, fn.ResDef, subpath, fn.ResDef, subpath, resType)
 					}
 					if strings.HasPrefix(fn.ResDef, "*[]") {
 						fn.ResPassthrough = "*" + fn.ResPassthrough
-						fn.ResDef = strings.TrimPrefix(fn.ResDef, "*")
 						// fn.ResInitializer = fmt.Sprintf("make(%s, 0)", fn.ResDef)
+						fn.ResInitializer = fmt.Sprintf(`struct {
+		JSON200 struct {
+			%s %s
+		}
+	}{
+		JSON200: struct {
+			%s %s
+		} {
+			%s: &%s{},
+		},
+	}`, subpath, fn.ResDef, subpath, fn.ResDef, subpath, resType)
+						fn.ResDef = strings.TrimPrefix(fn.ResDef, "*")
 					}
 				}
 

@@ -120,7 +120,13 @@ func (a *MockSSHKeys) List(ctx context.Context) ([]oapi.SshKey, error) {
 		JSON200 struct {
 			SshKeys *[]oapi.SshKey
 		}
-	}{}
+	}{
+		JSON200: struct {
+			SshKeys *[]oapi.SshKey
+		} {
+			SshKeys: &[]oapi.SshKey{},
+		},
+	}
     err := utils.GetTestCall(a.CallCount, &resp.JSON200)
 	if err != nil {
 		return nil, err

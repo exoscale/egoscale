@@ -143,7 +143,13 @@ func (a *MockPrivateNetworks) List(ctx context.Context) ([]oapi.PrivateNetwork, 
 		JSON200 struct {
 			PrivateNetworks *[]oapi.PrivateNetwork
 		}
-	}{}
+	}{
+		JSON200: struct {
+			PrivateNetworks *[]oapi.PrivateNetwork
+		} {
+			PrivateNetworks: &[]oapi.PrivateNetwork{},
+		},
+	}
     err := utils.GetTestCall(a.CallCount, &resp.JSON200)
 	if err != nil {
 		return nil, err

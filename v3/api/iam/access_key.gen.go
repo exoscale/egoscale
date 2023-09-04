@@ -162,7 +162,13 @@ func (a *MockAccessKey) List(ctx context.Context) ([]oapi.AccessKey, error) {
 		JSON200 struct {
 			AccessKeys *[]oapi.AccessKey
 		}
-	}{}
+	}{
+		JSON200: struct {
+			AccessKeys *[]oapi.AccessKey
+		} {
+			AccessKeys: &[]oapi.AccessKey{},
+		},
+	}
     err := utils.GetTestCall(a.CallCount, &resp.JSON200)
 	if err != nil {
 		return nil, err
@@ -178,7 +184,13 @@ func (a *MockAccessKey) ListKnownOperations(ctx context.Context) ([]oapi.AccessK
 		JSON200 struct {
 			AccessKeyOperations *[]oapi.AccessKeyOperation
 		}
-	}{}
+	}{
+		JSON200: struct {
+			AccessKeyOperations *[]oapi.AccessKeyOperation
+		} {
+			AccessKeyOperations: &[]oapi.AccessKeyOperation{},
+		},
+	}
     err := utils.GetTestCall(a.CallCount, &resp.JSON200)
 	if err != nil {
 		return nil, err
@@ -194,7 +206,13 @@ func (a *MockAccessKey) ListOperations(ctx context.Context) ([]oapi.AccessKeyOpe
 		JSON200 struct {
 			AccessKeyOperations *[]oapi.AccessKeyOperation
 		}
-	}{}
+	}{
+		JSON200: struct {
+			AccessKeyOperations *[]oapi.AccessKeyOperation
+		} {
+			AccessKeyOperations: &[]oapi.AccessKeyOperation{},
+		},
+	}
     err := utils.GetTestCall(a.CallCount, &resp.JSON200)
 	if err != nil {
 		return nil, err

@@ -135,25 +135,35 @@ func cloneReadCloser(rc io.ReadCloser) (io.ReadCloser, io.ReadCloser, error) {
 	return newReadCloser, originalReadCloser, nil
 }
 
-func dumpStuff(r io.ReadCloser, prefix string) {
-	if r == nil {
-		fmt.Printf("%s: (empty)\n", prefix)
+func dumpContent(r io.ReadCloser) map[string]interface{} {
+	// if r == nil {
+	// 	fmt.Printf("%s: (empty)\n", prefix)
 
-		return
-	}
+	// 	return
+	// }
 
 	content := make(map[string]interface{})
+	if r == nil {
+		return content
+	}
+
 	err := json.NewDecoder(r).Decode(&content)
 	if err != nil {
 		fmt.Println(err.Error())
-	} else {
-		respJSON, err := json.MarshalIndent(content, " ", "    ")
-		if err != nil {
-			fmt.Println(err.Error())
-		} else {
-			fmt.Println(prefix+":", string(respJSON))
-		}
 	}
+
+	return content
+
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// } else {
+	// 	respJSON, err := json.MarshalIndent(content, " ", "    ")
+	// 	if err != nil {
+	// 		fmt.Println(err.Error())
+	// 	} else {
+	// 		fmt.Println(prefix+":", string(respJSON))
+	// 	}
+	// }
 }
 
 func (t *RecordMiddleware) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -162,20 +172,23 @@ func (t *RecordMiddleware) RoundTrip(req *http.Request) (*http.Response, error) 
 		fmt.Println(err.Error())
 	}
 	req.Body = o
-	dumpStuff(n, "req")
-
-	fmt.Println("----------------------------------------------------------------------")
+	reqContent := dumpContent(n)
 
 	resp, err := t.next.RoundTrip(req)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, ">>> %s\n", err.Error())
+		fmt.Println(err.Error())
 	} else {
 		n, o, err := cloneReadCloser(resp.Body)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
 		resp.Body = o
-		dumpStuff(n, "resp")
+		respContent := dumpContent(n)
+
+		err = WriteTestdata(reqContent, respContent, resp.StatusCode)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 	}
 
 	return resp, err

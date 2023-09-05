@@ -73,6 +73,15 @@ func ClientOptWithTimeout(v time.Duration) ClientOpt {
 	}
 }
 
+// ClientOptWithRecording...
+func ClientOptWithRecording(recordToFile string) ClientOpt {
+	return func(c *Client) error {
+		c.recordToFile = recordToFile
+
+		return nil
+	}
+}
+
 // ClientOptWithPollInterval returns a ClientOpt overriding the default client async operation polling interval.
 func ClientOptWithPollInterval(v time.Duration) ClientOpt {
 	return func(c *Client) error {
@@ -178,7 +187,6 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 		client.httpClient.Transport = api.NewTraceMiddleware(client.httpClient.Transport)
 	}
 
-	client.recordToFile = "asdf"
 	if client.recordToFile != "" {
 		client.httpClient.Transport = api.NewRecordMiddleware(client.httpClient.Transport)
 	}

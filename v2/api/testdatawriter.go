@@ -21,8 +21,7 @@ type TestFlow struct {
 }
 
 var (
-	testdataFilename = "testdata.json"
-	mu               sync.Mutex
+	mu sync.Mutex
 )
 
 func ReadTestdata(fileName string) (*TestFlow, error) {
@@ -50,8 +49,8 @@ func ReadTestdata(fileName string) (*TestFlow, error) {
 	return tf, nil
 }
 
-func GetTestCall(callNr int, callResp interface{}) error {
-	testflow, err := ReadTestdata(testdataFilename)
+func GetTestCall(filename string, callNr int, callResp interface{}) error {
+	testflow, err := ReadTestdata(filename)
 	if err != nil {
 		return fmt.Errorf("error reading test data %w", err)
 	}
@@ -74,11 +73,11 @@ func GetTestCall(callNr int, callResp interface{}) error {
 	return nil
 }
 
-func WriteTestdata(req, resp interface{}, respStatus int) error {
+func WriteTestdata(filename string, req, resp interface{}, respStatus int) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	tf, err := ReadTestdata(testdataFilename)
+	tf, err := ReadTestdata(filename)
 	if err != nil {
 		return fmt.Errorf("error reading test data before writing %w", err)
 	}
@@ -94,7 +93,7 @@ func WriteTestdata(req, resp interface{}, respStatus int) error {
 		return fmt.Errorf("error marshalling with ident %w", err)
 	}
 
-	f, err := os.Create(testdataFilename)
+	f, err := os.Create(filename)
 	if err != nil {
 		return fmt.Errorf("error opening file for writing %w", err)
 	}

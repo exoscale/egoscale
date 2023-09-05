@@ -82,6 +82,15 @@ func ClientOptWithRecording(recordToFile string) ClientOpt {
 	}
 }
 
+// ClientOptWithReplay...
+func ClientOptWithReplay(replayFromFile string) ClientOpt {
+	return func(c *Client) error {
+		c.replayFromFile = replayFromFile
+
+		return nil
+	}
+}
+
 // ClientOptWithPollInterval returns a ClientOpt overriding the default client async operation polling interval.
 func ClientOptWithPollInterval(v time.Duration) ClientOpt {
 	return func(c *Client) error {
@@ -135,14 +144,15 @@ type oapiClient interface {
 type Client struct {
 	oapiClient
 
-	apiKey       string
-	apiSecret    string
-	apiEndpoint  string
-	timeout      time.Duration
-	pollInterval time.Duration
-	trace        bool
-	recordToFile string
-	httpClient   *http.Client
+	apiKey         string
+	apiSecret      string
+	apiEndpoint    string
+	timeout        time.Duration
+	pollInterval   time.Duration
+	trace          bool
+	recordToFile   string
+	replayFromFile string
+	httpClient     *http.Client
 }
 
 // NewClient returns a new Exoscale API client, or an error if one couldn't be initialized.
@@ -187,8 +197,16 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 		client.httpClient.Transport = api.NewTraceMiddleware(client.httpClient.Transport)
 	}
 
+	if client.recordToFile != "" && client.replayFromFile != "" {
+		return nil, fmt.Errorf("can't record and replay at the same time")
+	}
+
 	if client.recordToFile != "" {
-		client.httpClient.Transport = api.NewRecordMiddleware(client.httpClient.Transport)
+		client.httpClient.Transport = api.NewRecordMiddleware(client.httpClient.Transport, client.recordToFile)
+	}
+
+	if client.replayFromFile != "" {
+		client.httpClient.Transport = api.NewReplayMiddleware(client.httpClient.Transport, client.replayFromFile)
 	}
 
 	client.httpClient.Transport = api.NewAPIErrorHandlerMiddleware(client.httpClient.Transport)

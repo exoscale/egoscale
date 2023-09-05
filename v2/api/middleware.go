@@ -103,15 +103,19 @@ func (t *TraceMiddleware) RoundTrip(req *http.Request) (*http.Response, error) {
 
 // RecordMiddleware is a client HTTP middleware that dumps HTTP requests and responses content.
 type RecordMiddleware struct {
-	next http.RoundTripper
+	next     http.RoundTripper
+	filename string
 }
 
-func NewRecordMiddleware(next http.RoundTripper) Middleware {
+func NewRecordMiddleware(next http.RoundTripper, filename string) Middleware {
 	if next == nil {
 		next = http.DefaultTransport
 	}
 
-	return &RecordMiddleware{next: next}
+	return &RecordMiddleware{
+		next:     next,
+		filename: filename,
+	}
 }
 
 func cloneReadCloser(rc io.ReadCloser) (io.ReadCloser, io.ReadCloser, error) {
@@ -185,11 +189,65 @@ func (t *RecordMiddleware) RoundTrip(req *http.Request) (*http.Response, error) 
 		resp.Body = o
 		respContent := dumpContent(n)
 
-		err = WriteTestdata(reqContent, respContent, resp.StatusCode)
+		err = WriteTestdata(t.filename, reqContent, respContent, resp.StatusCode)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
 	}
 
 	return resp, err
+}
+
+type ReplayMiddleware struct {
+	next     http.RoundTripper
+	filename string
+}
+
+func NewReplayMiddleware(next http.RoundTripper, filename string) Middleware {
+	if next == nil {
+		next = http.DefaultTransport
+	}
+
+	return &ReplayMiddleware{
+		next:     next,
+		filename: filename,
+	}
+}
+
+var callNr int
+
+func (t *ReplayMiddleware) RoundTrip(req *http.Request) (*http.Response, error) {
+	// TODO check request body
+	// n, o, err := cloneReadCloser(req.Body)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// req.Body = o
+	// reqContent := dumpContent(n)
+
+	callContent := make(map[string]interface{})
+	err := GetTestCall(t.filename, callNr, &callContent)
+	if err != nil {
+		return nil, err
+	}
+	callNr++
+
+	respBody := bytes.Buffer{}
+	resp := &http.Response{
+		Status:     "200",
+		StatusCode: 200,
+		Body:       ioutil.NopCloser(&respBody),
+		Header:     make(http.Header),
+	}
+
+	resp.Header.Add("Content-Type", "json")
+	// case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+
+	err = json.NewEncoder(&respBody).Encode(callContent)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("respBody.Bytes(): %v\n", string(respBody.Bytes()))
+
+	return resp, nil
 }

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.101.1
+-------
+
+- fix: give correct permissions to release workflow
+
 0.101.0
 -------
 

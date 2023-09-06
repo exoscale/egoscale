@@ -12,12 +12,12 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
-// Generate is a command the generates Consumer API according to the mapping in mapping.go file.
+// Generate is a command the generates Consumer API according to the mapping in the mapping.go file.
 func Generate() {
 	tpl := template.Must(template.ParseFiles("templates/resource.tmpl"))
 
 	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, "../oapi/oapi.gen.go", nil, parser.ParseComments)
+	node, err := parser.ParseFile(fset, "../client.gen.go", nil, parser.ParseComments)
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +61,7 @@ func Generate() {
 
 			f, err := os.Create(
 				fmt.Sprintf(
-					"../api/%s/%s.gen.go",
+					"../%s_%s.gen.go",
 					group,
 					strcase.ToSnake(entity.RootName),
 				),
@@ -78,9 +78,7 @@ func Generate() {
 	}
 }
 
-// FuncOptArgs looks for function signature in oapi/oapi.gen.go and returns non-default arguments.
-// Default arguments are context.Context and oapi.RequestEditorsFn.
-// It will prepend "oapi." to locally defined types.
+// FuncOptArgs looks for function signature in client.gen.go and returns non-default arguments (default is server url).
 func FuncOptArgs(node *ast.File, name string) []string {
 	params := []string{}
 	found := false //to print useful error if function signature is not found.
@@ -91,12 +89,12 @@ func FuncOptArgs(node *ast.File, name string) []string {
 		if !ok {
 			return true
 		}
-		if fn.Name.Name != name+"WithResponse" {
+		if fn.Name.Name != "new"+name+"Request" {
 			return true
 		}
 		found = true
-		// Skip first (context.Context) and last (RequestEditorsFn...) parameter as they are always the same.
-		for i := 1; i < len(fn.Type.Params.List)-1; i++ {
+		// Skip first (server string) parameter.
+		for i := 1; i < len(fn.Type.Params.List); i++ {
 			param := fn.Type.Params.List[i]
 			switch t := param.Type.(type) {
 			case *ast.SelectorExpr: //external type
@@ -107,16 +105,8 @@ func FuncOptArgs(node *ast.File, name string) []string {
 					t.Sel.Name,
 				))
 			case *ast.Ident: //internal or builtin type
-				var format string
-				if strings.HasSuffix(t.Name, "RequestBody") {
-					// internal type, append package name
-					format = "%s oapi.%s"
-				} else {
-					// builtin
-					format = "%s %s"
-				}
 				params = append(params, fmt.Sprintf(
-					format,
+					"%s %s",
 					param.Names[0].Name,
 					t.Name,
 				))
@@ -130,14 +120,14 @@ func FuncOptArgs(node *ast.File, name string) []string {
 	})
 
 	if !found {
-		fmt.Printf("not found in oapi/oapi.gen.go: %s\n", name+"WithResponse")
+		fmt.Printf("not found in client.gen.go: %s\n", "new"+name+"Request")
 		os.Exit(1)
 	}
 
 	return params
 }
 
-// FuncResp looks for a response body structure in oapi/oapi.gen.go.
+// FuncResp looks for a response body structure in client.gen.go.
 // Returns type of JSON200 or nested struct attribute type and it's name.
 // Pointers are implicit.
 //
@@ -186,9 +176,9 @@ func FuncResp(node *ast.File, name string) (resType, subpath string) {
 			// Supported JSON200 types:
 			switch x := f.Type.(*ast.StarExpr).X.(type) {
 			case *ast.Ident: //defined oapi type
-				resType = fmt.Sprintf("oapi.%s", x.Name)
+				resType = fmt.Sprintf("%s", x.Name)
 			case *ast.ArrayType: //slice (usually List functions)
-				resType = fmt.Sprintf("[]oapi.%s", x.Elt.(*ast.Ident).Name)
+				resType = fmt.Sprintf("[]%s", x.Elt.(*ast.Ident).Name)
 			case *ast.StructType: //nested struct, limited support for single attribute structs
 				if len(x.Fields.List) != 1 {
 					fmt.Printf("found %s response, but has unsupported nested struct\n", name)
@@ -200,9 +190,9 @@ func FuncResp(node *ast.File, name string) (resType, subpath string) {
 
 				switch z := y.Type.(*ast.StarExpr).X.(type) {
 				case *ast.Ident: //defined oapi type
-					resType = fmt.Sprintf("oapi.%s", z.Name)
+					resType = fmt.Sprintf("%s", z.Name)
 				case *ast.ArrayType: //slice (usually List functions)
-					resType = fmt.Sprintf("[]oapi.%s", z.Elt.(*ast.Ident).Name)
+					resType = fmt.Sprintf("[]%s", z.Elt.(*ast.Ident).Name)
 				default:
 					// Panic to print useful error message.
 					_ = z.(*ast.Ident)

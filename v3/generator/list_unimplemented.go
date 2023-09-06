@@ -11,7 +11,7 @@ import (
 // ListUnimplemented goes though oapi client functions and prints thouse that are not yet mapped to Consumer API.
 func ListUnimplemented() {
 	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, "../oapi/oapi.gen.go", nil, parser.ParseComments)
+	node, err := parser.ParseFile(fset, "../client.gen.go", nil, parser.ParseComments)
 	if err != nil {
 		panic(err)
 	}
@@ -30,8 +30,9 @@ func ListUnimplemented() {
 		if !ok {
 			return true
 		}
-		if strings.HasSuffix(fn.Name.Name, "WithResponse") && !strings.HasSuffix(fn.Name.Name, "WithBodyWithResponse") {
-			n := strings.TrimSuffix(fn.Name.Name, "WithResponse")
+		if strings.HasSuffix(fn.Name.Name, "Response") {
+			n := strings.TrimSuffix(fn.Name.Name, "Response")
+			n = strings.TrimPrefix(n, "parse")
 			if _, ok := implemented[n]; !ok {
 				fmt.Println(n)
 			}

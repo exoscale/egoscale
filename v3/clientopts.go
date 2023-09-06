@@ -1,11 +1,10 @@
 package v3
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
-
-	"github.com/exoscale/egoscale/v3/oapi"
 )
 
 const (
@@ -13,14 +12,16 @@ const (
 	EnvKeyAPISecret = "EXOSCALE_API_SECRET"
 )
 
+// RequestEditorFn  is the function signature for the RequestEditor callback function
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
+
 // ClientConfig hold Client configuration options.
 type ClientConfig struct {
 	creds      *Credentials
 	httpClient *http.Client
 	logger     Logger
 
-	requestEditors []oapi.RequestEditorFn
-	// TODO: implement response editors (not available in oapi, should be embeded in consumer API.
+	requestEditors []RequestEditorFn
 
 	// User-Agent prefix
 	uaPrefix string
@@ -71,9 +72,9 @@ func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
 	}
 }
 
-// ClientOptWithRequestEditor returns a ClientOpt that adds oapi.RequestEditorFn to oapi client.
-// Editors run sequentialy and this function appends provided editor funtion to the end of the list.
-func ClientOptWithRequestEditor(e oapi.RequestEditorFn) ClientOpt {
+// ClientOptWithRequestEditor returns a ClientOpt that adds RequestEditorFn to a client.
+// Editors run sequentialy and this function appends provided editor function to the end of the list.
+func ClientOptWithRequestEditor(e RequestEditorFn) ClientOpt {
 	return func(c *ClientConfig) error {
 		c.requestEditors = append(c.requestEditors, e)
 

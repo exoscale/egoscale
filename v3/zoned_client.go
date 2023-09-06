@@ -6,8 +6,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-
-	"github.com/exoscale/egoscale/v3/oapi"
 )
 
 const (
@@ -21,14 +19,14 @@ var (
 	// DefaultZones list (available in oapi code).
 	// When new zone is added or existing removed this slice needs to be updated.
 	// First zone in the slice is used as default in DefaultZonedClient.
-	DefaultZones = []oapi.ZoneName{
-		oapi.ChGva2,
-		oapi.AtVie1,
-		oapi.AtVie2,
-		oapi.BgSof1,
-		oapi.ChDk2,
-		oapi.DeFra1,
-		oapi.DeMuc1,
+	DefaultZones = []ZoneName{
+		ChGva2,
+		AtVie1,
+		AtVie2,
+		BgSof1,
+		ChDk2,
+		DeFra1,
+		DeMuc1,
 	}
 )
 
@@ -36,8 +34,8 @@ var (
 // It has the same interface as Client and uses currently selected zone to run API calls.
 // Consumer is expected to select zone before invoking API calls.
 type ZonedClient struct {
-	zones       map[oapi.ZoneName]*oapi.ClientWithResponses
-	currentZone oapi.ZoneName
+	zones       map[ZoneName]string
+	currentZone ZoneName
 	mx          sync.RWMutex
 
 	Client
@@ -51,7 +49,7 @@ type ZonedClient struct {
 // ClientOpt options will be passed down to Client as provided.
 // If EXOSCALE_API_ENDPOINT_PATTERN environment variable is set, it replaces urlPattern.
 // If EXOSCALE_API_ENDPOINT_ZONES environment variable is set (CSV format), it replaces zones.
-func NewZonedClient(urlPattern string, zones []oapi.ZoneName, opts ...ClientOpt) (*ZonedClient, error) {
+func NewZonedClient(urlPattern string, zones []ZoneName, opts ...ClientOpt) (*ZonedClient, error) {
 	if len(zones) == 0 {
 		return nil, errors.New("list of zones cannot be empty")
 	}
@@ -61,33 +59,39 @@ func NewZonedClient(urlPattern string, zones []oapi.ZoneName, opts ...ClientOpt)
 		urlPattern = h
 	}
 	if z := os.Getenv(EnvKeyAPIEndpointZones); z != "" {
-		zones = []oapi.ZoneName{}
+		zones = []ZoneName{}
 		parts := strings.Split(z, ",")
 		for _, part := range parts {
-			zones = append(zones, oapi.ZoneName(part))
+			zones = append(zones, ZoneName(part))
 		}
 	}
 
 	zonedClient := ZonedClient{
-		zones: map[oapi.ZoneName]*oapi.ClientWithResponses{},
+		zones: map[ZoneName]string{},
 	}
 
-	for _, zone := range zones {
-		client, err := NewClient(fmt.Sprintf(urlPattern, zone), opts...)
-		if err != nil {
-			return nil, err
+	for i, zone := range zones {
+		url := fmt.Sprintf(urlPattern, zone)
+
+		// Ensure the server URL always has a trailing slash
+		if !strings.HasSuffix(url, "/") {
+			url += "/"
 		}
 
-		if zonedClient.creds == nil {
-			zonedClient.creds = client.creds
-		}
+		zonedClient.zones[zone] = url
 
-		zonedClient.zones[zone] = client.oapiClient
+		// We use first zone in the provided sice as default.
+		if i == 0 {
+			zonedClient.currentZone = zone
+
+			client, err := NewClient(url, opts...)
+			if err != nil {
+				return nil, err
+			}
+
+			zonedClient.Client = *client
+		}
 	}
-
-	// Set default zone to first zone in the provided slice
-	zonedClient.currentZone = zones[0]
-	zonedClient.oapiClient = zonedClient.zones[zones[0]]
 
 	return &zonedClient, nil
 }
@@ -99,7 +103,7 @@ func DefaultClient(opts ...ClientOpt) (*ZonedClient, error) {
 }
 
 // Zone returns the current zone identifier.
-func (c *ZonedClient) Zone() oapi.ZoneName {
+func (c *ZonedClient) Zone() ZoneName {
 	c.mx.RLock()
 	defer c.mx.RUnlock()
 
@@ -107,34 +111,39 @@ func (c *ZonedClient) Zone() oapi.ZoneName {
 }
 
 // SetZone selects the current zone.
-func (c *ZonedClient) SetZone(z oapi.ZoneName) {
+func (c *ZonedClient) SetZone(z ZoneName) {
 	c.mx.Lock()
-	c.oapiClient = c.zones[z]
+	c.server = c.zones[z]
+	c.currentZone = z
 	c.mx.Unlock()
 }
 
-// InZone selects returns the instance of the Client in selected zone so the methods may be chained:
+// InZone selects the instance of the Client in selected zone so the methods may be chained:
 //
-//	zonedClient.InZone(oapi.ChGva2).OAPIClient()...
-func (c *ZonedClient) InZone(z oapi.ZoneName) *Client {
-	return &Client{
-		creds:      c.creds,
-		oapiClient: c.zones[z],
-	}
-}
-
-// OAPIClient returns configured instance of OpenAPI generated (low-level) API client in the selected zone.
-func (c *ZonedClient) OAPIClient() *oapi.ClientWithResponses {
+//	zonedClient.InZone(ChGva2).IAM()...
+func (c *ZonedClient) InZone(z ZoneName) *Client {
 	c.mx.RLock()
 	defer c.mx.RUnlock()
 
-	return c.Client.OAPIClient()
+	return &Client{
+		server:     c.zones[z],
+		httpClient: c.httpClient,
+		reqEditors: c.reqEditors,
+		logger:     c.logger,
+		creds:      c.creds,
+	}
 }
 
 // ForEachZone runs function f in each configured zone.
 // Argument of function f is configured Client for the zone.
-func (c *ZonedClient) ForEachZone(f func(c *Client, zone oapi.ZoneName)) {
-	for zone, oapiClient := range c.zones {
-		f(&Client{creds: c.creds, oapiClient: oapiClient}, zone)
+func (c *ZonedClient) ForEachZone(f func(c *Client, zone ZoneName)) {
+	for z, url := range c.zones {
+		f(&Client{
+			server:     url,
+			httpClient: c.httpClient,
+			reqEditors: c.reqEditors,
+			logger:     c.logger,
+			creds:      c.creds,
+		}, z)
 	}
 }

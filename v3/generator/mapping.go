@@ -2,7 +2,7 @@ package main
 
 // APIMap maps oapi functions to Consumer API.
 var APIMap = Map{
-	"compute": []Entity{
+	"compute": []Resource{
 		{
 			RootName: "InstanceTypes",
 			Fns: []Fn{
@@ -21,6 +21,20 @@ var APIMap = Map{
 			},
 		},
 		{
+			RootName: "LoadBalancers",
+			Fns: []Fn{
+				{Name: "List", OAPIName: "ListLoadBalancers"},
+				{Name: "Get", OAPIName: "GetLoadBalancer"},
+				{Name: "Create", OAPIName: "CreateLoadBalancer"},
+				{Name: "Update", OAPIName: "UpdateLoadBalancer"},
+				{Name: "Delete", OAPIName: "DeleteLoadBalancer"},
+				{Name: "GetService", OAPIName: "GetLoadBalancerService"},
+				{Name: "AddService", OAPIName: "AddServiceToLoadBalancer"},
+				{Name: "UpdateService", OAPIName: "UpdateLoadBalancerService"},
+				{Name: "DeleteService", OAPIName: "DeleteLoadBalancerService"},
+			},
+		},
+		{
 			RootName: "SSHKeys",
 			Fns: []Fn{
 				{Name: "List", OAPIName: "ListSshKeys"},
@@ -30,21 +44,21 @@ var APIMap = Map{
 			},
 		},
 	},
-	"dbaas": []Entity{
+	"dbaas": []Resource{
 		{
 			RootName: "Integrations",
 			Fns: []Fn{
 				{
 					Name:                   "ListSettings",
 					OAPIName:               "ListDbaasIntegrationSettings",
-					ResDefOverride:         "*oapi.DBaaSIntegrationSettings",
-					ResPassthroughOverride: "oapi.FromListDbaasIntegrationSettingsResponse(resp)",
+					ResDefOverride:         "*DBaaSIntegrationSettings",
+					ResPassthroughOverride: "fromListDbaasIntegrationSettingsResponse(resp)",
 				},
 			},
 		},
 	},
 	"dns": nil,
-	"iam": []Entity{
+	"iam": []Resource{
 		{
 			RootName: "Roles",
 			Fns: []Fn{
@@ -75,7 +89,7 @@ var APIMap = Map{
 			},
 		},
 	},
-	"global": []Entity{
+	"global": []Resource{
 		{
 			RootName: "Operation",
 			Fns: []Fn{

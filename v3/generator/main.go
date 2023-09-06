@@ -5,14 +5,14 @@ import (
 	"os"
 )
 
-// Map hold all mapping information that allows us to generate Consumer API.
-// Map is split into groups (subfolder) and each group contains one or many entities.
-type Map map[string][]Entity
+// Map holds all mapping information that allows us to generate API.
+// Map is split into platform sections and each section contains one or many resources.
+type Map map[string][]Resource
 
-// Entity represents a resource in Exoscale platform.
-type Entity struct {
+// Resource represents a resource in Exoscale platform.
+type Resource struct {
 	// Mandatory
-	RootName string //struct name where API functions will attach (filename is strcase.ToSnake(RootName))
+	RootName string //struct name where API functions will attach
 	Fns      []Fn   //list of API calls
 
 	// Computed (don't set values manually)
@@ -38,7 +38,7 @@ type Fn struct {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Println("available commands: generate, list-unused")
+		fmt.Println("Available commands: generate, list-unimplemented")
 		os.Exit(1)
 	}
 
@@ -47,5 +47,9 @@ func main() {
 		Generate()
 	case "list-unimplemented":
 		ListUnimplemented()
+	default:
+		fmt.Println("Invalid command.")
+		fmt.Println("Available commands: generate, list-unimplemented")
+		os.Exit(1)
 	}
 }

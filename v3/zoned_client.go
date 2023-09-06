@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	// DefaultZones list (available in oapi code).
+	// DefaultZones list.
 	// When new zone is added or existing removed this slice needs to be updated.
 	// First zone in the slice is used as default in DefaultZonedClient.
 	DefaultZones = []ZoneName{

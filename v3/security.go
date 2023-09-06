@@ -33,7 +33,7 @@ func NewSecurityProvider(creds *Credentials) *SecurityProvider {
 	}
 }
 
-// Intercept is oapi.RequestEditorFn that will attach authentication header to API call.
+// Intercept is RequestEditorFn that will attach authentication header to API call.
 func (p *SecurityProvider) Intercept(ctx context.Context, req *http.Request) error {
 	var (
 		sigParts    []string

@@ -23,7 +23,7 @@ type Resource struct {
 type Fn struct {
 	// Mandatory
 	Name     string //name of the API function
-	OAPIName string //base name of the function in oapi
+	OAPIName string //base name of the function in client.gen.go
 
 	// Optional
 	ResDefOverride         string //override for response definition string

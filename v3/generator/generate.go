@@ -132,10 +132,10 @@ func FuncOptArgs(node *ast.File, name string) []string {
 // Pointers are implicit.
 //
 // For nested struct support is limited to single attribute structs with attribute type one of:
-// - defined oapi struct type;
-// - slice of defined oapi struct types;
+// - defined struct type;
+// - slice of defined struct types;
 //
-// For example if we have the following types in oapi/oapi.gen.go:
+// For example if we have the following types in client.gen.go:
 //
 //	type GetAccessKeyResponse struct {
 //		Body         []byte
@@ -175,7 +175,7 @@ func FuncResp(node *ast.File, name string) (resType, subpath string) {
 
 			// Supported JSON200 types:
 			switch x := f.Type.(*ast.StarExpr).X.(type) {
-			case *ast.Ident: //defined oapi type
+			case *ast.Ident: //defined type
 				resType = fmt.Sprintf("%s", x.Name)
 			case *ast.ArrayType: //slice (usually List functions)
 				resType = fmt.Sprintf("[]%s", x.Elt.(*ast.Ident).Name)
@@ -189,7 +189,7 @@ func FuncResp(node *ast.File, name string) (resType, subpath string) {
 				subpath = y.Names[0].Name //path after JSON200
 
 				switch z := y.Type.(*ast.StarExpr).X.(type) {
-				case *ast.Ident: //defined oapi type
+				case *ast.Ident: //defined type
 					resType = fmt.Sprintf("%s", z.Name)
 				case *ast.ArrayType: //slice (usually List functions)
 					resType = fmt.Sprintf("[]%s", z.Elt.(*ast.Ident).Name)

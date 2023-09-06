@@ -7,6 +7,6 @@ type DNSAPI struct {
 	client *Client
 }
 
-//func (a *DNS) Domains() *Domains {
-//return NewDomains(a.oapiClient)
+//func (a *DNS) Domains() *DomainsAPI {
+//return &DomainsAPI{a.client}
 //}

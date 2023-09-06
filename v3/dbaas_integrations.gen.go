@@ -4,18 +4,15 @@ package v3
 import (
 	"context"
 
-{{if .OAPITypesImport }}
-	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
-{{end -}}
 )
 
-type {{.RootName}}API struct {
+type IntegrationsAPI struct {
 	client *Client
 }
 
-{{ range .Fns}}
-func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{printf ", %s" .OptArgsDef}}{{end}}) ({{.ResDef}}, error) {
-	req, err := new{{.OAPIName}}Request(a.client.server{{if .OptArgsPassthrough}}{{printf ", %s" .OptArgsPassthrough}}{{end}})
+
+func (a *IntegrationsAPI) ListSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*DBaaSIntegrationSettings, error) {
+	req, err := newListDbaasIntegrationSettingsRequest(a.client.server, integrationType, sourceType, destType)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +31,7 @@ func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{pri
 		return nil, err
 	}
 
-	resp, err := parse{{.OAPIName}}Response(r)
+	resp, err := parseListDbaasIntegrationSettingsResponse(r)
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +41,6 @@ func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{pri
 		return nil, err
 	}
 
-	return {{.ResPassthrough}}, nil
+	return fromListDbaasIntegrationSettingsResponse(resp), nil
 }
-{{ end }}
+

@@ -68,3 +68,11 @@ func (l *StandardLogger) toMap(keysAndValues []interface{}) map[string]interface
 
 	return m
 }
+
+// DiscardLogger drops any message it receives.
+type DiscardLogger struct{}
+
+func (l *DiscardLogger) Error(msg string, keysAndValues ...interface{}) {}
+func (l *DiscardLogger) Info(msg string, keysAndValues ...interface{})  {}
+func (l *DiscardLogger) Debug(msg string, keysAndValues ...interface{}) {}
+func (l *DiscardLogger) Warn(msg string, keysAndValues ...interface{})  {}

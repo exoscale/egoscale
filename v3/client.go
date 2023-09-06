@@ -5,18 +5,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
-
-	"github.com/exoscale/egoscale/v3/api/compute"
-	"github.com/exoscale/egoscale/v3/api/dbaas"
-	"github.com/exoscale/egoscale/v3/api/dns"
-	"github.com/exoscale/egoscale/v3/api/global"
-	"github.com/exoscale/egoscale/v3/api/iam"
-	"github.com/exoscale/egoscale/v3/oapi"
 )
 
 const (
@@ -27,8 +22,12 @@ const (
 
 // Client represents Exoscale V3 API Client.
 type Client struct {
-	creds      *Credentials
-	oapiClient *oapi.ClientWithResponses
+	server     string
+	httpClient *http.Client
+	reqEditors []RequestEditorFn
+	logger     Logger
+
+	creds *Credentials
 }
 
 // NewClient returns a new Exoscale API V3 client, or an error if one couldn't be initialized.
@@ -44,22 +43,24 @@ func NewClient(endpoint string, opts ...ClientOpt) (*Client, error) {
 		endpoint = h
 	}
 
-	u, err := url.Parse(endpoint)
+	// Validate that string is URL
+	_, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL: %w", err)
 	}
 
+	// Ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(endpoint, "/") {
+		endpoint += "/"
+	}
+
 	config := ClientConfig{
-		requestEditors: []oapi.RequestEditorFn{},
+		requestEditors: []RequestEditorFn{},
 	}
 	for _, opt := range opts {
 		if err := opt(&config); err != nil {
 			return nil, fmt.Errorf("client configuration error: %w", err)
 		}
-	}
-
-	client := Client{
-		creds: config.creds,
 	}
 
 	// Use retryablehttp client by default
@@ -72,37 +73,36 @@ func NewClient(endpoint string, opts ...ClientOpt) (*Client, error) {
 		config.httpClient = rc.StandardClient()
 	}
 
-	// Mandatory oapi options.
-	oapiOpts := []oapi.ClientOption{
-		oapi.WithHTTPClient(config.httpClient),
-		oapi.WithRequestEditorFn(NewUserAgentProvider(config.uaPrefix).Intercept),
+	// Use dummy discard logger if none provided.
+	if config.logger == nil {
+		config.logger = NewStandardLogger(io.Discard, false)
+	}
+
+	client := Client{
+		server:     endpoint,
+		httpClient: config.httpClient,
+		logger:     config.logger,
+		creds:      config.creds,
+	}
+
+	// Mandatory request editors.
+	fns := []RequestEditorFn{
+		NewUserAgentProvider(config.uaPrefix).Intercept,
 	}
 
 	// We are adding security middleware only if API credentials are specified
 	// in order to allow generic usage and local testing.
-	// TODO: add log line emphasizing the lack of credentials.
+	// TODO: add log line emphasizing the lack of credentials
 	if client.creds != nil {
-		oapiOpts = append(
-			oapiOpts,
-			oapi.WithRequestEditorFn(NewSecurityProvider(client.creds).Intercept),
-		)
+		fns = append(fns, NewSecurityProvider(client.creds).Intercept)
 	}
 
 	// Attach any custom request editors
 	for _, editor := range config.requestEditors {
-		oapiOpts = append(
-			oapiOpts,
-			oapi.WithRequestEditorFn(editor),
-		)
+		fns = append(fns, editor)
 	}
 
-	client.oapiClient, err = oapi.NewClientWithResponses(
-		u.String(),
-		oapiOpts...,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("unable to initialize API client: %w", err)
-	}
+	client.reqEditors = fns
 
 	return &client, nil
 }
@@ -111,8 +111,8 @@ func NewClient(endpoint string, opts ...ClientOpt) (*Client, error) {
 // Final states are one of: failure, success, timeout.
 func (c *Client) Wait(
 	ctx context.Context,
-	f func(ctx context.Context) (*oapi.Operation, error),
-) (*oapi.Operation, error) {
+	f func(ctx context.Context) (*Operation, error),
+) (*Operation, error) {
 	ticker := time.NewTicker(PollingInterval)
 	defer ticker.Stop()
 
@@ -121,7 +121,7 @@ func (c *Client) Wait(
 		return nil, err
 	}
 	// Exit right away if operation is already done.
-	if *op.State != oapi.OperationStatePending {
+	if *op.State != OperationStatePending {
 		return op, nil
 	}
 
@@ -132,7 +132,7 @@ func (c *Client) Wait(
 			if err != nil {
 				return nil, err
 			}
-			if *op.State != oapi.OperationStatePending {
+			if *op.State != OperationStatePending {
 				continue
 			}
 
@@ -143,32 +143,27 @@ func (c *Client) Wait(
 	}
 }
 
-// OAPIClient returns configured instance of OpenAPI generated (low-level) API client.
-func (c *Client) OAPIClient() *oapi.ClientWithResponses {
-	return c.oapiClient
-}
-
 // IAM provides access to IAM resources on Exoscale platform.
-func (c *Client) IAM() *iam.IAM {
-	return iam.NewIAM(c.oapiClient)
+func (c *Client) IAM() *IAMAPI {
+	return &IAMAPI{c}
 }
 
 // DBaaS provides access to DBaaS resources on Exoscale platform.
-func (c *Client) DBaaS() *dbaas.DBaaS {
-	return dbaas.NewDBaaS(c.oapiClient)
+func (c *Client) DBaaS() *DBaaSAPI {
+	return &DBaaSAPI{c}
 }
 
 // Compute provides access to Compute resources on Exoscale platform.
-func (c *Client) Compute() *compute.Compute {
-	return compute.NewCompute(c.oapiClient)
+func (c *Client) Compute() *ComputeAPI {
+	return &ComputeAPI{c}
 }
 
 // DNS provides access to DNS resources on Exoscale platform.
-func (c *Client) DNS() *dns.DNS {
-	return dns.NewDNS(c.oapiClient)
+func (c *Client) DNS() *DNSAPI {
+	return &DNSAPI{c}
 }
 
 // Global provides access to global resources on Exoscale platform.
-func (c *Client) Global() *global.Global {
-	return global.NewGlobal(c.oapiClient)
+func (c *Client) Global() *GlobalAPI {
+	return &GlobalAPI{c}
 }

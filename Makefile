@@ -44,11 +44,8 @@ oapigen: install-oapi-codegen
 # OpenAPI v3 codegen
 .PHONY: oapigen-v3
 oapigen-v3:
-	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
-	wget -q --show-progress --progress=dot https://openapi-v2.exoscale.com/source.json -O- > v3/oapi/source.json
+	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.14.0
+	wget -q --show-progress --progress=dot https://openapi-v2.exoscale.com/source.json -O- > v3/generator/source.json
 	@echo
-	go generate ./v3/oapi/oapi.go
-	@rm v3/oapi/source.json
-	# Running temp fix for oapi-codegen issue:
-	sed -i 's/N200InstancesState/[]InstanceState/g' v3/oapi/oapi.gen.go
-	ls -l v3/oapi/oapi.gen.go
+	go generate ./v3/generator
+	@rm v3/generator/source.json

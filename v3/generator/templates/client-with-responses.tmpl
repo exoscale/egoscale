@@ -1,0 +1,44 @@
+{{range .}}{{$opid := .OperationId}}{{$op := .}}
+type {{genResponseTypeName $opid | ucFirst}} struct {
+    Body         []byte
+	HTTPResponse *http.Response
+    {{- range getResponseTypeDefinitions .}}
+    {{.TypeName}} *{{.Schema.TypeDecl}}
+    {{- end}}
+}
+
+// Status returns HTTPResponse.Status
+func (r {{genResponseTypeName $opid | ucFirst}}) Status() string {
+    if r.HTTPResponse != nil {
+        return r.HTTPResponse.Status
+    }
+    return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r {{genResponseTypeName $opid | ucFirst}}) StatusCode() int {
+    if r.HTTPResponse != nil {
+        return r.HTTPResponse.StatusCode
+    }
+    return 0
+}
+{{end}}
+
+{{/* Generate parse functions for responses*/}}
+{{range .}}{{$opid := .OperationId}}
+
+// parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
+func parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
+    bodyBytes, err := io.ReadAll(rsp.Body)
+    defer func() { _ = rsp.Body.Close() }()
+    if err != nil {
+        return nil, err
+    }
+
+    response := {{genResponsePayload $opid}}
+
+    {{genResponseUnmarshal .}}
+
+    return response, nil
+}
+{{end}}{{/* range . $opid := .OperationId */}}

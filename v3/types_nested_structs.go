@@ -1,4 +1,4 @@
-package oapi
+package v3
 
 type DBaaSIntegrationSettings struct {
 	AdditionalProperties *bool
@@ -7,7 +7,7 @@ type DBaaSIntegrationSettings struct {
 	Type                 *string
 }
 
-func FromListDbaasIntegrationSettingsResponse(r *ListDbaasIntegrationSettingsResponse) *DBaaSIntegrationSettings {
+func fromListDbaasIntegrationSettingsResponse(r *ListDbaasIntegrationSettingsResponse) *DBaaSIntegrationSettings {
 	t := r.JSON200.Settings
 
 	return &DBaaSIntegrationSettings{

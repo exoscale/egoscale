@@ -4,18 +4,17 @@ package v3
 import (
 	"context"
 
-{{if .OAPITypesImport }}
+
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
-{{end -}}
 )
 
-type {{.RootName}}API struct {
+type OperationAPI struct {
 	client *Client
 }
 
-{{ range .Fns}}
-func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{printf ", %s" .OptArgsDef}}{{end}}) ({{.ResDef}}, error) {
-	req, err := new{{.OAPIName}}Request(a.client.server{{if .OptArgsPassthrough}}{{printf ", %s" .OptArgsPassthrough}}{{end}})
+
+func (a *OperationAPI) Get(ctx context.Context, id openapi_types.UUID) (*Operation, error) {
+	req, err := newGetOperationRequest(a.client.server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +33,7 @@ func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{pri
 		return nil, err
 	}
 
-	resp, err := parse{{.OAPIName}}Response(r)
+	resp, err := parseGetOperationResponse(r)
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +43,6 @@ func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{pri
 		return nil, err
 	}
 
-	return {{.ResPassthrough}}, nil
+	return resp.JSON200, nil
 }
-{{ end }}
+

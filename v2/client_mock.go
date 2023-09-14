@@ -1184,3 +1184,20 @@ func (m *oapiClientMock) StopDbaasMysqlMigrationWithResponse(
 	args := m.Called(ctx, name, reqEditors)
 	return args.Get(0).(*oapi.StopDbaasMysqlMigrationResponse), args.Error(1)
 }
+
+func (m *oapiClientMock) GetIamOrganizationPolicyWithResponse(
+	ctx context.Context,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.GetIamOrganizationPolicyResponse, error) {
+	args := m.Called(ctx, reqEditors)
+	return args.Get(0).(*oapi.GetIamOrganizationPolicyResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) UpdateIamOrganizationPolicyWithResponse(
+	ctx context.Context,
+	body oapi.UpdateIamOrganizationPolicyJSONRequestBody,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.UpdateIamOrganizationPolicyResponse, error) {
+	args := m.Called(ctx, body, reqEditors)
+	return args.Get(0).(*oapi.UpdateIamOrganizationPolicyResponse), args.Error(1)
+}

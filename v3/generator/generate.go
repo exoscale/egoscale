@@ -12,9 +12,30 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
+type apiEntity struct {
+	RootName string
+	Fns      []Fn
+
+	OAPITypesImport bool
+	Package         string
+
+	IsRecorder bool
+}
+
+func createAPIEntity(r Resource) apiEntity {
+	return apiEntity{
+		RootName: r.RootName,
+		Fns:      r.Fns,
+
+		OAPITypesImport: r.OAPITypesImport,
+		Package:         r.Package,
+	}
+}
+
 // Generate is a command the generates Consumer API according to the mapping in the mapping.go file.
 func Generate() {
 	tpl := template.Must(template.ParseFiles("templates/resource.tmpl"))
+	recorderTpl := template.Must(template.ParseFiles("templates/recorder.tmpl"))
 
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, "../client.gen.go", nil, parser.ParseComments)
@@ -59,22 +80,76 @@ func Generate() {
 				entity.Fns[i] = fn
 			}
 
+			apiEnt := createAPIEntity(entity)
+
 			f, err := os.Create(
 				fmt.Sprintf(
 					"../%s_%s.gen.go",
 					group,
-					strcase.ToSnake(entity.RootName),
+					strcase.ToSnake(apiEnt.RootName),
 				),
 			)
 			if err != nil {
 				panic(err)
 			}
 
-			err = tpl.Execute(f, &entity)
+			err = tpl.Execute(f, &apiEnt)
+			if err != nil {
+				panic(err)
+			}
+
+			apiEnt.IsRecorder = true
+
+			fRecorder, err := os.Create(
+				fmt.Sprintf(
+					"../recorder/%s_%s.gen.go",
+					group,
+					strcase.ToSnake(apiEnt.RootName),
+				),
+			)
+			if err != nil {
+				panic(err)
+			}
+
+			for i := range apiEnt.Fns {
+				apiEnt.Fns[i].ResDef = addV3(apiEnt.Fns[i].ResDef)
+
+				if len(apiEnt.Fns[i].OptArgsDef) > 0 {
+					newArgs := ""
+					args := strings.Split(apiEnt.Fns[i].OptArgsDef, ", ")
+
+					for _, arg := range args {
+						argSplit := strings.Split(arg, " ")
+						argKey := argSplit[0]
+						argType := argSplit[1]
+
+						newArgs += ", " + argKey + " " + addV3(argType)
+					}
+
+					apiEnt.Fns[i].OptArgsDef = newArgs[2:]
+				}
+			}
+
+			err = recorderTpl.Execute(fRecorder, &apiEnt)
 			if err != nil {
 				panic(err)
 			}
 		}
+	}
+}
+
+func addV3(id string) string {
+	switch {
+	case strings.HasPrefix(id, "[]"):
+		return "[]v3." + id[2:]
+	case strings.HasPrefix(id, "*"):
+		return "*v3." + id[1:]
+	case id == "string":
+		return id
+	case strings.Contains(id, "."):
+		return id
+	default:
+		return "v3." + id
 	}
 }
 

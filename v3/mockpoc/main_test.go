@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/recorder"
 )
 
 func TestMock(t *testing.T) {
@@ -17,26 +17,31 @@ func TestMock(t *testing.T) {
 	testKeyName := "egomock-test-key"
 
 	ctx := context.Background()
-	accKeys := client.IAM().AccessKey()
-	iamKey, err := accKeys.Create(ctx, v3.CreateAccessKeyJSONRequestBody{
+	accKeysClient := client.IAM().AccessKey()
+	// accKeys := accKeysClient
+
+	accKeys := recorder.AccessKeyAPI{
+		Recordee: accKeysClient,
+	}
+	createKeyResp, err := accKeys.Create(ctx, v3.CreateAccessKeyJSONRequestBody{
 		Name: v3.FromString(testKeyName),
 	})
 	assert.NoError(t, err)
 
-	fmt.Printf("iamKey.Name: %v\n", *iamKey.Name)
-	fmt.Printf("iamKey.Secret: %v\n", *iamKey.Secret)
-
-	keys, err := accKeys.List(ctx)
+	getKeyResp, err := accKeys.Get(ctx, *createKeyResp.Key)
 	assert.NoError(t, err)
 
-	for _, key := range keys {
-		if *key.Name == testKeyName {
-			fmt.Printf("removing Access Key: %s\n", *key.Key)
+	assert.Equal(t, testKeyName, *getKeyResp.Name)
 
+	listKeysResp, err := accKeys.List(ctx)
+	assert.NoError(t, err)
+
+	for _, key := range listKeysResp {
+		if *key.Name == testKeyName {
 			revocation, err := accKeys.Revoke(ctx, *key.Key)
 			assert.NoError(t, err)
 
-			fmt.Printf("revocation: %v\n", revocation)
+			assert.Equal(t, v3.OperationStateSuccess, *revocation.State)
 		}
 	}
 }

@@ -22,7 +22,7 @@ func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{pri
     resp, err := a.Recordee.{{.Name}}(ctx, {{.OptArgsPassthrough}})
     respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata(req, respMap, 0)
+    writeErr := WriteTestdata("{{$.RootName}}API.{{.Name}}", req, respMap, 0)
     if writeErr != nil {
        panic(writeErr)
     }

@@ -20,7 +20,7 @@ func (a *OperationAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.Oper
     resp, err := a.Recordee.Get(ctx, id)
     respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata(req, respMap, 0)
+    writeErr := WriteTestdata("OperationAPI.Get", req, respMap, 0)
     if writeErr != nil {
        panic(writeErr)
     }

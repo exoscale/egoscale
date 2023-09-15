@@ -20,7 +20,7 @@ func (a *PrivateNetworksAPI) List(ctx context.Context) ([]v3.PrivateNetwork, err
     resp, err := a.Recordee.List(ctx, )
     respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata(req, respMap, 0)
+    writeErr := WriteTestdata("PrivateNetworksAPI.List", req, respMap, 0)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -34,7 +34,7 @@ func (a *PrivateNetworksAPI) Get(ctx context.Context, id openapi_types.UUID) (*v
     resp, err := a.Recordee.Get(ctx, id)
     respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata(req, respMap, 0)
+    writeErr := WriteTestdata("PrivateNetworksAPI.Get", req, respMap, 0)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -48,7 +48,7 @@ func (a *PrivateNetworksAPI) Create(ctx context.Context, body v3.CreatePrivateNe
     resp, err := a.Recordee.Create(ctx, body)
     respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata(req, respMap, 0)
+    writeErr := WriteTestdata("PrivateNetworksAPI.Create", req, respMap, 0)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -62,7 +62,7 @@ func (a *PrivateNetworksAPI) Update(ctx context.Context, id openapi_types.UUID, 
     resp, err := a.Recordee.Update(ctx, id, body)
     respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata(req, respMap, 0)
+    writeErr := WriteTestdata("PrivateNetworksAPI.Update", req, respMap, 0)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -76,7 +76,7 @@ func (a *PrivateNetworksAPI) Delete(ctx context.Context, id openapi_types.UUID) 
     resp, err := a.Recordee.Delete(ctx, id)
     respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata(req, respMap, 0)
+    writeErr := WriteTestdata("PrivateNetworksAPI.Delete", req, respMap, 0)
     if writeErr != nil {
        panic(writeErr)
     }

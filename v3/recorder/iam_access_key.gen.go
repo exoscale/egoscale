@@ -13,26 +13,86 @@ type AccessKeyAPI struct {
 
 
 func (a *AccessKeyAPI) List(ctx context.Context) ([]v3.AccessKey, error) {
-    return a.Recordee.List(ctx, )
+    req := argsToMap()
+
+    resp, err := a.Recordee.List(ctx, )
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *AccessKeyAPI) ListKnownOperations(ctx context.Context) ([]v3.AccessKeyOperation, error) {
-    return a.Recordee.ListKnownOperations(ctx, )
+    req := argsToMap()
+
+    resp, err := a.Recordee.ListKnownOperations(ctx, )
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *AccessKeyAPI) ListOperations(ctx context.Context) ([]v3.AccessKeyOperation, error) {
-    return a.Recordee.ListOperations(ctx, )
+    req := argsToMap()
+
+    resp, err := a.Recordee.ListOperations(ctx, )
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *AccessKeyAPI) Get(ctx context.Context, key string) (*v3.AccessKey, error) {
-    return a.Recordee.Get(ctx, key)
+    req := argsToMap(key)
+
+    resp, err := a.Recordee.Get(ctx, key)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *AccessKeyAPI) Create(ctx context.Context, body v3.CreateAccessKeyJSONRequestBody) (*v3.AccessKey, error) {
-    return a.Recordee.Create(ctx, body)
+    req := argsToMap(body)
+
+    resp, err := a.Recordee.Create(ctx, body)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *AccessKeyAPI) Revoke(ctx context.Context, key string) (*v3.Operation, error) {
-    return a.Recordee.Revoke(ctx, key)
+    req := argsToMap(key)
+
+    resp, err := a.Recordee.Revoke(ctx, key)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 

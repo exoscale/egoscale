@@ -13,10 +13,30 @@ type OrgQuotasAPI struct {
 
 
 func (a *OrgQuotasAPI) List(ctx context.Context) ([]v3.Quota, error) {
-    return a.Recordee.List(ctx, )
+    req := argsToMap()
+
+    resp, err := a.Recordee.List(ctx, )
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *OrgQuotasAPI) Get(ctx context.Context, entity string) (*v3.Quota, error) {
-    return a.Recordee.Get(ctx, entity)
+    req := argsToMap(entity)
+
+    resp, err := a.Recordee.Get(ctx, entity)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 

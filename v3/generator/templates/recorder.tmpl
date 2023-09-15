@@ -17,6 +17,16 @@ type {{.RootName}}API struct {
 
 {{ range .Fns}}
 func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{printf ", %s" .OptArgsDef}}{{end}}) ({{.ResDef}}, error) {
-    return a.Recordee.{{.Name}}(ctx, {{.OptArgsPassthrough}})
+    req := argsToMap({{.OptArgsPassthrough}})
+
+    resp, err := a.Recordee.{{.Name}}(ctx, {{.OptArgsPassthrough}})
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 {{ end }}

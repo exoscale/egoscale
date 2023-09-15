@@ -15,6 +15,16 @@ type OperationAPI struct {
 
 
 func (a *OperationAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
-    return a.Recordee.Get(ctx, id)
+    req := argsToMap(id)
+
+    resp, err := a.Recordee.Get(ctx, id)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 

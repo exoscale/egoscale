@@ -15,38 +15,128 @@ type LoadBalancersAPI struct {
 
 
 func (a *LoadBalancersAPI) List(ctx context.Context) ([]v3.LoadBalancer, error) {
-    return a.Recordee.List(ctx, )
+    req := argsToMap()
+
+    resp, err := a.Recordee.List(ctx, )
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *LoadBalancersAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.LoadBalancer, error) {
-    return a.Recordee.Get(ctx, id)
+    req := argsToMap(id)
+
+    resp, err := a.Recordee.Get(ctx, id)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *LoadBalancersAPI) Create(ctx context.Context, body v3.CreateLoadBalancerJSONRequestBody) (*v3.Operation, error) {
-    return a.Recordee.Create(ctx, body)
+    req := argsToMap(body)
+
+    resp, err := a.Recordee.Create(ctx, body)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *LoadBalancersAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.UpdateLoadBalancerJSONRequestBody) (*v3.Operation, error) {
-    return a.Recordee.Update(ctx, id, body)
+    req := argsToMap(id, body)
+
+    resp, err := a.Recordee.Update(ctx, id, body)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *LoadBalancersAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
-    return a.Recordee.Delete(ctx, id)
+    req := argsToMap(id)
+
+    resp, err := a.Recordee.Delete(ctx, id)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *LoadBalancersAPI) GetService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID) (*v3.LoadBalancerService, error) {
-    return a.Recordee.GetService(ctx, id, serviceId)
+    req := argsToMap(id, serviceId)
+
+    resp, err := a.Recordee.GetService(ctx, id, serviceId)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *LoadBalancersAPI) AddService(ctx context.Context, id openapi_types.UUID, body v3.AddServiceToLoadBalancerJSONRequestBody) (*v3.Operation, error) {
-    return a.Recordee.AddService(ctx, id, body)
+    req := argsToMap(id, body)
+
+    resp, err := a.Recordee.AddService(ctx, id, body)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *LoadBalancersAPI) UpdateService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID, body v3.UpdateLoadBalancerServiceJSONRequestBody) (*v3.Operation, error) {
-    return a.Recordee.UpdateService(ctx, id, serviceId, body)
+    req := argsToMap(id, serviceId, body)
+
+    resp, err := a.Recordee.UpdateService(ctx, id, serviceId, body)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *LoadBalancersAPI) DeleteService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID) (*v3.Operation, error) {
-    return a.Recordee.DeleteService(ctx, id, serviceId)
+    req := argsToMap(id, serviceId)
+
+    resp, err := a.Recordee.DeleteService(ctx, id, serviceId)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 

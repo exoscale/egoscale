@@ -15,26 +15,86 @@ type RolesAPI struct {
 
 
 func (a *RolesAPI) List(ctx context.Context) ([]v3.IamRole, error) {
-    return a.Recordee.List(ctx, )
+    req := argsToMap()
+
+    resp, err := a.Recordee.List(ctx, )
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *RolesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.IamRole, error) {
-    return a.Recordee.Get(ctx, id)
+    req := argsToMap(id)
+
+    resp, err := a.Recordee.Get(ctx, id)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *RolesAPI) Create(ctx context.Context, body v3.CreateIamRoleJSONRequestBody) (*v3.Operation, error) {
-    return a.Recordee.Create(ctx, body)
+    req := argsToMap(body)
+
+    resp, err := a.Recordee.Create(ctx, body)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *RolesAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
-    return a.Recordee.Delete(ctx, id)
+    req := argsToMap(id)
+
+    resp, err := a.Recordee.Delete(ctx, id)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *RolesAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.UpdateIamRoleJSONRequestBody) (*v3.Operation, error) {
-    return a.Recordee.Update(ctx, id, body)
+    req := argsToMap(id, body)
+
+    resp, err := a.Recordee.Update(ctx, id, body)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *RolesAPI) UpdatePolicy(ctx context.Context, id openapi_types.UUID, body v3.UpdateIamRolePolicyJSONRequestBody) (*v3.Operation, error) {
-    return a.Recordee.UpdatePolicy(ctx, id, body)
+    req := argsToMap(id, body)
+
+    resp, err := a.Recordee.UpdatePolicy(ctx, id, body)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 

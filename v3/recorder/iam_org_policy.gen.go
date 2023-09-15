@@ -13,10 +13,30 @@ type OrgPolicyAPI struct {
 
 
 func (a *OrgPolicyAPI) Get(ctx context.Context) (*v3.IamPolicy, error) {
-    return a.Recordee.Get(ctx, )
+    req := argsToMap()
+
+    resp, err := a.Recordee.Get(ctx, )
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *OrgPolicyAPI) Update(ctx context.Context, body v3.UpdateIamOrganizationPolicyJSONRequestBody) (*v3.Operation, error) {
-    return a.Recordee.Update(ctx, body)
+    req := argsToMap(body)
+
+    resp, err := a.Recordee.Update(ctx, body)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 

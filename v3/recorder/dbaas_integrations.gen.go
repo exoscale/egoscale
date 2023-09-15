@@ -13,6 +13,16 @@ type IntegrationsAPI struct {
 
 
 func (a *IntegrationsAPI) ListSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*v3.DBaaSIntegrationSettings, error) {
-    return a.Recordee.ListSettings(ctx, integrationType, sourceType, destType)
+    req := argsToMap(integrationType, sourceType, destType)
+
+    resp, err := a.Recordee.ListSettings(ctx, integrationType, sourceType, destType)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 

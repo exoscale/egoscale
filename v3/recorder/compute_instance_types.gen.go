@@ -15,10 +15,30 @@ type InstanceTypesAPI struct {
 
 
 func (a *InstanceTypesAPI) List(ctx context.Context) ([]v3.InstanceType, error) {
-    return a.Recordee.List(ctx, )
+    req := argsToMap()
+
+    resp, err := a.Recordee.List(ctx, )
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 
 func (a *InstanceTypesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.InstanceType, error) {
-    return a.Recordee.Get(ctx, id)
+    req := argsToMap(id)
+
+    resp, err := a.Recordee.Get(ctx, id)
+    respMap := argsToMap(resp, err)
+
+    writeErr := WriteTestdata(req, respMap, 0)
+    if writeErr != nil {
+       panic(writeErr)
+    }
+
+    return resp, err
 }
 

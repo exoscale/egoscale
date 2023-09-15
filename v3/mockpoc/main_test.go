@@ -3,20 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	v3 "github.com/exoscale/egoscale/v3"
 )
 
-func check(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func main() {
+func TestMock(t *testing.T) {
 	client, err := v3.DefaultClient(v3.ClientOptWithCredentialsFromEnv())
-	check(err)
+	assert.NoError(t, err)
 
 	testKeyName := "egomock-test-key"
 
@@ -25,22 +21,22 @@ func main() {
 	iamKey, err := accKeys.Create(ctx, v3.CreateAccessKeyJSONRequestBody{
 		Name: v3.FromString(testKeyName),
 	})
-	check(err)
+	assert.NoError(t, err)
 
 	fmt.Printf("iamKey.Name: %v\n", *iamKey.Name)
 	fmt.Printf("iamKey.Secret: %v\n", *iamKey.Secret)
 
 	keys, err := accKeys.List(ctx)
-	check(err)
+	assert.NoError(t, err)
 
 	for _, key := range keys {
 		if *key.Name == testKeyName {
 			fmt.Printf("removing Access Key: %s\n", *key.Key)
 
 			revocation, err := accKeys.Revoke(ctx, *key.Key)
-			check(err)
+			assert.NoError(t, err)
 
-			fmt.Printf("o: %v\n", revocation)
+			fmt.Printf("revocation: %v\n", revocation)
 		}
 	}
 }

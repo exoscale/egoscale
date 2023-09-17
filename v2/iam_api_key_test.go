@@ -51,7 +51,7 @@ func (ts *testSuite) TestClient_ListAPIKeys() {
 		Return(&oapi.ListApiKeysResponse{
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &struct {
-				ApiKeys *[]oapi.IamApiKey `json:"api-keys,omitempty"`
+				ApiKeys *[]oapi.IamApiKey `json:"api-keys,omitempty"` // nolint:revive
 			}{
 				ApiKeys: &[]oapi.IamApiKey{
 					{

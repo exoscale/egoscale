@@ -1201,3 +1201,58 @@ func (m *oapiClientMock) UpdateIamOrganizationPolicyWithResponse(
 	args := m.Called(ctx, body, reqEditors)
 	return args.Get(0).(*oapi.UpdateIamOrganizationPolicyResponse), args.Error(1)
 }
+
+func (m *oapiClientMock) GetIamRoleWithResponse(
+	ctx context.Context,
+	id string,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.GetIamRoleResponse, error) {
+	args := m.Called(ctx, id, reqEditors)
+	return args.Get(0).(*oapi.GetIamRoleResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) ListIamRolesWithResponse(
+	ctx context.Context,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.ListIamRolesResponse, error) {
+	args := m.Called(ctx, reqEditors)
+	return args.Get(0).(*oapi.ListIamRolesResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) CreateIamRoleWithResponse(
+	ctx context.Context,
+	body oapi.CreateIamRoleJSONRequestBody,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.CreateIamRoleResponse, error) {
+	args := m.Called(ctx, body, reqEditors)
+	return args.Get(0).(*oapi.CreateIamRoleResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) DeleteIamRoleWithResponse(
+	ctx context.Context,
+	id string,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.DeleteIamRoleResponse, error) {
+	args := m.Called(ctx, id, reqEditors)
+	return args.Get(0).(*oapi.DeleteIamRoleResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) UpdateIamRoleWithResponse(
+	ctx context.Context,
+	id string,
+	body oapi.UpdateIamRoleJSONRequestBody,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.UpdateIamRoleResponse, error) {
+	args := m.Called(ctx, id, body, reqEditors)
+	return args.Get(0).(*oapi.UpdateIamRoleResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) UpdateIamRolePolicyWithResponse(
+	ctx context.Context,
+	id string,
+	body oapi.UpdateIamRolePolicyJSONRequestBody,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.UpdateIamRolePolicyResponse, error) {
+	args := m.Called(ctx, id, body, reqEditors)
+	return args.Get(0).(*oapi.UpdateIamRolePolicyResponse), args.Error(1)
+}

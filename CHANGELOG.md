@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v2: implement IAMv3
+
 0.101.1
 -------
 

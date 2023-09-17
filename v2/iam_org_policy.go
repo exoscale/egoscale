@@ -19,38 +19,48 @@ func (c *Client) GetIAMOrgPolicy(ctx context.Context, zone string) (*IAMPolicy, 
 
 // UpdateIAMOrgPolicy updates existing IAM Organization policy.
 func (c *Client) UpdateIAMOrgPolicy(ctx context.Context, zone string, policy *IAMPolicy) error {
-	services := map[string]oapi.IamServicePolicy{}
+
+	req := oapi.UpdateIamOrganizationPolicyJSONRequestBody{
+		DefaultServiceStrategy: oapi.IamPolicyDefaultServiceStrategy(policy.DefaultServiceStrategy),
+		Services: oapi.IamPolicy_Services{
+			AdditionalProperties: map[string]oapi.IamServicePolicy{},
+		},
+	}
+
 	if len(policy.Services) > 0 {
 		for name, service := range policy.Services {
-			rules := []oapi.IamServicePolicyRule{}
-			for _, rule := range service.Rules {
-				resources := []string{}
-				if rule.Resources != nil {
-					resources = rule.Resources
+			t := oapi.IamServicePolicy{
+				Type: (*oapi.IamServicePolicyType)(service.Type),
+			}
+
+			if service.Rules != nil {
+				rules := []oapi.IamServicePolicyRule{}
+
+				for _, rule := range service.Rules {
+					r := oapi.IamServicePolicyRule{
+						Action:     (*oapi.IamServicePolicyRuleAction)(rule.Action),
+						Expression: rule.Expression,
+					}
+
+					if rule.Resources != nil {
+						r.Resources = &rule.Resources
+					}
+
+					rules = append(rules, r)
 				}
 
-				rules = append(rules, oapi.IamServicePolicyRule{
-					Action:     (*oapi.IamServicePolicyRuleAction)(rule.Action),
-					Expression: rule.Expression,
-					Resources:  &resources,
-				})
+				t.Rules = &rules
 			}
 
-			services[name] = oapi.IamServicePolicy{
-				Type:  (*oapi.IamServicePolicyType)(service.Type),
-				Rules: &rules,
-			}
+			req.Services.AdditionalProperties[name] = t
+
 		}
 	}
 
 	resp, err := c.UpdateIamOrganizationPolicyWithResponse(
 		apiv2.WithZone(ctx, zone),
-		oapi.UpdateIamOrganizationPolicyJSONRequestBody{
-			DefaultServiceStrategy: oapi.IamPolicyDefaultServiceStrategy(policy.DefaultServiceStrategy),
-			Services: oapi.IamPolicy_Services{
-				AdditionalProperties: services,
-			},
-		})
+		req,
+	)
 	if err != nil {
 		return err
 	}

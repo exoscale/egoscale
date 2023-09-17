@@ -1256,3 +1256,38 @@ func (m *oapiClientMock) UpdateIamRolePolicyWithResponse(
 	args := m.Called(ctx, id, body, reqEditors)
 	return args.Get(0).(*oapi.UpdateIamRolePolicyResponse), args.Error(1)
 }
+
+func (m *oapiClientMock) GetApiKeyWithResponse(
+	ctx context.Context,
+	id string,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.GetApiKeyResponse, error) {
+	args := m.Called(ctx, id, reqEditors)
+	return args.Get(0).(*oapi.GetApiKeyResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) ListApiKeysWithResponse(
+	ctx context.Context,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.ListApiKeysResponse, error) {
+	args := m.Called(ctx, reqEditors)
+	return args.Get(0).(*oapi.ListApiKeysResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) CreateApiKeyWithResponse(
+	ctx context.Context,
+	body oapi.CreateApiKeyJSONRequestBody,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.CreateApiKeyResponse, error) {
+	args := m.Called(ctx, body, reqEditors)
+	return args.Get(0).(*oapi.CreateApiKeyResponse), args.Error(1)
+}
+
+func (m *oapiClientMock) DeleteApiKeyWithResponse(
+	ctx context.Context,
+	id string,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.DeleteApiKeyResponse, error) {
+	args := m.Called(ctx, id, reqEditors)
+	return args.Get(0).(*oapi.DeleteApiKeyResponse), args.Error(1)
+}

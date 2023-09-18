@@ -29,7 +29,7 @@ func InitializeReturnType[T any](myFn any) T {
 var callNr atomic.Int32
 
 func GetTestCall(callResp interface{}, returnErr *error) error {
-	testflow, err := recorder.ReadTestdata(recorder.TestdataFilename)
+	testflow, err := recorder.ReadRecording(recorder.TestdataFilename)
 	if err != nil {
 		return fmt.Errorf("error reading test data %w", err)
 	}

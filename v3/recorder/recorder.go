@@ -5,20 +5,23 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
-type TestCall struct {
+type Call struct {
 	FunctionName  string
 	Parameters    interface{}
 	ReturnedValue interface{}
 	ReturnedError error
 }
 
-type TestFlow struct {
-	Calls []TestCall
+type Recording struct {
+	Calls []Call
 }
 
 var (
@@ -26,29 +29,29 @@ var (
 	mu               sync.Mutex
 )
 
-func ReadTestdata(fileName string) (*TestFlow, error) {
-	tf := &TestFlow{}
+func ReadRecording(fileName string) (*Recording, error) {
+	recording := &Recording{}
 
-	f, err := os.OpenFile(fileName, os.O_RDONLY, 0666)
+	recFile, err := os.OpenFile(fileName, os.O_RDONLY, 0666)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return tf, nil
+			return recording, nil
 		}
 		return nil, fmt.Errorf("error opening file for reading %w", err)
 	}
-	defer f.Close()
+	defer recFile.Close()
 
-	cntnt, err := io.ReadAll(f)
+	recContent, err := io.ReadAll(recFile)
 	if err != nil {
 		return nil, fmt.Errorf("error reading all test data %w", err)
 	}
 
-	err = json.Unmarshal(cntnt, tf)
+	err = json.Unmarshal(recContent, recording)
 	if err != nil {
-		return &TestFlow{}, nil
+		return &Recording{}, nil
 	}
 
-	return tf, nil
+	return recording, nil
 }
 
 func marshalIndent(obj any) ([]byte, error) {
@@ -66,20 +69,20 @@ func RecordCall(funcName string, parameters, returnedValue interface{}, returned
 	mu.Lock()
 	defer mu.Unlock()
 
-	var tf *TestFlow
+	var tf *Recording
 
 	if firstCall {
-		tf = &TestFlow{}
+		tf = &Recording{}
 		firstCall = false
 	} else {
 		var err error
-		tf, err = ReadTestdata(TestdataFilename)
+		tf, err = ReadRecording(TestdataFilename)
 		if err != nil {
 			return fmt.Errorf("error reading test data before writing %w", err)
 		}
 	}
 
-	tf.Calls = append(tf.Calls, TestCall{
+	tf.Calls = append(tf.Calls, Call{
 		FunctionName:  funcName,
 		Parameters:    parameters,
 		ReturnedValue: returnedValue,
@@ -131,6 +134,32 @@ func garbleSecrets(jsonData []byte) ([]byte, error) {
 	return nil, nil
 }
 
+var charSetAlphaNum = "abcdefghijklmnopqrstuvwxyz012346789"
+
+func randIntRange(min int, max int) int {
+	return rand.Intn(max-min) + min
+}
+
+func randStringFromCharSet(strlen int, charSet string) string {
+	result := make([]byte, strlen)
+	for i := 0; i < strlen; i++ {
+		result[i] = charSet[randIntRange(0, len(charSet))]
+	}
+	return string(result)
+}
+
+func randString(strlen int) string {
+	return randStringFromCharSet(strlen, charSetAlphaNum)
+}
+
+func garbleString(input string) string {
+	if _, err := uuid.Parse(input); err == nil {
+		return uuid.NewString()
+	}
+
+	return randString(len(input))
+}
+
 func garble(data interface{}) interface{} {
 	if data == nil {
 		return nil
@@ -151,13 +180,13 @@ func garble(data interface{}) interface{} {
 		return typedData
 	case string:
 		if !strings.Contains(allGoFiles, typedData) {
-			typedData = "xxxxxxxxxxxxxxxxxxxxx"
+			typedData = garbleString(typedData)
 		}
 
 		return typedData
 	case int:
 		if !strings.Contains(allGoFiles, fmt.Sprint(typedData)) {
-			typedData = 1111111
+			typedData = rand.Int()
 		}
 
 		return typedData

@@ -13,32 +13,24 @@ type OrgPolicyAPI struct {}
 func (a *OrgPolicyAPI) Get(ctx context.Context) (*v3.IamPolicy, error) {
     resp := InitializeReturnType[*v3.IamPolicy](a.Get)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *OrgPolicyAPI) Update(ctx context.Context, body v3.UpdateIamOrganizationPolicyJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Update)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 

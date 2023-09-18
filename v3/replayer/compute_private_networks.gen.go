@@ -15,80 +15,60 @@ type PrivateNetworksAPI struct {}
 func (a *PrivateNetworksAPI) List(ctx context.Context) ([]v3.PrivateNetwork, error) {
     resp := InitializeReturnType[[]v3.PrivateNetwork](a.List)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *PrivateNetworksAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.PrivateNetwork, error) {
     resp := InitializeReturnType[*v3.PrivateNetwork](a.Get)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *PrivateNetworksAPI) Create(ctx context.Context, body v3.CreatePrivateNetworkJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Create)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *PrivateNetworksAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.UpdatePrivateNetworkJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Update)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *PrivateNetworksAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Delete)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 

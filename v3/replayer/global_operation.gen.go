@@ -15,16 +15,12 @@ type OperationAPI struct {}
 func (a *OperationAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Get)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 

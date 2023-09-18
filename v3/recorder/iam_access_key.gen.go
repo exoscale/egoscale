@@ -17,7 +17,7 @@ func (a *AccessKeyAPI) List(ctx context.Context) ([]v3.AccessKey, error) {
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := WriteTestdata("AccessKeyAPI.List", req, resp, err)
+    writeErr := RecordCall("AccessKeyAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -30,7 +30,7 @@ func (a *AccessKeyAPI) ListKnownOperations(ctx context.Context) ([]v3.AccessKeyO
 
     resp, err := a.Recordee.ListKnownOperations(ctx, )
 
-    writeErr := WriteTestdata("AccessKeyAPI.ListKnownOperations", req, resp, err)
+    writeErr := RecordCall("AccessKeyAPI.ListKnownOperations", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -43,7 +43,7 @@ func (a *AccessKeyAPI) ListOperations(ctx context.Context) ([]v3.AccessKeyOperat
 
     resp, err := a.Recordee.ListOperations(ctx, )
 
-    writeErr := WriteTestdata("AccessKeyAPI.ListOperations", req, resp, err)
+    writeErr := RecordCall("AccessKeyAPI.ListOperations", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -56,7 +56,7 @@ func (a *AccessKeyAPI) Get(ctx context.Context, key string) (*v3.AccessKey, erro
 
     resp, err := a.Recordee.Get(ctx, key)
 
-    writeErr := WriteTestdata("AccessKeyAPI.Get", req, resp, err)
+    writeErr := RecordCall("AccessKeyAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -69,7 +69,7 @@ func (a *AccessKeyAPI) Create(ctx context.Context, body v3.CreateAccessKeyJSONRe
 
     resp, err := a.Recordee.Create(ctx, body)
 
-    writeErr := WriteTestdata("AccessKeyAPI.Create", req, resp, err)
+    writeErr := RecordCall("AccessKeyAPI.Create", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -82,7 +82,7 @@ func (a *AccessKeyAPI) Revoke(ctx context.Context, key string) (*v3.Operation, e
 
     resp, err := a.Recordee.Revoke(ctx, key)
 
-    writeErr := WriteTestdata("AccessKeyAPI.Revoke", req, resp, err)
+    writeErr := RecordCall("AccessKeyAPI.Revoke", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

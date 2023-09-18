@@ -19,7 +19,7 @@ func (a *InstanceTypesAPI) List(ctx context.Context) ([]v3.InstanceType, error) 
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := WriteTestdata("InstanceTypesAPI.List", req, resp, err)
+    writeErr := RecordCall("InstanceTypesAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -32,7 +32,7 @@ func (a *InstanceTypesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.
 
     resp, err := a.Recordee.Get(ctx, id)
 
-    writeErr := WriteTestdata("InstanceTypesAPI.Get", req, resp, err)
+    writeErr := RecordCall("InstanceTypesAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

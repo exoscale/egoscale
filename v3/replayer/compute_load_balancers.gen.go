@@ -15,144 +15,108 @@ type LoadBalancersAPI struct {}
 func (a *LoadBalancersAPI) List(ctx context.Context) ([]v3.LoadBalancer, error) {
     resp := InitializeReturnType[[]v3.LoadBalancer](a.List)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *LoadBalancersAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.LoadBalancer, error) {
     resp := InitializeReturnType[*v3.LoadBalancer](a.Get)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *LoadBalancersAPI) Create(ctx context.Context, body v3.CreateLoadBalancerJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Create)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *LoadBalancersAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.UpdateLoadBalancerJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Update)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *LoadBalancersAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Delete)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *LoadBalancersAPI) GetService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID) (*v3.LoadBalancerService, error) {
     resp := InitializeReturnType[*v3.LoadBalancerService](a.GetService)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *LoadBalancersAPI) AddService(ctx context.Context, id openapi_types.UUID, body v3.AddServiceToLoadBalancerJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.AddService)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *LoadBalancersAPI) UpdateService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID, body v3.UpdateLoadBalancerServiceJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.UpdateService)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *LoadBalancersAPI) DeleteService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.DeleteService)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 

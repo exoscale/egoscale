@@ -17,16 +17,12 @@ type {{.RootName}}API struct {}
 func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{printf ", %s" .OptArgsDef}}{{end}}) ({{.ResDef}}, error) {
     resp := InitializeReturnType[{{.ResDef}}](a.{{.Name}})
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 {{ end }}

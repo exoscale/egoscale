@@ -17,7 +17,7 @@ func (a *OrgPolicyAPI) Get(ctx context.Context) (*v3.IamPolicy, error) {
 
     resp, err := a.Recordee.Get(ctx, )
 
-    writeErr := WriteTestdata("OrgPolicyAPI.Get", req, resp, err)
+    writeErr := RecordCall("OrgPolicyAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -30,7 +30,7 @@ func (a *OrgPolicyAPI) Update(ctx context.Context, body v3.UpdateIamOrganization
 
     resp, err := a.Recordee.Update(ctx, body)
 
-    writeErr := WriteTestdata("OrgPolicyAPI.Update", req, resp, err)
+    writeErr := RecordCall("OrgPolicyAPI.Update", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

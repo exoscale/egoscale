@@ -17,7 +17,7 @@ func (a *OrgQuotasAPI) List(ctx context.Context) ([]v3.Quota, error) {
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := WriteTestdata("OrgQuotasAPI.List", req, resp, err)
+    writeErr := RecordCall("OrgQuotasAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -30,7 +30,7 @@ func (a *OrgQuotasAPI) Get(ctx context.Context, entity string) (*v3.Quota, error
 
     resp, err := a.Recordee.Get(ctx, entity)
 
-    writeErr := WriteTestdata("OrgQuotasAPI.Get", req, resp, err)
+    writeErr := RecordCall("OrgQuotasAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

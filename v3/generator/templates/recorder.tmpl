@@ -21,7 +21,7 @@ func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{pri
 
     resp, err := a.Recordee.{{.Name}}(ctx, {{.OptArgsPassthrough}})
 
-    writeErr := WriteTestdata("{{$.RootName}}API.{{.Name}}", req, resp, err)
+    writeErr := RecordCall("{{$.RootName}}API.{{.Name}}", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

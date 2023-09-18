@@ -17,7 +17,7 @@ func (a *IntegrationsAPI) ListSettings(ctx context.Context, integrationType stri
 
     resp, err := a.Recordee.ListSettings(ctx, integrationType, sourceType, destType)
 
-    writeErr := WriteTestdata("IntegrationsAPI.ListSettings", req, resp, err)
+    writeErr := RecordCall("IntegrationsAPI.ListSettings", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

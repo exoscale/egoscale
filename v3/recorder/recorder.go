@@ -11,10 +11,10 @@ import (
 )
 
 type TestCall struct {
-	FuncName    string
-	Req         interface{}
-	ReturnValue interface{}
-	ReturnError error
+	FunctionName  string
+	Parameters    interface{}
+	ReturnedValue interface{}
+	ReturnedError error
 }
 
 type TestFlow struct {
@@ -51,29 +51,50 @@ func ReadTestdata(fileName string) (*TestFlow, error) {
 	return tf, nil
 }
 
-func WriteTestdata(funcName string, req, resp interface{}, respErr error) error {
+func marshalIndent(obj any) ([]byte, error) {
+	indentedJSON, err := json.MarshalIndent(obj, "", "    ")
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling with ident, not logging error to avoid leaking secrets errid:1")
+	}
+
+	return indentedJSON, nil
+}
+
+var firstCall bool = true
+
+func RecordCall(funcName string, parameters, returnedValue interface{}, returnedError error) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	tf, err := ReadTestdata(TestdataFilename)
-	if err != nil {
-		return fmt.Errorf("error reading test data before writing %w", err)
+	var tf *TestFlow
+
+	if firstCall {
+		tf = &TestFlow{}
+		firstCall = false
+	} else {
+		var err error
+		tf, err = ReadTestdata(TestdataFilename)
+		if err != nil {
+			return fmt.Errorf("error reading test data before writing %w", err)
+		}
 	}
 
-	fmt.Printf("funcName: %v\n", funcName)
 	tf.Calls = append(tf.Calls, TestCall{
-		FuncName:    funcName,
-		Req:         req,
-		ReturnValue: resp,
-		ReturnError: respErr,
+		FunctionName:  funcName,
+		Parameters:    parameters,
+		ReturnedValue: returnedValue,
+		ReturnedError: returnedError,
 	})
 
-	indentedJSON, err := json.MarshalIndent(tf, "", "    ")
+	indentedJSON, err := marshalIndent(tf)
 	if err != nil {
-		return fmt.Errorf("error marshalling with ident %w", err)
+		return err
 	}
 
-	startGarble(indentedJSON)
+	indentedJSON, err = garbleSecrets(indentedJSON)
+	if err != nil {
+		return err
+	}
 
 	f, err := os.Create(TestdataFilename)
 	if err != nil {
@@ -89,7 +110,7 @@ func WriteTestdata(funcName string, req, resp interface{}, respErr error) error 
 	return nil
 }
 
-func startGarble(jsonData []byte) ([]byte, error) {
+func garbleSecrets(jsonData []byte) ([]byte, error) {
 	readAllGoFilesOnce.Do(readAllGoFiles)
 
 	var data map[string]interface{}
@@ -97,26 +118,56 @@ func startGarble(jsonData []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	garble(data, "")
+	garbledData := garble(data)
+	if garbledData != nil {
+		indentedJSON, err := marshalIndent(garbledData)
+		if err != nil {
+			return nil, err
+		}
+
+		return indentedJSON, nil
+	}
 
 	return nil, nil
 }
 
-func garble(data interface{}, key string) {
-	switch value := data.(type) {
-	case map[string]interface{}:
-		for key, val := range value {
-			garble(val, key)
-		}
-	case []interface{}:
-		for _, val := range value {
-			garble(val, "")
-		}
-	case string:
-		if !strings.Contains(allGoFiles, value) {
-			fmt.Printf("garbling %q: %v\n", key, value)
-		}
+func garble(data interface{}) interface{} {
+	if data == nil {
+		return nil
 	}
+
+	switch typedData := data.(type) {
+	case map[string]interface{}:
+		for key, val := range typedData {
+			typedData[key] = garble(val)
+		}
+
+		return typedData
+	case []interface{}:
+		for ind, val := range typedData {
+			typedData[ind] = garble(val)
+		}
+
+		return typedData
+	case string:
+		if !strings.Contains(allGoFiles, typedData) {
+			typedData = "xxxxxxxxxxxxxxxxxxxxx"
+		}
+
+		return typedData
+	case int:
+		if !strings.Contains(allGoFiles, fmt.Sprint(typedData)) {
+			typedData = 1111111
+		}
+
+		return typedData
+	case bool:
+		// booleans cannot be considered secrets
+
+		return typedData
+	}
+
+	panic("uninspected value for garbling")
 }
 
 func argsToMap(args ...any) map[int]any {

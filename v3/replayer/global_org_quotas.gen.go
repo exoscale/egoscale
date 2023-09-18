@@ -13,32 +13,24 @@ type OrgQuotasAPI struct {}
 func (a *OrgQuotasAPI) List(ctx context.Context) ([]v3.Quota, error) {
     resp := InitializeReturnType[[]v3.Quota](a.List)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 
 func (a *OrgQuotasAPI) Get(ctx context.Context, entity string) (*v3.Quota, error) {
     resp := InitializeReturnType[*v3.Quota](a.Get)
 
-    var returnErr *error
-    writeErr := GetTestCall(&resp, returnErr)
+    var returnErr error
+    writeErr := GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
 
-    if returnErr == nil {
-       return resp, nil
-    }
-
-    return resp, *returnErr
+    return resp, returnErr
 }
 

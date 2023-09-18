@@ -19,7 +19,7 @@ func (a *OperationAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.Oper
 
     resp, err := a.Recordee.Get(ctx, id)
 
-    writeErr := WriteTestdata("OperationAPI.Get", req, resp, err)
+    writeErr := RecordCall("OperationAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

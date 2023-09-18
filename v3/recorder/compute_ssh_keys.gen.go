@@ -17,7 +17,7 @@ func (a *SSHKeysAPI) List(ctx context.Context) ([]v3.SshKey, error) {
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := WriteTestdata("SSHKeysAPI.List", req, resp, err)
+    writeErr := RecordCall("SSHKeysAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -30,7 +30,7 @@ func (a *SSHKeysAPI) Register(ctx context.Context, body v3.RegisterSshKeyJSONReq
 
     resp, err := a.Recordee.Register(ctx, body)
 
-    writeErr := WriteTestdata("SSHKeysAPI.Register", req, resp, err)
+    writeErr := RecordCall("SSHKeysAPI.Register", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -43,7 +43,7 @@ func (a *SSHKeysAPI) Delete(ctx context.Context, name string) (*v3.Operation, er
 
     resp, err := a.Recordee.Delete(ctx, name)
 
-    writeErr := WriteTestdata("SSHKeysAPI.Delete", req, resp, err)
+    writeErr := RecordCall("SSHKeysAPI.Delete", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -56,7 +56,7 @@ func (a *SSHKeysAPI) Get(ctx context.Context, name string) (*v3.SshKey, error) {
 
     resp, err := a.Recordee.Get(ctx, name)
 
-    writeErr := WriteTestdata("SSHKeysAPI.Get", req, resp, err)
+    writeErr := RecordCall("SSHKeysAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

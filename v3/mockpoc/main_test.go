@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	v3 "github.com/exoscale/egoscale/v3"
-	"github.com/exoscale/egoscale/v3/replayer"
+	"github.com/exoscale/egoscale/v3/testing/replayer"
 )
 
 func TestMock(t *testing.T) {

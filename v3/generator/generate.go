@@ -103,7 +103,7 @@ func Generate() {
 
 			fRecorder, err := os.Create(
 				fmt.Sprintf(
-					"../recorder/%s_%s.gen.go",
+					"../testing/recorder/%s_%s.gen.go",
 					group,
 					strcase.ToSnake(apiEnt.RootName),
 				),
@@ -138,7 +138,7 @@ func Generate() {
 
 			fReplayer, err := os.Create(
 				fmt.Sprintf(
-					"../replayer/%s_%s.gen.go",
+					"../testing/replayer/%s_%s.gen.go",
 					group,
 					strcase.ToSnake(apiEnt.RootName),
 				),

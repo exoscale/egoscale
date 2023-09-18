@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"sync/atomic"
 
-	"github.com/exoscale/egoscale/v3/recorder"
+	"github.com/exoscale/egoscale/v3/testing/recorder"
 )
 
 func InitializeReturnType[T any](myFn any) T {

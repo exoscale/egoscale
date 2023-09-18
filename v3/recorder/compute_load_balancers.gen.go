@@ -18,9 +18,8 @@ func (a *LoadBalancersAPI) List(ctx context.Context) ([]v3.LoadBalancer, error) 
     req := argsToMap()
 
     resp, err := a.Recordee.List(ctx, )
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("LoadBalancersAPI.List", req, respMap, 0)
+    writeErr := WriteTestdata("LoadBalancersAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -32,9 +31,8 @@ func (a *LoadBalancersAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.
     req := argsToMap(id)
 
     resp, err := a.Recordee.Get(ctx, id)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("LoadBalancersAPI.Get", req, respMap, 0)
+    writeErr := WriteTestdata("LoadBalancersAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -46,9 +44,8 @@ func (a *LoadBalancersAPI) Create(ctx context.Context, body v3.CreateLoadBalance
     req := argsToMap(body)
 
     resp, err := a.Recordee.Create(ctx, body)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("LoadBalancersAPI.Create", req, respMap, 0)
+    writeErr := WriteTestdata("LoadBalancersAPI.Create", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -60,9 +57,8 @@ func (a *LoadBalancersAPI) Update(ctx context.Context, id openapi_types.UUID, bo
     req := argsToMap(id, body)
 
     resp, err := a.Recordee.Update(ctx, id, body)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("LoadBalancersAPI.Update", req, respMap, 0)
+    writeErr := WriteTestdata("LoadBalancersAPI.Update", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -74,9 +70,8 @@ func (a *LoadBalancersAPI) Delete(ctx context.Context, id openapi_types.UUID) (*
     req := argsToMap(id)
 
     resp, err := a.Recordee.Delete(ctx, id)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("LoadBalancersAPI.Delete", req, respMap, 0)
+    writeErr := WriteTestdata("LoadBalancersAPI.Delete", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -88,9 +83,8 @@ func (a *LoadBalancersAPI) GetService(ctx context.Context, id openapi_types.UUID
     req := argsToMap(id, serviceId)
 
     resp, err := a.Recordee.GetService(ctx, id, serviceId)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("LoadBalancersAPI.GetService", req, respMap, 0)
+    writeErr := WriteTestdata("LoadBalancersAPI.GetService", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -102,9 +96,8 @@ func (a *LoadBalancersAPI) AddService(ctx context.Context, id openapi_types.UUID
     req := argsToMap(id, body)
 
     resp, err := a.Recordee.AddService(ctx, id, body)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("LoadBalancersAPI.AddService", req, respMap, 0)
+    writeErr := WriteTestdata("LoadBalancersAPI.AddService", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -116,9 +109,8 @@ func (a *LoadBalancersAPI) UpdateService(ctx context.Context, id openapi_types.U
     req := argsToMap(id, serviceId, body)
 
     resp, err := a.Recordee.UpdateService(ctx, id, serviceId, body)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("LoadBalancersAPI.UpdateService", req, respMap, 0)
+    writeErr := WriteTestdata("LoadBalancersAPI.UpdateService", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -130,9 +122,8 @@ func (a *LoadBalancersAPI) DeleteService(ctx context.Context, id openapi_types.U
     req := argsToMap(id, serviceId)
 
     resp, err := a.Recordee.DeleteService(ctx, id, serviceId)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("LoadBalancersAPI.DeleteService", req, respMap, 0)
+    writeErr := WriteTestdata("LoadBalancersAPI.DeleteService", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

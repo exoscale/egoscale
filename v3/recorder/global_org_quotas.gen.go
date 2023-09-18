@@ -16,9 +16,8 @@ func (a *OrgQuotasAPI) List(ctx context.Context) ([]v3.Quota, error) {
     req := argsToMap()
 
     resp, err := a.Recordee.List(ctx, )
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("OrgQuotasAPI.List", req, respMap, 0)
+    writeErr := WriteTestdata("OrgQuotasAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -30,9 +29,8 @@ func (a *OrgQuotasAPI) Get(ctx context.Context, entity string) (*v3.Quota, error
     req := argsToMap(entity)
 
     resp, err := a.Recordee.Get(ctx, entity)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("OrgQuotasAPI.Get", req, respMap, 0)
+    writeErr := WriteTestdata("OrgQuotasAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

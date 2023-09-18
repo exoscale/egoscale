@@ -18,9 +18,8 @@ func (a *RolesAPI) List(ctx context.Context) ([]v3.IamRole, error) {
     req := argsToMap()
 
     resp, err := a.Recordee.List(ctx, )
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("RolesAPI.List", req, respMap, 0)
+    writeErr := WriteTestdata("RolesAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -32,9 +31,8 @@ func (a *RolesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.IamRole,
     req := argsToMap(id)
 
     resp, err := a.Recordee.Get(ctx, id)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("RolesAPI.Get", req, respMap, 0)
+    writeErr := WriteTestdata("RolesAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -46,9 +44,8 @@ func (a *RolesAPI) Create(ctx context.Context, body v3.CreateIamRoleJSONRequestB
     req := argsToMap(body)
 
     resp, err := a.Recordee.Create(ctx, body)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("RolesAPI.Create", req, respMap, 0)
+    writeErr := WriteTestdata("RolesAPI.Create", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -60,9 +57,8 @@ func (a *RolesAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Opera
     req := argsToMap(id)
 
     resp, err := a.Recordee.Delete(ctx, id)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("RolesAPI.Delete", req, respMap, 0)
+    writeErr := WriteTestdata("RolesAPI.Delete", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -74,9 +70,8 @@ func (a *RolesAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.Up
     req := argsToMap(id, body)
 
     resp, err := a.Recordee.Update(ctx, id, body)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("RolesAPI.Update", req, respMap, 0)
+    writeErr := WriteTestdata("RolesAPI.Update", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -88,9 +83,8 @@ func (a *RolesAPI) UpdatePolicy(ctx context.Context, id openapi_types.UUID, body
     req := argsToMap(id, body)
 
     resp, err := a.Recordee.UpdatePolicy(ctx, id, body)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("RolesAPI.UpdatePolicy", req, respMap, 0)
+    writeErr := WriteTestdata("RolesAPI.UpdatePolicy", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

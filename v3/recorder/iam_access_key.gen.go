@@ -16,9 +16,8 @@ func (a *AccessKeyAPI) List(ctx context.Context) ([]v3.AccessKey, error) {
     req := argsToMap()
 
     resp, err := a.Recordee.List(ctx, )
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("AccessKeyAPI.List", req, respMap, 0)
+    writeErr := WriteTestdata("AccessKeyAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -30,9 +29,8 @@ func (a *AccessKeyAPI) ListKnownOperations(ctx context.Context) ([]v3.AccessKeyO
     req := argsToMap()
 
     resp, err := a.Recordee.ListKnownOperations(ctx, )
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("AccessKeyAPI.ListKnownOperations", req, respMap, 0)
+    writeErr := WriteTestdata("AccessKeyAPI.ListKnownOperations", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -44,9 +42,8 @@ func (a *AccessKeyAPI) ListOperations(ctx context.Context) ([]v3.AccessKeyOperat
     req := argsToMap()
 
     resp, err := a.Recordee.ListOperations(ctx, )
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("AccessKeyAPI.ListOperations", req, respMap, 0)
+    writeErr := WriteTestdata("AccessKeyAPI.ListOperations", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -58,9 +55,8 @@ func (a *AccessKeyAPI) Get(ctx context.Context, key string) (*v3.AccessKey, erro
     req := argsToMap(key)
 
     resp, err := a.Recordee.Get(ctx, key)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("AccessKeyAPI.Get", req, respMap, 0)
+    writeErr := WriteTestdata("AccessKeyAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -72,9 +68,8 @@ func (a *AccessKeyAPI) Create(ctx context.Context, body v3.CreateAccessKeyJSONRe
     req := argsToMap(body)
 
     resp, err := a.Recordee.Create(ctx, body)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("AccessKeyAPI.Create", req, respMap, 0)
+    writeErr := WriteTestdata("AccessKeyAPI.Create", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -86,9 +81,8 @@ func (a *AccessKeyAPI) Revoke(ctx context.Context, key string) (*v3.Operation, e
     req := argsToMap(key)
 
     resp, err := a.Recordee.Revoke(ctx, key)
-    respMap := argsToMap(resp, err)
 
-    writeErr := WriteTestdata("AccessKeyAPI.Revoke", req, respMap, 0)
+    writeErr := WriteTestdata("AccessKeyAPI.Revoke", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

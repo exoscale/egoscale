@@ -11,10 +11,10 @@ import (
 )
 
 type TestCall struct {
-	FuncName   string
-	Req        interface{}
-	Resp       interface{}
-	RespStatus int
+	FuncName    string
+	Req         interface{}
+	ReturnValue interface{}
+	ReturnError error
 }
 
 type TestFlow struct {
@@ -22,7 +22,7 @@ type TestFlow struct {
 }
 
 var (
-	testdataFilename = "testdata.json"
+	TestdataFilename = "testdata.json"
 	mu               sync.Mutex
 )
 
@@ -51,45 +51,21 @@ func ReadTestdata(fileName string) (*TestFlow, error) {
 	return tf, nil
 }
 
-func GetTestCall(callNr int, callResp interface{}) error {
-	testflow, err := ReadTestdata(testdataFilename)
-	if err != nil {
-		return fmt.Errorf("error reading test data %w", err)
-	}
-
-	if len(testflow.Calls) <= callNr {
-		return fmt.Errorf("no call %d", callNr)
-	}
-
-	callIfval := testflow.Calls[callNr]
-	callIfvalRespJson, err := json.Marshal(callIfval.Resp)
-	if err != nil {
-		return fmt.Errorf("error marshalling call %w", err)
-	}
-
-	err = json.Unmarshal(callIfvalRespJson, callResp)
-	if err != nil {
-		return fmt.Errorf("error unmarshalling call %w", err)
-	}
-
-	return nil
-}
-
-func WriteTestdata(funcName string, req, resp interface{}, respStatus int) error {
+func WriteTestdata(funcName string, req, resp interface{}, respErr error) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	tf, err := ReadTestdata(testdataFilename)
+	tf, err := ReadTestdata(TestdataFilename)
 	if err != nil {
 		return fmt.Errorf("error reading test data before writing %w", err)
 	}
 
 	fmt.Printf("funcName: %v\n", funcName)
 	tf.Calls = append(tf.Calls, TestCall{
-		FuncName:   funcName,
-		RespStatus: respStatus,
-		Req:        req,
-		Resp:       resp,
+		FuncName:    funcName,
+		Req:         req,
+		ReturnValue: resp,
+		ReturnError: respErr,
 	})
 
 	indentedJSON, err := json.MarshalIndent(tf, "", "    ")
@@ -99,7 +75,7 @@ func WriteTestdata(funcName string, req, resp interface{}, respStatus int) error
 
 	startGarble(indentedJSON)
 
-	f, err := os.Create(testdataFilename)
+	f, err := os.Create(TestdataFilename)
 	if err != nil {
 		return fmt.Errorf("error opening file for writing %w", err)
 	}

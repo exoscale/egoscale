@@ -36,6 +36,7 @@ func createAPIEntity(r Resource) apiEntity {
 func Generate() {
 	tpl := template.Must(template.ParseFiles("templates/resource.tmpl"))
 	recorderTpl := template.Must(template.ParseFiles("templates/recorder.tmpl"))
+	replayerTpl := template.Must(template.ParseFiles("templates/replayer.tmpl"))
 
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, "../client.gen.go", nil, parser.ParseComments)
@@ -131,6 +132,22 @@ func Generate() {
 			}
 
 			err = recorderTpl.Execute(fRecorder, &apiEnt)
+			if err != nil {
+				panic(err)
+			}
+
+			fReplayer, err := os.Create(
+				fmt.Sprintf(
+					"../replayer/%s_%s.gen.go",
+					group,
+					strcase.ToSnake(apiEnt.RootName),
+				),
+			)
+			if err != nil {
+				panic(err)
+			}
+
+			err = replayerTpl.Execute(fReplayer, &apiEnt)
 			if err != nil {
 				panic(err)
 			}

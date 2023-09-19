@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	v3 "github.com/exoscale/egoscale/v3"
-	"github.com/exoscale/egoscale/v3/testing/replayer"
+	v3testing "github.com/exoscale/egoscale/v3/testing"
 )
 
 func TestMock(t *testing.T) {
@@ -16,17 +16,22 @@ func TestMock(t *testing.T) {
 	ctx := context.Background()
 
 	// recording
-	// client, err := v3.DefaultClient(v3.ClientOptWithCredentialsFromEnv())
-	// assert.NoError(t, err)
+	client, err := v3testing.NewClient(t, func() (*v3.Client, error) {
+		zc, err := v3.DefaultClient(v3.ClientOptWithCredentialsFromEnv())
 
-	// accKeysClient := client.IAM().AccessKey()
+		return &zc.Client, err
+	})
+	assert.NoError(t, err)
+
+	// accKeysClient := tc.IAM().AccessKey()
 	// accKeys := recorder.AccessKeyAPI{
 	// 	Recordee: accKeysClient,
 	// }
 	// recording
+	accKeys := client.IAM().AccessKey()
 
 	// replaying
-	accKeys := replayer.AccessKeyAPI{}
+	// accKeys := replayer.AccessKeyAPI{}
 	// replaying
 	createKeyResp, err := accKeys.Create(ctx, v3.CreateAccessKeyJSONRequestBody{
 		Name: v3.FromString(testKeyName),

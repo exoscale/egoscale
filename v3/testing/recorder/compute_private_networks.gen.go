@@ -11,6 +11,7 @@ v3 "github.com/exoscale/egoscale/v3"
 
 type PrivateNetworksAPI struct {
     Recordee *v3.PrivateNetworksAPI
+    Recorder *Recorder
 }
 
 
@@ -19,7 +20,7 @@ func (a *PrivateNetworksAPI) List(ctx context.Context) ([]v3.PrivateNetwork, err
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := RecordCall("PrivateNetworksAPI.List", req, resp, err)
+    writeErr := a.Recorder.RecordCall("PrivateNetworksAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -32,7 +33,7 @@ func (a *PrivateNetworksAPI) Get(ctx context.Context, id openapi_types.UUID) (*v
 
     resp, err := a.Recordee.Get(ctx, id)
 
-    writeErr := RecordCall("PrivateNetworksAPI.Get", req, resp, err)
+    writeErr := a.Recorder.RecordCall("PrivateNetworksAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -45,7 +46,7 @@ func (a *PrivateNetworksAPI) Create(ctx context.Context, body v3.CreatePrivateNe
 
     resp, err := a.Recordee.Create(ctx, body)
 
-    writeErr := RecordCall("PrivateNetworksAPI.Create", req, resp, err)
+    writeErr := a.Recorder.RecordCall("PrivateNetworksAPI.Create", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -58,7 +59,7 @@ func (a *PrivateNetworksAPI) Update(ctx context.Context, id openapi_types.UUID, 
 
     resp, err := a.Recordee.Update(ctx, id, body)
 
-    writeErr := RecordCall("PrivateNetworksAPI.Update", req, resp, err)
+    writeErr := a.Recorder.RecordCall("PrivateNetworksAPI.Update", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -71,7 +72,7 @@ func (a *PrivateNetworksAPI) Delete(ctx context.Context, id openapi_types.UUID) 
 
     resp, err := a.Recordee.Delete(ctx, id)
 
-    writeErr := RecordCall("PrivateNetworksAPI.Delete", req, resp, err)
+    writeErr := a.Recorder.RecordCall("PrivateNetworksAPI.Delete", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

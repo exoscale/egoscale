@@ -7,14 +7,16 @@ import (
 v3 "github.com/exoscale/egoscale/v3"
 )
 
-type OrgPolicyAPI struct {}
+type OrgPolicyAPI struct {
+     Replayer *Replayer
+}
 
 
 func (a *OrgPolicyAPI) Get(ctx context.Context) (*v3.IamPolicy, error) {
     resp := InitializeReturnType[*v3.IamPolicy](a.Get)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -26,7 +28,7 @@ func (a *OrgPolicyAPI) Update(ctx context.Context, body v3.UpdateIamOrganization
     resp := InitializeReturnType[*v3.Operation](a.Update)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }

@@ -9,14 +9,16 @@ import (
 v3 "github.com/exoscale/egoscale/v3"
 )
 
-type LoadBalancersAPI struct {}
+type LoadBalancersAPI struct {
+     Replayer *Replayer
+}
 
 
 func (a *LoadBalancersAPI) List(ctx context.Context) ([]v3.LoadBalancer, error) {
     resp := InitializeReturnType[[]v3.LoadBalancer](a.List)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -28,7 +30,7 @@ func (a *LoadBalancersAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.
     resp := InitializeReturnType[*v3.LoadBalancer](a.Get)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -40,7 +42,7 @@ func (a *LoadBalancersAPI) Create(ctx context.Context, body v3.CreateLoadBalance
     resp := InitializeReturnType[*v3.Operation](a.Create)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -52,7 +54,7 @@ func (a *LoadBalancersAPI) Update(ctx context.Context, id openapi_types.UUID, bo
     resp := InitializeReturnType[*v3.Operation](a.Update)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -64,7 +66,7 @@ func (a *LoadBalancersAPI) Delete(ctx context.Context, id openapi_types.UUID) (*
     resp := InitializeReturnType[*v3.Operation](a.Delete)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -76,7 +78,7 @@ func (a *LoadBalancersAPI) GetService(ctx context.Context, id openapi_types.UUID
     resp := InitializeReturnType[*v3.LoadBalancerService](a.GetService)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -88,7 +90,7 @@ func (a *LoadBalancersAPI) AddService(ctx context.Context, id openapi_types.UUID
     resp := InitializeReturnType[*v3.Operation](a.AddService)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -100,7 +102,7 @@ func (a *LoadBalancersAPI) UpdateService(ctx context.Context, id openapi_types.U
     resp := InitializeReturnType[*v3.Operation](a.UpdateService)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -112,7 +114,7 @@ func (a *LoadBalancersAPI) DeleteService(ctx context.Context, id openapi_types.U
     resp := InitializeReturnType[*v3.Operation](a.DeleteService)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }

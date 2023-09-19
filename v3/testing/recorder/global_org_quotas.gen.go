@@ -9,6 +9,7 @@ v3 "github.com/exoscale/egoscale/v3"
 
 type OrgQuotasAPI struct {
     Recordee *v3.OrgQuotasAPI
+    Recorder *Recorder
 }
 
 
@@ -17,7 +18,7 @@ func (a *OrgQuotasAPI) List(ctx context.Context) ([]v3.Quota, error) {
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := RecordCall("OrgQuotasAPI.List", req, resp, err)
+    writeErr := a.Recorder.RecordCall("OrgQuotasAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -30,7 +31,7 @@ func (a *OrgQuotasAPI) Get(ctx context.Context, entity string) (*v3.Quota, error
 
     resp, err := a.Recordee.Get(ctx, entity)
 
-    writeErr := RecordCall("OrgQuotasAPI.Get", req, resp, err)
+    writeErr := a.Recorder.RecordCall("OrgQuotasAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

@@ -9,6 +9,7 @@ v3 "github.com/exoscale/egoscale/v3"
 
 type OrgPolicyAPI struct {
     Recordee *v3.OrgPolicyAPI
+    Recorder *Recorder
 }
 
 
@@ -17,7 +18,7 @@ func (a *OrgPolicyAPI) Get(ctx context.Context) (*v3.IamPolicy, error) {
 
     resp, err := a.Recordee.Get(ctx, )
 
-    writeErr := RecordCall("OrgPolicyAPI.Get", req, resp, err)
+    writeErr := a.Recorder.RecordCall("OrgPolicyAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -30,7 +31,7 @@ func (a *OrgPolicyAPI) Update(ctx context.Context, body v3.UpdateIamOrganization
 
     resp, err := a.Recordee.Update(ctx, body)
 
-    writeErr := RecordCall("OrgPolicyAPI.Update", req, resp, err)
+    writeErr := a.Recorder.RecordCall("OrgPolicyAPI.Update", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

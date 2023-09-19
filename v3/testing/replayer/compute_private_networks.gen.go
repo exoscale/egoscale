@@ -9,14 +9,16 @@ import (
 v3 "github.com/exoscale/egoscale/v3"
 )
 
-type PrivateNetworksAPI struct {}
+type PrivateNetworksAPI struct {
+     Replayer *Replayer
+}
 
 
 func (a *PrivateNetworksAPI) List(ctx context.Context) ([]v3.PrivateNetwork, error) {
     resp := InitializeReturnType[[]v3.PrivateNetwork](a.List)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -28,7 +30,7 @@ func (a *PrivateNetworksAPI) Get(ctx context.Context, id openapi_types.UUID) (*v
     resp := InitializeReturnType[*v3.PrivateNetwork](a.Get)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -40,7 +42,7 @@ func (a *PrivateNetworksAPI) Create(ctx context.Context, body v3.CreatePrivateNe
     resp := InitializeReturnType[*v3.Operation](a.Create)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -52,7 +54,7 @@ func (a *PrivateNetworksAPI) Update(ctx context.Context, id openapi_types.UUID, 
     resp := InitializeReturnType[*v3.Operation](a.Update)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -64,7 +66,7 @@ func (a *PrivateNetworksAPI) Delete(ctx context.Context, id openapi_types.UUID) 
     resp := InitializeReturnType[*v3.Operation](a.Delete)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }

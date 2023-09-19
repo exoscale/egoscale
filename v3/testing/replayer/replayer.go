@@ -28,8 +28,12 @@ func InitializeReturnType[T any](myFn any) T {
 
 var callNr atomic.Int32
 
-func GetTestCall(callResp interface{}, returnErr *error) error {
-	testflow, err := recorder.ReadRecording(recorder.TestdataFilename)
+type Replayer struct {
+	Filename string
+}
+
+func (replayer *Replayer) GetTestCall(callResp interface{}, returnErr *error) error {
+	testflow, err := recorder.ReadRecording(replayer.Filename)
 	if err != nil {
 		return fmt.Errorf("error reading test data %w", err)
 	}

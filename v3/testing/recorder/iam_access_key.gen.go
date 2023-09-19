@@ -9,6 +9,7 @@ v3 "github.com/exoscale/egoscale/v3"
 
 type AccessKeyAPI struct {
     Recordee *v3.AccessKeyAPI
+    Recorder *Recorder
 }
 
 
@@ -17,7 +18,7 @@ func (a *AccessKeyAPI) List(ctx context.Context) ([]v3.AccessKey, error) {
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := RecordCall("AccessKeyAPI.List", req, resp, err)
+    writeErr := a.Recorder.RecordCall("AccessKeyAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -30,7 +31,7 @@ func (a *AccessKeyAPI) ListKnownOperations(ctx context.Context) ([]v3.AccessKeyO
 
     resp, err := a.Recordee.ListKnownOperations(ctx, )
 
-    writeErr := RecordCall("AccessKeyAPI.ListKnownOperations", req, resp, err)
+    writeErr := a.Recorder.RecordCall("AccessKeyAPI.ListKnownOperations", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -43,7 +44,7 @@ func (a *AccessKeyAPI) ListOperations(ctx context.Context) ([]v3.AccessKeyOperat
 
     resp, err := a.Recordee.ListOperations(ctx, )
 
-    writeErr := RecordCall("AccessKeyAPI.ListOperations", req, resp, err)
+    writeErr := a.Recorder.RecordCall("AccessKeyAPI.ListOperations", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -56,7 +57,7 @@ func (a *AccessKeyAPI) Get(ctx context.Context, key string) (*v3.AccessKey, erro
 
     resp, err := a.Recordee.Get(ctx, key)
 
-    writeErr := RecordCall("AccessKeyAPI.Get", req, resp, err)
+    writeErr := a.Recorder.RecordCall("AccessKeyAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -69,7 +70,7 @@ func (a *AccessKeyAPI) Create(ctx context.Context, body v3.CreateAccessKeyJSONRe
 
     resp, err := a.Recordee.Create(ctx, body)
 
-    writeErr := RecordCall("AccessKeyAPI.Create", req, resp, err)
+    writeErr := a.Recorder.RecordCall("AccessKeyAPI.Create", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -82,7 +83,7 @@ func (a *AccessKeyAPI) Revoke(ctx context.Context, key string) (*v3.Operation, e
 
     resp, err := a.Recordee.Revoke(ctx, key)
 
-    writeErr := RecordCall("AccessKeyAPI.Revoke", req, resp, err)
+    writeErr := a.Recorder.RecordCall("AccessKeyAPI.Revoke", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

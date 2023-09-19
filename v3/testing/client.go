@@ -2,10 +2,16 @@ package testing
 
 import (
 	"flag"
+	"fmt"
+	"os"
+	"path"
+	"regexp"
 	"sync"
 	"testing"
 
 	v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/testing/recorder"
+	"github.com/exoscale/egoscale/v3/testing/replayer"
 )
 
 type ClientIface interface {
@@ -17,16 +23,26 @@ type ClientIface interface {
 }
 
 type TestClient struct {
-	Client *v3.Client
+	Client   *v3.Client
+	Recorder *recorder.Recorder
+	Replayer *replayer.Replayer
 }
 
 // IAM provides access to IAM resources on Exoscale platform.
-func (c *TestClient) IAM() IAMAPIIface {
-	record := c.Client != nil
-	if record {
-		return &IAMAPIRecorder{c}
+func (tc *TestClient) IAM() IAMAPIIface {
+	if tc.Recorder != nil && tc.Replayer != nil {
+		panic("can't record and replay at the same time")
+	}
+
+	if tc.Recorder != nil {
+		return &IAMAPIRecorder{
+			Recorder: tc.Recorder,
+			client:   tc,
+		}
 	} else {
-		return &IAMAPIReplayer{}
+		return &IAMAPIReplayer{
+			Replayer: tc.Replayer,
+		}
 	}
 }
 
@@ -51,8 +67,9 @@ func (c *TestClient) IAM() IAMAPIIface {
 // }
 
 var (
-	recordCalls bool
-	parseFlags  sync.Once
+	recordCalls     bool
+	parseFlags      sync.Once
+	testdataDirName = "testdata"
 )
 
 func init() {
@@ -67,19 +84,61 @@ func getRecordingFlag() bool {
 	return recordCalls
 }
 
+func createTestdataDir() error {
+	if _, err := os.Stat(testdataDirName); os.IsNotExist(err) {
+		err := os.Mkdir(testdataDirName, os.FileMode(0755))
+		if err != nil {
+			return fmt.Errorf("failed to create testdata directory: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("failed to check existence of testdata directory: %w", err)
+	}
+
+	return nil
+}
+
+func normalizeFilename(s string) string {
+	// Replace whitespace with underscores
+	re := regexp.MustCompile(`\s+`)
+	s = re.ReplaceAllString(s, "_")
+
+	// Replace invalid characters with underscores
+	invalidChars := regexp.MustCompile(`[\/:*?"<>|]`)
+	s = invalidChars.ReplaceAllString(s, "_")
+
+	// Truncate to 255 characters as that's a limit on some filesystems
+	if len(s) > 255 {
+		s = s[:255]
+	}
+
+	return s
+}
+
 func NewClient(t *testing.T, initializer func() (*v3.Client, error)) (ClientIface, error) {
 	var record bool = getRecordingFlag()
 
+	recordingPath := path.Join(testdataDirName, normalizeFilename(t.Name()+".json"))
 	if record {
 		c, err := initializer()
 		if err != nil {
 			return nil, err
 		}
 
+		if err := createTestdataDir(); err != nil {
+			return nil, err
+		}
+
 		return &TestClient{
 			Client: c,
+			Recorder: &recorder.Recorder{
+				Filename: recordingPath,
+			},
 		}, nil
 	}
 
-	return &TestClient{}, nil
+	return &TestClient{
+		Replayer: &replayer.Replayer{
+			Filename: recordingPath,
+		},
+	}, nil
 }

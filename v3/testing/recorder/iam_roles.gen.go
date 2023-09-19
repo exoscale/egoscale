@@ -11,6 +11,7 @@ v3 "github.com/exoscale/egoscale/v3"
 
 type RolesAPI struct {
     Recordee *v3.RolesAPI
+    Recorder *Recorder
 }
 
 
@@ -19,7 +20,7 @@ func (a *RolesAPI) List(ctx context.Context) ([]v3.IamRole, error) {
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := RecordCall("RolesAPI.List", req, resp, err)
+    writeErr := a.Recorder.RecordCall("RolesAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -32,7 +33,7 @@ func (a *RolesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.IamRole,
 
     resp, err := a.Recordee.Get(ctx, id)
 
-    writeErr := RecordCall("RolesAPI.Get", req, resp, err)
+    writeErr := a.Recorder.RecordCall("RolesAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -45,7 +46,7 @@ func (a *RolesAPI) Create(ctx context.Context, body v3.CreateIamRoleJSONRequestB
 
     resp, err := a.Recordee.Create(ctx, body)
 
-    writeErr := RecordCall("RolesAPI.Create", req, resp, err)
+    writeErr := a.Recorder.RecordCall("RolesAPI.Create", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -58,7 +59,7 @@ func (a *RolesAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Opera
 
     resp, err := a.Recordee.Delete(ctx, id)
 
-    writeErr := RecordCall("RolesAPI.Delete", req, resp, err)
+    writeErr := a.Recorder.RecordCall("RolesAPI.Delete", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -71,7 +72,7 @@ func (a *RolesAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.Up
 
     resp, err := a.Recordee.Update(ctx, id, body)
 
-    writeErr := RecordCall("RolesAPI.Update", req, resp, err)
+    writeErr := a.Recorder.RecordCall("RolesAPI.Update", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -84,7 +85,7 @@ func (a *RolesAPI) UpdatePolicy(ctx context.Context, id openapi_types.UUID, body
 
     resp, err := a.Recordee.UpdatePolicy(ctx, id, body)
 
-    writeErr := RecordCall("RolesAPI.UpdatePolicy", req, resp, err)
+    writeErr := a.Recorder.RecordCall("RolesAPI.UpdatePolicy", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

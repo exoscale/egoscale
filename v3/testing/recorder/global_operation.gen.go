@@ -11,6 +11,7 @@ v3 "github.com/exoscale/egoscale/v3"
 
 type OperationAPI struct {
     Recordee *v3.OperationAPI
+    Recorder *Recorder
 }
 
 
@@ -19,7 +20,7 @@ func (a *OperationAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.Oper
 
     resp, err := a.Recordee.Get(ctx, id)
 
-    writeErr := RecordCall("OperationAPI.Get", req, resp, err)
+    writeErr := a.Recorder.RecordCall("OperationAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

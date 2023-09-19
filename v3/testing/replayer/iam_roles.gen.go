@@ -9,14 +9,16 @@ import (
 v3 "github.com/exoscale/egoscale/v3"
 )
 
-type RolesAPI struct {}
+type RolesAPI struct {
+     Replayer *Replayer
+}
 
 
 func (a *RolesAPI) List(ctx context.Context) ([]v3.IamRole, error) {
     resp := InitializeReturnType[[]v3.IamRole](a.List)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -28,7 +30,7 @@ func (a *RolesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.IamRole,
     resp := InitializeReturnType[*v3.IamRole](a.Get)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -40,7 +42,7 @@ func (a *RolesAPI) Create(ctx context.Context, body v3.CreateIamRoleJSONRequestB
     resp := InitializeReturnType[*v3.Operation](a.Create)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -52,7 +54,7 @@ func (a *RolesAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Opera
     resp := InitializeReturnType[*v3.Operation](a.Delete)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -64,7 +66,7 @@ func (a *RolesAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.Up
     resp := InitializeReturnType[*v3.Operation](a.Update)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -76,7 +78,7 @@ func (a *RolesAPI) UpdatePolicy(ctx context.Context, id openapi_types.UUID, body
     resp := InitializeReturnType[*v3.Operation](a.UpdatePolicy)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }

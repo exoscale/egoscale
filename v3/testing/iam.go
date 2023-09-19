@@ -15,7 +15,8 @@ type IAMAPIIface interface {
 }
 
 type IAMAPIRecorder struct {
-	client *TestClient
+	client   *TestClient
+	Recorder *recorder.Recorder
 }
 
 func (a *IAMAPIRecorder) Roles() *v3.RolesAPI {
@@ -29,10 +30,12 @@ func (a *IAMAPIRecorder) OrgPolicy() *v3.OrgPolicyAPI {
 func (a *IAMAPIRecorder) AccessKey() AccessKeyAPIIface {
 	return &recorder.AccessKeyAPI{
 		Recordee: a.client.Client.IAM().AccessKey(),
+		Recorder: a.Recorder,
 	}
 }
 
 type IAMAPIReplayer struct {
+	Replayer *replayer.Replayer
 }
 
 func (a *IAMAPIReplayer) Roles() *v3.RolesAPI {
@@ -44,7 +47,9 @@ func (a *IAMAPIReplayer) OrgPolicy() *v3.OrgPolicyAPI {
 }
 
 func (a *IAMAPIReplayer) AccessKey() AccessKeyAPIIface {
-	return &replayer.AccessKeyAPI{}
+	return &replayer.AccessKeyAPI{
+		Replayer: a.Replayer,
+	}
 }
 
 type AccessKeyAPIIface interface {

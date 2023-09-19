@@ -11,6 +11,7 @@ v3 "github.com/exoscale/egoscale/v3"
 
 type LoadBalancersAPI struct {
     Recordee *v3.LoadBalancersAPI
+    Recorder *Recorder
 }
 
 
@@ -19,7 +20,7 @@ func (a *LoadBalancersAPI) List(ctx context.Context) ([]v3.LoadBalancer, error) 
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := RecordCall("LoadBalancersAPI.List", req, resp, err)
+    writeErr := a.Recorder.RecordCall("LoadBalancersAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -32,7 +33,7 @@ func (a *LoadBalancersAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.
 
     resp, err := a.Recordee.Get(ctx, id)
 
-    writeErr := RecordCall("LoadBalancersAPI.Get", req, resp, err)
+    writeErr := a.Recorder.RecordCall("LoadBalancersAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -45,7 +46,7 @@ func (a *LoadBalancersAPI) Create(ctx context.Context, body v3.CreateLoadBalance
 
     resp, err := a.Recordee.Create(ctx, body)
 
-    writeErr := RecordCall("LoadBalancersAPI.Create", req, resp, err)
+    writeErr := a.Recorder.RecordCall("LoadBalancersAPI.Create", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -58,7 +59,7 @@ func (a *LoadBalancersAPI) Update(ctx context.Context, id openapi_types.UUID, bo
 
     resp, err := a.Recordee.Update(ctx, id, body)
 
-    writeErr := RecordCall("LoadBalancersAPI.Update", req, resp, err)
+    writeErr := a.Recorder.RecordCall("LoadBalancersAPI.Update", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -71,7 +72,7 @@ func (a *LoadBalancersAPI) Delete(ctx context.Context, id openapi_types.UUID) (*
 
     resp, err := a.Recordee.Delete(ctx, id)
 
-    writeErr := RecordCall("LoadBalancersAPI.Delete", req, resp, err)
+    writeErr := a.Recorder.RecordCall("LoadBalancersAPI.Delete", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -84,7 +85,7 @@ func (a *LoadBalancersAPI) GetService(ctx context.Context, id openapi_types.UUID
 
     resp, err := a.Recordee.GetService(ctx, id, serviceId)
 
-    writeErr := RecordCall("LoadBalancersAPI.GetService", req, resp, err)
+    writeErr := a.Recorder.RecordCall("LoadBalancersAPI.GetService", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -97,7 +98,7 @@ func (a *LoadBalancersAPI) AddService(ctx context.Context, id openapi_types.UUID
 
     resp, err := a.Recordee.AddService(ctx, id, body)
 
-    writeErr := RecordCall("LoadBalancersAPI.AddService", req, resp, err)
+    writeErr := a.Recorder.RecordCall("LoadBalancersAPI.AddService", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -110,7 +111,7 @@ func (a *LoadBalancersAPI) UpdateService(ctx context.Context, id openapi_types.U
 
     resp, err := a.Recordee.UpdateService(ctx, id, serviceId, body)
 
-    writeErr := RecordCall("LoadBalancersAPI.UpdateService", req, resp, err)
+    writeErr := a.Recorder.RecordCall("LoadBalancersAPI.UpdateService", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -123,7 +124,7 @@ func (a *LoadBalancersAPI) DeleteService(ctx context.Context, id openapi_types.U
 
     resp, err := a.Recordee.DeleteService(ctx, id, serviceId)
 
-    writeErr := RecordCall("LoadBalancersAPI.DeleteService", req, resp, err)
+    writeErr := a.Recorder.RecordCall("LoadBalancersAPI.DeleteService", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

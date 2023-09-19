@@ -13,6 +13,7 @@ import (
 
 type {{.RootName}}API struct {
     Recordee *v3.{{.RootName}}API
+    Recorder *Recorder
 }
 
 {{ range .Fns}}
@@ -21,7 +22,7 @@ func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{pri
 
     resp, err := a.Recordee.{{.Name}}(ctx, {{.OptArgsPassthrough}})
 
-    writeErr := RecordCall("{{$.RootName}}API.{{.Name}}", req, resp, err)
+    writeErr := a.Recorder.RecordCall("{{$.RootName}}API.{{.Name}}", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

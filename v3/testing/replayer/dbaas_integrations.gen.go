@@ -7,14 +7,16 @@ import (
 v3 "github.com/exoscale/egoscale/v3"
 )
 
-type IntegrationsAPI struct {}
+type IntegrationsAPI struct {
+     Replayer *Replayer
+}
 
 
 func (a *IntegrationsAPI) ListSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*v3.DBaaSIntegrationSettings, error) {
     resp := InitializeReturnType[*v3.DBaaSIntegrationSettings](a.ListSettings)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }

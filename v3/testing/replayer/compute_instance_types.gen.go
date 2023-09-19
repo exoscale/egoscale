@@ -9,14 +9,16 @@ import (
 v3 "github.com/exoscale/egoscale/v3"
 )
 
-type InstanceTypesAPI struct {}
+type InstanceTypesAPI struct {
+     Replayer *Replayer
+}
 
 
 func (a *InstanceTypesAPI) List(ctx context.Context) ([]v3.InstanceType, error) {
     resp := InitializeReturnType[[]v3.InstanceType](a.List)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -28,7 +30,7 @@ func (a *InstanceTypesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.
     resp := InitializeReturnType[*v3.InstanceType](a.Get)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }

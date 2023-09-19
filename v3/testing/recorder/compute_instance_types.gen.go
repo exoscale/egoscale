@@ -11,6 +11,7 @@ v3 "github.com/exoscale/egoscale/v3"
 
 type InstanceTypesAPI struct {
     Recordee *v3.InstanceTypesAPI
+    Recorder *Recorder
 }
 
 
@@ -19,7 +20,7 @@ func (a *InstanceTypesAPI) List(ctx context.Context) ([]v3.InstanceType, error) 
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := RecordCall("InstanceTypesAPI.List", req, resp, err)
+    writeErr := a.Recorder.RecordCall("InstanceTypesAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -32,7 +33,7 @@ func (a *InstanceTypesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.
 
     resp, err := a.Recordee.Get(ctx, id)
 
-    writeErr := RecordCall("InstanceTypesAPI.Get", req, resp, err)
+    writeErr := a.Recorder.RecordCall("InstanceTypesAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

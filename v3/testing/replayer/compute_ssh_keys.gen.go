@@ -7,14 +7,16 @@ import (
 v3 "github.com/exoscale/egoscale/v3"
 )
 
-type SSHKeysAPI struct {}
+type SSHKeysAPI struct {
+     Replayer *Replayer
+}
 
 
 func (a *SSHKeysAPI) List(ctx context.Context) ([]v3.SshKey, error) {
     resp := InitializeReturnType[[]v3.SshKey](a.List)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -26,7 +28,7 @@ func (a *SSHKeysAPI) Register(ctx context.Context, body v3.RegisterSshKeyJSONReq
     resp := InitializeReturnType[*v3.Operation](a.Register)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -38,7 +40,7 @@ func (a *SSHKeysAPI) Delete(ctx context.Context, name string) (*v3.Operation, er
     resp := InitializeReturnType[*v3.Operation](a.Delete)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -50,7 +52,7 @@ func (a *SSHKeysAPI) Get(ctx context.Context, name string) (*v3.SshKey, error) {
     resp := InitializeReturnType[*v3.SshKey](a.Get)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }

@@ -9,14 +9,16 @@ import (
 v3 "github.com/exoscale/egoscale/v3"
 )
 
-type OperationAPI struct {}
+type OperationAPI struct {
+     Replayer *Replayer
+}
 
 
 func (a *OperationAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Get)
 
     var returnErr error
-    writeErr := GetTestCall(&resp, &returnErr)
+    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
     if writeErr != nil {
        panic(writeErr)
     }

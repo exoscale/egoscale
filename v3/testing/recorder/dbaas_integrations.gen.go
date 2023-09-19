@@ -9,6 +9,7 @@ v3 "github.com/exoscale/egoscale/v3"
 
 type IntegrationsAPI struct {
     Recordee *v3.IntegrationsAPI
+    Recorder *Recorder
 }
 
 
@@ -17,7 +18,7 @@ func (a *IntegrationsAPI) ListSettings(ctx context.Context, integrationType stri
 
     resp, err := a.Recordee.ListSettings(ctx, integrationType, sourceType, destType)
 
-    writeErr := RecordCall("IntegrationsAPI.ListSettings", req, resp, err)
+    writeErr := a.Recorder.RecordCall("IntegrationsAPI.ListSettings", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

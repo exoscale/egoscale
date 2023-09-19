@@ -25,8 +25,7 @@ type Recording struct {
 }
 
 var (
-	TestdataFilename = "testdata.json"
-	mu               sync.Mutex
+	mu sync.Mutex
 )
 
 func ReadRecording(fileName string) (*Recording, error) {
@@ -65,9 +64,14 @@ func marshalIndent(obj any) ([]byte, error) {
 
 var firstCall bool = true
 
-func RecordCall(funcName string, parameters, returnedValue interface{}, returnedError error) error {
-	mu.Lock()
-	defer mu.Unlock()
+type Recorder struct {
+	Filename string
+	mu       sync.Mutex
+}
+
+func (recorder *Recorder) RecordCall(funcName string, parameters, returnedValue interface{}, returnedError error) error {
+	recorder.mu.Lock()
+	defer recorder.mu.Unlock()
 
 	var tf *Recording
 
@@ -76,7 +80,7 @@ func RecordCall(funcName string, parameters, returnedValue interface{}, returned
 		firstCall = false
 	} else {
 		var err error
-		tf, err = ReadRecording(TestdataFilename)
+		tf, err = ReadRecording(recorder.Filename)
 		if err != nil {
 			return fmt.Errorf("error reading test data before writing %w", err)
 		}
@@ -99,7 +103,7 @@ func RecordCall(funcName string, parameters, returnedValue interface{}, returned
 		return err
 	}
 
-	f, err := os.Create(TestdataFilename)
+	f, err := os.Create(recorder.Filename)
 	if err != nil {
 		return fmt.Errorf("error opening file for writing %w", err)
 	}

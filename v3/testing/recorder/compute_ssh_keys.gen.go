@@ -9,6 +9,7 @@ v3 "github.com/exoscale/egoscale/v3"
 
 type SSHKeysAPI struct {
     Recordee *v3.SSHKeysAPI
+    Recorder *Recorder
 }
 
 
@@ -17,7 +18,7 @@ func (a *SSHKeysAPI) List(ctx context.Context) ([]v3.SshKey, error) {
 
     resp, err := a.Recordee.List(ctx, )
 
-    writeErr := RecordCall("SSHKeysAPI.List", req, resp, err)
+    writeErr := a.Recorder.RecordCall("SSHKeysAPI.List", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -30,7 +31,7 @@ func (a *SSHKeysAPI) Register(ctx context.Context, body v3.RegisterSshKeyJSONReq
 
     resp, err := a.Recordee.Register(ctx, body)
 
-    writeErr := RecordCall("SSHKeysAPI.Register", req, resp, err)
+    writeErr := a.Recorder.RecordCall("SSHKeysAPI.Register", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -43,7 +44,7 @@ func (a *SSHKeysAPI) Delete(ctx context.Context, name string) (*v3.Operation, er
 
     resp, err := a.Recordee.Delete(ctx, name)
 
-    writeErr := RecordCall("SSHKeysAPI.Delete", req, resp, err)
+    writeErr := a.Recorder.RecordCall("SSHKeysAPI.Delete", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }
@@ -56,7 +57,7 @@ func (a *SSHKeysAPI) Get(ctx context.Context, name string) (*v3.SshKey, error) {
 
     resp, err := a.Recordee.Get(ctx, name)
 
-    writeErr := RecordCall("SSHKeysAPI.Get", req, resp, err)
+    writeErr := a.Recorder.RecordCall("SSHKeysAPI.Get", req, resp, err)
     if writeErr != nil {
        panic(writeErr)
     }

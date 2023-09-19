@@ -16,9 +16,9 @@ type PrivateNetworksAPI struct {
 
 
 func (a *PrivateNetworksAPI) List(ctx context.Context) ([]v3.PrivateNetwork, error) {
-    req := argsToMap()
+    req := ArgsToMap()
 
-    resp, err := a.Recordee.List(ctx, )
+    resp, err := a.Recordee.List(ctx)
 
     writeErr := a.Recorder.RecordCall("PrivateNetworksAPI.List", req, resp, err)
     if writeErr != nil {
@@ -29,7 +29,7 @@ func (a *PrivateNetworksAPI) List(ctx context.Context) ([]v3.PrivateNetwork, err
 }
 
 func (a *PrivateNetworksAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.PrivateNetwork, error) {
-    req := argsToMap(id)
+    req := ArgsToMap(id)
 
     resp, err := a.Recordee.Get(ctx, id)
 
@@ -42,7 +42,7 @@ func (a *PrivateNetworksAPI) Get(ctx context.Context, id openapi_types.UUID) (*v
 }
 
 func (a *PrivateNetworksAPI) Create(ctx context.Context, body v3.CreatePrivateNetworkJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(body)
+    req := ArgsToMap(body)
 
     resp, err := a.Recordee.Create(ctx, body)
 
@@ -55,7 +55,7 @@ func (a *PrivateNetworksAPI) Create(ctx context.Context, body v3.CreatePrivateNe
 }
 
 func (a *PrivateNetworksAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.UpdatePrivateNetworkJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(id, body)
+    req := ArgsToMap(id, body)
 
     resp, err := a.Recordee.Update(ctx, id, body)
 
@@ -68,7 +68,7 @@ func (a *PrivateNetworksAPI) Update(ctx context.Context, id openapi_types.UUID, 
 }
 
 func (a *PrivateNetworksAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
-    req := argsToMap(id)
+    req := ArgsToMap(id)
 
     resp, err := a.Recordee.Delete(ctx, id)
 

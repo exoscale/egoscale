@@ -7,20 +7,33 @@ import (
 
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/testing/recorder"
 )
 
 type OperationAPI struct {
-     Replayer *Replayer
+    Replayer *Replayer
+
+    GetHook func(ctx context.Context, id openapi_types.UUID) error
+
 }
 
 
 func (a *OperationAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Get)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.GetHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, id)
+    } else {
+        if err := a.GetHook(ctx, id); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr

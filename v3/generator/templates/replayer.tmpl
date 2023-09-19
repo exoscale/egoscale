@@ -9,20 +9,33 @@ import (
 {{end -}}
 
 	v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/testing/recorder"
 )
 
 type {{.RootName}}API struct {
-     Replayer *Replayer
+    Replayer *Replayer
+{{ range .Fns}}
+    {{.Name}}Hook func(ctx context.Context{{if .OptArgsDef}}{{printf ", %s" .OptArgsDef}}{{end}}) error
+{{ end }}
 }
 
 {{ range .Fns}}
 func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{printf ", %s" .OptArgsDef}}{{end}}) ({{.ResDef}}, error) {
     resp := InitializeReturnType[{{.ResDef}}](a.{{.Name}})
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.{{.Name}}Hook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx{{if .OptArgsDef}}, {{.OptArgsPassthrough}}{{end}})
+    } else {
+        if err := a.{{.Name}}Hook(ctx{{if .OptArgsDef}}, {{.OptArgsPassthrough}}{{end}}); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr

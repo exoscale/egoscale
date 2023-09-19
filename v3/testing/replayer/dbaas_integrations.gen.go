@@ -5,20 +5,33 @@ import (
 	"context"
 
 v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/testing/recorder"
 )
 
 type IntegrationsAPI struct {
-     Replayer *Replayer
+    Replayer *Replayer
+
+    ListSettingsHook func(ctx context.Context, integrationType string, sourceType string, destType string) error
+
 }
 
 
 func (a *IntegrationsAPI) ListSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*v3.DBaaSIntegrationSettings, error) {
     resp := InitializeReturnType[*v3.DBaaSIntegrationSettings](a.ListSettings)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.ListSettingsHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, integrationType, sourceType, destType)
+    } else {
+        if err := a.ListSettingsHook(ctx, integrationType, sourceType, destType); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr

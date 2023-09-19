@@ -5,20 +5,35 @@ import (
 	"context"
 
 v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/testing/recorder"
 )
 
 type OrgQuotasAPI struct {
-     Replayer *Replayer
+    Replayer *Replayer
+
+    ListHook func(ctx context.Context) error
+
+    GetHook func(ctx context.Context, entity string) error
+
 }
 
 
 func (a *OrgQuotasAPI) List(ctx context.Context) ([]v3.Quota, error) {
     resp := InitializeReturnType[[]v3.Quota](a.List)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.ListHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx)
+    } else {
+        if err := a.ListHook(ctx); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -27,10 +42,19 @@ func (a *OrgQuotasAPI) List(ctx context.Context) ([]v3.Quota, error) {
 func (a *OrgQuotasAPI) Get(ctx context.Context, entity string) (*v3.Quota, error) {
     resp := InitializeReturnType[*v3.Quota](a.Get)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.GetHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, entity)
+    } else {
+        if err := a.GetHook(ctx, entity); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr

@@ -18,9 +18,9 @@ type {{.RootName}}API struct {
 
 {{ range .Fns}}
 func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{printf ", %s" .OptArgsDef}}{{end}}) ({{.ResDef}}, error) {
-    req := argsToMap({{.OptArgsPassthrough}})
+    req := ArgsToMap({{.OptArgsPassthrough}})
 
-    resp, err := a.Recordee.{{.Name}}(ctx, {{.OptArgsPassthrough}})
+    resp, err := a.Recordee.{{.Name}}(ctx{{if .OptArgsDef}}, {{.OptArgsPassthrough}}{{end}})
 
     writeErr := a.Recorder.RecordCall("{{$.RootName}}API.{{.Name}}", req, resp, err)
     if writeErr != nil {

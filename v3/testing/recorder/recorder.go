@@ -13,9 +13,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type CallParameters map[int]any
+
 type Call struct {
 	FunctionName  string
-	Parameters    interface{}
+	Parameters    CallParameters
 	ReturnedValue interface{}
 	ReturnedError error
 }
@@ -23,10 +25,6 @@ type Call struct {
 type Recording struct {
 	Calls []Call
 }
-
-var (
-	mu sync.Mutex
-)
 
 func ReadRecording(fileName string) (*Recording, error) {
 	recording := &Recording{}
@@ -69,7 +67,7 @@ type Recorder struct {
 	mu       sync.Mutex
 }
 
-func (recorder *Recorder) RecordCall(funcName string, parameters, returnedValue interface{}, returnedError error) error {
+func (recorder *Recorder) RecordCall(funcName string, parameters CallParameters, returnedValue interface{}, returnedError error) error {
 	recorder.mu.Lock()
 	defer recorder.mu.Unlock()
 
@@ -203,7 +201,7 @@ func garble(data interface{}) interface{} {
 	panic("uninspected value for garbling")
 }
 
-func argsToMap(args ...any) map[int]any {
+func ArgsToMap(args ...any) map[int]any {
 	ret := make(map[int]any, 0)
 	for i, v := range args {
 		ret[i] = v

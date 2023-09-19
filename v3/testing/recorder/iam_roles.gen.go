@@ -16,9 +16,9 @@ type RolesAPI struct {
 
 
 func (a *RolesAPI) List(ctx context.Context) ([]v3.IamRole, error) {
-    req := argsToMap()
+    req := ArgsToMap()
 
-    resp, err := a.Recordee.List(ctx, )
+    resp, err := a.Recordee.List(ctx)
 
     writeErr := a.Recorder.RecordCall("RolesAPI.List", req, resp, err)
     if writeErr != nil {
@@ -29,7 +29,7 @@ func (a *RolesAPI) List(ctx context.Context) ([]v3.IamRole, error) {
 }
 
 func (a *RolesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.IamRole, error) {
-    req := argsToMap(id)
+    req := ArgsToMap(id)
 
     resp, err := a.Recordee.Get(ctx, id)
 
@@ -42,7 +42,7 @@ func (a *RolesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.IamRole,
 }
 
 func (a *RolesAPI) Create(ctx context.Context, body v3.CreateIamRoleJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(body)
+    req := ArgsToMap(body)
 
     resp, err := a.Recordee.Create(ctx, body)
 
@@ -55,7 +55,7 @@ func (a *RolesAPI) Create(ctx context.Context, body v3.CreateIamRoleJSONRequestB
 }
 
 func (a *RolesAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
-    req := argsToMap(id)
+    req := ArgsToMap(id)
 
     resp, err := a.Recordee.Delete(ctx, id)
 
@@ -68,7 +68,7 @@ func (a *RolesAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Opera
 }
 
 func (a *RolesAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.UpdateIamRoleJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(id, body)
+    req := ArgsToMap(id, body)
 
     resp, err := a.Recordee.Update(ctx, id, body)
 
@@ -81,7 +81,7 @@ func (a *RolesAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.Up
 }
 
 func (a *RolesAPI) UpdatePolicy(ctx context.Context, id openapi_types.UUID, body v3.UpdateIamRolePolicyJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(id, body)
+    req := ArgsToMap(id, body)
 
     resp, err := a.Recordee.UpdatePolicy(ctx, id, body)
 

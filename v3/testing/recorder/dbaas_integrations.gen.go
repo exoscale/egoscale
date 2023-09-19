@@ -14,7 +14,7 @@ type IntegrationsAPI struct {
 
 
 func (a *IntegrationsAPI) ListSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*v3.DBaaSIntegrationSettings, error) {
-    req := argsToMap(integrationType, sourceType, destType)
+    req := ArgsToMap(integrationType, sourceType, destType)
 
     resp, err := a.Recordee.ListSettings(ctx, integrationType, sourceType, destType)
 

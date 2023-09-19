@@ -16,7 +16,7 @@ type OperationAPI struct {
 
 
 func (a *OperationAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
-    req := argsToMap(id)
+    req := ArgsToMap(id)
 
     resp, err := a.Recordee.Get(ctx, id)
 

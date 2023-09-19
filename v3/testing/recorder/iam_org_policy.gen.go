@@ -14,9 +14,9 @@ type OrgPolicyAPI struct {
 
 
 func (a *OrgPolicyAPI) Get(ctx context.Context) (*v3.IamPolicy, error) {
-    req := argsToMap()
+    req := ArgsToMap()
 
-    resp, err := a.Recordee.Get(ctx, )
+    resp, err := a.Recordee.Get(ctx)
 
     writeErr := a.Recorder.RecordCall("OrgPolicyAPI.Get", req, resp, err)
     if writeErr != nil {
@@ -27,7 +27,7 @@ func (a *OrgPolicyAPI) Get(ctx context.Context) (*v3.IamPolicy, error) {
 }
 
 func (a *OrgPolicyAPI) Update(ctx context.Context, body v3.UpdateIamOrganizationPolicyJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(body)
+    req := ArgsToMap(body)
 
     resp, err := a.Recordee.Update(ctx, body)
 

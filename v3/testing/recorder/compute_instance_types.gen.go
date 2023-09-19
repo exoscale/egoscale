@@ -16,9 +16,9 @@ type InstanceTypesAPI struct {
 
 
 func (a *InstanceTypesAPI) List(ctx context.Context) ([]v3.InstanceType, error) {
-    req := argsToMap()
+    req := ArgsToMap()
 
-    resp, err := a.Recordee.List(ctx, )
+    resp, err := a.Recordee.List(ctx)
 
     writeErr := a.Recorder.RecordCall("InstanceTypesAPI.List", req, resp, err)
     if writeErr != nil {
@@ -29,7 +29,7 @@ func (a *InstanceTypesAPI) List(ctx context.Context) ([]v3.InstanceType, error) 
 }
 
 func (a *InstanceTypesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.InstanceType, error) {
-    req := argsToMap(id)
+    req := ArgsToMap(id)
 
     resp, err := a.Recordee.Get(ctx, id)
 

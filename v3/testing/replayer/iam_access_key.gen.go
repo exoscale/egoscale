@@ -5,20 +5,43 @@ import (
 	"context"
 
 v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/testing/recorder"
 )
 
 type AccessKeyAPI struct {
-     Replayer *Replayer
+    Replayer *Replayer
+
+    ListHook func(ctx context.Context) error
+
+    ListKnownOperationsHook func(ctx context.Context) error
+
+    ListOperationsHook func(ctx context.Context) error
+
+    GetHook func(ctx context.Context, key string) error
+
+    CreateHook func(ctx context.Context, body v3.CreateAccessKeyJSONRequestBody) error
+
+    RevokeHook func(ctx context.Context, key string) error
+
 }
 
 
 func (a *AccessKeyAPI) List(ctx context.Context) ([]v3.AccessKey, error) {
     resp := InitializeReturnType[[]v3.AccessKey](a.List)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.ListHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx)
+    } else {
+        if err := a.ListHook(ctx); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -27,10 +50,19 @@ func (a *AccessKeyAPI) List(ctx context.Context) ([]v3.AccessKey, error) {
 func (a *AccessKeyAPI) ListKnownOperations(ctx context.Context) ([]v3.AccessKeyOperation, error) {
     resp := InitializeReturnType[[]v3.AccessKeyOperation](a.ListKnownOperations)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.ListKnownOperationsHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx)
+    } else {
+        if err := a.ListKnownOperationsHook(ctx); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -39,10 +71,19 @@ func (a *AccessKeyAPI) ListKnownOperations(ctx context.Context) ([]v3.AccessKeyO
 func (a *AccessKeyAPI) ListOperations(ctx context.Context) ([]v3.AccessKeyOperation, error) {
     resp := InitializeReturnType[[]v3.AccessKeyOperation](a.ListOperations)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.ListOperationsHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx)
+    } else {
+        if err := a.ListOperationsHook(ctx); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -51,10 +92,19 @@ func (a *AccessKeyAPI) ListOperations(ctx context.Context) ([]v3.AccessKeyOperat
 func (a *AccessKeyAPI) Get(ctx context.Context, key string) (*v3.AccessKey, error) {
     resp := InitializeReturnType[*v3.AccessKey](a.Get)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.GetHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, key)
+    } else {
+        if err := a.GetHook(ctx, key); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -63,10 +113,19 @@ func (a *AccessKeyAPI) Get(ctx context.Context, key string) (*v3.AccessKey, erro
 func (a *AccessKeyAPI) Create(ctx context.Context, body v3.CreateAccessKeyJSONRequestBody) (*v3.AccessKey, error) {
     resp := InitializeReturnType[*v3.AccessKey](a.Create)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.CreateHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, body)
+    } else {
+        if err := a.CreateHook(ctx, body); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -75,10 +134,19 @@ func (a *AccessKeyAPI) Create(ctx context.Context, body v3.CreateAccessKeyJSONRe
 func (a *AccessKeyAPI) Revoke(ctx context.Context, key string) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Revoke)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.RevokeHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, key)
+    } else {
+        if err := a.RevokeHook(ctx, key); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr

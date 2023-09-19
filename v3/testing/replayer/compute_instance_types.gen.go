@@ -7,20 +7,35 @@ import (
 
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/testing/recorder"
 )
 
 type InstanceTypesAPI struct {
-     Replayer *Replayer
+    Replayer *Replayer
+
+    ListHook func(ctx context.Context) error
+
+    GetHook func(ctx context.Context, id openapi_types.UUID) error
+
 }
 
 
 func (a *InstanceTypesAPI) List(ctx context.Context) ([]v3.InstanceType, error) {
     resp := InitializeReturnType[[]v3.InstanceType](a.List)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.ListHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx)
+    } else {
+        if err := a.ListHook(ctx); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -29,10 +44,19 @@ func (a *InstanceTypesAPI) List(ctx context.Context) ([]v3.InstanceType, error) 
 func (a *InstanceTypesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.InstanceType, error) {
     resp := InitializeReturnType[*v3.InstanceType](a.Get)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.GetHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, id)
+    } else {
+        if err := a.GetHook(ctx, id); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr

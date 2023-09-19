@@ -14,9 +14,9 @@ type SSHKeysAPI struct {
 
 
 func (a *SSHKeysAPI) List(ctx context.Context) ([]v3.SshKey, error) {
-    req := argsToMap()
+    req := ArgsToMap()
 
-    resp, err := a.Recordee.List(ctx, )
+    resp, err := a.Recordee.List(ctx)
 
     writeErr := a.Recorder.RecordCall("SSHKeysAPI.List", req, resp, err)
     if writeErr != nil {
@@ -27,7 +27,7 @@ func (a *SSHKeysAPI) List(ctx context.Context) ([]v3.SshKey, error) {
 }
 
 func (a *SSHKeysAPI) Register(ctx context.Context, body v3.RegisterSshKeyJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(body)
+    req := ArgsToMap(body)
 
     resp, err := a.Recordee.Register(ctx, body)
 
@@ -40,7 +40,7 @@ func (a *SSHKeysAPI) Register(ctx context.Context, body v3.RegisterSshKeyJSONReq
 }
 
 func (a *SSHKeysAPI) Delete(ctx context.Context, name string) (*v3.Operation, error) {
-    req := argsToMap(name)
+    req := ArgsToMap(name)
 
     resp, err := a.Recordee.Delete(ctx, name)
 
@@ -53,7 +53,7 @@ func (a *SSHKeysAPI) Delete(ctx context.Context, name string) (*v3.Operation, er
 }
 
 func (a *SSHKeysAPI) Get(ctx context.Context, name string) (*v3.SshKey, error) {
-    req := argsToMap(name)
+    req := ArgsToMap(name)
 
     resp, err := a.Recordee.Get(ctx, name)
 

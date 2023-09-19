@@ -7,20 +7,49 @@ import (
 
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/testing/recorder"
 )
 
 type LoadBalancersAPI struct {
-     Replayer *Replayer
+    Replayer *Replayer
+
+    ListHook func(ctx context.Context) error
+
+    GetHook func(ctx context.Context, id openapi_types.UUID) error
+
+    CreateHook func(ctx context.Context, body v3.CreateLoadBalancerJSONRequestBody) error
+
+    UpdateHook func(ctx context.Context, id openapi_types.UUID, body v3.UpdateLoadBalancerJSONRequestBody) error
+
+    DeleteHook func(ctx context.Context, id openapi_types.UUID) error
+
+    GetServiceHook func(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID) error
+
+    AddServiceHook func(ctx context.Context, id openapi_types.UUID, body v3.AddServiceToLoadBalancerJSONRequestBody) error
+
+    UpdateServiceHook func(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID, body v3.UpdateLoadBalancerServiceJSONRequestBody) error
+
+    DeleteServiceHook func(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID) error
+
 }
 
 
 func (a *LoadBalancersAPI) List(ctx context.Context) ([]v3.LoadBalancer, error) {
     resp := InitializeReturnType[[]v3.LoadBalancer](a.List)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.ListHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx)
+    } else {
+        if err := a.ListHook(ctx); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -29,10 +58,19 @@ func (a *LoadBalancersAPI) List(ctx context.Context) ([]v3.LoadBalancer, error) 
 func (a *LoadBalancersAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.LoadBalancer, error) {
     resp := InitializeReturnType[*v3.LoadBalancer](a.Get)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.GetHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, id)
+    } else {
+        if err := a.GetHook(ctx, id); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -41,10 +79,19 @@ func (a *LoadBalancersAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.
 func (a *LoadBalancersAPI) Create(ctx context.Context, body v3.CreateLoadBalancerJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Create)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.CreateHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, body)
+    } else {
+        if err := a.CreateHook(ctx, body); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -53,10 +100,19 @@ func (a *LoadBalancersAPI) Create(ctx context.Context, body v3.CreateLoadBalance
 func (a *LoadBalancersAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.UpdateLoadBalancerJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Update)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.UpdateHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, id, body)
+    } else {
+        if err := a.UpdateHook(ctx, id, body); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -65,10 +121,19 @@ func (a *LoadBalancersAPI) Update(ctx context.Context, id openapi_types.UUID, bo
 func (a *LoadBalancersAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Delete)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.DeleteHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, id)
+    } else {
+        if err := a.DeleteHook(ctx, id); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -77,10 +142,19 @@ func (a *LoadBalancersAPI) Delete(ctx context.Context, id openapi_types.UUID) (*
 func (a *LoadBalancersAPI) GetService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID) (*v3.LoadBalancerService, error) {
     resp := InitializeReturnType[*v3.LoadBalancerService](a.GetService)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.GetServiceHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, id, serviceId)
+    } else {
+        if err := a.GetServiceHook(ctx, id, serviceId); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -89,10 +163,19 @@ func (a *LoadBalancersAPI) GetService(ctx context.Context, id openapi_types.UUID
 func (a *LoadBalancersAPI) AddService(ctx context.Context, id openapi_types.UUID, body v3.AddServiceToLoadBalancerJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.AddService)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.AddServiceHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, id, body)
+    } else {
+        if err := a.AddServiceHook(ctx, id, body); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -101,10 +184,19 @@ func (a *LoadBalancersAPI) AddService(ctx context.Context, id openapi_types.UUID
 func (a *LoadBalancersAPI) UpdateService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID, body v3.UpdateLoadBalancerServiceJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.UpdateService)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.UpdateServiceHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, id, serviceId, body)
+    } else {
+        if err := a.UpdateServiceHook(ctx, id, serviceId, body); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -113,10 +205,19 @@ func (a *LoadBalancersAPI) UpdateService(ctx context.Context, id openapi_types.U
 func (a *LoadBalancersAPI) DeleteService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.DeleteService)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.DeleteServiceHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, id, serviceId)
+    } else {
+        if err := a.DeleteServiceHook(ctx, id, serviceId); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr

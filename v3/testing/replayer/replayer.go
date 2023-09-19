@@ -26,13 +26,21 @@ func InitializeReturnType[T any](myFn any) T {
 	return reflect.New(returnType).Elem().Interface().(T)
 }
 
+func (replayer *Replayer) AssertArgs(expectedArgs recorder.CallParameters, args ...any) {
+	actualArgsMap := recorder.ArgsToMap(args...)
+
+	if !reflect.DeepEqual(expectedArgs, actualArgsMap) {
+		panic(fmt.Sprintf("unequal args\n\nexpected:\n%#v\n\n\nactual:\n%#v\n", expectedArgs, actualArgsMap))
+	}
+}
+
 var callNr atomic.Int32
 
 type Replayer struct {
 	Filename string
 }
 
-func (replayer *Replayer) GetTestCall(callResp interface{}, returnErr *error) error {
+func (replayer *Replayer) GetTestCall(callResp interface{}, argsMap *recorder.CallParameters, returnErr *error) error {
 	testflow, err := recorder.ReadRecording(replayer.Filename)
 	if err != nil {
 		return fmt.Errorf("error reading test data %w", err)
@@ -46,6 +54,7 @@ func (replayer *Replayer) GetTestCall(callResp interface{}, returnErr *error) er
 
 	callIfval := testflow.Calls[currentCallNr]
 	*returnErr = callIfval.ReturnedError
+	*argsMap = callIfval.Parameters
 	callIfvalRespJson, err := json.Marshal(callIfval.ReturnedValue)
 	if err != nil {
 		return fmt.Errorf("error marshalling call %w", err)

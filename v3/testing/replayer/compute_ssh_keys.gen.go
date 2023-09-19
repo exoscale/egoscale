@@ -5,20 +5,39 @@ import (
 	"context"
 
 v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/testing/recorder"
 )
 
 type SSHKeysAPI struct {
-     Replayer *Replayer
+    Replayer *Replayer
+
+    ListHook func(ctx context.Context) error
+
+    RegisterHook func(ctx context.Context, body v3.RegisterSshKeyJSONRequestBody) error
+
+    DeleteHook func(ctx context.Context, name string) error
+
+    GetHook func(ctx context.Context, name string) error
+
 }
 
 
 func (a *SSHKeysAPI) List(ctx context.Context) ([]v3.SshKey, error) {
     resp := InitializeReturnType[[]v3.SshKey](a.List)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.ListHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx)
+    } else {
+        if err := a.ListHook(ctx); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -27,10 +46,19 @@ func (a *SSHKeysAPI) List(ctx context.Context) ([]v3.SshKey, error) {
 func (a *SSHKeysAPI) Register(ctx context.Context, body v3.RegisterSshKeyJSONRequestBody) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Register)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.RegisterHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, body)
+    } else {
+        if err := a.RegisterHook(ctx, body); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -39,10 +67,19 @@ func (a *SSHKeysAPI) Register(ctx context.Context, body v3.RegisterSshKeyJSONReq
 func (a *SSHKeysAPI) Delete(ctx context.Context, name string) (*v3.Operation, error) {
     resp := InitializeReturnType[*v3.Operation](a.Delete)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.DeleteHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, name)
+    } else {
+        if err := a.DeleteHook(ctx, name); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr
@@ -51,10 +88,19 @@ func (a *SSHKeysAPI) Delete(ctx context.Context, name string) (*v3.Operation, er
 func (a *SSHKeysAPI) Get(ctx context.Context, name string) (*v3.SshKey, error) {
     resp := InitializeReturnType[*v3.SshKey](a.Get)
 
+    expectedArgs := make(recorder.CallParameters)
     var returnErr error
-    writeErr := a.Replayer.GetTestCall(&resp, &returnErr)
-    if writeErr != nil {
-       panic(writeErr)
+    err := a.Replayer.GetTestCall(&resp, &expectedArgs, &returnErr)
+    if err != nil {
+        panic(err)
+    }
+
+    if a.GetHook == nil {
+        a.Replayer.AssertArgs(expectedArgs, ctx, name)
+    } else {
+        if err := a.GetHook(ctx, name); err != nil {
+            panic(err)
+        }
     }
 
     return resp, returnErr

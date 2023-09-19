@@ -14,9 +14,9 @@ type AccessKeyAPI struct {
 
 
 func (a *AccessKeyAPI) List(ctx context.Context) ([]v3.AccessKey, error) {
-    req := argsToMap()
+    req := ArgsToMap()
 
-    resp, err := a.Recordee.List(ctx, )
+    resp, err := a.Recordee.List(ctx)
 
     writeErr := a.Recorder.RecordCall("AccessKeyAPI.List", req, resp, err)
     if writeErr != nil {
@@ -27,9 +27,9 @@ func (a *AccessKeyAPI) List(ctx context.Context) ([]v3.AccessKey, error) {
 }
 
 func (a *AccessKeyAPI) ListKnownOperations(ctx context.Context) ([]v3.AccessKeyOperation, error) {
-    req := argsToMap()
+    req := ArgsToMap()
 
-    resp, err := a.Recordee.ListKnownOperations(ctx, )
+    resp, err := a.Recordee.ListKnownOperations(ctx)
 
     writeErr := a.Recorder.RecordCall("AccessKeyAPI.ListKnownOperations", req, resp, err)
     if writeErr != nil {
@@ -40,9 +40,9 @@ func (a *AccessKeyAPI) ListKnownOperations(ctx context.Context) ([]v3.AccessKeyO
 }
 
 func (a *AccessKeyAPI) ListOperations(ctx context.Context) ([]v3.AccessKeyOperation, error) {
-    req := argsToMap()
+    req := ArgsToMap()
 
-    resp, err := a.Recordee.ListOperations(ctx, )
+    resp, err := a.Recordee.ListOperations(ctx)
 
     writeErr := a.Recorder.RecordCall("AccessKeyAPI.ListOperations", req, resp, err)
     if writeErr != nil {
@@ -53,7 +53,7 @@ func (a *AccessKeyAPI) ListOperations(ctx context.Context) ([]v3.AccessKeyOperat
 }
 
 func (a *AccessKeyAPI) Get(ctx context.Context, key string) (*v3.AccessKey, error) {
-    req := argsToMap(key)
+    req := ArgsToMap(key)
 
     resp, err := a.Recordee.Get(ctx, key)
 
@@ -66,7 +66,7 @@ func (a *AccessKeyAPI) Get(ctx context.Context, key string) (*v3.AccessKey, erro
 }
 
 func (a *AccessKeyAPI) Create(ctx context.Context, body v3.CreateAccessKeyJSONRequestBody) (*v3.AccessKey, error) {
-    req := argsToMap(body)
+    req := ArgsToMap(body)
 
     resp, err := a.Recordee.Create(ctx, body)
 
@@ -79,7 +79,7 @@ func (a *AccessKeyAPI) Create(ctx context.Context, body v3.CreateAccessKeyJSONRe
 }
 
 func (a *AccessKeyAPI) Revoke(ctx context.Context, key string) (*v3.Operation, error) {
-    req := argsToMap(key)
+    req := ArgsToMap(key)
 
     resp, err := a.Recordee.Revoke(ctx, key)
 

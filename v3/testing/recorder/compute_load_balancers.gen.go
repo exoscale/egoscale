@@ -16,9 +16,9 @@ type LoadBalancersAPI struct {
 
 
 func (a *LoadBalancersAPI) List(ctx context.Context) ([]v3.LoadBalancer, error) {
-    req := argsToMap()
+    req := ArgsToMap()
 
-    resp, err := a.Recordee.List(ctx, )
+    resp, err := a.Recordee.List(ctx)
 
     writeErr := a.Recorder.RecordCall("LoadBalancersAPI.List", req, resp, err)
     if writeErr != nil {
@@ -29,7 +29,7 @@ func (a *LoadBalancersAPI) List(ctx context.Context) ([]v3.LoadBalancer, error) 
 }
 
 func (a *LoadBalancersAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.LoadBalancer, error) {
-    req := argsToMap(id)
+    req := ArgsToMap(id)
 
     resp, err := a.Recordee.Get(ctx, id)
 
@@ -42,7 +42,7 @@ func (a *LoadBalancersAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.
 }
 
 func (a *LoadBalancersAPI) Create(ctx context.Context, body v3.CreateLoadBalancerJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(body)
+    req := ArgsToMap(body)
 
     resp, err := a.Recordee.Create(ctx, body)
 
@@ -55,7 +55,7 @@ func (a *LoadBalancersAPI) Create(ctx context.Context, body v3.CreateLoadBalance
 }
 
 func (a *LoadBalancersAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.UpdateLoadBalancerJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(id, body)
+    req := ArgsToMap(id, body)
 
     resp, err := a.Recordee.Update(ctx, id, body)
 
@@ -68,7 +68,7 @@ func (a *LoadBalancersAPI) Update(ctx context.Context, id openapi_types.UUID, bo
 }
 
 func (a *LoadBalancersAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Operation, error) {
-    req := argsToMap(id)
+    req := ArgsToMap(id)
 
     resp, err := a.Recordee.Delete(ctx, id)
 
@@ -81,7 +81,7 @@ func (a *LoadBalancersAPI) Delete(ctx context.Context, id openapi_types.UUID) (*
 }
 
 func (a *LoadBalancersAPI) GetService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID) (*v3.LoadBalancerService, error) {
-    req := argsToMap(id, serviceId)
+    req := ArgsToMap(id, serviceId)
 
     resp, err := a.Recordee.GetService(ctx, id, serviceId)
 
@@ -94,7 +94,7 @@ func (a *LoadBalancersAPI) GetService(ctx context.Context, id openapi_types.UUID
 }
 
 func (a *LoadBalancersAPI) AddService(ctx context.Context, id openapi_types.UUID, body v3.AddServiceToLoadBalancerJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(id, body)
+    req := ArgsToMap(id, body)
 
     resp, err := a.Recordee.AddService(ctx, id, body)
 
@@ -107,7 +107,7 @@ func (a *LoadBalancersAPI) AddService(ctx context.Context, id openapi_types.UUID
 }
 
 func (a *LoadBalancersAPI) UpdateService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID, body v3.UpdateLoadBalancerServiceJSONRequestBody) (*v3.Operation, error) {
-    req := argsToMap(id, serviceId, body)
+    req := ArgsToMap(id, serviceId, body)
 
     resp, err := a.Recordee.UpdateService(ctx, id, serviceId, body)
 
@@ -120,7 +120,7 @@ func (a *LoadBalancersAPI) UpdateService(ctx context.Context, id openapi_types.U
 }
 
 func (a *LoadBalancersAPI) DeleteService(ctx context.Context, id openapi_types.UUID, serviceId openapi_types.UUID) (*v3.Operation, error) {
-    req := argsToMap(id, serviceId)
+    req := ArgsToMap(id, serviceId)
 
     resp, err := a.Recordee.DeleteService(ctx, id, serviceId)
 

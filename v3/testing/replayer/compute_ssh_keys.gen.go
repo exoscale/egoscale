@@ -33,7 +33,7 @@ func (a *SSHKeysAPI) List(ctx context.Context) ([]v3.SshKey, error) {
     }
 
     if a.ListHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx)
+        
     } else {
         if err := a.ListHook(ctx); err != nil {
             panic(err)
@@ -54,7 +54,9 @@ func (a *SSHKeysAPI) Register(ctx context.Context, body v3.RegisterSshKeyJSONReq
     }
 
     if a.RegisterHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, body)
+        
+             a.Replayer.AssertArgs(expectedArgs, body)
+        
     } else {
         if err := a.RegisterHook(ctx, body); err != nil {
             panic(err)
@@ -75,7 +77,9 @@ func (a *SSHKeysAPI) Delete(ctx context.Context, name string) (*v3.Operation, er
     }
 
     if a.DeleteHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, name)
+        
+             a.Replayer.AssertArgs(expectedArgs, name)
+        
     } else {
         if err := a.DeleteHook(ctx, name); err != nil {
             panic(err)
@@ -96,7 +100,9 @@ func (a *SSHKeysAPI) Get(ctx context.Context, name string) (*v3.SshKey, error) {
     }
 
     if a.GetHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, name)
+        
+             a.Replayer.AssertArgs(expectedArgs, name)
+        
     } else {
         if err := a.GetHook(ctx, name); err != nil {
             panic(err)

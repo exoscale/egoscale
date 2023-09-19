@@ -27,7 +27,9 @@ func (a *IntegrationsAPI) ListSettings(ctx context.Context, integrationType stri
     }
 
     if a.ListSettingsHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, integrationType, sourceType, destType)
+        
+             a.Replayer.AssertArgs(expectedArgs, integrationType, sourceType, destType)
+        
     } else {
         if err := a.ListSettingsHook(ctx, integrationType, sourceType, destType); err != nil {
             panic(err)

@@ -31,7 +31,7 @@ func (a *InstanceTypesAPI) List(ctx context.Context) ([]v3.InstanceType, error) 
     }
 
     if a.ListHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx)
+        
     } else {
         if err := a.ListHook(ctx); err != nil {
             panic(err)
@@ -52,7 +52,9 @@ func (a *InstanceTypesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.
     }
 
     if a.GetHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id)
+        
+             a.Replayer.AssertArgs(expectedArgs, id)
+        
     } else {
         if err := a.GetHook(ctx, id); err != nil {
             panic(err)

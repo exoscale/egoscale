@@ -29,15 +29,27 @@ func InitializeReturnType[T any](myFn any) T {
 func (replayer *Replayer) AssertArgs(expectedArgs recorder.CallParameters, args ...any) {
 	actualArgsMap := recorder.ArgsToMap(args...)
 
-	if !reflect.DeepEqual(expectedArgs, actualArgsMap) {
+	// to remove type information, we marshal and unmarshal the args
+	// we are not printing error messages to panic to prevent leakage of secrets
+	jsonValue, err := json.Marshal(actualArgsMap)
+	if err != nil {
+		panic("failed to marshal args")
+	}
+
+	var x recorder.CallParameters
+	err = json.Unmarshal(jsonValue, &x)
+	if err != nil {
+		panic("failed to unmarshal args")
+	}
+
+	if !reflect.DeepEqual(expectedArgs, x) {
 		panic(fmt.Sprintf("unequal args\n\nexpected:\n%#v\n\n\nactual:\n%#v\n", expectedArgs, actualArgsMap))
 	}
 }
 
-var callNr atomic.Int32
-
 type Replayer struct {
 	Filename string
+	CallNr   atomic.Int32
 }
 
 func (replayer *Replayer) GetTestCall(callResp interface{}, argsMap *recorder.CallParameters, returnErr *error) error {
@@ -46,8 +58,8 @@ func (replayer *Replayer) GetTestCall(callResp interface{}, argsMap *recorder.Ca
 		return fmt.Errorf("error reading test data %w", err)
 	}
 
-	currentCallNr := callNr.Load()
-	callNr.Add(1)
+	currentCallNr := replayer.CallNr.Load()
+	replayer.CallNr.Add(1)
 	if len(testflow.Calls) <= int(currentCallNr) {
 		return fmt.Errorf("no call %d", currentCallNr)
 	}

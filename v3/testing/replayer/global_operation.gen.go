@@ -29,7 +29,9 @@ func (a *OperationAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.Oper
     }
 
     if a.GetHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id)
+        
+             a.Replayer.AssertArgs(expectedArgs, id)
+        
     } else {
         if err := a.GetHook(ctx, id); err != nil {
             panic(err)

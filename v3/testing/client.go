@@ -132,6 +132,7 @@ func NewClient(t *testing.T, initializer func() (*v3.Client, error)) (ClientIfac
 			Client: c,
 			Recorder: &recorder.Recorder{
 				Filename: recordingPath,
+				Garbler:  recorder.NewGarbler(),
 			},
 		}, nil
 	}

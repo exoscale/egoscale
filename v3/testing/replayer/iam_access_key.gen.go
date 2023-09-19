@@ -37,7 +37,7 @@ func (a *AccessKeyAPI) List(ctx context.Context) ([]v3.AccessKey, error) {
     }
 
     if a.ListHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx)
+        
     } else {
         if err := a.ListHook(ctx); err != nil {
             panic(err)
@@ -58,7 +58,7 @@ func (a *AccessKeyAPI) ListKnownOperations(ctx context.Context) ([]v3.AccessKeyO
     }
 
     if a.ListKnownOperationsHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx)
+        
     } else {
         if err := a.ListKnownOperationsHook(ctx); err != nil {
             panic(err)
@@ -79,7 +79,7 @@ func (a *AccessKeyAPI) ListOperations(ctx context.Context) ([]v3.AccessKeyOperat
     }
 
     if a.ListOperationsHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx)
+        
     } else {
         if err := a.ListOperationsHook(ctx); err != nil {
             panic(err)
@@ -100,7 +100,9 @@ func (a *AccessKeyAPI) Get(ctx context.Context, key string) (*v3.AccessKey, erro
     }
 
     if a.GetHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, key)
+        
+             a.Replayer.AssertArgs(expectedArgs, key)
+        
     } else {
         if err := a.GetHook(ctx, key); err != nil {
             panic(err)
@@ -121,7 +123,9 @@ func (a *AccessKeyAPI) Create(ctx context.Context, body v3.CreateAccessKeyJSONRe
     }
 
     if a.CreateHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, body)
+        
+             a.Replayer.AssertArgs(expectedArgs, body)
+        
     } else {
         if err := a.CreateHook(ctx, body); err != nil {
             panic(err)
@@ -142,7 +146,9 @@ func (a *AccessKeyAPI) Revoke(ctx context.Context, key string) (*v3.Operation, e
     }
 
     if a.RevokeHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, key)
+        
+             a.Replayer.AssertArgs(expectedArgs, key)
+        
     } else {
         if err := a.RevokeHook(ctx, key); err != nil {
             panic(err)

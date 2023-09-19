@@ -45,7 +45,7 @@ func (a *LoadBalancersAPI) List(ctx context.Context) ([]v3.LoadBalancer, error) 
     }
 
     if a.ListHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx)
+        
     } else {
         if err := a.ListHook(ctx); err != nil {
             panic(err)
@@ -66,7 +66,9 @@ func (a *LoadBalancersAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.
     }
 
     if a.GetHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id)
+        
+             a.Replayer.AssertArgs(expectedArgs, id)
+        
     } else {
         if err := a.GetHook(ctx, id); err != nil {
             panic(err)
@@ -87,7 +89,9 @@ func (a *LoadBalancersAPI) Create(ctx context.Context, body v3.CreateLoadBalance
     }
 
     if a.CreateHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, body)
+        
+             a.Replayer.AssertArgs(expectedArgs, body)
+        
     } else {
         if err := a.CreateHook(ctx, body); err != nil {
             panic(err)
@@ -108,7 +112,9 @@ func (a *LoadBalancersAPI) Update(ctx context.Context, id openapi_types.UUID, bo
     }
 
     if a.UpdateHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id, body)
+        
+             a.Replayer.AssertArgs(expectedArgs, id, body)
+        
     } else {
         if err := a.UpdateHook(ctx, id, body); err != nil {
             panic(err)
@@ -129,7 +135,9 @@ func (a *LoadBalancersAPI) Delete(ctx context.Context, id openapi_types.UUID) (*
     }
 
     if a.DeleteHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id)
+        
+             a.Replayer.AssertArgs(expectedArgs, id)
+        
     } else {
         if err := a.DeleteHook(ctx, id); err != nil {
             panic(err)
@@ -150,7 +158,9 @@ func (a *LoadBalancersAPI) GetService(ctx context.Context, id openapi_types.UUID
     }
 
     if a.GetServiceHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id, serviceId)
+        
+             a.Replayer.AssertArgs(expectedArgs, id, serviceId)
+        
     } else {
         if err := a.GetServiceHook(ctx, id, serviceId); err != nil {
             panic(err)
@@ -171,7 +181,9 @@ func (a *LoadBalancersAPI) AddService(ctx context.Context, id openapi_types.UUID
     }
 
     if a.AddServiceHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id, body)
+        
+             a.Replayer.AssertArgs(expectedArgs, id, body)
+        
     } else {
         if err := a.AddServiceHook(ctx, id, body); err != nil {
             panic(err)
@@ -192,7 +204,9 @@ func (a *LoadBalancersAPI) UpdateService(ctx context.Context, id openapi_types.U
     }
 
     if a.UpdateServiceHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id, serviceId, body)
+        
+             a.Replayer.AssertArgs(expectedArgs, id, serviceId, body)
+        
     } else {
         if err := a.UpdateServiceHook(ctx, id, serviceId, body); err != nil {
             panic(err)
@@ -213,7 +227,9 @@ func (a *LoadBalancersAPI) DeleteService(ctx context.Context, id openapi_types.U
     }
 
     if a.DeleteServiceHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id, serviceId)
+        
+             a.Replayer.AssertArgs(expectedArgs, id, serviceId)
+        
     } else {
         if err := a.DeleteServiceHook(ctx, id, serviceId); err != nil {
             panic(err)

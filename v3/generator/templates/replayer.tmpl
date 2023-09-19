@@ -31,7 +31,9 @@ func (a *{{$.RootName}}API) {{.Name}}(ctx context.Context{{if .OptArgsDef}}{{pri
     }
 
     if a.{{.Name}}Hook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx{{if .OptArgsDef}}, {{.OptArgsPassthrough}}{{end}})
+        {{if .OptArgsDef}}
+             a.Replayer.AssertArgs(expectedArgs, {{.OptArgsPassthrough}})
+        {{end}}
     } else {
         if err := a.{{.Name}}Hook(ctx{{if .OptArgsDef}}, {{.OptArgsPassthrough}}{{end}}); err != nil {
             panic(err)

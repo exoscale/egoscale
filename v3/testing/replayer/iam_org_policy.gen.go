@@ -29,7 +29,7 @@ func (a *OrgPolicyAPI) Get(ctx context.Context) (*v3.IamPolicy, error) {
     }
 
     if a.GetHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx)
+        
     } else {
         if err := a.GetHook(ctx); err != nil {
             panic(err)
@@ -50,7 +50,9 @@ func (a *OrgPolicyAPI) Update(ctx context.Context, body v3.UpdateIamOrganization
     }
 
     if a.UpdateHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, body)
+        
+             a.Replayer.AssertArgs(expectedArgs, body)
+        
     } else {
         if err := a.UpdateHook(ctx, body); err != nil {
             panic(err)

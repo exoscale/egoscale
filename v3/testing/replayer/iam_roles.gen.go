@@ -39,7 +39,7 @@ func (a *RolesAPI) List(ctx context.Context) ([]v3.IamRole, error) {
     }
 
     if a.ListHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx)
+        
     } else {
         if err := a.ListHook(ctx); err != nil {
             panic(err)
@@ -60,7 +60,9 @@ func (a *RolesAPI) Get(ctx context.Context, id openapi_types.UUID) (*v3.IamRole,
     }
 
     if a.GetHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id)
+        
+             a.Replayer.AssertArgs(expectedArgs, id)
+        
     } else {
         if err := a.GetHook(ctx, id); err != nil {
             panic(err)
@@ -81,7 +83,9 @@ func (a *RolesAPI) Create(ctx context.Context, body v3.CreateIamRoleJSONRequestB
     }
 
     if a.CreateHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, body)
+        
+             a.Replayer.AssertArgs(expectedArgs, body)
+        
     } else {
         if err := a.CreateHook(ctx, body); err != nil {
             panic(err)
@@ -102,7 +106,9 @@ func (a *RolesAPI) Delete(ctx context.Context, id openapi_types.UUID) (*v3.Opera
     }
 
     if a.DeleteHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id)
+        
+             a.Replayer.AssertArgs(expectedArgs, id)
+        
     } else {
         if err := a.DeleteHook(ctx, id); err != nil {
             panic(err)
@@ -123,7 +129,9 @@ func (a *RolesAPI) Update(ctx context.Context, id openapi_types.UUID, body v3.Up
     }
 
     if a.UpdateHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id, body)
+        
+             a.Replayer.AssertArgs(expectedArgs, id, body)
+        
     } else {
         if err := a.UpdateHook(ctx, id, body); err != nil {
             panic(err)
@@ -144,7 +152,9 @@ func (a *RolesAPI) UpdatePolicy(ctx context.Context, id openapi_types.UUID, body
     }
 
     if a.UpdatePolicyHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, id, body)
+        
+             a.Replayer.AssertArgs(expectedArgs, id, body)
+        
     } else {
         if err := a.UpdatePolicyHook(ctx, id, body); err != nil {
             panic(err)

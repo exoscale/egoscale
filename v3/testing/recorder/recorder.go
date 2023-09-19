@@ -60,11 +60,11 @@ func marshalIndent(obj any) ([]byte, error) {
 	return indentedJSON, nil
 }
 
-var firstCall bool = true
-
 type Recorder struct {
-	Filename string
-	mu       sync.Mutex
+	Filename  string
+	mu        sync.Mutex
+	FirstCall bool
+	Garbler   *Garbler
 }
 
 func (recorder *Recorder) RecordCall(funcName string, parameters CallParameters, returnedValue interface{}, returnedError error) error {
@@ -73,9 +73,9 @@ func (recorder *Recorder) RecordCall(funcName string, parameters CallParameters,
 
 	var tf *Recording
 
-	if firstCall {
+	if recorder.FirstCall {
 		tf = &Recording{}
-		firstCall = false
+		recorder.FirstCall = false
 	} else {
 		var err error
 		tf, err = ReadRecording(recorder.Filename)
@@ -96,7 +96,7 @@ func (recorder *Recorder) RecordCall(funcName string, parameters CallParameters,
 		return err
 	}
 
-	indentedJSON, err = garbleSecrets(indentedJSON)
+	indentedJSON, err = recorder.Garbler.garbleSecrets(indentedJSON)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,19 @@ func (recorder *Recorder) RecordCall(funcName string, parameters CallParameters,
 	return nil
 }
 
-func garbleSecrets(jsonData []byte) ([]byte, error) {
+type Garbler struct {
+	garbledInts    map[int]int
+	garbledStrings map[string]string
+}
+
+func NewGarbler() *Garbler {
+	return &Garbler{
+		garbledInts:    make(map[int]int),
+		garbledStrings: make(map[string]string),
+	}
+}
+
+func (g *Garbler) garbleSecrets(jsonData []byte) ([]byte, error) {
 	readAllGoFilesOnce.Do(readAllGoFiles)
 
 	var data map[string]interface{}
@@ -123,7 +135,7 @@ func garbleSecrets(jsonData []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	garbledData := garble(data)
+	garbledData := g.garble(data)
 	if garbledData != nil {
 		indentedJSON, err := marshalIndent(garbledData)
 		if err != nil {
@@ -154,15 +166,34 @@ func randString(strlen int) string {
 	return randStringFromCharSet(strlen, charSetAlphaNum)
 }
 
-func garbleString(input string) string {
-	if _, err := uuid.Parse(input); err == nil {
-		return uuid.NewString()
+func (g *Garbler) garbleInt(input int) int {
+	if v, ok := g.garbledInts[input]; ok {
+		return v
 	}
 
-	return randString(len(input))
+	ret := rand.Int()
+	g.garbledInts[input] = ret
+	return ret
 }
 
-func garble(data interface{}) interface{} {
+func (g *Garbler) garbleString(input string) string {
+	if v, ok := g.garbledStrings[input]; ok {
+		return v
+	}
+
+	ret := ""
+	if _, err := uuid.Parse(input); err == nil {
+		ret = uuid.NewString()
+	}
+
+	ret = randString(len(input))
+
+	g.garbledStrings[input] = ret
+
+	return ret
+}
+
+func (g *Garbler) garble(data interface{}) interface{} {
 	if data == nil {
 		return nil
 	}
@@ -170,25 +201,27 @@ func garble(data interface{}) interface{} {
 	switch typedData := data.(type) {
 	case map[string]interface{}:
 		for key, val := range typedData {
-			typedData[key] = garble(val)
+			if key != "FunctionName" {
+				typedData[key] = g.garble(val)
+			}
 		}
 
 		return typedData
 	case []interface{}:
 		for ind, val := range typedData {
-			typedData[ind] = garble(val)
+			typedData[ind] = g.garble(val)
 		}
 
 		return typedData
 	case string:
 		if !strings.Contains(allGoFiles, typedData) {
-			typedData = garbleString(typedData)
+			typedData = g.garbleString(typedData)
 		}
 
 		return typedData
 	case int:
 		if !strings.Contains(allGoFiles, fmt.Sprint(typedData)) {
-			typedData = rand.Int()
+			typedData = g.garbleInt(typedData)
 		}
 
 		return typedData
@@ -201,8 +234,8 @@ func garble(data interface{}) interface{} {
 	panic("uninspected value for garbling")
 }
 
-func ArgsToMap(args ...any) map[int]any {
-	ret := make(map[int]any, 0)
+func ArgsToMap(args ...any) CallParameters {
+	ret := make(CallParameters, 0)
 	for i, v := range args {
 		ret[i] = v
 	}

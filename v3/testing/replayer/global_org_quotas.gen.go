@@ -29,7 +29,7 @@ func (a *OrgQuotasAPI) List(ctx context.Context) ([]v3.Quota, error) {
     }
 
     if a.ListHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx)
+        
     } else {
         if err := a.ListHook(ctx); err != nil {
             panic(err)
@@ -50,7 +50,9 @@ func (a *OrgQuotasAPI) Get(ctx context.Context, entity string) (*v3.Quota, error
     }
 
     if a.GetHook == nil {
-        a.Replayer.AssertArgs(expectedArgs, ctx, entity)
+        
+             a.Replayer.AssertArgs(expectedArgs, entity)
+        
     } else {
         if err := a.GetHook(ctx, entity); err != nil {
             panic(err)

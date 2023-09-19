@@ -5,6 +5,7 @@ import (
 
 	v3 "github.com/exoscale/egoscale/v3"
 	"github.com/exoscale/egoscale/v3/testing/recorder"
+	"github.com/exoscale/egoscale/v3/testing/replayer"
 )
 
 type IAMAPIIface interface {
@@ -29,6 +30,21 @@ func (a *IAMAPIRecorder) AccessKey() AccessKeyAPIIface {
 	return &recorder.AccessKeyAPI{
 		Recordee: a.client.Client.IAM().AccessKey(),
 	}
+}
+
+type IAMAPIReplayer struct {
+}
+
+func (a *IAMAPIReplayer) Roles() *v3.RolesAPI {
+	panic("not implemented")
+}
+
+func (a *IAMAPIReplayer) OrgPolicy() *v3.OrgPolicyAPI {
+	panic("not implemented")
+}
+
+func (a *IAMAPIReplayer) AccessKey() AccessKeyAPIIface {
+	return &replayer.AccessKeyAPI{}
 }
 
 type AccessKeyAPIIface interface {

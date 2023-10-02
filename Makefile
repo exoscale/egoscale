@@ -40,3 +40,13 @@ oapigen: install-oapi-codegen
 	cd v2/oapi/; go generate
 	@rm v2/oapi/source.json
 	ls -l v2/oapi/oapi.gen.go
+
+.PHONY: generate
+generate:
+	@go install go.uber.org/mock/mockgen@latest
+	@wget -q --show-progress --progress=dot https://openapi-v2.exoscale.com/source.yaml -O- > v3/generator/source.yaml
+	@echo
+	@cd v3/generator/; go generate
+	@go mod tidy && go mod vendor
+	@rm v3/generator/source.yaml
+	@ls -l v3/*.go

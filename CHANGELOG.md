@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v2: IAMv3 Policy Resources field now noop #604
+
 0.102.0
 -------
 

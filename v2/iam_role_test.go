@@ -47,7 +47,6 @@ func (ts *testSuite) TestClient_GetIAMRole() {
 									{
 										Action:     (*oapi.IamServicePolicyRuleAction)(&testIAMPolicyServiceRuleAction),
 										Expression: &testIAMPolicyServiceRuleExpression,
-										Resources:  &testIAMPolicyServiceRuleResources,
 									},
 								},
 							},
@@ -77,7 +76,6 @@ func (ts *testSuite) TestClient_GetIAMRole() {
 						IAMPolicyServiceRule{
 							Action:     (*string)(&testIAMPolicyServiceRuleAction),
 							Expression: &testIAMPolicyServiceRuleExpression,
-							Resources:  testIAMPolicyServiceRuleResources,
 						},
 					},
 				},
@@ -125,7 +123,6 @@ func (ts *testSuite) TestClient_ListIAMRoles() {
 											{
 												Action:     (*oapi.IamServicePolicyRuleAction)(&testIAMPolicyServiceRuleAction),
 												Expression: &testIAMPolicyServiceRuleExpression,
-												Resources:  &testIAMPolicyServiceRuleResources,
 											},
 										},
 									},
@@ -158,7 +155,6 @@ func (ts *testSuite) TestClient_ListIAMRoles() {
 							IAMPolicyServiceRule{
 								Action:     (*string)(&testIAMPolicyServiceRuleAction),
 								Expression: &testIAMPolicyServiceRuleExpression,
-								Resources:  testIAMPolicyServiceRuleResources,
 							},
 						},
 					},
@@ -209,7 +205,6 @@ func (ts *testSuite) TestClient_CreateIAMRole() {
 										{
 											Action:     (*oapi.IamServicePolicyRuleAction)(&testIAMPolicyServiceRuleAction),
 											Expression: &testIAMPolicyServiceRuleExpression,
-											Resources:  &testIAMPolicyServiceRuleResources,
 										},
 									},
 								},
@@ -269,7 +264,6 @@ func (ts *testSuite) TestClient_CreateIAMRole() {
 									{
 										Action:     (*oapi.IamServicePolicyRuleAction)(&testIAMPolicyServiceRuleAction),
 										Expression: &testIAMPolicyServiceRuleExpression,
-										Resources:  &testIAMPolicyServiceRuleResources,
 									},
 								},
 							},
@@ -299,7 +293,6 @@ func (ts *testSuite) TestClient_CreateIAMRole() {
 						IAMPolicyServiceRule{
 							Action:     (*string)(&testIAMPolicyServiceRuleAction),
 							Expression: &testIAMPolicyServiceRuleExpression,
-							Resources:  testIAMPolicyServiceRuleResources,
 						},
 					},
 				},
@@ -326,7 +319,6 @@ func (ts *testSuite) TestClient_CreateIAMRole() {
 						IAMPolicyServiceRule{
 							Action:     (*string)(&testIAMPolicyServiceRuleAction),
 							Expression: &testIAMPolicyServiceRuleExpression,
-							Resources:  testIAMPolicyServiceRuleResources,
 						},
 					},
 				},
@@ -476,7 +468,6 @@ func (ts *testSuite) TestClient_UpdateIAMRolePolicy() {
 									{
 										Action:     (*oapi.IamServicePolicyRuleAction)(&testIAMPolicyServiceRuleAction),
 										Expression: &testIAMPolicyServiceRuleExpression,
-										Resources:  &testIAMPolicyServiceRuleResources,
 									},
 								},
 							},
@@ -515,7 +506,6 @@ func (ts *testSuite) TestClient_UpdateIAMRolePolicy() {
 						IAMPolicyServiceRule{
 							Action:     (*string)(&testIAMPolicyServiceRuleAction),
 							Expression: &testIAMPolicyServiceRuleExpression,
-							Resources:  testIAMPolicyServiceRuleResources,
 						},
 					},
 				},

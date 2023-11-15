@@ -13,7 +13,6 @@ var (
 	testIAMPolicyServiceType           = new(testSuite).randomString(10)
 	testIAMPolicyServiceRuleAction     = "allow"
 	testIAMPolicyServiceRuleExpression = new(testSuite).randomString(10)
-	testIAMPolicyServiceRuleResources  = []string{"foo", "bar"}
 )
 
 func (ts *testSuite) TestClient_GetIAMOrgPolicy() {
@@ -34,7 +33,6 @@ func (ts *testSuite) TestClient_GetIAMOrgPolicy() {
 								{
 									Action:     (*oapi.IamServicePolicyRuleAction)(&testIAMPolicyServiceRuleAction),
 									Expression: &testIAMPolicyServiceRuleExpression,
-									Resources:  &testIAMPolicyServiceRuleResources,
 								},
 							},
 						},
@@ -52,7 +50,6 @@ func (ts *testSuite) TestClient_GetIAMOrgPolicy() {
 					IAMPolicyServiceRule{
 						Action:     (*string)(&testIAMPolicyServiceRuleAction),
 						Expression: &testIAMPolicyServiceRuleExpression,
-						Resources:  testIAMPolicyServiceRuleResources,
 					},
 				},
 			},
@@ -89,7 +86,6 @@ func (ts *testSuite) TestClient_UpdateIAMOrgPolicy() {
 									{
 										Action:     (*oapi.IamServicePolicyRuleAction)(&testIAMPolicyServiceRuleAction),
 										Expression: &testIAMPolicyServiceRuleExpression,
-										Resources:  &testIAMPolicyServiceRuleResources,
 									},
 								},
 							},
@@ -126,7 +122,6 @@ func (ts *testSuite) TestClient_UpdateIAMOrgPolicy() {
 					IAMPolicyServiceRule{
 						Action:     (*string)(&testIAMPolicyServiceRuleAction),
 						Expression: &testIAMPolicyServiceRuleExpression,
-						Resources:  testIAMPolicyServiceRuleResources,
 					},
 				},
 			},

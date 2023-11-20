@@ -9,17 +9,13 @@ import (
 	"os"
 )
 
-type Middleware interface {
-	http.RoundTripper
-}
-
 // ErrorHandlerMiddleware is an Exoscale API HTTP client middleware that
 // returns concrete Go errors according to API response errors.
 type ErrorHandlerMiddleware struct {
 	next http.RoundTripper
 }
 
-func NewAPIErrorHandlerMiddleware(next http.RoundTripper) Middleware {
+func NewAPIErrorHandlerMiddleware(next http.RoundTripper) *ErrorHandlerMiddleware {
 	if next == nil {
 		next = http.DefaultTransport
 	}
@@ -73,7 +69,7 @@ type TraceMiddleware struct {
 	next http.RoundTripper
 }
 
-func NewTraceMiddleware(next http.RoundTripper) Middleware {
+func NewTraceMiddleware(next http.RoundTripper) *TraceMiddleware {
 	if next == nil {
 		next = http.DefaultTransport
 	}

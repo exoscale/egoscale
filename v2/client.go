@@ -213,6 +213,14 @@ func (c *Client) SetHTTPClient(client *http.Client) {
 		return
 	}
 
+	// Tracing must be performed before API error handling in the middleware chain,
+	// otherwise the response won't be dumped in case of an API error.
+	if c.trace {
+		c.httpClient.Transport = api.NewTraceMiddleware(c.httpClient.Transport)
+	}
+
+	c.httpClient.Transport = api.NewAPIErrorHandlerMiddleware(c.httpClient.Transport)
+
 	oapiOpts := []oapi.ClientOption{
 		oapi.WithHTTPClient(c.httpClient),
 		oapi.WithRequestEditorFn(

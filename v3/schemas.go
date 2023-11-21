@@ -86,6 +86,83 @@ type AntiAffinityGroup struct {
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
+type BlockStorageSnapshotState string
+
+const (
+	BlockStorageSnapshotStatePartiallyDestroyed BlockStorageSnapshotState = "partially-destroyed"
+	BlockStorageSnapshotStateDestroying         BlockStorageSnapshotState = "destroying"
+	BlockStorageSnapshotStateCreating           BlockStorageSnapshotState = "creating"
+	BlockStorageSnapshotStateCreated            BlockStorageSnapshotState = "created"
+	BlockStorageSnapshotStatePromoting          BlockStorageSnapshotState = "promoting"
+	BlockStorageSnapshotStateError              BlockStorageSnapshotState = "error"
+	BlockStorageSnapshotStateDestroyed          BlockStorageSnapshotState = "destroyed"
+	BlockStorageSnapshotStateAllocated          BlockStorageSnapshotState = "allocated"
+)
+
+// Block storage snapshot
+type BlockStorageSnapshot struct {
+	// Target block storage volume
+	BlockStorageVolume *BlockStorageVolumeTarget `json:"block-storage-volume,omitempty"`
+	// Snapshot creation date
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Snapshot ID
+	ID     UUID   `json:"id,omitempty"`
+	Labels Labels `json:"labels,omitempty"`
+	// Snapshot name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Snapshot size
+	Size int64 `json:"size,omitempty" validate:"omitempty,gte=100,lte=1024"`
+	// Snapshot state
+	State BlockStorageSnapshotState `json:"state,omitempty"`
+}
+
+// Target block storage snapshot
+type BlockStorageSnapshotTarget struct {
+	// Block storage snapshot ID
+	ID UUID `json:"id,omitempty"`
+}
+
+type BlockStorageVolumeState string
+
+const (
+	BlockStorageVolumeStateSnapshotting BlockStorageVolumeState = "snapshotting"
+	BlockStorageVolumeStateDeleted      BlockStorageVolumeState = "deleted"
+	BlockStorageVolumeStateCreating     BlockStorageVolumeState = "creating"
+	BlockStorageVolumeStateDetached     BlockStorageVolumeState = "detached"
+	BlockStorageVolumeStateDeleting     BlockStorageVolumeState = "deleting"
+	BlockStorageVolumeStateAttaching    BlockStorageVolumeState = "attaching"
+	BlockStorageVolumeStateError        BlockStorageVolumeState = "error"
+	BlockStorageVolumeStateAttached     BlockStorageVolumeState = "attached"
+	BlockStorageVolumeStateDetaching    BlockStorageVolumeState = "detaching"
+)
+
+// Block storage volume
+type BlockStorageVolume struct {
+	// Volume snapshots, if any
+	BlockStorageSnapshots []BlockStorageSnapshotTarget `json:"block-storage-snapshots,omitempty"`
+	// Volume block size
+	Blocksize int64 `json:"blocksize,omitempty" validate:"omitempty,gte=0"`
+	// Volume creation date
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Volume ID
+	ID UUID `json:"id,omitempty"`
+	// Target Instance
+	Instance *InstanceTarget `json:"instance,omitempty"`
+	Labels   Labels          `json:"labels,omitempty"`
+	// Volume name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Volume size
+	Size int64 `json:"size,omitempty" validate:"omitempty,gte=100,lte=1024"`
+	// Volume state
+	State BlockStorageVolumeState `json:"state,omitempty"`
+}
+
+// Target block storage volume
+type BlockStorageVolumeTarget struct {
+	// Block storage volume ID
+	ID UUID `json:"id,omitempty"`
+}
+
 type CdnConfigurationStatus string
 
 const (
@@ -2113,83 +2190,6 @@ type Resource struct {
 
 type ReverseDNSRecord struct {
 	DomainName *DomainName `json:"domain-name,omitempty" validate:"omitempty,gte=1,lte=253"`
-}
-
-type SecondaryVolumeState string
-
-const (
-	SecondaryVolumeStateSnapshotting SecondaryVolumeState = "snapshotting"
-	SecondaryVolumeStateDeleted      SecondaryVolumeState = "deleted"
-	SecondaryVolumeStateCreating     SecondaryVolumeState = "creating"
-	SecondaryVolumeStateDetached     SecondaryVolumeState = "detached"
-	SecondaryVolumeStateDeleting     SecondaryVolumeState = "deleting"
-	SecondaryVolumeStateAttaching    SecondaryVolumeState = "attaching"
-	SecondaryVolumeStateError        SecondaryVolumeState = "error"
-	SecondaryVolumeStateAttached     SecondaryVolumeState = "attached"
-	SecondaryVolumeStateDetaching    SecondaryVolumeState = "detaching"
-)
-
-// Secondary Volume
-type SecondaryVolume struct {
-	// Volume block size
-	Blocksize int64 `json:"blocksize,omitempty" validate:"omitempty,gte=0"`
-	// Volume creation date
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Volume ID
-	ID UUID `json:"id,omitempty"`
-	// Target Instance
-	Instance *InstanceTarget `json:"instance,omitempty"`
-	Labels   Labels          `json:"labels,omitempty"`
-	// Volume name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Volume snapshots, if any
-	SecondaryVolumeSnapshots []SecondaryVolumeSnapshotTarget `json:"secondary-volume-snapshots,omitempty"`
-	// Volume size
-	Size int64 `json:"size,omitempty" validate:"omitempty,gte=100,lte=1024"`
-	// Volume state
-	State SecondaryVolumeState `json:"state,omitempty"`
-}
-
-type SecondaryVolumeSnapshotState string
-
-const (
-	SecondaryVolumeSnapshotStatePartiallyDestroyed SecondaryVolumeSnapshotState = "partially-destroyed"
-	SecondaryVolumeSnapshotStateDestroying         SecondaryVolumeSnapshotState = "destroying"
-	SecondaryVolumeSnapshotStateCreating           SecondaryVolumeSnapshotState = "creating"
-	SecondaryVolumeSnapshotStateCreated            SecondaryVolumeSnapshotState = "created"
-	SecondaryVolumeSnapshotStatePromoting          SecondaryVolumeSnapshotState = "promoting"
-	SecondaryVolumeSnapshotStateError              SecondaryVolumeSnapshotState = "error"
-	SecondaryVolumeSnapshotStateDestroyed          SecondaryVolumeSnapshotState = "destroyed"
-	SecondaryVolumeSnapshotStateAllocated          SecondaryVolumeSnapshotState = "allocated"
-)
-
-// Secondary Volume
-type SecondaryVolumeSnapshot struct {
-	// Volume snapshot creation date
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Volume ID
-	ID     UUID   `json:"id,omitempty"`
-	Labels Labels `json:"labels,omitempty"`
-	// Volume snapshot name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Target secondary volume
-	SecondaryVolume *SecondaryVolumeTarget `json:"secondary-volume,omitempty"`
-	// Volume size
-	Size int64 `json:"size,omitempty" validate:"omitempty,gte=100,lte=1024"`
-	// Volume snapshot state
-	State SecondaryVolumeSnapshotState `json:"state,omitempty"`
-}
-
-// Target secondary volume snapshot
-type SecondaryVolumeSnapshotTarget struct {
-	// Secondary volume snapshot ID
-	ID UUID `json:"id,omitempty"`
-}
-
-// Target secondary volume
-type SecondaryVolumeTarget struct {
-	// Secondary volume ID
-	ID UUID `json:"id,omitempty"`
 }
 
 // Security Group

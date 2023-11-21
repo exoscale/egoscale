@@ -198,8 +198,35 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 }
 
 // SetHTTPClient overrides the current HTTP client.
+// As we don't return error, any error during intialization of client will make SetHTTPClient NOOP.
 func (c *Client) SetHTTPClient(client *http.Client) {
 	c.httpClient = client
+
+	apiURL, err := url.Parse(c.apiEndpoint)
+	if err != nil {
+		return
+	}
+	apiURL = apiURL.ResolveReference(&url.URL{Path: api.Prefix})
+
+	apiSecurityProvider, err := api.NewSecurityProvider(c.apiKey, c.apiSecret)
+	if err != nil {
+		return
+	}
+
+	oapiOpts := []oapi.ClientOption{
+		oapi.WithHTTPClient(c.httpClient),
+		oapi.WithRequestEditorFn(
+			oapi.MultiRequestsEditor(
+				setUserAgent,
+				apiSecurityProvider.Intercept,
+				setEndpointFromContext,
+			),
+		),
+	}
+
+	if c.oapiClient, err = oapi.NewClientWithResponses(apiURL.String(), oapiOpts...); err != nil {
+		return
+	}
 }
 
 // SetTimeout overrides the current client timeout value.

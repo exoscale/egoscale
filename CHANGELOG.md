@@ -1,10 +1,10 @@
-Unreleased
-----------
+0.102.2
+-------
 
 - v2: Fixed `SetHTTPClient` #605
 
 0.102.1
-=======
+-------
 
 - v2: IAMv3 Policy Resources field now noop #604
 

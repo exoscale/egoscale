@@ -9,7 +9,6 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.1
 	github.com/pb33f/libopenapi v0.11.0
 	github.com/stretchr/testify v1.8.2
-	go.uber.org/mock v0.3.0
 )
 
 require (

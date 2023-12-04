@@ -14,7 +14,6 @@ import (
 )
 
 //go:generate go run main.go ./source.yaml ../ v3
-//go:generate mockgen -package=mocks -source=../operations.go -destination=../mocks/mocks.go
 
 func main() {
 	if len(os.Args) <= 3 {

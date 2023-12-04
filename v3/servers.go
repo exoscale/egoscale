@@ -31,7 +31,7 @@ type APIZone string
 
 const (
 	APIZoneCHGva2 = "ch-gva-2"
-	APIZoneCHZrh1 = "ch-zrh-1"
+	APIZoneCHDk2  = "ch-dk-2"
 	APIZoneDEFra1 = "de-fra-1"
 	APIZoneDEMuc1 = "de-muc-1"
 	APIZoneATVie1 = "at-vie-1"

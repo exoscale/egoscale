@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
+	"log/slog"
 	"os"
 	"strings"
 	"text/template"
@@ -319,15 +320,31 @@ func getParameters(op *v3.Operation, funcName string) (params []string) {
 
 			name := helpers.ToLowerCamel(param.Name)
 
+			// This is WIP to be removed in:
+			// https://github.com/exoscale/entities/commit/dda7e9f52ded1879e509d465555023b5a16d0155
+			if strings.Contains(name, "*") {
+				slog.Warn(
+					"parameter name contains '*' in spec",
+					slog.String("operation", funcName),
+					slog.String("param", name),
+				)
+				name = strings.Trim(name, "*")
+			}
+
 			ptr := ""
 			if !param.Required {
+				slog.Warn(
+					"path parameter not required in spec",
+					slog.String("operation", funcName),
+					slog.String("param", name),
+				)
 				// XXX: we should never handle this case in our spec
 				// since optional param are query param and path param are alwayse required.
 				ptr = "*"
 			}
 
 			if !schemas.IsSimpleSchema(s) || len(s.Enum) > 0 {
-				params = append(params, name+" "+ptr+funcName+helpers.ToCamel(param.Name))
+				params = append(params, name+" "+ptr+funcName+helpers.ToCamel(name))
 				continue
 			}
 
@@ -431,8 +448,14 @@ func renderURLPathBuilder(rawPath string, op *v3.Operation) string {
 		if p.In != "path" {
 			continue
 		}
+
 		path = strings.Replace(path, "{"+p.Name+"}", "%v", 1)
-		sprintfParam = append(sprintfParam, helpers.ToLowerCamel(p.Name))
+		sprintfParam = append(
+			sprintfParam,
+			// This is WIP to be removed in:
+			// https://github.com/exoscale/entities/commit/dda7e9f52ded1879e509d465555023b5a16d0155
+			helpers.ToLowerCamel(strings.Trim(p.Name, "*")),
+		)
 	}
 	if path == rawPath {
 		return fmt.Sprintf("%q", rawPath)

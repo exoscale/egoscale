@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/exoscale/egoscale/v3/generator/client"
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/exoscale/egoscale/v3/generator/operations"
 	"github.com/exoscale/egoscale/v3/generator/schemas"
-	"github.com/exoscale/egoscale/v3/generator/servers"
 	"github.com/pb33f/libopenapi"
 )
 
@@ -41,7 +41,7 @@ func main() {
 	if err := schemas.Generate(doc, filepath.Join(genPathDir, "/schemas.go"), packageName); err != nil {
 		log.Fatal(err)
 	}
-	if err := servers.Generate(doc, filepath.Join(genPathDir, "/servers.go"), packageName); err != nil {
+	if err := client.Generate(doc, filepath.Join(genPathDir, "/client.go"), packageName); err != nil {
 		log.Fatal(err)
 	}
 	if err := operations.Generate(doc, filepath.Join(genPathDir, "/operations.go"), packageName); err != nil {

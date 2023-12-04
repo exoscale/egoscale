@@ -16,30 +16,19 @@ import (
 	"github.com/exoscale/egoscale/version"
 )
 
-type RequestMiddlewareFn func(ctx context.Context, req *http.Request) error
-
-// UserAgent is the "User-Agent" HTTP request header added to outgoing HTTP requests.
-var UserAgent = fmt.Sprintf("egoscale/%s (%s; %s/%s)",
-	version.Version,
-	runtime.Version(),
-	runtime.GOOS,
-	runtime.GOARCH)
-
-const pollingInterval = 3 * time.Second
-
-type APIZone string
+type ClientZone string
 
 const (
-	APIZoneCHGva2 = "ch-gva-2"
-	APIZoneCHDk2  = "ch-dk-2"
-	APIZoneDEFra1 = "de-fra-1"
-	APIZoneDEMuc1 = "de-muc-1"
-	APIZoneATVie1 = "at-vie-1"
-	APIZoneATVie2 = "at-vie-2"
-	APIZoneBGSof1 = "bg-sof-1"
+	ClientZoneCHGva2 ClientZone = "ch-gva-2"
+	ClientZoneCHDk2  ClientZone = "ch-dk-2"
+	ClientZoneDEFra1 ClientZone = "de-fra-1"
+	ClientZoneDEMuc1 ClientZone = "de-muc-1"
+	ClientZoneATVie1 ClientZone = "at-vie-1"
+	ClientZoneATVie2 ClientZone = "at-vie-2"
+	ClientZoneBGSof1 ClientZone = "bg-sof-1"
 )
 
-type ClientAPI struct {
+type Client struct {
 	apiKey          string
 	apiSecret       string
 	serverURL       string
@@ -51,12 +40,23 @@ type ClientAPI struct {
 	middlewares     []RequestMiddlewareFn
 }
 
-// ClientAPIOpt represents a function setting Exoscale API client option.
-type ClientAPIOpt func(*ClientAPI) error
+type RequestMiddlewareFn func(ctx context.Context, req *http.Request) error
 
-// ClientAPIOptWithTimeout returns a ClientAPIOpt overriding the default client timeout.
-func ClientAPIOptWithTimeout(v time.Duration) ClientAPIOpt {
-	return func(c *ClientAPI) error {
+// UserAgent is the "User-Agent" HTTP request header added to outgoing HTTP requests.
+var UserAgent = fmt.Sprintf("egoscale/%s (%s; %s/%s)",
+	version.Version,
+	runtime.Version(),
+	runtime.GOOS,
+	runtime.GOARCH)
+
+const pollingInterval = 3 * time.Second
+
+// ClientOpt represents a function setting Exoscale API client option.
+type ClientOpt func(*Client) error
+
+// ClientOptWithTimeout returns a ClientOpt overriding the default client timeout.
+func ClientOptWithTimeout(v time.Duration) ClientOpt {
+	return func(c *Client) error {
 		if v <= 0 {
 			return errors.New("timeout value must be greater than 0")
 		}
@@ -66,50 +66,50 @@ func ClientAPIOptWithTimeout(v time.Duration) ClientAPIOpt {
 	}
 }
 
-// ClientAPIOptWithTrace returns a ClientAPIOpt enabling HTTP request/response tracing.
-func ClientAPIOptWithTrace() ClientAPIOpt {
-	return func(c *ClientAPI) error {
+// ClientOptWithTrace returns a ClientOpt enabling HTTP request/response tracing.
+func ClientOptWithTrace() ClientOpt {
+	return func(c *Client) error {
 		c.trace = true
 		return nil
 	}
 }
 
-func ClientAPIOptWithEnvironment(env string) ClientAPIOpt {
-	return func(c *ClientAPI) error {
+func ClientOptWithEnvironment(env string) ClientOpt {
+	return func(c *Client) error {
 		c.rawServerURL = strings.Replace(c.rawServerURL, "api", env, 1)
 		c.serverURL = strings.Replace(c.serverURL, "api", env, 1)
 		return nil
 	}
 }
 
-// ClientAPIOptWithZone returns a ClientAPIOpt With a given zone.
-func ClientAPIOptWithZone(zone APIZone) ClientAPIOpt {
-	return func(c *ClientAPI) error {
+// ClientOptWithZone returns a ClientOpt With a given zone.
+func ClientOptWithZone(zone ClientZone) ClientOpt {
+	return func(c *Client) error {
 		c.serverURL = strings.Replace(c.rawServerURL, "{zone}", string(zone), 1)
 		return nil
 	}
 }
 
-// ClientAPIOptWithHTTPClient returns a ClientAPIOpt overriding the default http.Client.
+// ClientOptWithHTTPClient returns a ClientOpt overriding the default http.Client.
 // Note: the Exoscale API client will chain additional middleware
 // (http.RoundTripper) on the HTTP client internally, which can alter the HTTP
 // requests and responses. If you don't want any other middleware than the ones
 // currently set to your HTTP client, you should duplicate it and pass a copy
 // instead.
-func ClientAPIOptWithHTTPClient(v *http.Client) ClientAPIOpt {
-	return func(c *ClientAPI) error {
+func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
+	return func(c *Client) error {
 		c.httpClient = v
 
 		return nil
 	}
 }
 
-func NewClientAPI(apiKey, apiSecret string, opts ...ClientAPIOpt) (Client, error) {
+func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 	if apiKey == "" || apiSecret == "" {
 		return nil, fmt.Errorf("missing or incomplete API credentials")
 	}
 
-	client := &ClientAPI{
+	client := &Client{
 		apiKey:          apiKey,
 		apiSecret:       apiSecret,
 		serverURL:       "https://api-ch-gva-2.exoscale.com/v2",
@@ -140,8 +140,8 @@ func NewClientAPI(apiKey, apiSecret string, opts ...ClientAPIOpt) (Client, error
 	return client.WithRequestMiddleware(security.Intercept), nil
 }
 
-func (c *ClientAPI) WithZone(z APIZone) Client {
-	return &ClientAPI{
+func (c *Client) WithZone(z ClientZone) *Client {
+	return &Client{
 		serverURL:       strings.Replace(c.rawServerURL, "{zone}", string(z), 1),
 		rawServerURL:    c.rawServerURL,
 		httpClient:      c.httpClient,
@@ -150,8 +150,8 @@ func (c *ClientAPI) WithZone(z APIZone) Client {
 	}
 }
 
-func (c *ClientAPI) WithContext(ctx context.Context) Client {
-	return &ClientAPI{
+func (c *Client) WithContext(ctx context.Context) *Client {
+	return &Client{
 		serverURL:       c.serverURL,
 		rawServerURL:    c.rawServerURL,
 		httpClient:      c.httpClient,
@@ -160,8 +160,8 @@ func (c *ClientAPI) WithContext(ctx context.Context) Client {
 	}
 }
 
-func (c *ClientAPI) WithHttpClient(client *http.Client) Client {
-	return &ClientAPI{
+func (c *Client) WithHttpClient(client *http.Client) *Client {
+	return &Client{
 		serverURL:       c.serverURL,
 		rawServerURL:    c.rawServerURL,
 		httpClient:      client,
@@ -170,8 +170,8 @@ func (c *ClientAPI) WithHttpClient(client *http.Client) Client {
 	}
 }
 
-func (c *ClientAPI) WithRequestMiddleware(f RequestMiddlewareFn) Client {
-	return &ClientAPI{
+func (c *Client) WithRequestMiddleware(f RequestMiddlewareFn) *Client {
+	return &Client{
 		serverURL:       c.serverURL,
 		rawServerURL:    c.rawServerURL,
 		httpClient:      c.httpClient,
@@ -180,7 +180,7 @@ func (c *ClientAPI) WithRequestMiddleware(f RequestMiddlewareFn) Client {
 	}
 }
 
-func registerRequestMiddlewares(c *ClientAPI, ctx context.Context, req *http.Request) error {
+func registerRequestMiddlewares(c *Client, ctx context.Context, req *http.Request) error {
 	for _, fn := range c.middlewares {
 		if err := fn(ctx, req); err != nil {
 			return err

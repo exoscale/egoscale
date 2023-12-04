@@ -1,0 +1,114 @@
+// Wait is a helper that waits for async operation to reach the final state.
+// Final states are one of: failure, success, timeout.
+// If states argument are given, returns an error if the final state not match on of those.
+func (c Client) Wait(ctx context.Context, op *Operation, states ...OperationState) (*Operation, error) {
+	if op == nil {
+		return nil, fmt.Errorf("operation is nil")
+	}
+
+	ticker := time.NewTicker(c.pollingInterval)
+	defer ticker.Stop()
+
+	if op.State != OperationStatePending {
+		return op, nil
+	}
+
+	var operation *Operation
+polling:
+	for {
+		select {
+		case <-ticker.C:
+			o, err := c.GetOperation(ctx, op.ID)
+			if err != nil {
+				return nil, err
+			}
+			if o.State == OperationStatePending {
+				continue
+			}
+
+			operation = o
+			break polling
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+
+	if len(states) == 0 {
+		return operation, nil
+	}
+
+	for _, st := range states {
+		if operation.State == st {
+			return operation, nil
+		}
+	}
+
+	var ref OperationReference
+	if operation.Reference != nil {
+		ref = *operation.Reference
+	}
+
+	return nil,
+		fmt.Errorf("operation: %q %v, state: %s, reason: %q, message: %q",
+			operation.ID,
+			ref,
+			operation.State,
+			operation.Reason,
+			operation.Message,
+		)
+}
+
+func String(s string) *string {
+	return &s
+}
+
+func Int64(i int64) *int64 {
+	return &i
+}
+
+func Bool(b bool) *bool {
+	return &b
+}
+
+// Validate any struct from schema or request
+func Validate(r any) error {
+	return validator.New().Struct(r)
+}
+
+func prepareJsonBody(body any) (*bytes.Reader, error) {
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(buf), nil
+}
+
+func prepareJsonResponse(resp *http.Response, v any) error {
+	defer resp.Body.Close()
+
+	buf, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(buf, v); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type UUID string
+
+func (u UUID) String() string {
+	return string(u)
+}
+
+func ParseUUID(s string) (UUID, error) {
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return "", err
+	}
+
+	return UUID(id.String()), nil
+}

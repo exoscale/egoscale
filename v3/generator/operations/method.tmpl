@@ -1,0 +1,48 @@
+{{ .Comment }}
+func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
+	path := {{ .URLPathBuilder }}
+
+	{{ if .BodyRequest }}
+	body, err := prepareJsonBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("{{ .Name }}: prepare Json body: %w", err)
+	}
+	{{ end }}
+
+	request, err := http.NewRequestWithContext(ctx, "{{ .HTTPMethod }}", c.serverURL + path, {{ if .BodyRequest }}body{{else}}nil{{end}})
+	if err != nil {
+		return nil, fmt.Errorf("{{ .Name }}: new request: %w", err)
+	}
+
+	{{ if ne .QueryParams nil }}if len(opts) > 0 {
+		q := request.URL.Query()
+		for _, opt := range opts {
+			opt(q)
+		}
+		request.URL.RawQuery = q.Encode()
+	}{{ end }}
+
+	{{ if ne .ContentType "" }}
+	request.Header.Add("Content-Type", "{{ .ContentType }}")
+	{{ end }}
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("{{ .Name }}: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("{{ .Name }}: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request {{ .Name }} returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := {{ .BodyRespType }}{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("{{ .Name }}: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}

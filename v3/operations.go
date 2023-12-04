@@ -23,7 +23,7 @@ type ListAccessKeysResponse struct {
 }
 
 // List IAM Access Keys
-func (c ClientAPI) ListAccessKeys(ctx context.Context) (*ListAccessKeysResponse, error) {
+func (c Client) ListAccessKeys(ctx context.Context) (*ListAccessKeysResponse, error) {
 	path := "/access-key"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -65,7 +65,7 @@ type CreateAccessKeyRequest struct {
 }
 
 // This operation creates a legacy IAM Access Key, to create a key for use with IAM roles use the api-key endpoint.The corresponding secret is only available in the response returned by this operation, the caller must take care of storing it safely as there is no other way to retrieve it.
-func (c ClientAPI) CreateAccessKey(ctx context.Context, req CreateAccessKeyRequest) (*AccessKey, error) {
+func (c Client) CreateAccessKey(ctx context.Context, req CreateAccessKeyRequest) (*AccessKey, error) {
 	path := "/access-key"
 
 	body, err := prepareJsonBody(req)
@@ -106,7 +106,7 @@ type ListAccessKeyKnownOperationsResponse struct {
 }
 
 // Retrieve all known available IAM Access Key operations and associated tags
-func (c ClientAPI) ListAccessKeyKnownOperations(ctx context.Context) (*ListAccessKeyKnownOperationsResponse, error) {
+func (c Client) ListAccessKeyKnownOperations(ctx context.Context) (*ListAccessKeyKnownOperationsResponse, error) {
 	path := "/access-key-known-operations"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -140,7 +140,7 @@ type ListAccessKeyOperationsResponse struct {
 }
 
 // Retrieve IAM Access Key operations and associated tags for the signing key
-func (c ClientAPI) ListAccessKeyOperations(ctx context.Context) (*ListAccessKeyOperationsResponse, error) {
+func (c Client) ListAccessKeyOperations(ctx context.Context) (*ListAccessKeyOperationsResponse, error) {
 	path := "/access-key-operations"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -170,7 +170,7 @@ func (c ClientAPI) ListAccessKeyOperations(ctx context.Context) (*ListAccessKeyO
 }
 
 // This operation revokes the specified IAM Access Key. Access Keys created by the revoked Access Key will not be revoked.
-func (c ClientAPI) RevokeAccessKey(ctx context.Context, key string) (*Operation, error) {
+func (c Client) RevokeAccessKey(ctx context.Context, key string) (*Operation, error) {
 	path := fmt.Sprintf("/access-key/%v", key)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -200,7 +200,7 @@ func (c ClientAPI) RevokeAccessKey(ctx context.Context, key string) (*Operation,
 }
 
 // Retrieve IAM Access Key details
-func (c ClientAPI) GetAccessKey(ctx context.Context, key string) (*AccessKey, error) {
+func (c Client) GetAccessKey(ctx context.Context, key string) (*AccessKey, error) {
 	path := fmt.Sprintf("/access-key/%v", key)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -234,7 +234,7 @@ type ListAntiAffinityGroupsResponse struct {
 }
 
 // List Anti-affinity Groups
-func (c ClientAPI) ListAntiAffinityGroups(ctx context.Context) (*ListAntiAffinityGroupsResponse, error) {
+func (c Client) ListAntiAffinityGroups(ctx context.Context) (*ListAntiAffinityGroupsResponse, error) {
 	path := "/anti-affinity-group"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -271,7 +271,7 @@ type CreateAntiAffinityGroupRequest struct {
 }
 
 // Create an Anti-affinity Group
-func (c ClientAPI) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffinityGroupRequest) (*Operation, error) {
+func (c Client) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffinityGroupRequest) (*Operation, error) {
 	path := "/anti-affinity-group"
 
 	body, err := prepareJsonBody(req)
@@ -308,7 +308,7 @@ func (c ClientAPI) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAf
 }
 
 // Delete an Anti-affinity Group
-func (c ClientAPI) DeleteAntiAffinityGroup(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteAntiAffinityGroup(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/anti-affinity-group/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -338,7 +338,7 @@ func (c ClientAPI) DeleteAntiAffinityGroup(ctx context.Context, id UUID) (*Opera
 }
 
 // Retrieve Anti-affinity Group details
-func (c ClientAPI) GetAntiAffinityGroup(ctx context.Context, id UUID) (*AntiAffinityGroup, error) {
+func (c Client) GetAntiAffinityGroup(ctx context.Context, id UUID) (*AntiAffinityGroup, error) {
 	path := fmt.Sprintf("/anti-affinity-group/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -372,7 +372,7 @@ type ListAPIKeysResponse struct {
 }
 
 // List API keys
-func (c ClientAPI) ListAPIKeys(ctx context.Context) (*ListAPIKeysResponse, error) {
+func (c Client) ListAPIKeys(ctx context.Context) (*ListAPIKeysResponse, error) {
 	path := "/api-key"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -409,7 +409,7 @@ type CreateAPIKeyRequest struct {
 }
 
 // Create a new API key
-func (c ClientAPI) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAMAPIKeyCreated, error) {
+func (c Client) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAMAPIKeyCreated, error) {
 	path := "/api-key"
 
 	body, err := prepareJsonBody(req)
@@ -446,7 +446,7 @@ func (c ClientAPI) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*
 }
 
 // Delete an API key
-func (c ClientAPI) DeleteAPIKey(ctx context.Context, id string) (*Operation, error) {
+func (c Client) DeleteAPIKey(ctx context.Context, id string) (*Operation, error) {
 	path := fmt.Sprintf("/api-key/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -476,7 +476,7 @@ func (c ClientAPI) DeleteAPIKey(ctx context.Context, id string) (*Operation, err
 }
 
 // Get API key
-func (c ClientAPI) GetAPIKey(ctx context.Context, id string) (*IAMAPIKey, error) {
+func (c Client) GetAPIKey(ctx context.Context, id string) (*IAMAPIKey, error) {
 	path := fmt.Sprintf("/api-key/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -510,7 +510,7 @@ type GetDBAASCACertificateResponse struct {
 }
 
 // Returns a CA Certificate required to reach a DBaaS service through a TLS-protected connection.
-func (c ClientAPI) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertificateResponse, error) {
+func (c Client) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertificateResponse, error) {
 	path := "/dbaas-ca-certificate"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -540,7 +540,7 @@ func (c ClientAPI) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertif
 }
 
 // Delete a Grafana service
-func (c ClientAPI) DeleteDBAASServiceGrafana(ctx context.Context, name string) (*Operation, error) {
+func (c Client) DeleteDBAASServiceGrafana(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -570,7 +570,7 @@ func (c ClientAPI) DeleteDBAASServiceGrafana(ctx context.Context, name string) (
 }
 
 // Get a DBaaS Grafana service
-func (c ClientAPI) GetDBAASServiceGrafana(ctx context.Context, name string) (*DBAASServiceGrafana, error) {
+func (c Client) GetDBAASServiceGrafana(ctx context.Context, name string) (*DBAASServiceGrafana, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -635,7 +635,7 @@ type CreateDBAASServiceGrafanaRequest struct {
 }
 
 // Create a DBaaS Grafana service
-func (c ClientAPI) CreateDBAASServiceGrafana(ctx context.Context, name string, req CreateDBAASServiceGrafanaRequest) (*Operation, error) {
+func (c Client) CreateDBAASServiceGrafana(ctx context.Context, name string, req CreateDBAASServiceGrafanaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -706,7 +706,7 @@ type UpdateDBAASServiceGrafanaRequest struct {
 }
 
 // Update a DBaaS Grafana service
-func (c ClientAPI) UpdateDBAASServiceGrafana(ctx context.Context, name string, req UpdateDBAASServiceGrafanaRequest) (*Operation, error) {
+func (c Client) UpdateDBAASServiceGrafana(ctx context.Context, name string, req UpdateDBAASServiceGrafanaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -743,7 +743,7 @@ func (c ClientAPI) UpdateDBAASServiceGrafana(ctx context.Context, name string, r
 }
 
 // Initiate Grafana maintenance update
-func (c ClientAPI) StartDBAASGrafanaMaintenance(ctx context.Context, name string) (*Operation, error) {
+func (c Client) StartDBAASGrafanaMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v/maintenance/start", name)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -781,7 +781,7 @@ type CreateDBAASIntegrationRequest struct {
 }
 
 // Create a new DBaaS integration between two services
-func (c ClientAPI) CreateDBAASIntegration(ctx context.Context, req CreateDBAASIntegrationRequest) (*Operation, error) {
+func (c Client) CreateDBAASIntegration(ctx context.Context, req CreateDBAASIntegrationRequest) (*Operation, error) {
 	path := "/dbaas-integration"
 
 	body, err := prepareJsonBody(req)
@@ -831,7 +831,7 @@ type ListDBAASIntegrationSettingsResponse struct {
 }
 
 // Get DBaaS integration settings
-func (c ClientAPI) ListDBAASIntegrationSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*ListDBAASIntegrationSettingsResponse, error) {
+func (c Client) ListDBAASIntegrationSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*ListDBAASIntegrationSettingsResponse, error) {
 	path := fmt.Sprintf("/dbaas-integration-settings/%v/%v/%v", integrationType, sourceType, destType)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -865,7 +865,7 @@ type ListDBAASIntegrationTypesResponse struct {
 }
 
 // Get DBaaS integration types
-func (c ClientAPI) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegrationTypesResponse, error) {
+func (c Client) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegrationTypesResponse, error) {
 	path := "/dbaas-integration-types"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -895,7 +895,7 @@ func (c ClientAPI) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASInt
 }
 
 // Delete a DBaaS Integration
-func (c ClientAPI) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-integration/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -925,7 +925,7 @@ func (c ClientAPI) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operat
 }
 
 // Get a DBaaS Integration
-func (c ClientAPI) GetDBAASIntegration(ctx context.Context, id UUID) (*DBAASIntegration, error) {
+func (c Client) GetDBAASIntegration(ctx context.Context, id UUID) (*DBAASIntegration, error) {
 	path := fmt.Sprintf("/dbaas-integration/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -960,7 +960,7 @@ type UpdateDBAASIntegrationRequest struct {
 }
 
 // Update a existing DBaaS integration
-func (c ClientAPI) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateDBAASIntegrationRequest) (*Operation, error) {
+func (c Client) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateDBAASIntegrationRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-integration/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -997,7 +997,7 @@ func (c ClientAPI) UpdateDBAASIntegration(ctx context.Context, id UUID, req Upda
 }
 
 // Delete a Kafka service
-func (c ClientAPI) DeleteDBAASServiceKafka(ctx context.Context, name string) (*Operation, error) {
+func (c Client) DeleteDBAASServiceKafka(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -1027,7 +1027,7 @@ func (c ClientAPI) DeleteDBAASServiceKafka(ctx context.Context, name string) (*O
 }
 
 // Get a DBaaS Kafka service
-func (c ClientAPI) GetDBAASServiceKafka(ctx context.Context, name string) (*DBAASServiceKafka, error) {
+func (c Client) GetDBAASServiceKafka(ctx context.Context, name string) (*DBAASServiceKafka, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -1115,7 +1115,7 @@ type CreateDBAASServiceKafkaRequest struct {
 }
 
 // Create a DBaaS Kafka service
-func (c ClientAPI) CreateDBAASServiceKafka(ctx context.Context, name string, req CreateDBAASServiceKafkaRequest) (*Operation, error) {
+func (c Client) CreateDBAASServiceKafka(ctx context.Context, name string, req CreateDBAASServiceKafkaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -1210,7 +1210,7 @@ type UpdateDBAASServiceKafkaRequest struct {
 }
 
 // Update a DBaaS Kafka service
-func (c ClientAPI) UpdateDBAASServiceKafka(ctx context.Context, name string, req UpdateDBAASServiceKafkaRequest) (*Operation, error) {
+func (c Client) UpdateDBAASServiceKafka(ctx context.Context, name string, req UpdateDBAASServiceKafkaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -1247,7 +1247,7 @@ func (c ClientAPI) UpdateDBAASServiceKafka(ctx context.Context, name string, req
 }
 
 // Get DBaaS kafka ACL configuration
-func (c ClientAPI) GetDBAASKafkaAclConfig(ctx context.Context, name string) (*DBAASKafkaAcls, error) {
+func (c Client) GetDBAASKafkaAclConfig(ctx context.Context, name string) (*DBAASKafkaAcls, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/acl-config", name)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -1277,7 +1277,7 @@ func (c ClientAPI) GetDBAASKafkaAclConfig(ctx context.Context, name string) (*DB
 }
 
 // Initiate Kafka maintenance update
-func (c ClientAPI) StartDBAASKafkaMaintenance(ctx context.Context, name string) (*Operation, error) {
+func (c Client) StartDBAASKafkaMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/maintenance/start", name)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -1307,7 +1307,7 @@ func (c ClientAPI) StartDBAASKafkaMaintenance(ctx context.Context, name string) 
 }
 
 // Add a Kafka Schema Registry ACL entry
-func (c ClientAPI) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, name string, req DBAASKafkaSchemaRegistryAclEntry) (*Operation, error) {
+func (c Client) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, name string, req DBAASKafkaSchemaRegistryAclEntry) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/schema-registry/acl-config", name)
 
 	body, err := prepareJsonBody(req)
@@ -1344,7 +1344,7 @@ func (c ClientAPI) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, 
 }
 
 // Delete a Kafka ACL entry
-func (c ClientAPI) DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, name string, aclID string) (*Operation, error) {
+func (c Client) DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, name string, aclID string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/schema-registry/acl-config/%v", name, aclID)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -1374,7 +1374,7 @@ func (c ClientAPI) DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, 
 }
 
 // Add a Kafka topic ACL entry
-func (c ClientAPI) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string, req DBAASKafkaTopicAclEntry) (*Operation, error) {
+func (c Client) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string, req DBAASKafkaTopicAclEntry) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/topic/acl-config", name)
 
 	body, err := prepareJsonBody(req)
@@ -1411,7 +1411,7 @@ func (c ClientAPI) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name stri
 }
 
 // Delete a Kafka ACL entry
-func (c ClientAPI) DeleteDBAASKafkaTopicAclConfig(ctx context.Context, name string, aclID string) (*Operation, error) {
+func (c Client) DeleteDBAASKafkaTopicAclConfig(ctx context.Context, name string, aclID string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/topic/acl-config/%v", name, aclID)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -1445,7 +1445,7 @@ type CreateDBAASKafkaUserRequest struct {
 }
 
 // Create a DBaaS Kafka user
-func (c ClientAPI) CreateDBAASKafkaUser(ctx context.Context, serviceName string, req CreateDBAASKafkaUserRequest) (*Operation, error) {
+func (c Client) CreateDBAASKafkaUser(ctx context.Context, serviceName string, req CreateDBAASKafkaUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/user", serviceName)
 
 	body, err := prepareJsonBody(req)
@@ -1482,7 +1482,7 @@ func (c ClientAPI) CreateDBAASKafkaUser(ctx context.Context, serviceName string,
 }
 
 // Delete a DBaaS kafka user
-func (c ClientAPI) DeleteDBAASKafkaUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
+func (c Client) DeleteDBAASKafkaUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/user/%v", serviceName, username)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -1516,7 +1516,7 @@ type ResetDBAASKafkaUserPasswordRequest struct {
 }
 
 // If no password is provided one will be generated automatically.
-func (c ClientAPI) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASKafkaUserPasswordRequest) (*Operation, error) {
+func (c Client) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASKafkaUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/user/%v/password/reset", serviceName, username)
 
 	body, err := prepareJsonBody(req)
@@ -1553,7 +1553,7 @@ func (c ClientAPI) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName 
 }
 
 // Get a DBaaS migration status
-func (c ClientAPI) GetDBAASMigrationStatus(ctx context.Context, name string) (*DBAASMigrationStatus, error) {
+func (c Client) GetDBAASMigrationStatus(ctx context.Context, name string) (*DBAASMigrationStatus, error) {
 	path := fmt.Sprintf("/dbaas-migration-status/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -1583,7 +1583,7 @@ func (c ClientAPI) GetDBAASMigrationStatus(ctx context.Context, name string) (*D
 }
 
 // Delete a MySQL service
-func (c ClientAPI) DeleteDBAASServiceMysql(ctx context.Context, name string) (*Operation, error) {
+func (c Client) DeleteDBAASServiceMysql(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -1613,7 +1613,7 @@ func (c ClientAPI) DeleteDBAASServiceMysql(ctx context.Context, name string) (*O
 }
 
 // Get a DBaaS MySQL service
-func (c ClientAPI) GetDBAASServiceMysql(ctx context.Context, name string) (*DBAASServiceMysql, error) {
+func (c Client) GetDBAASServiceMysql(ctx context.Context, name string) (*DBAASServiceMysql, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -1734,7 +1734,7 @@ type CreateDBAASServiceMysqlRequest struct {
 }
 
 // Create a DBaaS MySQL service
-func (c ClientAPI) CreateDBAASServiceMysql(ctx context.Context, name string, req CreateDBAASServiceMysqlRequest) (*Operation, error) {
+func (c Client) CreateDBAASServiceMysql(ctx context.Context, name string, req CreateDBAASServiceMysqlRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -1836,7 +1836,7 @@ type UpdateDBAASServiceMysqlRequest struct {
 }
 
 // Update a DBaaS MySQL service
-func (c ClientAPI) UpdateDBAASServiceMysql(ctx context.Context, name string, req UpdateDBAASServiceMysqlRequest) (*Operation, error) {
+func (c Client) UpdateDBAASServiceMysql(ctx context.Context, name string, req UpdateDBAASServiceMysqlRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -1873,7 +1873,7 @@ func (c ClientAPI) UpdateDBAASServiceMysql(ctx context.Context, name string, req
 }
 
 // Initiate MySQL maintenance update
-func (c ClientAPI) StartDBAASMysqlMaintenance(ctx context.Context, name string) (*Operation, error) {
+func (c Client) StartDBAASMysqlMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/maintenance/start", name)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -1903,7 +1903,7 @@ func (c ClientAPI) StartDBAASMysqlMaintenance(ctx context.Context, name string) 
 }
 
 // Stop a DBaaS MySQL migration
-func (c ClientAPI) StopDBAASMysqlMigration(ctx context.Context, name string) (*Operation, error) {
+func (c Client) StopDBAASMysqlMigration(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/migration/stop", name)
 
 	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, nil)
@@ -1937,7 +1937,7 @@ type CreateDBAASMysqlDatabaseRequest struct {
 }
 
 // Create a DBaaS MySQL database
-func (c ClientAPI) CreateDBAASMysqlDatabase(ctx context.Context, serviceName string, req CreateDBAASMysqlDatabaseRequest) (*Operation, error) {
+func (c Client) CreateDBAASMysqlDatabase(ctx context.Context, serviceName string, req CreateDBAASMysqlDatabaseRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/database", serviceName)
 
 	body, err := prepareJsonBody(req)
@@ -1974,7 +1974,7 @@ func (c ClientAPI) CreateDBAASMysqlDatabase(ctx context.Context, serviceName str
 }
 
 // Delete a DBaaS MySQL database
-func (c ClientAPI) DeleteDBAASMysqlDatabase(ctx context.Context, serviceName string, databaseName string) (*Operation, error) {
+func (c Client) DeleteDBAASMysqlDatabase(ctx context.Context, serviceName string, databaseName string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/database/%v", serviceName, databaseName)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -2009,7 +2009,7 @@ type CreateDBAASMysqlUserRequest struct {
 }
 
 // Create a DBaaS MySQL user
-func (c ClientAPI) CreateDBAASMysqlUser(ctx context.Context, serviceName string, req CreateDBAASMysqlUserRequest) (*Operation, error) {
+func (c Client) CreateDBAASMysqlUser(ctx context.Context, serviceName string, req CreateDBAASMysqlUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/user", serviceName)
 
 	body, err := prepareJsonBody(req)
@@ -2046,7 +2046,7 @@ func (c ClientAPI) CreateDBAASMysqlUser(ctx context.Context, serviceName string,
 }
 
 // Delete a DBaaS MySQL user
-func (c ClientAPI) DeleteDBAASMysqlUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
+func (c Client) DeleteDBAASMysqlUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/user/%v", serviceName, username)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -2081,7 +2081,7 @@ type ResetDBAASMysqlUserPasswordRequest struct {
 }
 
 // If no password is provided one will be generated automatically.
-func (c ClientAPI) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASMysqlUserPasswordRequest) (*Operation, error) {
+func (c Client) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASMysqlUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/user/%v/password/reset", serviceName, username)
 
 	body, err := prepareJsonBody(req)
@@ -2118,7 +2118,7 @@ func (c ClientAPI) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName 
 }
 
 // Delete a OpenSearch service
-func (c ClientAPI) DeleteDBAASServiceOpensearch(ctx context.Context, name string) (*Operation, error) {
+func (c Client) DeleteDBAASServiceOpensearch(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -2148,7 +2148,7 @@ func (c ClientAPI) DeleteDBAASServiceOpensearch(ctx context.Context, name string
 }
 
 // Get a DBaaS OpenSearch service
-func (c ClientAPI) GetDBAASServiceOpensearch(ctx context.Context, name string) (*DBAASServiceOpensearch, error) {
+func (c Client) GetDBAASServiceOpensearch(ctx context.Context, name string) (*DBAASServiceOpensearch, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -2263,7 +2263,7 @@ type CreateDBAASServiceOpensearchRequest struct {
 }
 
 // Create a DBaaS OpenSearch service
-func (c ClientAPI) CreateDBAASServiceOpensearch(ctx context.Context, name string, req CreateDBAASServiceOpensearchRequest) (*Operation, error) {
+func (c Client) CreateDBAASServiceOpensearch(ctx context.Context, name string, req CreateDBAASServiceOpensearchRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -2382,7 +2382,7 @@ type UpdateDBAASServiceOpensearchRequest struct {
 }
 
 // Update a DBaaS OpenSearch service
-func (c ClientAPI) UpdateDBAASServiceOpensearch(ctx context.Context, name string, req UpdateDBAASServiceOpensearchRequest) (*Operation, error) {
+func (c Client) UpdateDBAASServiceOpensearch(ctx context.Context, name string, req UpdateDBAASServiceOpensearchRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -2419,7 +2419,7 @@ func (c ClientAPI) UpdateDBAASServiceOpensearch(ctx context.Context, name string
 }
 
 // Get DBaaS OpenSearch ACL configuration
-func (c ClientAPI) GetDBAASOpensearchAclConfig(ctx context.Context, name string) (*DBAASOpensearchAclConfig, error) {
+func (c Client) GetDBAASOpensearchAclConfig(ctx context.Context, name string) (*DBAASOpensearchAclConfig, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/acl-config", name)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -2449,7 +2449,7 @@ func (c ClientAPI) GetDBAASOpensearchAclConfig(ctx context.Context, name string)
 }
 
 // Create a DBaaS OpenSearch ACL configuration
-func (c ClientAPI) UpdateDBAASOpensearchAclConfig(ctx context.Context, name string, req DBAASOpensearchAclConfig) (*Operation, error) {
+func (c Client) UpdateDBAASOpensearchAclConfig(ctx context.Context, name string, req DBAASOpensearchAclConfig) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/acl-config", name)
 
 	body, err := prepareJsonBody(req)
@@ -2486,7 +2486,7 @@ func (c ClientAPI) UpdateDBAASOpensearchAclConfig(ctx context.Context, name stri
 }
 
 // Initiate OpenSearch maintenance update
-func (c ClientAPI) StartDBAASOpensearchMaintenance(ctx context.Context, name string) (*Operation, error) {
+func (c Client) StartDBAASOpensearchMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/maintenance/start", name)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -2520,7 +2520,7 @@ type CreateDBAASOpensearchUserRequest struct {
 }
 
 // Create a DBaaS OpenSearch user
-func (c ClientAPI) CreateDBAASOpensearchUser(ctx context.Context, serviceName string, req CreateDBAASOpensearchUserRequest) (*Operation, error) {
+func (c Client) CreateDBAASOpensearchUser(ctx context.Context, serviceName string, req CreateDBAASOpensearchUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/user", serviceName)
 
 	body, err := prepareJsonBody(req)
@@ -2557,7 +2557,7 @@ func (c ClientAPI) CreateDBAASOpensearchUser(ctx context.Context, serviceName st
 }
 
 // Delete a DBaaS OpenSearch user
-func (c ClientAPI) DeleteDBAASOpensearchUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
+func (c Client) DeleteDBAASOpensearchUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/user/%v", serviceName, username)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -2591,7 +2591,7 @@ type ResetDBAASOpensearchUserPasswordRequest struct {
 }
 
 // If no password is provided one will be generated automatically.
-func (c ClientAPI) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASOpensearchUserPasswordRequest) (*Operation, error) {
+func (c Client) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASOpensearchUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/user/%v/password/reset", serviceName, username)
 
 	body, err := prepareJsonBody(req)
@@ -2628,7 +2628,7 @@ func (c ClientAPI) ResetDBAASOpensearchUserPassword(ctx context.Context, service
 }
 
 // Delete a Postgres service
-func (c ClientAPI) DeleteDBAASServicePG(ctx context.Context, name string) (*Operation, error) {
+func (c Client) DeleteDBAASServicePG(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -2658,7 +2658,7 @@ func (c ClientAPI) DeleteDBAASServicePG(ctx context.Context, name string) (*Oper
 }
 
 // Get a DBaaS PostgreSQL service
-func (c ClientAPI) GetDBAASServicePG(ctx context.Context, name string) (*DBAASServicePG, error) {
+func (c Client) GetDBAASServicePG(ctx context.Context, name string) (*DBAASServicePG, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -2789,7 +2789,7 @@ type CreateDBAASServicePGRequest struct {
 }
 
 // Create a DBaaS PostgreSQL service
-func (c ClientAPI) CreateDBAASServicePG(ctx context.Context, name string, req CreateDBAASServicePGRequest) (*Operation, error) {
+func (c Client) CreateDBAASServicePG(ctx context.Context, name string, req CreateDBAASServicePGRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -2903,7 +2903,7 @@ type UpdateDBAASServicePGRequest struct {
 }
 
 // Update a DBaaS PostgreSQL service
-func (c ClientAPI) UpdateDBAASServicePG(ctx context.Context, name string, req UpdateDBAASServicePGRequest) (*Operation, error) {
+func (c Client) UpdateDBAASServicePG(ctx context.Context, name string, req UpdateDBAASServicePGRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -2940,7 +2940,7 @@ func (c ClientAPI) UpdateDBAASServicePG(ctx context.Context, name string, req Up
 }
 
 // Initiate PostgreSQL maintenance update
-func (c ClientAPI) StartDBAASPGMaintenance(ctx context.Context, name string) (*Operation, error) {
+func (c Client) StartDBAASPGMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/maintenance/start", name)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -2970,7 +2970,7 @@ func (c ClientAPI) StartDBAASPGMaintenance(ctx context.Context, name string) (*O
 }
 
 // Stop a DBaaS PostgreSQL migration
-func (c ClientAPI) StopDBAASPGMigration(ctx context.Context, name string) (*Operation, error) {
+func (c Client) StopDBAASPGMigration(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/migration/stop", name)
 
 	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, nil)
@@ -3008,7 +3008,7 @@ type CreateDBAASPGConnectionPoolRequest struct {
 }
 
 // Create a DBaaS PostgreSQL connection pool
-func (c ClientAPI) CreateDBAASPGConnectionPool(ctx context.Context, serviceName string, req CreateDBAASPGConnectionPoolRequest) (*Operation, error) {
+func (c Client) CreateDBAASPGConnectionPool(ctx context.Context, serviceName string, req CreateDBAASPGConnectionPoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/connection-pool", serviceName)
 
 	body, err := prepareJsonBody(req)
@@ -3045,7 +3045,7 @@ func (c ClientAPI) CreateDBAASPGConnectionPool(ctx context.Context, serviceName 
 }
 
 // Delete a DBaaS PostgreSQL connection pool
-func (c ClientAPI) DeleteDBAASPGConnectionPool(ctx context.Context, serviceName string, connectionPoolName string) (*Operation, error) {
+func (c Client) DeleteDBAASPGConnectionPool(ctx context.Context, serviceName string, connectionPoolName string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/connection-pool/%v", serviceName, connectionPoolName)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -3082,7 +3082,7 @@ type UpdateDBAASPGConnectionPoolRequest struct {
 }
 
 // Update a DBaaS PostgreSQL connection pool
-func (c ClientAPI) UpdateDBAASPGConnectionPool(ctx context.Context, serviceName string, connectionPoolName string, req UpdateDBAASPGConnectionPoolRequest) (*Operation, error) {
+func (c Client) UpdateDBAASPGConnectionPool(ctx context.Context, serviceName string, connectionPoolName string, req UpdateDBAASPGConnectionPoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/connection-pool/%v", serviceName, connectionPoolName)
 
 	body, err := prepareJsonBody(req)
@@ -3127,7 +3127,7 @@ type CreateDBAASPGDatabaseRequest struct {
 }
 
 // Create a DBaaS Postgres database
-func (c ClientAPI) CreateDBAASPGDatabase(ctx context.Context, serviceName string, req CreateDBAASPGDatabaseRequest) (*Operation, error) {
+func (c Client) CreateDBAASPGDatabase(ctx context.Context, serviceName string, req CreateDBAASPGDatabaseRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/database", serviceName)
 
 	body, err := prepareJsonBody(req)
@@ -3164,7 +3164,7 @@ func (c ClientAPI) CreateDBAASPGDatabase(ctx context.Context, serviceName string
 }
 
 // Delete a DBaaS Postgres database
-func (c ClientAPI) DeleteDBAASPGDatabase(ctx context.Context, serviceName string, databaseName string) (*Operation, error) {
+func (c Client) DeleteDBAASPGDatabase(ctx context.Context, serviceName string, databaseName string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/database/%v", serviceName, databaseName)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -3199,7 +3199,7 @@ type CreateDBAASPostgresUserRequest struct {
 }
 
 // Create a DBaaS Postgres user
-func (c ClientAPI) CreateDBAASPostgresUser(ctx context.Context, serviceName string, req CreateDBAASPostgresUserRequest) (*Operation, error) {
+func (c Client) CreateDBAASPostgresUser(ctx context.Context, serviceName string, req CreateDBAASPostgresUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user", serviceName)
 
 	body, err := prepareJsonBody(req)
@@ -3236,7 +3236,7 @@ func (c ClientAPI) CreateDBAASPostgresUser(ctx context.Context, serviceName stri
 }
 
 // Delete a DBaaS Postgres user
-func (c ClientAPI) DeleteDBAASPostgresUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
+func (c Client) DeleteDBAASPostgresUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user/%v", serviceName, username)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -3270,7 +3270,7 @@ type UpdateDBAASPostgresAllowReplicationRequest struct {
 }
 
 // Update access control for one service user
-func (c ClientAPI) UpdateDBAASPostgresAllowReplication(ctx context.Context, serviceName string, username string, req UpdateDBAASPostgresAllowReplicationRequest) (*DBAASPostgresUsers, error) {
+func (c Client) UpdateDBAASPostgresAllowReplication(ctx context.Context, serviceName string, username string, req UpdateDBAASPostgresAllowReplicationRequest) (*DBAASPostgresUsers, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user/%v/allow-replication", serviceName, username)
 
 	body, err := prepareJsonBody(req)
@@ -3311,7 +3311,7 @@ type ResetDBAASPostgresUserPasswordRequest struct {
 }
 
 // If no password is provided one will be generated automatically.
-func (c ClientAPI) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASPostgresUserPasswordRequest) (*Operation, error) {
+func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASPostgresUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user/%v/password/reset", serviceName, username)
 
 	body, err := prepareJsonBody(req)
@@ -3363,7 +3363,7 @@ type CreateDBAASPGUpgradeCheckRequest struct {
 }
 
 // Check whether you can upgrade Postgres service to a newer version
-func (c ClientAPI) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, req CreateDBAASPGUpgradeCheckRequest) (*DBAASTask, error) {
+func (c Client) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, req CreateDBAASPGUpgradeCheckRequest) (*DBAASTask, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/upgrade-check", service)
 
 	body, err := prepareJsonBody(req)
@@ -3400,7 +3400,7 @@ func (c ClientAPI) CreateDBAASPGUpgradeCheck(ctx context.Context, service string
 }
 
 // Delete a Redis service
-func (c ClientAPI) DeleteDBAASServiceRedis(ctx context.Context, name string) (*Operation, error) {
+func (c Client) DeleteDBAASServiceRedis(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -3430,7 +3430,7 @@ func (c ClientAPI) DeleteDBAASServiceRedis(ctx context.Context, name string) (*O
 }
 
 // Get a DBaaS Redis service
-func (c ClientAPI) GetDBAASServiceRedis(ctx context.Context, name string) (*DBAASServiceRedis, error) {
+func (c Client) GetDBAASServiceRedis(ctx context.Context, name string) (*DBAASServiceRedis, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -3518,7 +3518,7 @@ type CreateDBAASServiceRedisRequest struct {
 }
 
 // Create a DBaaS Redis service
-func (c ClientAPI) CreateDBAASServiceRedis(ctx context.Context, name string, req CreateDBAASServiceRedisRequest) (*Operation, error) {
+func (c Client) CreateDBAASServiceRedis(ctx context.Context, name string, req CreateDBAASServiceRedisRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -3610,7 +3610,7 @@ type UpdateDBAASServiceRedisRequest struct {
 }
 
 // Update a DBaaS Redis service
-func (c ClientAPI) UpdateDBAASServiceRedis(ctx context.Context, name string, req UpdateDBAASServiceRedisRequest) (*Operation, error) {
+func (c Client) UpdateDBAASServiceRedis(ctx context.Context, name string, req UpdateDBAASServiceRedisRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v", name)
 
 	body, err := prepareJsonBody(req)
@@ -3647,7 +3647,7 @@ func (c ClientAPI) UpdateDBAASServiceRedis(ctx context.Context, name string, req
 }
 
 // Initiate Redis maintenance update
-func (c ClientAPI) StartDBAASRedisMaintenance(ctx context.Context, name string) (*Operation, error) {
+func (c Client) StartDBAASRedisMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v/maintenance/start", name)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -3677,7 +3677,7 @@ func (c ClientAPI) StartDBAASRedisMaintenance(ctx context.Context, name string) 
 }
 
 // Stop a DBaaS Redis migration
-func (c ClientAPI) StopDBAASRedisMigration(ctx context.Context, name string) (*Operation, error) {
+func (c Client) StopDBAASRedisMigration(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v/migration/stop", name)
 
 	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, nil)
@@ -3711,7 +3711,7 @@ type ListDBAASServicesResponse struct {
 }
 
 // List DBaaS services
-func (c ClientAPI) ListDBAASServices(ctx context.Context) (*ListDBAASServicesResponse, error) {
+func (c Client) ListDBAASServices(ctx context.Context) (*ListDBAASServicesResponse, error) {
 	path := "/dbaas-service"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -3749,7 +3749,7 @@ type GetDBAASServiceLogsRequest struct {
 }
 
 // Get logs of DBaaS service
-func (c ClientAPI) GetDBAASServiceLogs(ctx context.Context, serviceName string, req GetDBAASServiceLogsRequest) (*DBAASServiceLogs, error) {
+func (c Client) GetDBAASServiceLogs(ctx context.Context, serviceName string, req GetDBAASServiceLogsRequest) (*DBAASServiceLogs, error) {
 	path := fmt.Sprintf("/dbaas-service-logs/%v", serviceName)
 
 	body, err := prepareJsonBody(req)
@@ -3805,7 +3805,7 @@ type GetDBAASServiceMetricsRequest struct {
 }
 
 // Get metrics of DBaaS service
-func (c ClientAPI) GetDBAASServiceMetrics(ctx context.Context, serviceName string, req GetDBAASServiceMetricsRequest) (*GetDBAASServiceMetricsResponse, error) {
+func (c Client) GetDBAASServiceMetrics(ctx context.Context, serviceName string, req GetDBAASServiceMetricsRequest) (*GetDBAASServiceMetricsResponse, error) {
 	path := fmt.Sprintf("/dbaas-service-metrics/%v", serviceName)
 
 	body, err := prepareJsonBody(req)
@@ -3846,7 +3846,7 @@ type ListDBAASServiceTypesResponse struct {
 }
 
 // List available service types for DBaaS
-func (c ClientAPI) ListDBAASServiceTypes(ctx context.Context) (*ListDBAASServiceTypesResponse, error) {
+func (c Client) ListDBAASServiceTypes(ctx context.Context) (*ListDBAASServiceTypesResponse, error) {
 	path := "/dbaas-service-type"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -3876,7 +3876,7 @@ func (c ClientAPI) ListDBAASServiceTypes(ctx context.Context) (*ListDBAASService
 }
 
 // Get a DBaaS service type
-func (c ClientAPI) GetDBAASServiceType(ctx context.Context, serviceTypeName string) (*DBAASServiceType, error) {
+func (c Client) GetDBAASServiceType(ctx context.Context, serviceTypeName string) (*DBAASServiceType, error) {
 	path := fmt.Sprintf("/dbaas-service-type/%v", serviceTypeName)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -3906,7 +3906,7 @@ func (c ClientAPI) GetDBAASServiceType(ctx context.Context, serviceTypeName stri
 }
 
 // Delete a DBaaS service
-func (c ClientAPI) DeleteDBAASService(ctx context.Context, name string) (*Operation, error) {
+func (c Client) DeleteDBAASService(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-service/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -3953,7 +3953,7 @@ type GetDBAASSettingsGrafanaResponse struct {
 }
 
 // Get DBaaS Grafana settings
-func (c ClientAPI) GetDBAASSettingsGrafana(ctx context.Context) (*GetDBAASSettingsGrafanaResponse, error) {
+func (c Client) GetDBAASSettingsGrafana(ctx context.Context) (*GetDBAASSettingsGrafanaResponse, error) {
 	path := "/dbaas-settings-grafana"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4030,7 +4030,7 @@ type GetDBAASSettingsKafkaResponse struct {
 }
 
 // Get DBaaS Kafka settings
-func (c ClientAPI) GetDBAASSettingsKafka(ctx context.Context) (*GetDBAASSettingsKafkaResponse, error) {
+func (c Client) GetDBAASSettingsKafka(ctx context.Context) (*GetDBAASSettingsKafkaResponse, error) {
 	path := "/dbaas-settings-kafka"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4077,7 +4077,7 @@ type GetDBAASSettingsMysqlResponse struct {
 }
 
 // Get DBaaS MySQL settings
-func (c ClientAPI) GetDBAASSettingsMysql(ctx context.Context) (*GetDBAASSettingsMysqlResponse, error) {
+func (c Client) GetDBAASSettingsMysql(ctx context.Context) (*GetDBAASSettingsMysqlResponse, error) {
 	path := "/dbaas-settings-mysql"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4124,7 +4124,7 @@ type GetDBAASSettingsOpensearchResponse struct {
 }
 
 // Get DBaaS OpenSearch settings
-func (c ClientAPI) GetDBAASSettingsOpensearch(ctx context.Context) (*GetDBAASSettingsOpensearchResponse, error) {
+func (c Client) GetDBAASSettingsOpensearch(ctx context.Context) (*GetDBAASSettingsOpensearchResponse, error) {
 	path := "/dbaas-settings-opensearch"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4201,7 +4201,7 @@ type GetDBAASSettingsPGResponse struct {
 }
 
 // Get DBaaS PostgreSQL settings
-func (c ClientAPI) GetDBAASSettingsPG(ctx context.Context) (*GetDBAASSettingsPGResponse, error) {
+func (c Client) GetDBAASSettingsPG(ctx context.Context) (*GetDBAASSettingsPGResponse, error) {
 	path := "/dbaas-settings-pg"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4248,7 +4248,7 @@ type GetDBAASSettingsRedisResponse struct {
 }
 
 // Returns the default settings for Redis.
-func (c ClientAPI) GetDBAASSettingsRedis(ctx context.Context) (*GetDBAASSettingsRedisResponse, error) {
+func (c Client) GetDBAASSettingsRedis(ctx context.Context) (*GetDBAASSettingsRedisResponse, error) {
 	path := "/dbaas-settings-redis"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4286,7 +4286,7 @@ type CreateDBAASTaskMigrationCheckRequest struct {
 }
 
 // Create a DBaaS task to check migration
-func (c ClientAPI) CreateDBAASTaskMigrationCheck(ctx context.Context, service string, req CreateDBAASTaskMigrationCheckRequest) (*Operation, error) {
+func (c Client) CreateDBAASTaskMigrationCheck(ctx context.Context, service string, req CreateDBAASTaskMigrationCheckRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-task-migration-check/%v", service)
 
 	body, err := prepareJsonBody(req)
@@ -4323,7 +4323,7 @@ func (c ClientAPI) CreateDBAASTaskMigrationCheck(ctx context.Context, service st
 }
 
 // Get a DBaaS task
-func (c ClientAPI) GetDBAASTask(ctx context.Context, service string, id UUID) (*DBAASTask, error) {
+func (c Client) GetDBAASTask(ctx context.Context, service string, id UUID) (*DBAASTask, error) {
 	path := fmt.Sprintf("/dbaas-task/%v/%v", service, id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4357,7 +4357,7 @@ type ListDeployTargetsResponse struct {
 }
 
 // List Deploy Targets
-func (c ClientAPI) ListDeployTargets(ctx context.Context) (*ListDeployTargetsResponse, error) {
+func (c Client) ListDeployTargets(ctx context.Context) (*ListDeployTargetsResponse, error) {
 	path := "/deploy-target"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4387,7 +4387,7 @@ func (c ClientAPI) ListDeployTargets(ctx context.Context) (*ListDeployTargetsRes
 }
 
 // Retrieve Deploy Target details
-func (c ClientAPI) GetDeployTarget(ctx context.Context, id UUID) (*DeployTarget, error) {
+func (c Client) GetDeployTarget(ctx context.Context, id UUID) (*DeployTarget, error) {
 	path := fmt.Sprintf("/deploy-target/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4421,7 +4421,7 @@ type ListDNSDomainsResponse struct {
 }
 
 // List DNS domains
-func (c ClientAPI) ListDNSDomains(ctx context.Context) (*ListDNSDomainsResponse, error) {
+func (c Client) ListDNSDomains(ctx context.Context) (*ListDNSDomainsResponse, error) {
 	path := "/dns-domain"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4457,7 +4457,7 @@ type CreateDNSDomainRequest struct {
 }
 
 // Create DNS domain
-func (c ClientAPI) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest) (*DNSDomain, error) {
+func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest) (*DNSDomain, error) {
 	path := "/dns-domain"
 
 	body, err := prepareJsonBody(req)
@@ -4498,7 +4498,7 @@ type ListDNSDomainRecordsResponse struct {
 }
 
 // List DNS domain records
-func (c ClientAPI) ListDNSDomainRecords(ctx context.Context, domainID UUID) (*ListDNSDomainRecordsResponse, error) {
+func (c Client) ListDNSDomainRecords(ctx context.Context, domainID UUID) (*ListDNSDomainRecordsResponse, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record", domainID)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4561,7 +4561,7 @@ type CreateDNSDomainRecordRequest struct {
 }
 
 // Create DNS domain record
-func (c ClientAPI) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req CreateDNSDomainRecordRequest) (*Operation, error) {
+func (c Client) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req CreateDNSDomainRecordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record", domainID)
 
 	body, err := prepareJsonBody(req)
@@ -4598,7 +4598,7 @@ func (c ClientAPI) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req
 }
 
 // Delete DNS domain record
-func (c ClientAPI) DeleteDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID) (*Operation, error) {
+func (c Client) DeleteDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID) (*Operation, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record/%v", domainID, recordID)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -4628,7 +4628,7 @@ func (c ClientAPI) DeleteDNSDomainRecord(ctx context.Context, domainID UUID, rec
 }
 
 // Retrieve DNS domain record details
-func (c ClientAPI) GetDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID) (*DNSDomainRecord, error) {
+func (c Client) GetDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID) (*DNSDomainRecord, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record/%v", domainID, recordID)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4669,7 +4669,7 @@ type UpdateDNSDomainRecordRequest struct {
 }
 
 // Update DNS domain record
-func (c ClientAPI) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID, req UpdateDNSDomainRecordRequest) (*Operation, error) {
+func (c Client) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID, req UpdateDNSDomainRecordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record/%v", domainID, recordID)
 
 	body, err := prepareJsonBody(req)
@@ -4706,7 +4706,7 @@ func (c ClientAPI) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, rec
 }
 
 // Delete DNS Domain
-func (c ClientAPI) DeleteDNSDomain(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteDNSDomain(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/dns-domain/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -4736,7 +4736,7 @@ func (c ClientAPI) DeleteDNSDomain(ctx context.Context, id UUID) (*Operation, er
 }
 
 // Retrieve DNS domain details
-func (c ClientAPI) GetDNSDomain(ctx context.Context, id UUID) (*DNSDomain, error) {
+func (c Client) GetDNSDomain(ctx context.Context, id UUID) (*DNSDomain, error) {
 	path := fmt.Sprintf("/dns-domain/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4770,7 +4770,7 @@ type GetDNSDomainZoneFileResponse struct {
 }
 
 // Retrieve DNS domain zone file
-func (c ClientAPI) GetDNSDomainZoneFile(ctx context.Context, id UUID) (*GetDNSDomainZoneFileResponse, error) {
+func (c Client) GetDNSDomainZoneFile(ctx context.Context, id UUID) (*GetDNSDomainZoneFileResponse, error) {
 	path := fmt.Sprintf("/dns-domain/%v/zone", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4804,7 +4804,7 @@ type ListElasticIPSResponse struct {
 }
 
 // List Elastic IPs
-func (c ClientAPI) ListElasticIPS(ctx context.Context) (*ListElasticIPSResponse, error) {
+func (c Client) ListElasticIPS(ctx context.Context) (*ListElasticIPSResponse, error) {
 	path := "/elastic-ip"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4851,7 +4851,7 @@ type CreateElasticIPRequest struct {
 }
 
 // Create an Elastic IP
-func (c ClientAPI) CreateElasticIP(ctx context.Context, req CreateElasticIPRequest) (*Operation, error) {
+func (c Client) CreateElasticIP(ctx context.Context, req CreateElasticIPRequest) (*Operation, error) {
 	path := "/elastic-ip"
 
 	body, err := prepareJsonBody(req)
@@ -4888,7 +4888,7 @@ func (c ClientAPI) CreateElasticIP(ctx context.Context, req CreateElasticIPReque
 }
 
 // Delete an Elastic IP
-func (c ClientAPI) DeleteElasticIP(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteElasticIP(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -4918,7 +4918,7 @@ func (c ClientAPI) DeleteElasticIP(ctx context.Context, id UUID) (*Operation, er
 }
 
 // Retrieve Elastic IP details
-func (c ClientAPI) GetElasticIP(ctx context.Context, id UUID) (*ElasticIP, error) {
+func (c Client) GetElasticIP(ctx context.Context, id UUID) (*ElasticIP, error) {
 	path := fmt.Sprintf("/elastic-ip/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -4956,7 +4956,7 @@ type UpdateElasticIPRequest struct {
 }
 
 // Update an Elastic IP
-func (c ClientAPI) UpdateElasticIP(ctx context.Context, id UUID, req UpdateElasticIPRequest) (*Operation, error) {
+func (c Client) UpdateElasticIP(ctx context.Context, id UUID, req UpdateElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -4999,7 +4999,7 @@ const (
 )
 
 // Reset an Elastic IP field to its default value
-func (c ClientAPI) ResetElasticIPField(ctx context.Context, id UUID, field ResetElasticIPFieldField) (*Operation, error) {
+func (c Client) ResetElasticIPField(ctx context.Context, id UUID, field ResetElasticIPFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v/%v", id, field)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -5034,7 +5034,7 @@ type AttachInstanceToElasticIPRequest struct {
 }
 
 // Attach a Compute instance to an Elastic IP
-func (c ClientAPI) AttachInstanceToElasticIP(ctx context.Context, id UUID, req AttachInstanceToElasticIPRequest) (*Operation, error) {
+func (c Client) AttachInstanceToElasticIP(ctx context.Context, id UUID, req AttachInstanceToElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v:attach", id)
 
 	body, err := prepareJsonBody(req)
@@ -5076,7 +5076,7 @@ type DetachInstanceFromElasticIPRequest struct {
 }
 
 // Detach a Compute instance from an Elastic IP
-func (c ClientAPI) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req DetachInstanceFromElasticIPRequest) (*Operation, error) {
+func (c Client) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req DetachInstanceFromElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v:detach", id)
 
 	body, err := prepareJsonBody(req)
@@ -5129,7 +5129,7 @@ func ListEventsWithTo(to time.Time) ListEventsOpt {
 // Retrieve Mutation Events for a given date range. Defaults to retrieving Events for the past 24 hours.
 // Both a `from` and `to` arguments can be specified to filter Events over a specific period.
 // Events will be the the most descriptive possible but not all fields are mandatory
-func (c ClientAPI) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event, error) {
+func (c Client) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event, error) {
 	path := "/event"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -5167,7 +5167,7 @@ func (c ClientAPI) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Eve
 }
 
 // Retrieve IAM Organization Policy
-func (c ClientAPI) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error) {
+func (c Client) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error) {
 	path := "/iam-organization-policy"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -5197,7 +5197,7 @@ func (c ClientAPI) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, er
 }
 
 // Update IAM Organization Policy
-func (c ClientAPI) UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) (*Operation, error) {
+func (c Client) UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) (*Operation, error) {
 	path := "/iam-organization-policy"
 
 	body, err := prepareJsonBody(req)
@@ -5238,7 +5238,7 @@ type ListIAMRolesResponse struct {
 }
 
 // List IAM Roles
-func (c ClientAPI) ListIAMRoles(ctx context.Context) (*ListIAMRolesResponse, error) {
+func (c Client) ListIAMRoles(ctx context.Context) (*ListIAMRolesResponse, error) {
 	path := "/iam-role"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -5282,7 +5282,7 @@ type CreateIAMRoleRequest struct {
 }
 
 // Create IAM Role
-func (c ClientAPI) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*Operation, error) {
+func (c Client) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*Operation, error) {
 	path := "/iam-role"
 
 	body, err := prepareJsonBody(req)
@@ -5319,7 +5319,7 @@ func (c ClientAPI) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) 
 }
 
 // Delete IAM Role
-func (c ClientAPI) DeleteIAMRole(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteIAMRole(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/iam-role/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -5349,7 +5349,7 @@ func (c ClientAPI) DeleteIAMRole(ctx context.Context, id UUID) (*Operation, erro
 }
 
 // Retrieve IAM Role
-func (c ClientAPI) GetIAMRole(ctx context.Context, id UUID) (*IAMRole, error) {
+func (c Client) GetIAMRole(ctx context.Context, id UUID) (*IAMRole, error) {
 	path := fmt.Sprintf("/iam-role/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -5387,7 +5387,7 @@ type UpdateIAMRoleRequest struct {
 }
 
 // Update IAM Role
-func (c ClientAPI) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleRequest) (*Operation, error) {
+func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleRequest) (*Operation, error) {
 	path := fmt.Sprintf("/iam-role/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -5424,7 +5424,7 @@ func (c ClientAPI) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRole
 }
 
 // Update IAM Role Policy
-func (c ClientAPI) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy) (*Operation, error) {
+func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy) (*Operation, error) {
 	path := fmt.Sprintf("/iam-role/%v:policy", id)
 
 	body, err := prepareJsonBody(req)
@@ -5522,7 +5522,7 @@ func ListInstancesWithIPAddress(ipAddress string) ListInstancesOpt {
 }
 
 // List Compute instances
-func (c ClientAPI) ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*ListInstancesResponse, error) {
+func (c Client) ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*ListInstancesResponse, error) {
 	path := "/instance"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -5589,7 +5589,7 @@ type CreateInstanceRequest struct {
 }
 
 // Create a Compute instance
-func (c ClientAPI) CreateInstance(ctx context.Context, req CreateInstanceRequest) (*Operation, error) {
+func (c Client) CreateInstance(ctx context.Context, req CreateInstanceRequest) (*Operation, error) {
 	path := "/instance"
 
 	body, err := prepareJsonBody(req)
@@ -5630,7 +5630,7 @@ type ListInstancePoolsResponse struct {
 }
 
 // List Instance Pools
-func (c ClientAPI) ListInstancePools(ctx context.Context) (*ListInstancePoolsResponse, error) {
+func (c Client) ListInstancePools(ctx context.Context) (*ListInstancePoolsResponse, error) {
 	path := "/instance-pool"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -5699,7 +5699,7 @@ type CreateInstancePoolRequest struct {
 }
 
 // Create an Instance Pool
-func (c ClientAPI) CreateInstancePool(ctx context.Context, req CreateInstancePoolRequest) (*Operation, error) {
+func (c Client) CreateInstancePool(ctx context.Context, req CreateInstancePoolRequest) (*Operation, error) {
 	path := "/instance-pool"
 
 	body, err := prepareJsonBody(req)
@@ -5736,7 +5736,7 @@ func (c ClientAPI) CreateInstancePool(ctx context.Context, req CreateInstancePoo
 }
 
 // Delete an Instance Pool
-func (c ClientAPI) DeleteInstancePool(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteInstancePool(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -5766,7 +5766,7 @@ func (c ClientAPI) DeleteInstancePool(ctx context.Context, id UUID) (*Operation,
 }
 
 // Retrieve Instance Pool details
-func (c ClientAPI) GetInstancePool(ctx context.Context, id UUID) (*InstancePool, error) {
+func (c Client) GetInstancePool(ctx context.Context, id UUID) (*InstancePool, error) {
 	path := fmt.Sprintf("/instance-pool/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -5833,7 +5833,7 @@ type UpdateInstancePoolRequest struct {
 }
 
 // Update an Instance Pool
-func (c ClientAPI) UpdateInstancePool(ctx context.Context, id UUID, req UpdateInstancePoolRequest) (*Operation, error) {
+func (c Client) UpdateInstancePool(ctx context.Context, id UUID, req UpdateInstancePoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -5885,7 +5885,7 @@ const (
 )
 
 // Reset an Instance Pool field to its default value
-func (c ClientAPI) ResetInstancePoolField(ctx context.Context, id UUID, field ResetInstancePoolFieldField) (*Operation, error) {
+func (c Client) ResetInstancePoolField(ctx context.Context, id UUID, field ResetInstancePoolFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v/%v", id, field)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -5919,7 +5919,7 @@ type EvictInstancePoolMembersRequest struct {
 }
 
 // This operation evicts the specified Compute instances member from the Instance Pool, shrinking it to `&lt;current pool size&gt; - &lt;# evicted members&gt;`.
-func (c ClientAPI) EvictInstancePoolMembers(ctx context.Context, id UUID, req EvictInstancePoolMembersRequest) (*Operation, error) {
+func (c Client) EvictInstancePoolMembers(ctx context.Context, id UUID, req EvictInstancePoolMembersRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v:evict", id)
 
 	body, err := prepareJsonBody(req)
@@ -5961,7 +5961,7 @@ type ScaleInstancePoolRequest struct {
 }
 
 // Scale an Instance Pool
-func (c ClientAPI) ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstancePoolRequest) (*Operation, error) {
+func (c Client) ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstancePoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v:scale", id)
 
 	body, err := prepareJsonBody(req)
@@ -6002,7 +6002,7 @@ type ListInstanceTypesResponse struct {
 }
 
 // List Compute instance Types
-func (c ClientAPI) ListInstanceTypes(ctx context.Context) (*ListInstanceTypesResponse, error) {
+func (c Client) ListInstanceTypes(ctx context.Context) (*ListInstanceTypesResponse, error) {
 	path := "/instance-type"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -6032,7 +6032,7 @@ func (c ClientAPI) ListInstanceTypes(ctx context.Context) (*ListInstanceTypesRes
 }
 
 // Retrieve Instance Type details
-func (c ClientAPI) GetInstanceType(ctx context.Context, id UUID) (*InstanceType, error) {
+func (c Client) GetInstanceType(ctx context.Context, id UUID) (*InstanceType, error) {
 	path := fmt.Sprintf("/instance-type/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -6062,7 +6062,7 @@ func (c ClientAPI) GetInstanceType(ctx context.Context, id UUID) (*InstanceType,
 }
 
 // Delete a Compute instance
-func (c ClientAPI) DeleteInstance(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteInstance(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -6092,7 +6092,7 @@ func (c ClientAPI) DeleteInstance(ctx context.Context, id UUID) (*Operation, err
 }
 
 // Retrieve Compute instance details
-func (c ClientAPI) GetInstance(ctx context.Context, id UUID) (*Instance, error) {
+func (c Client) GetInstance(ctx context.Context, id UUID) (*Instance, error) {
 	path := fmt.Sprintf("/instance/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -6131,7 +6131,7 @@ type UpdateInstanceRequest struct {
 }
 
 // Update a Compute instance
-func (c ClientAPI) UpdateInstance(ctx context.Context, id UUID, req UpdateInstanceRequest) (*Operation, error) {
+func (c Client) UpdateInstance(ctx context.Context, id UUID, req UpdateInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -6174,7 +6174,7 @@ const (
 )
 
 // Reset Instance field
-func (c ClientAPI) ResetInstanceField(ctx context.Context, id UUID, field ResetInstanceFieldField) (*Operation, error) {
+func (c Client) ResetInstanceField(ctx context.Context, id UUID, field ResetInstanceFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v/%v", id, field)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -6207,7 +6207,7 @@ type AddInstanceProtectionResponse struct {
 }
 
 // Set instance destruction protection
-func (c ClientAPI) AddInstanceProtection(ctx context.Context, id UUID) (*AddInstanceProtectionResponse, error) {
+func (c Client) AddInstanceProtection(ctx context.Context, id UUID) (*AddInstanceProtectionResponse, error) {
 	path := fmt.Sprintf("/instance/%v:add-protection", id)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -6237,7 +6237,7 @@ func (c ClientAPI) AddInstanceProtection(ctx context.Context, id UUID) (*AddInst
 }
 
 // Create a Snapshot of a Compute instance
-func (c ClientAPI) CreateSnapshot(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) CreateSnapshot(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:create-snapshot", id)
 
 	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, nil)
@@ -6271,7 +6271,7 @@ func (c ClientAPI) CreateSnapshot(ctx context.Context, id UUID) (*Operation, err
 // property set to `true`.
 // creation or resets.
 // creation or resets.
-func (c ClientAPI) RevealInstancePassword(ctx context.Context, id UUID) (*InstancePassword, error) {
+func (c Client) RevealInstancePassword(ctx context.Context, id UUID) (*InstancePassword, error) {
 	path := fmt.Sprintf("/instance/%v:password", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -6301,7 +6301,7 @@ func (c ClientAPI) RevealInstancePassword(ctx context.Context, id UUID) (*Instan
 }
 
 // Reboot a Compute instance
-func (c ClientAPI) RebootInstance(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) RebootInstance(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:reboot", id)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -6334,7 +6334,7 @@ type RemoveInstanceProtectionResponse struct {
 }
 
 // Remove instance destruction protection
-func (c ClientAPI) RemoveInstanceProtection(ctx context.Context, id UUID) (*RemoveInstanceProtectionResponse, error) {
+func (c Client) RemoveInstanceProtection(ctx context.Context, id UUID) (*RemoveInstanceProtectionResponse, error) {
 	path := fmt.Sprintf("/instance/%v:remove-protection", id)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -6371,7 +6371,7 @@ type ResetInstanceRequest struct {
 }
 
 // This operation re-installs a Compute instance to a base template. If target template is provided it will be used to recreated instance from. Warning: the operation wipes all data stored on the disk.
-func (c ClientAPI) ResetInstance(ctx context.Context, id UUID, req ResetInstanceRequest) (*Operation, error) {
+func (c Client) ResetInstance(ctx context.Context, id UUID, req ResetInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:reset", id)
 
 	body, err := prepareJsonBody(req)
@@ -6408,7 +6408,7 @@ func (c ClientAPI) ResetInstance(ctx context.Context, id UUID, req ResetInstance
 }
 
 // Reset a compute instance password
-func (c ClientAPI) ResetInstancePassword(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) ResetInstancePassword(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:reset-password", id)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -6443,7 +6443,7 @@ type ResizeInstanceDiskRequest struct {
 }
 
 // This operation resizes a Compute instance's disk volume. Note: the disk can only grow, cannot be shrunk.
-func (c ClientAPI) ResizeInstanceDisk(ctx context.Context, id UUID, req ResizeInstanceDiskRequest) (*Operation, error) {
+func (c Client) ResizeInstanceDisk(ctx context.Context, id UUID, req ResizeInstanceDiskRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:resize-disk", id)
 
 	body, err := prepareJsonBody(req)
@@ -6485,7 +6485,7 @@ type ScaleInstanceRequest struct {
 }
 
 // This operation changes the Compute instance's type. Note: the new Instance Type must be within the same family (e.g. a standard instance cannot be scaled to gpu2 or storage).
-func (c ClientAPI) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceRequest) (*Operation, error) {
+func (c Client) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:scale", id)
 
 	body, err := prepareJsonBody(req)
@@ -6534,7 +6534,7 @@ type StartInstanceRequest struct {
 }
 
 // This operation starts a virtual machine, potentially using a rescue profile if specified
-func (c ClientAPI) StartInstance(ctx context.Context, id UUID, req StartInstanceRequest) (*Operation, error) {
+func (c Client) StartInstance(ctx context.Context, id UUID, req StartInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:start", id)
 
 	body, err := prepareJsonBody(req)
@@ -6571,7 +6571,7 @@ func (c ClientAPI) StartInstance(ctx context.Context, id UUID, req StartInstance
 }
 
 // Stop a Compute instance
-func (c ClientAPI) StopInstance(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) StopInstance(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:stop", id)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -6607,7 +6607,7 @@ type RevertInstanceToSnapshotRequest struct {
 
 // This operation reverts the snapshot to the Compute instance volume, restoring stored data as it was at the time of the snapshot.
 // The Compute instance must be previously stopped.
-func (c ClientAPI) RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, req RevertInstanceToSnapshotRequest) (*Operation, error) {
+func (c Client) RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, req RevertInstanceToSnapshotRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:revert-snapshot", instanceID)
 
 	body, err := prepareJsonBody(req)
@@ -6648,7 +6648,7 @@ type ListLoadBalancersResponse struct {
 }
 
 // List Load Balancers
-func (c ClientAPI) ListLoadBalancers(ctx context.Context) (*ListLoadBalancersResponse, error) {
+func (c Client) ListLoadBalancers(ctx context.Context) (*ListLoadBalancersResponse, error) {
 	path := "/load-balancer"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -6686,7 +6686,7 @@ type CreateLoadBalancerRequest struct {
 }
 
 // Create a Load Balancer
-func (c ClientAPI) CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRequest) (*Operation, error) {
+func (c Client) CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRequest) (*Operation, error) {
 	path := "/load-balancer"
 
 	body, err := prepareJsonBody(req)
@@ -6723,7 +6723,7 @@ func (c ClientAPI) CreateLoadBalancer(ctx context.Context, req CreateLoadBalance
 }
 
 // Delete a Load Balancer
-func (c ClientAPI) DeleteLoadBalancer(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteLoadBalancer(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -6753,7 +6753,7 @@ func (c ClientAPI) DeleteLoadBalancer(ctx context.Context, id UUID) (*Operation,
 }
 
 // Retrieve Load Balancer details
-func (c ClientAPI) GetLoadBalancer(ctx context.Context, id UUID) (*LoadBalancer, error) {
+func (c Client) GetLoadBalancer(ctx context.Context, id UUID) (*LoadBalancer, error) {
 	path := fmt.Sprintf("/load-balancer/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -6791,7 +6791,7 @@ type UpdateLoadBalancerRequest struct {
 }
 
 // Update a Load Balancer
-func (c ClientAPI) UpdateLoadBalancer(ctx context.Context, id UUID, req UpdateLoadBalancerRequest) (*Operation, error) {
+func (c Client) UpdateLoadBalancer(ctx context.Context, id UUID, req UpdateLoadBalancerRequest) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -6861,7 +6861,7 @@ type AddServiceToLoadBalancerRequest struct {
 }
 
 // Add a Load Balancer Service
-func (c ClientAPI) AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddServiceToLoadBalancerRequest) (*Operation, error) {
+func (c Client) AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddServiceToLoadBalancerRequest) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service", id)
 
 	body, err := prepareJsonBody(req)
@@ -6898,7 +6898,7 @@ func (c ClientAPI) AddServiceToLoadBalancer(ctx context.Context, id UUID, req Ad
 }
 
 // Delete a Load Balancer Service
-func (c ClientAPI) DeleteLoadBalancerService(ctx context.Context, id UUID, serviceID UUID) (*Operation, error) {
+func (c Client) DeleteLoadBalancerService(ctx context.Context, id UUID, serviceID UUID) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service/%v", id, serviceID)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -6928,7 +6928,7 @@ func (c ClientAPI) DeleteLoadBalancerService(ctx context.Context, id UUID, servi
 }
 
 // Retrieve Load Balancer Service details
-func (c ClientAPI) GetLoadBalancerService(ctx context.Context, id UUID, serviceID UUID) (*LoadBalancerService, error) {
+func (c Client) GetLoadBalancerService(ctx context.Context, id UUID, serviceID UUID) (*LoadBalancerService, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service/%v", id, serviceID)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -6989,7 +6989,7 @@ type UpdateLoadBalancerServiceRequest struct {
 }
 
 // Update a Load Balancer Service
-func (c ClientAPI) UpdateLoadBalancerService(ctx context.Context, id UUID, serviceID UUID, req UpdateLoadBalancerServiceRequest) (*Operation, error) {
+func (c Client) UpdateLoadBalancerService(ctx context.Context, id UUID, serviceID UUID, req UpdateLoadBalancerServiceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service/%v", id, serviceID)
 
 	body, err := prepareJsonBody(req)
@@ -7032,7 +7032,7 @@ const (
 )
 
 // Reset a Load Balancer Service field to its default value
-func (c ClientAPI) ResetLoadBalancerServiceField(ctx context.Context, id UUID, serviceID UUID, field ResetLoadBalancerServiceFieldField) (*Operation, error) {
+func (c Client) ResetLoadBalancerServiceField(ctx context.Context, id UUID, serviceID UUID, field ResetLoadBalancerServiceFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service/%v/%v", id, serviceID, field)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -7069,7 +7069,7 @@ const (
 )
 
 // Reset a Load Balancer field to its default value
-func (c ClientAPI) ResetLoadBalancerField(ctx context.Context, id UUID, field ResetLoadBalancerFieldField) (*Operation, error) {
+func (c Client) ResetLoadBalancerField(ctx context.Context, id UUID, field ResetLoadBalancerFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/%v", id, field)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -7099,7 +7099,7 @@ func (c ClientAPI) ResetLoadBalancerField(ctx context.Context, id UUID, field Re
 }
 
 // Retrieve Operation details
-func (c ClientAPI) GetOperation(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) GetOperation(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/operation/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -7133,7 +7133,7 @@ type ListPrivateNetworksResponse struct {
 }
 
 // List Private Networks
-func (c ClientAPI) ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksResponse, error) {
+func (c Client) ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksResponse, error) {
 	path := "/private-network"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -7177,7 +7177,7 @@ type CreatePrivateNetworkRequest struct {
 }
 
 // Create a Private Network
-func (c ClientAPI) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetworkRequest) (*Operation, error) {
+func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetworkRequest) (*Operation, error) {
 	path := "/private-network"
 
 	body, err := prepareJsonBody(req)
@@ -7214,7 +7214,7 @@ func (c ClientAPI) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNe
 }
 
 // Delete a Private Network
-func (c ClientAPI) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -7244,7 +7244,7 @@ func (c ClientAPI) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operatio
 }
 
 // Retrieve Private Network details
-func (c ClientAPI) GetPrivateNetwork(ctx context.Context, id UUID) (*PrivateNetwork, error) {
+func (c Client) GetPrivateNetwork(ctx context.Context, id UUID) (*PrivateNetwork, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -7288,7 +7288,7 @@ type UpdatePrivateNetworkRequest struct {
 }
 
 // Update a Private Network
-func (c ClientAPI) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePrivateNetworkRequest) (*Operation, error) {
+func (c Client) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -7331,7 +7331,7 @@ const (
 )
 
 // Reset Private Network field
-func (c ClientAPI) ResetPrivateNetworkField(ctx context.Context, id UUID, field ResetPrivateNetworkFieldField) (*Operation, error) {
+func (c Client) ResetPrivateNetworkField(ctx context.Context, id UUID, field ResetPrivateNetworkFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v/%v", id, field)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -7374,7 +7374,7 @@ type AttachInstanceToPrivateNetworkRequest struct {
 }
 
 // Attach a Compute instance to a Private Network
-func (c ClientAPI) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req AttachInstanceToPrivateNetworkRequest) (*Operation, error) {
+func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req AttachInstanceToPrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:attach", id)
 
 	body, err := prepareJsonBody(req)
@@ -7416,7 +7416,7 @@ type DetachInstanceFromPrivateNetworkRequest struct {
 }
 
 // Detach a Compute instance from a Private Network
-func (c ClientAPI) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, req DetachInstanceFromPrivateNetworkRequest) (*Operation, error) {
+func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, req DetachInstanceFromPrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:detach", id)
 
 	body, err := prepareJsonBody(req)
@@ -7464,7 +7464,7 @@ type UpdatePrivateNetworkInstanceIPRequest struct {
 }
 
 // Update the IP address of an instance attached to a managed private network
-func (c ClientAPI) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req UpdatePrivateNetworkInstanceIPRequest) (*Operation, error) {
+func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req UpdatePrivateNetworkInstanceIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:update-ip", id)
 
 	body, err := prepareJsonBody(req)
@@ -7505,7 +7505,7 @@ type ListQuotasResponse struct {
 }
 
 // List Organization Quotas
-func (c ClientAPI) ListQuotas(ctx context.Context) (*ListQuotasResponse, error) {
+func (c Client) ListQuotas(ctx context.Context) (*ListQuotasResponse, error) {
 	path := "/quota"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -7535,7 +7535,7 @@ func (c ClientAPI) ListQuotas(ctx context.Context) (*ListQuotasResponse, error) 
 }
 
 // Retrieve Resource Quota
-func (c ClientAPI) GetQuota(ctx context.Context, entity string) (*Quota, error) {
+func (c Client) GetQuota(ctx context.Context, entity string) (*Quota, error) {
 	path := fmt.Sprintf("/quota/%v", entity)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -7565,7 +7565,7 @@ func (c ClientAPI) GetQuota(ctx context.Context, entity string) (*Quota, error) 
 }
 
 // Delete the PTR DNS record for an elastic IP
-func (c ClientAPI) DeleteReverseDNSElasticIP(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteReverseDNSElasticIP(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/reverse-dns/elastic-ip/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -7595,7 +7595,7 @@ func (c ClientAPI) DeleteReverseDNSElasticIP(ctx context.Context, id UUID) (*Ope
 }
 
 // Query the PTR DNS records for an elastic IP
-func (c ClientAPI) GetReverseDNSElasticIP(ctx context.Context, id UUID) (*ReverseDNSRecord, error) {
+func (c Client) GetReverseDNSElasticIP(ctx context.Context, id UUID) (*ReverseDNSRecord, error) {
 	path := fmt.Sprintf("/reverse-dns/elastic-ip/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -7629,7 +7629,7 @@ type UpdateReverseDNSElasticIPRequest struct {
 }
 
 // Update/Create the PTR DNS record for an elastic IP
-func (c ClientAPI) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req UpdateReverseDNSElasticIPRequest) (*Operation, error) {
+func (c Client) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req UpdateReverseDNSElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/reverse-dns/elastic-ip/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -7666,7 +7666,7 @@ func (c ClientAPI) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req U
 }
 
 // Delete the PTR DNS record for an instance
-func (c ClientAPI) DeleteReverseDNSInstance(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteReverseDNSInstance(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/reverse-dns/instance/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -7696,7 +7696,7 @@ func (c ClientAPI) DeleteReverseDNSInstance(ctx context.Context, id UUID) (*Oper
 }
 
 // Query the PTR DNS records for an instance
-func (c ClientAPI) GetReverseDNSInstance(ctx context.Context, id UUID) (*ReverseDNSRecord, error) {
+func (c Client) GetReverseDNSInstance(ctx context.Context, id UUID) (*ReverseDNSRecord, error) {
 	path := fmt.Sprintf("/reverse-dns/instance/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -7730,7 +7730,7 @@ type UpdateReverseDNSInstanceRequest struct {
 }
 
 // Update/Create the PTR DNS record for an instance
-func (c ClientAPI) UpdateReverseDNSInstance(ctx context.Context, id UUID, req UpdateReverseDNSInstanceRequest) (*Operation, error) {
+func (c Client) UpdateReverseDNSInstance(ctx context.Context, id UUID, req UpdateReverseDNSInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/reverse-dns/instance/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -7789,7 +7789,7 @@ func ListSecurityGroupsWithVisibility(visibility ListSecurityGroupsVisibility) L
 // Public security groups are objects maintained by Exoscale which contain source addresses for
 // relevant services hosted by Exoscale. They can be used a source in ingress rules and as a destination
 // in egress rules.
-func (c ClientAPI) ListSecurityGroups(ctx context.Context, opts ...ListSecurityGroupsOpt) (*ListSecurityGroupsResponse, error) {
+func (c Client) ListSecurityGroups(ctx context.Context, opts ...ListSecurityGroupsOpt) (*ListSecurityGroupsResponse, error) {
 	path := "/security-group"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -7834,7 +7834,7 @@ type CreateSecurityGroupRequest struct {
 }
 
 // Create a Security Group
-func (c ClientAPI) CreateSecurityGroup(ctx context.Context, req CreateSecurityGroupRequest) (*Operation, error) {
+func (c Client) CreateSecurityGroup(ctx context.Context, req CreateSecurityGroupRequest) (*Operation, error) {
 	path := "/security-group"
 
 	body, err := prepareJsonBody(req)
@@ -7871,7 +7871,7 @@ func (c ClientAPI) CreateSecurityGroup(ctx context.Context, req CreateSecurityGr
 }
 
 // Delete a Security Group
-func (c ClientAPI) DeleteSecurityGroup(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteSecurityGroup(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -7901,7 +7901,7 @@ func (c ClientAPI) DeleteSecurityGroup(ctx context.Context, id UUID) (*Operation
 }
 
 // Retrieve Security Group details
-func (c ClientAPI) GetSecurityGroup(ctx context.Context, id UUID) (*SecurityGroup, error) {
+func (c Client) GetSecurityGroup(ctx context.Context, id UUID) (*SecurityGroup, error) {
 	path := fmt.Sprintf("/security-group/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -7976,7 +7976,7 @@ type AddRuleToSecurityGroupRequest struct {
 }
 
 // Create a Security Group rule
-func (c ClientAPI) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRuleToSecurityGroupRequest) (*Operation, error) {
+func (c Client) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRuleToSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v/rules", id)
 
 	body, err := prepareJsonBody(req)
@@ -8013,7 +8013,7 @@ func (c ClientAPI) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddR
 }
 
 // Delete a Security Group rule
-func (c ClientAPI) DeleteRuleFromSecurityGroup(ctx context.Context, id UUID, ruleID UUID) (*Operation, error) {
+func (c Client) DeleteRuleFromSecurityGroup(ctx context.Context, id UUID, ruleID UUID) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v/rules/%v", id, ruleID)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -8048,7 +8048,7 @@ type AddExternalSourceToSecurityGroupRequest struct {
 }
 
 // Add an external source as a member of a Security Group
-func (c ClientAPI) AddExternalSourceToSecurityGroup(ctx context.Context, id UUID, req AddExternalSourceToSecurityGroupRequest) (*Operation, error) {
+func (c Client) AddExternalSourceToSecurityGroup(ctx context.Context, id UUID, req AddExternalSourceToSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:add-source", id)
 
 	body, err := prepareJsonBody(req)
@@ -8090,7 +8090,7 @@ type AttachInstanceToSecurityGroupRequest struct {
 }
 
 // Attach a Compute instance to a Security Group
-func (c ClientAPI) AttachInstanceToSecurityGroup(ctx context.Context, id UUID, req AttachInstanceToSecurityGroupRequest) (*Operation, error) {
+func (c Client) AttachInstanceToSecurityGroup(ctx context.Context, id UUID, req AttachInstanceToSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:attach", id)
 
 	body, err := prepareJsonBody(req)
@@ -8132,7 +8132,7 @@ type DetachInstanceFromSecurityGroupRequest struct {
 }
 
 // Detach a Compute instance from a Security Group
-func (c ClientAPI) DetachInstanceFromSecurityGroup(ctx context.Context, id UUID, req DetachInstanceFromSecurityGroupRequest) (*Operation, error) {
+func (c Client) DetachInstanceFromSecurityGroup(ctx context.Context, id UUID, req DetachInstanceFromSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:detach", id)
 
 	body, err := prepareJsonBody(req)
@@ -8174,7 +8174,7 @@ type RemoveExternalSourceFromSecurityGroupRequest struct {
 }
 
 // Remove an external source from a Security Group
-func (c ClientAPI) RemoveExternalSourceFromSecurityGroup(ctx context.Context, id UUID, req RemoveExternalSourceFromSecurityGroupRequest) (*Operation, error) {
+func (c Client) RemoveExternalSourceFromSecurityGroup(ctx context.Context, id UUID, req RemoveExternalSourceFromSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:remove-source", id)
 
 	body, err := prepareJsonBody(req)
@@ -8215,7 +8215,7 @@ type ListSKSClustersResponse struct {
 }
 
 // List SKS clusters
-func (c ClientAPI) ListSKSClusters(ctx context.Context) (*ListSKSClustersResponse, error) {
+func (c Client) ListSKSClusters(ctx context.Context) (*ListSKSClustersResponse, error) {
 	path := "/sks-cluster"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -8279,7 +8279,7 @@ type CreateSKSClusterRequest struct {
 }
 
 // Create an SKS cluster
-func (c ClientAPI) CreateSKSCluster(ctx context.Context, req CreateSKSClusterRequest) (*Operation, error) {
+func (c Client) CreateSKSCluster(ctx context.Context, req CreateSKSClusterRequest) (*Operation, error) {
 	path := "/sks-cluster"
 
 	body, err := prepareJsonBody(req)
@@ -8316,7 +8316,7 @@ func (c ClientAPI) CreateSKSCluster(ctx context.Context, req CreateSKSClusterReq
 }
 
 // This operation returns the deprecated resources for a given cluster
-func (c ClientAPI) ListSKSClusterDeprecatedResources(ctx context.Context, id UUID) ([]SKSClusterDeprecatedResource, error) {
+func (c Client) ListSKSClusterDeprecatedResources(ctx context.Context, id UUID) ([]SKSClusterDeprecatedResource, error) {
 	path := fmt.Sprintf("/sks-cluster-deprecated-resources/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -8350,7 +8350,7 @@ type GenerateSKSClusterKubeconfigResponse struct {
 }
 
 // This operation returns a Kubeconfig file encoded in base64.
-func (c ClientAPI) GenerateSKSClusterKubeconfig(ctx context.Context, id UUID, req SKSKubeconfigRequest) (*GenerateSKSClusterKubeconfigResponse, error) {
+func (c Client) GenerateSKSClusterKubeconfig(ctx context.Context, id UUID, req SKSKubeconfigRequest) (*GenerateSKSClusterKubeconfigResponse, error) {
 	path := fmt.Sprintf("/sks-cluster-kubeconfig/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -8399,7 +8399,7 @@ func ListSKSClusterVersionsWithIncludeDeprecated(includeDeprecated string) ListS
 }
 
 // List available versions for SKS clusters
-func (c ClientAPI) ListSKSClusterVersions(ctx context.Context, opts ...ListSKSClusterVersionsOpt) (*ListSKSClusterVersionsResponse, error) {
+func (c Client) ListSKSClusterVersions(ctx context.Context, opts ...ListSKSClusterVersionsOpt) (*ListSKSClusterVersionsResponse, error) {
 	path := "/sks-cluster-version"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -8437,7 +8437,7 @@ func (c ClientAPI) ListSKSClusterVersions(ctx context.Context, opts ...ListSKSCl
 }
 
 // Delete an SKS cluster
-func (c ClientAPI) DeleteSKSCluster(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteSKSCluster(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -8467,7 +8467,7 @@ func (c ClientAPI) DeleteSKSCluster(ctx context.Context, id UUID) (*Operation, e
 }
 
 // Retrieve SKS cluster details
-func (c ClientAPI) GetSKSCluster(ctx context.Context, id UUID) (*SKSCluster, error) {
+func (c Client) GetSKSCluster(ctx context.Context, id UUID) (*SKSCluster, error) {
 	path := fmt.Sprintf("/sks-cluster/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -8511,7 +8511,7 @@ type UpdateSKSClusterRequest struct {
 }
 
 // Update an SKS cluster
-func (c ClientAPI) UpdateSKSCluster(ctx context.Context, id UUID, req UpdateSKSClusterRequest) (*Operation, error) {
+func (c Client) UpdateSKSCluster(ctx context.Context, id UUID, req UpdateSKSClusterRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -8560,7 +8560,7 @@ const (
 )
 
 // This operation returns the certificate for the given SKS cluster authority encoded in base64.
-func (c ClientAPI) GetSKSClusterAuthorityCert(ctx context.Context, id UUID, authority GetSKSClusterAuthorityCertAuthority) (*GetSKSClusterAuthorityCertResponse, error) {
+func (c Client) GetSKSClusterAuthorityCert(ctx context.Context, id UUID, authority GetSKSClusterAuthorityCertAuthority) (*GetSKSClusterAuthorityCertResponse, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/authority/%v/cert", id, authority)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -8592,7 +8592,7 @@ func (c ClientAPI) GetSKSClusterAuthorityCert(ctx context.Context, id UUID, auth
 type GetSKSClusterInspectionResponse map[string]any
 
 // Helps troubleshoot common problems when deploying a kubernetes cluster. Inspections run every couple of minutes.
-func (c ClientAPI) GetSKSClusterInspection(ctx context.Context, id UUID) (*GetSKSClusterInspectionResponse, error) {
+func (c Client) GetSKSClusterInspection(ctx context.Context, id UUID) (*GetSKSClusterInspectionResponse, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/inspection", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -8651,7 +8651,7 @@ type CreateSKSNodepoolRequest struct {
 }
 
 // Create a new SKS Nodepool
-func (c ClientAPI) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNodepoolRequest) (*Operation, error) {
+func (c Client) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNodepoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool", id)
 
 	body, err := prepareJsonBody(req)
@@ -8688,7 +8688,7 @@ func (c ClientAPI) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKS
 }
 
 // Delete an SKS Nodepool
-func (c ClientAPI) DeleteSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID) (*Operation, error) {
+func (c Client) DeleteSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v", id, sksNodepoolID)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -8718,7 +8718,7 @@ func (c ClientAPI) DeleteSKSNodepool(ctx context.Context, id UUID, sksNodepoolID
 }
 
 // Retrieve SKS Nodepool details
-func (c ClientAPI) GetSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID) (*SKSNodepool, error) {
+func (c Client) GetSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID) (*SKSNodepool, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v", id, sksNodepoolID)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -8771,7 +8771,7 @@ type UpdateSKSNodepoolRequest struct {
 }
 
 // Update an SKS Nodepool
-func (c ClientAPI) UpdateSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID, req UpdateSKSNodepoolRequest) (*Operation, error) {
+func (c Client) UpdateSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID, req UpdateSKSNodepoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v", id, sksNodepoolID)
 
 	body, err := prepareJsonBody(req)
@@ -8819,7 +8819,7 @@ const (
 )
 
 // Reset an SKS Nodepool field to its default value
-func (c ClientAPI) ResetSKSNodepoolField(ctx context.Context, id UUID, sksNodepoolID UUID, field ResetSKSNodepoolFieldField) (*Operation, error) {
+func (c Client) ResetSKSNodepoolField(ctx context.Context, id UUID, sksNodepoolID UUID, field ResetSKSNodepoolFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v/%v", id, sksNodepoolID, field)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -8853,7 +8853,7 @@ type EvictSKSNodepoolMembersRequest struct {
 }
 
 // This operation evicts the specified Compute instances member from the Nodepool, shrinking it to `&lt;current nodepool size&gt; - &lt;# evicted members&gt;`.
-func (c ClientAPI) EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoolID UUID, req EvictSKSNodepoolMembersRequest) (*Operation, error) {
+func (c Client) EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoolID UUID, req EvictSKSNodepoolMembersRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v:evict", id, sksNodepoolID)
 
 	body, err := prepareJsonBody(req)
@@ -8895,7 +8895,7 @@ type ScaleSKSNodepoolRequest struct {
 }
 
 // Scale a SKS Nodepool
-func (c ClientAPI) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID, req ScaleSKSNodepoolRequest) (*Operation, error) {
+func (c Client) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID, req ScaleSKSNodepoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v:scale", id, sksNodepoolID)
 
 	body, err := prepareJsonBody(req)
@@ -8932,7 +8932,7 @@ func (c ClientAPI) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID 
 }
 
 // Rotate Exoscale CCM credentials
-func (c ClientAPI) RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/rotate-ccm-credentials", id)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -8962,7 +8962,7 @@ func (c ClientAPI) RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Opera
 }
 
 // Rotate operators certificate authority
-func (c ClientAPI) RotateSKSOperatorsCA(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) RotateSKSOperatorsCA(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/rotate-operators-ca", id)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -8997,7 +8997,7 @@ type UpgradeSKSClusterRequest struct {
 }
 
 // Upgrade an SKS cluster
-func (c ClientAPI) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSClusterRequest) (*Operation, error) {
+func (c Client) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSClusterRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/upgrade", id)
 
 	body, err := prepareJsonBody(req)
@@ -9034,7 +9034,7 @@ func (c ClientAPI) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSK
 }
 
 // Upgrade a SKS cluster to pro
-func (c ClientAPI) UpgradeSKSClusterServiceLevel(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) UpgradeSKSClusterServiceLevel(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/upgrade-service-level", id)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
@@ -9071,7 +9071,7 @@ const (
 )
 
 // Reset an SKS cluster field to its default value
-func (c ClientAPI) ResetSKSClusterField(ctx context.Context, id UUID, field ResetSKSClusterFieldField) (*Operation, error) {
+func (c Client) ResetSKSClusterField(ctx context.Context, id UUID, field ResetSKSClusterFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/%v", id, field)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -9105,7 +9105,7 @@ type ListSnapshotsResponse struct {
 }
 
 // List Snapshots
-func (c ClientAPI) ListSnapshots(ctx context.Context) (*ListSnapshotsResponse, error) {
+func (c Client) ListSnapshots(ctx context.Context) (*ListSnapshotsResponse, error) {
 	path := "/snapshot"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -9135,7 +9135,7 @@ func (c ClientAPI) ListSnapshots(ctx context.Context) (*ListSnapshotsResponse, e
 }
 
 // Delete a Snapshot
-func (c ClientAPI) DeleteSnapshot(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteSnapshot(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/snapshot/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -9165,7 +9165,7 @@ func (c ClientAPI) DeleteSnapshot(ctx context.Context, id UUID) (*Operation, err
 }
 
 // Retrieve Snapshot details
-func (c ClientAPI) GetSnapshot(ctx context.Context, id UUID) (*Snapshot, error) {
+func (c Client) GetSnapshot(ctx context.Context, id UUID) (*Snapshot, error) {
 	path := fmt.Sprintf("/snapshot/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -9195,7 +9195,7 @@ func (c ClientAPI) GetSnapshot(ctx context.Context, id UUID) (*Snapshot, error) 
 }
 
 // Export a Snapshot
-func (c ClientAPI) ExportSnapshot(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) ExportSnapshot(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/snapshot/%v:export", id)
 
 	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, nil)
@@ -9238,7 +9238,7 @@ type PromoteSnapshotToTemplateRequest struct {
 }
 
 // Promote a Snapshot to a Template
-func (c ClientAPI) PromoteSnapshotToTemplate(ctx context.Context, id UUID, req PromoteSnapshotToTemplateRequest) (*Operation, error) {
+func (c Client) PromoteSnapshotToTemplate(ctx context.Context, id UUID, req PromoteSnapshotToTemplateRequest) (*Operation, error) {
 	path := fmt.Sprintf("/snapshot/%v:promote", id)
 
 	body, err := prepareJsonBody(req)
@@ -9279,7 +9279,7 @@ type ListSOSBucketsUsageResponse struct {
 }
 
 // List SOS Buckets Usage
-func (c ClientAPI) ListSOSBucketsUsage(ctx context.Context) (*ListSOSBucketsUsageResponse, error) {
+func (c Client) ListSOSBucketsUsage(ctx context.Context) (*ListSOSBucketsUsageResponse, error) {
 	path := "/sos-buckets-usage"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -9321,7 +9321,7 @@ func GetSOSPresignedURLWithKey(key string) GetSOSPresignedURLOpt {
 }
 
 // Generates Presigned Download URL for SOS object
-func (c ClientAPI) GetSOSPresignedURL(ctx context.Context, bucket string, opts ...GetSOSPresignedURLOpt) (*GetSOSPresignedURLResponse, error) {
+func (c Client) GetSOSPresignedURL(ctx context.Context, bucket string, opts ...GetSOSPresignedURLOpt) (*GetSOSPresignedURLResponse, error) {
 	path := fmt.Sprintf("/sos/%v/presigned-url", bucket)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -9363,7 +9363,7 @@ type ListSSHKeysResponse struct {
 }
 
 // List SSH keys
-func (c ClientAPI) ListSSHKeys(ctx context.Context) (*ListSSHKeysResponse, error) {
+func (c Client) ListSSHKeys(ctx context.Context) (*ListSSHKeysResponse, error) {
 	path := "/ssh-key"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -9400,7 +9400,7 @@ type RegisterSSHKeyRequest struct {
 }
 
 // Import SSH key
-func (c ClientAPI) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (*Operation, error) {
+func (c Client) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (*Operation, error) {
 	path := "/ssh-key"
 
 	body, err := prepareJsonBody(req)
@@ -9437,7 +9437,7 @@ func (c ClientAPI) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest
 }
 
 // Delete a SSH key
-func (c ClientAPI) DeleteSSHKey(ctx context.Context, name string) (*Operation, error) {
+func (c Client) DeleteSSHKey(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/ssh-key/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -9467,7 +9467,7 @@ func (c ClientAPI) DeleteSSHKey(ctx context.Context, name string) (*Operation, e
 }
 
 // Retrieve SSH key details
-func (c ClientAPI) GetSSHKey(ctx context.Context, name string) (*SSHKey, error) {
+func (c Client) GetSSHKey(ctx context.Context, name string) (*SSHKey, error) {
 	path := fmt.Sprintf("/ssh-key/%v", name)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -9522,7 +9522,7 @@ func ListTemplatesWithFamily(family string) ListTemplatesOpt {
 }
 
 // List Templates
-func (c ClientAPI) ListTemplates(ctx context.Context, opts ...ListTemplatesOpt) (*ListTemplatesResponse, error) {
+func (c Client) ListTemplates(ctx context.Context, opts ...ListTemplatesOpt) (*ListTemplatesResponse, error) {
 	path := "/template"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -9594,7 +9594,7 @@ type RegisterTemplateRequest struct {
 }
 
 // Register a Template
-func (c ClientAPI) RegisterTemplate(ctx context.Context, req RegisterTemplateRequest) (*Operation, error) {
+func (c Client) RegisterTemplate(ctx context.Context, req RegisterTemplateRequest) (*Operation, error) {
 	path := "/template"
 
 	body, err := prepareJsonBody(req)
@@ -9631,7 +9631,7 @@ func (c ClientAPI) RegisterTemplate(ctx context.Context, req RegisterTemplateReq
 }
 
 // Delete a Template
-func (c ClientAPI) DeleteTemplate(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteTemplate(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/template/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
@@ -9661,7 +9661,7 @@ func (c ClientAPI) DeleteTemplate(ctx context.Context, id UUID) (*Operation, err
 }
 
 // Retrieve Template details
-func (c ClientAPI) GetTemplate(ctx context.Context, id UUID) (*Template, error) {
+func (c Client) GetTemplate(ctx context.Context, id UUID) (*Template, error) {
 	path := fmt.Sprintf("/template/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -9696,7 +9696,7 @@ type CopyTemplateRequest struct {
 }
 
 // Copy a Template from a zone to another
-func (c ClientAPI) CopyTemplate(ctx context.Context, id UUID, req CopyTemplateRequest) (*Operation, error) {
+func (c Client) CopyTemplate(ctx context.Context, id UUID, req CopyTemplateRequest) (*Operation, error) {
 	path := fmt.Sprintf("/template/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -9740,7 +9740,7 @@ type UpdateTemplateRequest struct {
 }
 
 // Update template attributes
-func (c ClientAPI) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateRequest) (*Operation, error) {
+func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateRequest) (*Operation, error) {
 	path := fmt.Sprintf("/template/%v", id)
 
 	body, err := prepareJsonBody(req)
@@ -9781,7 +9781,7 @@ type ListZonesResponse struct {
 }
 
 // List Zones
-func (c ClientAPI) ListZones(ctx context.Context) (*ListZonesResponse, error) {
+func (c Client) ListZones(ctx context.Context) (*ListZonesResponse, error) {
 	path := "/zone"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
@@ -9810,500 +9810,10 @@ func (c ClientAPI) ListZones(ctx context.Context) (*ListZonesResponse, error) {
 	return bodyresp, nil
 }
 
-// Client represents an API interface representation for ClientAPI and mock test.
-type Client interface {
-	// List IAM Access Keys
-	ListAccessKeys(ctx context.Context) (*ListAccessKeysResponse, error)
-	// This operation creates a legacy IAM Access Key, to create a key for use with IAM roles use the api-key endpoint.The corresponding secret is only available in the response returned by this operation, the caller must take care of storing it safely as there is no other way to retrieve it.
-	CreateAccessKey(ctx context.Context, req CreateAccessKeyRequest) (*AccessKey, error)
-	// Retrieve all known available IAM Access Key operations and associated tags
-	ListAccessKeyKnownOperations(ctx context.Context) (*ListAccessKeyKnownOperationsResponse, error)
-	// Retrieve IAM Access Key operations and associated tags for the signing key
-	ListAccessKeyOperations(ctx context.Context) (*ListAccessKeyOperationsResponse, error)
-	// This operation revokes the specified IAM Access Key. Access Keys created by the revoked Access Key will not be revoked.
-	RevokeAccessKey(ctx context.Context, key string) (*Operation, error)
-	// Retrieve IAM Access Key details
-	GetAccessKey(ctx context.Context, key string) (*AccessKey, error)
-	// List Anti-affinity Groups
-	ListAntiAffinityGroups(ctx context.Context) (*ListAntiAffinityGroupsResponse, error)
-	// Create an Anti-affinity Group
-	CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffinityGroupRequest) (*Operation, error)
-	// Delete an Anti-affinity Group
-	DeleteAntiAffinityGroup(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve Anti-affinity Group details
-	GetAntiAffinityGroup(ctx context.Context, id UUID) (*AntiAffinityGroup, error)
-	// List API keys
-	ListAPIKeys(ctx context.Context) (*ListAPIKeysResponse, error)
-	// Create a new API key
-	CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAMAPIKeyCreated, error)
-	// Delete an API key
-	DeleteAPIKey(ctx context.Context, id string) (*Operation, error)
-	// Get API key
-	GetAPIKey(ctx context.Context, id string) (*IAMAPIKey, error)
-	// Returns a CA Certificate required to reach a DBaaS service through a TLS-protected connection.
-	GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertificateResponse, error)
-	// Delete a Grafana service
-	DeleteDBAASServiceGrafana(ctx context.Context, name string) (*Operation, error)
-	// Get a DBaaS Grafana service
-	GetDBAASServiceGrafana(ctx context.Context, name string) (*DBAASServiceGrafana, error)
-	// Create a DBaaS Grafana service
-	CreateDBAASServiceGrafana(ctx context.Context, name string, req CreateDBAASServiceGrafanaRequest) (*Operation, error)
-	// Update a DBaaS Grafana service
-	UpdateDBAASServiceGrafana(ctx context.Context, name string, req UpdateDBAASServiceGrafanaRequest) (*Operation, error)
-	// Initiate Grafana maintenance update
-	StartDBAASGrafanaMaintenance(ctx context.Context, name string) (*Operation, error)
-	// Create a new DBaaS integration between two services
-	CreateDBAASIntegration(ctx context.Context, req CreateDBAASIntegrationRequest) (*Operation, error)
-	// Get DBaaS integration settings
-	ListDBAASIntegrationSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*ListDBAASIntegrationSettingsResponse, error)
-	// Get DBaaS integration types
-	ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegrationTypesResponse, error)
-	// Delete a DBaaS Integration
-	DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation, error)
-	// Get a DBaaS Integration
-	GetDBAASIntegration(ctx context.Context, id UUID) (*DBAASIntegration, error)
-	// Update a existing DBaaS integration
-	UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateDBAASIntegrationRequest) (*Operation, error)
-	// Delete a Kafka service
-	DeleteDBAASServiceKafka(ctx context.Context, name string) (*Operation, error)
-	// Get a DBaaS Kafka service
-	GetDBAASServiceKafka(ctx context.Context, name string) (*DBAASServiceKafka, error)
-	// Create a DBaaS Kafka service
-	CreateDBAASServiceKafka(ctx context.Context, name string, req CreateDBAASServiceKafkaRequest) (*Operation, error)
-	// Update a DBaaS Kafka service
-	UpdateDBAASServiceKafka(ctx context.Context, name string, req UpdateDBAASServiceKafkaRequest) (*Operation, error)
-	// Get DBaaS kafka ACL configuration
-	GetDBAASKafkaAclConfig(ctx context.Context, name string) (*DBAASKafkaAcls, error)
-	// Initiate Kafka maintenance update
-	StartDBAASKafkaMaintenance(ctx context.Context, name string) (*Operation, error)
-	// Add a Kafka Schema Registry ACL entry
-	CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, name string, req DBAASKafkaSchemaRegistryAclEntry) (*Operation, error)
-	// Delete a Kafka ACL entry
-	DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, name string, aclID string) (*Operation, error)
-	// Add a Kafka topic ACL entry
-	CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string, req DBAASKafkaTopicAclEntry) (*Operation, error)
-	// Delete a Kafka ACL entry
-	DeleteDBAASKafkaTopicAclConfig(ctx context.Context, name string, aclID string) (*Operation, error)
-	// Create a DBaaS Kafka user
-	CreateDBAASKafkaUser(ctx context.Context, serviceName string, req CreateDBAASKafkaUserRequest) (*Operation, error)
-	// Delete a DBaaS kafka user
-	DeleteDBAASKafkaUser(ctx context.Context, serviceName string, username string) (*Operation, error)
-	// If no password is provided one will be generated automatically.
-	ResetDBAASKafkaUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASKafkaUserPasswordRequest) (*Operation, error)
-	// Get a DBaaS migration status
-	GetDBAASMigrationStatus(ctx context.Context, name string) (*DBAASMigrationStatus, error)
-	// Delete a MySQL service
-	DeleteDBAASServiceMysql(ctx context.Context, name string) (*Operation, error)
-	// Get a DBaaS MySQL service
-	GetDBAASServiceMysql(ctx context.Context, name string) (*DBAASServiceMysql, error)
-	// Create a DBaaS MySQL service
-	CreateDBAASServiceMysql(ctx context.Context, name string, req CreateDBAASServiceMysqlRequest) (*Operation, error)
-	// Update a DBaaS MySQL service
-	UpdateDBAASServiceMysql(ctx context.Context, name string, req UpdateDBAASServiceMysqlRequest) (*Operation, error)
-	// Initiate MySQL maintenance update
-	StartDBAASMysqlMaintenance(ctx context.Context, name string) (*Operation, error)
-	// Stop a DBaaS MySQL migration
-	StopDBAASMysqlMigration(ctx context.Context, name string) (*Operation, error)
-	// Create a DBaaS MySQL database
-	CreateDBAASMysqlDatabase(ctx context.Context, serviceName string, req CreateDBAASMysqlDatabaseRequest) (*Operation, error)
-	// Delete a DBaaS MySQL database
-	DeleteDBAASMysqlDatabase(ctx context.Context, serviceName string, databaseName string) (*Operation, error)
-	// Create a DBaaS MySQL user
-	CreateDBAASMysqlUser(ctx context.Context, serviceName string, req CreateDBAASMysqlUserRequest) (*Operation, error)
-	// Delete a DBaaS MySQL user
-	DeleteDBAASMysqlUser(ctx context.Context, serviceName string, username string) (*Operation, error)
-	// If no password is provided one will be generated automatically.
-	ResetDBAASMysqlUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASMysqlUserPasswordRequest) (*Operation, error)
-	// Delete a OpenSearch service
-	DeleteDBAASServiceOpensearch(ctx context.Context, name string) (*Operation, error)
-	// Get a DBaaS OpenSearch service
-	GetDBAASServiceOpensearch(ctx context.Context, name string) (*DBAASServiceOpensearch, error)
-	// Create a DBaaS OpenSearch service
-	CreateDBAASServiceOpensearch(ctx context.Context, name string, req CreateDBAASServiceOpensearchRequest) (*Operation, error)
-	// Update a DBaaS OpenSearch service
-	UpdateDBAASServiceOpensearch(ctx context.Context, name string, req UpdateDBAASServiceOpensearchRequest) (*Operation, error)
-	// Get DBaaS OpenSearch ACL configuration
-	GetDBAASOpensearchAclConfig(ctx context.Context, name string) (*DBAASOpensearchAclConfig, error)
-	// Create a DBaaS OpenSearch ACL configuration
-	UpdateDBAASOpensearchAclConfig(ctx context.Context, name string, req DBAASOpensearchAclConfig) (*Operation, error)
-	// Initiate OpenSearch maintenance update
-	StartDBAASOpensearchMaintenance(ctx context.Context, name string) (*Operation, error)
-	// Create a DBaaS OpenSearch user
-	CreateDBAASOpensearchUser(ctx context.Context, serviceName string, req CreateDBAASOpensearchUserRequest) (*Operation, error)
-	// Delete a DBaaS OpenSearch user
-	DeleteDBAASOpensearchUser(ctx context.Context, serviceName string, username string) (*Operation, error)
-	// If no password is provided one will be generated automatically.
-	ResetDBAASOpensearchUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASOpensearchUserPasswordRequest) (*Operation, error)
-	// Delete a Postgres service
-	DeleteDBAASServicePG(ctx context.Context, name string) (*Operation, error)
-	// Get a DBaaS PostgreSQL service
-	GetDBAASServicePG(ctx context.Context, name string) (*DBAASServicePG, error)
-	// Create a DBaaS PostgreSQL service
-	CreateDBAASServicePG(ctx context.Context, name string, req CreateDBAASServicePGRequest) (*Operation, error)
-	// Update a DBaaS PostgreSQL service
-	UpdateDBAASServicePG(ctx context.Context, name string, req UpdateDBAASServicePGRequest) (*Operation, error)
-	// Initiate PostgreSQL maintenance update
-	StartDBAASPGMaintenance(ctx context.Context, name string) (*Operation, error)
-	// Stop a DBaaS PostgreSQL migration
-	StopDBAASPGMigration(ctx context.Context, name string) (*Operation, error)
-	// Create a DBaaS PostgreSQL connection pool
-	CreateDBAASPGConnectionPool(ctx context.Context, serviceName string, req CreateDBAASPGConnectionPoolRequest) (*Operation, error)
-	// Delete a DBaaS PostgreSQL connection pool
-	DeleteDBAASPGConnectionPool(ctx context.Context, serviceName string, connectionPoolName string) (*Operation, error)
-	// Update a DBaaS PostgreSQL connection pool
-	UpdateDBAASPGConnectionPool(ctx context.Context, serviceName string, connectionPoolName string, req UpdateDBAASPGConnectionPoolRequest) (*Operation, error)
-	// Create a DBaaS Postgres database
-	CreateDBAASPGDatabase(ctx context.Context, serviceName string, req CreateDBAASPGDatabaseRequest) (*Operation, error)
-	// Delete a DBaaS Postgres database
-	DeleteDBAASPGDatabase(ctx context.Context, serviceName string, databaseName string) (*Operation, error)
-	// Create a DBaaS Postgres user
-	CreateDBAASPostgresUser(ctx context.Context, serviceName string, req CreateDBAASPostgresUserRequest) (*Operation, error)
-	// Delete a DBaaS Postgres user
-	DeleteDBAASPostgresUser(ctx context.Context, serviceName string, username string) (*Operation, error)
-	// Update access control for one service user
-	UpdateDBAASPostgresAllowReplication(ctx context.Context, serviceName string, username string, req UpdateDBAASPostgresAllowReplicationRequest) (*DBAASPostgresUsers, error)
-	// If no password is provided one will be generated automatically.
-	ResetDBAASPostgresUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASPostgresUserPasswordRequest) (*Operation, error)
-	// Check whether you can upgrade Postgres service to a newer version
-	CreateDBAASPGUpgradeCheck(ctx context.Context, service string, req CreateDBAASPGUpgradeCheckRequest) (*DBAASTask, error)
-	// Delete a Redis service
-	DeleteDBAASServiceRedis(ctx context.Context, name string) (*Operation, error)
-	// Get a DBaaS Redis service
-	GetDBAASServiceRedis(ctx context.Context, name string) (*DBAASServiceRedis, error)
-	// Create a DBaaS Redis service
-	CreateDBAASServiceRedis(ctx context.Context, name string, req CreateDBAASServiceRedisRequest) (*Operation, error)
-	// Update a DBaaS Redis service
-	UpdateDBAASServiceRedis(ctx context.Context, name string, req UpdateDBAASServiceRedisRequest) (*Operation, error)
-	// Initiate Redis maintenance update
-	StartDBAASRedisMaintenance(ctx context.Context, name string) (*Operation, error)
-	// Stop a DBaaS Redis migration
-	StopDBAASRedisMigration(ctx context.Context, name string) (*Operation, error)
-	// List DBaaS services
-	ListDBAASServices(ctx context.Context) (*ListDBAASServicesResponse, error)
-	// Get logs of DBaaS service
-	GetDBAASServiceLogs(ctx context.Context, serviceName string, req GetDBAASServiceLogsRequest) (*DBAASServiceLogs, error)
-	// Get metrics of DBaaS service
-	GetDBAASServiceMetrics(ctx context.Context, serviceName string, req GetDBAASServiceMetricsRequest) (*GetDBAASServiceMetricsResponse, error)
-	// List available service types for DBaaS
-	ListDBAASServiceTypes(ctx context.Context) (*ListDBAASServiceTypesResponse, error)
-	// Get a DBaaS service type
-	GetDBAASServiceType(ctx context.Context, serviceTypeName string) (*DBAASServiceType, error)
-	// Delete a DBaaS service
-	DeleteDBAASService(ctx context.Context, name string) (*Operation, error)
-	// Get DBaaS Grafana settings
-	GetDBAASSettingsGrafana(ctx context.Context) (*GetDBAASSettingsGrafanaResponse, error)
-	// Get DBaaS Kafka settings
-	GetDBAASSettingsKafka(ctx context.Context) (*GetDBAASSettingsKafkaResponse, error)
-	// Get DBaaS MySQL settings
-	GetDBAASSettingsMysql(ctx context.Context) (*GetDBAASSettingsMysqlResponse, error)
-	// Get DBaaS OpenSearch settings
-	GetDBAASSettingsOpensearch(ctx context.Context) (*GetDBAASSettingsOpensearchResponse, error)
-	// Get DBaaS PostgreSQL settings
-	GetDBAASSettingsPG(ctx context.Context) (*GetDBAASSettingsPGResponse, error)
-	// Returns the default settings for Redis.
-	GetDBAASSettingsRedis(ctx context.Context) (*GetDBAASSettingsRedisResponse, error)
-	// Create a DBaaS task to check migration
-	CreateDBAASTaskMigrationCheck(ctx context.Context, service string, req CreateDBAASTaskMigrationCheckRequest) (*Operation, error)
-	// Get a DBaaS task
-	GetDBAASTask(ctx context.Context, service string, id UUID) (*DBAASTask, error)
-	// List Deploy Targets
-	ListDeployTargets(ctx context.Context) (*ListDeployTargetsResponse, error)
-	// Retrieve Deploy Target details
-	GetDeployTarget(ctx context.Context, id UUID) (*DeployTarget, error)
-	// List DNS domains
-	ListDNSDomains(ctx context.Context) (*ListDNSDomainsResponse, error)
-	// Create DNS domain
-	CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest) (*DNSDomain, error)
-	// List DNS domain records
-	ListDNSDomainRecords(ctx context.Context, domainID UUID) (*ListDNSDomainRecordsResponse, error)
-	// Create DNS domain record
-	CreateDNSDomainRecord(ctx context.Context, domainID UUID, req CreateDNSDomainRecordRequest) (*Operation, error)
-	// Delete DNS domain record
-	DeleteDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID) (*Operation, error)
-	// Retrieve DNS domain record details
-	GetDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID) (*DNSDomainRecord, error)
-	// Update DNS domain record
-	UpdateDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID, req UpdateDNSDomainRecordRequest) (*Operation, error)
-	// Delete DNS Domain
-	DeleteDNSDomain(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve DNS domain details
-	GetDNSDomain(ctx context.Context, id UUID) (*DNSDomain, error)
-	// Retrieve DNS domain zone file
-	GetDNSDomainZoneFile(ctx context.Context, id UUID) (*GetDNSDomainZoneFileResponse, error)
-	// List Elastic IPs
-	ListElasticIPS(ctx context.Context) (*ListElasticIPSResponse, error)
-	// Create an Elastic IP
-	CreateElasticIP(ctx context.Context, req CreateElasticIPRequest) (*Operation, error)
-	// Delete an Elastic IP
-	DeleteElasticIP(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve Elastic IP details
-	GetElasticIP(ctx context.Context, id UUID) (*ElasticIP, error)
-	// Update an Elastic IP
-	UpdateElasticIP(ctx context.Context, id UUID, req UpdateElasticIPRequest) (*Operation, error)
-	// Reset an Elastic IP field to its default value
-	ResetElasticIPField(ctx context.Context, id UUID, field ResetElasticIPFieldField) (*Operation, error)
-	// Attach a Compute instance to an Elastic IP
-	AttachInstanceToElasticIP(ctx context.Context, id UUID, req AttachInstanceToElasticIPRequest) (*Operation, error)
-	// Detach a Compute instance from an Elastic IP
-	DetachInstanceFromElasticIP(ctx context.Context, id UUID, req DetachInstanceFromElasticIPRequest) (*Operation, error)
-	// Retrieve Mutation Events for a given date range. Defaults to retrieving Events for the past 24 hours.
-	// Both a `from` and `to` arguments can be specified to filter Events over a specific period.
-	// Events will be the the most descriptive possible but not all fields are mandatory
-	ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event, error)
-	// Retrieve IAM Organization Policy
-	GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error)
-	// Update IAM Organization Policy
-	UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) (*Operation, error)
-	// List IAM Roles
-	ListIAMRoles(ctx context.Context) (*ListIAMRolesResponse, error)
-	// Create IAM Role
-	CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*Operation, error)
-	// Delete IAM Role
-	DeleteIAMRole(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve IAM Role
-	GetIAMRole(ctx context.Context, id UUID) (*IAMRole, error)
-	// Update IAM Role
-	UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleRequest) (*Operation, error)
-	// Update IAM Role Policy
-	UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy) (*Operation, error)
-	// List Compute instances
-	ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*ListInstancesResponse, error)
-	// Create a Compute instance
-	CreateInstance(ctx context.Context, req CreateInstanceRequest) (*Operation, error)
-	// List Instance Pools
-	ListInstancePools(ctx context.Context) (*ListInstancePoolsResponse, error)
-	// Create an Instance Pool
-	CreateInstancePool(ctx context.Context, req CreateInstancePoolRequest) (*Operation, error)
-	// Delete an Instance Pool
-	DeleteInstancePool(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve Instance Pool details
-	GetInstancePool(ctx context.Context, id UUID) (*InstancePool, error)
-	// Update an Instance Pool
-	UpdateInstancePool(ctx context.Context, id UUID, req UpdateInstancePoolRequest) (*Operation, error)
-	// Reset an Instance Pool field to its default value
-	ResetInstancePoolField(ctx context.Context, id UUID, field ResetInstancePoolFieldField) (*Operation, error)
-	// This operation evicts the specified Compute instances member from the Instance Pool, shrinking it to `&lt;current pool size&gt; - &lt;# evicted members&gt;`.
-	EvictInstancePoolMembers(ctx context.Context, id UUID, req EvictInstancePoolMembersRequest) (*Operation, error)
-	// Scale an Instance Pool
-	ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstancePoolRequest) (*Operation, error)
-	// List Compute instance Types
-	ListInstanceTypes(ctx context.Context) (*ListInstanceTypesResponse, error)
-	// Retrieve Instance Type details
-	GetInstanceType(ctx context.Context, id UUID) (*InstanceType, error)
-	// Delete a Compute instance
-	DeleteInstance(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve Compute instance details
-	GetInstance(ctx context.Context, id UUID) (*Instance, error)
-	// Update a Compute instance
-	UpdateInstance(ctx context.Context, id UUID, req UpdateInstanceRequest) (*Operation, error)
-	// Reset Instance field
-	ResetInstanceField(ctx context.Context, id UUID, field ResetInstanceFieldField) (*Operation, error)
-	// Set instance destruction protection
-	AddInstanceProtection(ctx context.Context, id UUID) (*AddInstanceProtectionResponse, error)
-	// Create a Snapshot of a Compute instance
-	CreateSnapshot(ctx context.Context, id UUID) (*Operation, error)
-	// Reveal the password used during instance creation or the latest password reset.
-	// This is only available for VMs created against templates having the `password-enabled`
-	// property set to `true`.
-	// creation or resets.
-	// creation or resets.
-	RevealInstancePassword(ctx context.Context, id UUID) (*InstancePassword, error)
-	// Reboot a Compute instance
-	RebootInstance(ctx context.Context, id UUID) (*Operation, error)
-	// Remove instance destruction protection
-	RemoveInstanceProtection(ctx context.Context, id UUID) (*RemoveInstanceProtectionResponse, error)
-	// This operation re-installs a Compute instance to a base template. If target template is provided it will be used to recreated instance from. Warning: the operation wipes all data stored on the disk.
-	ResetInstance(ctx context.Context, id UUID, req ResetInstanceRequest) (*Operation, error)
-	// Reset a compute instance password
-	ResetInstancePassword(ctx context.Context, id UUID) (*Operation, error)
-	// This operation resizes a Compute instance's disk volume. Note: the disk can only grow, cannot be shrunk.
-	ResizeInstanceDisk(ctx context.Context, id UUID, req ResizeInstanceDiskRequest) (*Operation, error)
-	// This operation changes the Compute instance's type. Note: the new Instance Type must be within the same family (e.g. a standard instance cannot be scaled to gpu2 or storage).
-	ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceRequest) (*Operation, error)
-	// This operation starts a virtual machine, potentially using a rescue profile if specified
-	StartInstance(ctx context.Context, id UUID, req StartInstanceRequest) (*Operation, error)
-	// Stop a Compute instance
-	StopInstance(ctx context.Context, id UUID) (*Operation, error)
-	// This operation reverts the snapshot to the Compute instance volume, restoring stored data as it was at the time of the snapshot.
-	// The Compute instance must be previously stopped.
-	RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, req RevertInstanceToSnapshotRequest) (*Operation, error)
-	// List Load Balancers
-	ListLoadBalancers(ctx context.Context) (*ListLoadBalancersResponse, error)
-	// Create a Load Balancer
-	CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRequest) (*Operation, error)
-	// Delete a Load Balancer
-	DeleteLoadBalancer(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve Load Balancer details
-	GetLoadBalancer(ctx context.Context, id UUID) (*LoadBalancer, error)
-	// Update a Load Balancer
-	UpdateLoadBalancer(ctx context.Context, id UUID, req UpdateLoadBalancerRequest) (*Operation, error)
-	// Add a Load Balancer Service
-	AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddServiceToLoadBalancerRequest) (*Operation, error)
-	// Delete a Load Balancer Service
-	DeleteLoadBalancerService(ctx context.Context, id UUID, serviceID UUID) (*Operation, error)
-	// Retrieve Load Balancer Service details
-	GetLoadBalancerService(ctx context.Context, id UUID, serviceID UUID) (*LoadBalancerService, error)
-	// Update a Load Balancer Service
-	UpdateLoadBalancerService(ctx context.Context, id UUID, serviceID UUID, req UpdateLoadBalancerServiceRequest) (*Operation, error)
-	// Reset a Load Balancer Service field to its default value
-	ResetLoadBalancerServiceField(ctx context.Context, id UUID, serviceID UUID, field ResetLoadBalancerServiceFieldField) (*Operation, error)
-	// Reset a Load Balancer field to its default value
-	ResetLoadBalancerField(ctx context.Context, id UUID, field ResetLoadBalancerFieldField) (*Operation, error)
-	// Retrieve Operation details
-	GetOperation(ctx context.Context, id UUID) (*Operation, error)
-	// List Private Networks
-	ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksResponse, error)
-	// Create a Private Network
-	CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetworkRequest) (*Operation, error)
-	// Delete a Private Network
-	DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve Private Network details
-	GetPrivateNetwork(ctx context.Context, id UUID) (*PrivateNetwork, error)
-	// Update a Private Network
-	UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePrivateNetworkRequest) (*Operation, error)
-	// Reset Private Network field
-	ResetPrivateNetworkField(ctx context.Context, id UUID, field ResetPrivateNetworkFieldField) (*Operation, error)
-	// Attach a Compute instance to a Private Network
-	AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req AttachInstanceToPrivateNetworkRequest) (*Operation, error)
-	// Detach a Compute instance from a Private Network
-	DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, req DetachInstanceFromPrivateNetworkRequest) (*Operation, error)
-	// Update the IP address of an instance attached to a managed private network
-	UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req UpdatePrivateNetworkInstanceIPRequest) (*Operation, error)
-	// List Organization Quotas
-	ListQuotas(ctx context.Context) (*ListQuotasResponse, error)
-	// Retrieve Resource Quota
-	GetQuota(ctx context.Context, entity string) (*Quota, error)
-	// Delete the PTR DNS record for an elastic IP
-	DeleteReverseDNSElasticIP(ctx context.Context, id UUID) (*Operation, error)
-	// Query the PTR DNS records for an elastic IP
-	GetReverseDNSElasticIP(ctx context.Context, id UUID) (*ReverseDNSRecord, error)
-	// Update/Create the PTR DNS record for an elastic IP
-	UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req UpdateReverseDNSElasticIPRequest) (*Operation, error)
-	// Delete the PTR DNS record for an instance
-	DeleteReverseDNSInstance(ctx context.Context, id UUID) (*Operation, error)
-	// Query the PTR DNS records for an instance
-	GetReverseDNSInstance(ctx context.Context, id UUID) (*ReverseDNSRecord, error)
-	// Update/Create the PTR DNS record for an instance
-	UpdateReverseDNSInstance(ctx context.Context, id UUID, req UpdateReverseDNSInstanceRequest) (*Operation, error)
-	// Lists security groups. When visibility is set to public, lists public security groups.
-	// Public security groups are objects maintained by Exoscale which contain source addresses for
-	// relevant services hosted by Exoscale. They can be used a source in ingress rules and as a destination
-	// in egress rules.
-	ListSecurityGroups(ctx context.Context, opts ...ListSecurityGroupsOpt) (*ListSecurityGroupsResponse, error)
-	// Create a Security Group
-	CreateSecurityGroup(ctx context.Context, req CreateSecurityGroupRequest) (*Operation, error)
-	// Delete a Security Group
-	DeleteSecurityGroup(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve Security Group details
-	GetSecurityGroup(ctx context.Context, id UUID) (*SecurityGroup, error)
-	// Create a Security Group rule
-	AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRuleToSecurityGroupRequest) (*Operation, error)
-	// Delete a Security Group rule
-	DeleteRuleFromSecurityGroup(ctx context.Context, id UUID, ruleID UUID) (*Operation, error)
-	// Add an external source as a member of a Security Group
-	AddExternalSourceToSecurityGroup(ctx context.Context, id UUID, req AddExternalSourceToSecurityGroupRequest) (*Operation, error)
-	// Attach a Compute instance to a Security Group
-	AttachInstanceToSecurityGroup(ctx context.Context, id UUID, req AttachInstanceToSecurityGroupRequest) (*Operation, error)
-	// Detach a Compute instance from a Security Group
-	DetachInstanceFromSecurityGroup(ctx context.Context, id UUID, req DetachInstanceFromSecurityGroupRequest) (*Operation, error)
-	// Remove an external source from a Security Group
-	RemoveExternalSourceFromSecurityGroup(ctx context.Context, id UUID, req RemoveExternalSourceFromSecurityGroupRequest) (*Operation, error)
-	// List SKS clusters
-	ListSKSClusters(ctx context.Context) (*ListSKSClustersResponse, error)
-	// Create an SKS cluster
-	CreateSKSCluster(ctx context.Context, req CreateSKSClusterRequest) (*Operation, error)
-	// This operation returns the deprecated resources for a given cluster
-	ListSKSClusterDeprecatedResources(ctx context.Context, id UUID) ([]SKSClusterDeprecatedResource, error)
-	// This operation returns a Kubeconfig file encoded in base64.
-	GenerateSKSClusterKubeconfig(ctx context.Context, id UUID, req SKSKubeconfigRequest) (*GenerateSKSClusterKubeconfigResponse, error)
-	// List available versions for SKS clusters
-	ListSKSClusterVersions(ctx context.Context, opts ...ListSKSClusterVersionsOpt) (*ListSKSClusterVersionsResponse, error)
-	// Delete an SKS cluster
-	DeleteSKSCluster(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve SKS cluster details
-	GetSKSCluster(ctx context.Context, id UUID) (*SKSCluster, error)
-	// Update an SKS cluster
-	UpdateSKSCluster(ctx context.Context, id UUID, req UpdateSKSClusterRequest) (*Operation, error)
-	// This operation returns the certificate for the given SKS cluster authority encoded in base64.
-	GetSKSClusterAuthorityCert(ctx context.Context, id UUID, authority GetSKSClusterAuthorityCertAuthority) (*GetSKSClusterAuthorityCertResponse, error)
-	// Helps troubleshoot common problems when deploying a kubernetes cluster. Inspections run every couple of minutes.
-	GetSKSClusterInspection(ctx context.Context, id UUID) (*GetSKSClusterInspectionResponse, error)
-	// Create a new SKS Nodepool
-	CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNodepoolRequest) (*Operation, error)
-	// Delete an SKS Nodepool
-	DeleteSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID) (*Operation, error)
-	// Retrieve SKS Nodepool details
-	GetSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID) (*SKSNodepool, error)
-	// Update an SKS Nodepool
-	UpdateSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID, req UpdateSKSNodepoolRequest) (*Operation, error)
-	// Reset an SKS Nodepool field to its default value
-	ResetSKSNodepoolField(ctx context.Context, id UUID, sksNodepoolID UUID, field ResetSKSNodepoolFieldField) (*Operation, error)
-	// This operation evicts the specified Compute instances member from the Nodepool, shrinking it to `&lt;current nodepool size&gt; - &lt;# evicted members&gt;`.
-	EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoolID UUID, req EvictSKSNodepoolMembersRequest) (*Operation, error)
-	// Scale a SKS Nodepool
-	ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID, req ScaleSKSNodepoolRequest) (*Operation, error)
-	// Rotate Exoscale CCM credentials
-	RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Operation, error)
-	// Rotate operators certificate authority
-	RotateSKSOperatorsCA(ctx context.Context, id UUID) (*Operation, error)
-	// Upgrade an SKS cluster
-	UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSClusterRequest) (*Operation, error)
-	// Upgrade a SKS cluster to pro
-	UpgradeSKSClusterServiceLevel(ctx context.Context, id UUID) (*Operation, error)
-	// Reset an SKS cluster field to its default value
-	ResetSKSClusterField(ctx context.Context, id UUID, field ResetSKSClusterFieldField) (*Operation, error)
-	// List Snapshots
-	ListSnapshots(ctx context.Context) (*ListSnapshotsResponse, error)
-	// Delete a Snapshot
-	DeleteSnapshot(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve Snapshot details
-	GetSnapshot(ctx context.Context, id UUID) (*Snapshot, error)
-	// Export a Snapshot
-	ExportSnapshot(ctx context.Context, id UUID) (*Operation, error)
-	// Promote a Snapshot to a Template
-	PromoteSnapshotToTemplate(ctx context.Context, id UUID, req PromoteSnapshotToTemplateRequest) (*Operation, error)
-	// List SOS Buckets Usage
-	ListSOSBucketsUsage(ctx context.Context) (*ListSOSBucketsUsageResponse, error)
-	// Generates Presigned Download URL for SOS object
-	GetSOSPresignedURL(ctx context.Context, bucket string, opts ...GetSOSPresignedURLOpt) (*GetSOSPresignedURLResponse, error)
-	// List SSH keys
-	ListSSHKeys(ctx context.Context) (*ListSSHKeysResponse, error)
-	// Import SSH key
-	RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (*Operation, error)
-	// Delete a SSH key
-	DeleteSSHKey(ctx context.Context, name string) (*Operation, error)
-	// Retrieve SSH key details
-	GetSSHKey(ctx context.Context, name string) (*SSHKey, error)
-	// List Templates
-	ListTemplates(ctx context.Context, opts ...ListTemplatesOpt) (*ListTemplatesResponse, error)
-	// Register a Template
-	RegisterTemplate(ctx context.Context, req RegisterTemplateRequest) (*Operation, error)
-	// Delete a Template
-	DeleteTemplate(ctx context.Context, id UUID) (*Operation, error)
-	// Retrieve Template details
-	GetTemplate(ctx context.Context, id UUID) (*Template, error)
-	// Copy a Template from a zone to another
-	CopyTemplate(ctx context.Context, id UUID, req CopyTemplateRequest) (*Operation, error)
-	// Update template attributes
-	UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateRequest) (*Operation, error)
-	// List Zones
-	ListZones(ctx context.Context) (*ListZonesResponse, error)
-
-	Wait(context.Context, *Operation, ...OperationState) (*Operation, error)
-
-	WithZone(APIZone) Client
-
-	WithContext(context.Context) Client
-
-	WithHttpClient(*http.Client) Client
-
-	WithRequestMiddleware(RequestMiddlewareFn) Client
-}
-
 // Wait is a helper that waits for async operation to reach the final state.
 // Final states are one of: failure, success, timeout.
 // If states argument are given, returns an error if the final state not match on of those.
-func (c ClientAPI) Wait(ctx context.Context, op *Operation, states ...OperationState) (*Operation, error) {
+func (c Client) Wait(ctx context.Context, op *Operation, states ...OperationState) (*Operation, error) {
 	if op == nil {
 		return nil, fmt.Errorf("operation is nil")
 	}

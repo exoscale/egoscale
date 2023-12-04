@@ -43,7 +43,7 @@ import (
 )
 `, packageName))
 
-	methods := []Method{}
+	methods := []MethodTmpl{}
 
 	err := helpers.ForEachMapSorted(model.Model.Paths.PathItems, func(path string, item any) error {
 		pathItems := item.(*v3.PathItem)
@@ -92,20 +92,11 @@ import (
 		return err
 	}
 
-	// Add extra methods here from static generated (operationUtils).
-	// TODO put this static list somewhere.
-	methods = append(methods, Method{Name: "Wait", Params: "context.Context, *Operation, ...OperationState", ValueReturn: "(*Operation, error)"})
-	methods = append(methods, Method{Name: "WithZone", Params: "APIZone", ValueReturn: "Client"})
-	methods = append(methods, Method{Name: "WithContext", Params: "context.Context", ValueReturn: "Client"})
-	methods = append(methods, Method{Name: "WithHttpClient", Params: " *http.Client", ValueReturn: "Client"})
-	methods = append(methods, Method{Name: "WithRequestMiddleware", Params: "RequestMiddlewareFn", ValueReturn: "Client"})
-
-	iface, err := renderInterface(methods)
+	helpers, err := os.ReadFile("./operations/helpers.tmpl")
 	if err != nil {
 		return err
 	}
-	output.Write(iface)
-	output.WriteString(operationUtils)
+	output.Write(helpers)
 
 	if os.Getenv("GENERATOR_DEBUG") == "operations" {
 		fmt.Println(output.String())
@@ -253,10 +244,21 @@ func renderMethodParameterSchema(name string, op *v3.Operation) ([]byte, error) 
 	return output.Bytes(), nil
 }
 
-func serializeMethod(path, httpMethode, funcName string, op *v3.Operation) (*Method, error) {
-	p := Method{
-		// Generate code only for prod for now
-		APIName:    "API",
+type MethodTmpl struct {
+	Comment        string
+	Name           string
+	Params         string
+	ValueReturn    string
+	URLPathBuilder string
+	HTTPMethod     string
+	BodyRequest    bool
+	BodyRespType   string
+	ContentType    string
+	QueryParams    map[string]string
+}
+
+func serializeMethod(path, httpMethode, funcName string, op *v3.Operation) (*MethodTmpl, error) {
+	p := MethodTmpl{
 		Name:       funcName,
 		HTTPMethod: strings.ToUpper(httpMethode),
 	}
@@ -289,8 +291,8 @@ func serializeMethod(path, httpMethode, funcName string, op *v3.Operation) (*Met
 	return &p, nil
 }
 
-func renderMethod(m *Method) ([]byte, error) {
-	t, err := template.New("Method").Parse(methodTemplate)
+func renderMethod(m *MethodTmpl) ([]byte, error) {
+	t, err := template.New("method.tmpl").ParseFiles("./operations/method.tmpl")
 	if err != nil {
 		return nil, err
 	}
@@ -482,215 +484,6 @@ func getQueryParams(op *v3.Operation) map[string]string {
 
 	return result
 }
-
-type Method struct {
-	Comment        string
-	APIName        string
-	Name           string
-	Params         string
-	ValueReturn    string
-	URLPathBuilder string
-	HTTPMethod     string
-	BodyRequest    bool
-	BodyRespType   string
-	ContentType    string
-	QueryParams    map[string]string
-}
-
-const methodTemplate = `
-{{ .Comment }}
-func (c Client{{ .APIName }}) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
-	path := {{ .URLPathBuilder }}
-
-	{{ if .BodyRequest }}
-	body, err := prepareJsonBody(req)
-	if err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: prepare Json body: %w", err)
-	}
-	{{ end }}
-
-	request, err := http.NewRequestWithContext(ctx, "{{ .HTTPMethod }}", c.serverURL + path, {{ if .BodyRequest }}body{{else}}nil{{end}})
-	if err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: new request: %w", err)
-	}
-
-	{{ if ne .QueryParams nil }}if len(opts) > 0 {
-		q := request.URL.Query()
-		for _, opt := range opts {
-			opt(q)
-		}
-		request.URL.RawQuery = q.Encode()
-	}{{ end }}
-
-	{{ if ne .ContentType "" }}
-	request.Header.Add("Content-Type", "{{ .ContentType }}")
-	{{ end }}
-
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: register middlewares: %w", err)
-	}
-
-	resp, err := c.httpClient.Do(request)
-	if err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: http client do: %w", err)
-	}
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request {{ .Name }} returned %d code", resp.StatusCode)
-	}
-
-	bodyresp := {{ .BodyRespType }}{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: prepare Json response: %w", err)
-	}
-
-	return bodyresp, nil
-}
-`
-
-type InterfaceModel struct {
-	Methods []Method
-}
-
-func renderInterface(methods []Method) ([]byte, error) {
-	t, err := template.New("Interface").Parse(interfaceTemplate)
-	if err != nil {
-		return nil, err
-	}
-
-	buf := bytes.NewBuffer([]byte{})
-	if err := t.Execute(buf, InterfaceModel{Methods: methods}); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-const interfaceTemplate = `
-// Client represents an API interface representation for ClientAPI and mock test.
-type Client interface {
-	{{ range .Methods }}{{ .Comment }}
-	{{ .Name }}({{ .Params }}) {{ .ValueReturn }}
-	{{end}}
-}
-`
-
-const operationUtils = `
-// Wait is a helper that waits for async operation to reach the final state.
-// Final states are one of: failure, success, timeout.
-// If states argument are given, returns an error if the final state not match on of those.
-func (c ClientAPI) Wait(ctx context.Context, op *Operation, states ...OperationState) (*Operation, error) {
-	if op == nil {
-		return nil, fmt.Errorf("operation is nil")
-	}
-
-	ticker := time.NewTicker(c.pollingInterval)
-	defer ticker.Stop()
-
-	if op.State != OperationStatePending {
-		return op, nil
-	}
-
-	var operation *Operation
-polling:
-	for {
-		select {
-		case <-ticker.C:
-			o, err := c.GetOperation(ctx, op.ID)
-			if err != nil {
-				return nil, err
-			}
-			if o.State == OperationStatePending {
-				continue
-			}
-
-			operation = o
-			break polling
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
-	}
-
-	if len(states) == 0 {
-		return operation, nil
-	}
-
-	for _, st := range states {
-		if operation.State == st {
-			return operation, nil
-		}
-	}
-
-	var ref OperationReference
-	if operation.Reference != nil {
-		ref = *operation.Reference
-	}
-
-	return nil,
-		fmt.Errorf("operation: %q %v, state: %s, reason: %q, message: %q",
-			operation.ID,
-			ref,
-			operation.State,
-			operation.Reason,
-			operation.Message,
-		)
-}
-
-func String(s string) *string {
-	return &s
-}
-
-func Int64(i int64) *int64 {
-	return &i
-}
-
-func Bool(b bool) *bool {
-	return &b
-}
-
-// Validate any struct from schema or request
-func Validate(r any) error {
-	return validator.New().Struct(r)
-}
-
-func prepareJsonBody(body any) (*bytes.Reader, error) {
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(buf), nil
-}
-
-func prepareJsonResponse(resp *http.Response, v any) error {
-	defer resp.Body.Close()
-
-	buf, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(buf, v); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type UUID string
-
-func (u UUID) String() string {
-	return string(u)
-}
-
-func ParseUUID(s string) (UUID, error) {
-	id, err := uuid.Parse(s)
-	if err != nil {
-		return "", err
-	}
-
-	return UUID(id.String()), nil
-}
-`
 
 func isArrayReference(sp *base.SchemaProxy) (bool, string) {
 	s := sp.Schema()

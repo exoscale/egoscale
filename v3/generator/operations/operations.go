@@ -43,8 +43,6 @@ import (
 )
 `, packageName))
 
-	methods := []MethodTmpl{}
-
 	err := helpers.ForEachMapSorted(model.Model.Paths.PathItems, func(path string, item any) error {
 		pathItems := item.(*v3.PathItem)
 		return helpers.ForEachMapSorted(pathItems.GetOperations(), func(opName string, op any) error {
@@ -77,7 +75,9 @@ import (
 				return err
 			}
 
-			methods = append(methods, *method)
+			if method == nil {
+				return nil
+			}
 
 			m, err := renderMethod(method)
 			if err != nil {
@@ -124,7 +124,7 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 			return nil
 		}
 
-		ok, _ = isArrayReference(media.Schema)
+		_, ok = isArrayReference(media.Schema)
 		if ok {
 			return nil
 		}
@@ -144,6 +144,8 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 	return output.Bytes(), nil
 }
 
+// renderRequestSchema returns a nil output if there is no
+// request schema to render for a given operation.
 func renderRequestSchema(name string, op *v3.Operation) ([]byte, error) {
 	output := bytes.NewBuffer([]byte{})
 
@@ -161,7 +163,7 @@ func renderRequestSchema(name string, op *v3.Operation) ([]byte, error) {
 		return nil, nil
 	}
 
-	ok, _ = isArrayReference(media.Schema)
+	_, ok = isArrayReference(media.Schema)
 	if ok {
 		return nil, nil
 	}
@@ -274,9 +276,14 @@ func serializeMethod(path, httpMethode, funcName string, op *v3.Operation) (*Met
 	}
 	p.ValueReturn = fmt.Sprintf("(%s)", strings.Join(valuesReturn, ", "))
 	// This should never happen in our Exoscale API.
-	// This panic is here as a reminder the day we add such a behavior in the OpenAPI spec.
+	// This is here as a reminder the day we add such a behavior in the OpenAPI spec.
 	if p.ValueReturn == "(error)" {
-		panic("single error value return not implemented")
+		slog.Error(
+			"single error value return not implemented",
+			slog.String("path", path),
+			slog.String("operation", funcName),
+		)
+		return nil, nil
 	}
 	p.URLPathBuilder = renderURLPathBuilder(path, op)
 
@@ -403,7 +410,7 @@ func getValuesReturn(op *v3.Operation, funcName string) (values []string) {
 			return values
 		}
 
-		ok, a := isArrayReference(media.Schema)
+		a, ok := isArrayReference(media.Schema)
 		if ok {
 			values = append(values, a)
 			return values
@@ -485,25 +492,25 @@ func getQueryParams(op *v3.Operation) map[string]string {
 	return result
 }
 
-func isArrayReference(sp *base.SchemaProxy) (bool, string) {
+func isArrayReference(sp *base.SchemaProxy) (string, bool) {
 	s := sp.Schema()
 	if s == nil {
-		return false, ""
+		return "", false
 	}
 
 	if s.Type[0] == "array" {
 		if s.Items == nil {
-			return false, ""
+			return "", false
 		}
 		if !s.Items.IsA() {
-			return false, ""
+			return "", false
 		}
 
 		isReference := s.Items.A.IsReference()
 		if isReference {
-			return true, "[]" + helpers.RenderReference(s.Items.A.GetReference())
+			return "[]" + helpers.RenderReference(s.Items.A.GetReference()), true
 		}
 	}
 
-	return false, ""
+	return "", false
 }

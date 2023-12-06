@@ -3,6 +3,7 @@ package schemas
 import (
 	"bytes"
 	"go/format"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -19,6 +20,7 @@ var ignoredList = map[string]struct{}{
 	"snapshot-export": {},
 }
 
+// Generate go schema models from OpenAPI spec into a go file.
 func Generate(doc libopenapi.Document, path, packageName string) error {
 	result, errs := doc.BuildV3Model()
 	for _, err := range errs {
@@ -36,12 +38,12 @@ import (
 )
 `, packageName))
 
-	err := helpers.ForEachMapSorted(result.Model.Components.Schemas, func(k string, v any) error {
-		if _, ok := ignoredList[k]; ok {
+	err := helpers.ForEachMapSorted(result.Model.Components.Schemas, func(schemaName string, v any) error {
+		if _, ok := ignoredList[schemaName]; ok {
 			return nil
 		}
 
-		r, err := RenderSchema(k, v.(*base.SchemaProxy))
+		r, err := RenderSchema(schemaName, v.(*base.SchemaProxy))
 		if err != nil {
 			return err
 		}
@@ -65,8 +67,8 @@ import (
 	return os.WriteFile(path, content, os.ModePerm)
 }
 
-// RenderSchema returns generated GO code from an OpenAPI Schema.
-func RenderSchema(name string, s *base.SchemaProxy) ([]byte, error) {
+// RenderSchema returns generated go code from an OpenAPI Schema proxy object.
+func RenderSchema(schemaName string, s *base.SchemaProxy) ([]byte, error) {
 	output := bytes.NewBuffer([]byte{})
 
 	sc, err := s.BuildSchema()
@@ -74,8 +76,8 @@ func RenderSchema(name string, s *base.SchemaProxy) ([]byte, error) {
 		return nil, err
 	}
 
-	name = helpers.ToCamel(name)
-	if err := renderSchemaInternal(name, sc, map[[32]byte]bool{}, output); err != nil {
+	schemaName = helpers.ToCamel(schemaName)
+	if err := renderSchemaInternal(schemaName, sc, output); err != nil {
 		return nil, err
 	}
 
@@ -84,6 +86,7 @@ func RenderSchema(name string, s *base.SchemaProxy) ([]byte, error) {
 
 // RenderSimpleType returns the type of a simple go type,
 // not an object, map, array...etc.
+// This function is called if you are sure IsSimpleSchema(s *base.Schema) return true.
 // Add more simple type here.
 func RenderSimpleType(s *base.Schema) string {
 	if s.Format != "" {
@@ -102,7 +105,11 @@ func RenderSimpleType(s *base.Schema) string {
 
 	if len(s.Type) == 0 {
 		// This should never happen.
-		panic("invalid spec, no type definition")
+		slog.Error(
+			"invalid spec: no type definition, Please fix the OpenApi Spec! Returning type any",
+			slog.Any("schema", s),
+		)
+		return "any"
 	}
 	if s.Type[0] == "boolean" {
 		return "bool"
@@ -114,7 +121,14 @@ func RenderSimpleType(s *base.Schema) string {
 	return s.Type[0]
 }
 
-func renderSchemaInternal(n string, s *base.Schema, known map[[32]byte]bool, output *bytes.Buffer) error {
+// renderSchemaInternal render a given libopenapi Schema into a buffer.
+// This function is mostly used recursively to render sub schemas into this buffer.
+//
+// /!\ for every recusivity call, make sure to check schema reference before,
+// to prevent end up in infinite loop.
+// That prevent embed hash cookies in the whole codebase to compare schemas:
+// e.g: https://github.com/danielgtaylor/restish/blob/main/openapi/schema.go#L59
+func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffer) error {
 	doc := renderDoc(s) + "\n"
 	inferType(s)
 
@@ -137,46 +151,47 @@ func renderSchemaInternal(n string, s *base.Schema, known map[[32]byte]bool, out
 		var definition string
 
 		if len(s.Enum) > 0 {
-			definition = renderSimpleTypeEnum(n, s)
+			definition = renderSimpleTypeEnum(schemaName, s)
 		} else {
-			definition = "type " + n + " " + RenderSimpleType(s) + "\n"
+			definition = "type " + schemaName + " " + RenderSimpleType(s) + "\n"
 		}
 
 		output.WriteString(definition)
 		return nil
 	case "array":
 		output.WriteString(doc)
-		array, err := renderArray(n, s, known, output)
+		array, err := renderArray(schemaName, s, output)
 		if err != nil {
 			return err
 		}
-		output.WriteString("type " + n + " " + array + "\n")
+		output.WriteString("type " + schemaName + " " + array + "\n")
 		return nil
 	case "object":
-		object, err := renderObject(n, s, known, output)
+		object, err := renderObject(schemaName, s, output)
 		if err != nil {
 			return err
 		}
 		output.WriteString(doc)
 		output.WriteString(object)
 		return nil
-	// map represents an AdditionalProperties, it will always be map[string]Type
+	// map represents an OpenAPI AdditionalProperties, it will always be map[string]Type
 	case "map":
 		output.WriteString(doc)
-		Map, err := renderSimpleMap(n, s, known, output)
+		Map, err := renderSimpleMap(schemaName, s, output)
 		if err != nil {
 			return err
 		}
-		output.WriteString("type " + n + " " + Map + "\n")
+		output.WriteString("type " + schemaName + " " + Map + "\n")
 		return nil
 	default:
-		panic("type: " + typ + " not implemented")
+		slog.Error("type not implemented", slog.String("type", typ))
+		return nil
 	}
 }
 
-func renderSimpleTypeEnum(n string, s *base.Schema) string {
+func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 	typ := RenderSimpleType(s)
-	definition := "type " + n + " " + typ + "\n"
+	definition := "type " + typeName + " " + typ + "\n"
 	definition += "const (\n"
 
 	for _, e := range s.Enum {
@@ -184,14 +199,14 @@ func renderSimpleTypeEnum(n string, s *base.Schema) string {
 		if typ == "string" {
 			value = fmt.Sprintf(`"%v"`, e)
 		}
-		definition += n + helpers.ToCamel(fmt.Sprintf("%v", e)) + " " + n + " = " + value + "\n"
+		definition += typeName + helpers.ToCamel(fmt.Sprintf("%v", e)) + " " + typeName + " = " + value + "\n"
 	}
 	definition += ")\n"
 
 	return definition
 }
 
-func renderArray(n string, s *base.Schema, known map[[32]byte]bool, output *bytes.Buffer) (string, error) {
+func renderArray(typeName string, s *base.Schema, output *bytes.Buffer) (string, error) {
 	definition := "[]"
 
 	if s.Items == nil {
@@ -211,7 +226,7 @@ func renderArray(n string, s *base.Schema, known map[[32]byte]bool, output *byte
 	}
 
 	if item.AdditionalProperties != nil {
-		Map, err := renderSimpleMap(n, item, known, output)
+		Map, err := renderSimpleMap(typeName, item, output)
 		if err != nil {
 			return "", err
 		}
@@ -223,17 +238,11 @@ func renderArray(n string, s *base.Schema, known map[[32]byte]bool, output *byte
 		return definition + RenderSimpleType(item), nil
 	}
 
-	hash := item.GoLow().Hash()
-	if !known[hash] {
-		known[hash] = true
-		if err := renderSchemaInternal(n, item, known, output); err != nil {
-			return "", err
-		}
-		known[hash] = false
-		return definition + n, nil
+	if err := renderSchemaInternal(typeName, item, output); err != nil {
+		return "", err
 	}
 
-	panic("array: not reachable")
+	return definition + typeName, nil
 }
 
 func renderValidation(s *base.Schema, required bool) string {
@@ -277,27 +286,18 @@ func renderValidation(s *base.Schema, required bool) string {
 	if len(ops) == 0 {
 		return ""
 	}
+	// Remove the useless omitempty validation if it's the only one.
+	// JSON opmit empty will be already there.
 	if len(ops) == 1 && ops[0] == "omitempty" {
 		return ""
 	}
 
-	validation := `validate:"`
-	for i, op := range ops {
-		if i == len(ops)-1 {
-			validation += op
-			break
-		}
-
-		validation += op + ","
-
-	}
-
-	return validation + `"`
+	return fmt.Sprintf(`validate:"%s"`, strings.Join(ops, ","))
 }
 
-func renderObject(n string, s *base.Schema, known map[[32]byte]bool, output *bytes.Buffer) (string, error) {
-	definition := "type " + n + " struct {\n"
-	err := helpers.ForEachMapSorted(s.Properties, func(name string, v any) error {
+func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string, error) {
+	definition := "type " + typeName + " struct {\n"
+	err := helpers.ForEachMapSorted(s.Properties, func(propName string, v any) error {
 		properties := v.(*base.SchemaProxy)
 
 		prop := properties.Schema()
@@ -305,17 +305,22 @@ func renderObject(n string, s *base.Schema, known map[[32]byte]bool, output *byt
 			return nil
 		}
 
+		var nullable = false
+		if prop.Nullable != nil {
+			nullable = *prop.Nullable
+		}
+
 		doc := renderDoc(prop)
 		if doc != "" {
 			definition += doc + "\n"
 		}
 
-		tag := fmt.Sprintf(" `json:\"%s,omitempty\"", name)
+		tag := fmt.Sprintf(" `json:\"%s,omitempty\"", propName)
 
 		required := "*"
-		req := isRequiredField(name, s)
+		req := isRequiredField(propName, s)
 		if req {
-			tag = fmt.Sprintf(" `json:%q", name)
+			tag = fmt.Sprintf(" `json:%q", propName)
 		}
 		validation := renderValidation(prop, req)
 		if validation != "" {
@@ -323,7 +328,7 @@ func renderObject(n string, s *base.Schema, known map[[32]byte]bool, output *byt
 		}
 		tag += "`"
 
-		camelName := helpers.ToCamel(name)
+		camelName := helpers.ToCamel(propName)
 
 		if properties.IsReference() {
 			referenceName := helpers.RenderReference(properties.GetReference())
@@ -335,7 +340,7 @@ func renderObject(n string, s *base.Schema, known map[[32]byte]bool, output *byt
 		}
 
 		if prop.Type[0] == "array" {
-			array, err := renderArray(n+camelName, prop, known, output)
+			array, err := renderArray(typeName+camelName, prop, output)
 			if err != nil {
 				return err
 			}
@@ -345,12 +350,17 @@ func renderObject(n string, s *base.Schema, known map[[32]byte]bool, output *byt
 
 		if IsSimpleSchema(prop) {
 			if len(prop.Enum) > 0 {
-				output.WriteString(renderSimpleTypeEnum(n+camelName, prop))
-				definition += camelName + " " + n + camelName + tag + "\n"
+				output.WriteString(renderSimpleTypeEnum(typeName+camelName, prop))
+				definition += camelName + " " + typeName + camelName + tag + "\n"
 				return nil
 			}
 
-			if prop.Type[0] == "string" || prop.Type[0] == "integer" {
+			// To be discuss here, for the moment we bypass pointer on those types,
+			// and use JSON omitempty. This will cover most of all case.
+			// For the specific types left like in PUT requests schema,
+			// we need to update the spec to put those type as nullable, take the instance-pool as good example,
+			// (only use custom schema, not schema reference for PUT request).
+			if !nullable && (prop.Type[0] == "string" || prop.Type[0] == "integer") {
 				definition += camelName + " " + RenderSimpleType(prop) + tag + "\n"
 				return nil
 			}
@@ -366,7 +376,7 @@ func renderObject(n string, s *base.Schema, known map[[32]byte]bool, output *byt
 		}
 
 		if prop.AdditionalProperties != nil {
-			Map, err := renderSimpleMap(n+camelName, prop, known, output)
+			Map, err := renderSimpleMap(typeName+camelName, prop, output)
 			if err != nil {
 				return err
 			}
@@ -374,15 +384,10 @@ func renderObject(n string, s *base.Schema, known map[[32]byte]bool, output *byt
 			return nil
 		}
 
-		hash := prop.GoLow().Hash()
-		if !known[hash] {
-			known[hash] = true
-			if err := renderSchemaInternal(n+camelName, prop, known, output); err != nil {
-				return err
-			}
-			known[hash] = false
-			definition += camelName + " " + required + n + camelName + tag + "\n"
+		if err := renderSchemaInternal(typeName+camelName, prop, output); err != nil {
+			return err
 		}
+		definition += camelName + " " + required + typeName + camelName + tag + "\n"
 
 		return nil
 	})
@@ -393,9 +398,9 @@ func renderObject(n string, s *base.Schema, known map[[32]byte]bool, output *byt
 	return definition + "}\n\n", nil
 }
 
-func isRequiredField(name string, s *base.Schema) bool {
+func isRequiredField(schemaName string, s *base.Schema) bool {
 	for _, req := range s.Required {
-		if req == name {
+		if req == schemaName {
 			return true
 		}
 	}
@@ -404,16 +409,21 @@ func isRequiredField(name string, s *base.Schema) bool {
 }
 
 // renderSimpleMap represents AdditionalProperties, it's always a map[string]Type
-func renderSimpleMap(n string, s *base.Schema, known map[[32]byte]bool, output *bytes.Buffer) (string, error) {
+func renderSimpleMap(typeName string, s *base.Schema, output *bytes.Buffer) (string, error) {
 	definition := "map[string]"
 
 	switch ap := s.AdditionalProperties.(type) {
 	case *base.SchemaProxy:
 		break
+	// https://swagger.io/docs/specification/data-models/dictionaries/#free-form
+	// There is two case for a free form object:
+	//  - additionalProperties: true
+	//  - additionalProperties: {}
+	// Here is the libopenapi representation of it.
 	case bool, map[low.KeyReference[string]]low.ValueReference[interface{}]:
 		return definition + "any", nil
 	default:
-		return "", fmt.Errorf("additional properties in: %s not supported: %#v", n, ap)
+		return "", fmt.Errorf("additional properties in: %s not supported: %#v", typeName, ap)
 	}
 
 	sp := s.AdditionalProperties.(*base.SchemaProxy)
@@ -427,17 +437,11 @@ func renderSimpleMap(n string, s *base.Schema, known map[[32]byte]bool, output *
 		return definition + RenderSimpleType(addl), nil
 	}
 
-	hash := addl.GoLow().Hash()
-	if !known[hash] {
-		known[hash] = true
-		if err := renderSchemaInternal(n, addl, known, output); err != nil {
-			return "", err
-		}
-		known[hash] = false
-		return definition + n, nil
+	if err := renderSchemaInternal(typeName, addl, output); err != nil {
+		return "", err
 	}
 
-	panic("not reachable")
+	return definition + typeName, nil
 }
 
 // inferType fixes missing type if it is missing & can be inferred
@@ -475,23 +479,5 @@ func renderDoc(s *base.Schema) string {
 		doc = s.Title
 	}
 
-	if doc == "null" {
-		return ""
-	}
-
-	docs := strings.Split(doc, "\n")
-	r := []string{}
-	for i, d := range docs {
-		if d == "" {
-			docs = append(docs[:i], docs[i+1:]...)
-			continue
-		}
-		r = append(r, "// "+strings.TrimSpace(d))
-	}
-
-	if len(r) == 0 {
-		return ""
-	}
-
-	return strings.Join(r, "\n")
+	return helpers.RenderDoc(doc)
 }

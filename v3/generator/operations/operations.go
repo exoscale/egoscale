@@ -426,25 +426,8 @@ func renderDoc(op *v3.Operation) string {
 	if doc == "" {
 		doc = op.Summary
 	}
-	if doc == "null" {
-		return ""
-	}
 
-	docs := strings.Split(doc, "\n")
-	r := []string{}
-	for i, d := range docs {
-		if d == "" {
-			docs = append(docs[:i], docs[i+1:]...)
-			continue
-		}
-		r = append(r, "// "+strings.TrimSpace(d))
-	}
-
-	if len(r) == 0 {
-		return ""
-	}
-
-	return strings.Join(r, "\n")
+	return helpers.RenderDoc(doc)
 }
 
 func renderURLPathBuilder(rawPath string, op *v3.Operation) string {

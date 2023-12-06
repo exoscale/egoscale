@@ -17,6 +17,7 @@ func ConfigureAcronym(key, val string) {
 	uppercaseAcronym.Store(key, val)
 }
 
+// ForEachMapSorted iterate over a map[string]<T> sorted by keys.
 func ForEachMapSorted[V any](m map[string]V, f func(k string, v any) error) error {
 	keys := []string{}
 	for k := range m {
@@ -33,10 +34,12 @@ func ForEachMapSorted[V any](m map[string]V, f func(k string, v any) error) erro
 	return nil
 }
 
-func RenderReference(ref string) string {
-	return ToCamel(filepath.Base(ref))
+// RenderReference renders OpenAPI reference from path to go style.
+func RenderReference(referencePath string) string {
+	return ToCamel(filepath.Base(referencePath))
 }
 
+// Header retruns header file for generated go source files.
 func Header(packageName, version string) []byte {
 	return []byte(fmt.Sprintf(`// Package %s provides primitives to interact with the openapi HTTP API.
 //
@@ -46,14 +49,18 @@ func Header(packageName, version string) []byte {
 	))
 }
 
+// ToLowerCamel converts a string to lowerCamelCase
 func ToLowerCamel(s string) string {
 	return toInitialCamel(s, true)
 }
 
+// ToCamel converts a string to CamelCase
 func ToCamel(s string) string {
 	return toInitialCamel(s, false)
 }
 
+// toInitialCamel got inspiration from https://github.com/iancoleman/strcase
+// with improvement on acronym conversion.
 func toInitialCamel(s string, lower bool) string {
 	if s == "" {
 		return ""
@@ -118,4 +125,28 @@ func containSep(s string) (string, bool) {
 	}
 
 	return "", false
+}
+
+// RenderDoc returns proper go doc comment from
+// an OpenAPI spec field documentation.
+func RenderDoc(doc string) string {
+	if doc == "null" {
+		return ""
+	}
+
+	docs := strings.Split(doc, "\n")
+	r := []string{}
+	for i, d := range docs {
+		if d == "" {
+			docs = append(docs[:i], docs[i+1:]...)
+			continue
+		}
+		r = append(r, "// "+strings.TrimSpace(d))
+	}
+
+	if len(r) == 0 {
+		return ""
+	}
+
+	return strings.Join(r, "\n")
 }

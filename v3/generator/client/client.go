@@ -50,7 +50,7 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 			continue
 		}
 
-		srv, err := renderServer(s)
+		srv, err := renderClient(s)
 		if err != nil {
 			return err
 		}
@@ -88,15 +88,17 @@ func extractAPIName(s *v3.Server) (string, error) {
 	return h[0], nil
 }
 
-type ServerTmpl struct {
+// Template use client.tmpl file
+type Template struct {
 	Enum         string
 	DefaultZone  string
 	ServerURL    string
 	RawServerURL string
 }
 
-func renderServer(s *v3.Server) ([]byte, error) {
-	var srv ServerTmpl
+// renderClient using the client.tmpl template.
+func renderClient(s *v3.Server) ([]byte, error) {
+	var client Template
 	for k, v := range s.Variables {
 		if k != "zone" {
 			// Supporting only zone variable for Exoscale
@@ -107,7 +109,7 @@ func renderServer(s *v3.Server) ([]byte, error) {
 			enum += "ClientZone" + helpers.ToCamel(z) + " ClientZone = \"" + z + "\"\n  "
 		}
 
-		srv = ServerTmpl{
+		client = Template{
 			DefaultZone:  v.Default,
 			ServerURL:    strings.Replace(s.URL, "{zone}", v.Default, 1),
 			RawServerURL: s.URL,
@@ -121,7 +123,7 @@ func renderServer(s *v3.Server) ([]byte, error) {
 	}
 
 	output := bytes.NewBuffer([]byte{})
-	if err := t.Execute(output, srv); err != nil {
+	if err := t.Execute(output, client); err != nil {
 		log.Fatal(err)
 	}
 	return output.Bytes(), nil

@@ -47,7 +47,7 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 		}
 
 		if api != "api" {
-			// Skip generating code for preprod "ppapi" server.
+			// Skip generating code for pre-production "ppapi" server.
 			continue
 		}
 

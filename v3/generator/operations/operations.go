@@ -113,6 +113,7 @@ import (
 	return os.WriteFile(path, content, os.ModePerm)
 }
 
+// renderResponseSchema renders all schemas for every HTTP code response.
 func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 	output := bytes.NewBuffer([]byte{})
 	err := helpers.ForEachMapSorted(op.Responses.Codes, func(code string, v any) error {
@@ -123,10 +124,13 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 		if !ok {
 			return nil
 		}
+
+		// Skip on reference.
 		if media.Schema.IsReference() {
 			return nil
 		}
 
+		// Skip on array referencing a schema.
 		_, ok = isArrayReference(media.Schema)
 		if ok {
 			return nil
@@ -147,8 +151,8 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 	return output.Bytes(), nil
 }
 
-// renderRequestSchema returns a nil output if there is no
-// request schema to render for a given operation.
+// renderRequestSchema renders request body schemas, mostly for HTTP POST and PUT.
+// It returns a nil output if there is no request schema to render for a given operation.
 func renderRequestSchema(name string, op *v3.Operation) ([]byte, error) {
 	output := bytes.NewBuffer([]byte{})
 
@@ -162,10 +166,12 @@ func renderRequestSchema(name string, op *v3.Operation) ([]byte, error) {
 		return nil, nil
 	}
 
+	// Skip on reference.
 	if media.Schema.IsReference() {
 		return nil, nil
 	}
 
+	// Skip on array referencing a schema.
 	_, ok = isArrayReference(media.Schema)
 	if ok {
 		return nil, nil
@@ -195,6 +201,7 @@ type QueryParam struct {
 	FuncReturn string
 }
 
+// renderRequestParametersSchema renders the schemas for optional query params and path params.
 func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error) {
 	output := bytes.NewBuffer([]byte{})
 	query := bytes.NewBuffer([]byte{})
@@ -229,11 +236,25 @@ func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error
 			someQueryParam = true
 		}
 
+		// Skip simple types, not needed to be rendered.
 		if schemas.IsSimpleSchema(s) && len(s.Enum) == 0 {
 			continue
 		}
 
-		//TODO: build String() methone for not simple type.
+		// As long as an HTTP query param and path param not using objects or arrays in our spec,
+		// this code path is called only for string enum types.
+		// TODO: To support array or object, add a .String() method to those types for marshalling like described here:
+		// https://swagger.io/docs/specification/describing-parameters/#path-parameters
+		// https://swagger.io/docs/specification/describing-parameters/#query-parameters
+
+		if len(s.Enum) == 0 {
+			slog.Warn(
+				"object/array as query/path params are not implemented",
+				slog.String("request", name),
+				slog.String("param", ParamTypeName),
+			)
+		}
+
 		sc, err := schemas.RenderSchema(ParamTypeName, p.Schema)
 		if err != nil {
 			return nil, err
@@ -262,6 +283,7 @@ type RequestTmpl struct {
 	QueryParams    map[string]string
 }
 
+// serializeRequest serializes the openAPI spec into the request template.
 func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*RequestTmpl, error) {
 	p := RequestTmpl{
 		Name:       funcName,
@@ -278,7 +300,7 @@ func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*Req
 		}
 	}
 	p.ValueReturn = fmt.Sprintf("(%s)", strings.Join(valuesReturn, ", "))
-	// This should never happen in our Exoscale API.
+	// This should never happen in our Exoscale API spec.
 	// This is here as a reminder the day we add such a behavior in the OpenAPI spec.
 	if p.ValueReturn == "(error)" {
 		slog.Error(
@@ -301,6 +323,7 @@ func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*Req
 	return &p, nil
 }
 
+// renderRequest using the request.tmpl.
 func renderRequest(m *RequestTmpl) ([]byte, error) {
 	t, err := template.New("request.tmpl").ParseFiles("./operations/request.tmpl")
 	if err != nil {
@@ -325,6 +348,8 @@ func getParameters(op *v3.Operation, funcName string) (params []string) {
 				continue
 			}
 
+			// Only concat other parameters first,
+			// Since query param is set as vaarg parameter.
 			if param.In == "query" {
 				someQueryParam = true
 				continue
@@ -332,7 +357,6 @@ func getParameters(op *v3.Operation, funcName string) (params []string) {
 
 			name := helpers.ToLowerCamel(param.Name)
 
-			// This is WIP to be removed in:
 			// https://github.com/exoscale/entities/commit/dda7e9f52ded1879e509d465555023b5a16d0155
 			if strings.Contains(name, "*") {
 				slog.Warn(
@@ -351,7 +375,8 @@ func getParameters(op *v3.Operation, funcName string) (params []string) {
 					slog.String("param", name),
 				)
 				// XXX: we should never handle this case in our spec
-				// since optional param are query param and path param are alwayse required.
+				// since optional param are query param and path param are always required.
+				// https://swagger.io/docs/specification/describing-parameters/#path-parameters
 				ptr = "*"
 			}
 
@@ -363,7 +388,8 @@ func getParameters(op *v3.Operation, funcName string) (params []string) {
 			params = append(params, name+" "+ptr+schemas.RenderSimpleType(s))
 		}
 	}
-	// Add vaargs to the end
+
+	// Add variadic arguments to the end
 	if someQueryParam {
 		defer func() {
 			params = append(params, fmt.Sprintf("opts ...%sOpt", funcName))
@@ -374,7 +400,7 @@ func getParameters(op *v3.Operation, funcName string) (params []string) {
 		return
 	}
 
-	// TODO support other content type from spec.
+	// TODO support other content type from OpenAPI spec.
 	media, ok := op.RequestBody.Content["application/json"]
 	if !ok {
 		return
@@ -400,6 +426,8 @@ func getValuesReturn(op *v3.Operation, funcName string) (values []string) {
 	}
 
 	for k, v := range op.Responses.Codes {
+		// We support only 200 return as body reply in our OpenAPI spec.
+		// Skip other HTTP response code.
 		if k != "200" {
 			continue
 		}
@@ -433,6 +461,7 @@ func renderDoc(op *v3.Operation) string {
 	return helpers.RenderDoc(doc)
 }
 
+// renderURLPathBuilder renders the sprintf code used to build the path request in request template.
 func renderURLPathBuilder(rawPath string, op *v3.Operation) string {
 	if len(op.Parameters) == 0 {
 		return fmt.Sprintf("%q", rawPath)
@@ -447,7 +476,6 @@ func renderURLPathBuilder(rawPath string, op *v3.Operation) string {
 		path = strings.Replace(path, "{"+p.Name+"}", "%v", 1)
 		sprintfParam = append(
 			sprintfParam,
-			// This is WIP to be removed in:
 			// https://github.com/exoscale/entities/commit/dda7e9f52ded1879e509d465555023b5a16d0155
 			helpers.ToLowerCamel(strings.Trim(p.Name, "*")),
 		)
@@ -478,6 +506,8 @@ func getQueryParams(op *v3.Operation) map[string]string {
 	return result
 }
 
+// isArrayReference returns true if it's an array pointing on a schema reference.
+// Returns a formatted type corresponding to it on true.
 func isArrayReference(sp *base.SchemaProxy) (string, bool) {
 	s := sp.Schema()
 	if s == nil {

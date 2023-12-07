@@ -20,7 +20,7 @@ var ignoredList = map[string]struct{}{
 	"snapshot-export": {},
 }
 
-// Generate go schema models from OpenAPI spec into a go file.
+// Generate go models from OpenAPI spec schemas into a go file.
 func Generate(doc libopenapi.Document, path, packageName string) error {
 	result, errs := doc.BuildV3Model()
 	for _, err := range errs {
@@ -122,7 +122,7 @@ func RenderSimpleType(s *base.Schema) string {
 }
 
 // renderSchemaInternal render a given libopenapi Schema into a buffer.
-// This function is mostly used recursively to render sub schemas into this buffer.
+// This function is mostly used recursively to render sub schemas object into this buffer.
 //
 // /!\ for every recusivity call, make sure to check schema reference before,
 // to prevent end up in infinite loop.
@@ -174,7 +174,7 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 		output.WriteString(doc)
 		output.WriteString(object)
 		return nil
-	// map represents an OpenAPI AdditionalProperties, it will always be map[string]Type
+	// map represents an OpenAPI AdditionalProperties, it will always be map[string]T
 	case "map":
 		output.WriteString(doc)
 		Map, err := renderSimpleMap(schemaName, s, output)
@@ -238,6 +238,7 @@ func renderArray(typeName string, s *base.Schema, output *bytes.Buffer) (string,
 		return definition + RenderSimpleType(item), nil
 	}
 
+	// Render new object from array schema into the buffer.
 	if err := renderSchemaInternal(typeName, item, output); err != nil {
 		return "", err
 	}
@@ -349,6 +350,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		}
 
 		if IsSimpleSchema(prop) {
+			// Render property type enum.
 			if len(prop.Enum) > 0 {
 				output.WriteString(renderSimpleTypeEnum(typeName+camelName, prop))
 				definition += camelName + " " + typeName + camelName + tag + "\n"
@@ -364,17 +366,20 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 				definition += camelName + " " + RenderSimpleType(prop) + tag + "\n"
 				return nil
 			}
-
 			definition += camelName + " " + required + RenderSimpleType(prop) + tag + "\n"
 
 			return nil
 		}
 
+		// This is an OpenAPI free form object (deprecated).
+		// https://docs.42crunch.com/latest/content/oasv3/datavalidation/schema/v3-schema-object-without-properties.htm
+		// We recommand to use AdditionalProperties instead.
 		if len(prop.Properties) == 0 && prop.AdditionalProperties == nil {
 			definition += camelName + " map[string]any" + tag + "\n"
 			return nil
 		}
 
+		// Render additional properties (map).
 		if prop.AdditionalProperties != nil {
 			Map, err := renderSimpleMap(typeName+camelName, prop, output)
 			if err != nil {
@@ -384,6 +389,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			return nil
 		}
 
+		// Render new object from object property into the buffer.
 		if err := renderSchemaInternal(typeName+camelName, prop, output); err != nil {
 			return err
 		}
@@ -437,6 +443,7 @@ func renderSimpleMap(typeName string, s *base.Schema, output *bytes.Buffer) (str
 		return definition + RenderSimpleType(addl), nil
 	}
 
+	// Render new object from AdditionalProperties schema into the buffer.
 	if err := renderSchemaInternal(typeName, addl, output); err != nil {
 		return "", err
 	}

@@ -16,6 +16,7 @@ import (
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
+// Generate go requests from OpenAPI spec paths operations into a go file.
 func Generate(doc libopenapi.Document, path, packageName string) error {
 	model, errs := doc.BuildV3Model()
 	for _, err := range errs {
@@ -43,8 +44,10 @@ import (
 )
 `, packageName))
 
+	// Iterate over all paths.
 	err := helpers.ForEachMapSorted(model.Model.Paths.PathItems, func(path string, item any) error {
 		pathItems := item.(*v3.PathItem)
+		// For each path, render each operations (GET, POST, PUT...etc) schemas and requests.
 		return helpers.ForEachMapSorted(pathItems.GetOperations(), func(opName string, op any) error {
 			operation := op.(*v3.Operation)
 			funcName := helpers.ToCamel(operation.OperationId)
@@ -64,22 +67,22 @@ import (
 			}
 			output.Write(schemaRequest)
 
-			schemaParameters, err := renderMethodParameterSchema(funcName, operation)
+			schemaParameters, err := renderRequestParametersSchema(funcName, operation)
 			if err != nil {
 				return err
 			}
 			output.Write(schemaParameters)
 
-			method, err := serializeMethod(path, opName, funcName, operation)
+			request, err := serializeRequest(path, opName, funcName, operation)
 			if err != nil {
 				return err
 			}
 
-			if method == nil {
+			if request == nil {
 				return nil
 			}
 
-			m, err := renderMethod(method)
+			m, err := renderRequest(request)
 			if err != nil {
 				return err
 			}
@@ -178,7 +181,7 @@ func renderRequestSchema(name string, op *v3.Operation) ([]byte, error) {
 }
 
 const queryParamTemplate = `
-func {{ .MethodName }}({{ .ParamName }} {{ .ParamType }}) {{ .MethodReturn }} {
+func {{ .FuncName }}({{ .ParamName }} {{ .ParamType }}) {{ .FuncReturn }} {
 	return func(q url.Values) {
 		q.Add("{{ .ParamName }}", fmt.Sprint({{ .ParamName }}))
 	}
@@ -186,13 +189,13 @@ func {{ .MethodName }}({{ .ParamName }} {{ .ParamType }}) {{ .MethodReturn }} {
 `
 
 type QueryParam struct {
-	MethodName   string
-	ParamName    string
-	ParamType    string
-	MethodReturn string
+	FuncName   string
+	ParamName  string
+	ParamType  string
+	FuncReturn string
 }
 
-func renderMethodParameterSchema(name string, op *v3.Operation) ([]byte, error) {
+func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error) {
 	output := bytes.NewBuffer([]byte{})
 	query := bytes.NewBuffer([]byte{})
 
@@ -216,10 +219,10 @@ func renderMethodParameterSchema(name string, op *v3.Operation) ([]byte, error) 
 				typ = schemas.RenderSimpleType(s)
 			}
 			if err := t.Execute(query, QueryParam{
-				MethodName:   name + "With" + helpers.ToCamel(p.Name),
-				ParamName:    helpers.ToLowerCamel(p.Name),
-				ParamType:    typ,
-				MethodReturn: name + "Opt",
+				FuncName:   name + "With" + helpers.ToCamel(p.Name),
+				ParamName:  helpers.ToLowerCamel(p.Name),
+				ParamType:  typ,
+				FuncReturn: name + "Opt",
 			}); err != nil {
 				return nil, err
 			}
@@ -246,7 +249,7 @@ func renderMethodParameterSchema(name string, op *v3.Operation) ([]byte, error) 
 	return output.Bytes(), nil
 }
 
-type MethodTmpl struct {
+type RequestTmpl struct {
 	Comment        string
 	Name           string
 	Params         string
@@ -259,10 +262,10 @@ type MethodTmpl struct {
 	QueryParams    map[string]string
 }
 
-func serializeMethod(path, httpMethode, funcName string, op *v3.Operation) (*MethodTmpl, error) {
-	p := MethodTmpl{
+func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*RequestTmpl, error) {
+	p := RequestTmpl{
 		Name:       funcName,
-		HTTPMethod: strings.ToUpper(httpMethode),
+		HTTPMethod: strings.ToUpper(httpMethod),
 	}
 	p.Comment = renderDoc(op)
 	params := getParameters(op, funcName)
@@ -298,8 +301,8 @@ func serializeMethod(path, httpMethode, funcName string, op *v3.Operation) (*Met
 	return &p, nil
 }
 
-func renderMethod(m *MethodTmpl) ([]byte, error) {
-	t, err := template.New("method.tmpl").ParseFiles("./operations/method.tmpl")
+func renderRequest(m *RequestTmpl) ([]byte, error) {
+	t, err := template.New("request.tmpl").ParseFiles("./operations/request.tmpl")
 	if err != nil {
 		return nil, err
 	}

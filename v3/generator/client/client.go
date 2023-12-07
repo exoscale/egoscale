@@ -15,6 +15,7 @@ import (
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
+// Generate go client from OpenAPI spec servers into a go file.
 func Generate(doc libopenapi.Document, path, packageName string) error {
 	r, errs := doc.BuildV3Model()
 	for _, err := range errs {

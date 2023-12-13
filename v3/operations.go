@@ -505,6 +505,456 @@ func (c Client) GetAPIKey(ctx context.Context, id string) (*IAMAPIKey, error) {
 	return bodyresp, nil
 }
 
+type ListBlockStorageVolumesResponse struct {
+	BlockStorageVolumes []BlockStorageVolume `json:"block-storage-volumes,omitempty"`
+}
+
+type ListBlockStorageVolumesOpt func(url.Values)
+
+func ListBlockStorageVolumesWithInstanceID(instanceID UUID) ListBlockStorageVolumesOpt {
+	return func(q url.Values) {
+		q.Add("instanceID", fmt.Sprint(instanceID))
+	}
+}
+
+// List block storage volumes
+func (c Client) ListBlockStorageVolumes(ctx context.Context, opts ...ListBlockStorageVolumesOpt) (*ListBlockStorageVolumesResponse, error) {
+	path := "/block-storage"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListBlockStorageVolumes: new request: %w", err)
+	}
+
+	if len(opts) > 0 {
+		q := request.URL.Query()
+		for _, opt := range opts {
+			opt(q)
+		}
+		request.URL.RawQuery = q.Encode()
+	}
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("ListBlockStorageVolumes: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListBlockStorageVolumes: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request ListBlockStorageVolumes returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &ListBlockStorageVolumesResponse{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListBlockStorageVolumes: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateBlockStorageVolumeRequest struct {
+	// Target block storage snapshot
+	BlockStorageSnapshot *BlockStorageSnapshotTarget `json:"block-storage-snapshot,omitempty"`
+	Labels               Labels                      `json:"labels,omitempty"`
+	// Volume name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Volume size in GB.
+	// When a snapshot ID is supplied, this defaults to the size of the source volume, but can be set to a larger value.
+	Size int64 `json:"size,omitempty" validate:"omitempty,gte=100,lte=1024"`
+}
+
+// Create a block storage volume
+func (c Client) CreateBlockStorageVolume(ctx context.Context, req CreateBlockStorageVolumeRequest) (*Operation, error) {
+	path := "/block-storage"
+
+	body, err := prepareJsonBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageVolume: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageVolume: new request: %w", err)
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageVolume: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageVolume: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request CreateBlockStorageVolume returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageVolume: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ListBlockStorageSnapshotsResponse struct {
+	BlockStorageSnapshots []BlockStorageSnapshot `json:"block-storage-snapshots,omitempty"`
+}
+
+// List block storage snapshots
+func (c Client) ListBlockStorageSnapshots(ctx context.Context) (*ListBlockStorageSnapshotsResponse, error) {
+	path := "/block-storage-snapshot"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListBlockStorageSnapshots: new request: %w", err)
+	}
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("ListBlockStorageSnapshots: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListBlockStorageSnapshots: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request ListBlockStorageSnapshots returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &ListBlockStorageSnapshotsResponse{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListBlockStorageSnapshots: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Delete a block storage snapshot, data will be unrecoverable
+func (c Client) DeleteBlockStorageSnapshot(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/block-storage-snapshot/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: new request: %w", err)
+	}
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request DeleteBlockStorageSnapshot returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Retrieve block storage snapshot details
+func (c Client) GetBlockStorageSnapshot(ctx context.Context, id UUID) (*BlockStorageSnapshot, error) {
+	path := fmt.Sprintf("/block-storage-snapshot/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetBlockStorageSnapshot: new request: %w", err)
+	}
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("GetBlockStorageSnapshot: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetBlockStorageSnapshot: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request GetBlockStorageSnapshot returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &BlockStorageSnapshot{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetBlockStorageSnapshot: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Delete a block storage volume, data will be unrecoverable
+func (c Client) DeleteBlockStorageVolume(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/block-storage/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageVolume: new request: %w", err)
+	}
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageVolume: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageVolume: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request DeleteBlockStorageVolume returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageVolume: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Retrieve block storage volume details
+func (c Client) GetBlockStorageVolume(ctx context.Context, id UUID) (*BlockStorageVolume, error) {
+	path := fmt.Sprintf("/block-storage/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetBlockStorageVolume: new request: %w", err)
+	}
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("GetBlockStorageVolume: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetBlockStorageVolume: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request GetBlockStorageVolume returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &BlockStorageVolume{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetBlockStorageVolume: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateBlockStorageVolumeLabelsRequest struct {
+	Labels Labels `json:"labels,omitempty"`
+}
+
+// Set block storage volume labels
+func (c Client) UpdateBlockStorageVolumeLabels(ctx context.Context, id UUID, req UpdateBlockStorageVolumeLabelsRequest) (*Operation, error) {
+	path := fmt.Sprintf("/block-storage/%v", id)
+
+	body, err := prepareJsonBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: new request: %w", err)
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request UpdateBlockStorageVolumeLabels returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type AttachBlockStorageVolumeToInstanceRequest struct {
+	// Target Instance
+	Instance *InstanceTarget `json:"instance" validate:"required"`
+}
+
+// Attach block storage volume to an instance
+func (c Client) AttachBlockStorageVolumeToInstance(ctx context.Context, id UUID, req AttachBlockStorageVolumeToInstanceRequest) (*Operation, error) {
+	path := fmt.Sprintf("/block-storage/%v:attach", id)
+
+	body, err := prepareJsonBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: new request: %w", err)
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request AttachBlockStorageVolumeToInstance returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateBlockStorageSnapshotRequest struct {
+	Labels Labels `json:"labels,omitempty"`
+	// Snapshot name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+}
+
+// Create a block storage snapshot
+func (c Client) CreateBlockStorageSnapshot(ctx context.Context, id UUID, req CreateBlockStorageSnapshotRequest) (*Operation, error) {
+	path := fmt.Sprintf("/block-storage/%v:create-snapshot", id)
+
+	body, err := prepareJsonBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageSnapshot: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageSnapshot: new request: %w", err)
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageSnapshot: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageSnapshot: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request CreateBlockStorageSnapshot returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageSnapshot: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Detach block storage volume
+func (c Client) DetachBlockStorageVolume(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/block-storage/%v:detach", id)
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DetachBlockStorageVolume: new request: %w", err)
+	}
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("DetachBlockStorageVolume: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DetachBlockStorageVolume: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request DetachBlockStorageVolume returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("DetachBlockStorageVolume: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ResizeBlockStorageVolumeRequest struct {
+	// Volume size in GB
+	Size int64 `json:"size" validate:"required,gte=101,lte=1024"`
+}
+
+// This operation resizes a Block storage volume. Note: the volume can only grow, cannot be shrunk.
+func (c Client) ResizeBlockStorageVolume(ctx context.Context, id UUID, req ResizeBlockStorageVolumeRequest) (*BlockStorageVolume, error) {
+	path := fmt.Sprintf("/block-storage/%v:resize-volume", id)
+
+	body, err := prepareJsonBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("ResizeBlockStorageVolume: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("ResizeBlockStorageVolume: new request: %w", err)
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
+		return nil, fmt.Errorf("ResizeBlockStorageVolume: register middlewares: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ResizeBlockStorageVolume: http client do: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
+		return nil, fmt.Errorf("request ResizeBlockStorageVolume returned %d code", resp.StatusCode)
+	}
+
+	bodyresp := &BlockStorageVolume{}
+	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+		return nil, fmt.Errorf("ResizeBlockStorageVolume: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type GetDBAASCACertificateResponse struct {
 	Certificate string `json:"certificate,omitempty"`
 }

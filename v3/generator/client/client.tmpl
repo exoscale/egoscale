@@ -56,7 +56,7 @@ func ClientOptWithTrace() ClientOpt {
 	}
 }
 
-// ClientOptWithURL returns a ClientOpt With a given zone.
+// ClientOptWithURL returns a ClientOpt With a given zone URL.
 func ClientOptWithURL(url URL) ClientOpt {
 	return func(c *Client) error {
 		c.serverURL = string(url)

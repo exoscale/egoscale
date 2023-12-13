@@ -28,7 +28,7 @@ const (
 	BGSof1 URL = "https://api-bg-sof-1.exoscale.com/v2"
 )
 
-// Zones represents a list of all Exoscale Zone.
+// Zones represents a list of all Exoscale zone.
 var Zones map[string]URL = map[string]URL{
 	"ch-gva-2": CHGva2,
 	"ch-dk-2":  CHDk2,
@@ -85,7 +85,7 @@ func ClientOptWithTrace() ClientOpt {
 	}
 }
 
-// ClientOptWithURL returns a ClientOpt With a given zone.
+// ClientOptWithURL returns a ClientOpt With a given zone URL.
 func ClientOptWithURL(url URL) ClientOpt {
 	return func(c *Client) error {
 		c.serverURL = string(url)
@@ -143,7 +143,7 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 	return client.WithRequestMiddleware(security.Intercept), nil
 }
 
-// WithURL returns a copy of Client with new URL.
+// WithURL returns a copy of Client with new zone URL.
 func (c *Client) WithURL(url URL) *Client {
 	return &Client{
 		serverURL:       string(url),

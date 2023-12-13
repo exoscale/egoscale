@@ -30,7 +30,6 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 		"fmt"
 		"net/http"
 		"context"
-		"strings"
 		"runtime"
 		"time"
 		"errors"
@@ -91,10 +90,9 @@ func extractAPIName(s *v3.Server) (string, error) {
 
 // Template use client.tmpl file
 type Template struct {
-	Enum         string
-	DefaultZone  string
-	ServerURL    string
-	RawServerURL string
+	Enum      string
+	URLs      string
+	ServerURL string
 }
 
 // renderClient using the client.tmpl template.
@@ -105,16 +103,19 @@ func renderClient(s *v3.Server) ([]byte, error) {
 			// Supporting only zone variable for Exoscale
 			continue
 		}
+
 		enum := ""
+		urls := ""
 		for _, z := range v.Enum {
-			enum += "ClientZone" + helpers.ToCamel(z) + " ClientZone = \"" + z + "\"\n  "
+			url := strings.Replace(s.URL, "{zone}", z, 1)
+			enum += fmt.Sprintf("%s URL = %q\n", helpers.ToCamel(z), url)
+			urls += fmt.Sprintf("%q: %s,\n", z, helpers.ToCamel(z))
 		}
 
 		client = Template{
-			DefaultZone:  v.Default,
-			ServerURL:    strings.Replace(s.URL, "{zone}", v.Default, 1),
-			RawServerURL: s.URL,
-			Enum:         enum,
+			ServerURL: strings.Replace(s.URL, "{zone}", v.Default, 1),
+			Enum:      enum,
+			URLs:      urls,
 		}
 	}
 

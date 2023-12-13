@@ -28,8 +28,8 @@ const (
 	BGSof1 URL = "https://api-bg-sof-1.exoscale.com/v2"
 )
 
-// URLs represents a list of zoned URL.
-var URLs map[string]URL = map[string]URL{
+// Zones represents a list of all Exoscale Zone.
+var Zones map[string]URL = map[string]URL{
 	"ch-gva-2": CHGva2,
 	"ch-dk-2":  CHDk2,
 	"de-fra-1": DEFra1,

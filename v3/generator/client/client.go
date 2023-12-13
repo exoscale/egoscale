@@ -91,7 +91,7 @@ func extractAPIName(s *v3.Server) (string, error) {
 // Template use client.tmpl file
 type Template struct {
 	Enum      string
-	URLs      string
+	Zones     string
 	ServerURL string
 }
 
@@ -105,17 +105,17 @@ func renderClient(s *v3.Server) ([]byte, error) {
 		}
 
 		enum := ""
-		urls := ""
+		zones := ""
 		for _, z := range v.Enum {
 			url := strings.Replace(s.URL, "{zone}", z, 1)
 			enum += fmt.Sprintf("%s URL = %q\n", helpers.ToCamel(z), url)
-			urls += fmt.Sprintf("%q: %s,\n", z, helpers.ToCamel(z))
+			zones += fmt.Sprintf("%q: %s,\n", z, helpers.ToCamel(z))
 		}
 
 		client = Template{
 			ServerURL: strings.Replace(s.URL, "{zone}", v.Default, 1),
 			Enum:      enum,
-			URLs:      urls,
+			Zones:     zones,
 		}
 	}
 

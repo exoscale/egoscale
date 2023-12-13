@@ -5,9 +5,9 @@ const (
   {{ .Enum }}
 )
 
-// URLs represents a list of zoned URL.
-var URLs map[string]URL = map[string]URL{
-	{{ .URLs }}
+// Zones represents a list of all Exoscale Zone.
+var Zones map[string]URL = map[string]URL{
+	{{ .Zones }}
 }
 
 // Client represents an Exoscale API client.

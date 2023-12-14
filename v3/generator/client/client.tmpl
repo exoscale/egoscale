@@ -68,7 +68,7 @@ func ClientOptWithURL(url URL) ClientOpt {
 	}
 }
 
-// ClientOptWithURL returns a ClientOpt With a given RequestEditors.
+// ClientOptWithRequestEditors returns a ClientOpt With given RequestEditors.
 func ClientOptWithRequestEditors(f ...RequestEditorFn) ClientOpt {
 	return func(c *Client) error {
 		c.requestEditors = append(c.requestEditors, f...)

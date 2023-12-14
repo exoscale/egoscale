@@ -9,30 +9,41 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
-	"strings"
 	"time"
 
 	api "github.com/exoscale/egoscale/v3/api"
 	"github.com/exoscale/egoscale/version"
 )
 
-type ClientZone string
+// URL represents a zoned url endpoint.
+type URL string
 
 const (
-	ClientZoneCHGva2 ClientZone = "ch-gva-2"
-	ClientZoneCHDk2  ClientZone = "ch-dk-2"
-	ClientZoneDEFra1 ClientZone = "de-fra-1"
-	ClientZoneDEMuc1 ClientZone = "de-muc-1"
-	ClientZoneATVie1 ClientZone = "at-vie-1"
-	ClientZoneATVie2 ClientZone = "at-vie-2"
-	ClientZoneBGSof1 ClientZone = "bg-sof-1"
+	CHGva2 URL = "https://api-ch-gva-2.exoscale.com/v2"
+	CHDk2  URL = "https://api-ch-dk-2.exoscale.com/v2"
+	DEFra1 URL = "https://api-de-fra-1.exoscale.com/v2"
+	DEMuc1 URL = "https://api-de-muc-1.exoscale.com/v2"
+	ATVie1 URL = "https://api-at-vie-1.exoscale.com/v2"
+	ATVie2 URL = "https://api-at-vie-2.exoscale.com/v2"
+	BGSof1 URL = "https://api-bg-sof-1.exoscale.com/v2"
 )
 
+// Zones represents a list of all Exoscale zone.
+var Zones map[string]URL = map[string]URL{
+	"ch-gva-2": CHGva2,
+	"ch-dk-2":  CHDk2,
+	"de-fra-1": DEFra1,
+	"de-muc-1": DEMuc1,
+	"at-vie-1": ATVie1,
+	"at-vie-2": ATVie2,
+	"bg-sof-1": BGSof1,
+}
+
+// Client represents an Exoscale API client.
 type Client struct {
 	apiKey          string
 	apiSecret       string
 	serverURL       string
-	rawServerURL    string
 	httpClient      *http.Client
 	timeout         time.Duration
 	pollingInterval time.Duration
@@ -74,18 +85,10 @@ func ClientOptWithTrace() ClientOpt {
 	}
 }
 
-func ClientOptWithEnvironment(env string) ClientOpt {
+// ClientOptWithURL returns a ClientOpt With a given zone URL.
+func ClientOptWithURL(url URL) ClientOpt {
 	return func(c *Client) error {
-		c.rawServerURL = strings.Replace(c.rawServerURL, "api", env, 1)
-		c.serverURL = strings.Replace(c.serverURL, "api", env, 1)
-		return nil
-	}
-}
-
-// ClientOptWithZone returns a ClientOpt With a given zone.
-func ClientOptWithZone(zone ClientZone) ClientOpt {
-	return func(c *Client) error {
-		c.serverURL = strings.Replace(c.rawServerURL, "{zone}", string(zone), 1)
+		c.serverURL = string(url)
 		return nil
 	}
 }
@@ -104,6 +107,7 @@ func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
 	}
 }
 
+// NewClient returns a new Exoscale API client.
 func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 	if apiKey == "" || apiSecret == "" {
 		return nil, fmt.Errorf("missing or incomplete API credentials")
@@ -112,8 +116,7 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 	client := &Client{
 		apiKey:          apiKey,
 		apiSecret:       apiSecret,
-		serverURL:       "https://api-ch-gva-2.exoscale.com/v2",
-		rawServerURL:    "https://api-{zone}.exoscale.com/v2",
+		serverURL:       string(CHGva2),
 		httpClient:      http.DefaultClient,
 		pollingInterval: pollingInterval,
 	}
@@ -140,40 +143,30 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 	return client.WithRequestMiddleware(security.Intercept), nil
 }
 
-func (c *Client) WithZone(z ClientZone) *Client {
+// WithURL returns a copy of Client with new zone URL.
+func (c *Client) WithURL(url URL) *Client {
 	return &Client{
-		serverURL:       strings.Replace(c.rawServerURL, "{zone}", string(z), 1),
-		rawServerURL:    c.rawServerURL,
+		serverURL:       string(url),
 		httpClient:      c.httpClient,
 		middlewares:     c.middlewares,
 		pollingInterval: c.pollingInterval,
 	}
 }
 
-func (c *Client) WithContext(ctx context.Context) *Client {
-	return &Client{
-		serverURL:       c.serverURL,
-		rawServerURL:    c.rawServerURL,
-		httpClient:      c.httpClient,
-		middlewares:     c.middlewares,
-		pollingInterval: c.pollingInterval,
-	}
-}
-
+// WithHttpClient returns a copy of Client with new http.Client.
 func (c *Client) WithHttpClient(client *http.Client) *Client {
 	return &Client{
 		serverURL:       c.serverURL,
-		rawServerURL:    c.rawServerURL,
 		httpClient:      client,
 		middlewares:     c.middlewares,
 		pollingInterval: c.pollingInterval,
 	}
 }
 
+// WithRequestMiddleware returns a copy of Client with new RequestMiddlewareFn.
 func (c *Client) WithRequestMiddleware(f RequestMiddlewareFn) *Client {
 	return &Client{
 		serverURL:       c.serverURL,
-		rawServerURL:    c.rawServerURL,
 		httpClient:      c.httpClient,
 		middlewares:     append(c.middlewares, f),
 		pollingInterval: c.pollingInterval,

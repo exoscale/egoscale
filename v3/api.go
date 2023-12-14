@@ -1,3 +1,26 @@
+package v3
+
+import (
+	"bytes"
+	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httputil"
+	"os"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+)
+
 var (
 	// ErrNotFound represents an error indicating a non-existent resource.
 	ErrNotFound = errors.New("resource not found")
@@ -205,7 +228,6 @@ func extractRequestParameters(req *http.Request) ([]string, string) {
 
 	return names, values
 }
-
 
 func handleHTTPErrorResp(resp *http.Response) error {
 	if resp.StatusCode >= 400 && resp.StatusCode <= 599 {

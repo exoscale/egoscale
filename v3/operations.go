@@ -51,7 +51,7 @@ func (c Client) ListAccessKeys(ctx context.Context) (*ListAccessKeysResponse, er
 	}
 
 	bodyresp := &ListAccessKeysResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAccessKeys: prepare Json response: %w", err)
 	}
 
@@ -74,7 +74,7 @@ type CreateAccessKeyRequest struct {
 func (c Client) CreateAccessKey(ctx context.Context, req CreateAccessKeyRequest) (*AccessKey, error) {
 	path := "/access-key"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAccessKey: prepare Json body: %w", err)
 	}
@@ -112,7 +112,7 @@ func (c Client) CreateAccessKey(ctx context.Context, req CreateAccessKeyRequest)
 	}
 
 	bodyresp := &AccessKey{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAccessKey: prepare Json response: %w", err)
 	}
 
@@ -158,7 +158,7 @@ func (c Client) ListAccessKeyKnownOperations(ctx context.Context) (*ListAccessKe
 	}
 
 	bodyresp := &ListAccessKeyKnownOperationsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAccessKeyKnownOperations: prepare Json response: %w", err)
 	}
 
@@ -204,7 +204,7 @@ func (c Client) ListAccessKeyOperations(ctx context.Context) (*ListAccessKeyOper
 	}
 
 	bodyresp := &ListAccessKeyOperationsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAccessKeyOperations: prepare Json response: %w", err)
 	}
 
@@ -246,7 +246,7 @@ func (c Client) RevokeAccessKey(ctx context.Context, key string) (*Operation, er
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevokeAccessKey: prepare Json response: %w", err)
 	}
 
@@ -288,7 +288,7 @@ func (c Client) GetAccessKey(ctx context.Context, key string) (*AccessKey, error
 	}
 
 	bodyresp := &AccessKey{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetAccessKey: prepare Json response: %w", err)
 	}
 
@@ -334,7 +334,7 @@ func (c Client) ListAntiAffinityGroups(ctx context.Context) (*ListAntiAffinityGr
 	}
 
 	bodyresp := &ListAntiAffinityGroupsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAntiAffinityGroups: prepare Json response: %w", err)
 	}
 
@@ -352,7 +352,7 @@ type CreateAntiAffinityGroupRequest struct {
 func (c Client) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffinityGroupRequest) (*Operation, error) {
 	path := "/anti-affinity-group"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: prepare Json body: %w", err)
 	}
@@ -390,7 +390,7 @@ func (c Client) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffin
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: prepare Json response: %w", err)
 	}
 
@@ -432,7 +432,7 @@ func (c Client) DeleteAntiAffinityGroup(ctx context.Context, id UUID) (*Operatio
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteAntiAffinityGroup: prepare Json response: %w", err)
 	}
 
@@ -474,7 +474,7 @@ func (c Client) GetAntiAffinityGroup(ctx context.Context, id UUID) (*AntiAffinit
 	}
 
 	bodyresp := &AntiAffinityGroup{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetAntiAffinityGroup: prepare Json response: %w", err)
 	}
 
@@ -520,7 +520,7 @@ func (c Client) ListAPIKeys(ctx context.Context) (*ListAPIKeysResponse, error) {
 	}
 
 	bodyresp := &ListAPIKeysResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAPIKeys: prepare Json response: %w", err)
 	}
 
@@ -538,7 +538,7 @@ type CreateAPIKeyRequest struct {
 func (c Client) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAMAPIKeyCreated, error) {
 	path := "/api-key"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAPIKey: prepare Json body: %w", err)
 	}
@@ -576,7 +576,7 @@ func (c Client) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAM
 	}
 
 	bodyresp := &IAMAPIKeyCreated{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAPIKey: prepare Json response: %w", err)
 	}
 
@@ -618,7 +618,7 @@ func (c Client) DeleteAPIKey(ctx context.Context, id string) (*Operation, error)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteAPIKey: prepare Json response: %w", err)
 	}
 
@@ -660,7 +660,7 @@ func (c Client) GetAPIKey(ctx context.Context, id string) (*IAMAPIKey, error) {
 	}
 
 	bodyresp := &IAMAPIKey{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetAPIKey: prepare Json response: %w", err)
 	}
 
@@ -722,7 +722,7 @@ func (c Client) ListBlockStorageVolumes(ctx context.Context, opts ...ListBlockSt
 	}
 
 	bodyresp := &ListBlockStorageVolumesResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListBlockStorageVolumes: prepare Json response: %w", err)
 	}
 
@@ -744,7 +744,7 @@ type CreateBlockStorageVolumeRequest struct {
 func (c Client) CreateBlockStorageVolume(ctx context.Context, req CreateBlockStorageVolumeRequest) (*Operation, error) {
 	path := "/block-storage"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageVolume: prepare Json body: %w", err)
 	}
@@ -782,7 +782,7 @@ func (c Client) CreateBlockStorageVolume(ctx context.Context, req CreateBlockSto
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageVolume: prepare Json response: %w", err)
 	}
 
@@ -828,7 +828,7 @@ func (c Client) ListBlockStorageSnapshots(ctx context.Context) (*ListBlockStorag
 	}
 
 	bodyresp := &ListBlockStorageSnapshotsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListBlockStorageSnapshots: prepare Json response: %w", err)
 	}
 
@@ -870,7 +870,7 @@ func (c Client) DeleteBlockStorageSnapshot(ctx context.Context, id UUID) (*Opera
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: prepare Json response: %w", err)
 	}
 
@@ -912,7 +912,7 @@ func (c Client) GetBlockStorageSnapshot(ctx context.Context, id UUID) (*BlockSto
 	}
 
 	bodyresp := &BlockStorageSnapshot{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetBlockStorageSnapshot: prepare Json response: %w", err)
 	}
 
@@ -954,7 +954,7 @@ func (c Client) DeleteBlockStorageVolume(ctx context.Context, id UUID) (*Operati
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageVolume: prepare Json response: %w", err)
 	}
 
@@ -996,7 +996,7 @@ func (c Client) GetBlockStorageVolume(ctx context.Context, id UUID) (*BlockStora
 	}
 
 	bodyresp := &BlockStorageVolume{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetBlockStorageVolume: prepare Json response: %w", err)
 	}
 
@@ -1011,7 +1011,7 @@ type UpdateBlockStorageVolumeLabelsRequest struct {
 func (c Client) UpdateBlockStorageVolumeLabels(ctx context.Context, id UUID, req UpdateBlockStorageVolumeLabelsRequest) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: prepare Json body: %w", err)
 	}
@@ -1049,7 +1049,7 @@ func (c Client) UpdateBlockStorageVolumeLabels(ctx context.Context, id UUID, req
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: prepare Json response: %w", err)
 	}
 
@@ -1065,7 +1065,7 @@ type AttachBlockStorageVolumeToInstanceRequest struct {
 func (c Client) AttachBlockStorageVolumeToInstance(ctx context.Context, id UUID, req AttachBlockStorageVolumeToInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage/%v:attach", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: prepare Json body: %w", err)
 	}
@@ -1103,7 +1103,7 @@ func (c Client) AttachBlockStorageVolumeToInstance(ctx context.Context, id UUID,
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: prepare Json response: %w", err)
 	}
 
@@ -1120,7 +1120,7 @@ type CreateBlockStorageSnapshotRequest struct {
 func (c Client) CreateBlockStorageSnapshot(ctx context.Context, id UUID, req CreateBlockStorageSnapshotRequest) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage/%v:create-snapshot", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: prepare Json body: %w", err)
 	}
@@ -1158,7 +1158,7 @@ func (c Client) CreateBlockStorageSnapshot(ctx context.Context, id UUID, req Cre
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: prepare Json response: %w", err)
 	}
 
@@ -1200,7 +1200,7 @@ func (c Client) DetachBlockStorageVolume(ctx context.Context, id UUID) (*Operati
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachBlockStorageVolume: prepare Json response: %w", err)
 	}
 
@@ -1216,7 +1216,7 @@ type ResizeBlockStorageVolumeRequest struct {
 func (c Client) ResizeBlockStorageVolume(ctx context.Context, id UUID, req ResizeBlockStorageVolumeRequest) (*BlockStorageVolume, error) {
 	path := fmt.Sprintf("/block-storage/%v:resize-volume", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: prepare Json body: %w", err)
 	}
@@ -1254,7 +1254,7 @@ func (c Client) ResizeBlockStorageVolume(ctx context.Context, id UUID, req Resiz
 	}
 
 	bodyresp := &BlockStorageVolume{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: prepare Json response: %w", err)
 	}
 
@@ -1300,7 +1300,7 @@ func (c Client) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertifica
 	}
 
 	bodyresp := &GetDBAASCACertificateResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASCACertificate: prepare Json response: %w", err)
 	}
 
@@ -1342,7 +1342,7 @@ func (c Client) DeleteDBAASServiceGrafana(ctx context.Context, name string) (*Op
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: prepare Json response: %w", err)
 	}
 
@@ -1384,7 +1384,7 @@ func (c Client) GetDBAASServiceGrafana(ctx context.Context, name string) (*DBAAS
 	}
 
 	bodyresp := &DBAASServiceGrafana{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceGrafana: prepare Json response: %w", err)
 	}
 
@@ -1430,7 +1430,7 @@ type CreateDBAASServiceGrafanaRequest struct {
 func (c Client) CreateDBAASServiceGrafana(ctx context.Context, name string, req CreateDBAASServiceGrafanaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: prepare Json body: %w", err)
 	}
@@ -1468,7 +1468,7 @@ func (c Client) CreateDBAASServiceGrafana(ctx context.Context, name string, req 
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: prepare Json response: %w", err)
 	}
 
@@ -1513,7 +1513,7 @@ type UpdateDBAASServiceGrafanaRequest struct {
 func (c Client) UpdateDBAASServiceGrafana(ctx context.Context, name string, req UpdateDBAASServiceGrafanaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: prepare Json body: %w", err)
 	}
@@ -1551,7 +1551,7 @@ func (c Client) UpdateDBAASServiceGrafana(ctx context.Context, name string, req 
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: prepare Json response: %w", err)
 	}
 
@@ -1593,7 +1593,7 @@ func (c Client) StartDBAASGrafanaMaintenance(ctx context.Context, name string) (
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: prepare Json response: %w", err)
 	}
 
@@ -1612,7 +1612,7 @@ type CreateDBAASIntegrationRequest struct {
 func (c Client) CreateDBAASIntegration(ctx context.Context, req CreateDBAASIntegrationRequest) (*Operation, error) {
 	path := "/dbaas-integration"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASIntegration: prepare Json body: %w", err)
 	}
@@ -1650,7 +1650,7 @@ func (c Client) CreateDBAASIntegration(ctx context.Context, req CreateDBAASInteg
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASIntegration: prepare Json response: %w", err)
 	}
 
@@ -1705,7 +1705,7 @@ func (c Client) ListDBAASIntegrationSettings(ctx context.Context, integrationTyp
 	}
 
 	bodyresp := &ListDBAASIntegrationSettingsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationSettings: prepare Json response: %w", err)
 	}
 
@@ -1751,7 +1751,7 @@ func (c Client) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegr
 	}
 
 	bodyresp := &ListDBAASIntegrationTypesResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationTypes: prepare Json response: %w", err)
 	}
 
@@ -1793,7 +1793,7 @@ func (c Client) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASIntegration: prepare Json response: %w", err)
 	}
 
@@ -1835,7 +1835,7 @@ func (c Client) GetDBAASIntegration(ctx context.Context, id UUID) (*DBAASIntegra
 	}
 
 	bodyresp := &DBAASIntegration{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASIntegration: prepare Json response: %w", err)
 	}
 
@@ -1851,7 +1851,7 @@ type UpdateDBAASIntegrationRequest struct {
 func (c Client) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateDBAASIntegrationRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-integration/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASIntegration: prepare Json body: %w", err)
 	}
@@ -1889,7 +1889,7 @@ func (c Client) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateD
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASIntegration: prepare Json response: %w", err)
 	}
 
@@ -1931,7 +1931,7 @@ func (c Client) DeleteDBAASServiceKafka(ctx context.Context, name string) (*Oper
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceKafka: prepare Json response: %w", err)
 	}
 
@@ -1973,7 +1973,7 @@ func (c Client) GetDBAASServiceKafka(ctx context.Context, name string) (*DBAASSe
 	}
 
 	bodyresp := &DBAASServiceKafka{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceKafka: prepare Json response: %w", err)
 	}
 
@@ -2042,7 +2042,7 @@ type CreateDBAASServiceKafkaRequest struct {
 func (c Client) CreateDBAASServiceKafka(ctx context.Context, name string, req CreateDBAASServiceKafkaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: prepare Json body: %w", err)
 	}
@@ -2080,7 +2080,7 @@ func (c Client) CreateDBAASServiceKafka(ctx context.Context, name string, req Cr
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: prepare Json response: %w", err)
 	}
 
@@ -2149,7 +2149,7 @@ type UpdateDBAASServiceKafkaRequest struct {
 func (c Client) UpdateDBAASServiceKafka(ctx context.Context, name string, req UpdateDBAASServiceKafkaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: prepare Json body: %w", err)
 	}
@@ -2187,7 +2187,7 @@ func (c Client) UpdateDBAASServiceKafka(ctx context.Context, name string, req Up
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: prepare Json response: %w", err)
 	}
 
@@ -2229,7 +2229,7 @@ func (c Client) GetDBAASKafkaAclConfig(ctx context.Context, name string) (*DBAAS
 	}
 
 	bodyresp := &DBAASKafkaAcls{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: prepare Json response: %w", err)
 	}
 
@@ -2271,7 +2271,7 @@ func (c Client) StartDBAASKafkaMaintenance(ctx context.Context, name string) (*O
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: prepare Json response: %w", err)
 	}
 
@@ -2282,7 +2282,7 @@ func (c Client) StartDBAASKafkaMaintenance(ctx context.Context, name string) (*O
 func (c Client) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, name string, req DBAASKafkaSchemaRegistryAclEntry) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/schema-registry/acl-config", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: prepare Json body: %w", err)
 	}
@@ -2320,7 +2320,7 @@ func (c Client) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: prepare Json response: %w", err)
 	}
 
@@ -2362,7 +2362,7 @@ func (c Client) DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: prepare Json response: %w", err)
 	}
 
@@ -2373,7 +2373,7 @@ func (c Client) DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 func (c Client) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string, req DBAASKafkaTopicAclEntry) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/topic/acl-config", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: prepare Json body: %w", err)
 	}
@@ -2411,7 +2411,7 @@ func (c Client) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: prepare Json response: %w", err)
 	}
 
@@ -2453,7 +2453,7 @@ func (c Client) DeleteDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: prepare Json response: %w", err)
 	}
 
@@ -2468,7 +2468,7 @@ type CreateDBAASKafkaUserRequest struct {
 func (c Client) CreateDBAASKafkaUser(ctx context.Context, serviceName string, req CreateDBAASKafkaUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/user", serviceName)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: prepare Json body: %w", err)
 	}
@@ -2506,7 +2506,7 @@ func (c Client) CreateDBAASKafkaUser(ctx context.Context, serviceName string, re
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: prepare Json response: %w", err)
 	}
 
@@ -2548,7 +2548,7 @@ func (c Client) DeleteDBAASKafkaUser(ctx context.Context, serviceName string, us
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaUser: prepare Json response: %w", err)
 	}
 
@@ -2563,7 +2563,7 @@ type ResetDBAASKafkaUserPasswordRequest struct {
 func (c Client) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASKafkaUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: prepare Json body: %w", err)
 	}
@@ -2601,7 +2601,7 @@ func (c Client) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName str
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: prepare Json response: %w", err)
 	}
 
@@ -2643,7 +2643,7 @@ func (c Client) GetDBAASMigrationStatus(ctx context.Context, name string) (*DBAA
 	}
 
 	bodyresp := &DBAASMigrationStatus{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASMigrationStatus: prepare Json response: %w", err)
 	}
 
@@ -2685,7 +2685,7 @@ func (c Client) DeleteDBAASServiceMysql(ctx context.Context, name string) (*Oper
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceMysql: prepare Json response: %w", err)
 	}
 
@@ -2727,7 +2727,7 @@ func (c Client) GetDBAASServiceMysql(ctx context.Context, name string) (*DBAASSe
 	}
 
 	bodyresp := &DBAASServiceMysql{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMysql: prepare Json response: %w", err)
 	}
 
@@ -2829,7 +2829,7 @@ type CreateDBAASServiceMysqlRequest struct {
 func (c Client) CreateDBAASServiceMysql(ctx context.Context, name string, req CreateDBAASServiceMysqlRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: prepare Json body: %w", err)
 	}
@@ -2867,7 +2867,7 @@ func (c Client) CreateDBAASServiceMysql(ctx context.Context, name string, req Cr
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: prepare Json response: %w", err)
 	}
 
@@ -2943,7 +2943,7 @@ type UpdateDBAASServiceMysqlRequest struct {
 func (c Client) UpdateDBAASServiceMysql(ctx context.Context, name string, req UpdateDBAASServiceMysqlRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: prepare Json body: %w", err)
 	}
@@ -2981,7 +2981,7 @@ func (c Client) UpdateDBAASServiceMysql(ctx context.Context, name string, req Up
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: prepare Json response: %w", err)
 	}
 
@@ -3023,7 +3023,7 @@ func (c Client) StartDBAASMysqlMaintenance(ctx context.Context, name string) (*O
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: prepare Json response: %w", err)
 	}
 
@@ -3065,7 +3065,7 @@ func (c Client) StopDBAASMysqlMigration(ctx context.Context, name string) (*Oper
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopDBAASMysqlMigration: prepare Json response: %w", err)
 	}
 
@@ -3080,7 +3080,7 @@ type CreateDBAASMysqlDatabaseRequest struct {
 func (c Client) CreateDBAASMysqlDatabase(ctx context.Context, serviceName string, req CreateDBAASMysqlDatabaseRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/database", serviceName)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: prepare Json body: %w", err)
 	}
@@ -3118,7 +3118,7 @@ func (c Client) CreateDBAASMysqlDatabase(ctx context.Context, serviceName string
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: prepare Json response: %w", err)
 	}
 
@@ -3160,7 +3160,7 @@ func (c Client) DeleteDBAASMysqlDatabase(ctx context.Context, serviceName string
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: prepare Json response: %w", err)
 	}
 
@@ -3176,7 +3176,7 @@ type CreateDBAASMysqlUserRequest struct {
 func (c Client) CreateDBAASMysqlUser(ctx context.Context, serviceName string, req CreateDBAASMysqlUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/user", serviceName)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: prepare Json body: %w", err)
 	}
@@ -3214,7 +3214,7 @@ func (c Client) CreateDBAASMysqlUser(ctx context.Context, serviceName string, re
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: prepare Json response: %w", err)
 	}
 
@@ -3256,7 +3256,7 @@ func (c Client) DeleteDBAASMysqlUser(ctx context.Context, serviceName string, us
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlUser: prepare Json response: %w", err)
 	}
 
@@ -3272,7 +3272,7 @@ type ResetDBAASMysqlUserPasswordRequest struct {
 func (c Client) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASMysqlUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: prepare Json body: %w", err)
 	}
@@ -3310,7 +3310,7 @@ func (c Client) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName str
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: prepare Json response: %w", err)
 	}
 
@@ -3352,7 +3352,7 @@ func (c Client) DeleteDBAASServiceOpensearch(ctx context.Context, name string) (
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: prepare Json response: %w", err)
 	}
 
@@ -3394,7 +3394,7 @@ func (c Client) GetDBAASServiceOpensearch(ctx context.Context, name string) (*DB
 	}
 
 	bodyresp := &DBAASServiceOpensearch{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceOpensearch: prepare Json response: %w", err)
 	}
 
@@ -3490,7 +3490,7 @@ type CreateDBAASServiceOpensearchRequest struct {
 func (c Client) CreateDBAASServiceOpensearch(ctx context.Context, name string, req CreateDBAASServiceOpensearchRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: prepare Json body: %w", err)
 	}
@@ -3528,7 +3528,7 @@ func (c Client) CreateDBAASServiceOpensearch(ctx context.Context, name string, r
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: prepare Json response: %w", err)
 	}
 
@@ -3621,7 +3621,7 @@ type UpdateDBAASServiceOpensearchRequest struct {
 func (c Client) UpdateDBAASServiceOpensearch(ctx context.Context, name string, req UpdateDBAASServiceOpensearchRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: prepare Json body: %w", err)
 	}
@@ -3659,7 +3659,7 @@ func (c Client) UpdateDBAASServiceOpensearch(ctx context.Context, name string, r
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: prepare Json response: %w", err)
 	}
 
@@ -3701,7 +3701,7 @@ func (c Client) GetDBAASOpensearchAclConfig(ctx context.Context, name string) (*
 	}
 
 	bodyresp := &DBAASOpensearchAclConfig{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: prepare Json response: %w", err)
 	}
 
@@ -3712,7 +3712,7 @@ func (c Client) GetDBAASOpensearchAclConfig(ctx context.Context, name string) (*
 func (c Client) UpdateDBAASOpensearchAclConfig(ctx context.Context, name string, req DBAASOpensearchAclConfig) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/acl-config", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: prepare Json body: %w", err)
 	}
@@ -3750,7 +3750,7 @@ func (c Client) UpdateDBAASOpensearchAclConfig(ctx context.Context, name string,
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: prepare Json response: %w", err)
 	}
 
@@ -3792,7 +3792,7 @@ func (c Client) StartDBAASOpensearchMaintenance(ctx context.Context, name string
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: prepare Json response: %w", err)
 	}
 
@@ -3807,7 +3807,7 @@ type CreateDBAASOpensearchUserRequest struct {
 func (c Client) CreateDBAASOpensearchUser(ctx context.Context, serviceName string, req CreateDBAASOpensearchUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/user", serviceName)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: prepare Json body: %w", err)
 	}
@@ -3845,7 +3845,7 @@ func (c Client) CreateDBAASOpensearchUser(ctx context.Context, serviceName strin
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: prepare Json response: %w", err)
 	}
 
@@ -3887,7 +3887,7 @@ func (c Client) DeleteDBAASOpensearchUser(ctx context.Context, serviceName strin
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: prepare Json response: %w", err)
 	}
 
@@ -3902,7 +3902,7 @@ type ResetDBAASOpensearchUserPasswordRequest struct {
 func (c Client) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASOpensearchUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: prepare Json body: %w", err)
 	}
@@ -3940,7 +3940,7 @@ func (c Client) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceNam
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: prepare Json response: %w", err)
 	}
 
@@ -3982,7 +3982,7 @@ func (c Client) DeleteDBAASServicePG(ctx context.Context, name string) (*Operati
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServicePG: prepare Json response: %w", err)
 	}
 
@@ -4024,7 +4024,7 @@ func (c Client) GetDBAASServicePG(ctx context.Context, name string) (*DBAASServi
 	}
 
 	bodyresp := &DBAASServicePG{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServicePG: prepare Json response: %w", err)
 	}
 
@@ -4136,7 +4136,7 @@ type CreateDBAASServicePGRequest struct {
 func (c Client) CreateDBAASServicePG(ctx context.Context, name string, req CreateDBAASServicePGRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServicePG: prepare Json body: %w", err)
 	}
@@ -4174,7 +4174,7 @@ func (c Client) CreateDBAASServicePG(ctx context.Context, name string, req Creat
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServicePG: prepare Json response: %w", err)
 	}
 
@@ -4262,7 +4262,7 @@ type UpdateDBAASServicePGRequest struct {
 func (c Client) UpdateDBAASServicePG(ctx context.Context, name string, req UpdateDBAASServicePGRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServicePG: prepare Json body: %w", err)
 	}
@@ -4300,7 +4300,7 @@ func (c Client) UpdateDBAASServicePG(ctx context.Context, name string, req Updat
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServicePG: prepare Json response: %w", err)
 	}
 
@@ -4342,7 +4342,7 @@ func (c Client) StartDBAASPGMaintenance(ctx context.Context, name string) (*Oper
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASPGMaintenance: prepare Json response: %w", err)
 	}
 
@@ -4384,7 +4384,7 @@ func (c Client) StopDBAASPGMigration(ctx context.Context, name string) (*Operati
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopDBAASPGMigration: prepare Json response: %w", err)
 	}
 
@@ -4403,7 +4403,7 @@ type CreateDBAASPGConnectionPoolRequest struct {
 func (c Client) CreateDBAASPGConnectionPool(ctx context.Context, serviceName string, req CreateDBAASPGConnectionPoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/connection-pool", serviceName)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: prepare Json body: %w", err)
 	}
@@ -4441,7 +4441,7 @@ func (c Client) CreateDBAASPGConnectionPool(ctx context.Context, serviceName str
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: prepare Json response: %w", err)
 	}
 
@@ -4483,7 +4483,7 @@ func (c Client) DeleteDBAASPGConnectionPool(ctx context.Context, serviceName str
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: prepare Json response: %w", err)
 	}
 
@@ -4501,7 +4501,7 @@ type UpdateDBAASPGConnectionPoolRequest struct {
 func (c Client) UpdateDBAASPGConnectionPool(ctx context.Context, serviceName string, connectionPoolName string, req UpdateDBAASPGConnectionPoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/connection-pool/%v", serviceName, connectionPoolName)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: prepare Json body: %w", err)
 	}
@@ -4539,7 +4539,7 @@ func (c Client) UpdateDBAASPGConnectionPool(ctx context.Context, serviceName str
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: prepare Json response: %w", err)
 	}
 
@@ -4558,7 +4558,7 @@ type CreateDBAASPGDatabaseRequest struct {
 func (c Client) CreateDBAASPGDatabase(ctx context.Context, serviceName string, req CreateDBAASPGDatabaseRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/database", serviceName)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: prepare Json body: %w", err)
 	}
@@ -4596,7 +4596,7 @@ func (c Client) CreateDBAASPGDatabase(ctx context.Context, serviceName string, r
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: prepare Json response: %w", err)
 	}
 
@@ -4638,7 +4638,7 @@ func (c Client) DeleteDBAASPGDatabase(ctx context.Context, serviceName string, d
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGDatabase: prepare Json response: %w", err)
 	}
 
@@ -4654,7 +4654,7 @@ type CreateDBAASPostgresUserRequest struct {
 func (c Client) CreateDBAASPostgresUser(ctx context.Context, serviceName string, req CreateDBAASPostgresUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user", serviceName)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: prepare Json body: %w", err)
 	}
@@ -4692,7 +4692,7 @@ func (c Client) CreateDBAASPostgresUser(ctx context.Context, serviceName string,
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: prepare Json response: %w", err)
 	}
 
@@ -4734,7 +4734,7 @@ func (c Client) DeleteDBAASPostgresUser(ctx context.Context, serviceName string,
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPostgresUser: prepare Json response: %w", err)
 	}
 
@@ -4749,7 +4749,7 @@ type UpdateDBAASPostgresAllowReplicationRequest struct {
 func (c Client) UpdateDBAASPostgresAllowReplication(ctx context.Context, serviceName string, username string, req UpdateDBAASPostgresAllowReplicationRequest) (*DBAASPostgresUsers, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user/%v/allow-replication", serviceName, username)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: prepare Json body: %w", err)
 	}
@@ -4787,7 +4787,7 @@ func (c Client) UpdateDBAASPostgresAllowReplication(ctx context.Context, service
 	}
 
 	bodyresp := &DBAASPostgresUsers{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: prepare Json response: %w", err)
 	}
 
@@ -4802,7 +4802,7 @@ type ResetDBAASPostgresUserPasswordRequest struct {
 func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASPostgresUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: prepare Json body: %w", err)
 	}
@@ -4840,7 +4840,7 @@ func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName 
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: prepare Json response: %w", err)
 	}
 
@@ -4866,7 +4866,7 @@ type CreateDBAASPGUpgradeCheckRequest struct {
 func (c Client) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, req CreateDBAASPGUpgradeCheckRequest) (*DBAASTask, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/upgrade-check", service)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: prepare Json body: %w", err)
 	}
@@ -4904,7 +4904,7 @@ func (c Client) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, r
 	}
 
 	bodyresp := &DBAASTask{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: prepare Json response: %w", err)
 	}
 
@@ -4946,7 +4946,7 @@ func (c Client) DeleteDBAASServiceRedis(ctx context.Context, name string) (*Oper
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceRedis: prepare Json response: %w", err)
 	}
 
@@ -4988,7 +4988,7 @@ func (c Client) GetDBAASServiceRedis(ctx context.Context, name string) (*DBAASSe
 	}
 
 	bodyresp := &DBAASServiceRedis{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceRedis: prepare Json response: %w", err)
 	}
 
@@ -5057,7 +5057,7 @@ type CreateDBAASServiceRedisRequest struct {
 func (c Client) CreateDBAASServiceRedis(ctx context.Context, name string, req CreateDBAASServiceRedisRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceRedis: prepare Json body: %w", err)
 	}
@@ -5095,7 +5095,7 @@ func (c Client) CreateDBAASServiceRedis(ctx context.Context, name string, req Cr
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceRedis: prepare Json response: %w", err)
 	}
 
@@ -5161,7 +5161,7 @@ type UpdateDBAASServiceRedisRequest struct {
 func (c Client) UpdateDBAASServiceRedis(ctx context.Context, name string, req UpdateDBAASServiceRedisRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v", name)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceRedis: prepare Json body: %w", err)
 	}
@@ -5199,7 +5199,7 @@ func (c Client) UpdateDBAASServiceRedis(ctx context.Context, name string, req Up
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceRedis: prepare Json response: %w", err)
 	}
 
@@ -5241,7 +5241,7 @@ func (c Client) StartDBAASRedisMaintenance(ctx context.Context, name string) (*O
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASRedisMaintenance: prepare Json response: %w", err)
 	}
 
@@ -5283,7 +5283,7 @@ func (c Client) StopDBAASRedisMigration(ctx context.Context, name string) (*Oper
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopDBAASRedisMigration: prepare Json response: %w", err)
 	}
 
@@ -5329,7 +5329,7 @@ func (c Client) ListDBAASServices(ctx context.Context) (*ListDBAASServicesRespon
 	}
 
 	bodyresp := &ListDBAASServicesResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASServices: prepare Json response: %w", err)
 	}
 
@@ -5348,7 +5348,7 @@ type GetDBAASServiceLogsRequest struct {
 func (c Client) GetDBAASServiceLogs(ctx context.Context, serviceName string, req GetDBAASServiceLogsRequest) (*DBAASServiceLogs, error) {
 	path := fmt.Sprintf("/dbaas-service-logs/%v", serviceName)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceLogs: prepare Json body: %w", err)
 	}
@@ -5386,7 +5386,7 @@ func (c Client) GetDBAASServiceLogs(ctx context.Context, serviceName string, req
 	}
 
 	bodyresp := &DBAASServiceLogs{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceLogs: prepare Json response: %w", err)
 	}
 
@@ -5416,7 +5416,7 @@ type GetDBAASServiceMetricsRequest struct {
 func (c Client) GetDBAASServiceMetrics(ctx context.Context, serviceName string, req GetDBAASServiceMetricsRequest) (*GetDBAASServiceMetricsResponse, error) {
 	path := fmt.Sprintf("/dbaas-service-metrics/%v", serviceName)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: prepare Json body: %w", err)
 	}
@@ -5454,7 +5454,7 @@ func (c Client) GetDBAASServiceMetrics(ctx context.Context, serviceName string, 
 	}
 
 	bodyresp := &GetDBAASServiceMetricsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: prepare Json response: %w", err)
 	}
 
@@ -5500,7 +5500,7 @@ func (c Client) ListDBAASServiceTypes(ctx context.Context) (*ListDBAASServiceTyp
 	}
 
 	bodyresp := &ListDBAASServiceTypesResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASServiceTypes: prepare Json response: %w", err)
 	}
 
@@ -5542,7 +5542,7 @@ func (c Client) GetDBAASServiceType(ctx context.Context, serviceTypeName string)
 	}
 
 	bodyresp := &DBAASServiceType{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceType: prepare Json response: %w", err)
 	}
 
@@ -5584,7 +5584,7 @@ func (c Client) DeleteDBAASService(ctx context.Context, name string) (*Operation
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASService: prepare Json response: %w", err)
 	}
 
@@ -5643,7 +5643,7 @@ func (c Client) GetDBAASSettingsGrafana(ctx context.Context) (*GetDBAASSettingsG
 	}
 
 	bodyresp := &GetDBAASSettingsGrafanaResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsGrafana: prepare Json response: %w", err)
 	}
 
@@ -5732,7 +5732,7 @@ func (c Client) GetDBAASSettingsKafka(ctx context.Context) (*GetDBAASSettingsKaf
 	}
 
 	bodyresp := &GetDBAASSettingsKafkaResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsKafka: prepare Json response: %w", err)
 	}
 
@@ -5791,7 +5791,7 @@ func (c Client) GetDBAASSettingsMysql(ctx context.Context) (*GetDBAASSettingsMys
 	}
 
 	bodyresp := &GetDBAASSettingsMysqlResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsMysql: prepare Json response: %w", err)
 	}
 
@@ -5850,7 +5850,7 @@ func (c Client) GetDBAASSettingsOpensearch(ctx context.Context) (*GetDBAASSettin
 	}
 
 	bodyresp := &GetDBAASSettingsOpensearchResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: prepare Json response: %w", err)
 	}
 
@@ -5939,7 +5939,7 @@ func (c Client) GetDBAASSettingsPG(ctx context.Context) (*GetDBAASSettingsPGResp
 	}
 
 	bodyresp := &GetDBAASSettingsPGResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsPG: prepare Json response: %w", err)
 	}
 
@@ -5998,7 +5998,7 @@ func (c Client) GetDBAASSettingsRedis(ctx context.Context) (*GetDBAASSettingsRed
 	}
 
 	bodyresp := &GetDBAASSettingsRedisResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsRedis: prepare Json response: %w", err)
 	}
 
@@ -6017,7 +6017,7 @@ type CreateDBAASTaskMigrationCheckRequest struct {
 func (c Client) CreateDBAASTaskMigrationCheck(ctx context.Context, service string, req CreateDBAASTaskMigrationCheckRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-task-migration-check/%v", service)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: prepare Json body: %w", err)
 	}
@@ -6055,7 +6055,7 @@ func (c Client) CreateDBAASTaskMigrationCheck(ctx context.Context, service strin
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: prepare Json response: %w", err)
 	}
 
@@ -6097,7 +6097,7 @@ func (c Client) GetDBAASTask(ctx context.Context, service string, id UUID) (*DBA
 	}
 
 	bodyresp := &DBAASTask{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASTask: prepare Json response: %w", err)
 	}
 
@@ -6143,7 +6143,7 @@ func (c Client) ListDeployTargets(ctx context.Context) (*ListDeployTargetsRespon
 	}
 
 	bodyresp := &ListDeployTargetsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDeployTargets: prepare Json response: %w", err)
 	}
 
@@ -6185,7 +6185,7 @@ func (c Client) GetDeployTarget(ctx context.Context, id UUID) (*DeployTarget, er
 	}
 
 	bodyresp := &DeployTarget{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDeployTarget: prepare Json response: %w", err)
 	}
 
@@ -6231,7 +6231,7 @@ func (c Client) ListDNSDomains(ctx context.Context) (*ListDNSDomainsResponse, er
 	}
 
 	bodyresp := &ListDNSDomainsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDNSDomains: prepare Json response: %w", err)
 	}
 
@@ -6248,7 +6248,7 @@ type CreateDNSDomainRequest struct {
 func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest) (*DNSDomain, error) {
 	path := "/dns-domain"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: prepare Json body: %w", err)
 	}
@@ -6286,7 +6286,7 @@ func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest)
 	}
 
 	bodyresp := &DNSDomain{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: prepare Json response: %w", err)
 	}
 
@@ -6332,7 +6332,7 @@ func (c Client) ListDNSDomainRecords(ctx context.Context, domainID UUID) (*ListD
 	}
 
 	bodyresp := &ListDNSDomainRecordsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDNSDomainRecords: prepare Json response: %w", err)
 	}
 
@@ -6376,7 +6376,7 @@ type CreateDNSDomainRecordRequest struct {
 func (c Client) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req CreateDNSDomainRecordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record", domainID)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomainRecord: prepare Json body: %w", err)
 	}
@@ -6414,7 +6414,7 @@ func (c Client) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req Cr
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDNSDomainRecord: prepare Json response: %w", err)
 	}
 
@@ -6456,7 +6456,7 @@ func (c Client) DeleteDNSDomainRecord(ctx context.Context, domainID UUID, record
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomainRecord: prepare Json response: %w", err)
 	}
 
@@ -6498,7 +6498,7 @@ func (c Client) GetDNSDomainRecord(ctx context.Context, domainID UUID, recordID 
 	}
 
 	bodyresp := &DNSDomainRecord{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDNSDomainRecord: prepare Json response: %w", err)
 	}
 
@@ -6520,7 +6520,7 @@ type UpdateDNSDomainRecordRequest struct {
 func (c Client) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID, req UpdateDNSDomainRecordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record/%v", domainID, recordID)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: prepare Json body: %w", err)
 	}
@@ -6558,7 +6558,7 @@ func (c Client) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, record
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: prepare Json response: %w", err)
 	}
 
@@ -6600,7 +6600,7 @@ func (c Client) DeleteDNSDomain(ctx context.Context, id UUID) (*Operation, error
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomain: prepare Json response: %w", err)
 	}
 
@@ -6642,7 +6642,7 @@ func (c Client) GetDNSDomain(ctx context.Context, id UUID) (*DNSDomain, error) {
 	}
 
 	bodyresp := &DNSDomain{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDNSDomain: prepare Json response: %w", err)
 	}
 
@@ -6688,7 +6688,7 @@ func (c Client) GetDNSDomainZoneFile(ctx context.Context, id UUID) (*GetDNSDomai
 	}
 
 	bodyresp := &GetDNSDomainZoneFileResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDNSDomainZoneFile: prepare Json response: %w", err)
 	}
 
@@ -6734,7 +6734,7 @@ func (c Client) ListElasticIPS(ctx context.Context) (*ListElasticIPSResponse, er
 	}
 
 	bodyresp := &ListElasticIPSResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListElasticIPS: prepare Json response: %w", err)
 	}
 
@@ -6762,7 +6762,7 @@ type CreateElasticIPRequest struct {
 func (c Client) CreateElasticIP(ctx context.Context, req CreateElasticIPRequest) (*Operation, error) {
 	path := "/elastic-ip"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateElasticIP: prepare Json body: %w", err)
 	}
@@ -6800,7 +6800,7 @@ func (c Client) CreateElasticIP(ctx context.Context, req CreateElasticIPRequest)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateElasticIP: prepare Json response: %w", err)
 	}
 
@@ -6842,7 +6842,7 @@ func (c Client) DeleteElasticIP(ctx context.Context, id UUID) (*Operation, error
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteElasticIP: prepare Json response: %w", err)
 	}
 
@@ -6884,7 +6884,7 @@ func (c Client) GetElasticIP(ctx context.Context, id UUID) (*ElasticIP, error) {
 	}
 
 	bodyresp := &ElasticIP{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetElasticIP: prepare Json response: %w", err)
 	}
 
@@ -6903,7 +6903,7 @@ type UpdateElasticIPRequest struct {
 func (c Client) UpdateElasticIP(ctx context.Context, id UUID, req UpdateElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateElasticIP: prepare Json body: %w", err)
 	}
@@ -6941,7 +6941,7 @@ func (c Client) UpdateElasticIP(ctx context.Context, id UUID, req UpdateElasticI
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateElasticIP: prepare Json response: %w", err)
 	}
 
@@ -6989,7 +6989,7 @@ func (c Client) ResetElasticIPField(ctx context.Context, id UUID, field ResetEla
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetElasticIPField: prepare Json response: %w", err)
 	}
 
@@ -7005,7 +7005,7 @@ type AttachInstanceToElasticIPRequest struct {
 func (c Client) AttachInstanceToElasticIP(ctx context.Context, id UUID, req AttachInstanceToElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v:attach", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: prepare Json body: %w", err)
 	}
@@ -7043,7 +7043,7 @@ func (c Client) AttachInstanceToElasticIP(ctx context.Context, id UUID, req Atta
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: prepare Json response: %w", err)
 	}
 
@@ -7059,7 +7059,7 @@ type DetachInstanceFromElasticIPRequest struct {
 func (c Client) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req DetachInstanceFromElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v:detach", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: prepare Json body: %w", err)
 	}
@@ -7097,7 +7097,7 @@ func (c Client) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req De
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: prepare Json response: %w", err)
 	}
 
@@ -7163,7 +7163,7 @@ func (c Client) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event,
 	}
 
 	bodyresp := []Event{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListEvents: prepare Json response: %w", err)
 	}
 
@@ -7205,7 +7205,7 @@ func (c Client) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error
 	}
 
 	bodyresp := &IAMPolicy{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetIAMOrganizationPolicy: prepare Json response: %w", err)
 	}
 
@@ -7216,7 +7216,7 @@ func (c Client) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error
 func (c Client) UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) (*Operation, error) {
 	path := "/iam-organization-policy"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: prepare Json body: %w", err)
 	}
@@ -7254,7 +7254,7 @@ func (c Client) UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) 
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: prepare Json response: %w", err)
 	}
 
@@ -7300,7 +7300,7 @@ func (c Client) ListIAMRoles(ctx context.Context) (*ListIAMRolesResponse, error)
 	}
 
 	bodyresp := &ListIAMRolesResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListIAMRoles: prepare Json response: %w", err)
 	}
 
@@ -7325,7 +7325,7 @@ type CreateIAMRoleRequest struct {
 func (c Client) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*Operation, error) {
 	path := "/iam-role"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateIAMRole: prepare Json body: %w", err)
 	}
@@ -7363,7 +7363,7 @@ func (c Client) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*O
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateIAMRole: prepare Json response: %w", err)
 	}
 
@@ -7405,7 +7405,7 @@ func (c Client) DeleteIAMRole(ctx context.Context, id UUID) (*Operation, error) 
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteIAMRole: prepare Json response: %w", err)
 	}
 
@@ -7447,7 +7447,7 @@ func (c Client) GetIAMRole(ctx context.Context, id UUID) (*IAMRole, error) {
 	}
 
 	bodyresp := &IAMRole{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetIAMRole: prepare Json response: %w", err)
 	}
 
@@ -7466,7 +7466,7 @@ type UpdateIAMRoleRequest struct {
 func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleRequest) (*Operation, error) {
 	path := fmt.Sprintf("/iam-role/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRole: prepare Json body: %w", err)
 	}
@@ -7504,7 +7504,7 @@ func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleReq
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRole: prepare Json response: %w", err)
 	}
 
@@ -7515,7 +7515,7 @@ func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleReq
 func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy) (*Operation, error) {
 	path := fmt.Sprintf("/iam-role/%v:policy", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: prepare Json body: %w", err)
 	}
@@ -7553,7 +7553,7 @@ func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: prepare Json response: %w", err)
 	}
 
@@ -7664,7 +7664,7 @@ func (c Client) ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*L
 	}
 
 	bodyresp := &ListInstancesResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListInstances: prepare Json response: %w", err)
 	}
 
@@ -7704,7 +7704,7 @@ type CreateInstanceRequest struct {
 func (c Client) CreateInstance(ctx context.Context, req CreateInstanceRequest) (*Operation, error) {
 	path := "/instance"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstance: prepare Json body: %w", err)
 	}
@@ -7742,7 +7742,7 @@ func (c Client) CreateInstance(ctx context.Context, req CreateInstanceRequest) (
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateInstance: prepare Json response: %w", err)
 	}
 
@@ -7788,7 +7788,7 @@ func (c Client) ListInstancePools(ctx context.Context) (*ListInstancePoolsRespon
 	}
 
 	bodyresp := &ListInstancePoolsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListInstancePools: prepare Json response: %w", err)
 	}
 
@@ -7838,7 +7838,7 @@ type CreateInstancePoolRequest struct {
 func (c Client) CreateInstancePool(ctx context.Context, req CreateInstancePoolRequest) (*Operation, error) {
 	path := "/instance-pool"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstancePool: prepare Json body: %w", err)
 	}
@@ -7876,7 +7876,7 @@ func (c Client) CreateInstancePool(ctx context.Context, req CreateInstancePoolRe
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateInstancePool: prepare Json response: %w", err)
 	}
 
@@ -7918,7 +7918,7 @@ func (c Client) DeleteInstancePool(ctx context.Context, id UUID) (*Operation, er
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteInstancePool: prepare Json response: %w", err)
 	}
 
@@ -7960,7 +7960,7 @@ func (c Client) GetInstancePool(ctx context.Context, id UUID) (*InstancePool, er
 	}
 
 	bodyresp := &InstancePool{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetInstancePool: prepare Json response: %w", err)
 	}
 
@@ -8008,7 +8008,7 @@ type UpdateInstancePoolRequest struct {
 func (c Client) UpdateInstancePool(ctx context.Context, id UUID, req UpdateInstancePoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstancePool: prepare Json body: %w", err)
 	}
@@ -8046,7 +8046,7 @@ func (c Client) UpdateInstancePool(ctx context.Context, id UUID, req UpdateInsta
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateInstancePool: prepare Json response: %w", err)
 	}
 
@@ -8103,7 +8103,7 @@ func (c Client) ResetInstancePoolField(ctx context.Context, id UUID, field Reset
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstancePoolField: prepare Json response: %w", err)
 	}
 
@@ -8118,7 +8118,7 @@ type EvictInstancePoolMembersRequest struct {
 func (c Client) EvictInstancePoolMembers(ctx context.Context, id UUID, req EvictInstancePoolMembersRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v:evict", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("EvictInstancePoolMembers: prepare Json body: %w", err)
 	}
@@ -8156,7 +8156,7 @@ func (c Client) EvictInstancePoolMembers(ctx context.Context, id UUID, req Evict
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("EvictInstancePoolMembers: prepare Json response: %w", err)
 	}
 
@@ -8172,7 +8172,7 @@ type ScaleInstancePoolRequest struct {
 func (c Client) ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstancePoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v:scale", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstancePool: prepare Json body: %w", err)
 	}
@@ -8210,7 +8210,7 @@ func (c Client) ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstanc
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScaleInstancePool: prepare Json response: %w", err)
 	}
 
@@ -8256,7 +8256,7 @@ func (c Client) ListInstanceTypes(ctx context.Context) (*ListInstanceTypesRespon
 	}
 
 	bodyresp := &ListInstanceTypesResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListInstanceTypes: prepare Json response: %w", err)
 	}
 
@@ -8298,7 +8298,7 @@ func (c Client) GetInstanceType(ctx context.Context, id UUID) (*InstanceType, er
 	}
 
 	bodyresp := &InstanceType{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetInstanceType: prepare Json response: %w", err)
 	}
 
@@ -8340,7 +8340,7 @@ func (c Client) DeleteInstance(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteInstance: prepare Json response: %w", err)
 	}
 
@@ -8382,7 +8382,7 @@ func (c Client) GetInstance(ctx context.Context, id UUID) (*Instance, error) {
 	}
 
 	bodyresp := &Instance{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetInstance: prepare Json response: %w", err)
 	}
 
@@ -8402,7 +8402,7 @@ type UpdateInstanceRequest struct {
 func (c Client) UpdateInstance(ctx context.Context, id UUID, req UpdateInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstance: prepare Json body: %w", err)
 	}
@@ -8440,7 +8440,7 @@ func (c Client) UpdateInstance(ctx context.Context, id UUID, req UpdateInstanceR
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateInstance: prepare Json response: %w", err)
 	}
 
@@ -8488,7 +8488,7 @@ func (c Client) ResetInstanceField(ctx context.Context, id UUID, field ResetInst
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstanceField: prepare Json response: %w", err)
 	}
 
@@ -8533,7 +8533,7 @@ func (c Client) AddInstanceProtection(ctx context.Context, id UUID) (*AddInstanc
 	}
 
 	bodyresp := &AddInstanceProtectionResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddInstanceProtection: prepare Json response: %w", err)
 	}
 
@@ -8575,7 +8575,7 @@ func (c Client) CreateSnapshot(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSnapshot: prepare Json response: %w", err)
 	}
 
@@ -8621,7 +8621,7 @@ func (c Client) RevealInstancePassword(ctx context.Context, id UUID) (*InstanceP
 	}
 
 	bodyresp := &InstancePassword{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealInstancePassword: prepare Json response: %w", err)
 	}
 
@@ -8663,7 +8663,7 @@ func (c Client) RebootInstance(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RebootInstance: prepare Json response: %w", err)
 	}
 
@@ -8708,7 +8708,7 @@ func (c Client) RemoveInstanceProtection(ctx context.Context, id UUID) (*RemoveI
 	}
 
 	bodyresp := &RemoveInstanceProtectionResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RemoveInstanceProtection: prepare Json response: %w", err)
 	}
 
@@ -8726,7 +8726,7 @@ type ResetInstanceRequest struct {
 func (c Client) ResetInstance(ctx context.Context, id UUID, req ResetInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:reset", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstance: prepare Json body: %w", err)
 	}
@@ -8764,7 +8764,7 @@ func (c Client) ResetInstance(ctx context.Context, id UUID, req ResetInstanceReq
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstance: prepare Json response: %w", err)
 	}
 
@@ -8806,7 +8806,7 @@ func (c Client) ResetInstancePassword(ctx context.Context, id UUID) (*Operation,
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstancePassword: prepare Json response: %w", err)
 	}
 
@@ -8822,7 +8822,7 @@ type ResizeInstanceDiskRequest struct {
 func (c Client) ResizeInstanceDisk(ctx context.Context, id UUID, req ResizeInstanceDiskRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:resize-disk", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResizeInstanceDisk: prepare Json body: %w", err)
 	}
@@ -8860,7 +8860,7 @@ func (c Client) ResizeInstanceDisk(ctx context.Context, id UUID, req ResizeInsta
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResizeInstanceDisk: prepare Json response: %w", err)
 	}
 
@@ -8876,7 +8876,7 @@ type ScaleInstanceRequest struct {
 func (c Client) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:scale", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstance: prepare Json body: %w", err)
 	}
@@ -8914,7 +8914,7 @@ func (c Client) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceReq
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScaleInstance: prepare Json response: %w", err)
 	}
 
@@ -8937,7 +8937,7 @@ type StartInstanceRequest struct {
 func (c Client) StartInstance(ctx context.Context, id UUID, req StartInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:start", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("StartInstance: prepare Json body: %w", err)
 	}
@@ -8975,7 +8975,7 @@ func (c Client) StartInstance(ctx context.Context, id UUID, req StartInstanceReq
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartInstance: prepare Json response: %w", err)
 	}
 
@@ -9017,7 +9017,7 @@ func (c Client) StopInstance(ctx context.Context, id UUID) (*Operation, error) {
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopInstance: prepare Json response: %w", err)
 	}
 
@@ -9034,7 +9034,7 @@ type RevertInstanceToSnapshotRequest struct {
 func (c Client) RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, req RevertInstanceToSnapshotRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:revert-snapshot", instanceID)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: prepare Json body: %w", err)
 	}
@@ -9072,7 +9072,7 @@ func (c Client) RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, r
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: prepare Json response: %w", err)
 	}
 
@@ -9118,7 +9118,7 @@ func (c Client) ListLoadBalancers(ctx context.Context) (*ListLoadBalancersRespon
 	}
 
 	bodyresp := &ListLoadBalancersResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListLoadBalancers: prepare Json response: %w", err)
 	}
 
@@ -9137,7 +9137,7 @@ type CreateLoadBalancerRequest struct {
 func (c Client) CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRequest) (*Operation, error) {
 	path := "/load-balancer"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateLoadBalancer: prepare Json body: %w", err)
 	}
@@ -9175,7 +9175,7 @@ func (c Client) CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRe
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateLoadBalancer: prepare Json response: %w", err)
 	}
 
@@ -9217,7 +9217,7 @@ func (c Client) DeleteLoadBalancer(ctx context.Context, id UUID) (*Operation, er
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancer: prepare Json response: %w", err)
 	}
 
@@ -9259,7 +9259,7 @@ func (c Client) GetLoadBalancer(ctx context.Context, id UUID) (*LoadBalancer, er
 	}
 
 	bodyresp := &LoadBalancer{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetLoadBalancer: prepare Json response: %w", err)
 	}
 
@@ -9278,7 +9278,7 @@ type UpdateLoadBalancerRequest struct {
 func (c Client) UpdateLoadBalancer(ctx context.Context, id UUID, req UpdateLoadBalancerRequest) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancer: prepare Json body: %w", err)
 	}
@@ -9316,7 +9316,7 @@ func (c Client) UpdateLoadBalancer(ctx context.Context, id UUID, req UpdateLoadB
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancer: prepare Json response: %w", err)
 	}
 
@@ -9360,7 +9360,7 @@ type AddServiceToLoadBalancerRequest struct {
 func (c Client) AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddServiceToLoadBalancerRequest) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: prepare Json body: %w", err)
 	}
@@ -9398,7 +9398,7 @@ func (c Client) AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddSe
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: prepare Json response: %w", err)
 	}
 
@@ -9440,7 +9440,7 @@ func (c Client) DeleteLoadBalancerService(ctx context.Context, id UUID, serviceI
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancerService: prepare Json response: %w", err)
 	}
 
@@ -9482,7 +9482,7 @@ func (c Client) GetLoadBalancerService(ctx context.Context, id UUID, serviceID U
 	}
 
 	bodyresp := &LoadBalancerService{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetLoadBalancerService: prepare Json response: %w", err)
 	}
 
@@ -9524,7 +9524,7 @@ type UpdateLoadBalancerServiceRequest struct {
 func (c Client) UpdateLoadBalancerService(ctx context.Context, id UUID, serviceID UUID, req UpdateLoadBalancerServiceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service/%v", id, serviceID)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancerService: prepare Json body: %w", err)
 	}
@@ -9562,7 +9562,7 @@ func (c Client) UpdateLoadBalancerService(ctx context.Context, id UUID, serviceI
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancerService: prepare Json response: %w", err)
 	}
 
@@ -9610,7 +9610,7 @@ func (c Client) ResetLoadBalancerServiceField(ctx context.Context, id UUID, serv
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerServiceField: prepare Json response: %w", err)
 	}
 
@@ -9659,7 +9659,7 @@ func (c Client) ResetLoadBalancerField(ctx context.Context, id UUID, field Reset
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerField: prepare Json response: %w", err)
 	}
 
@@ -9701,7 +9701,7 @@ func (c Client) GetOperation(ctx context.Context, id UUID) (*Operation, error) {
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetOperation: prepare Json response: %w", err)
 	}
 
@@ -9747,7 +9747,7 @@ func (c Client) ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksRe
 	}
 
 	bodyresp := &ListPrivateNetworksResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListPrivateNetworks: prepare Json response: %w", err)
 	}
 
@@ -9772,7 +9772,7 @@ type CreatePrivateNetworkRequest struct {
 func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetworkRequest) (*Operation, error) {
 	path := "/private-network"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreatePrivateNetwork: prepare Json body: %w", err)
 	}
@@ -9810,7 +9810,7 @@ func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetwo
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreatePrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -9852,7 +9852,7 @@ func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, 
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeletePrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -9894,7 +9894,7 @@ func (c Client) GetPrivateNetwork(ctx context.Context, id UUID) (*PrivateNetwork
 	}
 
 	bodyresp := &PrivateNetwork{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetPrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -9919,7 +9919,7 @@ type UpdatePrivateNetworkRequest struct {
 func (c Client) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetwork: prepare Json body: %w", err)
 	}
@@ -9957,7 +9957,7 @@ func (c Client) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePri
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -10005,7 +10005,7 @@ func (c Client) ResetPrivateNetworkField(ctx context.Context, id UUID, field Res
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetPrivateNetworkField: prepare Json response: %w", err)
 	}
 
@@ -10029,7 +10029,7 @@ type AttachInstanceToPrivateNetworkRequest struct {
 func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req AttachInstanceToPrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:attach", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: prepare Json body: %w", err)
 	}
@@ -10067,7 +10067,7 @@ func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -10083,7 +10083,7 @@ type DetachInstanceFromPrivateNetworkRequest struct {
 func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, req DetachInstanceFromPrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:detach", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: prepare Json body: %w", err)
 	}
@@ -10121,7 +10121,7 @@ func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, r
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -10143,7 +10143,7 @@ type UpdatePrivateNetworkInstanceIPRequest struct {
 func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req UpdatePrivateNetworkInstanceIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:update-ip", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: prepare Json body: %w", err)
 	}
@@ -10181,7 +10181,7 @@ func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: prepare Json response: %w", err)
 	}
 
@@ -10227,7 +10227,7 @@ func (c Client) ListQuotas(ctx context.Context) (*ListQuotasResponse, error) {
 	}
 
 	bodyresp := &ListQuotasResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListQuotas: prepare Json response: %w", err)
 	}
 
@@ -10269,7 +10269,7 @@ func (c Client) GetQuota(ctx context.Context, entity string) (*Quota, error) {
 	}
 
 	bodyresp := &Quota{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetQuota: prepare Json response: %w", err)
 	}
 
@@ -10311,7 +10311,7 @@ func (c Client) DeleteReverseDNSElasticIP(ctx context.Context, id UUID) (*Operat
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: prepare Json response: %w", err)
 	}
 
@@ -10353,7 +10353,7 @@ func (c Client) GetReverseDNSElasticIP(ctx context.Context, id UUID) (*ReverseDN
 	}
 
 	bodyresp := &ReverseDNSRecord{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetReverseDNSElasticIP: prepare Json response: %w", err)
 	}
 
@@ -10368,7 +10368,7 @@ type UpdateReverseDNSElasticIPRequest struct {
 func (c Client) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req UpdateReverseDNSElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/reverse-dns/elastic-ip/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: prepare Json body: %w", err)
 	}
@@ -10406,7 +10406,7 @@ func (c Client) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req Upda
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: prepare Json response: %w", err)
 	}
 
@@ -10448,7 +10448,7 @@ func (c Client) DeleteReverseDNSInstance(ctx context.Context, id UUID) (*Operati
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSInstance: prepare Json response: %w", err)
 	}
 
@@ -10490,7 +10490,7 @@ func (c Client) GetReverseDNSInstance(ctx context.Context, id UUID) (*ReverseDNS
 	}
 
 	bodyresp := &ReverseDNSRecord{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetReverseDNSInstance: prepare Json response: %w", err)
 	}
 
@@ -10505,7 +10505,7 @@ type UpdateReverseDNSInstanceRequest struct {
 func (c Client) UpdateReverseDNSInstance(ctx context.Context, id UUID, req UpdateReverseDNSInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/reverse-dns/instance/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: prepare Json body: %w", err)
 	}
@@ -10543,7 +10543,7 @@ func (c Client) UpdateReverseDNSInstance(ctx context.Context, id UUID, req Updat
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: prepare Json response: %w", err)
 	}
 
@@ -10615,7 +10615,7 @@ func (c Client) ListSecurityGroups(ctx context.Context, opts ...ListSecurityGrou
 	}
 
 	bodyresp := &ListSecurityGroupsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSecurityGroups: prepare Json response: %w", err)
 	}
 
@@ -10633,7 +10633,7 @@ type CreateSecurityGroupRequest struct {
 func (c Client) CreateSecurityGroup(ctx context.Context, req CreateSecurityGroupRequest) (*Operation, error) {
 	path := "/security-group"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSecurityGroup: prepare Json body: %w", err)
 	}
@@ -10671,7 +10671,7 @@ func (c Client) CreateSecurityGroup(ctx context.Context, req CreateSecurityGroup
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -10713,7 +10713,7 @@ func (c Client) DeleteSecurityGroup(ctx context.Context, id UUID) (*Operation, e
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -10755,7 +10755,7 @@ func (c Client) GetSecurityGroup(ctx context.Context, id UUID) (*SecurityGroup, 
 	}
 
 	bodyresp := &SecurityGroup{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -10811,7 +10811,7 @@ type AddRuleToSecurityGroupRequest struct {
 func (c Client) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRuleToSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v/rules", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: prepare Json body: %w", err)
 	}
@@ -10849,7 +10849,7 @@ func (c Client) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRule
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -10891,7 +10891,7 @@ func (c Client) DeleteRuleFromSecurityGroup(ctx context.Context, id UUID, ruleID
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -10907,7 +10907,7 @@ type AddExternalSourceToSecurityGroupRequest struct {
 func (c Client) AddExternalSourceToSecurityGroup(ctx context.Context, id UUID, req AddExternalSourceToSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:add-source", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: prepare Json body: %w", err)
 	}
@@ -10945,7 +10945,7 @@ func (c Client) AddExternalSourceToSecurityGroup(ctx context.Context, id UUID, r
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -10961,7 +10961,7 @@ type AttachInstanceToSecurityGroupRequest struct {
 func (c Client) AttachInstanceToSecurityGroup(ctx context.Context, id UUID, req AttachInstanceToSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:attach", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: prepare Json body: %w", err)
 	}
@@ -10999,7 +10999,7 @@ func (c Client) AttachInstanceToSecurityGroup(ctx context.Context, id UUID, req 
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -11015,7 +11015,7 @@ type DetachInstanceFromSecurityGroupRequest struct {
 func (c Client) DetachInstanceFromSecurityGroup(ctx context.Context, id UUID, req DetachInstanceFromSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:detach", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: prepare Json body: %w", err)
 	}
@@ -11053,7 +11053,7 @@ func (c Client) DetachInstanceFromSecurityGroup(ctx context.Context, id UUID, re
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -11069,7 +11069,7 @@ type RemoveExternalSourceFromSecurityGroupRequest struct {
 func (c Client) RemoveExternalSourceFromSecurityGroup(ctx context.Context, id UUID, req RemoveExternalSourceFromSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:remove-source", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: prepare Json body: %w", err)
 	}
@@ -11107,7 +11107,7 @@ func (c Client) RemoveExternalSourceFromSecurityGroup(ctx context.Context, id UU
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -11153,7 +11153,7 @@ func (c Client) ListSKSClusters(ctx context.Context) (*ListSKSClustersResponse, 
 	}
 
 	bodyresp := &ListSKSClustersResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSKSClusters: prepare Json response: %w", err)
 	}
 
@@ -11198,7 +11198,7 @@ type CreateSKSClusterRequest struct {
 func (c Client) CreateSKSCluster(ctx context.Context, req CreateSKSClusterRequest) (*Operation, error) {
 	path := "/sks-cluster"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSCluster: prepare Json body: %w", err)
 	}
@@ -11236,7 +11236,7 @@ func (c Client) CreateSKSCluster(ctx context.Context, req CreateSKSClusterReques
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSKSCluster: prepare Json response: %w", err)
 	}
 
@@ -11278,7 +11278,7 @@ func (c Client) ListSKSClusterDeprecatedResources(ctx context.Context, id UUID) 
 	}
 
 	bodyresp := []SKSClusterDeprecatedResource{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: prepare Json response: %w", err)
 	}
 
@@ -11293,7 +11293,7 @@ type GenerateSKSClusterKubeconfigResponse struct {
 func (c Client) GenerateSKSClusterKubeconfig(ctx context.Context, id UUID, req SKSKubeconfigRequest) (*GenerateSKSClusterKubeconfigResponse, error) {
 	path := fmt.Sprintf("/sks-cluster-kubeconfig/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: prepare Json body: %w", err)
 	}
@@ -11331,7 +11331,7 @@ func (c Client) GenerateSKSClusterKubeconfig(ctx context.Context, id UUID, req S
 	}
 
 	bodyresp := &GenerateSKSClusterKubeconfigResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: prepare Json response: %w", err)
 	}
 
@@ -11393,7 +11393,7 @@ func (c Client) ListSKSClusterVersions(ctx context.Context, opts ...ListSKSClust
 	}
 
 	bodyresp := &ListSKSClusterVersionsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSKSClusterVersions: prepare Json response: %w", err)
 	}
 
@@ -11435,7 +11435,7 @@ func (c Client) DeleteSKSCluster(ctx context.Context, id UUID) (*Operation, erro
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSKSCluster: prepare Json response: %w", err)
 	}
 
@@ -11477,7 +11477,7 @@ func (c Client) GetSKSCluster(ctx context.Context, id UUID) (*SKSCluster, error)
 	}
 
 	bodyresp := &SKSCluster{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSCluster: prepare Json response: %w", err)
 	}
 
@@ -11502,7 +11502,7 @@ type UpdateSKSClusterRequest struct {
 func (c Client) UpdateSKSCluster(ctx context.Context, id UUID, req UpdateSKSClusterRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSCluster: prepare Json body: %w", err)
 	}
@@ -11540,7 +11540,7 @@ func (c Client) UpdateSKSCluster(ctx context.Context, id UUID, req UpdateSKSClus
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateSKSCluster: prepare Json response: %w", err)
 	}
 
@@ -11594,7 +11594,7 @@ func (c Client) GetSKSClusterAuthorityCert(ctx context.Context, id UUID, authori
 	}
 
 	bodyresp := &GetSKSClusterAuthorityCertResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: prepare Json response: %w", err)
 	}
 
@@ -11638,7 +11638,7 @@ func (c Client) GetSKSClusterInspection(ctx context.Context, id UUID) (*GetSKSCl
 	}
 
 	bodyresp := &GetSKSClusterInspectionResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSClusterInspection: prepare Json response: %w", err)
 	}
 
@@ -11678,7 +11678,7 @@ type CreateSKSNodepoolRequest struct {
 func (c Client) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNodepoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSNodepool: prepare Json body: %w", err)
 	}
@@ -11716,7 +11716,7 @@ func (c Client) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNod
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSKSNodepool: prepare Json response: %w", err)
 	}
 
@@ -11758,7 +11758,7 @@ func (c Client) DeleteSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UU
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSKSNodepool: prepare Json response: %w", err)
 	}
 
@@ -11800,7 +11800,7 @@ func (c Client) GetSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID)
 	}
 
 	bodyresp := &SKSNodepool{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSNodepool: prepare Json response: %w", err)
 	}
 
@@ -11834,7 +11834,7 @@ type UpdateSKSNodepoolRequest struct {
 func (c Client) UpdateSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID, req UpdateSKSNodepoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v", id, sksNodepoolID)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSNodepool: prepare Json body: %w", err)
 	}
@@ -11872,7 +11872,7 @@ func (c Client) UpdateSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UU
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateSKSNodepool: prepare Json response: %w", err)
 	}
 
@@ -11925,7 +11925,7 @@ func (c Client) ResetSKSNodepoolField(ctx context.Context, id UUID, sksNodepoolI
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetSKSNodepoolField: prepare Json response: %w", err)
 	}
 
@@ -11940,7 +11940,7 @@ type EvictSKSNodepoolMembersRequest struct {
 func (c Client) EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoolID UUID, req EvictSKSNodepoolMembersRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v:evict", id, sksNodepoolID)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: prepare Json body: %w", err)
 	}
@@ -11978,7 +11978,7 @@ func (c Client) EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoo
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: prepare Json response: %w", err)
 	}
 
@@ -11994,7 +11994,7 @@ type ScaleSKSNodepoolRequest struct {
 func (c Client) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID, req ScaleSKSNodepoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v:scale", id, sksNodepoolID)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleSKSNodepool: prepare Json body: %w", err)
 	}
@@ -12032,7 +12032,7 @@ func (c Client) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUI
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScaleSKSNodepool: prepare Json response: %w", err)
 	}
 
@@ -12074,7 +12074,7 @@ func (c Client) RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Operatio
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateSKSCcmCredentials: prepare Json response: %w", err)
 	}
 
@@ -12116,7 +12116,7 @@ func (c Client) RotateSKSOperatorsCA(ctx context.Context, id UUID) (*Operation, 
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateSKSOperatorsCA: prepare Json response: %w", err)
 	}
 
@@ -12132,7 +12132,7 @@ type UpgradeSKSClusterRequest struct {
 func (c Client) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSClusterRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/upgrade", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpgradeSKSCluster: prepare Json body: %w", err)
 	}
@@ -12170,7 +12170,7 @@ func (c Client) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSCl
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpgradeSKSCluster: prepare Json response: %w", err)
 	}
 
@@ -12212,7 +12212,7 @@ func (c Client) UpgradeSKSClusterServiceLevel(ctx context.Context, id UUID) (*Op
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: prepare Json response: %w", err)
 	}
 
@@ -12261,7 +12261,7 @@ func (c Client) ResetSKSClusterField(ctx context.Context, id UUID, field ResetSK
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetSKSClusterField: prepare Json response: %w", err)
 	}
 
@@ -12307,7 +12307,7 @@ func (c Client) ListSnapshots(ctx context.Context) (*ListSnapshotsResponse, erro
 	}
 
 	bodyresp := &ListSnapshotsResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSnapshots: prepare Json response: %w", err)
 	}
 
@@ -12349,7 +12349,7 @@ func (c Client) DeleteSnapshot(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSnapshot: prepare Json response: %w", err)
 	}
 
@@ -12391,7 +12391,7 @@ func (c Client) GetSnapshot(ctx context.Context, id UUID) (*Snapshot, error) {
 	}
 
 	bodyresp := &Snapshot{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSnapshot: prepare Json response: %w", err)
 	}
 
@@ -12433,7 +12433,7 @@ func (c Client) ExportSnapshot(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ExportSnapshot: prepare Json response: %w", err)
 	}
 
@@ -12457,7 +12457,7 @@ type PromoteSnapshotToTemplateRequest struct {
 func (c Client) PromoteSnapshotToTemplate(ctx context.Context, id UUID, req PromoteSnapshotToTemplateRequest) (*Operation, error) {
 	path := fmt.Sprintf("/snapshot/%v:promote", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: prepare Json body: %w", err)
 	}
@@ -12495,7 +12495,7 @@ func (c Client) PromoteSnapshotToTemplate(ctx context.Context, id UUID, req Prom
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: prepare Json response: %w", err)
 	}
 
@@ -12541,7 +12541,7 @@ func (c Client) ListSOSBucketsUsage(ctx context.Context) (*ListSOSBucketsUsageRe
 	}
 
 	bodyresp := &ListSOSBucketsUsageResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSOSBucketsUsage: prepare Json response: %w", err)
 	}
 
@@ -12603,7 +12603,7 @@ func (c Client) GetSOSPresignedURL(ctx context.Context, bucket string, opts ...G
 	}
 
 	bodyresp := &GetSOSPresignedURLResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSOSPresignedURL: prepare Json response: %w", err)
 	}
 
@@ -12649,7 +12649,7 @@ func (c Client) ListSSHKeys(ctx context.Context) (*ListSSHKeysResponse, error) {
 	}
 
 	bodyresp := &ListSSHKeysResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSSHKeys: prepare Json response: %w", err)
 	}
 
@@ -12667,7 +12667,7 @@ type RegisterSSHKeyRequest struct {
 func (c Client) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (*Operation, error) {
 	path := "/ssh-key"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterSSHKey: prepare Json body: %w", err)
 	}
@@ -12705,7 +12705,7 @@ func (c Client) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RegisterSSHKey: prepare Json response: %w", err)
 	}
 
@@ -12747,7 +12747,7 @@ func (c Client) DeleteSSHKey(ctx context.Context, name string) (*Operation, erro
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSSHKey: prepare Json response: %w", err)
 	}
 
@@ -12789,7 +12789,7 @@ func (c Client) GetSSHKey(ctx context.Context, name string) (*SSHKey, error) {
 	}
 
 	bodyresp := &SSHKey{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSSHKey: prepare Json response: %w", err)
 	}
 
@@ -12864,7 +12864,7 @@ func (c Client) ListTemplates(ctx context.Context, opts ...ListTemplatesOpt) (*L
 	}
 
 	bodyresp := &ListTemplatesResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListTemplates: prepare Json response: %w", err)
 	}
 
@@ -12909,7 +12909,7 @@ type RegisterTemplateRequest struct {
 func (c Client) RegisterTemplate(ctx context.Context, req RegisterTemplateRequest) (*Operation, error) {
 	path := "/template"
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterTemplate: prepare Json body: %w", err)
 	}
@@ -12947,7 +12947,7 @@ func (c Client) RegisterTemplate(ctx context.Context, req RegisterTemplateReques
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RegisterTemplate: prepare Json response: %w", err)
 	}
 
@@ -12989,7 +12989,7 @@ func (c Client) DeleteTemplate(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteTemplate: prepare Json response: %w", err)
 	}
 
@@ -13031,7 +13031,7 @@ func (c Client) GetTemplate(ctx context.Context, id UUID) (*Template, error) {
 	}
 
 	bodyresp := &Template{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetTemplate: prepare Json response: %w", err)
 	}
 
@@ -13047,7 +13047,7 @@ type CopyTemplateRequest struct {
 func (c Client) CopyTemplate(ctx context.Context, id UUID, req CopyTemplateRequest) (*Operation, error) {
 	path := fmt.Sprintf("/template/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("CopyTemplate: prepare Json body: %w", err)
 	}
@@ -13085,7 +13085,7 @@ func (c Client) CopyTemplate(ctx context.Context, id UUID, req CopyTemplateReque
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CopyTemplate: prepare Json response: %w", err)
 	}
 
@@ -13103,7 +13103,7 @@ type UpdateTemplateRequest struct {
 func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateRequest) (*Operation, error) {
 	path := fmt.Sprintf("/template/%v", id)
 
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: prepare Json body: %w", err)
 	}
@@ -13141,7 +13141,7 @@ func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateR
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: prepare Json response: %w", err)
 	}
 
@@ -13187,7 +13187,7 @@ func (c Client) ListZones(ctx context.Context) (*ListZonesResponse, error) {
 	}
 
 	bodyresp := &ListZonesResponse{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListZones: prepare Json response: %w", err)
 	}
 

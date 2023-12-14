@@ -3,7 +3,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	path := {{ .URLPathBuilder }}
 
 	{{ if .BodyRequest }}
-	body, err := prepareJsonBody(req)
+	body, err := prepareJSONBody(req)
 	if err != nil {
 		return nil, fmt.Errorf("{{ .Name }}: prepare Json body: %w", err)
 	}
@@ -52,7 +52,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	}
 
 	bodyresp := {{ .BodyRespType }}{}
-	if err := prepareJsonResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("{{ .Name }}: prepare Json response: %w", err)
 	}
 

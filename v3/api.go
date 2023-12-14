@@ -131,7 +131,7 @@ func Validate(r any) error {
 	return validator.New().Struct(r)
 }
 
-func prepareJsonBody(body any) (*bytes.Reader, error) {
+func prepareJSONBody(body any) (*bytes.Reader, error) {
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func prepareJsonBody(body any) (*bytes.Reader, error) {
 	return bytes.NewReader(buf), nil
 }
 
-func prepareJsonResponse(resp *http.Response, v any) error {
+func prepareJSONResponse(resp *http.Response, v any) error {
 	defer resp.Body.Close()
 
 	buf, err := io.ReadAll(resp.Body)

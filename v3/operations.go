@@ -6,17 +6,283 @@ package v3
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
+	"os"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
+
+var (
+	// ErrNotFound represents an error indicating a non-existent resource.
+	ErrNotFound = errors.New("resource not found")
+
+	// ErrTooManyFound represents an error indicating multiple results found for a single resource.
+	ErrTooManyFound = errors.New("multiple resources found")
+
+	// ErrInvalidRequest represents an error indicating that the caller's request is invalid.
+	ErrInvalidRequest = errors.New("invalid request")
+
+	// ErrAPIError represents an error indicating an API-side issue.
+	ErrAPIError = errors.New("API error")
+)
+
+// Wait is a helper that waits for async operation to reach the final state.
+// Final states are one of: failure, success, timeout.
+// If states argument are given, returns an error if the final state not match on of those.
+func (c Client) Wait(ctx context.Context, op *Operation, states ...OperationState) (*Operation, error) {
+	if op == nil {
+		return nil, fmt.Errorf("operation is nil")
+	}
+
+	ticker := time.NewTicker(c.pollingInterval)
+	defer ticker.Stop()
+
+	if op.State != OperationStatePending {
+		return op, nil
+	}
+
+	var operation *Operation
+polling:
+	for {
+		select {
+		case <-ticker.C:
+			o, err := c.GetOperation(ctx, op.ID)
+			if err != nil {
+				return nil, err
+			}
+			if o.State == OperationStatePending {
+				continue
+			}
+
+			operation = o
+			break polling
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+
+	if len(states) == 0 {
+		return operation, nil
+	}
+
+	for _, st := range states {
+		if operation.State == st {
+			return operation, nil
+		}
+	}
+
+	var ref OperationReference
+	if operation.Reference != nil {
+		ref = *operation.Reference
+	}
+
+	return nil,
+		fmt.Errorf("operation: %q %v, state: %s, reason: %q, message: %q",
+			operation.ID,
+			ref,
+			operation.State,
+			operation.Reason,
+			operation.Message,
+		)
+}
+
+type UUID string
+
+func (u UUID) String() string {
+	return string(u)
+}
+
+func ParseUUID(s string) (UUID, error) {
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return "", err
+	}
+
+	return UUID(id.String()), nil
+}
+
+func String(s string) *string {
+	return &s
+}
+
+func Int64(i int64) *int64 {
+	return &i
+}
+
+func Bool(b bool) *bool {
+	return &b
+}
+
+// Validate any struct from schema or request
+func Validate(r any) error {
+	return validator.New().Struct(r)
+}
+
+func prepareJsonBody(body any) (*bytes.Reader, error) {
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(buf), nil
+}
+
+func prepareJsonResponse(resp *http.Response, v any) error {
+	defer resp.Body.Close()
+
+	buf, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(buf, v); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c Client) signRequest(req *http.Request) error {
+	var (
+		sigParts    []string
+		headerParts []string
+	)
+
+	var expiration = time.Now().UTC().Add(time.Minute * 10)
+
+	// Request method/URL path
+	sigParts = append(sigParts, fmt.Sprintf("%s %s", req.Method, req.URL.EscapedPath()))
+	headerParts = append(headerParts, "EXO2-HMAC-SHA256 credential="+c.apiKey)
+
+	// Request body if present
+	body := ""
+	if req.Body != nil {
+		data, err := io.ReadAll(req.Body)
+		if err != nil {
+			return err
+		}
+		err = req.Body.Close()
+		if err != nil {
+			return err
+		}
+		body = string(data)
+		req.Body = io.NopCloser(bytes.NewReader(data))
+	}
+	sigParts = append(sigParts, body)
+
+	// Request query string parameters
+	// Important: this is order-sensitive, we have to have to sort parameters alphabetically to ensure signed
+	// values match the names listed in the "signed-query-args=" signature pragma.
+	signedParams, paramsValues := extractRequestParameters(req)
+	sigParts = append(sigParts, paramsValues)
+	if len(signedParams) > 0 {
+		headerParts = append(headerParts, "signed-query-args="+strings.Join(signedParams, ";"))
+	}
+
+	// Request headers -- none at the moment
+	// Note: the same order-sensitive caution for query string parameters applies to headers.
+	sigParts = append(sigParts, "")
+
+	// Request expiration date (UNIX timestamp, no line return)
+	sigParts = append(sigParts, fmt.Sprint(expiration.Unix()))
+	headerParts = append(headerParts, "expires="+fmt.Sprint(expiration.Unix()))
+
+	h := hmac.New(sha256.New, []byte(c.apiSecret))
+	if _, err := h.Write([]byte(strings.Join(sigParts, "\n"))); err != nil {
+		return err
+	}
+	headerParts = append(headerParts, "signature="+base64.StdEncoding.EncodeToString(h.Sum(nil)))
+
+	req.Header.Set("Authorization", strings.Join(headerParts, ","))
+
+	return nil
+}
+
+// extractRequestParameters returns the list of request URL parameters names
+// and a strings concatenating the values of the parameters.
+func extractRequestParameters(req *http.Request) ([]string, string) {
+	var (
+		names  []string
+		values string
+	)
+
+	for param, values := range req.URL.Query() {
+		// Keep only parameters that hold exactly 1 value (i.e. no empty or multi-valued parameters)
+		if len(values) == 1 {
+			names = append(names, param)
+		}
+	}
+	sort.Strings(names)
+
+	for _, param := range names {
+		values += req.URL.Query().Get(param)
+	}
+
+	return names, values
+}
+
+func handleHTTPErrorResp(resp *http.Response) error {
+	if resp.StatusCode >= 400 && resp.StatusCode <= 599 {
+		var res struct {
+			Message string `json:"message"`
+		}
+
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("error reading response body: %s", err)
+		}
+
+		if json.Valid(data) {
+			if err = json.Unmarshal(data, &res); err != nil {
+				return fmt.Errorf("error unmarshaling response: %s", err)
+			}
+		} else {
+			res.Message = string(data)
+		}
+
+		switch {
+		case resp.StatusCode == http.StatusNotFound:
+			return ErrNotFound
+
+		case resp.StatusCode >= 400 && resp.StatusCode < 500:
+			return fmt.Errorf("%w: %s", ErrInvalidRequest, res.Message)
+
+		case resp.StatusCode >= 500:
+			return fmt.Errorf("%w: %s", ErrAPIError, res.Message)
+		}
+	}
+
+	return nil
+}
+
+func dumpRequest(req *http.Request) {
+	if req != nil {
+		if dump, err := httputil.DumpRequest(req, true); err == nil {
+			fmt.Fprintf(os.Stderr, ">>> %s\n", dump)
+		}
+	}
+}
+
+func dumpResponse(resp *http.Response) {
+	if resp != nil {
+		if dump, err := httputil.DumpResponse(resp, true); err == nil {
+			fmt.Fprintf(os.Stderr, "<<< %s\n", dump)
+		}
+	}
+}
 
 type ListAccessKeysResponse struct {
 	AccessKeys []AccessKey `json:"access-keys,omitempty"`
@@ -31,21 +297,34 @@ func (c Client) ListAccessKeys(ctx context.Context) (*ListAccessKeysResponse, er
 		return nil, fmt.Errorf("ListAccessKeys: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListAccessKeys: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListAccessKeys: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListAccessKeys: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListAccessKeys: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListAccessKeys returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListAccessKeys: http response: %w", err)
 	}
 
 	bodyresp := &ListAccessKeysResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAccessKeys: prepare Json response: %w", err)
 	}
 
@@ -80,21 +359,34 @@ func (c Client) CreateAccessKey(ctx context.Context, req CreateAccessKeyRequest)
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateAccessKey: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateAccessKey: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateAccessKey: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAccessKey: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateAccessKey returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateAccessKey: http response: %w", err)
 	}
 
 	bodyresp := &AccessKey{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAccessKey: prepare Json response: %w", err)
 	}
 
@@ -114,21 +406,34 @@ func (c Client) ListAccessKeyKnownOperations(ctx context.Context) (*ListAccessKe
 		return nil, fmt.Errorf("ListAccessKeyKnownOperations: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListAccessKeyKnownOperations: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListAccessKeyKnownOperations: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListAccessKeyKnownOperations: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListAccessKeyKnownOperations: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListAccessKeyKnownOperations returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListAccessKeyKnownOperations: http response: %w", err)
 	}
 
 	bodyresp := &ListAccessKeyKnownOperationsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAccessKeyKnownOperations: prepare Json response: %w", err)
 	}
 
@@ -148,21 +453,34 @@ func (c Client) ListAccessKeyOperations(ctx context.Context) (*ListAccessKeyOper
 		return nil, fmt.Errorf("ListAccessKeyOperations: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListAccessKeyOperations: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListAccessKeyOperations: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListAccessKeyOperations: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListAccessKeyOperations: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListAccessKeyOperations returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListAccessKeyOperations: http response: %w", err)
 	}
 
 	bodyresp := &ListAccessKeyOperationsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAccessKeyOperations: prepare Json response: %w", err)
 	}
 
@@ -178,21 +496,34 @@ func (c Client) RevokeAccessKey(ctx context.Context, key string) (*Operation, er
 		return nil, fmt.Errorf("RevokeAccessKey: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("RevokeAccessKey: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevokeAccessKey: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevokeAccessKey: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevokeAccessKey: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request RevokeAccessKey returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevokeAccessKey: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevokeAccessKey: prepare Json response: %w", err)
 	}
 
@@ -208,21 +539,34 @@ func (c Client) GetAccessKey(ctx context.Context, key string) (*AccessKey, error
 		return nil, fmt.Errorf("GetAccessKey: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetAccessKey: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetAccessKey: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetAccessKey: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetAccessKey: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetAccessKey returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetAccessKey: http response: %w", err)
 	}
 
 	bodyresp := &AccessKey{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetAccessKey: prepare Json response: %w", err)
 	}
 
@@ -242,21 +586,34 @@ func (c Client) ListAntiAffinityGroups(ctx context.Context) (*ListAntiAffinityGr
 		return nil, fmt.Errorf("ListAntiAffinityGroups: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListAntiAffinityGroups: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListAntiAffinityGroups: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListAntiAffinityGroups: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListAntiAffinityGroups: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListAntiAffinityGroups returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListAntiAffinityGroups: http response: %w", err)
 	}
 
 	bodyresp := &ListAntiAffinityGroupsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAntiAffinityGroups: prepare Json response: %w", err)
 	}
 
@@ -286,21 +643,34 @@ func (c Client) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffin
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateAntiAffinityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateAntiAffinityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateAntiAffinityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateAntiAffinityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateAntiAffinityGroup: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: prepare Json response: %w", err)
 	}
 
@@ -316,21 +686,34 @@ func (c Client) DeleteAntiAffinityGroup(ctx context.Context, id UUID) (*Operatio
 		return nil, fmt.Errorf("DeleteAntiAffinityGroup: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteAntiAffinityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteAntiAffinityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteAntiAffinityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteAntiAffinityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteAntiAffinityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteAntiAffinityGroup: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteAntiAffinityGroup: prepare Json response: %w", err)
 	}
 
@@ -346,21 +729,34 @@ func (c Client) GetAntiAffinityGroup(ctx context.Context, id UUID) (*AntiAffinit
 		return nil, fmt.Errorf("GetAntiAffinityGroup: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetAntiAffinityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetAntiAffinityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetAntiAffinityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetAntiAffinityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetAntiAffinityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetAntiAffinityGroup: http response: %w", err)
 	}
 
 	bodyresp := &AntiAffinityGroup{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetAntiAffinityGroup: prepare Json response: %w", err)
 	}
 
@@ -380,21 +776,34 @@ func (c Client) ListAPIKeys(ctx context.Context) (*ListAPIKeysResponse, error) {
 		return nil, fmt.Errorf("ListAPIKeys: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListAPIKeys: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListAPIKeys: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListAPIKeys: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListAPIKeys: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListAPIKeys returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListAPIKeys: http response: %w", err)
 	}
 
 	bodyresp := &ListAPIKeysResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAPIKeys: prepare Json response: %w", err)
 	}
 
@@ -424,21 +833,34 @@ func (c Client) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAM
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateAPIKey: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateAPIKey: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateAPIKey: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAPIKey: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateAPIKey returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateAPIKey: http response: %w", err)
 	}
 
 	bodyresp := &IAMAPIKeyCreated{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAPIKey: prepare Json response: %w", err)
 	}
 
@@ -454,21 +876,34 @@ func (c Client) DeleteAPIKey(ctx context.Context, id string) (*Operation, error)
 		return nil, fmt.Errorf("DeleteAPIKey: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteAPIKey: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteAPIKey: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteAPIKey: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteAPIKey: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteAPIKey returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteAPIKey: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteAPIKey: prepare Json response: %w", err)
 	}
 
@@ -484,21 +919,34 @@ func (c Client) GetAPIKey(ctx context.Context, id string) (*IAMAPIKey, error) {
 		return nil, fmt.Errorf("GetAPIKey: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetAPIKey: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetAPIKey: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetAPIKey: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetAPIKey: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetAPIKey returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetAPIKey: http response: %w", err)
 	}
 
 	bodyresp := &IAMAPIKey{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetAPIKey: prepare Json response: %w", err)
 	}
 
@@ -534,21 +982,34 @@ func (c Client) ListBlockStorageVolumes(ctx context.Context, opts ...ListBlockSt
 		request.URL.RawQuery = q.Encode()
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListBlockStorageVolumes: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListBlockStorageVolumes: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListBlockStorageVolumes: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListBlockStorageVolumes: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListBlockStorageVolumes returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListBlockStorageVolumes: http response: %w", err)
 	}
 
 	bodyresp := &ListBlockStorageVolumesResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListBlockStorageVolumes: prepare Json response: %w", err)
 	}
 
@@ -582,21 +1043,34 @@ func (c Client) CreateBlockStorageVolume(ctx context.Context, req CreateBlockSto
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateBlockStorageVolume: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageVolume: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageVolume: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageVolume: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateBlockStorageVolume returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageVolume: prepare Json response: %w", err)
 	}
 
@@ -616,21 +1090,34 @@ func (c Client) ListBlockStorageSnapshots(ctx context.Context) (*ListBlockStorag
 		return nil, fmt.Errorf("ListBlockStorageSnapshots: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListBlockStorageSnapshots: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListBlockStorageSnapshots: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListBlockStorageSnapshots: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListBlockStorageSnapshots: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListBlockStorageSnapshots returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListBlockStorageSnapshots: http response: %w", err)
 	}
 
 	bodyresp := &ListBlockStorageSnapshotsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListBlockStorageSnapshots: prepare Json response: %w", err)
 	}
 
@@ -646,21 +1133,34 @@ func (c Client) DeleteBlockStorageSnapshot(ctx context.Context, id UUID) (*Opera
 		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteBlockStorageSnapshot returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: prepare Json response: %w", err)
 	}
 
@@ -676,21 +1176,34 @@ func (c Client) GetBlockStorageSnapshot(ctx context.Context, id UUID) (*BlockSto
 		return nil, fmt.Errorf("GetBlockStorageSnapshot: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetBlockStorageSnapshot: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetBlockStorageSnapshot: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetBlockStorageSnapshot: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetBlockStorageSnapshot: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetBlockStorageSnapshot returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetBlockStorageSnapshot: http response: %w", err)
 	}
 
 	bodyresp := &BlockStorageSnapshot{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetBlockStorageSnapshot: prepare Json response: %w", err)
 	}
 
@@ -706,21 +1219,34 @@ func (c Client) DeleteBlockStorageVolume(ctx context.Context, id UUID) (*Operati
 		return nil, fmt.Errorf("DeleteBlockStorageVolume: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteBlockStorageVolume: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageVolume: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageVolume: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageVolume: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteBlockStorageVolume returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageVolume: prepare Json response: %w", err)
 	}
 
@@ -736,21 +1262,34 @@ func (c Client) GetBlockStorageVolume(ctx context.Context, id UUID) (*BlockStora
 		return nil, fmt.Errorf("GetBlockStorageVolume: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetBlockStorageVolume: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetBlockStorageVolume: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetBlockStorageVolume: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetBlockStorageVolume: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetBlockStorageVolume returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := &BlockStorageVolume{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetBlockStorageVolume: prepare Json response: %w", err)
 	}
 
@@ -777,21 +1316,34 @@ func (c Client) UpdateBlockStorageVolumeLabels(ctx context.Context, id UUID, req
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateBlockStorageVolumeLabels returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: prepare Json response: %w", err)
 	}
 
@@ -819,21 +1371,34 @@ func (c Client) AttachBlockStorageVolumeToInstance(ctx context.Context, id UUID,
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request AttachBlockStorageVolumeToInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: prepare Json response: %w", err)
 	}
 
@@ -862,21 +1427,34 @@ func (c Client) CreateBlockStorageSnapshot(ctx context.Context, id UUID, req Cre
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateBlockStorageSnapshot: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageSnapshot: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageSnapshot: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateBlockStorageSnapshot returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateBlockStorageSnapshot: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: prepare Json response: %w", err)
 	}
 
@@ -892,21 +1470,34 @@ func (c Client) DetachBlockStorageVolume(ctx context.Context, id UUID) (*Operati
 		return nil, fmt.Errorf("DetachBlockStorageVolume: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DetachBlockStorageVolume: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DetachBlockStorageVolume: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DetachBlockStorageVolume: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DetachBlockStorageVolume: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DetachBlockStorageVolume returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DetachBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachBlockStorageVolume: prepare Json response: %w", err)
 	}
 
@@ -934,21 +1525,34 @@ func (c Client) ResizeBlockStorageVolume(ctx context.Context, id UUID, req Resiz
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResizeBlockStorageVolume: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResizeBlockStorageVolume: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResizeBlockStorageVolume: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResizeBlockStorageVolume returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResizeBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := &BlockStorageVolume{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: prepare Json response: %w", err)
 	}
 
@@ -968,21 +1572,34 @@ func (c Client) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertifica
 		return nil, fmt.Errorf("GetDBAASCACertificate: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASCACertificate: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASCACertificate: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASCACertificate: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASCACertificate: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASCACertificate returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASCACertificate: http response: %w", err)
 	}
 
 	bodyresp := &GetDBAASCACertificateResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASCACertificate: prepare Json response: %w", err)
 	}
 
@@ -998,21 +1615,34 @@ func (c Client) DeleteDBAASServiceGrafana(ctx context.Context, name string) (*Op
 		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASServiceGrafana returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: prepare Json response: %w", err)
 	}
 
@@ -1028,21 +1658,34 @@ func (c Client) GetDBAASServiceGrafana(ctx context.Context, name string) (*DBAAS
 		return nil, fmt.Errorf("GetDBAASServiceGrafana: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASServiceGrafana: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceGrafana: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceGrafana: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceGrafana: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASServiceGrafana returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceGrafana: http response: %w", err)
 	}
 
 	bodyresp := &DBAASServiceGrafana{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceGrafana: prepare Json response: %w", err)
 	}
 
@@ -1100,21 +1743,34 @@ func (c Client) CreateDBAASServiceGrafana(ctx context.Context, name string, req 
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASServiceGrafana: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceGrafana: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceGrafana: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASServiceGrafana returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceGrafana: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: prepare Json response: %w", err)
 	}
 
@@ -1171,21 +1827,34 @@ func (c Client) UpdateDBAASServiceGrafana(ctx context.Context, name string, req 
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDBAASServiceGrafana returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: prepare Json response: %w", err)
 	}
 
@@ -1201,21 +1870,34 @@ func (c Client) StartDBAASGrafanaMaintenance(ctx context.Context, name string) (
 		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StartDBAASGrafanaMaintenance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: prepare Json response: %w", err)
 	}
 
@@ -1246,21 +1928,34 @@ func (c Client) CreateDBAASIntegration(ctx context.Context, req CreateDBAASInteg
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASIntegration: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASIntegration: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASIntegration: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASIntegration: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASIntegration returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASIntegration: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASIntegration: prepare Json response: %w", err)
 	}
 
@@ -1289,21 +1984,34 @@ func (c Client) ListDBAASIntegrationSettings(ctx context.Context, integrationTyp
 		return nil, fmt.Errorf("ListDBAASIntegrationSettings: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListDBAASIntegrationSettings: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDBAASIntegrationSettings: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDBAASIntegrationSettings: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationSettings: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListDBAASIntegrationSettings returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDBAASIntegrationSettings: http response: %w", err)
 	}
 
 	bodyresp := &ListDBAASIntegrationSettingsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationSettings: prepare Json response: %w", err)
 	}
 
@@ -1323,21 +2031,34 @@ func (c Client) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegr
 		return nil, fmt.Errorf("ListDBAASIntegrationTypes: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListDBAASIntegrationTypes: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDBAASIntegrationTypes: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDBAASIntegrationTypes: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationTypes: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListDBAASIntegrationTypes returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDBAASIntegrationTypes: http response: %w", err)
 	}
 
 	bodyresp := &ListDBAASIntegrationTypesResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationTypes: prepare Json response: %w", err)
 	}
 
@@ -1353,21 +2074,34 @@ func (c Client) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation
 		return nil, fmt.Errorf("DeleteDBAASIntegration: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASIntegration: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASIntegration: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASIntegration: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASIntegration: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASIntegration returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASIntegration: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASIntegration: prepare Json response: %w", err)
 	}
 
@@ -1383,21 +2117,34 @@ func (c Client) GetDBAASIntegration(ctx context.Context, id UUID) (*DBAASIntegra
 		return nil, fmt.Errorf("GetDBAASIntegration: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASIntegration: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASIntegration: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASIntegration: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASIntegration: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASIntegration returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASIntegration: http response: %w", err)
 	}
 
 	bodyresp := &DBAASIntegration{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASIntegration: prepare Json response: %w", err)
 	}
 
@@ -1425,21 +2172,34 @@ func (c Client) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateD
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDBAASIntegration: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASIntegration: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASIntegration: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASIntegration: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDBAASIntegration returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASIntegration: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASIntegration: prepare Json response: %w", err)
 	}
 
@@ -1455,21 +2215,34 @@ func (c Client) DeleteDBAASServiceKafka(ctx context.Context, name string) (*Oper
 		return nil, fmt.Errorf("DeleteDBAASServiceKafka: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASServiceKafka: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceKafka: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceKafka: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceKafka: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASServiceKafka returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceKafka: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceKafka: prepare Json response: %w", err)
 	}
 
@@ -1485,21 +2258,34 @@ func (c Client) GetDBAASServiceKafka(ctx context.Context, name string) (*DBAASSe
 		return nil, fmt.Errorf("GetDBAASServiceKafka: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASServiceKafka: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceKafka: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceKafka: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceKafka: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASServiceKafka returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceKafka: http response: %w", err)
 	}
 
 	bodyresp := &DBAASServiceKafka{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceKafka: prepare Json response: %w", err)
 	}
 
@@ -1580,21 +2366,34 @@ func (c Client) CreateDBAASServiceKafka(ctx context.Context, name string, req Cr
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASServiceKafka: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceKafka: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceKafka: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASServiceKafka returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceKafka: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: prepare Json response: %w", err)
 	}
 
@@ -1675,21 +2474,34 @@ func (c Client) UpdateDBAASServiceKafka(ctx context.Context, name string, req Up
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDBAASServiceKafka: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceKafka: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceKafka: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDBAASServiceKafka returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceKafka: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: prepare Json response: %w", err)
 	}
 
@@ -1705,21 +2517,34 @@ func (c Client) GetDBAASKafkaAclConfig(ctx context.Context, name string) (*DBAAS
 		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASKafkaAclConfig returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: http response: %w", err)
 	}
 
 	bodyresp := &DBAASKafkaAcls{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: prepare Json response: %w", err)
 	}
 
@@ -1735,21 +2560,34 @@ func (c Client) StartDBAASKafkaMaintenance(ctx context.Context, name string) (*O
 		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StartDBAASKafkaMaintenance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: prepare Json response: %w", err)
 	}
 
@@ -1772,21 +2610,34 @@ func (c Client) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASKafkaSchemaRegistryAclConfig returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: prepare Json response: %w", err)
 	}
 
@@ -1802,21 +2653,34 @@ func (c Client) DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASKafkaSchemaRegistryAclConfig returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: prepare Json response: %w", err)
 	}
 
@@ -1839,21 +2703,34 @@ func (c Client) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASKafkaTopicAclConfig returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: prepare Json response: %w", err)
 	}
 
@@ -1869,21 +2746,34 @@ func (c Client) DeleteDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASKafkaTopicAclConfig returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: prepare Json response: %w", err)
 	}
 
@@ -1910,21 +2800,34 @@ func (c Client) CreateDBAASKafkaUser(ctx context.Context, serviceName string, re
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASKafkaUser: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASKafkaUser: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASKafkaUser: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASKafkaUser returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASKafkaUser: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: prepare Json response: %w", err)
 	}
 
@@ -1940,21 +2843,34 @@ func (c Client) DeleteDBAASKafkaUser(ctx context.Context, serviceName string, us
 		return nil, fmt.Errorf("DeleteDBAASKafkaUser: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASKafkaUser: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASKafkaUser: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASKafkaUser: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaUser: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASKafkaUser returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASKafkaUser: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaUser: prepare Json response: %w", err)
 	}
 
@@ -1981,21 +2897,34 @@ func (c Client) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName str
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetDBAASKafkaUserPassword returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: prepare Json response: %w", err)
 	}
 
@@ -2011,21 +2940,34 @@ func (c Client) GetDBAASMigrationStatus(ctx context.Context, name string) (*DBAA
 		return nil, fmt.Errorf("GetDBAASMigrationStatus: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASMigrationStatus: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASMigrationStatus: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASMigrationStatus: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASMigrationStatus: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASMigrationStatus returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASMigrationStatus: http response: %w", err)
 	}
 
 	bodyresp := &DBAASMigrationStatus{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASMigrationStatus: prepare Json response: %w", err)
 	}
 
@@ -2041,21 +2983,34 @@ func (c Client) DeleteDBAASServiceMysql(ctx context.Context, name string) (*Oper
 		return nil, fmt.Errorf("DeleteDBAASServiceMysql: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASServiceMysql: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceMysql: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceMysql: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceMysql: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASServiceMysql returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceMysql: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceMysql: prepare Json response: %w", err)
 	}
 
@@ -2071,21 +3026,34 @@ func (c Client) GetDBAASServiceMysql(ctx context.Context, name string) (*DBAASSe
 		return nil, fmt.Errorf("GetDBAASServiceMysql: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASServiceMysql: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceMysql: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceMysql: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMysql: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASServiceMysql returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceMysql: http response: %w", err)
 	}
 
 	bodyresp := &DBAASServiceMysql{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMysql: prepare Json response: %w", err)
 	}
 
@@ -2199,21 +3167,34 @@ func (c Client) CreateDBAASServiceMysql(ctx context.Context, name string, req Cr
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASServiceMysql: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceMysql: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceMysql: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASServiceMysql returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceMysql: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: prepare Json response: %w", err)
 	}
 
@@ -2301,21 +3282,34 @@ func (c Client) UpdateDBAASServiceMysql(ctx context.Context, name string, req Up
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDBAASServiceMysql: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceMysql: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceMysql: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDBAASServiceMysql returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceMysql: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: prepare Json response: %w", err)
 	}
 
@@ -2331,21 +3325,34 @@ func (c Client) StartDBAASMysqlMaintenance(ctx context.Context, name string) (*O
 		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StartDBAASMysqlMaintenance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: prepare Json response: %w", err)
 	}
 
@@ -2361,21 +3368,34 @@ func (c Client) StopDBAASMysqlMigration(ctx context.Context, name string) (*Oper
 		return nil, fmt.Errorf("StopDBAASMysqlMigration: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StopDBAASMysqlMigration: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StopDBAASMysqlMigration: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StopDBAASMysqlMigration: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StopDBAASMysqlMigration: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StopDBAASMysqlMigration returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StopDBAASMysqlMigration: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopDBAASMysqlMigration: prepare Json response: %w", err)
 	}
 
@@ -2402,21 +3422,34 @@ func (c Client) CreateDBAASMysqlDatabase(ctx context.Context, serviceName string
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASMysqlDatabase returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: prepare Json response: %w", err)
 	}
 
@@ -2432,21 +3465,34 @@ func (c Client) DeleteDBAASMysqlDatabase(ctx context.Context, serviceName string
 		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASMysqlDatabase returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: prepare Json response: %w", err)
 	}
 
@@ -2474,21 +3520,34 @@ func (c Client) CreateDBAASMysqlUser(ctx context.Context, serviceName string, re
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASMysqlUser: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASMysqlUser: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASMysqlUser: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASMysqlUser returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASMysqlUser: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: prepare Json response: %w", err)
 	}
 
@@ -2504,21 +3563,34 @@ func (c Client) DeleteDBAASMysqlUser(ctx context.Context, serviceName string, us
 		return nil, fmt.Errorf("DeleteDBAASMysqlUser: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASMysqlUser: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASMysqlUser: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASMysqlUser: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlUser: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASMysqlUser returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASMysqlUser: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlUser: prepare Json response: %w", err)
 	}
 
@@ -2546,21 +3618,34 @@ func (c Client) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName str
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetDBAASMysqlUserPassword returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: prepare Json response: %w", err)
 	}
 
@@ -2576,21 +3661,34 @@ func (c Client) DeleteDBAASServiceOpensearch(ctx context.Context, name string) (
 		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASServiceOpensearch returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: prepare Json response: %w", err)
 	}
 
@@ -2606,21 +3704,34 @@ func (c Client) GetDBAASServiceOpensearch(ctx context.Context, name string) (*DB
 		return nil, fmt.Errorf("GetDBAASServiceOpensearch: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASServiceOpensearch: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceOpensearch: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceOpensearch: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceOpensearch: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASServiceOpensearch returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceOpensearch: http response: %w", err)
 	}
 
 	bodyresp := &DBAASServiceOpensearch{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceOpensearch: prepare Json response: %w", err)
 	}
 
@@ -2728,21 +3839,34 @@ func (c Client) CreateDBAASServiceOpensearch(ctx context.Context, name string, r
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASServiceOpensearch returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: prepare Json response: %w", err)
 	}
 
@@ -2847,21 +3971,34 @@ func (c Client) UpdateDBAASServiceOpensearch(ctx context.Context, name string, r
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDBAASServiceOpensearch returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: prepare Json response: %w", err)
 	}
 
@@ -2877,21 +4014,34 @@ func (c Client) GetDBAASOpensearchAclConfig(ctx context.Context, name string) (*
 		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASOpensearchAclConfig returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: http response: %w", err)
 	}
 
 	bodyresp := &DBAASOpensearchAclConfig{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: prepare Json response: %w", err)
 	}
 
@@ -2914,21 +4064,34 @@ func (c Client) UpdateDBAASOpensearchAclConfig(ctx context.Context, name string,
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDBAASOpensearchAclConfig returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: prepare Json response: %w", err)
 	}
 
@@ -2944,21 +4107,34 @@ func (c Client) StartDBAASOpensearchMaintenance(ctx context.Context, name string
 		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StartDBAASOpensearchMaintenance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: prepare Json response: %w", err)
 	}
 
@@ -2985,21 +4161,34 @@ func (c Client) CreateDBAASOpensearchUser(ctx context.Context, serviceName strin
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASOpensearchUser: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASOpensearchUser: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASOpensearchUser: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASOpensearchUser returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASOpensearchUser: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: prepare Json response: %w", err)
 	}
 
@@ -3015,21 +4204,34 @@ func (c Client) DeleteDBAASOpensearchUser(ctx context.Context, serviceName strin
 		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASOpensearchUser returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: prepare Json response: %w", err)
 	}
 
@@ -3056,21 +4258,34 @@ func (c Client) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceNam
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetDBAASOpensearchUserPassword returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: prepare Json response: %w", err)
 	}
 
@@ -3086,21 +4301,34 @@ func (c Client) DeleteDBAASServicePG(ctx context.Context, name string) (*Operati
 		return nil, fmt.Errorf("DeleteDBAASServicePG: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASServicePG: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServicePG: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServicePG: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServicePG: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASServicePG returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServicePG: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServicePG: prepare Json response: %w", err)
 	}
 
@@ -3116,21 +4344,34 @@ func (c Client) GetDBAASServicePG(ctx context.Context, name string) (*DBAASServi
 		return nil, fmt.Errorf("GetDBAASServicePG: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASServicePG: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServicePG: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServicePG: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServicePG: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASServicePG returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServicePG: http response: %w", err)
 	}
 
 	bodyresp := &DBAASServicePG{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServicePG: prepare Json response: %w", err)
 	}
 
@@ -3254,21 +4495,34 @@ func (c Client) CreateDBAASServicePG(ctx context.Context, name string, req Creat
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASServicePG: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServicePG: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServicePG: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServicePG: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASServicePG returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServicePG: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServicePG: prepare Json response: %w", err)
 	}
 
@@ -3368,21 +4622,34 @@ func (c Client) UpdateDBAASServicePG(ctx context.Context, name string, req Updat
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDBAASServicePG: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServicePG: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServicePG: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServicePG: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDBAASServicePG returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServicePG: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServicePG: prepare Json response: %w", err)
 	}
 
@@ -3398,21 +4665,34 @@ func (c Client) StartDBAASPGMaintenance(ctx context.Context, name string) (*Oper
 		return nil, fmt.Errorf("StartDBAASPGMaintenance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StartDBAASPGMaintenance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StartDBAASPGMaintenance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StartDBAASPGMaintenance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASPGMaintenance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StartDBAASPGMaintenance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StartDBAASPGMaintenance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASPGMaintenance: prepare Json response: %w", err)
 	}
 
@@ -3428,21 +4708,34 @@ func (c Client) StopDBAASPGMigration(ctx context.Context, name string) (*Operati
 		return nil, fmt.Errorf("StopDBAASPGMigration: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StopDBAASPGMigration: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StopDBAASPGMigration: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StopDBAASPGMigration: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StopDBAASPGMigration: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StopDBAASPGMigration returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StopDBAASPGMigration: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopDBAASPGMigration: prepare Json response: %w", err)
 	}
 
@@ -3473,21 +4766,34 @@ func (c Client) CreateDBAASPGConnectionPool(ctx context.Context, serviceName str
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASPGConnectionPool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: prepare Json response: %w", err)
 	}
 
@@ -3503,21 +4809,34 @@ func (c Client) DeleteDBAASPGConnectionPool(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASPGConnectionPool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: prepare Json response: %w", err)
 	}
 
@@ -3547,21 +4866,34 @@ func (c Client) UpdateDBAASPGConnectionPool(ctx context.Context, serviceName str
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDBAASPGConnectionPool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: prepare Json response: %w", err)
 	}
 
@@ -3592,21 +4924,34 @@ func (c Client) CreateDBAASPGDatabase(ctx context.Context, serviceName string, r
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASPGDatabase: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPGDatabase: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPGDatabase: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASPGDatabase returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPGDatabase: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: prepare Json response: %w", err)
 	}
 
@@ -3622,21 +4967,34 @@ func (c Client) DeleteDBAASPGDatabase(ctx context.Context, serviceName string, d
 		return nil, fmt.Errorf("DeleteDBAASPGDatabase: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASPGDatabase: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASPGDatabase: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASPGDatabase: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGDatabase: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASPGDatabase returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASPGDatabase: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGDatabase: prepare Json response: %w", err)
 	}
 
@@ -3664,21 +5022,34 @@ func (c Client) CreateDBAASPostgresUser(ctx context.Context, serviceName string,
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASPostgresUser: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPostgresUser: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPostgresUser: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASPostgresUser returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPostgresUser: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: prepare Json response: %w", err)
 	}
 
@@ -3694,21 +5065,34 @@ func (c Client) DeleteDBAASPostgresUser(ctx context.Context, serviceName string,
 		return nil, fmt.Errorf("DeleteDBAASPostgresUser: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASPostgresUser: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASPostgresUser: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASPostgresUser: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPostgresUser: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASPostgresUser returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASPostgresUser: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPostgresUser: prepare Json response: %w", err)
 	}
 
@@ -3735,21 +5119,34 @@ func (c Client) UpdateDBAASPostgresAllowReplication(ctx context.Context, service
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDBAASPostgresAllowReplication returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: http response: %w", err)
 	}
 
 	bodyresp := &DBAASPostgresUsers{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: prepare Json response: %w", err)
 	}
 
@@ -3776,21 +5173,34 @@ func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName 
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetDBAASPostgresUserPassword returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: prepare Json response: %w", err)
 	}
 
@@ -3828,21 +5238,34 @@ func (c Client) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, r
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASPGUpgradeCheck returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: http response: %w", err)
 	}
 
 	bodyresp := &DBAASTask{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: prepare Json response: %w", err)
 	}
 
@@ -3858,21 +5281,34 @@ func (c Client) DeleteDBAASServiceRedis(ctx context.Context, name string) (*Oper
 		return nil, fmt.Errorf("DeleteDBAASServiceRedis: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASServiceRedis: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceRedis: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceRedis: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceRedis: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASServiceRedis returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceRedis: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceRedis: prepare Json response: %w", err)
 	}
 
@@ -3888,21 +5324,34 @@ func (c Client) GetDBAASServiceRedis(ctx context.Context, name string) (*DBAASSe
 		return nil, fmt.Errorf("GetDBAASServiceRedis: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASServiceRedis: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceRedis: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceRedis: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceRedis: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASServiceRedis returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceRedis: http response: %w", err)
 	}
 
 	bodyresp := &DBAASServiceRedis{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceRedis: prepare Json response: %w", err)
 	}
 
@@ -3983,21 +5432,34 @@ func (c Client) CreateDBAASServiceRedis(ctx context.Context, name string, req Cr
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASServiceRedis: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceRedis: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceRedis: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceRedis: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASServiceRedis returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceRedis: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceRedis: prepare Json response: %w", err)
 	}
 
@@ -4075,21 +5537,34 @@ func (c Client) UpdateDBAASServiceRedis(ctx context.Context, name string, req Up
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDBAASServiceRedis: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceRedis: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceRedis: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceRedis: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDBAASServiceRedis returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceRedis: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceRedis: prepare Json response: %w", err)
 	}
 
@@ -4105,21 +5580,34 @@ func (c Client) StartDBAASRedisMaintenance(ctx context.Context, name string) (*O
 		return nil, fmt.Errorf("StartDBAASRedisMaintenance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StartDBAASRedisMaintenance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StartDBAASRedisMaintenance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StartDBAASRedisMaintenance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASRedisMaintenance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StartDBAASRedisMaintenance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StartDBAASRedisMaintenance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASRedisMaintenance: prepare Json response: %w", err)
 	}
 
@@ -4135,21 +5623,34 @@ func (c Client) StopDBAASRedisMigration(ctx context.Context, name string) (*Oper
 		return nil, fmt.Errorf("StopDBAASRedisMigration: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StopDBAASRedisMigration: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StopDBAASRedisMigration: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StopDBAASRedisMigration: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StopDBAASRedisMigration: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StopDBAASRedisMigration returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StopDBAASRedisMigration: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopDBAASRedisMigration: prepare Json response: %w", err)
 	}
 
@@ -4169,21 +5670,34 @@ func (c Client) ListDBAASServices(ctx context.Context) (*ListDBAASServicesRespon
 		return nil, fmt.Errorf("ListDBAASServices: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListDBAASServices: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDBAASServices: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDBAASServices: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASServices: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListDBAASServices returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDBAASServices: http response: %w", err)
 	}
 
 	bodyresp := &ListDBAASServicesResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASServices: prepare Json response: %w", err)
 	}
 
@@ -4214,21 +5728,34 @@ func (c Client) GetDBAASServiceLogs(ctx context.Context, serviceName string, req
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASServiceLogs: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceLogs: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceLogs: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceLogs: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASServiceLogs returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceLogs: http response: %w", err)
 	}
 
 	bodyresp := &DBAASServiceLogs{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceLogs: prepare Json response: %w", err)
 	}
 
@@ -4270,21 +5797,34 @@ func (c Client) GetDBAASServiceMetrics(ctx context.Context, serviceName string, 
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASServiceMetrics: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceMetrics: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceMetrics: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASServiceMetrics returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceMetrics: http response: %w", err)
 	}
 
 	bodyresp := &GetDBAASServiceMetricsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: prepare Json response: %w", err)
 	}
 
@@ -4304,21 +5844,34 @@ func (c Client) ListDBAASServiceTypes(ctx context.Context) (*ListDBAASServiceTyp
 		return nil, fmt.Errorf("ListDBAASServiceTypes: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListDBAASServiceTypes: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDBAASServiceTypes: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDBAASServiceTypes: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASServiceTypes: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListDBAASServiceTypes returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDBAASServiceTypes: http response: %w", err)
 	}
 
 	bodyresp := &ListDBAASServiceTypesResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASServiceTypes: prepare Json response: %w", err)
 	}
 
@@ -4334,21 +5887,34 @@ func (c Client) GetDBAASServiceType(ctx context.Context, serviceTypeName string)
 		return nil, fmt.Errorf("GetDBAASServiceType: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASServiceType: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceType: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceType: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceType: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASServiceType returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceType: http response: %w", err)
 	}
 
 	bodyresp := &DBAASServiceType{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceType: prepare Json response: %w", err)
 	}
 
@@ -4364,21 +5930,34 @@ func (c Client) DeleteDBAASService(ctx context.Context, name string) (*Operation
 		return nil, fmt.Errorf("DeleteDBAASService: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDBAASService: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASService: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASService: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASService: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDBAASService returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASService: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASService: prepare Json response: %w", err)
 	}
 
@@ -4411,21 +5990,34 @@ func (c Client) GetDBAASSettingsGrafana(ctx context.Context) (*GetDBAASSettingsG
 		return nil, fmt.Errorf("GetDBAASSettingsGrafana: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASSettingsGrafana: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsGrafana: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsGrafana: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsGrafana: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASSettingsGrafana returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsGrafana: http response: %w", err)
 	}
 
 	bodyresp := &GetDBAASSettingsGrafanaResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsGrafana: prepare Json response: %w", err)
 	}
 
@@ -4488,21 +6080,34 @@ func (c Client) GetDBAASSettingsKafka(ctx context.Context) (*GetDBAASSettingsKaf
 		return nil, fmt.Errorf("GetDBAASSettingsKafka: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASSettingsKafka: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsKafka: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsKafka: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsKafka: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASSettingsKafka returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsKafka: http response: %w", err)
 	}
 
 	bodyresp := &GetDBAASSettingsKafkaResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsKafka: prepare Json response: %w", err)
 	}
 
@@ -4535,21 +6140,34 @@ func (c Client) GetDBAASSettingsMysql(ctx context.Context) (*GetDBAASSettingsMys
 		return nil, fmt.Errorf("GetDBAASSettingsMysql: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASSettingsMysql: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsMysql: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsMysql: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsMysql: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASSettingsMysql returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsMysql: http response: %w", err)
 	}
 
 	bodyresp := &GetDBAASSettingsMysqlResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsMysql: prepare Json response: %w", err)
 	}
 
@@ -4582,21 +6200,34 @@ func (c Client) GetDBAASSettingsOpensearch(ctx context.Context) (*GetDBAASSettin
 		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASSettingsOpensearch returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: http response: %w", err)
 	}
 
 	bodyresp := &GetDBAASSettingsOpensearchResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: prepare Json response: %w", err)
 	}
 
@@ -4659,21 +6290,34 @@ func (c Client) GetDBAASSettingsPG(ctx context.Context) (*GetDBAASSettingsPGResp
 		return nil, fmt.Errorf("GetDBAASSettingsPG: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASSettingsPG: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsPG: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsPG: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsPG: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASSettingsPG returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsPG: http response: %w", err)
 	}
 
 	bodyresp := &GetDBAASSettingsPGResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsPG: prepare Json response: %w", err)
 	}
 
@@ -4706,21 +6350,34 @@ func (c Client) GetDBAASSettingsRedis(ctx context.Context) (*GetDBAASSettingsRed
 		return nil, fmt.Errorf("GetDBAASSettingsRedis: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASSettingsRedis: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsRedis: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsRedis: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsRedis: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASSettingsRedis returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsRedis: http response: %w", err)
 	}
 
 	bodyresp := &GetDBAASSettingsRedisResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsRedis: prepare Json response: %w", err)
 	}
 
@@ -4751,21 +6408,34 @@ func (c Client) CreateDBAASTaskMigrationCheck(ctx context.Context, service strin
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDBAASTaskMigrationCheck returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: prepare Json response: %w", err)
 	}
 
@@ -4781,21 +6451,34 @@ func (c Client) GetDBAASTask(ctx context.Context, service string, id UUID) (*DBA
 		return nil, fmt.Errorf("GetDBAASTask: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDBAASTask: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASTask: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASTask: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASTask: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDBAASTask returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASTask: http response: %w", err)
 	}
 
 	bodyresp := &DBAASTask{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASTask: prepare Json response: %w", err)
 	}
 
@@ -4815,21 +6498,34 @@ func (c Client) ListDeployTargets(ctx context.Context) (*ListDeployTargetsRespon
 		return nil, fmt.Errorf("ListDeployTargets: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListDeployTargets: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDeployTargets: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDeployTargets: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDeployTargets: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListDeployTargets returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDeployTargets: http response: %w", err)
 	}
 
 	bodyresp := &ListDeployTargetsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDeployTargets: prepare Json response: %w", err)
 	}
 
@@ -4845,21 +6541,34 @@ func (c Client) GetDeployTarget(ctx context.Context, id UUID) (*DeployTarget, er
 		return nil, fmt.Errorf("GetDeployTarget: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDeployTarget: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDeployTarget: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDeployTarget: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDeployTarget: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDeployTarget returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDeployTarget: http response: %w", err)
 	}
 
 	bodyresp := &DeployTarget{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDeployTarget: prepare Json response: %w", err)
 	}
 
@@ -4879,21 +6588,34 @@ func (c Client) ListDNSDomains(ctx context.Context) (*ListDNSDomainsResponse, er
 		return nil, fmt.Errorf("ListDNSDomains: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListDNSDomains: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDNSDomains: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDNSDomains: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDNSDomains: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListDNSDomains returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDNSDomains: http response: %w", err)
 	}
 
 	bodyresp := &ListDNSDomainsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDNSDomains: prepare Json response: %w", err)
 	}
 
@@ -4922,21 +6644,34 @@ func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest)
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDNSDomain: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDNSDomain: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDNSDomain: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDNSDomain returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDNSDomain: http response: %w", err)
 	}
 
 	bodyresp := &DNSDomain{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: prepare Json response: %w", err)
 	}
 
@@ -4956,21 +6691,34 @@ func (c Client) ListDNSDomainRecords(ctx context.Context, domainID UUID) (*ListD
 		return nil, fmt.Errorf("ListDNSDomainRecords: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListDNSDomainRecords: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDNSDomainRecords: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDNSDomainRecords: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDNSDomainRecords: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListDNSDomainRecords returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDNSDomainRecords: http response: %w", err)
 	}
 
 	bodyresp := &ListDNSDomainRecordsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDNSDomainRecords: prepare Json response: %w", err)
 	}
 
@@ -5026,21 +6774,34 @@ func (c Client) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req Cr
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateDNSDomainRecord: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDNSDomainRecord: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDNSDomainRecord: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomainRecord: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateDNSDomainRecord returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDNSDomainRecord: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDNSDomainRecord: prepare Json response: %w", err)
 	}
 
@@ -5056,21 +6817,34 @@ func (c Client) DeleteDNSDomainRecord(ctx context.Context, domainID UUID, record
 		return nil, fmt.Errorf("DeleteDNSDomainRecord: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDNSDomainRecord: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDNSDomainRecord: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDNSDomainRecord: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomainRecord: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDNSDomainRecord returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDNSDomainRecord: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomainRecord: prepare Json response: %w", err)
 	}
 
@@ -5086,21 +6860,34 @@ func (c Client) GetDNSDomainRecord(ctx context.Context, domainID UUID, recordID 
 		return nil, fmt.Errorf("GetDNSDomainRecord: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDNSDomainRecord: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDNSDomainRecord: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDNSDomainRecord: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDNSDomainRecord: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDNSDomainRecord returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDNSDomainRecord: http response: %w", err)
 	}
 
 	bodyresp := &DNSDomainRecord{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDNSDomainRecord: prepare Json response: %w", err)
 	}
 
@@ -5134,21 +6921,34 @@ func (c Client) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, record
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateDNSDomainRecord: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDNSDomainRecord: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDNSDomainRecord: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateDNSDomainRecord returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDNSDomainRecord: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: prepare Json response: %w", err)
 	}
 
@@ -5164,21 +6964,34 @@ func (c Client) DeleteDNSDomain(ctx context.Context, id UUID) (*Operation, error
 		return nil, fmt.Errorf("DeleteDNSDomain: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteDNSDomain: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDNSDomain: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDNSDomain: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomain: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteDNSDomain returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDNSDomain: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomain: prepare Json response: %w", err)
 	}
 
@@ -5194,21 +7007,34 @@ func (c Client) GetDNSDomain(ctx context.Context, id UUID) (*DNSDomain, error) {
 		return nil, fmt.Errorf("GetDNSDomain: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDNSDomain: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDNSDomain: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDNSDomain: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDNSDomain: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDNSDomain returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDNSDomain: http response: %w", err)
 	}
 
 	bodyresp := &DNSDomain{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDNSDomain: prepare Json response: %w", err)
 	}
 
@@ -5228,21 +7054,34 @@ func (c Client) GetDNSDomainZoneFile(ctx context.Context, id UUID) (*GetDNSDomai
 		return nil, fmt.Errorf("GetDNSDomainZoneFile: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetDNSDomainZoneFile: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDNSDomainZoneFile: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDNSDomainZoneFile: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDNSDomainZoneFile: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetDNSDomainZoneFile returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDNSDomainZoneFile: http response: %w", err)
 	}
 
 	bodyresp := &GetDNSDomainZoneFileResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDNSDomainZoneFile: prepare Json response: %w", err)
 	}
 
@@ -5262,21 +7101,34 @@ func (c Client) ListElasticIPS(ctx context.Context) (*ListElasticIPSResponse, er
 		return nil, fmt.Errorf("ListElasticIPS: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListElasticIPS: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListElasticIPS: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListElasticIPS: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListElasticIPS: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListElasticIPS returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListElasticIPS: http response: %w", err)
 	}
 
 	bodyresp := &ListElasticIPSResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListElasticIPS: prepare Json response: %w", err)
 	}
 
@@ -5316,21 +7168,34 @@ func (c Client) CreateElasticIP(ctx context.Context, req CreateElasticIPRequest)
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateElasticIP: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateElasticIP: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateElasticIP: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateElasticIP: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateElasticIP returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateElasticIP: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateElasticIP: prepare Json response: %w", err)
 	}
 
@@ -5346,21 +7211,34 @@ func (c Client) DeleteElasticIP(ctx context.Context, id UUID) (*Operation, error
 		return nil, fmt.Errorf("DeleteElasticIP: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteElasticIP: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteElasticIP: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteElasticIP: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteElasticIP: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteElasticIP returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteElasticIP: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteElasticIP: prepare Json response: %w", err)
 	}
 
@@ -5376,21 +7254,34 @@ func (c Client) GetElasticIP(ctx context.Context, id UUID) (*ElasticIP, error) {
 		return nil, fmt.Errorf("GetElasticIP: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetElasticIP: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetElasticIP: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetElasticIP: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetElasticIP: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetElasticIP returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetElasticIP: http response: %w", err)
 	}
 
 	bodyresp := &ElasticIP{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetElasticIP: prepare Json response: %w", err)
 	}
 
@@ -5421,21 +7312,34 @@ func (c Client) UpdateElasticIP(ctx context.Context, id UUID, req UpdateElasticI
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateElasticIP: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateElasticIP: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateElasticIP: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateElasticIP: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateElasticIP returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateElasticIP: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateElasticIP: prepare Json response: %w", err)
 	}
 
@@ -5457,21 +7361,34 @@ func (c Client) ResetElasticIPField(ctx context.Context, id UUID, field ResetEla
 		return nil, fmt.Errorf("ResetElasticIPField: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetElasticIPField: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetElasticIPField: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetElasticIPField: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetElasticIPField: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetElasticIPField returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetElasticIPField: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetElasticIPField: prepare Json response: %w", err)
 	}
 
@@ -5499,21 +7416,34 @@ func (c Client) AttachInstanceToElasticIP(ctx context.Context, id UUID, req Atta
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("AttachInstanceToElasticIP: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToElasticIP: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToElasticIP: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request AttachInstanceToElasticIP returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToElasticIP: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: prepare Json response: %w", err)
 	}
 
@@ -5541,21 +7471,34 @@ func (c Client) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req De
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DetachInstanceFromElasticIP: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromElasticIP: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromElasticIP: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DetachInstanceFromElasticIP returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromElasticIP: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: prepare Json response: %w", err)
 	}
 
@@ -5595,21 +7538,34 @@ func (c Client) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event,
 		request.URL.RawQuery = q.Encode()
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListEvents: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListEvents: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListEvents: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListEvents: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListEvents returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListEvents: http response: %w", err)
 	}
 
 	bodyresp := []Event{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListEvents: prepare Json response: %w", err)
 	}
 
@@ -5625,21 +7581,34 @@ func (c Client) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error
 		return nil, fmt.Errorf("GetIAMOrganizationPolicy: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetIAMOrganizationPolicy: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetIAMOrganizationPolicy: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetIAMOrganizationPolicy: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetIAMOrganizationPolicy: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetIAMOrganizationPolicy returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetIAMOrganizationPolicy: http response: %w", err)
 	}
 
 	bodyresp := &IAMPolicy{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetIAMOrganizationPolicy: prepare Json response: %w", err)
 	}
 
@@ -5662,21 +7631,34 @@ func (c Client) UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) 
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateIAMOrganizationPolicy returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: prepare Json response: %w", err)
 	}
 
@@ -5696,21 +7678,34 @@ func (c Client) ListIAMRoles(ctx context.Context) (*ListIAMRolesResponse, error)
 		return nil, fmt.Errorf("ListIAMRoles: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListIAMRoles: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListIAMRoles: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListIAMRoles: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListIAMRoles: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListIAMRoles returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListIAMRoles: http response: %w", err)
 	}
 
 	bodyresp := &ListIAMRolesResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListIAMRoles: prepare Json response: %w", err)
 	}
 
@@ -5747,21 +7742,34 @@ func (c Client) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*O
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateIAMRole: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateIAMRole: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateIAMRole: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateIAMRole: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateIAMRole returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateIAMRole: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateIAMRole: prepare Json response: %w", err)
 	}
 
@@ -5777,21 +7785,34 @@ func (c Client) DeleteIAMRole(ctx context.Context, id UUID) (*Operation, error) 
 		return nil, fmt.Errorf("DeleteIAMRole: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteIAMRole: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteIAMRole: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteIAMRole: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteIAMRole: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteIAMRole returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteIAMRole: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteIAMRole: prepare Json response: %w", err)
 	}
 
@@ -5807,21 +7828,34 @@ func (c Client) GetIAMRole(ctx context.Context, id UUID) (*IAMRole, error) {
 		return nil, fmt.Errorf("GetIAMRole: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetIAMRole: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetIAMRole: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetIAMRole: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetIAMRole: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetIAMRole returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetIAMRole: http response: %w", err)
 	}
 
 	bodyresp := &IAMRole{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetIAMRole: prepare Json response: %w", err)
 	}
 
@@ -5852,21 +7886,34 @@ func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleReq
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateIAMRole: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateIAMRole: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateIAMRole: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRole: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateIAMRole returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateIAMRole: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRole: prepare Json response: %w", err)
 	}
 
@@ -5889,21 +7936,34 @@ func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy)
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateIAMRolePolicy: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateIAMRolePolicy: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateIAMRolePolicy: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateIAMRolePolicy returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateIAMRolePolicy: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: prepare Json response: %w", err)
 	}
 
@@ -5988,21 +8048,34 @@ func (c Client) ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*L
 		request.URL.RawQuery = q.Encode()
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListInstances: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListInstances: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListInstances: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListInstances: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListInstances returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListInstances: http response: %w", err)
 	}
 
 	bodyresp := &ListInstancesResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListInstances: prepare Json response: %w", err)
 	}
 
@@ -6054,21 +8127,34 @@ func (c Client) CreateInstance(ctx context.Context, req CreateInstanceRequest) (
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateInstance: prepare Json response: %w", err)
 	}
 
@@ -6088,21 +8174,34 @@ func (c Client) ListInstancePools(ctx context.Context) (*ListInstancePoolsRespon
 		return nil, fmt.Errorf("ListInstancePools: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListInstancePools: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListInstancePools: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListInstancePools: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListInstancePools: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListInstancePools returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListInstancePools: http response: %w", err)
 	}
 
 	bodyresp := &ListInstancePoolsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListInstancePools: prepare Json response: %w", err)
 	}
 
@@ -6164,21 +8263,34 @@ func (c Client) CreateInstancePool(ctx context.Context, req CreateInstancePoolRe
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateInstancePool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateInstancePool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateInstancePool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstancePool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateInstancePool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateInstancePool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateInstancePool: prepare Json response: %w", err)
 	}
 
@@ -6194,21 +8306,34 @@ func (c Client) DeleteInstancePool(ctx context.Context, id UUID) (*Operation, er
 		return nil, fmt.Errorf("DeleteInstancePool: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteInstancePool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteInstancePool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteInstancePool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteInstancePool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteInstancePool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteInstancePool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteInstancePool: prepare Json response: %w", err)
 	}
 
@@ -6224,21 +8349,34 @@ func (c Client) GetInstancePool(ctx context.Context, id UUID) (*InstancePool, er
 		return nil, fmt.Errorf("GetInstancePool: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetInstancePool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetInstancePool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetInstancePool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetInstancePool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetInstancePool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetInstancePool: http response: %w", err)
 	}
 
 	bodyresp := &InstancePool{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetInstancePool: prepare Json response: %w", err)
 	}
 
@@ -6298,21 +8436,34 @@ func (c Client) UpdateInstancePool(ctx context.Context, id UUID, req UpdateInsta
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateInstancePool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateInstancePool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateInstancePool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstancePool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateInstancePool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateInstancePool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateInstancePool: prepare Json response: %w", err)
 	}
 
@@ -6343,21 +8494,34 @@ func (c Client) ResetInstancePoolField(ctx context.Context, id UUID, field Reset
 		return nil, fmt.Errorf("ResetInstancePoolField: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetInstancePoolField: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetInstancePoolField: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetInstancePoolField: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstancePoolField: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetInstancePoolField returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetInstancePoolField: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstancePoolField: prepare Json response: %w", err)
 	}
 
@@ -6384,21 +8548,34 @@ func (c Client) EvictInstancePoolMembers(ctx context.Context, id UUID, req Evict
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("EvictInstancePoolMembers: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("EvictInstancePoolMembers: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("EvictInstancePoolMembers: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("EvictInstancePoolMembers: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request EvictInstancePoolMembers returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("EvictInstancePoolMembers: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("EvictInstancePoolMembers: prepare Json response: %w", err)
 	}
 
@@ -6426,21 +8603,34 @@ func (c Client) ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstanc
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ScaleInstancePool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ScaleInstancePool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ScaleInstancePool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstancePool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ScaleInstancePool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ScaleInstancePool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScaleInstancePool: prepare Json response: %w", err)
 	}
 
@@ -6460,21 +8650,34 @@ func (c Client) ListInstanceTypes(ctx context.Context) (*ListInstanceTypesRespon
 		return nil, fmt.Errorf("ListInstanceTypes: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListInstanceTypes: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListInstanceTypes: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListInstanceTypes: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListInstanceTypes: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListInstanceTypes returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListInstanceTypes: http response: %w", err)
 	}
 
 	bodyresp := &ListInstanceTypesResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListInstanceTypes: prepare Json response: %w", err)
 	}
 
@@ -6490,21 +8693,34 @@ func (c Client) GetInstanceType(ctx context.Context, id UUID) (*InstanceType, er
 		return nil, fmt.Errorf("GetInstanceType: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetInstanceType: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetInstanceType: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetInstanceType: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetInstanceType: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetInstanceType returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetInstanceType: http response: %w", err)
 	}
 
 	bodyresp := &InstanceType{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetInstanceType: prepare Json response: %w", err)
 	}
 
@@ -6520,21 +8736,34 @@ func (c Client) DeleteInstance(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("DeleteInstance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteInstance: prepare Json response: %w", err)
 	}
 
@@ -6550,21 +8779,34 @@ func (c Client) GetInstance(ctx context.Context, id UUID) (*Instance, error) {
 		return nil, fmt.Errorf("GetInstance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetInstance: http response: %w", err)
 	}
 
 	bodyresp := &Instance{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetInstance: prepare Json response: %w", err)
 	}
 
@@ -6596,21 +8838,34 @@ func (c Client) UpdateInstance(ctx context.Context, id UUID, req UpdateInstanceR
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateInstance: prepare Json response: %w", err)
 	}
 
@@ -6632,21 +8887,34 @@ func (c Client) ResetInstanceField(ctx context.Context, id UUID, field ResetInst
 		return nil, fmt.Errorf("ResetInstanceField: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetInstanceField: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetInstanceField: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetInstanceField: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstanceField: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetInstanceField returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetInstanceField: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstanceField: prepare Json response: %w", err)
 	}
 
@@ -6665,21 +8933,34 @@ func (c Client) AddInstanceProtection(ctx context.Context, id UUID) (*AddInstanc
 		return nil, fmt.Errorf("AddInstanceProtection: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("AddInstanceProtection: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AddInstanceProtection: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AddInstanceProtection: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AddInstanceProtection: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request AddInstanceProtection returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AddInstanceProtection: http response: %w", err)
 	}
 
 	bodyresp := &AddInstanceProtectionResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddInstanceProtection: prepare Json response: %w", err)
 	}
 
@@ -6695,21 +8976,34 @@ func (c Client) CreateSnapshot(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("CreateSnapshot: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateSnapshot: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateSnapshot: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateSnapshot: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSnapshot: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateSnapshot returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateSnapshot: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSnapshot: prepare Json response: %w", err)
 	}
 
@@ -6729,21 +9023,34 @@ func (c Client) RevealInstancePassword(ctx context.Context, id UUID) (*InstanceP
 		return nil, fmt.Errorf("RevealInstancePassword: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("RevealInstancePassword: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealInstancePassword: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealInstancePassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealInstancePassword: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request RevealInstancePassword returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealInstancePassword: http response: %w", err)
 	}
 
 	bodyresp := &InstancePassword{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealInstancePassword: prepare Json response: %w", err)
 	}
 
@@ -6759,21 +9066,34 @@ func (c Client) RebootInstance(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("RebootInstance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("RebootInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RebootInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RebootInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RebootInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request RebootInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RebootInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RebootInstance: prepare Json response: %w", err)
 	}
 
@@ -6792,21 +9112,34 @@ func (c Client) RemoveInstanceProtection(ctx context.Context, id UUID) (*RemoveI
 		return nil, fmt.Errorf("RemoveInstanceProtection: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("RemoveInstanceProtection: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RemoveInstanceProtection: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RemoveInstanceProtection: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RemoveInstanceProtection: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request RemoveInstanceProtection returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RemoveInstanceProtection: http response: %w", err)
 	}
 
 	bodyresp := &RemoveInstanceProtectionResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RemoveInstanceProtection: prepare Json response: %w", err)
 	}
 
@@ -6836,21 +9169,34 @@ func (c Client) ResetInstance(ctx context.Context, id UUID, req ResetInstanceReq
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstance: prepare Json response: %w", err)
 	}
 
@@ -6866,21 +9212,34 @@ func (c Client) ResetInstancePassword(ctx context.Context, id UUID) (*Operation,
 		return nil, fmt.Errorf("ResetInstancePassword: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetInstancePassword: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetInstancePassword: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetInstancePassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstancePassword: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetInstancePassword returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetInstancePassword: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstancePassword: prepare Json response: %w", err)
 	}
 
@@ -6908,21 +9267,34 @@ func (c Client) ResizeInstanceDisk(ctx context.Context, id UUID, req ResizeInsta
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResizeInstanceDisk: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResizeInstanceDisk: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResizeInstanceDisk: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResizeInstanceDisk: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResizeInstanceDisk returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResizeInstanceDisk: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResizeInstanceDisk: prepare Json response: %w", err)
 	}
 
@@ -6950,21 +9322,34 @@ func (c Client) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceReq
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ScaleInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ScaleInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ScaleInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ScaleInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ScaleInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScaleInstance: prepare Json response: %w", err)
 	}
 
@@ -6999,21 +9384,34 @@ func (c Client) StartInstance(ctx context.Context, id UUID, req StartInstanceReq
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StartInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StartInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StartInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StartInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StartInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartInstance: prepare Json response: %w", err)
 	}
 
@@ -7029,21 +9427,34 @@ func (c Client) StopInstance(ctx context.Context, id UUID) (*Operation, error) {
 		return nil, fmt.Errorf("StopInstance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("StopInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StopInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StopInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StopInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request StopInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StopInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopInstance: prepare Json response: %w", err)
 	}
 
@@ -7072,21 +9483,34 @@ func (c Client) RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, r
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("RevertInstanceToSnapshot: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevertInstanceToSnapshot: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevertInstanceToSnapshot: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request RevertInstanceToSnapshot returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevertInstanceToSnapshot: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: prepare Json response: %w", err)
 	}
 
@@ -7106,21 +9530,34 @@ func (c Client) ListLoadBalancers(ctx context.Context) (*ListLoadBalancersRespon
 		return nil, fmt.Errorf("ListLoadBalancers: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListLoadBalancers: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListLoadBalancers: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListLoadBalancers: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListLoadBalancers: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListLoadBalancers returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListLoadBalancers: http response: %w", err)
 	}
 
 	bodyresp := &ListLoadBalancersResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListLoadBalancers: prepare Json response: %w", err)
 	}
 
@@ -7151,21 +9588,34 @@ func (c Client) CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRe
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateLoadBalancer: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateLoadBalancer: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateLoadBalancer: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateLoadBalancer: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateLoadBalancer returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateLoadBalancer: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateLoadBalancer: prepare Json response: %w", err)
 	}
 
@@ -7181,21 +9631,34 @@ func (c Client) DeleteLoadBalancer(ctx context.Context, id UUID) (*Operation, er
 		return nil, fmt.Errorf("DeleteLoadBalancer: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteLoadBalancer: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteLoadBalancer: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteLoadBalancer: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancer: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteLoadBalancer returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteLoadBalancer: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancer: prepare Json response: %w", err)
 	}
 
@@ -7211,21 +9674,34 @@ func (c Client) GetLoadBalancer(ctx context.Context, id UUID) (*LoadBalancer, er
 		return nil, fmt.Errorf("GetLoadBalancer: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetLoadBalancer: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetLoadBalancer: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetLoadBalancer: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetLoadBalancer: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetLoadBalancer returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetLoadBalancer: http response: %w", err)
 	}
 
 	bodyresp := &LoadBalancer{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetLoadBalancer: prepare Json response: %w", err)
 	}
 
@@ -7256,21 +9732,34 @@ func (c Client) UpdateLoadBalancer(ctx context.Context, id UUID, req UpdateLoadB
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateLoadBalancer: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateLoadBalancer: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateLoadBalancer: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancer: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateLoadBalancer returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateLoadBalancer: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancer: prepare Json response: %w", err)
 	}
 
@@ -7326,21 +9815,34 @@ func (c Client) AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddSe
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("AddServiceToLoadBalancer: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AddServiceToLoadBalancer: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AddServiceToLoadBalancer: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request AddServiceToLoadBalancer returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AddServiceToLoadBalancer: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: prepare Json response: %w", err)
 	}
 
@@ -7356,21 +9858,34 @@ func (c Client) DeleteLoadBalancerService(ctx context.Context, id UUID, serviceI
 		return nil, fmt.Errorf("DeleteLoadBalancerService: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteLoadBalancerService: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteLoadBalancerService: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteLoadBalancerService: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancerService: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteLoadBalancerService returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteLoadBalancerService: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancerService: prepare Json response: %w", err)
 	}
 
@@ -7386,21 +9901,34 @@ func (c Client) GetLoadBalancerService(ctx context.Context, id UUID, serviceID U
 		return nil, fmt.Errorf("GetLoadBalancerService: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetLoadBalancerService: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetLoadBalancerService: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetLoadBalancerService: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetLoadBalancerService: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetLoadBalancerService returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetLoadBalancerService: http response: %w", err)
 	}
 
 	bodyresp := &LoadBalancerService{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetLoadBalancerService: prepare Json response: %w", err)
 	}
 
@@ -7454,21 +9982,34 @@ func (c Client) UpdateLoadBalancerService(ctx context.Context, id UUID, serviceI
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateLoadBalancerService: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateLoadBalancerService: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateLoadBalancerService: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancerService: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateLoadBalancerService returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateLoadBalancerService: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancerService: prepare Json response: %w", err)
 	}
 
@@ -7490,21 +10031,34 @@ func (c Client) ResetLoadBalancerServiceField(ctx context.Context, id UUID, serv
 		return nil, fmt.Errorf("ResetLoadBalancerServiceField: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetLoadBalancerServiceField: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetLoadBalancerServiceField: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetLoadBalancerServiceField: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerServiceField: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetLoadBalancerServiceField returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetLoadBalancerServiceField: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerServiceField: prepare Json response: %w", err)
 	}
 
@@ -7527,21 +10081,34 @@ func (c Client) ResetLoadBalancerField(ctx context.Context, id UUID, field Reset
 		return nil, fmt.Errorf("ResetLoadBalancerField: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetLoadBalancerField: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetLoadBalancerField: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetLoadBalancerField: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerField: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetLoadBalancerField returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetLoadBalancerField: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerField: prepare Json response: %w", err)
 	}
 
@@ -7557,21 +10124,34 @@ func (c Client) GetOperation(ctx context.Context, id UUID) (*Operation, error) {
 		return nil, fmt.Errorf("GetOperation: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetOperation: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetOperation: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetOperation: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetOperation: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetOperation returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetOperation: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetOperation: prepare Json response: %w", err)
 	}
 
@@ -7591,21 +10171,34 @@ func (c Client) ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksRe
 		return nil, fmt.Errorf("ListPrivateNetworks: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListPrivateNetworks: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListPrivateNetworks: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListPrivateNetworks: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListPrivateNetworks: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListPrivateNetworks returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListPrivateNetworks: http response: %w", err)
 	}
 
 	bodyresp := &ListPrivateNetworksResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListPrivateNetworks: prepare Json response: %w", err)
 	}
 
@@ -7642,21 +10235,34 @@ func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetwo
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreatePrivateNetwork: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreatePrivateNetwork: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreatePrivateNetwork: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreatePrivateNetwork: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreatePrivateNetwork returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreatePrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreatePrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -7672,21 +10278,34 @@ func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, 
 		return nil, fmt.Errorf("DeletePrivateNetwork: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeletePrivateNetwork: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeletePrivateNetwork: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeletePrivateNetwork: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeletePrivateNetwork: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeletePrivateNetwork returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeletePrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeletePrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -7702,21 +10321,34 @@ func (c Client) GetPrivateNetwork(ctx context.Context, id UUID) (*PrivateNetwork
 		return nil, fmt.Errorf("GetPrivateNetwork: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetPrivateNetwork: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetPrivateNetwork: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetPrivateNetwork: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetPrivateNetwork: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetPrivateNetwork returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetPrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := &PrivateNetwork{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetPrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -7753,21 +10385,34 @@ func (c Client) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePri
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdatePrivateNetwork: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdatePrivateNetwork: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdatePrivateNetwork: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetwork: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdatePrivateNetwork returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdatePrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -7789,21 +10434,34 @@ func (c Client) ResetPrivateNetworkField(ctx context.Context, id UUID, field Res
 		return nil, fmt.Errorf("ResetPrivateNetworkField: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetPrivateNetworkField: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetPrivateNetworkField: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetPrivateNetworkField: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetPrivateNetworkField: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetPrivateNetworkField returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetPrivateNetworkField: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetPrivateNetworkField: prepare Json response: %w", err)
 	}
 
@@ -7839,21 +10497,34 @@ func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request AttachInstanceToPrivateNetwork returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -7881,21 +10552,34 @@ func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, r
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DetachInstanceFromPrivateNetwork returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: prepare Json response: %w", err)
 	}
 
@@ -7929,21 +10613,34 @@ func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdatePrivateNetworkInstanceIP returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: prepare Json response: %w", err)
 	}
 
@@ -7963,21 +10660,34 @@ func (c Client) ListQuotas(ctx context.Context) (*ListQuotasResponse, error) {
 		return nil, fmt.Errorf("ListQuotas: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListQuotas: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListQuotas: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListQuotas: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListQuotas: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListQuotas returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListQuotas: http response: %w", err)
 	}
 
 	bodyresp := &ListQuotasResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListQuotas: prepare Json response: %w", err)
 	}
 
@@ -7993,21 +10703,34 @@ func (c Client) GetQuota(ctx context.Context, entity string) (*Quota, error) {
 		return nil, fmt.Errorf("GetQuota: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetQuota: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetQuota: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetQuota: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetQuota: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetQuota returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetQuota: http response: %w", err)
 	}
 
 	bodyresp := &Quota{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetQuota: prepare Json response: %w", err)
 	}
 
@@ -8023,21 +10746,34 @@ func (c Client) DeleteReverseDNSElasticIP(ctx context.Context, id UUID) (*Operat
 		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteReverseDNSElasticIP returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: prepare Json response: %w", err)
 	}
 
@@ -8053,21 +10789,34 @@ func (c Client) GetReverseDNSElasticIP(ctx context.Context, id UUID) (*ReverseDN
 		return nil, fmt.Errorf("GetReverseDNSElasticIP: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetReverseDNSElasticIP: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetReverseDNSElasticIP: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetReverseDNSElasticIP: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetReverseDNSElasticIP: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetReverseDNSElasticIP returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetReverseDNSElasticIP: http response: %w", err)
 	}
 
 	bodyresp := &ReverseDNSRecord{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetReverseDNSElasticIP: prepare Json response: %w", err)
 	}
 
@@ -8094,21 +10843,34 @@ func (c Client) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req Upda
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateReverseDNSElasticIP returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: prepare Json response: %w", err)
 	}
 
@@ -8124,21 +10886,34 @@ func (c Client) DeleteReverseDNSInstance(ctx context.Context, id UUID) (*Operati
 		return nil, fmt.Errorf("DeleteReverseDNSInstance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteReverseDNSInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteReverseDNSInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteReverseDNSInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteReverseDNSInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteReverseDNSInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSInstance: prepare Json response: %w", err)
 	}
 
@@ -8154,21 +10929,34 @@ func (c Client) GetReverseDNSInstance(ctx context.Context, id UUID) (*ReverseDNS
 		return nil, fmt.Errorf("GetReverseDNSInstance: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetReverseDNSInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetReverseDNSInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetReverseDNSInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetReverseDNSInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetReverseDNSInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetReverseDNSInstance: http response: %w", err)
 	}
 
 	bodyresp := &ReverseDNSRecord{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetReverseDNSInstance: prepare Json response: %w", err)
 	}
 
@@ -8195,21 +10983,34 @@ func (c Client) UpdateReverseDNSInstance(ctx context.Context, id UUID, req Updat
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateReverseDNSInstance: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateReverseDNSInstance: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateReverseDNSInstance: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateReverseDNSInstance returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateReverseDNSInstance: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: prepare Json response: %w", err)
 	}
 
@@ -8255,21 +11056,34 @@ func (c Client) ListSecurityGroups(ctx context.Context, opts ...ListSecurityGrou
 		request.URL.RawQuery = q.Encode()
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListSecurityGroups: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListSecurityGroups: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListSecurityGroups: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSecurityGroups: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListSecurityGroups returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListSecurityGroups: http response: %w", err)
 	}
 
 	bodyresp := &ListSecurityGroupsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSecurityGroups: prepare Json response: %w", err)
 	}
 
@@ -8299,21 +11113,34 @@ func (c Client) CreateSecurityGroup(ctx context.Context, req CreateSecurityGroup
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateSecurityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateSecurityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateSecurityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSecurityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateSecurityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -8329,21 +11156,34 @@ func (c Client) DeleteSecurityGroup(ctx context.Context, id UUID) (*Operation, e
 		return nil, fmt.Errorf("DeleteSecurityGroup: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteSecurityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteSecurityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteSecurityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSecurityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteSecurityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -8359,21 +11199,34 @@ func (c Client) GetSecurityGroup(ctx context.Context, id UUID) (*SecurityGroup, 
 		return nil, fmt.Errorf("GetSecurityGroup: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetSecurityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetSecurityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetSecurityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSecurityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetSecurityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := &SecurityGroup{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -8441,21 +11294,34 @@ func (c Client) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRule
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("AddRuleToSecurityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AddRuleToSecurityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AddRuleToSecurityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request AddRuleToSecurityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AddRuleToSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -8471,21 +11337,34 @@ func (c Client) DeleteRuleFromSecurityGroup(ctx context.Context, id UUID, ruleID
 		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteRuleFromSecurityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -8513,21 +11392,34 @@ func (c Client) AddExternalSourceToSecurityGroup(ctx context.Context, id UUID, r
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request AddExternalSourceToSecurityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -8555,21 +11447,34 @@ func (c Client) AttachInstanceToSecurityGroup(ctx context.Context, id UUID, req 
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request AttachInstanceToSecurityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -8597,21 +11502,34 @@ func (c Client) DetachInstanceFromSecurityGroup(ctx context.Context, id UUID, re
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DetachInstanceFromSecurityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -8639,21 +11557,34 @@ func (c Client) RemoveExternalSourceFromSecurityGroup(ctx context.Context, id UU
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request RemoveExternalSourceFromSecurityGroup returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: prepare Json response: %w", err)
 	}
 
@@ -8673,21 +11604,34 @@ func (c Client) ListSKSClusters(ctx context.Context) (*ListSKSClustersResponse, 
 		return nil, fmt.Errorf("ListSKSClusters: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListSKSClusters: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListSKSClusters: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListSKSClusters: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSKSClusters: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListSKSClusters returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListSKSClusters: http response: %w", err)
 	}
 
 	bodyresp := &ListSKSClustersResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSKSClusters: prepare Json response: %w", err)
 	}
 
@@ -8744,21 +11688,34 @@ func (c Client) CreateSKSCluster(ctx context.Context, req CreateSKSClusterReques
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateSKSCluster: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateSKSCluster: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateSKSCluster: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSCluster: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateSKSCluster returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateSKSCluster: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSKSCluster: prepare Json response: %w", err)
 	}
 
@@ -8774,21 +11731,34 @@ func (c Client) ListSKSClusterDeprecatedResources(ctx context.Context, id UUID) 
 		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListSKSClusterDeprecatedResources returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: http response: %w", err)
 	}
 
 	bodyresp := []SKSClusterDeprecatedResource{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: prepare Json response: %w", err)
 	}
 
@@ -8815,21 +11785,34 @@ func (c Client) GenerateSKSClusterKubeconfig(ctx context.Context, id UUID, req S
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GenerateSKSClusterKubeconfig returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: http response: %w", err)
 	}
 
 	bodyresp := &GenerateSKSClusterKubeconfigResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: prepare Json response: %w", err)
 	}
 
@@ -8865,21 +11848,34 @@ func (c Client) ListSKSClusterVersions(ctx context.Context, opts ...ListSKSClust
 		request.URL.RawQuery = q.Encode()
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListSKSClusterVersions: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListSKSClusterVersions: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListSKSClusterVersions: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSKSClusterVersions: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListSKSClusterVersions returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListSKSClusterVersions: http response: %w", err)
 	}
 
 	bodyresp := &ListSKSClusterVersionsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSKSClusterVersions: prepare Json response: %w", err)
 	}
 
@@ -8895,21 +11891,34 @@ func (c Client) DeleteSKSCluster(ctx context.Context, id UUID) (*Operation, erro
 		return nil, fmt.Errorf("DeleteSKSCluster: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteSKSCluster: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteSKSCluster: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteSKSCluster: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSKSCluster: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteSKSCluster returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteSKSCluster: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSKSCluster: prepare Json response: %w", err)
 	}
 
@@ -8925,21 +11934,34 @@ func (c Client) GetSKSCluster(ctx context.Context, id UUID) (*SKSCluster, error)
 		return nil, fmt.Errorf("GetSKSCluster: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetSKSCluster: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetSKSCluster: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetSKSCluster: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSCluster: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetSKSCluster returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetSKSCluster: http response: %w", err)
 	}
 
 	bodyresp := &SKSCluster{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSCluster: prepare Json response: %w", err)
 	}
 
@@ -8976,21 +11998,34 @@ func (c Client) UpdateSKSCluster(ctx context.Context, id UUID, req UpdateSKSClus
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateSKSCluster: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateSKSCluster: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateSKSCluster: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSCluster: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateSKSCluster returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateSKSCluster: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateSKSCluster: prepare Json response: %w", err)
 	}
 
@@ -9018,21 +12053,34 @@ func (c Client) GetSKSClusterAuthorityCert(ctx context.Context, id UUID, authori
 		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetSKSClusterAuthorityCert returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: http response: %w", err)
 	}
 
 	bodyresp := &GetSKSClusterAuthorityCertResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: prepare Json response: %w", err)
 	}
 
@@ -9050,21 +12098,34 @@ func (c Client) GetSKSClusterInspection(ctx context.Context, id UUID) (*GetSKSCl
 		return nil, fmt.Errorf("GetSKSClusterInspection: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetSKSClusterInspection: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetSKSClusterInspection: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetSKSClusterInspection: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSClusterInspection: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetSKSClusterInspection returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetSKSClusterInspection: http response: %w", err)
 	}
 
 	bodyresp := &GetSKSClusterInspectionResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSClusterInspection: prepare Json response: %w", err)
 	}
 
@@ -9116,21 +12177,34 @@ func (c Client) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNod
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CreateSKSNodepool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateSKSNodepool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateSKSNodepool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSNodepool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CreateSKSNodepool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateSKSNodepool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSKSNodepool: prepare Json response: %w", err)
 	}
 
@@ -9146,21 +12220,34 @@ func (c Client) DeleteSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UU
 		return nil, fmt.Errorf("DeleteSKSNodepool: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteSKSNodepool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteSKSNodepool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteSKSNodepool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSKSNodepool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteSKSNodepool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteSKSNodepool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSKSNodepool: prepare Json response: %w", err)
 	}
 
@@ -9176,21 +12263,34 @@ func (c Client) GetSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID)
 		return nil, fmt.Errorf("GetSKSNodepool: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetSKSNodepool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetSKSNodepool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetSKSNodepool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSNodepool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetSKSNodepool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetSKSNodepool: http response: %w", err)
 	}
 
 	bodyresp := &SKSNodepool{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSNodepool: prepare Json response: %w", err)
 	}
 
@@ -9236,21 +12336,34 @@ func (c Client) UpdateSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UU
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateSKSNodepool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateSKSNodepool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateSKSNodepool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSNodepool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateSKSNodepool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateSKSNodepool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateSKSNodepool: prepare Json response: %w", err)
 	}
 
@@ -9277,21 +12390,34 @@ func (c Client) ResetSKSNodepoolField(ctx context.Context, id UUID, sksNodepoolI
 		return nil, fmt.Errorf("ResetSKSNodepoolField: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetSKSNodepoolField: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetSKSNodepoolField: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetSKSNodepoolField: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetSKSNodepoolField: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetSKSNodepoolField returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetSKSNodepoolField: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetSKSNodepoolField: prepare Json response: %w", err)
 	}
 
@@ -9318,21 +12444,34 @@ func (c Client) EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoo
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("EvictSKSNodepoolMembers: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("EvictSKSNodepoolMembers: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("EvictSKSNodepoolMembers: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request EvictSKSNodepoolMembers returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("EvictSKSNodepoolMembers: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: prepare Json response: %w", err)
 	}
 
@@ -9360,21 +12499,34 @@ func (c Client) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUI
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ScaleSKSNodepool: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ScaleSKSNodepool: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ScaleSKSNodepool: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleSKSNodepool: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ScaleSKSNodepool returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ScaleSKSNodepool: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScaleSKSNodepool: prepare Json response: %w", err)
 	}
 
@@ -9390,21 +12542,34 @@ func (c Client) RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Operatio
 		return nil, fmt.Errorf("RotateSKSCcmCredentials: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("RotateSKSCcmCredentials: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RotateSKSCcmCredentials: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RotateSKSCcmCredentials: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RotateSKSCcmCredentials: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request RotateSKSCcmCredentials returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RotateSKSCcmCredentials: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateSKSCcmCredentials: prepare Json response: %w", err)
 	}
 
@@ -9420,21 +12585,34 @@ func (c Client) RotateSKSOperatorsCA(ctx context.Context, id UUID) (*Operation, 
 		return nil, fmt.Errorf("RotateSKSOperatorsCA: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("RotateSKSOperatorsCA: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RotateSKSOperatorsCA: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RotateSKSOperatorsCA: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RotateSKSOperatorsCA: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request RotateSKSOperatorsCA returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RotateSKSOperatorsCA: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateSKSOperatorsCA: prepare Json response: %w", err)
 	}
 
@@ -9462,21 +12640,34 @@ func (c Client) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSCl
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpgradeSKSCluster: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpgradeSKSCluster: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpgradeSKSCluster: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpgradeSKSCluster: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpgradeSKSCluster returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpgradeSKSCluster: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpgradeSKSCluster: prepare Json response: %w", err)
 	}
 
@@ -9492,21 +12683,34 @@ func (c Client) UpgradeSKSClusterServiceLevel(ctx context.Context, id UUID) (*Op
 		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpgradeSKSClusterServiceLevel returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: prepare Json response: %w", err)
 	}
 
@@ -9529,21 +12733,34 @@ func (c Client) ResetSKSClusterField(ctx context.Context, id UUID, field ResetSK
 		return nil, fmt.Errorf("ResetSKSClusterField: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ResetSKSClusterField: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetSKSClusterField: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetSKSClusterField: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetSKSClusterField: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ResetSKSClusterField returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetSKSClusterField: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetSKSClusterField: prepare Json response: %w", err)
 	}
 
@@ -9563,21 +12780,34 @@ func (c Client) ListSnapshots(ctx context.Context) (*ListSnapshotsResponse, erro
 		return nil, fmt.Errorf("ListSnapshots: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListSnapshots: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListSnapshots: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListSnapshots: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSnapshots: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListSnapshots returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListSnapshots: http response: %w", err)
 	}
 
 	bodyresp := &ListSnapshotsResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSnapshots: prepare Json response: %w", err)
 	}
 
@@ -9593,21 +12823,34 @@ func (c Client) DeleteSnapshot(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("DeleteSnapshot: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteSnapshot: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteSnapshot: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteSnapshot: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSnapshot: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteSnapshot returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteSnapshot: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSnapshot: prepare Json response: %w", err)
 	}
 
@@ -9623,21 +12866,34 @@ func (c Client) GetSnapshot(ctx context.Context, id UUID) (*Snapshot, error) {
 		return nil, fmt.Errorf("GetSnapshot: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetSnapshot: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetSnapshot: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetSnapshot: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSnapshot: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetSnapshot returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetSnapshot: http response: %w", err)
 	}
 
 	bodyresp := &Snapshot{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSnapshot: prepare Json response: %w", err)
 	}
 
@@ -9653,21 +12909,34 @@ func (c Client) ExportSnapshot(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("ExportSnapshot: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ExportSnapshot: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ExportSnapshot: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ExportSnapshot: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ExportSnapshot: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ExportSnapshot returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ExportSnapshot: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ExportSnapshot: prepare Json response: %w", err)
 	}
 
@@ -9703,21 +12972,34 @@ func (c Client) PromoteSnapshotToTemplate(ctx context.Context, id UUID, req Prom
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("PromoteSnapshotToTemplate: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("PromoteSnapshotToTemplate: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("PromoteSnapshotToTemplate: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request PromoteSnapshotToTemplate returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("PromoteSnapshotToTemplate: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: prepare Json response: %w", err)
 	}
 
@@ -9737,21 +13019,34 @@ func (c Client) ListSOSBucketsUsage(ctx context.Context) (*ListSOSBucketsUsageRe
 		return nil, fmt.Errorf("ListSOSBucketsUsage: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListSOSBucketsUsage: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListSOSBucketsUsage: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListSOSBucketsUsage: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSOSBucketsUsage: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListSOSBucketsUsage returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListSOSBucketsUsage: http response: %w", err)
 	}
 
 	bodyresp := &ListSOSBucketsUsageResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSOSBucketsUsage: prepare Json response: %w", err)
 	}
 
@@ -9787,21 +13082,34 @@ func (c Client) GetSOSPresignedURL(ctx context.Context, bucket string, opts ...G
 		request.URL.RawQuery = q.Encode()
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetSOSPresignedURL: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetSOSPresignedURL: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetSOSPresignedURL: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSOSPresignedURL: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetSOSPresignedURL returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetSOSPresignedURL: http response: %w", err)
 	}
 
 	bodyresp := &GetSOSPresignedURLResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSOSPresignedURL: prepare Json response: %w", err)
 	}
 
@@ -9821,21 +13129,34 @@ func (c Client) ListSSHKeys(ctx context.Context) (*ListSSHKeysResponse, error) {
 		return nil, fmt.Errorf("ListSSHKeys: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListSSHKeys: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListSSHKeys: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListSSHKeys: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSSHKeys: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListSSHKeys returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListSSHKeys: http response: %w", err)
 	}
 
 	bodyresp := &ListSSHKeysResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSSHKeys: prepare Json response: %w", err)
 	}
 
@@ -9865,21 +13186,34 @@ func (c Client) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("RegisterSSHKey: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RegisterSSHKey: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RegisterSSHKey: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterSSHKey: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request RegisterSSHKey returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RegisterSSHKey: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RegisterSSHKey: prepare Json response: %w", err)
 	}
 
@@ -9895,21 +13229,34 @@ func (c Client) DeleteSSHKey(ctx context.Context, name string) (*Operation, erro
 		return nil, fmt.Errorf("DeleteSSHKey: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteSSHKey: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteSSHKey: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteSSHKey: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSSHKey: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteSSHKey returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteSSHKey: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSSHKey: prepare Json response: %w", err)
 	}
 
@@ -9925,21 +13272,34 @@ func (c Client) GetSSHKey(ctx context.Context, name string) (*SSHKey, error) {
 		return nil, fmt.Errorf("GetSSHKey: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetSSHKey: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetSSHKey: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetSSHKey: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSSHKey: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetSSHKey returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetSSHKey: http response: %w", err)
 	}
 
 	bodyresp := &SSHKey{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSSHKey: prepare Json response: %w", err)
 	}
 
@@ -9988,21 +13348,34 @@ func (c Client) ListTemplates(ctx context.Context, opts ...ListTemplatesOpt) (*L
 		request.URL.RawQuery = q.Encode()
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListTemplates: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListTemplates: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListTemplates: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListTemplates: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListTemplates returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListTemplates: http response: %w", err)
 	}
 
 	bodyresp := &ListTemplatesResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListTemplates: prepare Json response: %w", err)
 	}
 
@@ -10059,21 +13432,34 @@ func (c Client) RegisterTemplate(ctx context.Context, req RegisterTemplateReques
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("RegisterTemplate: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RegisterTemplate: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RegisterTemplate: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterTemplate: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request RegisterTemplate returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RegisterTemplate: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RegisterTemplate: prepare Json response: %w", err)
 	}
 
@@ -10089,21 +13475,34 @@ func (c Client) DeleteTemplate(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("DeleteTemplate: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteTemplate: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteTemplate: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteTemplate: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteTemplate: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request DeleteTemplate returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteTemplate: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteTemplate: prepare Json response: %w", err)
 	}
 
@@ -10119,21 +13518,34 @@ func (c Client) GetTemplate(ctx context.Context, id UUID) (*Template, error) {
 		return nil, fmt.Errorf("GetTemplate: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("GetTemplate: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetTemplate: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetTemplate: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetTemplate: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request GetTemplate returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetTemplate: http response: %w", err)
 	}
 
 	bodyresp := &Template{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetTemplate: prepare Json response: %w", err)
 	}
 
@@ -10161,21 +13573,34 @@ func (c Client) CopyTemplate(ctx context.Context, id UUID, req CopyTemplateReque
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("CopyTemplate: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CopyTemplate: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CopyTemplate: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CopyTemplate: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request CopyTemplate returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CopyTemplate: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CopyTemplate: prepare Json response: %w", err)
 	}
 
@@ -10205,21 +13630,34 @@ func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateR
 
 	request.Header.Add("Content-Type", "application/json")
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateTemplate: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateTemplate: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateTemplate: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request UpdateTemplate returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateTemplate: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: prepare Json response: %w", err)
 	}
 
@@ -10239,138 +13677,36 @@ func (c Client) ListZones(ctx context.Context) (*ListZonesResponse, error) {
 		return nil, fmt.Errorf("ListZones: new request: %w", err)
 	}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("ListZones: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListZones: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListZones: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListZones: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request ListZones returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListZones: http response: %w", err)
 	}
 
 	bodyresp := &ListZonesResponse{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListZones: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil
-}
-
-// Wait is a helper that waits for async operation to reach the final state.
-// Final states are one of: failure, success, timeout.
-// If states argument are given, returns an error if the final state not match on of those.
-func (c Client) Wait(ctx context.Context, op *Operation, states ...OperationState) (*Operation, error) {
-	if op == nil {
-		return nil, fmt.Errorf("operation is nil")
-	}
-
-	ticker := time.NewTicker(c.pollingInterval)
-	defer ticker.Stop()
-
-	if op.State != OperationStatePending {
-		return op, nil
-	}
-
-	var operation *Operation
-polling:
-	for {
-		select {
-		case <-ticker.C:
-			o, err := c.GetOperation(ctx, op.ID)
-			if err != nil {
-				return nil, err
-			}
-			if o.State == OperationStatePending {
-				continue
-			}
-
-			operation = o
-			break polling
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
-	}
-
-	if len(states) == 0 {
-		return operation, nil
-	}
-
-	for _, st := range states {
-		if operation.State == st {
-			return operation, nil
-		}
-	}
-
-	var ref OperationReference
-	if operation.Reference != nil {
-		ref = *operation.Reference
-	}
-
-	return nil,
-		fmt.Errorf("operation: %q %v, state: %s, reason: %q, message: %q",
-			operation.ID,
-			ref,
-			operation.State,
-			operation.Reason,
-			operation.Message,
-		)
-}
-
-func String(s string) *string {
-	return &s
-}
-
-func Int64(i int64) *int64 {
-	return &i
-}
-
-func Bool(b bool) *bool {
-	return &b
-}
-
-// Validate any struct from schema or request
-func Validate(r any) error {
-	return validator.New().Struct(r)
-}
-
-func prepareJsonBody(body any) (*bytes.Reader, error) {
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(buf), nil
-}
-
-func prepareJsonResponse(resp *http.Response, v any) error {
-	defer resp.Body.Close()
-
-	buf, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(buf, v); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type UUID string
-
-func (u UUID) String() string {
-	return string(u)
-}
-
-func ParseUUID(s string) (UUID, error) {
-	id, err := uuid.Parse(s)
-	if err != nil {
-		return "", err
-	}
-
-	return UUID(id.String()), nil
 }

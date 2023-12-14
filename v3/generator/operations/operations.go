@@ -30,22 +30,36 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	
 import (
 	"bytes"
+	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"context"
+	"net/http/httputil"
 	"net/url"
+	"os"
+	"sort"
+	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 )
 `, packageName))
 
+	h, err := os.ReadFile("./operations/helpers.tmpl")
+	if err != nil {
+		return err
+	}
+	output.Write(h)
+
 	// Iterate over all paths.
-	err := helpers.ForEachMapSorted(model.Model.Paths.PathItems, func(path string, item any) error {
+	err = helpers.ForEachMapSorted(model.Model.Paths.PathItems, func(path string, item any) error {
 		pathItems := item.(*v3.PathItem)
 		// For each path, render each operations (GET, POST, PUT...etc) schemas and requests.
 		return helpers.ForEachMapSorted(pathItems.GetOperations(), func(opName string, op any) error {
@@ -94,12 +108,6 @@ import (
 	if err != nil {
 		return err
 	}
-
-	helpers, err := os.ReadFile("./operations/helpers.tmpl")
-	if err != nil {
-		return err
-	}
-	output.Write(helpers)
 
 	if os.Getenv("GENERATOR_DEBUG") == "operations" {
 		fmt.Println(output.String())

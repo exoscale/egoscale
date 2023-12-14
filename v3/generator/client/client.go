@@ -35,7 +35,6 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 		"errors"
 
 		"github.com/exoscale/egoscale/version"
-		api "github.com/exoscale/egoscale/v3/api"
 	)
 	`, packageName))
 

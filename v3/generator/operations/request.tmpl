@@ -26,21 +26,34 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	request.Header.Add("Content-Type", "{{ .ContentType }}")
 	{{ end }}
 
-	if err := registerRequestMiddlewares(&c, ctx, request); err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: register middlewares: %w", err)
+	if err := c.executeRequestEditors(ctx, request); err != nil {
+		return nil, fmt.Errorf("{{ .Name }}: execute request editors: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(request)
+	if c.trace {
+		dumpRequest(request)
+		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("{{ .Name }}: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("{{ .Name }}: http client do: %w", err)
 	}
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusIMUsed {
-		return nil, fmt.Errorf("request {{ .Name }} returned %d code", resp.StatusCode)
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("{{ .Name }}: http response: %w", err)
 	}
 
 	bodyresp := {{ .BodyRespType }}{}
-	if err := prepareJsonResponse(resp, bodyresp); err != nil {
+	if err := prepareJsonResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("{{ .Name }}: prepare Json response: %w", err)
 	}
 

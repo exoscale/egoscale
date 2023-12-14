@@ -113,7 +113,7 @@ func renderClient(s *v3.Server) ([]byte, error) {
 		}
 
 		client = Template{
-			ServerURL: strings.Replace(s.URL, "{zone}", v.Default, 1),
+			ServerURL: helpers.ToCamel(v.Default),
 			Enum:      enum,
 			Zones:     zones,
 		}

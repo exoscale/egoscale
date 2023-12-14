@@ -116,7 +116,7 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 	client := &Client{
 		apiKey:          apiKey,
 		apiSecret:       apiSecret,
-		serverURL:       "https://api-ch-gva-2.exoscale.com/v2",
+		serverURL:       string(CHGva2),
 		httpClient:      http.DefaultClient,
 		pollingInterval: pollingInterval,
 	}

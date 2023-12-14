@@ -5,7 +5,7 @@ const (
   {{ .Enum }}
 )
 
-// Zones represents a list of all Exoscale Zone.
+// Zones represents a list of all Exoscale zone.
 var Zones map[string]URL = map[string]URL{
 	{{ .Zones }}
 }
@@ -87,7 +87,7 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
   client := &Client{
 	apiKey:				apiKey,
 	apiSecret:			apiSecret,
-	serverURL:			"{{.ServerURL}}",
+	serverURL:			string({{ .ServerURL }}),
 	httpClient:			http.DefaultClient,
 	pollingInterval:	pollingInterval,
   }
@@ -114,7 +114,7 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 	return client.WithRequestMiddleware(security.Intercept), nil
 }
 
-// WithURL returns a copy of Client with new URL.
+// WithURL returns a copy of Client with new zone URL.
 func (c *Client) WithURL(url URL) *Client {
 	return &Client{
 		serverURL:       string(url),

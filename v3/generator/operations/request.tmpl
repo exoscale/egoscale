@@ -26,13 +26,12 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	request.Header.Add("Content-Type", "{{ .ContentType }}")
 	{{ end }}
 
-	if err := c.executeRequestEditors(ctx, request); err != nil {
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
 		return nil, fmt.Errorf("{{ .Name }}: execute request editors: %w", err)
 	}
 
 	if c.trace {
 		dumpRequest(request)
-		fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
 	}
 
 	if err := c.signRequest(request); err != nil {

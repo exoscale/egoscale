@@ -34,7 +34,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 )
 `, packageName))

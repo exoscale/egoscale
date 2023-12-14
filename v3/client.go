@@ -50,11 +50,11 @@ type Client struct {
 
 	// A list of callbacks for modifying requests which are generated before sending over
 	// the network.
-	requestEditors []RequestEditorFn
+	requestInterceptors []RequestInterceptorFn
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(ctx context.Context, req *http.Request) error
+// RequestInterceptorFn is the function signature for the RequestInterceptor callback function
+type RequestInterceptorFn func(ctx context.Context, req *http.Request) error
 
 // UserAgent is the "User-Agent" HTTP request header added to outgoing HTTP requests.
 var UserAgent = fmt.Sprintf("egoscale/%s (%s; %s/%s)",
@@ -96,10 +96,10 @@ func ClientOptWithURL(url URL) ClientOpt {
 	}
 }
 
-// ClientOptWithRequestEditors returns a ClientOpt With given RequestEditors.
-func ClientOptWithRequestEditors(f ...RequestEditorFn) ClientOpt {
+// ClientOptWithRequestInterceptors returns a ClientOpt With given RequestInterceptors.
+func ClientOptWithRequestInterceptors(f ...RequestInterceptorFn) ClientOpt {
 	return func(c *Client) error {
-		c.requestEditors = append(c.requestEditors, f...)
+		c.requestInterceptors = append(c.requestInterceptors, f...)
 		return nil
 	}
 }
@@ -144,54 +144,54 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 // WithURL returns a copy of Client with new zone URL.
 func (c *Client) WithURL(url URL) *Client {
 	return &Client{
-		apiKey:          c.apiKey,
-		apiSecret:       c.apiSecret,
-		serverURL:       string(url),
-		httpClient:      c.httpClient,
-		requestEditors:  c.requestEditors,
-		pollingInterval: c.pollingInterval,
+		apiKey:              c.apiKey,
+		apiSecret:           c.apiSecret,
+		serverURL:           string(url),
+		httpClient:          c.httpClient,
+		requestInterceptors: c.requestInterceptors,
+		pollingInterval:     c.pollingInterval,
 	}
 }
 
 // WithTrace returns a copy of Client with tracing enabled.
 func (c *Client) WithTrace() *Client {
 	return &Client{
-		apiKey:          c.apiKey,
-		apiSecret:       c.apiSecret,
-		serverURL:       c.serverURL,
-		httpClient:      c.httpClient,
-		requestEditors:  c.requestEditors,
-		pollingInterval: c.pollingInterval,
-		trace:           true,
+		apiKey:              c.apiKey,
+		apiSecret:           c.apiSecret,
+		serverURL:           c.serverURL,
+		httpClient:          c.httpClient,
+		requestInterceptors: c.requestInterceptors,
+		pollingInterval:     c.pollingInterval,
+		trace:               true,
 	}
 }
 
 // WithHttpClient returns a copy of Client with new http.Client.
 func (c *Client) WithHttpClient(client *http.Client) *Client {
 	return &Client{
-		apiKey:          c.apiKey,
-		apiSecret:       c.apiSecret,
-		serverURL:       c.serverURL,
-		httpClient:      client,
-		requestEditors:  c.requestEditors,
-		pollingInterval: c.pollingInterval,
+		apiKey:              c.apiKey,
+		apiSecret:           c.apiSecret,
+		serverURL:           c.serverURL,
+		httpClient:          client,
+		requestInterceptors: c.requestInterceptors,
+		pollingInterval:     c.pollingInterval,
 	}
 }
 
-// WithRequestEditor returns a copy of Client with new RequestEditors.
-func (c *Client) WithRequestEditor(f ...RequestEditorFn) *Client {
+// WithRequestInterceptor returns a copy of Client with new RequestInterceptors.
+func (c *Client) WithRequestInterceptor(f ...RequestInterceptorFn) *Client {
 	return &Client{
-		apiKey:          c.apiKey,
-		apiSecret:       c.apiSecret,
-		serverURL:       c.serverURL,
-		httpClient:      c.httpClient,
-		requestEditors:  append(c.requestEditors, f...),
-		pollingInterval: c.pollingInterval,
+		apiKey:              c.apiKey,
+		apiSecret:           c.apiSecret,
+		serverURL:           c.serverURL,
+		httpClient:          c.httpClient,
+		requestInterceptors: append(c.requestInterceptors, f...),
+		pollingInterval:     c.pollingInterval,
 	}
 }
 
-func (c *Client) executeRequestEditors(ctx context.Context, req *http.Request) error {
-	for _, fn := range c.requestEditors {
+func (c *Client) executeRequestInterceptors(ctx context.Context, req *http.Request) error {
+	for _, fn := range c.requestInterceptors {
 		if err := fn(ctx, req); err != nil {
 			return err
 		}

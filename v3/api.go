@@ -279,6 +279,7 @@ func dumpResponse(resp *http.Response) {
 	if resp != nil {
 		if dump, err := httputil.DumpResponse(resp, true); err == nil {
 			fmt.Fprintf(os.Stderr, "<<< %s\n", dump)
+			fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
 		}
 	}
 }

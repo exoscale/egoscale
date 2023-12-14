@@ -35,6 +35,21 @@ var (
 	ErrAPIError = errors.New("API error")
 )
 
+type UUID string
+
+func (u UUID) String() string {
+	return string(u)
+}
+
+func ParseUUID(s string) (UUID, error) {
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return "", err
+	}
+
+	return UUID(id.String()), nil
+}
+
 // Wait is a helper that waits for async operation to reach the final state.
 // Final states are one of: failure, success, timeout.
 // If states argument are given, returns an error if the final state not match on of those.
@@ -95,21 +110,6 @@ polling:
 		)
 }
 
-type UUID string
-
-func (u UUID) String() string {
-	return string(u)
-}
-
-func ParseUUID(s string) (UUID, error) {
-	id, err := uuid.Parse(s)
-	if err != nil {
-		return "", err
-	}
-
-	return UUID(id.String()), nil
-}
-
 func String(s string) *string {
 	return &s
 }
@@ -120,6 +120,10 @@ func Int64(i int64) *int64 {
 
 func Bool(b bool) *bool {
 	return &b
+}
+
+func Ptr[T any](v T) *T {
+	return &v
 }
 
 // Validate any struct from schema or request

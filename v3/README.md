@@ -1,4 +1,4 @@
-# Egoscale v3
+# Egoscale v3 (Alpha)
 
 **Egoscale v3** is based on a generator written from scratch with [libopenapi](https://github.com/pb33f/libopenapi).
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"sync"
 )
@@ -133,18 +134,20 @@ func Test() {
 
 	// add custom injector
 	creds.WithInjectors(func(ctx context.Context) (CredentialsValue, error) {
-		//custom
+		// custom
 		return CredentialsValue{}, nil
 	})
 	// add a predifined injector
 	creds.WithInjectors(InjectorEnv)
 
 	// reload it after added injectors.
-	creds.Retrieve(ctx)
+	if err := creds.Retrieve(ctx); err != nil {
+		log.Fatal(err)
+	}
 
 	// create loaded creds from injector custom or not.
 	_, _ = NewCredentials(ctx, func(ctx context.Context) (CredentialsValue, error) {
-		//custom
+		// custom
 		return CredentialsValue{}, nil
 	}, InjectorFile)
 

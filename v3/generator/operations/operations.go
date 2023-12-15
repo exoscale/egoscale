@@ -29,18 +29,12 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	output.WriteString(fmt.Sprintf(`package %s
 	
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
-	"context"
 	"net/url"
 	"time"
-
-	"github.com/google/uuid"
-	"github.com/go-playground/validator/v10"
 )
 `, packageName))
 
@@ -94,12 +88,6 @@ import (
 	if err != nil {
 		return err
 	}
-
-	helpers, err := os.ReadFile("./operations/helpers.tmpl")
-	if err != nil {
-		return err
-	}
-	output.Write(helpers)
 
 	if os.Getenv("GENERATOR_DEBUG") == "operations" {
 		fmt.Println(output.String())

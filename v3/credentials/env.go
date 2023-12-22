@@ -14,18 +14,17 @@ func NewEnvCredentials() *Credentials {
 func (e *EnvProvider) Retrieve() (Value, error) {
 	e.retrieved = false
 
-	key := os.Getenv("AWS_ACCESS_KEY_ID")
-	secret := os.Getenv("AWS_SECRET_ACCESS_KEY")
+	v := Value{
+		APIKey:    os.Getenv("EXOSCALE_API_KEY"),
+		APISecret: os.Getenv("EXOSCALE_API_SECRET"),
+	}
 
-	if key == "" || secret == "" {
+	if !v.HasKeys() {
 		return Value{}, ErrMissingIncomplete
 	}
 
 	e.retrieved = true
-	return Value{
-		APIKey:    key,
-		APISecret: secret,
-	}, nil
+	return v, nil
 }
 
 // IsExpired returns if the credentials have been retrieved.

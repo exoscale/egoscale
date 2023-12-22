@@ -16,8 +16,7 @@ type Value struct {
 	APISecret string
 }
 
-// HasKeys returns if the credentials Value has both AccessKeyID and
-// SecretAccessKey value set.
+// HasKeys returns true if the credentials Value has both APIKey and APISecret.
 func (v Value) HasKeys() bool {
 	return v.APIKey != "" && v.APISecret != ""
 }

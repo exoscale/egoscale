@@ -1,13 +1,25 @@
 package credentials
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"sync"
+)
+
+var (
+	ErrMissingIncomplete = errors.New("missing or incomplete API credentials")
 )
 
 type Value struct {
 	APIKey    string
 	APISecret string
+}
+
+// HasKeys returns if the credentials Value has both AccessKeyID and
+// SecretAccessKey value set.
+func (v Value) HasKeys() bool {
+	return v.APIKey != "" && v.APISecret != ""
 }
 
 type Provider interface {
@@ -20,24 +32,22 @@ type Provider interface {
 	IsExpired() bool
 }
 
+type ProviderWithContext interface {
+	Provider
+
+	RetrieveWithContext(context.Context) (Value, error)
+}
+
 type Credentials struct {
-	value    Value
-	Provider Provider
+	credentials Value
+	provider    Provider
 
 	sync.RWMutex
 }
 
-func NewFileCredentials() *Credentials {
-	return NewCredentials(&FileProvider{})
-}
-
-func NewEnvCredentials() *Credentials {
-	return NewCredentials(&EnvProvider{})
-}
-
 func NewCredentials(provider Provider) *Credentials {
 	return &Credentials{
-		Provider: provider,
+		provider: provider,
 	}
 }
 
@@ -45,24 +55,8 @@ func (c *Credentials) Get() (Value, error) {
 	return Value{}, fmt.Errorf("not implemented")
 }
 
-type EnvProvider struct {
-}
+func (c *Credentials) retrieve(ctx context.Context) {
+	c.Lock()
+	defer c.Unlock()
 
-func (e *EnvProvider) Retrieve() (Value, error) {
-	return Value{}, nil
-}
-
-func (e *EnvProvider) IsExpired() bool {
-	return false
-}
-
-type FileProvider struct {
-}
-
-func (f *FileProvider) Retrieve() (Value, error) {
-	return Value{}, nil
-}
-
-func (f *FileProvider) IsExpired() bool {
-	return false
 }

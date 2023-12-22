@@ -14,7 +14,7 @@ func NewStaticCredentials(apiKey, apiSecret string) *Credentials {
 
 // Retrieve returns the credentials or error if the credentials are invalid.
 func (s *StaticProvider) Retrieve() (Value, error) {
-	if s.APIKey == "" || s.APISecret == "" {
+	if !s.HasKeys() {
 		return Value{}, ErrMissingIncomplete
 	}
 

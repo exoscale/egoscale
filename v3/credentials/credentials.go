@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 )
 
 var (
@@ -50,8 +51,31 @@ func NewCredentials(provider Provider) *Credentials {
 	}
 }
 
+func (c *Credentials) Expire() {
+	c.Lock()
+	defer c.Unlock()
+
+	c.credentials = Value{}
+
+}
+
+func (c *Credentials) ExpiresAt() (time.Time, error) {
+	c.RLock()
+	defer c.RUnlock()
+
+	return time.Time{}, fmt.Errorf("not implemented")
+}
+
 func (c *Credentials) Get() (Value, error) {
 	return Value{}, fmt.Errorf("not implemented")
+}
+
+func (c *Credentials) GetWithContext(ctx context.Context) (Value, error) {
+	return Value{}, fmt.Errorf("not implemented")
+}
+
+func (c *Credentials) IsExpired() bool {
+	return false
 }
 
 func (c *Credentials) retrieve(ctx context.Context) {

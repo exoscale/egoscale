@@ -5,7 +5,6 @@ package v3
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -45,7 +44,6 @@ type Client struct {
 	apiSecret       string
 	serverURL       string
 	httpClient      *http.Client
-	timeout         time.Duration
 	pollingInterval time.Duration
 	trace           bool
 
@@ -68,18 +66,6 @@ const pollingInterval = 3 * time.Second
 
 // ClientOpt represents a function setting Exoscale API client option.
 type ClientOpt func(*Client) error
-
-// ClientOptWithTimeout returns a ClientOpt overriding the default client timeout.
-func ClientOptWithTimeout(v time.Duration) ClientOpt {
-	return func(c *Client) error {
-		if v <= 0 {
-			return errors.New("timeout value must be greater than 0")
-		}
-		c.timeout = v
-
-		return nil
-	}
-}
 
 // ClientOptWithTrace returns a ClientOpt enabling HTTP request/response tracing.
 func ClientOptWithTrace() ClientOpt {
@@ -151,6 +137,7 @@ func (c *Client) WithURL(url URL) *Client {
 		httpClient:          c.httpClient,
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
+		trace:               c.trace,
 	}
 }
 
@@ -176,6 +163,7 @@ func (c *Client) WithHttpClient(client *http.Client) *Client {
 		httpClient:          client,
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
+		trace:               c.trace,
 	}
 }
 
@@ -188,6 +176,7 @@ func (c *Client) WithRequestInterceptor(f ...RequestInterceptorFn) *Client {
 		httpClient:          c.httpClient,
 		requestInterceptors: append(c.requestInterceptors, f...),
 		pollingInterval:     c.pollingInterval,
+		trace:               c.trace,
 	}
 }
 

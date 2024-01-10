@@ -1,9 +1,7 @@
 package credentials
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 )
@@ -32,15 +30,10 @@ type Provider interface {
 	IsExpired() bool
 }
 
-type ProviderWithContext interface {
-	Provider
-
-	RetrieveWithContext(context.Context) (Value, error)
-}
-
 type Credentials struct {
 	credentials Value
 	provider    Provider
+	expireAt    time.Time
 
 	sync.RWMutex
 }
@@ -63,23 +56,35 @@ func (c *Credentials) ExpiresAt() (time.Time, error) {
 	c.RLock()
 	defer c.RUnlock()
 
-	return time.Time{}, fmt.Errorf("not implemented")
+	return c.expireAt, nil
 }
 
 func (c *Credentials) Get() (Value, error) {
-	return Value{}, fmt.Errorf("not implemented")
-}
+	c.RLock()
+	defer c.RUnlock()
+	if c.provider.IsExpired() {
+		if err := c.retrieve(); err != nil {
+			return Value{}, err
+		}
+	}
 
-func (c *Credentials) GetWithContext(ctx context.Context) (Value, error) {
-	return Value{}, fmt.Errorf("not implemented")
+	return c.credentials, nil
 }
 
 func (c *Credentials) IsExpired() bool {
-	return false
+	return c.provider.IsExpired()
 }
 
-func (c *Credentials) retrieve(ctx context.Context) {
+func (c *Credentials) retrieve() error {
 	c.Lock()
 	defer c.Unlock()
 
+	v, err := c.provider.Retrieve()
+	if err != nil {
+		return err
+	}
+
+	c.credentials = v
+
+	return nil
 }

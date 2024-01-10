@@ -12,8 +12,6 @@ func NewEnvCredentials() *Credentials {
 
 // Retrieve retrieves the keys from the environment.
 func (e *EnvProvider) Retrieve() (Value, error) {
-	e.retrieved = false
-
 	v := Value{
 		APIKey:    os.Getenv("EXOSCALE_API_KEY"),
 		APISecret: os.Getenv("EXOSCALE_API_SECRET"),

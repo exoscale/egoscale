@@ -90,19 +90,19 @@ func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
 	}
 }
 
-// NewClient returns a new Exoscale API client.
-func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
-	if apiKey == "" || apiSecret == "" {
-		return nil, fmt.Errorf("missing or incomplete API credentials")
+func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client, error) {
+	values, err := credentials.Get()
+	if err != nil {
+		return nil, err
 	}
 
-  client := &Client{
-	apiKey:				apiKey,
-	apiSecret:			apiSecret,
-	serverURL:			string({{ .ServerURL }}),
-	httpClient:			http.DefaultClient,
-	pollingInterval:	pollingInterval,
-  }
+	client := &Client{
+		apiKey:          values.APIKey,
+		apiSecret:       values.APISecret,
+		serverURL:       string(CHGva2),
+		httpClient:      http.DefaultClient,
+		pollingInterval: pollingInterval,
+	}
 
 	for _, opt := range opts {
 		if err := opt(client); err != nil {

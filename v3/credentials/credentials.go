@@ -52,14 +52,12 @@ func (c *Credentials) Expire() {
 }
 
 func (c *Credentials) Get() (Value, error) {
-	c.RLock()
-	if c.provider.IsExpired() {
-		c.RUnlock()
+	if c.IsExpired() {
 		if err := c.retrieve(); err != nil {
 			return Value{}, err
 		}
-		c.RLock()
 	}
+	c.RLock()
 	defer c.RUnlock()
 
 	if !c.credentials.HasKeys() {
@@ -70,7 +68,10 @@ func (c *Credentials) Get() (Value, error) {
 }
 
 func (c *Credentials) IsExpired() bool {
-	return c.provider.IsExpired()
+	c.RLock()
+	defer c.RUnlock()
+
+	return (!c.credentials.HasKeys() || c.provider.IsExpired())
 }
 
 func (c *Credentials) retrieve() error {

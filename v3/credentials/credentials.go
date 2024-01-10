@@ -3,7 +3,6 @@ package credentials
 import (
 	"errors"
 	"sync"
-	"time"
 )
 
 var (
@@ -33,7 +32,6 @@ type Provider interface {
 type Credentials struct {
 	credentials Value
 	provider    Provider
-	expireAt    time.Time
 
 	sync.RWMutex
 }
@@ -49,14 +47,6 @@ func (c *Credentials) Expire() {
 	defer c.Unlock()
 
 	c.credentials = Value{}
-
-}
-
-func (c *Credentials) ExpiresAt() (time.Time, error) {
-	c.RLock()
-	defer c.RUnlock()
-
-	return c.expireAt, nil
 }
 
 func (c *Credentials) Get() (Value, error) {

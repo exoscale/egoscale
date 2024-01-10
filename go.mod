@@ -2,6 +2,7 @@ module github.com/exoscale/egoscale
 
 require (
 	github.com/BluntSporks/abbreviation v0.0.0-20150522120346-096cdb48bafa
+	github.com/davecgh/go-spew v1.1.1
 	github.com/deepmap/oapi-codegen v1.9.1
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -12,7 +13,6 @@ require (
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

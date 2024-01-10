@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/exoscale/egoscale/v3/credentials"
 	"github.com/exoscale/egoscale/version"
 )
 

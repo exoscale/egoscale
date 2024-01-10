@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/exoscale/egoscale/v3/credentials"
 	"github.com/exoscale/egoscale/version"
 )
@@ -110,6 +111,8 @@ func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client
 	if err != nil {
 		return nil, err
 	}
+
+	spew.Dump(values)
 
 	client := &Client{
 		apiKey:          values.APIKey,

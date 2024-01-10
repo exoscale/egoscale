@@ -37,9 +37,11 @@ type Credentials struct {
 }
 
 func NewCredentials(provider Provider) *Credentials {
-	return &Credentials{
+	creds := &Credentials{
 		provider: provider,
 	}
+
+	return creds
 }
 
 func (c *Credentials) Expire() {
@@ -51,11 +53,17 @@ func (c *Credentials) Expire() {
 
 func (c *Credentials) Get() (Value, error) {
 	c.RLock()
-	defer c.RUnlock()
 	if c.provider.IsExpired() {
+		c.RUnlock()
 		if err := c.retrieve(); err != nil {
 			return Value{}, err
 		}
+		c.RLock()
+	}
+	defer c.RUnlock()
+
+	if !c.credentials.HasKeys() {
+		return Value{}, ErrMissingIncomplete
 	}
 
 	return c.credentials, nil

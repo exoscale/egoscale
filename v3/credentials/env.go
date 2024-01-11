@@ -12,6 +12,8 @@ func NewEnvCredentials() *Credentials {
 
 // Retrieve retrieves the keys from the environment.
 func (e *EnvProvider) Retrieve() (Value, error) {
+	e.retrieved = false
+
 	v := Value{
 		APIKey: readFromEnv(
 			"EXOSCALE_API_KEY",
@@ -33,6 +35,7 @@ func (e *EnvProvider) Retrieve() (Value, error) {
 	}
 
 	e.retrieved = true
+
 	return v, nil
 }
 

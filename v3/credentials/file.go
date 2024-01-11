@@ -42,6 +42,8 @@ func NewFileCredentials(opts ...FileOpt) *Credentials {
 }
 
 func (f *FileProvider) Retrieve() (Value, error) {
+	f.retrieved = false
+
 	viperConf, err := f.retrieveViperConfig()
 	if err != nil {
 		return Value{}, err
@@ -86,8 +88,9 @@ func (f *FileProvider) Retrieve() (Value, error) {
 		return Value{}, fmt.Errorf("file provider: account %q: %w", accountName, ErrMissingIncomplete)
 	}
 
-	return v, nil
+	f.retrieved = true
 
+	return v, nil
 }
 
 // IsExpired returns if the shared credentials have expired.

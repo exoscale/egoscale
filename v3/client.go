@@ -105,6 +105,7 @@ func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
 	}
 }
 
+// NewClient returns a new Exoscale API client.
 func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client, error) {
 	values, err := credentials.Get()
 	if err != nil {

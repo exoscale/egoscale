@@ -94,8 +94,8 @@ func (f *FileProvider) Retrieve() (Value, error) {
 }
 
 // IsExpired returns if the shared credentials have expired.
-func (p *FileProvider) IsExpired() bool {
-	return !p.retrieved
+func (f *FileProvider) IsExpired() bool {
+	return !f.retrieved
 }
 
 type Account struct {

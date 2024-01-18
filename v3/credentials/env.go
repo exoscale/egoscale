@@ -30,7 +30,7 @@ func (e *EnvProvider) Retrieve() (Value, error) {
 		),
 	}
 
-	if !v.HasKeys() {
+	if !v.IsSet() {
 		return Value{}, ErrMissingIncomplete
 	}
 

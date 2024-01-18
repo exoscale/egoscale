@@ -14,8 +14,8 @@ type Value struct {
 	APISecret string
 }
 
-// HasKeys returns true if the credentials Value has both APIKey and APISecret.
-func (v Value) HasKeys() bool {
+// IsSet returns true if the credentials Value has both APIKey and APISecret.
+func (v Value) IsSet() bool {
 	return v.APIKey != "" && v.APISecret != ""
 }
 
@@ -60,7 +60,7 @@ func (c *Credentials) Get() (Value, error) {
 	c.RLock()
 	defer c.RUnlock()
 
-	if !c.credentials.HasKeys() {
+	if !c.credentials.IsSet() {
 		return Value{}, ErrMissingIncomplete
 	}
 
@@ -71,7 +71,7 @@ func (c *Credentials) IsExpired() bool {
 	c.RLock()
 	defer c.RUnlock()
 
-	return (!c.credentials.HasKeys() || c.provider.IsExpired())
+	return (!c.credentials.IsSet() || c.provider.IsExpired())
 }
 
 func (c *Credentials) retrieve() error {

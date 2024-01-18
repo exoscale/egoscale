@@ -84,7 +84,7 @@ func (f *FileProvider) Retrieve() (Value, error) {
 		APISecret: account.Secret,
 	}
 
-	if !v.HasKeys() {
+	if !v.IsSet() {
 		return Value{}, fmt.Errorf("file provider: account %q: %w", accountName, ErrMissingIncomplete)
 	}
 

@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+0.102.3
+-------
 
 - v2: fix issue with iam role labels #614
 

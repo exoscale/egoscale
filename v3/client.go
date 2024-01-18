@@ -27,6 +27,17 @@ const (
 	BGSof1 URL = "https://api-bg-sof-1.exoscale.com/v2"
 )
 
+// Zone gets the zone name from the URL.
+func (u URL) Zone() (string, bool) {
+	for zone, url := range Zones {
+		if url == u {
+			return zone, true
+		}
+	}
+
+	return "", false
+}
+
 // Zones represents a list of all Exoscale zone.
 var Zones map[string]URL = map[string]URL{
 	"ch-gva-2": CHGva2,

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/exoscale/egoscale/version"
+	"github.com/go-playground/validator/v10"
 )
 
 // URL represents a zoned url endpoint.
@@ -57,6 +58,7 @@ type Client struct {
 	httpClient      *http.Client
 	timeout         time.Duration
 	pollingInterval time.Duration
+	validate        *validator.Validate
 	trace           bool
 
 	// A list of callbacks for modifying requests which are generated before sending over
@@ -95,6 +97,14 @@ func ClientOptWithTimeout(v time.Duration) ClientOpt {
 func ClientOptWithTrace() ClientOpt {
 	return func(c *Client) error {
 		c.trace = true
+		return nil
+	}
+}
+
+// ClientOptWithValidator returns a ClientOpt with a given validator.
+func ClientOptWithValidator(validate *validator.Validate) ClientOpt {
+	return func(c *Client) error {
+		c.validate = validate
 		return nil
 	}
 }
@@ -141,6 +151,7 @@ func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
 		serverURL:       string(CHGva2),
 		httpClient:      http.DefaultClient,
 		pollingInterval: pollingInterval,
+		validate:        validator.New(),
 	}
 
 	for _, opt := range opts {
@@ -161,6 +172,7 @@ func (c *Client) WithURL(url URL) *Client {
 		httpClient:          c.httpClient,
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
+		validate:            c.validate,
 	}
 }
 
@@ -174,6 +186,7 @@ func (c *Client) WithTrace() *Client {
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
 		trace:               true,
+		validate:            c.validate,
 	}
 }
 
@@ -186,6 +199,7 @@ func (c *Client) WithHttpClient(client *http.Client) *Client {
 		httpClient:          client,
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
+		validate:            c.validate,
 	}
 }
 
@@ -198,6 +212,7 @@ func (c *Client) WithRequestInterceptor(f ...RequestInterceptorFn) *Client {
 		httpClient:          c.httpClient,
 		requestInterceptors: append(c.requestInterceptors, f...),
 		pollingInterval:     c.pollingInterval,
+		validate:            c.validate,
 	}
 }
 

@@ -35,6 +35,7 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 		"errors"
 
 		"github.com/exoscale/egoscale/version"
+		"github.com/go-playground/validator/v10"
 	)
 	`, packageName))
 

@@ -4124,10 +4124,9 @@ type CreateDBAASServicePGRequest struct {
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
 	// TimescaleDB extension configuration values
-	TimescaledbSettings JSONSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
-	Variant             *EnumPGVariant        `json:"variant,omitempty"`
-	// PostgreSQL major version
-	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
+	TimescaledbSettings JSONSchemaTimescaledb  `json:"timescaledb-settings,omitempty"`
+	Variant             *EnumPGVariant         `json:"variant,omitempty"`
+	Version             *DBAASPGTargetVersions `json:"version,omitempty"`
 	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
 	WorkMem int64 `json:"work-mem,omitempty" validate:"omitempty,gte=1,lte=1024"`
 }
@@ -4847,19 +4846,8 @@ func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName 
 	return bodyresp, nil
 }
 
-type CreateDBAASPGUpgradeCheckRequestTargetVersion string
-
-const (
-	CreateDBAASPGUpgradeCheckRequestTargetVersion14 CreateDBAASPGUpgradeCheckRequestTargetVersion = "14"
-	CreateDBAASPGUpgradeCheckRequestTargetVersion15 CreateDBAASPGUpgradeCheckRequestTargetVersion = "15"
-	CreateDBAASPGUpgradeCheckRequestTargetVersion12 CreateDBAASPGUpgradeCheckRequestTargetVersion = "12"
-	CreateDBAASPGUpgradeCheckRequestTargetVersion13 CreateDBAASPGUpgradeCheckRequestTargetVersion = "13"
-	CreateDBAASPGUpgradeCheckRequestTargetVersion11 CreateDBAASPGUpgradeCheckRequestTargetVersion = "11"
-)
-
 type CreateDBAASPGUpgradeCheckRequest struct {
-	// Target version for upgrade
-	TargetVersion CreateDBAASPGUpgradeCheckRequestTargetVersion `json:"target-version" validate:"required"`
+	TargetVersion *DBAASPGTargetVersions `json:"target-version" validate:"required"`
 }
 
 // Check whether you can upgrade Postgres service to a newer version

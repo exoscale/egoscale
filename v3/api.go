@@ -127,8 +127,31 @@ func Ptr[T any](v T) *T {
 }
 
 // Validate any struct from schema or request
-func Validate(r any) error {
-	return validator.New().Struct(r)
+func (c Client) Validate(s any) error {
+	err := c.validate.Struct(s)
+	if err == nil {
+		return nil
+	}
+
+	// Print better error messages
+	validationErrors := err.(validator.ValidationErrors)
+
+	if len(validationErrors) > 0 {
+		e := validationErrors[0]
+		errorString := fmt.Sprintf(
+			"Request validation error: '%s' = '%v' does not validate ",
+			e.StructNamespace(),
+			e.Value(),
+		)
+		if e.Param() == "" {
+			errorString += fmt.Sprintf("'%s'", e.ActualTag())
+		} else {
+			errorString += fmt.Sprintf("'%s=%v'", e.ActualTag(), e.Param())
+		}
+		return fmt.Errorf(errorString)
+	}
+
+	return err
 }
 
 func prepareJSONBody(body any) (*bytes.Reader, error) {

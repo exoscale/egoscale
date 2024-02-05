@@ -12,6 +12,7 @@ import (
 
 	"github.com/exoscale/egoscale/v3/credentials"
 	"github.com/exoscale/egoscale/version"
+	"github.com/go-playground/validator/v10"
 )
 
 // URL represents a zoned url endpoint.
@@ -56,6 +57,7 @@ type Client struct {
 	serverURL       string
 	httpClient      *http.Client
 	pollingInterval time.Duration
+	validate        *validator.Validate
 	trace           bool
 
 	// A list of callbacks for modifying requests which are generated before sending over
@@ -82,6 +84,14 @@ type ClientOpt func(*Client) error
 func ClientOptWithTrace() ClientOpt {
 	return func(c *Client) error {
 		c.trace = true
+		return nil
+	}
+}
+
+// ClientOptWithValidator returns a ClientOpt with a given validator.
+func ClientOptWithValidator(validate *validator.Validate) ClientOpt {
+	return func(c *Client) error {
+		c.validate = validate
 		return nil
 	}
 }
@@ -129,6 +139,7 @@ func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client
 		serverURL:       string(CHGva2),
 		httpClient:      http.DefaultClient,
 		pollingInterval: pollingInterval,
+		validate:        validator.New(),
 	}
 
 	for _, opt := range opts {
@@ -150,6 +161,7 @@ func (c *Client) WithURL(url URL) *Client {
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
 		trace:               c.trace,
+		validate:            c.validate,
 	}
 }
 
@@ -163,6 +175,7 @@ func (c *Client) WithTrace() *Client {
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
 		trace:               true,
+		validate:            c.validate,
 	}
 }
 
@@ -176,6 +189,7 @@ func (c *Client) WithHttpClient(client *http.Client) *Client {
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
 		trace:               c.trace,
+		validate:            c.validate,
 	}
 }
 
@@ -189,6 +203,7 @@ func (c *Client) WithRequestInterceptor(f ...RequestInterceptorFn) *Client {
 		requestInterceptors: append(c.requestInterceptors, f...),
 		pollingInterval:     c.pollingInterval,
 		trace:               c.trace,
+		validate:            c.validate,
 	}
 }
 

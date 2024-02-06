@@ -19,13 +19,13 @@ func (c Client) GetZoneName(ctx context.Context, endpoint Endpoint) (ZoneName, e
 	return "", fmt.Errorf("get zone name: no matching zone for %s", endpoint)
 }
 
-func (c Client) GetZoneAPIEndpoint(ctx context.Context, zoneName string) (Endpoint, error) {
+func (c Client) GetZoneAPIEndpoint(ctx context.Context, zoneName ZoneName) (Endpoint, error) {
 	resp, err := c.ListZones(ctx)
 	if err != nil {
 		return "", fmt.Errorf("get zone api endpoint: %w", err)
 	}
 	for _, zone := range resp.Zones {
-		if zone.Name == ZoneName(zoneName) {
+		if zone.Name == zoneName {
 			return zone.APIEndpoint, nil
 		}
 	}

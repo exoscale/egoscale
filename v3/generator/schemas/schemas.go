@@ -89,6 +89,19 @@ func RenderSchema(schemaName string, s *base.SchemaProxy) ([]byte, error) {
 // This function is called if you are sure IsSimpleSchema(s *base.Schema) return true.
 // Add more simple type here.
 func RenderSimpleType(s *base.Schema) string {
+	typ, ok := s.Extensions["x-go-type"]
+	if ok {
+		t, ok := typ.(string)
+		if ok {
+			return t
+		}
+
+		slog.Error(
+			"invalid x-go-type extension type, fallback on original type",
+			slog.Any("type", typ),
+		)
+	}
+
 	if s.Format != "" {
 		if s.Format == "date-time" {
 			return "time.Time"
@@ -318,7 +331,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 
 		tag := fmt.Sprintf(" `json:\"%s,omitempty\"", propName)
 
-		required := "*"
+		pointer := "*"
 		req := isRequiredField(propName, s)
 		if req {
 			tag = fmt.Sprintf(" `json:%q", propName)
@@ -334,9 +347,12 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		if properties.IsReference() {
 			referenceName := helpers.RenderReference(properties.GetReference())
 			if prop.AdditionalProperties != nil {
-				required = ""
+				pointer = ""
 			}
-			definition += camelName + " " + required + referenceName + tag + "\n"
+			if !nullable && IsSimpleSchema(prop) {
+				pointer = ""
+			}
+			definition += camelName + " " + pointer + referenceName + tag + "\n"
 			return nil
 		}
 
@@ -366,7 +382,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 				definition += camelName + " " + RenderSimpleType(prop) + tag + "\n"
 				return nil
 			}
-			definition += camelName + " " + required + RenderSimpleType(prop) + tag + "\n"
+			definition += camelName + " " + pointer + RenderSimpleType(prop) + tag + "\n"
 
 			return nil
 		}
@@ -393,7 +409,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		if err := renderSchemaInternal(typeName+camelName, prop, output); err != nil {
 			return err
 		}
-		definition += camelName + " " + required + typeName + camelName + tag + "\n"
+		definition += camelName + " " + pointer + typeName + camelName + tag + "\n"
 
 		return nil
 	})

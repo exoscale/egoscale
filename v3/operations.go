@@ -20,7 +20,7 @@ type ListAccessKeysResponse struct {
 func (c Client) ListAccessKeys(ctx context.Context) (*ListAccessKeysResponse, error) {
 	path := "/access-key"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListAccessKeys: new request: %w", err)
 	}
@@ -79,7 +79,7 @@ func (c Client) CreateAccessKey(ctx context.Context, req CreateAccessKeyRequest)
 		return nil, fmt.Errorf("CreateAccessKey: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAccessKey: new request: %w", err)
 	}
@@ -127,7 +127,7 @@ type ListAccessKeyKnownOperationsResponse struct {
 func (c Client) ListAccessKeyKnownOperations(ctx context.Context) (*ListAccessKeyKnownOperationsResponse, error) {
 	path := "/access-key-known-operations"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListAccessKeyKnownOperations: new request: %w", err)
 	}
@@ -173,7 +173,7 @@ type ListAccessKeyOperationsResponse struct {
 func (c Client) ListAccessKeyOperations(ctx context.Context) (*ListAccessKeyOperationsResponse, error) {
 	path := "/access-key-operations"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListAccessKeyOperations: new request: %w", err)
 	}
@@ -215,7 +215,7 @@ func (c Client) ListAccessKeyOperations(ctx context.Context) (*ListAccessKeyOper
 func (c Client) RevokeAccessKey(ctx context.Context, key string) (*Operation, error) {
 	path := fmt.Sprintf("/access-key/%v", key)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("RevokeAccessKey: new request: %w", err)
 	}
@@ -257,7 +257,7 @@ func (c Client) RevokeAccessKey(ctx context.Context, key string) (*Operation, er
 func (c Client) GetAccessKey(ctx context.Context, key string) (*AccessKey, error) {
 	path := fmt.Sprintf("/access-key/%v", key)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetAccessKey: new request: %w", err)
 	}
@@ -303,7 +303,7 @@ type ListAntiAffinityGroupsResponse struct {
 func (c Client) ListAntiAffinityGroups(ctx context.Context) (*ListAntiAffinityGroupsResponse, error) {
 	path := "/anti-affinity-group"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListAntiAffinityGroups: new request: %w", err)
 	}
@@ -357,7 +357,7 @@ func (c Client) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffin
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: new request: %w", err)
 	}
@@ -401,7 +401,7 @@ func (c Client) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffin
 func (c Client) DeleteAntiAffinityGroup(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/anti-affinity-group/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteAntiAffinityGroup: new request: %w", err)
 	}
@@ -443,7 +443,7 @@ func (c Client) DeleteAntiAffinityGroup(ctx context.Context, id UUID) (*Operatio
 func (c Client) GetAntiAffinityGroup(ctx context.Context, id UUID) (*AntiAffinityGroup, error) {
 	path := fmt.Sprintf("/anti-affinity-group/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetAntiAffinityGroup: new request: %w", err)
 	}
@@ -489,7 +489,7 @@ type ListAPIKeysResponse struct {
 func (c Client) ListAPIKeys(ctx context.Context) (*ListAPIKeysResponse, error) {
 	path := "/api-key"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListAPIKeys: new request: %w", err)
 	}
@@ -543,7 +543,7 @@ func (c Client) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAM
 		return nil, fmt.Errorf("CreateAPIKey: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAPIKey: new request: %w", err)
 	}
@@ -587,7 +587,7 @@ func (c Client) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAM
 func (c Client) DeleteAPIKey(ctx context.Context, id string) (*Operation, error) {
 	path := fmt.Sprintf("/api-key/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteAPIKey: new request: %w", err)
 	}
@@ -629,7 +629,7 @@ func (c Client) DeleteAPIKey(ctx context.Context, id string) (*Operation, error)
 func (c Client) GetAPIKey(ctx context.Context, id string) (*IAMAPIKey, error) {
 	path := fmt.Sprintf("/api-key/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetAPIKey: new request: %w", err)
 	}
@@ -683,7 +683,7 @@ func ListBlockStorageVolumesWithInstanceID(instanceID UUID) ListBlockStorageVolu
 func (c Client) ListBlockStorageVolumes(ctx context.Context, opts ...ListBlockStorageVolumesOpt) (*ListBlockStorageVolumesResponse, error) {
 	path := "/block-storage"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListBlockStorageVolumes: new request: %w", err)
 	}
@@ -749,7 +749,7 @@ func (c Client) CreateBlockStorageVolume(ctx context.Context, req CreateBlockSto
 		return nil, fmt.Errorf("CreateBlockStorageVolume: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageVolume: new request: %w", err)
 	}
@@ -797,7 +797,7 @@ type ListBlockStorageSnapshotsResponse struct {
 func (c Client) ListBlockStorageSnapshots(ctx context.Context) (*ListBlockStorageSnapshotsResponse, error) {
 	path := "/block-storage-snapshot"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListBlockStorageSnapshots: new request: %w", err)
 	}
@@ -839,7 +839,7 @@ func (c Client) ListBlockStorageSnapshots(ctx context.Context) (*ListBlockStorag
 func (c Client) DeleteBlockStorageSnapshot(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage-snapshot/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: new request: %w", err)
 	}
@@ -881,7 +881,7 @@ func (c Client) DeleteBlockStorageSnapshot(ctx context.Context, id UUID) (*Opera
 func (c Client) GetBlockStorageSnapshot(ctx context.Context, id UUID) (*BlockStorageSnapshot, error) {
 	path := fmt.Sprintf("/block-storage-snapshot/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetBlockStorageSnapshot: new request: %w", err)
 	}
@@ -923,7 +923,7 @@ func (c Client) GetBlockStorageSnapshot(ctx context.Context, id UUID) (*BlockSto
 func (c Client) DeleteBlockStorageVolume(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageVolume: new request: %w", err)
 	}
@@ -965,7 +965,7 @@ func (c Client) DeleteBlockStorageVolume(ctx context.Context, id UUID) (*Operati
 func (c Client) GetBlockStorageVolume(ctx context.Context, id UUID) (*BlockStorageVolume, error) {
 	path := fmt.Sprintf("/block-storage/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetBlockStorageVolume: new request: %w", err)
 	}
@@ -1016,7 +1016,7 @@ func (c Client) UpdateBlockStorageVolumeLabels(ctx context.Context, id UUID, req
 		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: new request: %w", err)
 	}
@@ -1070,7 +1070,7 @@ func (c Client) AttachBlockStorageVolumeToInstance(ctx context.Context, id UUID,
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: new request: %w", err)
 	}
@@ -1125,7 +1125,7 @@ func (c Client) CreateBlockStorageSnapshot(ctx context.Context, id UUID, req Cre
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: new request: %w", err)
 	}
@@ -1169,7 +1169,7 @@ func (c Client) CreateBlockStorageSnapshot(ctx context.Context, id UUID, req Cre
 func (c Client) DetachBlockStorageVolume(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage/%v:detach", id)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DetachBlockStorageVolume: new request: %w", err)
 	}
@@ -1221,7 +1221,7 @@ func (c Client) ResizeBlockStorageVolume(ctx context.Context, id UUID, req Resiz
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: new request: %w", err)
 	}
@@ -1269,7 +1269,7 @@ type GetDBAASCACertificateResponse struct {
 func (c Client) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertificateResponse, error) {
 	path := "/dbaas-ca-certificate"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASCACertificate: new request: %w", err)
 	}
@@ -1311,7 +1311,7 @@ func (c Client) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertifica
 func (c Client) DeleteDBAASServiceGrafana(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: new request: %w", err)
 	}
@@ -1353,7 +1353,7 @@ func (c Client) DeleteDBAASServiceGrafana(ctx context.Context, name string) (*Op
 func (c Client) GetDBAASServiceGrafana(ctx context.Context, name string) (*DBAASServiceGrafana, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceGrafana: new request: %w", err)
 	}
@@ -1413,7 +1413,7 @@ type CreateDBAASServiceGrafanaRequestMaintenance struct {
 }
 
 type CreateDBAASServiceGrafanaRequest struct {
-	ForkFromService *DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	ForkFromService DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Grafana settings
 	GrafanaSettings *JSONSchemaGrafana `json:"grafana-settings,omitempty"`
 	// Allowed CIDR address blocks for incoming connections
@@ -1435,7 +1435,7 @@ func (c Client) CreateDBAASServiceGrafana(ctx context.Context, name string, req 
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: new request: %w", err)
 	}
@@ -1518,7 +1518,7 @@ func (c Client) UpdateDBAASServiceGrafana(ctx context.Context, name string, req 
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: new request: %w", err)
 	}
@@ -1562,7 +1562,7 @@ func (c Client) UpdateDBAASServiceGrafana(ctx context.Context, name string, req 
 func (c Client) StartDBAASGrafanaMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v/maintenance/start", name)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: new request: %w", err)
 	}
@@ -1601,11 +1601,11 @@ func (c Client) StartDBAASGrafanaMaintenance(ctx context.Context, name string) (
 }
 
 type CreateDBAASIntegrationRequest struct {
-	DestService     *DBAASServiceName     `json:"dest-service" validate:"required,gte=0,lte=63"`
-	IntegrationType *EnumIntegrationTypes `json:"integration-type" validate:"required"`
+	DestService     DBAASServiceName     `json:"dest-service" validate:"required,gte=0,lte=63"`
+	IntegrationType EnumIntegrationTypes `json:"integration-type" validate:"required"`
 	// Integration settings
-	Settings      map[string]any    `json:"settings,omitempty"`
-	SourceService *DBAASServiceName `json:"source-service" validate:"required,gte=0,lte=63"`
+	Settings      map[string]any   `json:"settings,omitempty"`
+	SourceService DBAASServiceName `json:"source-service" validate:"required,gte=0,lte=63"`
 }
 
 // Create a new DBaaS integration between two services
@@ -1617,7 +1617,7 @@ func (c Client) CreateDBAASIntegration(ctx context.Context, req CreateDBAASInteg
 		return nil, fmt.Errorf("CreateDBAASIntegration: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASIntegration: new request: %w", err)
 	}
@@ -1674,7 +1674,7 @@ type ListDBAASIntegrationSettingsResponse struct {
 func (c Client) ListDBAASIntegrationSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*ListDBAASIntegrationSettingsResponse, error) {
 	path := fmt.Sprintf("/dbaas-integration-settings/%v/%v/%v", integrationType, sourceType, destType)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationSettings: new request: %w", err)
 	}
@@ -1720,7 +1720,7 @@ type ListDBAASIntegrationTypesResponse struct {
 func (c Client) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegrationTypesResponse, error) {
 	path := "/dbaas-integration-types"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationTypes: new request: %w", err)
 	}
@@ -1762,7 +1762,7 @@ func (c Client) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegr
 func (c Client) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-integration/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASIntegration: new request: %w", err)
 	}
@@ -1804,7 +1804,7 @@ func (c Client) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation
 func (c Client) GetDBAASIntegration(ctx context.Context, id UUID) (*DBAASIntegration, error) {
 	path := fmt.Sprintf("/dbaas-integration/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASIntegration: new request: %w", err)
 	}
@@ -1856,7 +1856,7 @@ func (c Client) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateD
 		return nil, fmt.Errorf("UpdateDBAASIntegration: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASIntegration: new request: %w", err)
 	}
@@ -1900,7 +1900,7 @@ func (c Client) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateD
 func (c Client) DeleteDBAASServiceKafka(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceKafka: new request: %w", err)
 	}
@@ -1942,7 +1942,7 @@ func (c Client) DeleteDBAASServiceKafka(ctx context.Context, name string) (*Oper
 func (c Client) GetDBAASServiceKafka(ctx context.Context, name string) (*DBAASServiceKafka, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceKafka: new request: %w", err)
 	}
@@ -2047,7 +2047,7 @@ func (c Client) CreateDBAASServiceKafka(ctx context.Context, name string, req Cr
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: new request: %w", err)
 	}
@@ -2154,7 +2154,7 @@ func (c Client) UpdateDBAASServiceKafka(ctx context.Context, name string, req Up
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: new request: %w", err)
 	}
@@ -2198,7 +2198,7 @@ func (c Client) UpdateDBAASServiceKafka(ctx context.Context, name string, req Up
 func (c Client) GetDBAASKafkaAclConfig(ctx context.Context, name string) (*DBAASKafkaAcls, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/acl-config", name)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: new request: %w", err)
 	}
@@ -2240,7 +2240,7 @@ func (c Client) GetDBAASKafkaAclConfig(ctx context.Context, name string) (*DBAAS
 func (c Client) StartDBAASKafkaMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/maintenance/start", name)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: new request: %w", err)
 	}
@@ -2287,7 +2287,7 @@ func (c Client) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: new request: %w", err)
 	}
@@ -2331,7 +2331,7 @@ func (c Client) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 func (c Client) DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, name string, aclID string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/schema-registry/acl-config/%v", name, aclID)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: new request: %w", err)
 	}
@@ -2378,7 +2378,7 @@ func (c Client) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: new request: %w", err)
 	}
@@ -2422,7 +2422,7 @@ func (c Client) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 func (c Client) DeleteDBAASKafkaTopicAclConfig(ctx context.Context, name string, aclID string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/topic/acl-config/%v", name, aclID)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: new request: %w", err)
 	}
@@ -2461,7 +2461,7 @@ func (c Client) DeleteDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 }
 
 type CreateDBAASKafkaUserRequest struct {
-	Username *DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
+	Username DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
 }
 
 // Create a DBaaS Kafka user
@@ -2473,7 +2473,7 @@ func (c Client) CreateDBAASKafkaUser(ctx context.Context, serviceName string, re
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: new request: %w", err)
 	}
@@ -2517,7 +2517,7 @@ func (c Client) CreateDBAASKafkaUser(ctx context.Context, serviceName string, re
 func (c Client) DeleteDBAASKafkaUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/user/%v", serviceName, username)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaUser: new request: %w", err)
 	}
@@ -2556,7 +2556,7 @@ func (c Client) DeleteDBAASKafkaUser(ctx context.Context, serviceName string, us
 }
 
 type ResetDBAASKafkaUserPasswordRequest struct {
-	Password *DBAASUserPassword `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
+	Password DBAASUserPassword `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
 }
 
 // If no password is provided one will be generated automatically.
@@ -2568,7 +2568,7 @@ func (c Client) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: new request: %w", err)
 	}
@@ -2612,7 +2612,7 @@ func (c Client) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName str
 func (c Client) GetDBAASMigrationStatus(ctx context.Context, name string) (*DBAASMigrationStatus, error) {
 	path := fmt.Sprintf("/dbaas-migration-status/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASMigrationStatus: new request: %w", err)
 	}
@@ -2654,7 +2654,7 @@ func (c Client) GetDBAASMigrationStatus(ctx context.Context, name string) (*DBAA
 func (c Client) DeleteDBAASServiceMysql(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceMysql: new request: %w", err)
 	}
@@ -2696,7 +2696,7 @@ func (c Client) DeleteDBAASServiceMysql(ctx context.Context, name string) (*Oper
 func (c Client) GetDBAASServiceMysql(ctx context.Context, name string) (*DBAASServiceMysql, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMysql: new request: %w", err)
 	}
@@ -2748,10 +2748,10 @@ const (
 )
 
 type CreateDBAASServiceMysqlRequestIntegrations struct {
-	DestService *DBAASServiceName `json:"dest-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	DestService DBAASServiceName `json:"dest-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Integration settings
-	Settings      map[string]any    `json:"settings,omitempty"`
-	SourceService *DBAASServiceName `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	Settings      map[string]any   `json:"settings,omitempty"`
+	SourceService DBAASServiceName `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Integration type
 	Type CreateDBAASServiceMysqlRequestIntegrationsType `json:"type" validate:"required"`
 }
@@ -2784,8 +2784,8 @@ type CreateDBAASServiceMysqlRequestMigration struct {
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
 	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string               `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    *EnumMigrationMethod `json:"method,omitempty"`
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Port number of the server where to migrate data from
@@ -2803,8 +2803,8 @@ type CreateDBAASServiceMysqlRequest struct {
 	AdminUsername  string                                        `json:"admin-username,omitempty" validate:"omitempty,gte=1,lte=64"`
 	BackupSchedule *CreateDBAASServiceMysqlRequestBackupSchedule `json:"backup-schedule,omitempty"`
 	// The minimum amount of time in seconds to keep binlog entries before deletion. This may be extended for services that require binlog entries for longer than the default for example if using the MySQL Debezium Kafka connector.
-	BinlogRetentionPeriod int64             `json:"binlog-retention-period,omitempty" validate:"omitempty,gte=600,lte=86400"`
-	ForkFromService       *DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	BinlogRetentionPeriod int64            `json:"binlog-retention-period,omitempty" validate:"omitempty,gte=600,lte=86400"`
+	ForkFromService       DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Service integrations to be enabled when creating the service.
 	Integrations []CreateDBAASServiceMysqlRequestIntegrations `json:"integrations,omitempty"`
 	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
@@ -2834,7 +2834,7 @@ func (c Client) CreateDBAASServiceMysql(ctx context.Context, name string, req Cr
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: new request: %w", err)
 	}
@@ -2909,8 +2909,8 @@ type UpdateDBAASServiceMysqlRequestMigration struct {
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
 	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string               `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    *EnumMigrationMethod `json:"method,omitempty"`
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Port number of the server where to migrate data from
@@ -2948,7 +2948,7 @@ func (c Client) UpdateDBAASServiceMysql(ctx context.Context, name string, req Up
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: new request: %w", err)
 	}
@@ -2992,7 +2992,7 @@ func (c Client) UpdateDBAASServiceMysql(ctx context.Context, name string, req Up
 func (c Client) StartDBAASMysqlMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/maintenance/start", name)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: new request: %w", err)
 	}
@@ -3034,7 +3034,7 @@ func (c Client) StartDBAASMysqlMaintenance(ctx context.Context, name string) (*O
 func (c Client) StopDBAASMysqlMigration(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/migration/stop", name)
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("StopDBAASMysqlMigration: new request: %w", err)
 	}
@@ -3073,7 +3073,7 @@ func (c Client) StopDBAASMysqlMigration(ctx context.Context, name string) (*Oper
 }
 
 type CreateDBAASMysqlDatabaseRequest struct {
-	DatabaseName *DBAASDatabaseName `json:"database-name" validate:"required,gte=1,lte=40"`
+	DatabaseName DBAASDatabaseName `json:"database-name" validate:"required,gte=1,lte=40"`
 }
 
 // Create a DBaaS MySQL database
@@ -3085,7 +3085,7 @@ func (c Client) CreateDBAASMysqlDatabase(ctx context.Context, serviceName string
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: new request: %w", err)
 	}
@@ -3129,7 +3129,7 @@ func (c Client) CreateDBAASMysqlDatabase(ctx context.Context, serviceName string
 func (c Client) DeleteDBAASMysqlDatabase(ctx context.Context, serviceName string, databaseName string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/database/%v", serviceName, databaseName)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: new request: %w", err)
 	}
@@ -3168,8 +3168,8 @@ func (c Client) DeleteDBAASMysqlDatabase(ctx context.Context, serviceName string
 }
 
 type CreateDBAASMysqlUserRequest struct {
-	Authentication *EnumMysqlAuthenticationPlugin `json:"authentication,omitempty"`
-	Username       *DBAASUserUsername             `json:"username" validate:"required,gte=1,lte=64"`
+	Authentication EnumMysqlAuthenticationPlugin `json:"authentication,omitempty"`
+	Username       DBAASUserUsername             `json:"username" validate:"required,gte=1,lte=64"`
 }
 
 // Create a DBaaS MySQL user
@@ -3181,7 +3181,7 @@ func (c Client) CreateDBAASMysqlUser(ctx context.Context, serviceName string, re
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: new request: %w", err)
 	}
@@ -3225,7 +3225,7 @@ func (c Client) CreateDBAASMysqlUser(ctx context.Context, serviceName string, re
 func (c Client) DeleteDBAASMysqlUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/user/%v", serviceName, username)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlUser: new request: %w", err)
 	}
@@ -3264,8 +3264,8 @@ func (c Client) DeleteDBAASMysqlUser(ctx context.Context, serviceName string, us
 }
 
 type ResetDBAASMysqlUserPasswordRequest struct {
-	Authentication *EnumMysqlAuthenticationPlugin `json:"authentication,omitempty"`
-	Password       *DBAASUserPassword             `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
+	Authentication EnumMysqlAuthenticationPlugin `json:"authentication,omitempty"`
+	Password       DBAASUserPassword             `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
 }
 
 // If no password is provided one will be generated automatically.
@@ -3277,7 +3277,7 @@ func (c Client) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: new request: %w", err)
 	}
@@ -3321,7 +3321,7 @@ func (c Client) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName str
 func (c Client) DeleteDBAASServiceOpensearch(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: new request: %w", err)
 	}
@@ -3363,7 +3363,7 @@ func (c Client) DeleteDBAASServiceOpensearch(ctx context.Context, name string) (
 func (c Client) GetDBAASServiceOpensearch(ctx context.Context, name string) (*DBAASServiceOpensearch, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceOpensearch: new request: %w", err)
 	}
@@ -3459,7 +3459,7 @@ type CreateDBAASServiceOpensearchRequestOpensearchDashboards struct {
 }
 
 type CreateDBAASServiceOpensearchRequest struct {
-	ForkFromService *DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	ForkFromService DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Allows you to create glob style patterns and set a max number of indexes matching this pattern you want to keep. Creating indexes exceeding this value will cause the oldest one to get deleted. You could for example create a pattern looking like 'logs.?' and then create index logs.1, logs.2 etc, it will delete logs.1 once you create logs.6. Do note 'logs.?' does not apply to logs.10. Note: Setting max_index_count to 0 will do nothing and the pattern gets ignored.
 	IndexPatterns []CreateDBAASServiceOpensearchRequestIndexPatterns `json:"index-patterns,omitempty"`
 	// Template settings for all new indexes
@@ -3495,7 +3495,7 @@ func (c Client) CreateDBAASServiceOpensearch(ctx context.Context, name string, r
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: new request: %w", err)
 	}
@@ -3626,7 +3626,7 @@ func (c Client) UpdateDBAASServiceOpensearch(ctx context.Context, name string, r
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: new request: %w", err)
 	}
@@ -3670,7 +3670,7 @@ func (c Client) UpdateDBAASServiceOpensearch(ctx context.Context, name string, r
 func (c Client) GetDBAASOpensearchAclConfig(ctx context.Context, name string) (*DBAASOpensearchAclConfig, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/acl-config", name)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: new request: %w", err)
 	}
@@ -3717,7 +3717,7 @@ func (c Client) UpdateDBAASOpensearchAclConfig(ctx context.Context, name string,
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: new request: %w", err)
 	}
@@ -3761,7 +3761,7 @@ func (c Client) UpdateDBAASOpensearchAclConfig(ctx context.Context, name string,
 func (c Client) StartDBAASOpensearchMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/maintenance/start", name)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: new request: %w", err)
 	}
@@ -3800,7 +3800,7 @@ func (c Client) StartDBAASOpensearchMaintenance(ctx context.Context, name string
 }
 
 type CreateDBAASOpensearchUserRequest struct {
-	Username *DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
+	Username DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
 }
 
 // Create a DBaaS OpenSearch user
@@ -3812,7 +3812,7 @@ func (c Client) CreateDBAASOpensearchUser(ctx context.Context, serviceName strin
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: new request: %w", err)
 	}
@@ -3856,7 +3856,7 @@ func (c Client) CreateDBAASOpensearchUser(ctx context.Context, serviceName strin
 func (c Client) DeleteDBAASOpensearchUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/user/%v", serviceName, username)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: new request: %w", err)
 	}
@@ -3895,7 +3895,7 @@ func (c Client) DeleteDBAASOpensearchUser(ctx context.Context, serviceName strin
 }
 
 type ResetDBAASOpensearchUserPasswordRequest struct {
-	Password *DBAASUserPassword `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
+	Password DBAASUserPassword `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
 }
 
 // If no password is provided one will be generated automatically.
@@ -3907,7 +3907,7 @@ func (c Client) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceNam
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: new request: %w", err)
 	}
@@ -3951,7 +3951,7 @@ func (c Client) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceNam
 func (c Client) DeleteDBAASServicePG(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServicePG: new request: %w", err)
 	}
@@ -3993,7 +3993,7 @@ func (c Client) DeleteDBAASServicePG(ctx context.Context, name string) (*Operati
 func (c Client) GetDBAASServicePG(ctx context.Context, name string) (*DBAASServicePG, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServicePG: new request: %w", err)
 	}
@@ -4045,10 +4045,10 @@ const (
 )
 
 type CreateDBAASServicePGRequestIntegrations struct {
-	DestService *DBAASServiceName `json:"dest-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	DestService DBAASServiceName `json:"dest-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Integration settings
-	Settings      map[string]any    `json:"settings,omitempty"`
-	SourceService *DBAASServiceName `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	Settings      map[string]any   `json:"settings,omitempty"`
+	SourceService DBAASServiceName `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Integration type
 	Type CreateDBAASServicePGRequestIntegrationsType `json:"type" validate:"required"`
 }
@@ -4081,8 +4081,8 @@ type CreateDBAASServicePGRequestMigration struct {
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
 	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string               `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    *EnumMigrationMethod `json:"method,omitempty"`
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Port number of the server where to migrate data from
@@ -4099,7 +4099,7 @@ type CreateDBAASServicePGRequest struct {
 	// Custom username for admin user. This must be set only when a new service is being created.
 	AdminUsername   string                                     `json:"admin-username,omitempty" validate:"omitempty,gte=1,lte=64"`
 	BackupSchedule  *CreateDBAASServicePGRequestBackupSchedule `json:"backup-schedule,omitempty"`
-	ForkFromService *DBAASServiceName                          `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	ForkFromService DBAASServiceName                           `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Service integrations to be enabled when creating the service.
 	Integrations []CreateDBAASServicePGRequestIntegrations `json:"integrations,omitempty"`
 	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
@@ -4119,14 +4119,14 @@ type CreateDBAASServicePGRequest struct {
 	// ISO time of a backup to recover from for services that support arbitrary times
 	RecoveryBackupTime string `json:"recovery-backup-time,omitempty" validate:"omitempty,gte=1"`
 	// Percentage of total RAM that the database server uses for shared memory buffers. Valid range is 20-60 (float), which corresponds to 20% - 60%. This setting adjusts the shared_buffers configuration value.
-	SharedBuffersPercentage int64                         `json:"shared-buffers-percentage,omitempty" validate:"omitempty,gte=20,lte=60"`
-	SynchronousReplication  *EnumPGSynchronousReplication `json:"synchronous-replication,omitempty"`
+	SharedBuffersPercentage int64                        `json:"shared-buffers-percentage,omitempty" validate:"omitempty,gte=20,lte=60"`
+	SynchronousReplication  EnumPGSynchronousReplication `json:"synchronous-replication,omitempty"`
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
 	// TimescaleDB extension configuration values
-	TimescaledbSettings JSONSchemaTimescaledb  `json:"timescaledb-settings,omitempty"`
-	Variant             *EnumPGVariant         `json:"variant,omitempty"`
-	Version             *DBAASPGTargetVersions `json:"version,omitempty"`
+	TimescaledbSettings JSONSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
+	Variant             EnumPGVariant         `json:"variant,omitempty"`
+	Version             DBAASPGTargetVersions `json:"version,omitempty"`
 	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
 	WorkMem int64 `json:"work-mem,omitempty" validate:"omitempty,gte=1,lte=1024"`
 }
@@ -4140,7 +4140,7 @@ func (c Client) CreateDBAASServicePG(ctx context.Context, name string, req Creat
 		return nil, fmt.Errorf("CreateDBAASServicePG: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServicePG: new request: %w", err)
 	}
@@ -4215,8 +4215,8 @@ type UpdateDBAASServicePGRequestMigration struct {
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
 	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string               `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    *EnumMigrationMethod `json:"method,omitempty"`
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Port number of the server where to migrate data from
@@ -4244,13 +4244,13 @@ type UpdateDBAASServicePGRequest struct {
 	// Subscription plan
 	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
 	// Percentage of total RAM that the database server uses for shared memory buffers. Valid range is 20-60 (float), which corresponds to 20% - 60%. This setting adjusts the shared_buffers configuration value.
-	SharedBuffersPercentage int64                         `json:"shared-buffers-percentage,omitempty" validate:"omitempty,gte=20,lte=60"`
-	SynchronousReplication  *EnumPGSynchronousReplication `json:"synchronous-replication,omitempty"`
+	SharedBuffersPercentage int64                        `json:"shared-buffers-percentage,omitempty" validate:"omitempty,gte=20,lte=60"`
+	SynchronousReplication  EnumPGSynchronousReplication `json:"synchronous-replication,omitempty"`
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
 	// TimescaleDB extension configuration values
 	TimescaledbSettings JSONSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
-	Variant             *EnumPGVariant        `json:"variant,omitempty"`
+	Variant             EnumPGVariant         `json:"variant,omitempty"`
 	// Version
 	Version string `json:"version,omitempty"`
 	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
@@ -4266,7 +4266,7 @@ func (c Client) UpdateDBAASServicePG(ctx context.Context, name string, req Updat
 		return nil, fmt.Errorf("UpdateDBAASServicePG: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServicePG: new request: %w", err)
 	}
@@ -4310,7 +4310,7 @@ func (c Client) UpdateDBAASServicePG(ctx context.Context, name string, req Updat
 func (c Client) StartDBAASPGMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/maintenance/start", name)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASPGMaintenance: new request: %w", err)
 	}
@@ -4352,7 +4352,7 @@ func (c Client) StartDBAASPGMaintenance(ctx context.Context, name string) (*Oper
 func (c Client) StopDBAASPGMigration(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/migration/stop", name)
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("StopDBAASPGMigration: new request: %w", err)
 	}
@@ -4391,11 +4391,11 @@ func (c Client) StopDBAASPGMigration(ctx context.Context, name string) (*Operati
 }
 
 type CreateDBAASPGConnectionPoolRequest struct {
-	DatabaseName *DBAASDatabaseName   `json:"database-name" validate:"required,gte=1,lte=40"`
-	Mode         *EnumPGPoolMode      `json:"mode,omitempty"`
-	Name         *DBAASPGPoolName     `json:"name" validate:"required,gte=1,lte=63"`
-	Size         *DBAASPGPoolSize     `json:"size,omitempty" validate:"omitempty,gte=1,lte=10000"`
-	Username     *DBAASPGPoolUsername `json:"username,omitempty" validate:"omitempty,gte=1,lte=64"`
+	DatabaseName DBAASDatabaseName   `json:"database-name" validate:"required,gte=1,lte=40"`
+	Mode         EnumPGPoolMode      `json:"mode,omitempty"`
+	Name         DBAASPGPoolName     `json:"name" validate:"required,gte=1,lte=63"`
+	Size         DBAASPGPoolSize     `json:"size,omitempty" validate:"omitempty,gte=1,lte=10000"`
+	Username     DBAASPGPoolUsername `json:"username,omitempty" validate:"omitempty,gte=1,lte=64"`
 }
 
 // Create a DBaaS PostgreSQL connection pool
@@ -4407,7 +4407,7 @@ func (c Client) CreateDBAASPGConnectionPool(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: new request: %w", err)
 	}
@@ -4451,7 +4451,7 @@ func (c Client) CreateDBAASPGConnectionPool(ctx context.Context, serviceName str
 func (c Client) DeleteDBAASPGConnectionPool(ctx context.Context, serviceName string, connectionPoolName string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/connection-pool/%v", serviceName, connectionPoolName)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: new request: %w", err)
 	}
@@ -4490,10 +4490,10 @@ func (c Client) DeleteDBAASPGConnectionPool(ctx context.Context, serviceName str
 }
 
 type UpdateDBAASPGConnectionPoolRequest struct {
-	DatabaseName *DBAASDatabaseName   `json:"database-name,omitempty" validate:"omitempty,gte=1,lte=40"`
-	Mode         *EnumPGPoolMode      `json:"mode,omitempty"`
-	Size         *DBAASPGPoolSize     `json:"size,omitempty" validate:"omitempty,gte=1,lte=10000"`
-	Username     *DBAASPGPoolUsername `json:"username,omitempty" validate:"omitempty,gte=1,lte=64"`
+	DatabaseName DBAASDatabaseName   `json:"database-name,omitempty" validate:"omitempty,gte=1,lte=40"`
+	Mode         EnumPGPoolMode      `json:"mode,omitempty"`
+	Size         DBAASPGPoolSize     `json:"size,omitempty" validate:"omitempty,gte=1,lte=10000"`
+	Username     DBAASPGPoolUsername `json:"username,omitempty" validate:"omitempty,gte=1,lte=64"`
 }
 
 // Update a DBaaS PostgreSQL connection pool
@@ -4505,7 +4505,7 @@ func (c Client) UpdateDBAASPGConnectionPool(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: new request: %w", err)
 	}
@@ -4546,7 +4546,7 @@ func (c Client) UpdateDBAASPGConnectionPool(ctx context.Context, serviceName str
 }
 
 type CreateDBAASPGDatabaseRequest struct {
-	DatabaseName *DBAASDatabaseName `json:"database-name" validate:"required,gte=1,lte=40"`
+	DatabaseName DBAASDatabaseName `json:"database-name" validate:"required,gte=1,lte=40"`
 	// Default string sort order (LC_COLLATE) for PostgreSQL database
 	LCCollate string `json:"lc-collate,omitempty" validate:"omitempty,lte=128"`
 	// Default character classification (LC_CTYPE) for PostgreSQL database
@@ -4562,7 +4562,7 @@ func (c Client) CreateDBAASPGDatabase(ctx context.Context, serviceName string, r
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: new request: %w", err)
 	}
@@ -4606,7 +4606,7 @@ func (c Client) CreateDBAASPGDatabase(ctx context.Context, serviceName string, r
 func (c Client) DeleteDBAASPGDatabase(ctx context.Context, serviceName string, databaseName string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/database/%v", serviceName, databaseName)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGDatabase: new request: %w", err)
 	}
@@ -4645,8 +4645,8 @@ func (c Client) DeleteDBAASPGDatabase(ctx context.Context, serviceName string, d
 }
 
 type CreateDBAASPostgresUserRequest struct {
-	AllowReplication *bool              `json:"allow-replication,omitempty"`
-	Username         *DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
+	AllowReplication *bool             `json:"allow-replication,omitempty"`
+	Username         DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
 }
 
 // Create a DBaaS Postgres user
@@ -4658,7 +4658,7 @@ func (c Client) CreateDBAASPostgresUser(ctx context.Context, serviceName string,
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: new request: %w", err)
 	}
@@ -4702,7 +4702,7 @@ func (c Client) CreateDBAASPostgresUser(ctx context.Context, serviceName string,
 func (c Client) DeleteDBAASPostgresUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user/%v", serviceName, username)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPostgresUser: new request: %w", err)
 	}
@@ -4753,7 +4753,7 @@ func (c Client) UpdateDBAASPostgresAllowReplication(ctx context.Context, service
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: new request: %w", err)
 	}
@@ -4794,7 +4794,7 @@ func (c Client) UpdateDBAASPostgresAllowReplication(ctx context.Context, service
 }
 
 type ResetDBAASPostgresUserPasswordRequest struct {
-	Password *DBAASUserPassword `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
+	Password DBAASUserPassword `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
 }
 
 // If no password is provided one will be generated automatically.
@@ -4806,7 +4806,7 @@ func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName 
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: new request: %w", err)
 	}
@@ -4847,7 +4847,7 @@ func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName 
 }
 
 type CreateDBAASPGUpgradeCheckRequest struct {
-	TargetVersion *DBAASPGTargetVersions `json:"target-version" validate:"required"`
+	TargetVersion DBAASPGTargetVersions `json:"target-version" validate:"required"`
 }
 
 // Check whether you can upgrade Postgres service to a newer version
@@ -4859,7 +4859,7 @@ func (c Client) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, r
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: new request: %w", err)
 	}
@@ -4903,7 +4903,7 @@ func (c Client) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, r
 func (c Client) DeleteDBAASServiceRedis(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceRedis: new request: %w", err)
 	}
@@ -4945,7 +4945,7 @@ func (c Client) DeleteDBAASServiceRedis(ctx context.Context, name string) (*Oper
 func (c Client) GetDBAASServiceRedis(ctx context.Context, name string) (*DBAASServiceRedis, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceRedis: new request: %w", err)
 	}
@@ -5011,8 +5011,8 @@ type CreateDBAASServiceRedisRequestMigration struct {
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
 	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string               `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    *EnumMigrationMethod `json:"method,omitempty"`
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Port number of the server where to migrate data from
@@ -5024,7 +5024,7 @@ type CreateDBAASServiceRedisRequestMigration struct {
 }
 
 type CreateDBAASServiceRedisRequest struct {
-	ForkFromService *DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	ForkFromService DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
 	IPFilter []string `json:"ip-filter,omitempty"`
 	// Automatic maintenance settings
@@ -5050,7 +5050,7 @@ func (c Client) CreateDBAASServiceRedis(ctx context.Context, name string, req Cr
 		return nil, fmt.Errorf("CreateDBAASServiceRedis: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceRedis: new request: %w", err)
 	}
@@ -5118,8 +5118,8 @@ type UpdateDBAASServiceRedisRequestMigration struct {
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
 	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string               `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    *EnumMigrationMethod `json:"method,omitempty"`
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Port number of the server where to migrate data from
@@ -5154,7 +5154,7 @@ func (c Client) UpdateDBAASServiceRedis(ctx context.Context, name string, req Up
 		return nil, fmt.Errorf("UpdateDBAASServiceRedis: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceRedis: new request: %w", err)
 	}
@@ -5198,7 +5198,7 @@ func (c Client) UpdateDBAASServiceRedis(ctx context.Context, name string, req Up
 func (c Client) StartDBAASRedisMaintenance(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v/maintenance/start", name)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASRedisMaintenance: new request: %w", err)
 	}
@@ -5240,7 +5240,7 @@ func (c Client) StartDBAASRedisMaintenance(ctx context.Context, name string) (*O
 func (c Client) StopDBAASRedisMigration(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-redis/%v/migration/stop", name)
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("StopDBAASRedisMigration: new request: %w", err)
 	}
@@ -5286,7 +5286,7 @@ type ListDBAASServicesResponse struct {
 func (c Client) ListDBAASServices(ctx context.Context) (*ListDBAASServicesResponse, error) {
 	path := "/dbaas-service"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASServices: new request: %w", err)
 	}
@@ -5328,8 +5328,8 @@ type GetDBAASServiceLogsRequest struct {
 	// How many log entries to receive at most, up to 500 (default: 100)
 	Limit int64 `json:"limit,omitempty" validate:"omitempty,gte=1,lte=500"`
 	// Opaque offset identifier
-	Offset    string         `json:"offset,omitempty"`
-	SortOrder *EnumSortOrder `json:"sort-order,omitempty"`
+	Offset    string        `json:"offset,omitempty"`
+	SortOrder EnumSortOrder `json:"sort-order,omitempty"`
 }
 
 // Get logs of DBaaS service
@@ -5341,7 +5341,7 @@ func (c Client) GetDBAASServiceLogs(ctx context.Context, serviceName string, req
 		return nil, fmt.Errorf("GetDBAASServiceLogs: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceLogs: new request: %w", err)
 	}
@@ -5409,7 +5409,7 @@ func (c Client) GetDBAASServiceMetrics(ctx context.Context, serviceName string, 
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: new request: %w", err)
 	}
@@ -5457,7 +5457,7 @@ type ListDBAASServiceTypesResponse struct {
 func (c Client) ListDBAASServiceTypes(ctx context.Context) (*ListDBAASServiceTypesResponse, error) {
 	path := "/dbaas-service-type"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASServiceTypes: new request: %w", err)
 	}
@@ -5499,7 +5499,7 @@ func (c Client) ListDBAASServiceTypes(ctx context.Context) (*ListDBAASServiceTyp
 func (c Client) GetDBAASServiceType(ctx context.Context, serviceTypeName string) (*DBAASServiceType, error) {
 	path := fmt.Sprintf("/dbaas-service-type/%v", serviceTypeName)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceType: new request: %w", err)
 	}
@@ -5541,7 +5541,7 @@ func (c Client) GetDBAASServiceType(ctx context.Context, serviceTypeName string)
 func (c Client) DeleteDBAASService(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-service/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASService: new request: %w", err)
 	}
@@ -5600,7 +5600,7 @@ type GetDBAASSettingsGrafanaResponse struct {
 func (c Client) GetDBAASSettingsGrafana(ctx context.Context) (*GetDBAASSettingsGrafanaResponse, error) {
 	path := "/dbaas-settings-grafana"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsGrafana: new request: %w", err)
 	}
@@ -5689,7 +5689,7 @@ type GetDBAASSettingsKafkaResponse struct {
 func (c Client) GetDBAASSettingsKafka(ctx context.Context) (*GetDBAASSettingsKafkaResponse, error) {
 	path := "/dbaas-settings-kafka"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsKafka: new request: %w", err)
 	}
@@ -5748,7 +5748,7 @@ type GetDBAASSettingsMysqlResponse struct {
 func (c Client) GetDBAASSettingsMysql(ctx context.Context) (*GetDBAASSettingsMysqlResponse, error) {
 	path := "/dbaas-settings-mysql"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsMysql: new request: %w", err)
 	}
@@ -5807,7 +5807,7 @@ type GetDBAASSettingsOpensearchResponse struct {
 func (c Client) GetDBAASSettingsOpensearch(ctx context.Context) (*GetDBAASSettingsOpensearchResponse, error) {
 	path := "/dbaas-settings-opensearch"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: new request: %w", err)
 	}
@@ -5896,7 +5896,7 @@ type GetDBAASSettingsPGResponse struct {
 func (c Client) GetDBAASSettingsPG(ctx context.Context) (*GetDBAASSettingsPGResponse, error) {
 	path := "/dbaas-settings-pg"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsPG: new request: %w", err)
 	}
@@ -5955,7 +5955,7 @@ type GetDBAASSettingsRedisResponse struct {
 func (c Client) GetDBAASSettingsRedis(ctx context.Context) (*GetDBAASSettingsRedisResponse, error) {
 	path := "/dbaas-settings-redis"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsRedis: new request: %w", err)
 	}
@@ -5995,8 +5995,8 @@ func (c Client) GetDBAASSettingsRedis(ctx context.Context) (*GetDBAASSettingsRed
 
 type CreateDBAASTaskMigrationCheckRequest struct {
 	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string               `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    *EnumMigrationMethod `json:"method,omitempty"`
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Service URI of the source MySQL or PostgreSQL database with admin credentials.
 	SourceServiceURI string `json:"source-service-uri" validate:"required,gte=1,lte=512"`
 }
@@ -6010,7 +6010,7 @@ func (c Client) CreateDBAASTaskMigrationCheck(ctx context.Context, service strin
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: new request: %w", err)
 	}
@@ -6054,7 +6054,7 @@ func (c Client) CreateDBAASTaskMigrationCheck(ctx context.Context, service strin
 func (c Client) GetDBAASTask(ctx context.Context, service string, id UUID) (*DBAASTask, error) {
 	path := fmt.Sprintf("/dbaas-task/%v/%v", service, id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASTask: new request: %w", err)
 	}
@@ -6100,7 +6100,7 @@ type ListDeployTargetsResponse struct {
 func (c Client) ListDeployTargets(ctx context.Context) (*ListDeployTargetsResponse, error) {
 	path := "/deploy-target"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListDeployTargets: new request: %w", err)
 	}
@@ -6142,7 +6142,7 @@ func (c Client) ListDeployTargets(ctx context.Context) (*ListDeployTargetsRespon
 func (c Client) GetDeployTarget(ctx context.Context, id UUID) (*DeployTarget, error) {
 	path := fmt.Sprintf("/deploy-target/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDeployTarget: new request: %w", err)
 	}
@@ -6188,7 +6188,7 @@ type ListDNSDomainsResponse struct {
 func (c Client) ListDNSDomains(ctx context.Context) (*ListDNSDomainsResponse, error) {
 	path := "/dns-domain"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListDNSDomains: new request: %w", err)
 	}
@@ -6241,7 +6241,7 @@ func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest)
 		return nil, fmt.Errorf("CreateDNSDomain: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: new request: %w", err)
 	}
@@ -6289,7 +6289,7 @@ type ListDNSDomainRecordsResponse struct {
 func (c Client) ListDNSDomainRecords(ctx context.Context, domainID UUID) (*ListDNSDomainRecordsResponse, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record", domainID)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListDNSDomainRecords: new request: %w", err)
 	}
@@ -6369,7 +6369,7 @@ func (c Client) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req Cr
 		return nil, fmt.Errorf("CreateDNSDomainRecord: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomainRecord: new request: %w", err)
 	}
@@ -6413,7 +6413,7 @@ func (c Client) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req Cr
 func (c Client) DeleteDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID) (*Operation, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record/%v", domainID, recordID)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomainRecord: new request: %w", err)
 	}
@@ -6455,7 +6455,7 @@ func (c Client) DeleteDNSDomainRecord(ctx context.Context, domainID UUID, record
 func (c Client) GetDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID) (*DNSDomainRecord, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record/%v", domainID, recordID)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDNSDomainRecord: new request: %w", err)
 	}
@@ -6513,7 +6513,7 @@ func (c Client) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, record
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: new request: %w", err)
 	}
@@ -6557,7 +6557,7 @@ func (c Client) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, record
 func (c Client) DeleteDNSDomain(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/dns-domain/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomain: new request: %w", err)
 	}
@@ -6599,7 +6599,7 @@ func (c Client) DeleteDNSDomain(ctx context.Context, id UUID) (*Operation, error
 func (c Client) GetDNSDomain(ctx context.Context, id UUID) (*DNSDomain, error) {
 	path := fmt.Sprintf("/dns-domain/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDNSDomain: new request: %w", err)
 	}
@@ -6645,7 +6645,7 @@ type GetDNSDomainZoneFileResponse struct {
 func (c Client) GetDNSDomainZoneFile(ctx context.Context, id UUID) (*GetDNSDomainZoneFileResponse, error) {
 	path := fmt.Sprintf("/dns-domain/%v/zone", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetDNSDomainZoneFile: new request: %w", err)
 	}
@@ -6691,7 +6691,7 @@ type ListElasticIPSResponse struct {
 func (c Client) ListElasticIPS(ctx context.Context) (*ListElasticIPSResponse, error) {
 	path := "/elastic-ip"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListElasticIPS: new request: %w", err)
 	}
@@ -6755,7 +6755,7 @@ func (c Client) CreateElasticIP(ctx context.Context, req CreateElasticIPRequest)
 		return nil, fmt.Errorf("CreateElasticIP: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateElasticIP: new request: %w", err)
 	}
@@ -6799,7 +6799,7 @@ func (c Client) CreateElasticIP(ctx context.Context, req CreateElasticIPRequest)
 func (c Client) DeleteElasticIP(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteElasticIP: new request: %w", err)
 	}
@@ -6841,7 +6841,7 @@ func (c Client) DeleteElasticIP(ctx context.Context, id UUID) (*Operation, error
 func (c Client) GetElasticIP(ctx context.Context, id UUID) (*ElasticIP, error) {
 	path := fmt.Sprintf("/elastic-ip/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetElasticIP: new request: %w", err)
 	}
@@ -6896,7 +6896,7 @@ func (c Client) UpdateElasticIP(ctx context.Context, id UUID, req UpdateElasticI
 		return nil, fmt.Errorf("UpdateElasticIP: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateElasticIP: new request: %w", err)
 	}
@@ -6946,7 +6946,7 @@ const (
 func (c Client) ResetElasticIPField(ctx context.Context, id UUID, field ResetElasticIPFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v/%v", id, field)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ResetElasticIPField: new request: %w", err)
 	}
@@ -6998,7 +6998,7 @@ func (c Client) AttachInstanceToElasticIP(ctx context.Context, id UUID, req Atta
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: new request: %w", err)
 	}
@@ -7052,7 +7052,7 @@ func (c Client) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req De
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: new request: %w", err)
 	}
@@ -7112,7 +7112,7 @@ func ListEventsWithTo(to time.Time) ListEventsOpt {
 func (c Client) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event, error) {
 	path := "/event"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListEvents: new request: %w", err)
 	}
@@ -7162,7 +7162,7 @@ func (c Client) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event,
 func (c Client) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error) {
 	path := "/iam-organization-policy"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetIAMOrganizationPolicy: new request: %w", err)
 	}
@@ -7209,7 +7209,7 @@ func (c Client) UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) 
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: new request: %w", err)
 	}
@@ -7257,7 +7257,7 @@ type ListIAMRolesResponse struct {
 func (c Client) ListIAMRoles(ctx context.Context) (*ListIAMRolesResponse, error) {
 	path := "/iam-role"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListIAMRoles: new request: %w", err)
 	}
@@ -7318,7 +7318,7 @@ func (c Client) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*O
 		return nil, fmt.Errorf("CreateIAMRole: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateIAMRole: new request: %w", err)
 	}
@@ -7362,7 +7362,7 @@ func (c Client) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*O
 func (c Client) DeleteIAMRole(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/iam-role/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteIAMRole: new request: %w", err)
 	}
@@ -7404,7 +7404,7 @@ func (c Client) DeleteIAMRole(ctx context.Context, id UUID) (*Operation, error) 
 func (c Client) GetIAMRole(ctx context.Context, id UUID) (*IAMRole, error) {
 	path := fmt.Sprintf("/iam-role/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetIAMRole: new request: %w", err)
 	}
@@ -7459,7 +7459,7 @@ func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleReq
 		return nil, fmt.Errorf("UpdateIAMRole: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRole: new request: %w", err)
 	}
@@ -7508,7 +7508,7 @@ func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy)
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: new request: %w", err)
 	}
@@ -7566,15 +7566,15 @@ type ListInstancesResponseInstances struct {
 	// Instance Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
 	// Instance public IPv4 address
-	PublicIP           net.IP              `json:"public-ip,omitempty"`
-	PublicIPAssignment *PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	PublicIP           net.IP             `json:"public-ip,omitempty"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Instance Security Groups
 	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
 	// SSH key
 	SSHKey *SSHKey `json:"ssh-key,omitempty"`
 	// Instance SSH Keys
-	SSHKeys []SSHKey       `json:"ssh-keys,omitempty"`
-	State   *InstanceState `json:"state,omitempty"`
+	SSHKeys []SSHKey      `json:"ssh-keys,omitempty"`
+	State   InstanceState `json:"state,omitempty"`
 	// Instance template
 	Template *Template `json:"template,omitempty"`
 }
@@ -7613,7 +7613,7 @@ func ListInstancesWithIPAddress(ipAddress string) ListInstancesOpt {
 func (c Client) ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*ListInstancesResponse, error) {
 	path := "/instance"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListInstances: new request: %w", err)
 	}
@@ -7674,8 +7674,8 @@ type CreateInstanceRequest struct {
 	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
 	Labels      Labels `json:"labels,omitempty"`
 	// Instance name
-	Name               string              `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	PublicIPAssignment *PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	Name               string             `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Instance Security Groups
 	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
 	// SSH key
@@ -7697,7 +7697,7 @@ func (c Client) CreateInstance(ctx context.Context, req CreateInstanceRequest) (
 		return nil, fmt.Errorf("CreateInstance: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstance: new request: %w", err)
 	}
@@ -7745,7 +7745,7 @@ type ListInstancePoolsResponse struct {
 func (c Client) ListInstancePools(ctx context.Context) (*ListInstancePoolsResponse, error) {
 	path := "/instance-pool"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListInstancePools: new request: %w", err)
 	}
@@ -7806,8 +7806,8 @@ type CreateInstancePoolRequest struct {
 	// Instance Pool name
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Instance Pool Private Networks
-	PrivateNetworks    []PrivateNetwork    `json:"private-networks,omitempty"`
-	PublicIPAssignment *PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	PrivateNetworks    []PrivateNetwork   `json:"private-networks,omitempty"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Instance Pool Security Groups
 	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
 	// Number of Instances
@@ -7831,7 +7831,7 @@ func (c Client) CreateInstancePool(ctx context.Context, req CreateInstancePoolRe
 		return nil, fmt.Errorf("CreateInstancePool: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstancePool: new request: %w", err)
 	}
@@ -7875,7 +7875,7 @@ func (c Client) CreateInstancePool(ctx context.Context, req CreateInstancePoolRe
 func (c Client) DeleteInstancePool(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteInstancePool: new request: %w", err)
 	}
@@ -7917,7 +7917,7 @@ func (c Client) DeleteInstancePool(ctx context.Context, id UUID) (*Operation, er
 func (c Client) GetInstancePool(ctx context.Context, id UUID) (*InstancePool, error) {
 	path := fmt.Sprintf("/instance-pool/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetInstancePool: new request: %w", err)
 	}
@@ -7978,8 +7978,8 @@ type UpdateInstancePoolRequest struct {
 	// Instance Pool name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Instance Pool Private Networks
-	PrivateNetworks    []PrivateNetwork    `json:"private-networks,omitempty"`
-	PublicIPAssignment *PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	PrivateNetworks    []PrivateNetwork   `json:"private-networks,omitempty"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Instance Pool Security Groups
 	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
 	// SSH key
@@ -8001,7 +8001,7 @@ func (c Client) UpdateInstancePool(ctx context.Context, id UUID, req UpdateInsta
 		return nil, fmt.Errorf("UpdateInstancePool: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstancePool: new request: %w", err)
 	}
@@ -8060,7 +8060,7 @@ const (
 func (c Client) ResetInstancePoolField(ctx context.Context, id UUID, field ResetInstancePoolFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v/%v", id, field)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstancePoolField: new request: %w", err)
 	}
@@ -8111,7 +8111,7 @@ func (c Client) EvictInstancePoolMembers(ctx context.Context, id UUID, req Evict
 		return nil, fmt.Errorf("EvictInstancePoolMembers: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("EvictInstancePoolMembers: new request: %w", err)
 	}
@@ -8165,7 +8165,7 @@ func (c Client) ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstanc
 		return nil, fmt.Errorf("ScaleInstancePool: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstancePool: new request: %w", err)
 	}
@@ -8213,7 +8213,7 @@ type ListInstanceTypesResponse struct {
 func (c Client) ListInstanceTypes(ctx context.Context) (*ListInstanceTypesResponse, error) {
 	path := "/instance-type"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListInstanceTypes: new request: %w", err)
 	}
@@ -8255,7 +8255,7 @@ func (c Client) ListInstanceTypes(ctx context.Context) (*ListInstanceTypesRespon
 func (c Client) GetInstanceType(ctx context.Context, id UUID) (*InstanceType, error) {
 	path := fmt.Sprintf("/instance-type/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetInstanceType: new request: %w", err)
 	}
@@ -8297,7 +8297,7 @@ func (c Client) GetInstanceType(ctx context.Context, id UUID) (*InstanceType, er
 func (c Client) DeleteInstance(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteInstance: new request: %w", err)
 	}
@@ -8339,7 +8339,7 @@ func (c Client) DeleteInstance(ctx context.Context, id UUID) (*Operation, error)
 func (c Client) GetInstance(ctx context.Context, id UUID) (*Instance, error) {
 	path := fmt.Sprintf("/instance/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetInstance: new request: %w", err)
 	}
@@ -8380,8 +8380,8 @@ func (c Client) GetInstance(ctx context.Context, id UUID) (*Instance, error) {
 type UpdateInstanceRequest struct {
 	Labels Labels `json:"labels,omitempty"`
 	// Instance name
-	Name               string              `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	PublicIPAssignment *PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	Name               string             `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Instance Cloud-init user-data
 	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1,lte=32768"`
 }
@@ -8395,7 +8395,7 @@ func (c Client) UpdateInstance(ctx context.Context, id UUID, req UpdateInstanceR
 		return nil, fmt.Errorf("UpdateInstance: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstance: new request: %w", err)
 	}
@@ -8445,7 +8445,7 @@ const (
 func (c Client) ResetInstanceField(ctx context.Context, id UUID, field ResetInstanceFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v/%v", id, field)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstanceField: new request: %w", err)
 	}
@@ -8490,7 +8490,7 @@ type AddInstanceProtectionResponse struct {
 func (c Client) AddInstanceProtection(ctx context.Context, id UUID) (*AddInstanceProtectionResponse, error) {
 	path := fmt.Sprintf("/instance/%v:add-protection", id)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("AddInstanceProtection: new request: %w", err)
 	}
@@ -8532,7 +8532,7 @@ func (c Client) AddInstanceProtection(ctx context.Context, id UUID) (*AddInstanc
 func (c Client) CreateSnapshot(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:create-snapshot", id)
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSnapshot: new request: %w", err)
 	}
@@ -8578,7 +8578,7 @@ func (c Client) CreateSnapshot(ctx context.Context, id UUID) (*Operation, error)
 func (c Client) RevealInstancePassword(ctx context.Context, id UUID) (*InstancePassword, error) {
 	path := fmt.Sprintf("/instance/%v:password", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("RevealInstancePassword: new request: %w", err)
 	}
@@ -8620,7 +8620,7 @@ func (c Client) RevealInstancePassword(ctx context.Context, id UUID) (*InstanceP
 func (c Client) RebootInstance(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:reboot", id)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("RebootInstance: new request: %w", err)
 	}
@@ -8665,7 +8665,7 @@ type RemoveInstanceProtectionResponse struct {
 func (c Client) RemoveInstanceProtection(ctx context.Context, id UUID) (*RemoveInstanceProtectionResponse, error) {
 	path := fmt.Sprintf("/instance/%v:remove-protection", id)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("RemoveInstanceProtection: new request: %w", err)
 	}
@@ -8719,7 +8719,7 @@ func (c Client) ResetInstance(ctx context.Context, id UUID, req ResetInstanceReq
 		return nil, fmt.Errorf("ResetInstance: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstance: new request: %w", err)
 	}
@@ -8763,7 +8763,7 @@ func (c Client) ResetInstance(ctx context.Context, id UUID, req ResetInstanceReq
 func (c Client) ResetInstancePassword(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:reset-password", id)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstancePassword: new request: %w", err)
 	}
@@ -8815,7 +8815,7 @@ func (c Client) ResizeInstanceDisk(ctx context.Context, id UUID, req ResizeInsta
 		return nil, fmt.Errorf("ResizeInstanceDisk: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("ResizeInstanceDisk: new request: %w", err)
 	}
@@ -8869,7 +8869,7 @@ func (c Client) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceReq
 		return nil, fmt.Errorf("ScaleInstance: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstance: new request: %w", err)
 	}
@@ -8930,7 +8930,7 @@ func (c Client) StartInstance(ctx context.Context, id UUID, req StartInstanceReq
 		return nil, fmt.Errorf("StartInstance: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("StartInstance: new request: %w", err)
 	}
@@ -8974,7 +8974,7 @@ func (c Client) StartInstance(ctx context.Context, id UUID, req StartInstanceReq
 func (c Client) StopInstance(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:stop", id)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("StopInstance: new request: %w", err)
 	}
@@ -9027,7 +9027,7 @@ func (c Client) RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, r
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: new request: %w", err)
 	}
@@ -9075,7 +9075,7 @@ type ListLoadBalancersResponse struct {
 func (c Client) ListLoadBalancers(ctx context.Context) (*ListLoadBalancersResponse, error) {
 	path := "/load-balancer"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListLoadBalancers: new request: %w", err)
 	}
@@ -9130,7 +9130,7 @@ func (c Client) CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRe
 		return nil, fmt.Errorf("CreateLoadBalancer: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateLoadBalancer: new request: %w", err)
 	}
@@ -9174,7 +9174,7 @@ func (c Client) CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRe
 func (c Client) DeleteLoadBalancer(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancer: new request: %w", err)
 	}
@@ -9216,7 +9216,7 @@ func (c Client) DeleteLoadBalancer(ctx context.Context, id UUID) (*Operation, er
 func (c Client) GetLoadBalancer(ctx context.Context, id UUID) (*LoadBalancer, error) {
 	path := fmt.Sprintf("/load-balancer/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetLoadBalancer: new request: %w", err)
 	}
@@ -9271,7 +9271,7 @@ func (c Client) UpdateLoadBalancer(ctx context.Context, id UUID, req UpdateLoadB
 		return nil, fmt.Errorf("UpdateLoadBalancer: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancer: new request: %w", err)
 	}
@@ -9353,7 +9353,7 @@ func (c Client) AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddSe
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: new request: %w", err)
 	}
@@ -9397,7 +9397,7 @@ func (c Client) AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddSe
 func (c Client) DeleteLoadBalancerService(ctx context.Context, id UUID, serviceID UUID) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service/%v", id, serviceID)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancerService: new request: %w", err)
 	}
@@ -9439,7 +9439,7 @@ func (c Client) DeleteLoadBalancerService(ctx context.Context, id UUID, serviceI
 func (c Client) GetLoadBalancerService(ctx context.Context, id UUID, serviceID UUID) (*LoadBalancerService, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service/%v", id, serviceID)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetLoadBalancerService: new request: %w", err)
 	}
@@ -9517,7 +9517,7 @@ func (c Client) UpdateLoadBalancerService(ctx context.Context, id UUID, serviceI
 		return nil, fmt.Errorf("UpdateLoadBalancerService: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancerService: new request: %w", err)
 	}
@@ -9567,7 +9567,7 @@ const (
 func (c Client) ResetLoadBalancerServiceField(ctx context.Context, id UUID, serviceID UUID, field ResetLoadBalancerServiceFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service/%v/%v", id, serviceID, field)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerServiceField: new request: %w", err)
 	}
@@ -9616,7 +9616,7 @@ const (
 func (c Client) ResetLoadBalancerField(ctx context.Context, id UUID, field ResetLoadBalancerFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/%v", id, field)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerField: new request: %w", err)
 	}
@@ -9658,7 +9658,7 @@ func (c Client) ResetLoadBalancerField(ctx context.Context, id UUID, field Reset
 func (c Client) GetOperation(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/operation/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetOperation: new request: %w", err)
 	}
@@ -9704,7 +9704,7 @@ type ListPrivateNetworksResponse struct {
 func (c Client) ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksResponse, error) {
 	path := "/private-network"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListPrivateNetworks: new request: %w", err)
 	}
@@ -9765,7 +9765,7 @@ func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetwo
 		return nil, fmt.Errorf("CreatePrivateNetwork: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreatePrivateNetwork: new request: %w", err)
 	}
@@ -9809,7 +9809,7 @@ func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetwo
 func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeletePrivateNetwork: new request: %w", err)
 	}
@@ -9851,7 +9851,7 @@ func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, 
 func (c Client) GetPrivateNetwork(ctx context.Context, id UUID) (*PrivateNetwork, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetPrivateNetwork: new request: %w", err)
 	}
@@ -9912,7 +9912,7 @@ func (c Client) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePri
 		return nil, fmt.Errorf("UpdatePrivateNetwork: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetwork: new request: %w", err)
 	}
@@ -9962,7 +9962,7 @@ const (
 func (c Client) ResetPrivateNetworkField(ctx context.Context, id UUID, field ResetPrivateNetworkFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v/%v", id, field)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ResetPrivateNetworkField: new request: %w", err)
 	}
@@ -10022,7 +10022,7 @@ func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: new request: %w", err)
 	}
@@ -10076,7 +10076,7 @@ func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, r
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: new request: %w", err)
 	}
@@ -10136,7 +10136,7 @@ func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: new request: %w", err)
 	}
@@ -10184,7 +10184,7 @@ type ListQuotasResponse struct {
 func (c Client) ListQuotas(ctx context.Context) (*ListQuotasResponse, error) {
 	path := "/quota"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListQuotas: new request: %w", err)
 	}
@@ -10226,7 +10226,7 @@ func (c Client) ListQuotas(ctx context.Context) (*ListQuotasResponse, error) {
 func (c Client) GetQuota(ctx context.Context, entity string) (*Quota, error) {
 	path := fmt.Sprintf("/quota/%v", entity)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetQuota: new request: %w", err)
 	}
@@ -10268,7 +10268,7 @@ func (c Client) GetQuota(ctx context.Context, entity string) (*Quota, error) {
 func (c Client) DeleteReverseDNSElasticIP(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/reverse-dns/elastic-ip/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: new request: %w", err)
 	}
@@ -10310,7 +10310,7 @@ func (c Client) DeleteReverseDNSElasticIP(ctx context.Context, id UUID) (*Operat
 func (c Client) GetReverseDNSElasticIP(ctx context.Context, id UUID) (*ReverseDNSRecord, error) {
 	path := fmt.Sprintf("/reverse-dns/elastic-ip/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetReverseDNSElasticIP: new request: %w", err)
 	}
@@ -10361,7 +10361,7 @@ func (c Client) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req Upda
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: new request: %w", err)
 	}
@@ -10405,7 +10405,7 @@ func (c Client) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req Upda
 func (c Client) DeleteReverseDNSInstance(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/reverse-dns/instance/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSInstance: new request: %w", err)
 	}
@@ -10447,7 +10447,7 @@ func (c Client) DeleteReverseDNSInstance(ctx context.Context, id UUID) (*Operati
 func (c Client) GetReverseDNSInstance(ctx context.Context, id UUID) (*ReverseDNSRecord, error) {
 	path := fmt.Sprintf("/reverse-dns/instance/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetReverseDNSInstance: new request: %w", err)
 	}
@@ -10498,7 +10498,7 @@ func (c Client) UpdateReverseDNSInstance(ctx context.Context, id UUID, req Updat
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: new request: %w", err)
 	}
@@ -10564,7 +10564,7 @@ func ListSecurityGroupsWithVisibility(visibility ListSecurityGroupsVisibility) L
 func (c Client) ListSecurityGroups(ctx context.Context, opts ...ListSecurityGroupsOpt) (*ListSecurityGroupsResponse, error) {
 	path := "/security-group"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListSecurityGroups: new request: %w", err)
 	}
@@ -10626,7 +10626,7 @@ func (c Client) CreateSecurityGroup(ctx context.Context, req CreateSecurityGroup
 		return nil, fmt.Errorf("CreateSecurityGroup: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSecurityGroup: new request: %w", err)
 	}
@@ -10670,7 +10670,7 @@ func (c Client) CreateSecurityGroup(ctx context.Context, req CreateSecurityGroup
 func (c Client) DeleteSecurityGroup(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSecurityGroup: new request: %w", err)
 	}
@@ -10712,7 +10712,7 @@ func (c Client) DeleteSecurityGroup(ctx context.Context, id UUID) (*Operation, e
 func (c Client) GetSecurityGroup(ctx context.Context, id UUID) (*SecurityGroup, error) {
 	path := fmt.Sprintf("/security-group/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetSecurityGroup: new request: %w", err)
 	}
@@ -10804,7 +10804,7 @@ func (c Client) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRule
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: new request: %w", err)
 	}
@@ -10848,7 +10848,7 @@ func (c Client) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRule
 func (c Client) DeleteRuleFromSecurityGroup(ctx context.Context, id UUID, ruleID UUID) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v/rules/%v", id, ruleID)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: new request: %w", err)
 	}
@@ -10900,7 +10900,7 @@ func (c Client) AddExternalSourceToSecurityGroup(ctx context.Context, id UUID, r
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: new request: %w", err)
 	}
@@ -10954,7 +10954,7 @@ func (c Client) AttachInstanceToSecurityGroup(ctx context.Context, id UUID, req 
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: new request: %w", err)
 	}
@@ -11008,7 +11008,7 @@ func (c Client) DetachInstanceFromSecurityGroup(ctx context.Context, id UUID, re
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: new request: %w", err)
 	}
@@ -11062,7 +11062,7 @@ func (c Client) RemoveExternalSourceFromSecurityGroup(ctx context.Context, id UU
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: new request: %w", err)
 	}
@@ -11110,7 +11110,7 @@ type ListSKSClustersResponse struct {
 func (c Client) ListSKSClusters(ctx context.Context) (*ListSKSClustersResponse, error) {
 	path := "/sks-cluster"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListSKSClusters: new request: %w", err)
 	}
@@ -11191,7 +11191,7 @@ func (c Client) CreateSKSCluster(ctx context.Context, req CreateSKSClusterReques
 		return nil, fmt.Errorf("CreateSKSCluster: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSCluster: new request: %w", err)
 	}
@@ -11235,7 +11235,7 @@ func (c Client) CreateSKSCluster(ctx context.Context, req CreateSKSClusterReques
 func (c Client) ListSKSClusterDeprecatedResources(ctx context.Context, id UUID) ([]SKSClusterDeprecatedResource, error) {
 	path := fmt.Sprintf("/sks-cluster-deprecated-resources/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: new request: %w", err)
 	}
@@ -11286,7 +11286,7 @@ func (c Client) GenerateSKSClusterKubeconfig(ctx context.Context, id UUID, req S
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: new request: %w", err)
 	}
@@ -11342,7 +11342,7 @@ func ListSKSClusterVersionsWithIncludeDeprecated(includeDeprecated string) ListS
 func (c Client) ListSKSClusterVersions(ctx context.Context, opts ...ListSKSClusterVersionsOpt) (*ListSKSClusterVersionsResponse, error) {
 	path := "/sks-cluster-version"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListSKSClusterVersions: new request: %w", err)
 	}
@@ -11392,7 +11392,7 @@ func (c Client) ListSKSClusterVersions(ctx context.Context, opts ...ListSKSClust
 func (c Client) DeleteSKSCluster(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSKSCluster: new request: %w", err)
 	}
@@ -11434,7 +11434,7 @@ func (c Client) DeleteSKSCluster(ctx context.Context, id UUID) (*Operation, erro
 func (c Client) GetSKSCluster(ctx context.Context, id UUID) (*SKSCluster, error) {
 	path := fmt.Sprintf("/sks-cluster/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSCluster: new request: %w", err)
 	}
@@ -11495,7 +11495,7 @@ func (c Client) UpdateSKSCluster(ctx context.Context, id UUID, req UpdateSKSClus
 		return nil, fmt.Errorf("UpdateSKSCluster: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSCluster: new request: %w", err)
 	}
@@ -11551,7 +11551,7 @@ const (
 func (c Client) GetSKSClusterAuthorityCert(ctx context.Context, id UUID, authority GetSKSClusterAuthorityCertAuthority) (*GetSKSClusterAuthorityCertResponse, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/authority/%v/cert", id, authority)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: new request: %w", err)
 	}
@@ -11595,7 +11595,7 @@ type GetSKSClusterInspectionResponse map[string]any
 func (c Client) GetSKSClusterInspection(ctx context.Context, id UUID) (*GetSKSClusterInspectionResponse, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/inspection", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSClusterInspection: new request: %w", err)
 	}
@@ -11671,7 +11671,7 @@ func (c Client) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNod
 		return nil, fmt.Errorf("CreateSKSNodepool: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSNodepool: new request: %w", err)
 	}
@@ -11715,7 +11715,7 @@ func (c Client) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNod
 func (c Client) DeleteSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v", id, sksNodepoolID)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSKSNodepool: new request: %w", err)
 	}
@@ -11757,7 +11757,7 @@ func (c Client) DeleteSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UU
 func (c Client) GetSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID) (*SKSNodepool, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v", id, sksNodepoolID)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSNodepool: new request: %w", err)
 	}
@@ -11827,7 +11827,7 @@ func (c Client) UpdateSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UU
 		return nil, fmt.Errorf("UpdateSKSNodepool: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSNodepool: new request: %w", err)
 	}
@@ -11882,7 +11882,7 @@ const (
 func (c Client) ResetSKSNodepoolField(ctx context.Context, id UUID, sksNodepoolID UUID, field ResetSKSNodepoolFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v/%v", id, sksNodepoolID, field)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ResetSKSNodepoolField: new request: %w", err)
 	}
@@ -11933,7 +11933,7 @@ func (c Client) EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoo
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: new request: %w", err)
 	}
@@ -11987,7 +11987,7 @@ func (c Client) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUI
 		return nil, fmt.Errorf("ScaleSKSNodepool: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleSKSNodepool: new request: %w", err)
 	}
@@ -12031,7 +12031,7 @@ func (c Client) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUI
 func (c Client) RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/rotate-ccm-credentials", id)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("RotateSKSCcmCredentials: new request: %w", err)
 	}
@@ -12073,7 +12073,7 @@ func (c Client) RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Operatio
 func (c Client) RotateSKSOperatorsCA(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/rotate-operators-ca", id)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("RotateSKSOperatorsCA: new request: %w", err)
 	}
@@ -12125,7 +12125,7 @@ func (c Client) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSCl
 		return nil, fmt.Errorf("UpgradeSKSCluster: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpgradeSKSCluster: new request: %w", err)
 	}
@@ -12169,7 +12169,7 @@ func (c Client) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSCl
 func (c Client) UpgradeSKSClusterServiceLevel(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/upgrade-service-level", id)
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: new request: %w", err)
 	}
@@ -12218,7 +12218,7 @@ const (
 func (c Client) ResetSKSClusterField(ctx context.Context, id UUID, field ResetSKSClusterFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/%v", id, field)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ResetSKSClusterField: new request: %w", err)
 	}
@@ -12264,7 +12264,7 @@ type ListSnapshotsResponse struct {
 func (c Client) ListSnapshots(ctx context.Context) (*ListSnapshotsResponse, error) {
 	path := "/snapshot"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListSnapshots: new request: %w", err)
 	}
@@ -12306,7 +12306,7 @@ func (c Client) ListSnapshots(ctx context.Context) (*ListSnapshotsResponse, erro
 func (c Client) DeleteSnapshot(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/snapshot/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSnapshot: new request: %w", err)
 	}
@@ -12348,7 +12348,7 @@ func (c Client) DeleteSnapshot(ctx context.Context, id UUID) (*Operation, error)
 func (c Client) GetSnapshot(ctx context.Context, id UUID) (*Snapshot, error) {
 	path := fmt.Sprintf("/snapshot/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetSnapshot: new request: %w", err)
 	}
@@ -12390,7 +12390,7 @@ func (c Client) GetSnapshot(ctx context.Context, id UUID) (*Snapshot, error) {
 func (c Client) ExportSnapshot(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/snapshot/%v:export", id)
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ExportSnapshot: new request: %w", err)
 	}
@@ -12450,7 +12450,7 @@ func (c Client) PromoteSnapshotToTemplate(ctx context.Context, id UUID, req Prom
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: new request: %w", err)
 	}
@@ -12498,7 +12498,7 @@ type ListSOSBucketsUsageResponse struct {
 func (c Client) ListSOSBucketsUsage(ctx context.Context) (*ListSOSBucketsUsageResponse, error) {
 	path := "/sos-buckets-usage"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListSOSBucketsUsage: new request: %w", err)
 	}
@@ -12552,7 +12552,7 @@ func GetSOSPresignedURLWithKey(key string) GetSOSPresignedURLOpt {
 func (c Client) GetSOSPresignedURL(ctx context.Context, bucket string, opts ...GetSOSPresignedURLOpt) (*GetSOSPresignedURLResponse, error) {
 	path := fmt.Sprintf("/sos/%v/presigned-url", bucket)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetSOSPresignedURL: new request: %w", err)
 	}
@@ -12606,7 +12606,7 @@ type ListSSHKeysResponse struct {
 func (c Client) ListSSHKeys(ctx context.Context) (*ListSSHKeysResponse, error) {
 	path := "/ssh-key"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListSSHKeys: new request: %w", err)
 	}
@@ -12660,7 +12660,7 @@ func (c Client) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (
 		return nil, fmt.Errorf("RegisterSSHKey: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterSSHKey: new request: %w", err)
 	}
@@ -12704,7 +12704,7 @@ func (c Client) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (
 func (c Client) DeleteSSHKey(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/ssh-key/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSSHKey: new request: %w", err)
 	}
@@ -12746,7 +12746,7 @@ func (c Client) DeleteSSHKey(ctx context.Context, name string) (*Operation, erro
 func (c Client) GetSSHKey(ctx context.Context, name string) (*SSHKey, error) {
 	path := fmt.Sprintf("/ssh-key/%v", name)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetSSHKey: new request: %w", err)
 	}
@@ -12813,7 +12813,7 @@ func ListTemplatesWithFamily(family string) ListTemplatesOpt {
 func (c Client) ListTemplates(ctx context.Context, opts ...ListTemplatesOpt) (*ListTemplatesResponse, error) {
 	path := "/template"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListTemplates: new request: %w", err)
 	}
@@ -12902,7 +12902,7 @@ func (c Client) RegisterTemplate(ctx context.Context, req RegisterTemplateReques
 		return nil, fmt.Errorf("RegisterTemplate: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterTemplate: new request: %w", err)
 	}
@@ -12946,7 +12946,7 @@ func (c Client) RegisterTemplate(ctx context.Context, req RegisterTemplateReques
 func (c Client) DeleteTemplate(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/template/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteTemplate: new request: %w", err)
 	}
@@ -12988,7 +12988,7 @@ func (c Client) DeleteTemplate(ctx context.Context, id UUID) (*Operation, error)
 func (c Client) GetTemplate(ctx context.Context, id UUID) (*Template, error) {
 	path := fmt.Sprintf("/template/%v", id)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetTemplate: new request: %w", err)
 	}
@@ -13040,7 +13040,7 @@ func (c Client) CopyTemplate(ctx context.Context, id UUID, req CopyTemplateReque
 		return nil, fmt.Errorf("CopyTemplate: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("CopyTemplate: new request: %w", err)
 	}
@@ -13096,7 +13096,7 @@ func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateR
 		return nil, fmt.Errorf("UpdateTemplate: prepare Json body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverURL+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: new request: %w", err)
 	}
@@ -13144,7 +13144,7 @@ type ListZonesResponse struct {
 func (c Client) ListZones(ctx context.Context) (*ListZonesResponse, error) {
 	path := "/zone"
 
-	request, err := http.NewRequestWithContext(ctx, "GET", c.serverURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ListZones: new request: %w", err)
 	}

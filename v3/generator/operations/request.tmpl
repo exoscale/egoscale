@@ -9,7 +9,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	}
 	{{ end }}
 
-	request, err := http.NewRequestWithContext(ctx, "{{ .HTTPMethod }}", c.serverURL + path, {{ if .BodyRequest }}body{{else}}nil{{end}})
+	request, err := http.NewRequestWithContext(ctx, "{{ .HTTPMethod }}", c.serverEndpoint + path, {{ if .BodyRequest }}body{{else}}nil{{end}})
 	if err != nil {
 		return nil, fmt.Errorf("{{ .Name }}: new request: %w", err)
 	}

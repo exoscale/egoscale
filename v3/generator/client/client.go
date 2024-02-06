@@ -90,9 +90,8 @@ func extractAPIName(s *v3.Server) (string, error) {
 
 // Template use client.tmpl file
 type Template struct {
-	Enum      string
-	Zones     string
-	ServerURL string
+	Enum           string
+	ServerEndpoint string
 }
 
 // renderClient using the client.tmpl template.
@@ -105,17 +104,14 @@ func renderClient(s *v3.Server) ([]byte, error) {
 		}
 
 		enum := ""
-		zones := ""
 		for _, z := range v.Enum {
 			url := strings.Replace(s.URL, "{zone}", z, 1)
-			enum += fmt.Sprintf("%s URL = %q\n", helpers.ToCamel(z), url)
-			zones += fmt.Sprintf("%q: %s,\n", z, helpers.ToCamel(z))
+			enum += fmt.Sprintf("%s Endpoint = %q\n", helpers.ToCamel(z), url)
 		}
 
 		client = Template{
-			ServerURL: helpers.ToCamel(v.Default),
-			Enum:      enum,
-			Zones:     zones,
+			ServerEndpoint: helpers.ToCamel(v.Default),
+			Enum:           enum,
 		}
 	}
 

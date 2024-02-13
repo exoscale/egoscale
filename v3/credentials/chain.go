@@ -24,8 +24,8 @@ func NewChainCredentials(providers []Provider) *Credentials {
 	})
 }
 
-// Retrieve returns the credentials value or error if no provider returned
-// without error.
+// Retrieve returns the first provider in the chain that succeeds,
+// or error if no provider returned.
 //
 // If a provider is found it will be cached and any calls to IsExpired()
 // will return the expired state of the cached provider.

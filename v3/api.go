@@ -139,7 +139,7 @@ func (c Client) Validate(s any) error {
 	if len(validationErrors) > 0 {
 		e := validationErrors[0]
 		errorString := fmt.Sprintf(
-			"Request validation error: '%s' = '%v' does not validate ",
+			"request validation error: '%s' = '%v' does not validate ",
 			e.StructNamespace(),
 			e.Value(),
 		)

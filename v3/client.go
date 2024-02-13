@@ -5,12 +5,12 @@ package v3
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
 	"time"
 
+	"github.com/exoscale/egoscale/v3/credentials"
 	"github.com/exoscale/egoscale/version"
 	"github.com/go-playground/validator/v10"
 )
@@ -62,7 +62,6 @@ type Client struct {
 	apiSecret       string
 	serverEndpoint  string
 	httpClient      *http.Client
-	timeout         time.Duration
 	pollingInterval time.Duration
 	validate        *validator.Validate
 	trace           bool
@@ -86,18 +85,6 @@ const pollingInterval = 3 * time.Second
 
 // ClientOpt represents a function setting Exoscale API client option.
 type ClientOpt func(*Client) error
-
-// ClientOptWithTimeout returns a ClientOpt overriding the default client timeout.
-func ClientOptWithTimeout(v time.Duration) ClientOpt {
-	return func(c *Client) error {
-		if v <= 0 {
-			return errors.New("timeout value must be greater than 0")
-		}
-		c.timeout = v
-
-		return nil
-	}
-}
 
 // ClientOptWithTrace returns a ClientOpt enabling HTTP request/response tracing.
 func ClientOptWithTrace() ClientOpt {
@@ -146,14 +133,15 @@ func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
 }
 
 // NewClient returns a new Exoscale API client.
-func NewClient(apiKey, apiSecret string, opts ...ClientOpt) (*Client, error) {
-	if apiKey == "" || apiSecret == "" {
-		return nil, fmt.Errorf("missing or incomplete API credentials")
+func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client, error) {
+	values, err := credentials.Get()
+	if err != nil {
+		return nil, err
 	}
 
 	client := &Client{
-		apiKey:          apiKey,
-		apiSecret:       apiSecret,
+		apiKey:          values.APIKey,
+		apiSecret:       values.APISecret,
 		serverEndpoint:  string(CHGva2),
 		httpClient:      http.DefaultClient,
 		pollingInterval: pollingInterval,
@@ -178,6 +166,7 @@ func (c *Client) WithEndpoint(endpoint Endpoint) *Client {
 		httpClient:          c.httpClient,
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
+		trace:               c.trace,
 		validate:            c.validate,
 	}
 }
@@ -205,6 +194,7 @@ func (c *Client) WithHttpClient(client *http.Client) *Client {
 		httpClient:          client,
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
+		trace:               c.trace,
 		validate:            c.validate,
 	}
 }
@@ -218,6 +208,7 @@ func (c *Client) WithRequestInterceptor(f ...RequestInterceptorFn) *Client {
 		httpClient:          c.httpClient,
 		requestInterceptors: append(c.requestInterceptors, f...),
 		pollingInterval:     c.pollingInterval,
+		trace:               c.trace,
 		validate:            c.validate,
 	}
 }

@@ -143,7 +143,7 @@ func RenderSimpleType(s *base.Schema) string {
 // e.g: https://github.com/danielgtaylor/restish/blob/main/openapi/schema.go#L59
 func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffer) error {
 	doc := renderDoc(s) + "\n"
-	inferType(s)
+	InferType(s)
 
 	// TODO: list type alternatives somehow?
 	// In OpenAPI versions 2 and 3.0, this Type is a single value,
@@ -467,8 +467,8 @@ func renderSimpleMap(typeName string, s *base.Schema, output *bytes.Buffer) (str
 	return definition + typeName, nil
 }
 
-// inferType fixes missing type if it is missing & can be inferred
-func inferType(s *base.Schema) {
+// InferType fixes missing type if it is missing & can be inferred
+func InferType(s *base.Schema) {
 	if len(s.Type) == 0 {
 		if s.Items != nil {
 			s.Type = []string{"array"}

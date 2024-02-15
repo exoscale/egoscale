@@ -113,6 +113,11 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 			return nil
 		}
 
+		gettable, err := renderGettable(name, media.Schema)
+		if err != nil {
+			return err
+		}
+
 		// Skip on reference.
 		if media.Schema.IsReference() {
 			return nil
@@ -129,6 +134,9 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 			return err
 		}
 		output.Write(schemaResp)
+		if gettable != nil {
+			output.Write(gettable)
+		}
 
 		return nil
 	})
@@ -256,6 +264,95 @@ func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error
 	}
 
 	return output.Bytes(), nil
+}
+
+const gettableTemplate = `
+// Get{{ .TypeName }} attempts to find an {{ .TypeName }} by name or ID.
+func (l {{ .ListTypeName }}) Get{{ .TypeName }}(nameOrID string) ({{ .TypeName }}, error) {
+	for i, elem := range l.{{ .ListFieldName }} {
+		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+			return l.{{ .ListFieldName }}[i], nil
+		}
+	}
+
+	return {{ .TypeName }}{}, ErrNotFound
+}
+`
+
+type Gettable struct {
+	TypeName      string
+	ListTypeName  string
+	ListFieldName string
+}
+
+// renderGettable renders a gettable method on listable resource.
+// this gettable method get the resource by name or id if available.
+// returns nil on non listable resources.
+func renderGettable(funcName string, s *base.SchemaProxy) ([]byte, error) {
+	sc, err := s.BuildSchema()
+	if err != nil {
+		return nil, err
+	}
+	schemas.InferType(sc)
+
+	// Check if listable response.
+	if !strings.HasPrefix(strings.ToLower(funcName), "list") {
+		return nil, nil
+	}
+
+	if sc.Type[0] != "object" {
+		return nil, nil
+	}
+
+	for propName, propSc := range sc.Properties {
+		prop, err := propSc.BuildSchema()
+		if err != nil {
+			return nil, err
+		}
+		schemas.InferType(prop)
+
+		if prop.Type[0] != "array" {
+			continue
+		}
+
+		if prop.Items == nil {
+			continue
+		}
+		if !prop.Items.IsA() {
+			continue
+		}
+
+		item, err := prop.Items.A.BuildSchema()
+		if err != nil {
+			return nil, err
+		}
+
+		typeName := funcName + "Response" + helpers.ToCamel(propName)
+		if prop.Items.A.IsReference() {
+			typeName = helpers.RenderReference(prop.Items.A.GetReference())
+		}
+
+		_, name := item.Properties["name"]
+		_, id := item.Properties["id"]
+		if name && id {
+			output := bytes.NewBuffer([]byte{})
+			t, err := template.New("Gettable").Parse(gettableTemplate)
+			if err != nil {
+				return nil, err
+			}
+			if err := t.Execute(output, Gettable{
+				ListTypeName:  funcName + "Response",
+				ListFieldName: helpers.ToCamel(propName),
+				TypeName:      typeName,
+			}); err != nil {
+				return nil, err
+			}
+
+			return output.Bytes(), nil
+		}
+	}
+
+	return nil, nil
 }
 
 type RequestTmpl struct {

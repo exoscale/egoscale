@@ -113,7 +113,7 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 			return nil
 		}
 
-		gettable, err := renderGettable(name, media.Schema)
+		gettable, err := renderFindable(name, media.Schema)
 		if err != nil {
 			return err
 		}
@@ -266,29 +266,29 @@ func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error
 	return output.Bytes(), nil
 }
 
-const gettableTemplate = `
-// Get{{ .TypeName }} attempts to find an {{ .TypeName }} by name or ID.
-func (l {{ .ListTypeName }}) Get{{ .TypeName }}(nameOrID string) ({{ .TypeName }}, error) {
+const findableTemplate = `
+// Find{{ .TypeName }} attempts to find an {{ .TypeName }} by name or ID.
+func (l {{ .ListTypeName }}) Find{{ .TypeName }}(nameOrID string) ({{ .TypeName }}, error) {
 	for i, elem := range l.{{ .ListFieldName }} {
 		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
 			return l.{{ .ListFieldName }}[i], nil
 		}
 	}
 
-	return {{ .TypeName }}{}, ErrNotFound
+	return {{ .TypeName }}{}, fmt.Errorf("%q not found in {{ .ListTypeName }}: %w", nameOrID, ErrNotFound)
 }
 `
 
-type Gettable struct {
+type Findable struct {
 	TypeName      string
 	ListTypeName  string
 	ListFieldName string
 }
 
-// renderGettable renders a gettable method on listable resource.
-// this gettable method get the resource by name or id if available.
+// renderFindable renders a find method on listable resource.
+// this find method get the resource by name or id if available.
 // returns nil on non listable resources.
-func renderGettable(funcName string, s *base.SchemaProxy) ([]byte, error) {
+func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 	sc, err := s.BuildSchema()
 	if err != nil {
 		return nil, err
@@ -336,11 +336,11 @@ func renderGettable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 		_, hasID := item.Properties["id"]
 		if hasName && hasID {
 			output := bytes.NewBuffer([]byte{})
-			t, err := template.New("Gettable").Parse(gettableTemplate)
+			t, err := template.New("Findable").Parse(findableTemplate)
 			if err != nil {
 				return nil, err
 			}
-			if err := t.Execute(output, Gettable{
+			if err := t.Execute(output, Findable{
 				ListTypeName:  funcName + "Response",
 				ListFieldName: helpers.ToCamel(propName),
 				TypeName:      typeName,

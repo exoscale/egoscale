@@ -113,7 +113,7 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 			return nil
 		}
 
-		gettable, err := renderFindable(name, media.Schema)
+		findable, err := renderFindable(name, media.Schema)
 		if err != nil {
 			return err
 		}
@@ -134,8 +134,8 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 			return err
 		}
 		output.Write(schemaResp)
-		if gettable != nil {
-			output.Write(gettable)
+		if findable != nil {
+			output.Write(findable)
 		}
 
 		return nil

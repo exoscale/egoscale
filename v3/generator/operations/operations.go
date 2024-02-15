@@ -300,7 +300,7 @@ func renderGettable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 		return nil, nil
 	}
 
-	if sc.Type[0] != "object" {
+	if len(sc.Type) > 0 && sc.Type[0] != "object" {
 		return nil, nil
 	}
 
@@ -311,7 +311,7 @@ func renderGettable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 		}
 		schemas.InferType(prop)
 
-		if prop.Type[0] != "array" {
+		if len(prop.Type) > 0 && prop.Type[0] != "array" {
 			continue
 		}
 
@@ -332,9 +332,9 @@ func renderGettable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 			typeName = helpers.RenderReference(prop.Items.A.GetReference())
 		}
 
-		_, name := item.Properties["name"]
-		_, id := item.Properties["id"]
-		if name && id {
+		_, hasName := item.Properties["name"]
+		_, hasID := item.Properties["id"]
+		if hasName && hasID {
 			output := bytes.NewBuffer([]byte{})
 			t, err := template.New("Gettable").Parse(gettableTemplate)
 			if err != nil {

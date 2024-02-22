@@ -17,7 +17,7 @@ jobs:
       GOLANGCI_LINT_CONFIG: ".golangci.yml"
     steps:
       - uses: actions/checkout@v3
-      - run: git submodule update --init --recursive go.mk
+      - run: make go.mk
       - uses: ./go.mk/.github/actions/setup
 
       - uses: ./go.mk/.github/actions/pre-check

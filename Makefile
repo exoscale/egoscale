@@ -33,9 +33,6 @@ PROJECT_URL := https://$(PACKAGE)
 
 # Dependencies
 
-# Requires: https://github.com/exoscale/go.mk
-# - install: git submodule update --init --recursive go.mk
-# - update:  git submodule update --remote
 go.mk/init.mk:
 include go.mk/init.mk
 go.mk/public.mk:

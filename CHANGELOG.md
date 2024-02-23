@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- go.mk: remove submodule and initialize through make #618 
+
 0.102.3
 -------
 

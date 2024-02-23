@@ -1,3 +1,4 @@
+/go.mk
 dist/
 test/
 listApis.json

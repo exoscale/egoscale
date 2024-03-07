@@ -71,8 +71,10 @@ oapigen: install-oapi-codegen
 .PHONY: generate
 generate:
 	@wget -q --show-progress --progress=dot https://openapi-v2.exoscale.com/source.yaml -O- > v3/generator/source.yaml
-	@echo
-	@cd v3/generator/; go generate
-	@go mod tidy && go mod vendor
-	@rm v3/generator/source.yaml
-	@ls -l v3/*.go
+	@cd v3/generator/
+	@go generate
+	@go mod tidy
+	@go mod vendor
+	@rm source.yaml
+	@cd ..
+	@ls -l *.go

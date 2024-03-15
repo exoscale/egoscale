@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - go.mk: remove submodule and initialize through make #618 
+- Makefile: fix targets #619 
 
 0.102.3
 -------

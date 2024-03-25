@@ -11,27 +11,35 @@ import (
 )
 
 var (
-	testSKSNodepoolAddons                    = []oapi.SksNodepoolAddons{oapi.SksNodepoolAddonsStorageLvm}
-	testSKSNodepoolAntiAffinityGroupID       = new(testSuite).randomID()
-	testSKSNodepoolCreatedAt, _              = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
-	testSKSNodepoolDeployTargetID            = new(testSuite).randomID()
-	testSKSNodepoolDescription               = new(testSuite).randomString(10)
-	testSKSNodepoolDiskSize            int64 = 15
-	testSKSNodepoolID                        = new(testSuite).randomID()
-	testSKSNodepoolInstancePoolID            = new(testSuite).randomID()
-	testSKSNodepoolInstancePrefix            = new(testSuite).randomString(10)
-	testSKSNodepoolInstanceTypeID            = new(testSuite).randomID()
-	testSKSNodepoolLabels                    = map[string]string{"k1": "v1", "k2": "v2"}
-	testSKSNodepoolName                      = new(testSuite).randomString(10)
-	testSKSNodepoolPrivateNetworkID          = new(testSuite).randomID()
-	testSKSNodepoolSecurityGroupID           = new(testSuite).randomID()
-	testSKSNodepoolSize                int64 = 3
-	testSKSNodepoolState                     = oapi.SksNodepoolStateRunning
-	testSKSNodepoolTaintEffect               = oapi.SksNodepoolTaintEffectNoExecute
-	testSKSNodepoolTaintKey                  = new(testSuite).randomString(10)
-	testSKSNodepoolTaintValue                = new(testSuite).randomString(10)
-	testSKSNodepoolTemplateID                = new(testSuite).randomID()
-	testSKSNodepoolVersion                   = "1.18.6"
+	testSKSNodepoolAddons                            = []oapi.SksNodepoolAddons{oapi.SksNodepoolAddonsStorageLvm}
+	testSKSNodepoolAntiAffinityGroupID               = new(testSuite).randomID()
+	testSKSNodepoolCreatedAt, _                      = time.Parse(iso8601Format, "2020-11-18T07:54:36Z")
+	testSKSNodepoolDeployTargetID                    = new(testSuite).randomID()
+	testSKSNodepoolDescription                       = new(testSuite).randomString(10)
+	testSKSNodepoolDiskSize                    int64 = 15
+	testSKSNodepoolID                                = new(testSuite).randomID()
+	testSKSNodepoolInstancePoolID                    = new(testSuite).randomID()
+	testSKSNodepoolInstancePrefix                    = new(testSuite).randomString(10)
+	testSKSNodepoolInstanceTypeID                    = new(testSuite).randomID()
+	testSKSNodepoolLabels                            = map[string]string{"k1": "v1", "k2": "v2"}
+	testSKSNodepoolName                              = new(testSuite).randomString(10)
+	testSKSNodepoolPrivateNetworkID                  = new(testSuite).randomID()
+	testSKSNodepoolSecurityGroupID                   = new(testSuite).randomID()
+	testSKSNodepoolSize                        int64 = 3
+	testSKSNodepoolState                             = oapi.SksNodepoolStateRunning
+	testSKSNodepoolTaintEffect                       = oapi.SksNodepoolTaintEffectNoExecute
+	testSKSNodepoolTaintKey                          = new(testSuite).randomString(10)
+	testSKSNodepoolTaintValue                        = new(testSuite).randomString(10)
+	testSKSNodepoolTemplateID                        = new(testSuite).randomID()
+	testSKSNodepoolKubeletImageGcMinAge              = new(testSuite).randomString(10)
+	testSKSNodepoolKubeletImageGcHighThreshold int64 = 10
+	testSKSNodepoolKubeletImageGcLowThreshold  int64 = 5
+	testSKSNodepoolKubeletImageGc                    = oapi.KubeletImageGc{
+		HighThreshold: &(testSKSNodepoolKubeletImageGcHighThreshold),
+		LowThreshold:  &testSKSNodepoolKubeletImageGcLowThreshold,
+		MinAge:        &testSKSNodepoolKubeletImageGcMinAge,
+	}
+	testSKSNodepoolVersion = "1.18.6"
 )
 
 func (ts *testSuite) TestCLient_CreateSKSNodepool() {
@@ -61,6 +69,7 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 					DiskSize:           testSKSNodepoolDiskSize,
 					InstancePrefix:     &testSKSNodepoolInstancePrefix,
 					InstanceType:       oapi.InstanceType{Id: &testSKSNodepoolInstanceTypeID},
+					KubeletImageGc:     &testSKSNodepoolKubeletImageGc,
 					Labels:             &oapi.Labels{AdditionalProperties: testSKSNodepoolLabels},
 					Name:               testSKSNodepoolName,
 					PrivateNetworks:    &[]oapi.PrivateNetwork{{Id: &testSKSNodepoolPrivateNetworkID}},
@@ -130,8 +139,9 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 						},
 					},
 				},
-				Template: &oapi.Template{Id: &testSKSNodepoolTemplateID},
-				Version:  &testSKSNodepoolVersion,
+				Template:       &oapi.Template{Id: &testSKSNodepoolTemplateID},
+				KubeletImageGc: &testSKSNodepoolKubeletImageGc,
+				Version:        &testSKSNodepoolVersion,
 			},
 		}, nil)
 
@@ -150,12 +160,17 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 		InstancePoolID:       &testSKSNodepoolInstancePoolID,
 		InstancePrefix:       &testSKSNodepoolInstancePrefix,
 		InstanceTypeID:       &testSKSNodepoolInstanceTypeID,
-		Labels:               &testSKSNodepoolLabels,
-		Name:                 &testSKSNodepoolName,
-		PrivateNetworkIDs:    &[]string{testSKSNodepoolPrivateNetworkID},
-		SecurityGroupIDs:     &[]string{testSKSNodepoolSecurityGroupID},
-		Size:                 &testSKSNodepoolSize,
-		State:                (*string)(&testSKSNodepoolState),
+		KubeletImageGc: &SKSNodepoolKubeletImageGc{
+			MinAge:        *testSKSNodepoolKubeletImageGc.MinAge,
+			HighThreshold: *testSKSNodepoolKubeletImageGc.HighThreshold,
+			LowThreshold:  *testSKSNodepoolKubeletImageGc.LowThreshold,
+		},
+		Labels:            &testSKSNodepoolLabels,
+		Name:              &testSKSNodepoolName,
+		PrivateNetworkIDs: &[]string{testSKSNodepoolPrivateNetworkID},
+		SecurityGroupIDs:  &[]string{testSKSNodepoolSecurityGroupID},
+		Size:              &testSKSNodepoolSize,
+		State:             (*string)(&testSKSNodepoolState),
 		Taints: &map[string]*SKSNodepoolTaint{
 			testSKSNodepoolTaintKey: {
 				Effect: string(testSKSNodepoolTaintEffect),

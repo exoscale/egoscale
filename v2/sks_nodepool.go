@@ -15,6 +15,12 @@ type SKSNodepoolTaint struct {
 	Value  string
 }
 
+type SKSNodepoolKubeletImageGc struct {
+	MinAge        string
+	HighThreshold int64
+	LowThreshold  int64
+}
+
 func sksNodepoolTaintFromAPI(t *oapi.SksNodepoolTaint) *SKSNodepoolTaint {
 	return &SKSNodepoolTaint{
 		Effect: string(t.Effect),
@@ -40,6 +46,7 @@ type SKSNodepool struct {
 	SecurityGroupIDs     *[]string
 	Size                 *int64 `req-for:"create"`
 	State                *string
+	KubeletImageGc       *SKSNodepoolKubeletImageGc
 	Taints               *map[string]*SKSNodepoolTaint
 	TemplateID           *string
 	Version              *string
@@ -81,6 +88,16 @@ func sksNodepoolFromAPI(n *oapi.SksNodepool) *SKSNodepool {
 		InstancePoolID: n.InstancePool.Id,
 		InstancePrefix: n.InstancePrefix,
 		InstanceTypeID: n.InstanceType.Id,
+		KubeletImageGc: func() (i *SKSNodepoolKubeletImageGc) {
+			if n.KubeletImageGc != nil {
+				i = &SKSNodepoolKubeletImageGc{
+					MinAge:        *n.KubeletImageGc.MinAge,
+					HighThreshold: *n.KubeletImageGc.HighThreshold,
+					LowThreshold:  *n.KubeletImageGc.LowThreshold,
+				}
+			}
+			return
+		}(),
 		Labels: func() (v *map[string]string) {
 			if n.Labels != nil && len(n.Labels.AdditionalProperties) > 0 {
 				v = &n.Labels.AdditionalProperties
@@ -176,6 +193,16 @@ func (c *Client) CreateSKSNodepool(
 			DiskSize:       *nodepool.DiskSize,
 			InstancePrefix: nodepool.InstancePrefix,
 			InstanceType:   oapi.InstanceType{Id: nodepool.InstanceTypeID},
+			KubeletImageGc: func() (v *oapi.KubeletImageGc) {
+				if nodepool.KubeletImageGc != nil {
+					v = &oapi.KubeletImageGc{
+						MinAge:        &nodepool.KubeletImageGc.MinAge,
+						HighThreshold: &nodepool.KubeletImageGc.HighThreshold,
+						LowThreshold:  &nodepool.KubeletImageGc.LowThreshold,
+					}
+				}
+				return
+			}(),
 			Labels: func() (v *oapi.Labels) {
 				if nodepool.Labels != nil {
 					v = &oapi.Labels{AdditionalProperties: *nodepool.Labels}
@@ -240,7 +267,6 @@ func (c *Client) CreateSKSNodepool(
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve Nodepool: %s", err)
 	}
-
 	return sksNodepoolFromAPI(nodepoolRes.JSON200), nil
 }
 

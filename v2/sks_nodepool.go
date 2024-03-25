@@ -28,7 +28,7 @@ type SKSNodepoolKubeletImageGc struct {
 	LowThreshold  *int64
 }
 
-func sksNodepoolKubeletImageGcFromApi(gc *oapi.KubeletImageGc) *SKSNodepoolKubeletImageGc {
+func sksNodepoolKubeletImageGcFromAPI(gc *oapi.KubeletImageGc) *SKSNodepoolKubeletImageGc {
 	r := &SKSNodepoolKubeletImageGc{}
 
 	if gc != nil {
@@ -106,7 +106,7 @@ func sksNodepoolFromAPI(n *oapi.SksNodepool) *SKSNodepool {
 		InstancePoolID: n.InstancePool.Id,
 		InstancePrefix: n.InstancePrefix,
 		InstanceTypeID: n.InstanceType.Id,
-		KubeletImageGc: sksNodepoolKubeletImageGcFromApi(n.KubeletImageGc),
+		KubeletImageGc: sksNodepoolKubeletImageGcFromAPI(n.KubeletImageGc),
 		Labels: func() (v *map[string]string) {
 			if n.Labels != nil && len(n.Labels.AdditionalProperties) > 0 {
 				v = &n.Labels.AdditionalProperties

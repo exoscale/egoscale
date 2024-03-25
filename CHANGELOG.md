@@ -6,6 +6,7 @@ Unreleased
 
 - go.mk: remove submodule and initialize through make #618 
 - Makefile: fix targets #619 
+- SKS nodepool: support for kubelet image gc #620 
 
 0.102.3
 -------

@@ -15,17 +15,35 @@ type SKSNodepoolTaint struct {
 	Value  string
 }
 
-type SKSNodepoolKubeletImageGc struct {
-	MinAge        string
-	HighThreshold int64
-	LowThreshold  int64
-}
-
 func sksNodepoolTaintFromAPI(t *oapi.SksNodepoolTaint) *SKSNodepoolTaint {
 	return &SKSNodepoolTaint{
 		Effect: string(t.Effect),
 		Value:  t.Value,
 	}
+}
+
+type SKSNodepoolKubeletImageGc struct {
+	MinAge        *string
+	HighThreshold *int64
+	LowThreshold  *int64
+}
+
+func sksNodepoolKubeletImageGcFromApi(gc *oapi.KubeletImageGc) *SKSNodepoolKubeletImageGc {
+	r := &SKSNodepoolKubeletImageGc{}
+
+	if gc != nil {
+		if gc.MinAge != nil {
+			r.MinAge = gc.MinAge
+		}
+		if gc.HighThreshold != nil {
+			r.HighThreshold = gc.HighThreshold
+		}
+		if gc.LowThreshold != nil {
+			r.LowThreshold = gc.LowThreshold
+		}
+	}
+
+	return r
 }
 
 // SKSNodepool represents an SKS Nodepool.
@@ -88,16 +106,7 @@ func sksNodepoolFromAPI(n *oapi.SksNodepool) *SKSNodepool {
 		InstancePoolID: n.InstancePool.Id,
 		InstancePrefix: n.InstancePrefix,
 		InstanceTypeID: n.InstanceType.Id,
-		KubeletImageGc: func() (i *SKSNodepoolKubeletImageGc) {
-			if n.KubeletImageGc != nil {
-				i = &SKSNodepoolKubeletImageGc{
-					MinAge:        *n.KubeletImageGc.MinAge,
-					HighThreshold: *n.KubeletImageGc.HighThreshold,
-					LowThreshold:  *n.KubeletImageGc.LowThreshold,
-				}
-			}
-			return
-		}(),
+		KubeletImageGc: sksNodepoolKubeletImageGcFromApi(n.KubeletImageGc),
 		Labels: func() (v *map[string]string) {
 			if n.Labels != nil && len(n.Labels.AdditionalProperties) > 0 {
 				v = &n.Labels.AdditionalProperties
@@ -194,11 +203,17 @@ func (c *Client) CreateSKSNodepool(
 			InstancePrefix: nodepool.InstancePrefix,
 			InstanceType:   oapi.InstanceType{Id: nodepool.InstanceTypeID},
 			KubeletImageGc: func() (v *oapi.KubeletImageGc) {
+				v = &oapi.KubeletImageGc{}
+
 				if nodepool.KubeletImageGc != nil {
-					v = &oapi.KubeletImageGc{
-						MinAge:        &nodepool.KubeletImageGc.MinAge,
-						HighThreshold: &nodepool.KubeletImageGc.HighThreshold,
-						LowThreshold:  &nodepool.KubeletImageGc.LowThreshold,
+					if nodepool.KubeletImageGc.MinAge != nil {
+						v.MinAge = nodepool.KubeletImageGc.MinAge
+					}
+					if nodepool.KubeletImageGc.HighThreshold != nil {
+						v.HighThreshold = nodepool.KubeletImageGc.HighThreshold
+					}
+					if nodepool.KubeletImageGc.LowThreshold != nil {
+						v.LowThreshold = nodepool.KubeletImageGc.LowThreshold
 					}
 				}
 				return

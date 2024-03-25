@@ -161,9 +161,9 @@ func (ts *testSuite) TestCLient_CreateSKSNodepool() {
 		InstancePrefix:       &testSKSNodepoolInstancePrefix,
 		InstanceTypeID:       &testSKSNodepoolInstanceTypeID,
 		KubeletImageGc: &SKSNodepoolKubeletImageGc{
-			MinAge:        *testSKSNodepoolKubeletImageGc.MinAge,
-			HighThreshold: *testSKSNodepoolKubeletImageGc.HighThreshold,
-			LowThreshold:  *testSKSNodepoolKubeletImageGc.LowThreshold,
+			MinAge:        testSKSNodepoolKubeletImageGc.MinAge,
+			HighThreshold: testSKSNodepoolKubeletImageGc.HighThreshold,
+			LowThreshold:  testSKSNodepoolKubeletImageGc.LowThreshold,
 		},
 		Labels:            &testSKSNodepoolLabels,
 		Name:              &testSKSNodepoolName,

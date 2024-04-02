@@ -46,6 +46,46 @@ const (
 	AccessKeyResourceResourceTypeProduct AccessKeyResourceResourceType = "product"
 )
 
+// Defines values for BlockStorageSnapshotState.
+const (
+	BlockStorageSnapshotStateAllocated BlockStorageSnapshotState = "allocated"
+
+	BlockStorageSnapshotStateCreated BlockStorageSnapshotState = "created"
+
+	BlockStorageSnapshotStateCreating BlockStorageSnapshotState = "creating"
+
+	BlockStorageSnapshotStateDestroyed BlockStorageSnapshotState = "destroyed"
+
+	BlockStorageSnapshotStateDestroying BlockStorageSnapshotState = "destroying"
+
+	BlockStorageSnapshotStateError BlockStorageSnapshotState = "error"
+
+	BlockStorageSnapshotStatePartiallyDestroyed BlockStorageSnapshotState = "partially-destroyed"
+
+	BlockStorageSnapshotStatePromoting BlockStorageSnapshotState = "promoting"
+)
+
+// Defines values for BlockStorageVolumeState.
+const (
+	BlockStorageVolumeStateAttached BlockStorageVolumeState = "attached"
+
+	BlockStorageVolumeStateAttaching BlockStorageVolumeState = "attaching"
+
+	BlockStorageVolumeStateCreating BlockStorageVolumeState = "creating"
+
+	BlockStorageVolumeStateDeleted BlockStorageVolumeState = "deleted"
+
+	BlockStorageVolumeStateDeleting BlockStorageVolumeState = "deleting"
+
+	BlockStorageVolumeStateDetached BlockStorageVolumeState = "detached"
+
+	BlockStorageVolumeStateDetaching BlockStorageVolumeState = "detaching"
+
+	BlockStorageVolumeStateError BlockStorageVolumeState = "error"
+
+	BlockStorageVolumeStateSnapshotting BlockStorageVolumeState = "snapshotting"
+)
+
 // Defines values for DbaasKafkaSchemaRegistryAclEntryPermission.
 const (
 	DbaasKafkaSchemaRegistryAclEntryPermissionSchemaRegistryRead DbaasKafkaSchemaRegistryAclEntryPermission = "schema_registry_read"
@@ -95,6 +135,19 @@ const (
 	DbaasNodeStateProgressUpdatePhasePrepare DbaasNodeStateProgressUpdatePhase = "prepare"
 
 	DbaasNodeStateProgressUpdatePhaseStream DbaasNodeStateProgressUpdatePhase = "stream"
+)
+
+// Defines values for DbaasPgTargetVersions.
+const (
+	DbaasPgTargetVersionsN12 DbaasPgTargetVersions = "12"
+
+	DbaasPgTargetVersionsN13 DbaasPgTargetVersions = "13"
+
+	DbaasPgTargetVersionsN14 DbaasPgTargetVersions = "14"
+
+	DbaasPgTargetVersionsN15 DbaasPgTargetVersions = "15"
+
+	DbaasPgTargetVersionsN16 DbaasPgTargetVersions = "16"
 )
 
 // Defines values for DbaasServiceMaintenanceDow.
@@ -425,6 +478,277 @@ const (
 	InstanceTypeSizeTitan InstanceTypeSize = "titan"
 )
 
+// Defines values for JsonSchemaGrafanaAlertingErrorOrTimeout.
+const (
+	JsonSchemaGrafanaAlertingErrorOrTimeoutAlerting JsonSchemaGrafanaAlertingErrorOrTimeout = "alerting"
+
+	JsonSchemaGrafanaAlertingErrorOrTimeoutKeepState JsonSchemaGrafanaAlertingErrorOrTimeout = "keep_state"
+)
+
+// Defines values for JsonSchemaGrafanaAlertingNodataOrNullvalues.
+const (
+	JsonSchemaGrafanaAlertingNodataOrNullvaluesAlerting JsonSchemaGrafanaAlertingNodataOrNullvalues = "alerting"
+
+	JsonSchemaGrafanaAlertingNodataOrNullvaluesKeepState JsonSchemaGrafanaAlertingNodataOrNullvalues = "keep_state"
+
+	JsonSchemaGrafanaAlertingNodataOrNullvaluesNoData JsonSchemaGrafanaAlertingNodataOrNullvalues = "no_data"
+
+	JsonSchemaGrafanaAlertingNodataOrNullvaluesOk JsonSchemaGrafanaAlertingNodataOrNullvalues = "ok"
+)
+
+// Defines values for JsonSchemaGrafanaCookieSamesite.
+const (
+	JsonSchemaGrafanaCookieSamesiteLax JsonSchemaGrafanaCookieSamesite = "lax"
+
+	JsonSchemaGrafanaCookieSamesiteNone JsonSchemaGrafanaCookieSamesite = "none"
+
+	JsonSchemaGrafanaCookieSamesiteStrict JsonSchemaGrafanaCookieSamesite = "strict"
+)
+
+// Defines values for JsonSchemaGrafanaSmtpServerStarttlsPolicy.
+const (
+	JsonSchemaGrafanaSmtpServerStarttlsPolicyMandatoryStartTLS JsonSchemaGrafanaSmtpServerStarttlsPolicy = "MandatoryStartTLS"
+
+	JsonSchemaGrafanaSmtpServerStarttlsPolicyNoStartTLS JsonSchemaGrafanaSmtpServerStarttlsPolicy = "NoStartTLS"
+
+	JsonSchemaGrafanaSmtpServerStarttlsPolicyOpportunisticStartTLS JsonSchemaGrafanaSmtpServerStarttlsPolicy = "OpportunisticStartTLS"
+)
+
+// Defines values for JsonSchemaGrafanaUserAutoAssignOrgRole.
+const (
+	JsonSchemaGrafanaUserAutoAssignOrgRoleAdmin JsonSchemaGrafanaUserAutoAssignOrgRole = "Admin"
+
+	JsonSchemaGrafanaUserAutoAssignOrgRoleEditor JsonSchemaGrafanaUserAutoAssignOrgRole = "Editor"
+
+	JsonSchemaGrafanaUserAutoAssignOrgRoleViewer JsonSchemaGrafanaUserAutoAssignOrgRole = "Viewer"
+)
+
+// Defines values for JsonSchemaKafkaCompressionType.
+const (
+	JsonSchemaKafkaCompressionTypeGzip JsonSchemaKafkaCompressionType = "gzip"
+
+	JsonSchemaKafkaCompressionTypeLz4 JsonSchemaKafkaCompressionType = "lz4"
+
+	JsonSchemaKafkaCompressionTypeProducer JsonSchemaKafkaCompressionType = "producer"
+
+	JsonSchemaKafkaCompressionTypeSnappy JsonSchemaKafkaCompressionType = "snappy"
+
+	JsonSchemaKafkaCompressionTypeUncompressed JsonSchemaKafkaCompressionType = "uncompressed"
+
+	JsonSchemaKafkaCompressionTypeZstd JsonSchemaKafkaCompressionType = "zstd"
+)
+
+// Defines values for JsonSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy.
+const (
+	JsonSchemaKafkaLogCleanupAndCompactionLogCleanupPolicyCompact JsonSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "compact"
+
+	JsonSchemaKafkaLogCleanupAndCompactionLogCleanupPolicyCompactdelete JsonSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "compact,delete"
+
+	JsonSchemaKafkaLogCleanupAndCompactionLogCleanupPolicyDelete JsonSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "delete"
+)
+
+// Defines values for JsonSchemaKafkaLogMessageTimestampType.
+const (
+	JsonSchemaKafkaLogMessageTimestampTypeCreateTime JsonSchemaKafkaLogMessageTimestampType = "CreateTime"
+
+	JsonSchemaKafkaLogMessageTimestampTypeLogAppendTime JsonSchemaKafkaLogMessageTimestampType = "LogAppendTime"
+)
+
+// Defines values for JsonSchemaKafkaConnectConnectorClientConfigOverridePolicy.
+const (
+	JsonSchemaKafkaConnectConnectorClientConfigOverridePolicyAll JsonSchemaKafkaConnectConnectorClientConfigOverridePolicy = "All"
+
+	JsonSchemaKafkaConnectConnectorClientConfigOverridePolicyNone JsonSchemaKafkaConnectConnectorClientConfigOverridePolicy = "None"
+)
+
+// Defines values for JsonSchemaKafkaConnectConsumerAutoOffsetReset.
+const (
+	JsonSchemaKafkaConnectConsumerAutoOffsetResetEarliest JsonSchemaKafkaConnectConsumerAutoOffsetReset = "earliest"
+
+	JsonSchemaKafkaConnectConsumerAutoOffsetResetLatest JsonSchemaKafkaConnectConsumerAutoOffsetReset = "latest"
+)
+
+// Defines values for JsonSchemaKafkaConnectConsumerIsolationLevel.
+const (
+	JsonSchemaKafkaConnectConsumerIsolationLevelReadCommitted JsonSchemaKafkaConnectConsumerIsolationLevel = "read_committed"
+
+	JsonSchemaKafkaConnectConsumerIsolationLevelReadUncommitted JsonSchemaKafkaConnectConsumerIsolationLevel = "read_uncommitted"
+)
+
+// Defines values for JsonSchemaKafkaConnectProducerCompressionType.
+const (
+	JsonSchemaKafkaConnectProducerCompressionTypeGzip JsonSchemaKafkaConnectProducerCompressionType = "gzip"
+
+	JsonSchemaKafkaConnectProducerCompressionTypeLz4 JsonSchemaKafkaConnectProducerCompressionType = "lz4"
+
+	JsonSchemaKafkaConnectProducerCompressionTypeNone JsonSchemaKafkaConnectProducerCompressionType = "none"
+
+	JsonSchemaKafkaConnectProducerCompressionTypeSnappy JsonSchemaKafkaConnectProducerCompressionType = "snappy"
+
+	JsonSchemaKafkaConnectProducerCompressionTypeZstd JsonSchemaKafkaConnectProducerCompressionType = "zstd"
+)
+
+// Defines values for JsonSchemaKafkaRestConsumerRequestTimeoutMs.
+const (
+	JsonSchemaKafkaRestConsumerRequestTimeoutMsN1000 JsonSchemaKafkaRestConsumerRequestTimeoutMs = 1000
+
+	JsonSchemaKafkaRestConsumerRequestTimeoutMsN15000 JsonSchemaKafkaRestConsumerRequestTimeoutMs = 15000
+
+	JsonSchemaKafkaRestConsumerRequestTimeoutMsN30000 JsonSchemaKafkaRestConsumerRequestTimeoutMs = 30000
+)
+
+// Defines values for JsonSchemaKafkaRestProducerAcks.
+const (
+	JsonSchemaKafkaRestProducerAcksAll JsonSchemaKafkaRestProducerAcks = "all"
+
+	JsonSchemaKafkaRestProducerAcksN0 JsonSchemaKafkaRestProducerAcks = "0"
+
+	JsonSchemaKafkaRestProducerAcksN1 JsonSchemaKafkaRestProducerAcks = "-1"
+
+	JsonSchemaKafkaRestProducerAcksN11 JsonSchemaKafkaRestProducerAcks = "1"
+)
+
+// Defines values for JsonSchemaKafkaRestProducerCompressionType.
+const (
+	JsonSchemaKafkaRestProducerCompressionTypeGzip JsonSchemaKafkaRestProducerCompressionType = "gzip"
+
+	JsonSchemaKafkaRestProducerCompressionTypeLz4 JsonSchemaKafkaRestProducerCompressionType = "lz4"
+
+	JsonSchemaKafkaRestProducerCompressionTypeNone JsonSchemaKafkaRestProducerCompressionType = "none"
+
+	JsonSchemaKafkaRestProducerCompressionTypeSnappy JsonSchemaKafkaRestProducerCompressionType = "snappy"
+
+	JsonSchemaKafkaRestProducerCompressionTypeZstd JsonSchemaKafkaRestProducerCompressionType = "zstd"
+)
+
+// Defines values for JsonSchemaMysqlInternalTmpMemStorageEngine.
+const (
+	JsonSchemaMysqlInternalTmpMemStorageEngineMEMORY JsonSchemaMysqlInternalTmpMemStorageEngine = "MEMORY"
+
+	JsonSchemaMysqlInternalTmpMemStorageEngineTempTable JsonSchemaMysqlInternalTmpMemStorageEngine = "TempTable"
+)
+
+// Defines values for JsonSchemaOpensearchAuthFailureListenersInternalAuthenticationBackendLimitingAuthenticationBackend.
+const (
+	JsonSchemaOpensearchAuthFailureListenersInternalAuthenticationBackendLimitingAuthenticationBackendInternal JsonSchemaOpensearchAuthFailureListenersInternalAuthenticationBackendLimitingAuthenticationBackend = "internal"
+)
+
+// Defines values for JsonSchemaOpensearchAuthFailureListenersInternalAuthenticationBackendLimitingType.
+const (
+	JsonSchemaOpensearchAuthFailureListenersInternalAuthenticationBackendLimitingTypeUsername JsonSchemaOpensearchAuthFailureListenersInternalAuthenticationBackendLimitingType = "username"
+)
+
+// Defines values for JsonSchemaOpensearchAuthFailureListenersIpRateLimitingType.
+const (
+	JsonSchemaOpensearchAuthFailureListenersIpRateLimitingTypeIp JsonSchemaOpensearchAuthFailureListenersIpRateLimitingType = "ip"
+)
+
+// Defines values for JsonSchemaPgDefaultToastCompression.
+const (
+	JsonSchemaPgDefaultToastCompressionLz4 JsonSchemaPgDefaultToastCompression = "lz4"
+
+	JsonSchemaPgDefaultToastCompressionPglz JsonSchemaPgDefaultToastCompression = "pglz"
+)
+
+// Defines values for JsonSchemaPgLogErrorVerbosity.
+const (
+	JsonSchemaPgLogErrorVerbosityDEFAULT JsonSchemaPgLogErrorVerbosity = "DEFAULT"
+
+	JsonSchemaPgLogErrorVerbosityTERSE JsonSchemaPgLogErrorVerbosity = "TERSE"
+
+	JsonSchemaPgLogErrorVerbosityVERBOSE JsonSchemaPgLogErrorVerbosity = "VERBOSE"
+)
+
+// Defines values for JsonSchemaPgLogLinePrefix.
+const (
+	JsonSchemaPgLogLinePrefixMpqUserudbdappa JsonSchemaPgLogLinePrefix = "'%m [%p] %q[user=%u,db=%d,app=%a] '"
+
+	JsonSchemaPgLogLinePrefixPidpuserudbdappaclienth JsonSchemaPgLogLinePrefix = "'pid=%p,user=%u,db=%d,app=%a,client=%h '"
+
+	JsonSchemaPgLogLinePrefixTpl1Userudbdappaclienth JsonSchemaPgLogLinePrefix = "'%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '"
+)
+
+// Defines values for JsonSchemaPgPgStatStatementsTrack.
+const (
+	JsonSchemaPgPgStatStatementsTrackAll JsonSchemaPgPgStatStatementsTrack = "all"
+
+	JsonSchemaPgPgStatStatementsTrackNone JsonSchemaPgPgStatStatementsTrack = "none"
+
+	JsonSchemaPgPgStatStatementsTrackTop JsonSchemaPgPgStatStatementsTrack = "top"
+)
+
+// Defines values for JsonSchemaPgTrackCommitTimestamp.
+const (
+	JsonSchemaPgTrackCommitTimestampOff JsonSchemaPgTrackCommitTimestamp = "off"
+
+	JsonSchemaPgTrackCommitTimestampOn JsonSchemaPgTrackCommitTimestamp = "on"
+)
+
+// Defines values for JsonSchemaPgTrackFunctions.
+const (
+	JsonSchemaPgTrackFunctionsAll JsonSchemaPgTrackFunctions = "all"
+
+	JsonSchemaPgTrackFunctionsNone JsonSchemaPgTrackFunctions = "none"
+
+	JsonSchemaPgTrackFunctionsPl JsonSchemaPgTrackFunctions = "pl"
+)
+
+// Defines values for JsonSchemaPgTrackIoTiming.
+const (
+	JsonSchemaPgTrackIoTimingOff JsonSchemaPgTrackIoTiming = "off"
+
+	JsonSchemaPgTrackIoTimingOn JsonSchemaPgTrackIoTiming = "on"
+)
+
+// Defines values for JsonSchemaPgbouncerAutodbPoolMode.
+const (
+	JsonSchemaPgbouncerAutodbPoolModeSession JsonSchemaPgbouncerAutodbPoolMode = "session"
+
+	JsonSchemaPgbouncerAutodbPoolModeStatement JsonSchemaPgbouncerAutodbPoolMode = "statement"
+
+	JsonSchemaPgbouncerAutodbPoolModeTransaction JsonSchemaPgbouncerAutodbPoolMode = "transaction"
+)
+
+// Defines values for JsonSchemaPgbouncerIgnoreStartupParameters.
+const (
+	JsonSchemaPgbouncerIgnoreStartupParametersExtraFloatDigits JsonSchemaPgbouncerIgnoreStartupParameters = "extra_float_digits"
+
+	JsonSchemaPgbouncerIgnoreStartupParametersSearchPath JsonSchemaPgbouncerIgnoreStartupParameters = "search_path"
+)
+
+// Defines values for JsonSchemaRedisAclChannelsDefault.
+const (
+	JsonSchemaRedisAclChannelsDefaultAllchannels JsonSchemaRedisAclChannelsDefault = "allchannels"
+
+	JsonSchemaRedisAclChannelsDefaultResetchannels JsonSchemaRedisAclChannelsDefault = "resetchannels"
+)
+
+// Defines values for JsonSchemaRedisMaxmemoryPolicy.
+const (
+	JsonSchemaRedisMaxmemoryPolicyAllkeysLfu JsonSchemaRedisMaxmemoryPolicy = "allkeys-lfu"
+
+	JsonSchemaRedisMaxmemoryPolicyAllkeysLru JsonSchemaRedisMaxmemoryPolicy = "allkeys-lru"
+
+	JsonSchemaRedisMaxmemoryPolicyAllkeysRandom JsonSchemaRedisMaxmemoryPolicy = "allkeys-random"
+
+	JsonSchemaRedisMaxmemoryPolicyNoeviction JsonSchemaRedisMaxmemoryPolicy = "noeviction"
+
+	JsonSchemaRedisMaxmemoryPolicyVolatileLfu JsonSchemaRedisMaxmemoryPolicy = "volatile-lfu"
+
+	JsonSchemaRedisMaxmemoryPolicyVolatileLru JsonSchemaRedisMaxmemoryPolicy = "volatile-lru"
+
+	JsonSchemaRedisMaxmemoryPolicyVolatileRandom JsonSchemaRedisMaxmemoryPolicy = "volatile-random"
+
+	JsonSchemaRedisMaxmemoryPolicyVolatileTtl JsonSchemaRedisMaxmemoryPolicy = "volatile-ttl"
+)
+
+// Defines values for JsonSchemaRedisPersistence.
+const (
+	JsonSchemaRedisPersistenceOff JsonSchemaRedisPersistence = "off"
+
+	JsonSchemaRedisPersistenceRdb JsonSchemaRedisPersistence = "rdb"
+)
+
 // Defines values for LoadBalancerState.
 const (
 	LoadBalancerStateCreating LoadBalancerState = "creating"
@@ -571,6 +895,8 @@ const (
 // Defines values for SksClusterAddons.
 const (
 	SksClusterAddonsExoscaleCloudController SksClusterAddons = "exoscale-cloud-controller"
+
+	SksClusterAddonsExoscaleContainerStorageInterface SksClusterAddons = "exoscale-container-storage-interface"
 
 	SksClusterAddonsMetricsServer SksClusterAddons = "metrics-server"
 )
@@ -762,6 +1088,74 @@ type AntiAffinityGroup struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// Block storage snapshot
+type BlockStorageSnapshot struct {
+	// Target block storage volume
+	BlockStorageVolume *BlockStorageVolumeTarget `json:"block-storage-volume,omitempty"`
+
+	// Snapshot creation date
+	CreatedAt *time.Time `json:"created-at,omitempty"`
+
+	// Snapshot ID
+	Id     *string `json:"id,omitempty"`
+	Labels *Labels `json:"labels,omitempty"`
+
+	// Snapshot name
+	Name *string `json:"name,omitempty"`
+
+	// Snapshot size
+	Size *int64 `json:"size,omitempty"`
+
+	// Snapshot state
+	State *BlockStorageSnapshotState `json:"state,omitempty"`
+}
+
+// Snapshot state
+type BlockStorageSnapshotState string
+
+// Target block storage snapshot
+type BlockStorageSnapshotTarget struct {
+	// Block storage snapshot ID
+	Id *string `json:"id,omitempty"`
+}
+
+// Block storage volume
+type BlockStorageVolume struct {
+	// Volume snapshots, if any
+	BlockStorageSnapshots *[]BlockStorageSnapshotTarget `json:"block-storage-snapshots,omitempty"`
+
+	// Volume block size
+	Blocksize *int64 `json:"blocksize,omitempty"`
+
+	// Volume creation date
+	CreatedAt *time.Time `json:"created-at,omitempty"`
+
+	// Volume ID
+	Id *string `json:"id,omitempty"`
+
+	// Target Instance
+	Instance *InstanceTarget `json:"instance,omitempty"`
+	Labels   *Labels         `json:"labels,omitempty"`
+
+	// Volume name
+	Name *string `json:"name,omitempty"`
+
+	// Volume size
+	Size *int64 `json:"size,omitempty"`
+
+	// Volume state
+	State *BlockStorageVolumeState `json:"state,omitempty"`
+}
+
+// Volume state
+type BlockStorageVolumeState string
+
+// Target block storage volume
+type BlockStorageVolumeTarget struct {
+	// Block storage volume ID
+	Id *string `json:"id,omitempty"`
+}
+
 // DBaaS plan backup config
 type DbaasBackupConfig struct {
 	// Interval of taking a frequent backup in service types supporting different backup schedules
@@ -788,8 +1182,7 @@ type DbaasBackupConfig struct {
 	// Mechanism how backups can be restored. 'regular'
 	//                                             means a backup is restored as is so that the system
 	//                                             is restored to the state it was when the backup was generated.
-	//                                             'pitr' means point-in-time-recovery, which allows restoring
-	//                                             the system to any state since the first available full snapshot.
+	//                                             'pitr' means point-in-time-recovery, which allows restoring the system to any state since the first available full snapshot.
 	RecoveryMode *string `json:"recovery-mode,omitempty"`
 }
 
@@ -1004,6 +1397,9 @@ type DbaasPgPoolSize int64
 // DbaasPgPoolUsername defines model for dbaas-pg-pool-username.
 type DbaasPgPoolUsername string
 
+// DbaasPgTargetVersions defines model for dbaas-pg-target-versions.
+type DbaasPgTargetVersions string
+
 // DBaaS plan
 type DbaasPlan struct {
 	// Requires authorization or publicly available
@@ -1123,10 +1519,8 @@ type DbaasServiceGrafana struct {
 	Description *string `json:"description,omitempty"`
 
 	// TODO UNIT disk space for data storage
-	DiskSize *int64 `json:"disk-size,omitempty"`
-
-	// Grafana specific settings
-	GrafanaSettings *map[string]interface{} `json:"grafana-settings,omitempty"`
+	DiskSize        *int64             `json:"disk-size,omitempty"`
+	GrafanaSettings *JsonSchemaGrafana `json:"grafana-settings,omitempty"`
 
 	// Service integrations
 	Integrations *[]DbaasIntegration `json:"integrations,omitempty"`
@@ -1236,19 +1630,13 @@ type DbaasServiceKafka struct {
 	IpFilter *[]string `json:"ip-filter,omitempty"`
 
 	// Whether Kafka Connect is enabled
-	KafkaConnectEnabled *bool `json:"kafka-connect-enabled,omitempty"`
-
-	// Kafka Connect configuration values
-	KafkaConnectSettings *map[string]interface{} `json:"kafka-connect-settings,omitempty"`
+	KafkaConnectEnabled  *bool                   `json:"kafka-connect-enabled,omitempty"`
+	KafkaConnectSettings *JsonSchemaKafkaConnect `json:"kafka-connect-settings,omitempty"`
 
 	// Whether Kafka REST is enabled
-	KafkaRestEnabled *bool `json:"kafka-rest-enabled,omitempty"`
-
-	// Kafka REST configuration
-	KafkaRestSettings *map[string]interface{} `json:"kafka-rest-settings,omitempty"`
-
-	// Kafka-specific settings
-	KafkaSettings *map[string]interface{} `json:"kafka-settings,omitempty"`
+	KafkaRestEnabled  *bool                `json:"kafka-rest-enabled,omitempty"`
+	KafkaRestSettings *JsonSchemaKafkaRest `json:"kafka-rest-settings,omitempty"`
+	KafkaSettings     *JsonSchemaKafka     `json:"kafka-settings,omitempty"`
 
 	// Automatic maintenance settings
 	Maintenance *DbaasServiceMaintenance `json:"maintenance,omitempty"`
@@ -1273,11 +1661,9 @@ type DbaasServiceKafka struct {
 	Plan string `json:"plan"`
 
 	// Whether Schema-Registry is enabled
-	SchemaRegistryEnabled *bool `json:"schema-registry-enabled,omitempty"`
-
-	// Schema Registry configuration
-	SchemaRegistrySettings *map[string]interface{} `json:"schema-registry-settings,omitempty"`
-	State                  *EnumServiceState       `json:"state,omitempty"`
+	SchemaRegistryEnabled  *bool                     `json:"schema-registry-enabled,omitempty"`
+	SchemaRegistrySettings *JsonSchemaSchemaRegistry `json:"schema-registry-settings,omitempty"`
+	State                  *EnumServiceState         `json:"state,omitempty"`
 
 	// Service is protected against termination and powering off
 	TerminationProtection *bool                `json:"termination-protection,omitempty"`
@@ -1389,11 +1775,9 @@ type DbaasServiceMysql struct {
 	IpFilter *[]string `json:"ip-filter,omitempty"`
 
 	// Automatic maintenance settings
-	Maintenance *DbaasServiceMaintenance `json:"maintenance,omitempty"`
-
-	// MySQL-specific settings
-	MysqlSettings *map[string]interface{} `json:"mysql-settings,omitempty"`
-	Name          DbaasServiceName        `json:"name"`
+	Maintenance   *DbaasServiceMaintenance `json:"maintenance,omitempty"`
+	MysqlSettings *JsonSchemaMysql         `json:"mysql-settings,omitempty"`
+	Name          DbaasServiceName         `json:"name"`
 
 	// Number of service nodes in the active plan
 	NodeCount *int64 `json:"node-count,omitempty"`
@@ -1568,9 +1952,7 @@ type DbaasServiceOpensearch struct {
 		// Timeout in milliseconds for requests made by OpenSearch Dashboards towards OpenSearch (default: 30000)
 		OpensearchRequestTimeout *int64 `json:"opensearch-request-timeout,omitempty"`
 	} `json:"opensearch-dashboards,omitempty"`
-
-	// OpenSearch-specific settings
-	OpensearchSettings *map[string]interface{} `json:"opensearch-settings,omitempty"`
+	OpensearchSettings *JsonSchemaOpensearch `json:"opensearch-settings,omitempty"`
 
 	// Subscription plan
 	Plan  string            `json:"plan"`
@@ -1690,16 +2072,10 @@ type DbaasServicePg struct {
 	NodeStates *[]DbaasNodeState `json:"node-states,omitempty"`
 
 	// Service notifications
-	Notifications *[]DbaasServiceNotification `json:"notifications,omitempty"`
-
-	// PostgreSQL-specific settings
-	PgSettings *map[string]interface{} `json:"pg-settings,omitempty"`
-
-	// PGBouncer connection pooling settings
-	PgbouncerSettings *map[string]interface{} `json:"pgbouncer-settings,omitempty"`
-
-	// PGLookout settings
-	PglookoutSettings *map[string]interface{} `json:"pglookout-settings,omitempty"`
+	Notifications     *[]DbaasServiceNotification `json:"notifications,omitempty"`
+	PgSettings        *JsonSchemaPg               `json:"pg-settings,omitempty"`
+	PgbouncerSettings *JsonSchemaPgbouncer        `json:"pgbouncer-settings,omitempty"`
+	PglookoutSettings *JsonSchemaPglookout        `json:"pglookout-settings,omitempty"`
 
 	// Subscription plan
 	Plan string `json:"plan"`
@@ -1710,11 +2086,9 @@ type DbaasServicePg struct {
 	SynchronousReplication  *EnumPgSynchronousReplication `json:"synchronous-replication,omitempty"`
 
 	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-
-	// TimescaleDB extension configuration values
-	TimescaledbSettings *map[string]interface{} `json:"timescaledb-settings,omitempty"`
-	Type                DbaasServiceTypeName    `json:"type"`
+	TerminationProtection *bool                  `json:"termination-protection,omitempty"`
+	TimescaledbSettings   *JsonSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
+	Type                  DbaasServiceTypeName   `json:"type"`
 
 	// Service last update timestamp (ISO 8601)
 	UpdatedAt *time.Time `json:"updated-at,omitempty"`
@@ -1812,11 +2186,9 @@ type DbaasServiceRedis struct {
 	Notifications *[]DbaasServiceNotification `json:"notifications,omitempty"`
 
 	// Subscription plan
-	Plan string `json:"plan"`
-
-	// Redis-specific settings
-	RedisSettings *map[string]interface{} `json:"redis-settings,omitempty"`
-	State         *EnumServiceState       `json:"state,omitempty"`
+	Plan          string            `json:"plan"`
+	RedisSettings *JsonSchemaRedis  `json:"redis-settings,omitempty"`
+	State         *EnumServiceState `json:"state,omitempty"`
 
 	// Service is protected against termination and powering off
 	TerminationProtection *bool                `json:"termination-protection,omitempty"`
@@ -1898,8 +2270,60 @@ type DbaasTask struct {
 	TaskType *string `json:"task-type,omitempty"`
 }
 
+// Kafka User secrets
+type DbaasUserKafkaSecrets struct {
+	// Kafka certificate
+	AccessCert       *string    `json:"access-cert,omitempty"`
+	AccessCertExpiry *time.Time `json:"access-cert-expiry,omitempty"`
+
+	// Kafka access key
+	AccessKey *string `json:"access-key,omitempty"`
+
+	// Kafka password
+	Password *string `json:"password,omitempty"`
+
+	// Kafka username
+	Username *string `json:"username,omitempty"`
+}
+
+// MySQL User secrets
+type DbaasUserMysqlSecrets struct {
+	// MySQL password
+	Password *string `json:"password,omitempty"`
+
+	// MySQL username
+	Username *string `json:"username,omitempty"`
+}
+
+// Opensearch User secrets
+type DbaasUserOpensearchSecrets struct {
+	// Opensearch password
+	Password *string `json:"password,omitempty"`
+
+	// Opensearch username
+	Username *string `json:"username,omitempty"`
+}
+
 // DbaasUserPassword defines model for dbaas-user-password.
 type DbaasUserPassword string
+
+// Postgres User secrets
+type DbaasUserPostgresSecrets struct {
+	// Postgres password
+	Password *string `json:"password,omitempty"`
+
+	// Postgres username
+	Username *string `json:"username,omitempty"`
+}
+
+// Redis User secrets
+type DbaasUserRedisSecrets struct {
+	// Redis password
+	Password *string `json:"password,omitempty"`
+
+	// Redis username
+	Username *string `json:"username,omitempty"`
+}
 
 // DbaasUserUsername defines model for dbaas-user-username.
 type DbaasUserUsername string
@@ -2081,17 +2505,23 @@ type Event struct {
 	// Operation handler name
 	Handler *string `json:"handler,omitempty"`
 
+	// IAM API Key
+	IamApiKey *IamApiKey `json:"iam-api-key,omitempty"`
+
+	// IAM Role
+	IamRole *IamRole `json:"iam-role,omitempty"`
+
 	// Operation message
 	Message *string `json:"message,omitempty"`
 
 	// URI path parameters (free form map)
 	PathParams *map[string]interface{} `json:"path-params,omitempty"`
 
-	// Client IP address
-	RemoteAddr *string `json:"remote-addr,omitempty"`
-
 	// Operation unique identifier
 	RequestId *string `json:"request-id,omitempty"`
+
+	// Client IP address
+	SourceIp *string `json:"source-ip,omitempty"`
 
 	// Operation HTTP status
 	Status *int64 `json:"status,omitempty"`
@@ -2221,6 +2651,9 @@ type Instance struct {
 	Ipv6Address *string `json:"ipv6-address,omitempty"`
 	Labels      *Labels `json:"labels,omitempty"`
 
+	// Instance MAC address
+	MacAddress *string `json:"mac-address,omitempty"`
+
 	// Resource manager
 	Manager *Manager `json:"manager,omitempty"`
 
@@ -2228,7 +2661,13 @@ type Instance struct {
 	Name *string `json:"name,omitempty"`
 
 	// Instance Private Networks
-	PrivateNetworks *[]PrivateNetwork `json:"private-networks,omitempty"`
+	PrivateNetworks *[]struct {
+		// Private Network ID
+		Id *string `json:"id,omitempty"`
+
+		// Private Network MAC address
+		MacAddress *string `json:"mac-address,omitempty"`
+	} `json:"private-networks,omitempty"`
 
 	// Instance public IPv4 address
 	PublicIp           *string             `json:"public-ip,omitempty"`
@@ -2372,6 +2811,862 @@ type InstanceTypeFamily string
 
 // Instance type size
 type InstanceTypeSize string
+
+// JsonSchemaGrafana defines model for json-schema-grafana.
+type JsonSchemaGrafana struct {
+	AlertingEnabled              *bool                                        `json:"alerting_enabled,omitempty"`
+	AlertingErrorOrTimeout       *JsonSchemaGrafanaAlertingErrorOrTimeout     `json:"alerting_error_or_timeout,omitempty"`
+	AlertingMaxAnnotationsToKeep *int                                         `json:"alerting_max_annotations_to_keep,omitempty"`
+	AlertingNodataOrNullvalues   *JsonSchemaGrafanaAlertingNodataOrNullvalues `json:"alerting_nodata_or_nullvalues,omitempty"`
+	AllowEmbedding               *bool                                        `json:"allow_embedding,omitempty"`
+	AuthAzuread                  *struct {
+		AllowSignUp    *bool     `json:"allow_sign_up,omitempty"`
+		AllowedDomains *[]string `json:"allowed_domains,omitempty"`
+		AllowedGroups  *[]string `json:"allowed_groups,omitempty"`
+		AuthUrl        string    `json:"auth_url"`
+		ClientId       string    `json:"client_id"`
+		ClientSecret   string    `json:"client_secret"`
+		TokenUrl       string    `json:"token_url"`
+	} `json:"auth_azuread,omitempty"`
+	AuthBasicEnabled *bool `json:"auth_basic_enabled,omitempty"`
+	AuthGenericOauth *struct {
+		AllowSignUp          *bool     `json:"allow_sign_up,omitempty"`
+		AllowedDomains       *[]string `json:"allowed_domains,omitempty"`
+		AllowedOrganizations *[]string `json:"allowed_organizations,omitempty"`
+		ApiUrl               string    `json:"api_url"`
+		AuthUrl              string    `json:"auth_url"`
+		AutoLogin            *bool     `json:"auto_login,omitempty"`
+		ClientId             string    `json:"client_id"`
+		ClientSecret         string    `json:"client_secret"`
+		Name                 *string   `json:"name,omitempty"`
+		Scopes               *[]string `json:"scopes,omitempty"`
+		TokenUrl             string    `json:"token_url"`
+	} `json:"auth_generic_oauth,omitempty"`
+	AuthGithub *struct {
+		AllowSignUp          *bool     `json:"allow_sign_up,omitempty"`
+		AllowedOrganizations *[]string `json:"allowed_organizations,omitempty"`
+		ClientId             string    `json:"client_id"`
+		ClientSecret         string    `json:"client_secret"`
+		TeamIds              *[]int    `json:"team_ids,omitempty"`
+	} `json:"auth_github,omitempty"`
+	AuthGitlab *struct {
+		AllowSignUp   *bool    `json:"allow_sign_up,omitempty"`
+		AllowedGroups []string `json:"allowed_groups"`
+		ApiUrl        *string  `json:"api_url,omitempty"`
+		AuthUrl       *string  `json:"auth_url,omitempty"`
+		ClientId      string   `json:"client_id"`
+		ClientSecret  string   `json:"client_secret"`
+		TokenUrl      *string  `json:"token_url,omitempty"`
+	} `json:"auth_gitlab,omitempty"`
+	AuthGoogle *struct {
+		AllowSignUp    *bool    `json:"allow_sign_up,omitempty"`
+		AllowedDomains []string `json:"allowed_domains"`
+		ClientId       string   `json:"client_id"`
+		ClientSecret   string   `json:"client_secret"`
+	} `json:"auth_google,omitempty"`
+	CookieSamesite *JsonSchemaGrafanaCookieSamesite `json:"cookie_samesite,omitempty"`
+
+	// This feature is new in Grafana 9 and is quite resource intensive. It may cause low-end plans to work more slowly while the dashboard previews are rendering.
+	DashboardPreviewsEnabled *bool `json:"dashboard_previews_enabled,omitempty"`
+
+	// Signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s, 1h
+	DashboardsMinRefreshInterval *string `json:"dashboards_min_refresh_interval,omitempty"`
+	DashboardsVersionsToKeep     *int    `json:"dashboards_versions_to_keep,omitempty"`
+	DataproxySendUserHeader      *bool   `json:"dataproxy_send_user_header,omitempty"`
+	DataproxyTimeout             *int    `json:"dataproxy_timeout,omitempty"`
+	DateFormats                  *struct {
+		DefaultTimezone *string `json:"default_timezone,omitempty"`
+		FullDate        *string `json:"full_date,omitempty"`
+		IntervalDay     *string `json:"interval_day,omitempty"`
+		IntervalHour    *string `json:"interval_hour,omitempty"`
+		IntervalMinute  *string `json:"interval_minute,omitempty"`
+		IntervalMonth   *string `json:"interval_month,omitempty"`
+		IntervalSecond  *string `json:"interval_second,omitempty"`
+		IntervalYear    *string `json:"interval_year,omitempty"`
+	} `json:"date_formats,omitempty"`
+	DisableGravatar               *bool   `json:"disable_gravatar,omitempty"`
+	EditorsCanAdmin               *bool   `json:"editors_can_admin,omitempty"`
+	GoogleAnalyticsUaId           *string `json:"google_analytics_ua_id,omitempty"`
+	MetricsEnabled                *bool   `json:"metrics_enabled,omitempty"`
+	OauthAllowInsecureEmailLookup *bool   `json:"oauth_allow_insecure_email_lookup,omitempty"`
+	PrivatelinkAccess             *struct {
+		Grafana *bool `json:"grafana,omitempty"`
+	} `json:"privatelink_access,omitempty"`
+	RecoveryBasebackupName *string `json:"recovery_basebackup_name,omitempty"`
+	SmtpServer             *struct {
+		FromAddress    string                                     `json:"from_address"`
+		FromName       *string                                    `json:"from_name"`
+		Host           string                                     `json:"host"`
+		Password       *string                                    `json:"password"`
+		Port           int                                        `json:"port"`
+		SkipVerify     *bool                                      `json:"skip_verify,omitempty"`
+		StarttlsPolicy *JsonSchemaGrafanaSmtpServerStarttlsPolicy `json:"starttls_policy,omitempty"`
+		Username       *string                                    `json:"username"`
+	} `json:"smtp_server,omitempty"`
+	UnifiedAlertingEnabled *bool                                   `json:"unified_alerting_enabled,omitempty"`
+	UserAutoAssignOrg      *bool                                   `json:"user_auto_assign_org,omitempty"`
+	UserAutoAssignOrgRole  *JsonSchemaGrafanaUserAutoAssignOrgRole `json:"user_auto_assign_org_role,omitempty"`
+	ViewersCanEdit         *bool                                   `json:"viewers_can_edit,omitempty"`
+}
+
+// JsonSchemaGrafanaAlertingErrorOrTimeout defines model for JsonSchemaGrafana.AlertingErrorOrTimeout.
+type JsonSchemaGrafanaAlertingErrorOrTimeout string
+
+// JsonSchemaGrafanaAlertingNodataOrNullvalues defines model for JsonSchemaGrafana.AlertingNodataOrNullvalues.
+type JsonSchemaGrafanaAlertingNodataOrNullvalues string
+
+// JsonSchemaGrafanaCookieSamesite defines model for JsonSchemaGrafana.CookieSamesite.
+type JsonSchemaGrafanaCookieSamesite string
+
+// JsonSchemaGrafanaSmtpServerStarttlsPolicy defines model for JsonSchemaGrafana.SmtpServer.StarttlsPolicy.
+type JsonSchemaGrafanaSmtpServerStarttlsPolicy string
+
+// JsonSchemaGrafanaUserAutoAssignOrgRole defines model for JsonSchemaGrafana.UserAutoAssignOrgRole.
+type JsonSchemaGrafanaUserAutoAssignOrgRole string
+
+// JsonSchemaKafka defines model for json-schema-kafka.
+type JsonSchemaKafka struct {
+	// Enable auto creation of topics
+	AutoCreateTopicsEnable *bool `json:"auto_create_topics_enable,omitempty"`
+
+	// Specify the final compression type for a given topic. This configuration accepts the standard compression codecs ('gzip', 'snappy', 'lz4', 'zstd'). It additionally accepts 'uncompressed' which is equivalent to no compression; and 'producer' which means retain the original compression codec set by the producer.
+	CompressionType *JsonSchemaKafkaCompressionType `json:"compression_type,omitempty"`
+
+	// Idle connections timeout: the server socket processor threads close the connections that idle for longer than this.
+	ConnectionsMaxIdleMs *int `json:"connections_max_idle_ms,omitempty"`
+
+	// Replication factor for autocreated topics
+	DefaultReplicationFactor *int `json:"default_replication_factor,omitempty"`
+
+	// The amount of time, in milliseconds, the group coordinator will wait for more consumers to join a new group before performing the first rebalance. A longer delay means potentially fewer rebalances, but increases the time until processing begins. The default value for this is 3 seconds. During development and testing it might be desirable to set this to 0 in order to not delay test execution time.
+	GroupInitialRebalanceDelayMs *int `json:"group_initial_rebalance_delay_ms,omitempty"`
+
+	// The maximum allowed session timeout for registered consumers. Longer timeouts give consumers more time to process messages in between heartbeats at the cost of a longer time to detect failures.
+	GroupMaxSessionTimeoutMs *int `json:"group_max_session_timeout_ms,omitempty"`
+
+	// The minimum allowed session timeout for registered consumers. Longer timeouts give consumers more time to process messages in between heartbeats at the cost of a longer time to detect failures.
+	GroupMinSessionTimeoutMs *int `json:"group_min_session_timeout_ms,omitempty"`
+	LogCleanupAndCompaction  *struct {
+		// How long are delete records retained?
+		LogCleanerDeleteRetentionMs *int `json:"log_cleaner_delete_retention_ms,omitempty"`
+
+		// The maximum amount of time message will remain uncompacted. Only applicable for logs that are being compacted
+		LogCleanerMaxCompactionLagMs *int `json:"log_cleaner_max_compaction_lag_ms,omitempty"`
+
+		// Controls log compactor frequency. Larger value means more frequent compactions but also more space wasted for logs. Consider setting log.cleaner.max.compaction.lag.ms to enforce compactions sooner, instead of setting a very high value for this option.
+		LogCleanerMinCleanableRatio *float32 `json:"log_cleaner_min_cleanable_ratio,omitempty"`
+
+		// The minimum time a message will remain uncompacted in the log. Only applicable for logs that are being compacted.
+		LogCleanerMinCompactionLagMs *int `json:"log_cleaner_min_compaction_lag_ms,omitempty"`
+
+		// The default cleanup policy for segments beyond the retention window
+		LogCleanupPolicy *JsonSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy `json:"log_cleanup_policy,omitempty"`
+	} `json:"log-cleanup-and-compaction,omitempty"`
+
+	// The number of messages accumulated on a log partition before messages are flushed to disk
+	LogFlushIntervalMessages *int `json:"log_flush_interval_messages,omitempty"`
+
+	// The maximum time in ms that a message in any topic is kept in memory before flushed to disk. If not set, the value in log.flush.scheduler.interval.ms is used
+	LogFlushIntervalMs *int `json:"log_flush_interval_ms,omitempty"`
+
+	// The interval with which Kafka adds an entry to the offset index
+	LogIndexIntervalBytes *int `json:"log_index_interval_bytes,omitempty"`
+
+	// The maximum size in bytes of the offset index
+	LogIndexSizeMaxBytes *int `json:"log_index_size_max_bytes,omitempty"`
+
+	// The maximum size of local log segments that can grow for a partition before it gets eligible for deletion. If set to -2, the value of log.retention.bytes is used. The effective value should always be less than or equal to log.retention.bytes value.
+	LogLocalRetentionBytes *int `json:"log_local_retention_bytes,omitempty"`
+
+	// The number of milliseconds to keep the local log segments before it gets eligible for deletion. If set to -2, the value of log.retention.ms is used. The effective value should always be less than or equal to log.retention.ms value.
+	LogLocalRetentionMs *int `json:"log_local_retention_ms,omitempty"`
+
+	// This configuration controls whether down-conversion of message formats is enabled to satisfy consume requests.
+	LogMessageDownconversionEnable *bool `json:"log_message_downconversion_enable,omitempty"`
+
+	// The maximum difference allowed between the timestamp when a broker receives a message and the timestamp specified in the message
+	LogMessageTimestampDifferenceMaxMs *int `json:"log_message_timestamp_difference_max_ms,omitempty"`
+
+	// Define whether the timestamp in the message is message create time or log append time.
+	LogMessageTimestampType *JsonSchemaKafkaLogMessageTimestampType `json:"log_message_timestamp_type,omitempty"`
+
+	// Should pre allocate file when create new segment?
+	LogPreallocate *bool `json:"log_preallocate,omitempty"`
+
+	// The maximum size of the log before deleting messages
+	LogRetentionBytes *int `json:"log_retention_bytes,omitempty"`
+
+	// The number of hours to keep a log file before deleting it
+	LogRetentionHours *int `json:"log_retention_hours,omitempty"`
+
+	// The number of milliseconds to keep a log file before deleting it (in milliseconds), If not set, the value in log.retention.minutes is used. If set to -1, no time limit is applied.
+	LogRetentionMs *int `json:"log_retention_ms,omitempty"`
+
+	// The maximum jitter to subtract from logRollTimeMillis (in milliseconds). If not set, the value in log.roll.jitter.hours is used
+	LogRollJitterMs *int `json:"log_roll_jitter_ms,omitempty"`
+
+	// The maximum time before a new log segment is rolled out (in milliseconds).
+	LogRollMs *int `json:"log_roll_ms,omitempty"`
+
+	// The maximum size of a single log file
+	LogSegmentBytes *int `json:"log_segment_bytes,omitempty"`
+
+	// The amount of time to wait before deleting a file from the filesystem
+	LogSegmentDeleteDelayMs *int `json:"log_segment_delete_delay_ms,omitempty"`
+
+	// The maximum number of connections allowed from each ip address (defaults to 2147483647).
+	MaxConnectionsPerIp *int `json:"max_connections_per_ip,omitempty"`
+
+	// The maximum number of incremental fetch sessions that the broker will maintain.
+	MaxIncrementalFetchSessionCacheSlots *int `json:"max_incremental_fetch_session_cache_slots,omitempty"`
+
+	// The maximum size of message that the server can receive.
+	MessageMaxBytes *int `json:"message_max_bytes,omitempty"`
+
+	// When a producer sets acks to 'all' (or '-1'), min.insync.replicas specifies the minimum number of replicas that must acknowledge a write for the write to be considered successful.
+	MinInsyncReplicas *int `json:"min_insync_replicas,omitempty"`
+
+	// Number of partitions for autocreated topics
+	NumPartitions *int `json:"num_partitions,omitempty"`
+
+	// Log retention window in minutes for offsets topic
+	OffsetsRetentionMinutes *int `json:"offsets_retention_minutes,omitempty"`
+
+	// The purge interval (in number of requests) of the producer request purgatory(defaults to 1000).
+	ProducerPurgatoryPurgeIntervalRequests *int `json:"producer_purgatory_purge_interval_requests,omitempty"`
+
+	// The number of bytes of messages to attempt to fetch for each partition (defaults to 1048576). This is not an absolute maximum, if the first record batch in the first non-empty partition of the fetch is larger than this value, the record batch will still be returned to ensure that progress can be made.
+	ReplicaFetchMaxBytes *int `json:"replica_fetch_max_bytes,omitempty"`
+
+	// Maximum bytes expected for the entire fetch response (defaults to 10485760). Records are fetched in batches, and if the first record batch in the first non-empty partition of the fetch is larger than this value, the record batch will still be returned to ensure that progress can be made. As such, this is not an absolute maximum.
+	ReplicaFetchResponseMaxBytes *int `json:"replica_fetch_response_max_bytes,omitempty"`
+
+	// The (optional) comma-delimited setting for the broker to use to verify that the JWT was issued for one of the expected audiences.
+	SaslOauthbearerExpectedAudience *string `json:"sasl_oauthbearer_expected_audience,omitempty"`
+
+	// Optional setting for the broker to use to verify that the JWT was created by the expected issuer.
+	SaslOauthbearerExpectedIssuer *string `json:"sasl_oauthbearer_expected_issuer,omitempty"`
+
+	// OIDC JWKS endpoint URL. By setting this the SASL SSL OAuth2/OIDC authentication is enabled. See also other options for SASL OAuth2/OIDC.
+	SaslOauthbearerJwksEndpointUrl *string `json:"sasl_oauthbearer_jwks_endpoint_url,omitempty"`
+
+	// Name of the scope from which to extract the subject claim from the JWT. Defaults to sub.
+	SaslOauthbearerSubClaimName *string `json:"sasl_oauthbearer_sub_claim_name,omitempty"`
+
+	// The maximum number of bytes in a socket request (defaults to 104857600).
+	SocketRequestMaxBytes *int `json:"socket_request_max_bytes,omitempty"`
+
+	// The interval at which to remove transactions that have expired due to transactional.id.expiration.ms passing (defaults to 3600000 (1 hour)).
+	TransactionRemoveExpiredTransactionCleanupIntervalMs *int `json:"transaction_remove_expired_transaction_cleanup_interval_ms,omitempty"`
+
+	// The transaction topic segment bytes should be kept relatively small in order to facilitate faster log compaction and cache loads (defaults to 104857600 (100 mebibytes)).
+	TransactionStateLogSegmentBytes *int `json:"transaction_state_log_segment_bytes,omitempty"`
+}
+
+// Specify the final compression type for a given topic. This configuration accepts the standard compression codecs ('gzip', 'snappy', 'lz4', 'zstd'). It additionally accepts 'uncompressed' which is equivalent to no compression; and 'producer' which means retain the original compression codec set by the producer.
+type JsonSchemaKafkaCompressionType string
+
+// The default cleanup policy for segments beyond the retention window
+type JsonSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy string
+
+// Define whether the timestamp in the message is message create time or log append time.
+type JsonSchemaKafkaLogMessageTimestampType string
+
+// JsonSchemaKafkaConnect defines model for json-schema-kafka-connect.
+type JsonSchemaKafkaConnect struct {
+	// Defines what client configurations can be overridden by the connector. Default is None
+	ConnectorClientConfigOverridePolicy *JsonSchemaKafkaConnectConnectorClientConfigOverridePolicy `json:"connector_client_config_override_policy,omitempty"`
+
+	// What to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server. Default is earliest
+	ConsumerAutoOffsetReset *JsonSchemaKafkaConnectConsumerAutoOffsetReset `json:"consumer_auto_offset_reset,omitempty"`
+
+	// Records are fetched in batches by the consumer, and if the first record batch in the first non-empty partition of the fetch is larger than this value, the record batch will still be returned to ensure that the consumer can make progress. As such, this is not a absolute maximum.
+	ConsumerFetchMaxBytes *int `json:"consumer_fetch_max_bytes,omitempty"`
+
+	// Transaction read isolation level. read_uncommitted is the default, but read_committed can be used if consume-exactly-once behavior is desired.
+	ConsumerIsolationLevel *JsonSchemaKafkaConnectConsumerIsolationLevel `json:"consumer_isolation_level,omitempty"`
+
+	// Records are fetched in batches by the consumer.If the first record batch in the first non-empty partition of the fetch is larger than this limit, the batch will still be returned to ensure that the consumer can make progress.
+	ConsumerMaxPartitionFetchBytes *int `json:"consumer_max_partition_fetch_bytes,omitempty"`
+
+	// The maximum delay in milliseconds between invocations of poll() when using consumer group management (defaults to 300000).
+	ConsumerMaxPollIntervalMs *int `json:"consumer_max_poll_interval_ms,omitempty"`
+
+	// The maximum number of records returned in a single call to poll() (defaults to 500).
+	ConsumerMaxPollRecords *int `json:"consumer_max_poll_records,omitempty"`
+
+	// The interval at which to try committing offsets for tasks (defaults to 60000).
+	OffsetFlushIntervalMs *int `json:"offset_flush_interval_ms,omitempty"`
+
+	// Maximum number of milliseconds to wait for records to flush and partition offset data to be committed to offset storage before cancelling the process and restoring the offset data to be committed in a future attempt (defaults to 5000).
+	OffsetFlushTimeoutMs *int `json:"offset_flush_timeout_ms,omitempty"`
+
+	// This setting gives the upper bound of the batch size to be sent. If there are fewer than this many bytes accumulated for this partition, the producer will 'linger' for the linger.ms time waiting for more records to show up. A batch size of zero will disable batching entirely (defaults to 16384).
+	ProducerBatchSize *int `json:"producer_batch_size,omitempty"`
+
+	// The total bytes of memory the producer can use to buffer records waiting to be sent to the broker (defaults to 33554432).
+	ProducerBufferMemory *int `json:"producer_buffer_memory,omitempty"`
+
+	// Specify the default compression type for producers. This configuration accepts the standard compression codecs ('gzip', 'snappy', 'lz4', 'zstd'). It additionally accepts 'none' which is the default and equivalent to no compression.
+	ProducerCompressionType *JsonSchemaKafkaConnectProducerCompressionType `json:"producer_compression_type,omitempty"`
+
+	// This setting gives the upper bound on the delay for batching: once there is batch.size worth of records for a partition it will be sent immediately regardless of this setting, however if there are fewer than this many bytes accumulated for this partition the producer will 'linger' for the specified time waiting for more records to show up. Defaults to 0.
+	ProducerLingerMs *int `json:"producer_linger_ms,omitempty"`
+
+	// This setting will limit the number of record batches the producer will send in a single request to avoid sending huge requests.
+	ProducerMaxRequestSize *int `json:"producer_max_request_size,omitempty"`
+
+	// The maximum delay that is scheduled in order to wait for the return of one or more departed workers before rebalancing and reassigning their connectors and tasks to the group. During this period the connectors and tasks of the departed workers remain unassigned.  Defaults to 5 minutes.
+	ScheduledRebalanceMaxDelayMs *int `json:"scheduled_rebalance_max_delay_ms,omitempty"`
+
+	// The timeout in milliseconds used to detect failures when using Kafka’s group management facilities (defaults to 10000).
+	SessionTimeoutMs *int `json:"session_timeout_ms,omitempty"`
+}
+
+// Defines what client configurations can be overridden by the connector. Default is None
+type JsonSchemaKafkaConnectConnectorClientConfigOverridePolicy string
+
+// What to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server. Default is earliest
+type JsonSchemaKafkaConnectConsumerAutoOffsetReset string
+
+// Transaction read isolation level. read_uncommitted is the default, but read_committed can be used if consume-exactly-once behavior is desired.
+type JsonSchemaKafkaConnectConsumerIsolationLevel string
+
+// Specify the default compression type for producers. This configuration accepts the standard compression codecs ('gzip', 'snappy', 'lz4', 'zstd'). It additionally accepts 'none' which is the default and equivalent to no compression.
+type JsonSchemaKafkaConnectProducerCompressionType string
+
+// JsonSchemaKafkaRest defines model for json-schema-kafka-rest.
+type JsonSchemaKafkaRest struct {
+	// If true the consumer's offset will be periodically committed to Kafka in the background
+	ConsumerEnableAutoCommit *bool `json:"consumer_enable_auto_commit,omitempty"`
+
+	// Maximum number of bytes in unencoded message keys and values by a single request
+	ConsumerRequestMaxBytes *int `json:"consumer_request_max_bytes,omitempty"`
+
+	// The maximum total time to wait for messages for a request if the maximum number of messages has not yet been reached
+	ConsumerRequestTimeoutMs *JsonSchemaKafkaRestConsumerRequestTimeoutMs `json:"consumer_request_timeout_ms,omitempty"`
+
+	// The number of acknowledgments the producer requires the leader to have received before considering a request complete. If set to 'all' or '-1', the leader will wait for the full set of in-sync replicas to acknowledge the record.
+	ProducerAcks *JsonSchemaKafkaRestProducerAcks `json:"producer_acks,omitempty"`
+
+	// Specify the default compression type for producers. This configuration accepts the standard compression codecs ('gzip', 'snappy', 'lz4', 'zstd'). It additionally accepts 'none' which is the default and equivalent to no compression.
+	ProducerCompressionType *JsonSchemaKafkaRestProducerCompressionType `json:"producer_compression_type,omitempty"`
+
+	// Wait for up to the given delay to allow batching records together
+	ProducerLingerMs *int `json:"producer_linger_ms,omitempty"`
+
+	// The maximum size of a request in bytes. Note that Kafka broker can also cap the record batch size.
+	ProducerMaxRequestSize *int `json:"producer_max_request_size,omitempty"`
+
+	// Maximum number of SimpleConsumers that can be instantiated per broker
+	SimpleconsumerPoolSizeMax *int `json:"simpleconsumer_pool_size_max,omitempty"`
+}
+
+// The maximum total time to wait for messages for a request if the maximum number of messages has not yet been reached
+type JsonSchemaKafkaRestConsumerRequestTimeoutMs int
+
+// The number of acknowledgments the producer requires the leader to have received before considering a request complete. If set to 'all' or '-1', the leader will wait for the full set of in-sync replicas to acknowledge the record.
+type JsonSchemaKafkaRestProducerAcks string
+
+// Specify the default compression type for producers. This configuration accepts the standard compression codecs ('gzip', 'snappy', 'lz4', 'zstd'). It additionally accepts 'none' which is the default and equivalent to no compression.
+type JsonSchemaKafkaRestProducerCompressionType string
+
+// JsonSchemaMysql defines model for json-schema-mysql.
+type JsonSchemaMysql struct {
+	// The number of seconds that the mysqld server waits for a connect packet before responding with Bad handshake
+	ConnectTimeout *int `json:"connect_timeout,omitempty"`
+
+	// Default server time zone as an offset from UTC (from -12:00 to +12:00), a time zone name, or 'SYSTEM' to use the MySQL server default.
+	DefaultTimeZone *string `json:"default_time_zone,omitempty"`
+
+	// The maximum permitted result length in bytes for the GROUP_CONCAT() function.
+	GroupConcatMaxLen *int `json:"group_concat_max_len,omitempty"`
+
+	// The time, in seconds, before cached statistics expire
+	InformationSchemaStatsExpiry *int `json:"information_schema_stats_expiry,omitempty"`
+
+	// Maximum size for the InnoDB change buffer, as a percentage of the total size of the buffer pool. Default is 25
+	InnodbChangeBufferMaxSize *int `json:"innodb_change_buffer_max_size,omitempty"`
+
+	// Specifies whether flushing a page from the InnoDB buffer pool also flushes other dirty pages in the same extent (default is 1): 0 - dirty pages in the same extent are not flushed,  1 - flush contiguous dirty pages in the same extent,  2 - flush dirty pages in the same extent
+	InnodbFlushNeighbors *int `json:"innodb_flush_neighbors,omitempty"`
+
+	// Minimum length of words that are stored in an InnoDB FULLTEXT index. Changing this parameter will lead to a restart of the MySQL service.
+	InnodbFtMinTokenSize *int `json:"innodb_ft_min_token_size,omitempty"`
+
+	// This option is used to specify your own InnoDB FULLTEXT index stopword list for all InnoDB tables.
+	InnodbFtServerStopwordTable *string `json:"innodb_ft_server_stopword_table"`
+
+	// The length of time in seconds an InnoDB transaction waits for a row lock before giving up. Default is 120.
+	InnodbLockWaitTimeout *int `json:"innodb_lock_wait_timeout,omitempty"`
+
+	// The size in bytes of the buffer that InnoDB uses to write to the log files on disk.
+	InnodbLogBufferSize *int `json:"innodb_log_buffer_size,omitempty"`
+
+	// The upper limit in bytes on the size of the temporary log files used during online DDL operations for InnoDB tables.
+	InnodbOnlineAlterLogMaxSize *int `json:"innodb_online_alter_log_max_size,omitempty"`
+
+	// When enabled, information about all deadlocks in InnoDB user transactions is recorded in the error log. Disabled by default.
+	InnodbPrintAllDeadlocks *bool `json:"innodb_print_all_deadlocks,omitempty"`
+
+	// The number of I/O threads for read operations in InnoDB. Default is 4. Changing this parameter will lead to a restart of the MySQL service.
+	InnodbReadIoThreads *int `json:"innodb_read_io_threads,omitempty"`
+
+	// When enabled a transaction timeout causes InnoDB to abort and roll back the entire transaction. Changing this parameter will lead to a restart of the MySQL service.
+	InnodbRollbackOnTimeout *bool `json:"innodb_rollback_on_timeout,omitempty"`
+
+	// Defines the maximum number of threads permitted inside of InnoDB. Default is 0 (infinite concurrency - no limit)
+	InnodbThreadConcurrency *int `json:"innodb_thread_concurrency,omitempty"`
+
+	// The number of I/O threads for write operations in InnoDB. Default is 4. Changing this parameter will lead to a restart of the MySQL service.
+	InnodbWriteIoThreads *int `json:"innodb_write_io_threads,omitempty"`
+
+	// The number of seconds the server waits for activity on an interactive connection before closing it.
+	InteractiveTimeout *int `json:"interactive_timeout,omitempty"`
+
+	// The storage engine for in-memory internal temporary tables.
+	InternalTmpMemStorageEngine *JsonSchemaMysqlInternalTmpMemStorageEngine `json:"internal_tmp_mem_storage_engine,omitempty"`
+
+	// The slow_query_logs work as SQL statements that take more than long_query_time seconds to execute. Default is 10s
+	LongQueryTime *float32 `json:"long_query_time,omitempty"`
+
+	// Size of the largest message in bytes that can be received by the server. Default is 67108864 (64M)
+	MaxAllowedPacket *int `json:"max_allowed_packet,omitempty"`
+
+	// Limits the size of internal in-memory tables. Also set tmp_table_size. Default is 16777216 (16M)
+	MaxHeapTableSize *int `json:"max_heap_table_size,omitempty"`
+
+	// Start sizes of connection buffer and result buffer. Default is 16384 (16K). Changing this parameter will lead to a restart of the MySQL service.
+	NetBufferLength *int `json:"net_buffer_length,omitempty"`
+
+	// The number of seconds to wait for more data from a connection before aborting the read.
+	NetReadTimeout *int `json:"net_read_timeout,omitempty"`
+
+	// The number of seconds to wait for a block to be written to a connection before aborting the write.
+	NetWriteTimeout *int `json:"net_write_timeout,omitempty"`
+
+	// Slow query log enables capturing of slow queries. Setting slow_query_log to false also truncates the mysql.slow_log table. Default is off
+	SlowQueryLog *bool `json:"slow_query_log,omitempty"`
+
+	// Sort buffer size in bytes for ORDER BY optimization. Default is 262144 (256K)
+	SortBufferSize *int `json:"sort_buffer_size,omitempty"`
+
+	// Global SQL mode. Set to empty to use MySQL server defaults. When creating a new service and not setting this field Aiven default SQL mode (strict, SQL standard compliant) will be assigned.
+	SqlMode *string `json:"sql_mode,omitempty"`
+
+	// Require primary key to be defined for new tables or old tables modified with ALTER TABLE and fail if missing. It is recommended to always have primary keys because various functionality may break if any large table is missing them.
+	SqlRequirePrimaryKey *bool `json:"sql_require_primary_key,omitempty"`
+
+	// Limits the size of internal in-memory tables. Also set max_heap_table_size. Default is 16777216 (16M)
+	TmpTableSize *int `json:"tmp_table_size,omitempty"`
+
+	// The number of seconds the server waits for activity on a noninteractive connection before closing it.
+	WaitTimeout *int `json:"wait_timeout,omitempty"`
+}
+
+// The storage engine for in-memory internal temporary tables.
+type JsonSchemaMysqlInternalTmpMemStorageEngine string
+
+// JsonSchemaOpensearch defines model for json-schema-opensearch.
+type JsonSchemaOpensearch struct {
+	// Explicitly allow or block automatic creation of indices. Defaults to true
+	ActionAutoCreateIndexEnabled  *bool `json:"action_auto_create_index_enabled,omitempty"`
+	ActionDestructiveRequiresName *bool `json:"action_destructive_requires_name"`
+	AuthFailureListeners          *struct {
+		InternalAuthenticationBackendLimiting *struct {
+			// The number of login attempts allowed before login is blocked
+			AllowedTries *int `json:"allowed_tries,omitempty"`
+
+			// The internal backend. Enter `internal`
+			AuthenticationBackend *JsonSchemaOpensearchAuthFailureListenersInternalAuthenticationBackendLimitingAuthenticationBackend `json:"authentication_backend,omitempty"`
+
+			// The duration of time that login remains blocked after a failed login
+			BlockExpirySeconds *int `json:"block_expiry_seconds,omitempty"`
+
+			// The maximum number of blocked IP addresses
+			MaxBlockedClients *int `json:"max_blocked_clients,omitempty"`
+
+			// The maximum number of tracked IP addresses that have failed login
+			MaxTrackedClients *int `json:"max_tracked_clients,omitempty"`
+
+			// The window of time in which the value for `allowed_tries` is enforced
+			TimeWindowSeconds *int `json:"time_window_seconds,omitempty"`
+
+			// The type of rate limiting
+			Type *JsonSchemaOpensearchAuthFailureListenersInternalAuthenticationBackendLimitingType `json:"type,omitempty"`
+		} `json:"internal_authentication_backend_limiting,omitempty"`
+		IpRateLimiting *struct {
+			// The number of login attempts allowed before login is blocked
+			AllowedTries *int `json:"allowed_tries,omitempty"`
+
+			// The duration of time that login remains blocked after a failed login
+			BlockExpirySeconds *int `json:"block_expiry_seconds,omitempty"`
+
+			// The maximum number of blocked IP addresses
+			MaxBlockedClients *int `json:"max_blocked_clients,omitempty"`
+
+			// The maximum number of tracked IP addresses that have failed login
+			MaxTrackedClients *int `json:"max_tracked_clients,omitempty"`
+
+			// The window of time in which the value for `allowed_tries` is enforced
+			TimeWindowSeconds *int `json:"time_window_seconds,omitempty"`
+
+			// The type of rate limiting
+			Type *JsonSchemaOpensearchAuthFailureListenersIpRateLimitingType `json:"type,omitempty"`
+		} `json:"ip_rate_limiting,omitempty"`
+	} `json:"auth_failure_listeners,omitempty"`
+
+	// Controls the number of shards allowed in the cluster per data node
+	ClusterMaxShardsPerNode *int `json:"cluster_max_shards_per_node,omitempty"`
+
+	// How many concurrent incoming/outgoing shard recoveries (normally replicas) are allowed to happen on a node. Defaults to 2.
+	ClusterRoutingAllocationNodeConcurrentRecoveries *int `json:"cluster_routing_allocation_node_concurrent_recoveries,omitempty"`
+	EmailSender                                      *struct {
+		// This should be identical to the Sender name defined in Opensearch dashboards
+		EmailSenderName string `json:"email_sender_name"`
+
+		// Sender password for Opensearch alerts to authenticate with SMTP server
+		EmailSenderPassword string `json:"email_sender_password"`
+		EmailSenderUsername string `json:"email_sender_username"`
+	} `json:"email-sender,omitempty"`
+
+	// Maximum content length for HTTP requests to the OpenSearch HTTP API, in bytes.
+	HttpMaxContentLength *int `json:"http_max_content_length,omitempty"`
+
+	// The max size of allowed headers, in bytes
+	HttpMaxHeaderSize *int `json:"http_max_header_size,omitempty"`
+
+	// The max length of an HTTP URL, in bytes
+	HttpMaxInitialLineLength *int `json:"http_max_initial_line_length,omitempty"`
+
+	// Relative amount. Maximum amount of heap memory used for field data cache. This is an expert setting; decreasing the value too much will increase overhead of loading field data; too much memory used for field data cache will decrease amount of heap available for other operations.
+	IndicesFielddataCacheSize *int `json:"indices_fielddata_cache_size"`
+
+	// Percentage value. Default is 10%. Total amount of heap used for indexing buffer, before writing segments to disk. This is an expert setting. Too low value will slow down indexing; too high value will increase indexing performance but causes performance issues for query performance.
+	IndicesMemoryIndexBufferSize *int `json:"indices_memory_index_buffer_size,omitempty"`
+
+	// Percentage value. Default is 10%. Maximum amount of heap used for query cache. This is an expert setting. Too low value will decrease query performance and increase performance for other operations; too high value will cause issues with other OpenSearch functionality.
+	IndicesQueriesCacheSize *int `json:"indices_queries_cache_size,omitempty"`
+
+	// Maximum number of clauses Lucene BooleanQuery can have. The default value (1024) is relatively high, and increasing it may cause performance issues. Investigate other approaches first before increasing this value.
+	IndicesQueryBoolMaxClauseCount *int `json:"indices_query_bool_max_clause_count,omitempty"`
+
+	// Limits total inbound and outbound recovery traffic for each node. Applies to both peer recoveries as well as snapshot recoveries (i.e., restores from a snapshot). Defaults to 40mb
+	IndicesRecoveryMaxBytesPerSec *int `json:"indices_recovery_max_bytes_per_sec,omitempty"`
+
+	// Number of file chunks sent in parallel for each recovery. Defaults to 2.
+	IndicesRecoveryMaxConcurrentFileChunks *int `json:"indices_recovery_max_concurrent_file_chunks,omitempty"`
+	IsmHistory                             *struct {
+		IsmEnabled                        *bool `json:"ism_enabled"`
+		IsmHistoryEnabled                 *bool `json:"ism_history_enabled"`
+		IsmHistoryMaxAge                  *int  `json:"ism_history_max_age"`
+		IsmHistoryMaxDocs                 *int  `json:"ism_history_max_docs"`
+		IsmHistoryRolloverCheckPeriod     *int  `json:"ism_history_rollover_check_period"`
+		IsmHistoryRolloverRetentionPeriod *int  `json:"ism_history_rollover_retention_period"`
+	} `json:"ism-history,omitempty"`
+
+	// Compatibility mode sets OpenSearch to report its version as 7.10 so clients continue to work. Default is false
+	OverrideMainResponseVersion *bool `json:"override_main_response_version,omitempty"`
+
+	// Whitelisted addresses for reindexing. Changing this value will cause all OpenSearch instances to restart.
+	ReindexRemoteWhitelist *[]string `json:"reindex_remote_whitelist"`
+
+	// Script compilation circuit breaker limits the number of inline script compilations within a period of time. Default is use-context
+	ScriptMaxCompilationsRate *string `json:"script_max_compilations_rate,omitempty"`
+
+	// Maximum number of aggregation buckets allowed in a single response. OpenSearch default value is used when this is not defined.
+	SearchMaxBuckets *int `json:"search_max_buckets"`
+
+	// Size for the thread pool queue. See documentation for exact details.
+	ThreadPoolAnalyzeQueueSize *int `json:"thread_pool_analyze_queue_size,omitempty"`
+
+	// Size for the thread pool. See documentation for exact details. Do note this may have maximum value depending on CPU count - value is automatically lowered if set to higher than maximum value.
+	ThreadPoolAnalyzeSize *int `json:"thread_pool_analyze_size,omitempty"`
+
+	// Size for the thread pool. See documentation for exact details. Do note this may have maximum value depending on CPU count - value is automatically lowered if set to higher than maximum value.
+	ThreadPoolForceMergeSize *int `json:"thread_pool_force_merge_size,omitempty"`
+
+	// Size for the thread pool queue. See documentation for exact details.
+	ThreadPoolGetQueueSize *int `json:"thread_pool_get_queue_size,omitempty"`
+
+	// Size for the thread pool. See documentation for exact details. Do note this may have maximum value depending on CPU count - value is automatically lowered if set to higher than maximum value.
+	ThreadPoolGetSize *int `json:"thread_pool_get_size,omitempty"`
+
+	// Size for the thread pool queue. See documentation for exact details.
+	ThreadPoolSearchQueueSize *int `json:"thread_pool_search_queue_size,omitempty"`
+
+	// Size for the thread pool. See documentation for exact details. Do note this may have maximum value depending on CPU count - value is automatically lowered if set to higher than maximum value.
+	ThreadPoolSearchSize *int `json:"thread_pool_search_size,omitempty"`
+
+	// Size for the thread pool queue. See documentation for exact details.
+	ThreadPoolSearchThrottledQueueSize *int `json:"thread_pool_search_throttled_queue_size,omitempty"`
+
+	// Size for the thread pool. See documentation for exact details. Do note this may have maximum value depending on CPU count - value is automatically lowered if set to higher than maximum value.
+	ThreadPoolSearchThrottledSize *int `json:"thread_pool_search_throttled_size,omitempty"`
+
+	// Size for the thread pool queue. See documentation for exact details.
+	ThreadPoolWriteQueueSize *int `json:"thread_pool_write_queue_size,omitempty"`
+
+	// Size for the thread pool. See documentation for exact details. Do note this may have maximum value depending on CPU count - value is automatically lowered if set to higher than maximum value.
+	ThreadPoolWriteSize *int `json:"thread_pool_write_size,omitempty"`
+}
+
+// The internal backend. Enter `internal`
+type JsonSchemaOpensearchAuthFailureListenersInternalAuthenticationBackendLimitingAuthenticationBackend string
+
+// The type of rate limiting
+type JsonSchemaOpensearchAuthFailureListenersInternalAuthenticationBackendLimitingType string
+
+// The type of rate limiting
+type JsonSchemaOpensearchAuthFailureListenersIpRateLimitingType string
+
+// JsonSchemaPg defines model for json-schema-pg.
+type JsonSchemaPg struct {
+	Autovacuum *struct {
+		// Specifies a fraction of the table size to add to autovacuum_analyze_threshold when deciding whether to trigger an ANALYZE. The default is 0.2 (20% of table size)
+		AutovacuumAnalyzeScaleFactor *float32 `json:"autovacuum_analyze_scale_factor,omitempty"`
+
+		// Specifies the minimum number of inserted, updated or deleted tuples needed to trigger an  ANALYZE in any one table. The default is 50 tuples.
+		AutovacuumAnalyzeThreshold *int `json:"autovacuum_analyze_threshold,omitempty"`
+
+		// Specifies the maximum age (in transactions) that a table's pg_class.relfrozenxid field can attain before a VACUUM operation is forced to prevent transaction ID wraparound within the table. Note that the system will launch autovacuum processes to prevent wraparound even when autovacuum is otherwise disabled. This parameter will cause the server to be restarted.
+		AutovacuumFreezeMaxAge *int `json:"autovacuum_freeze_max_age,omitempty"`
+
+		// Specifies the maximum number of autovacuum processes (other than the autovacuum launcher) that may be running at any one time. The default is three. This parameter can only be set at server start.
+		AutovacuumMaxWorkers *int `json:"autovacuum_max_workers,omitempty"`
+
+		// Specifies the minimum delay between autovacuum runs on any given database. The delay is measured in seconds, and the default is one minute
+		AutovacuumNaptime *int `json:"autovacuum_naptime,omitempty"`
+
+		// Specifies the cost delay value that will be used in automatic VACUUM operations. If -1 is specified, the regular vacuum_cost_delay value will be used. The default value is 20 milliseconds
+		AutovacuumVacuumCostDelay *int `json:"autovacuum_vacuum_cost_delay,omitempty"`
+
+		// Specifies the cost limit value that will be used in automatic VACUUM operations. If -1 is specified (which is the default), the regular vacuum_cost_limit value will be used.
+		AutovacuumVacuumCostLimit *int `json:"autovacuum_vacuum_cost_limit,omitempty"`
+
+		// Specifies a fraction of the table size to add to autovacuum_vacuum_threshold when deciding whether to trigger a VACUUM. The default is 0.2 (20% of table size)
+		AutovacuumVacuumScaleFactor *float32 `json:"autovacuum_vacuum_scale_factor,omitempty"`
+
+		// Specifies the minimum number of updated or deleted tuples needed to trigger a VACUUM in any one table. The default is 50 tuples
+		AutovacuumVacuumThreshold *int `json:"autovacuum_vacuum_threshold,omitempty"`
+
+		// Causes each action executed by autovacuum to be logged if it ran for at least the specified number of milliseconds. Setting this to zero logs all autovacuum actions. Minus-one (the default) disables logging autovacuum actions.
+		LogAutovacuumMinDuration *int `json:"log_autovacuum_min_duration,omitempty"`
+	} `json:"autovacuum,omitempty"`
+	BgWriter *struct {
+		// Specifies the delay between activity rounds for the background writer in milliseconds. Default is 200.
+		BgwriterDelay *int `json:"bgwriter_delay,omitempty"`
+
+		// Whenever more than bgwriter_flush_after bytes have been written by the background writer, attempt to force the OS to issue these writes to the underlying storage. Specified in kilobytes, default is 512. Setting of 0 disables forced writeback.
+		BgwriterFlushAfter *int `json:"bgwriter_flush_after,omitempty"`
+
+		// In each round, no more than this many buffers will be written by the background writer. Setting this to zero disables background writing. Default is 100.
+		BgwriterLruMaxpages *int `json:"bgwriter_lru_maxpages,omitempty"`
+
+		// The average recent need for new buffers is multiplied by bgwriter_lru_multiplier to arrive at an estimate of the number that will be needed during the next round, (up to bgwriter_lru_maxpages). 1.0 represents a “just in time” policy of writing exactly the number of buffers predicted to be needed. Larger values provide some cushion against spikes in demand, while smaller values intentionally leave writes to be done by server processes. The default is 2.0.
+		BgwriterLruMultiplier *float32 `json:"bgwriter_lru_multiplier,omitempty"`
+	} `json:"bg-writer,omitempty"`
+
+	// This is the amount of time, in milliseconds, to wait on a lock before checking to see if there is a deadlock condition.
+	DeadlockTimeout *int `json:"deadlock_timeout,omitempty"`
+
+	// Specifies the default TOAST compression method for values of compressible columns (the default is lz4).
+	DefaultToastCompression *JsonSchemaPgDefaultToastCompression `json:"default_toast_compression,omitempty"`
+
+	// Time out sessions with open transactions after this number of milliseconds
+	IdleInTransactionSessionTimeout *int `json:"idle_in_transaction_session_timeout,omitempty"`
+
+	// Controls system-wide use of Just-in-Time Compilation (JIT).
+	Jit *bool `json:"jit,omitempty"`
+
+	// Controls the amount of detail written in the server log for each message that is logged.
+	LogErrorVerbosity *JsonSchemaPgLogErrorVerbosity `json:"log_error_verbosity,omitempty"`
+
+	// Choose from one of the available log-formats. These can support popular log analyzers like pgbadger, pganalyze etc.
+	LogLinePrefix *JsonSchemaPgLogLinePrefix `json:"log_line_prefix,omitempty"`
+
+	// Log statements that take more than this number of milliseconds to run, -1 disables
+	LogMinDurationStatement *int `json:"log_min_duration_statement,omitempty"`
+
+	// Log statements for each temporary file created larger than this number of kilobytes, -1 disables
+	LogTempFiles *int `json:"log_temp_files,omitempty"`
+
+	// PostgreSQL maximum number of files that can be open per process
+	MaxFilesPerProcess *int `json:"max_files_per_process,omitempty"`
+
+	// PostgreSQL maximum locks per transaction
+	MaxLocksPerTransaction *int `json:"max_locks_per_transaction,omitempty"`
+
+	// PostgreSQL maximum logical replication workers (taken from the pool of max_parallel_workers)
+	MaxLogicalReplicationWorkers *int `json:"max_logical_replication_workers,omitempty"`
+
+	// Sets the maximum number of workers that the system can support for parallel queries
+	MaxParallelWorkers *int `json:"max_parallel_workers,omitempty"`
+
+	// Sets the maximum number of workers that can be started by a single Gather or Gather Merge node
+	MaxParallelWorkersPerGather *int `json:"max_parallel_workers_per_gather,omitempty"`
+
+	// PostgreSQL maximum predicate locks per transaction
+	MaxPredLocksPerTransaction *int `json:"max_pred_locks_per_transaction,omitempty"`
+
+	// PostgreSQL maximum prepared transactions
+	MaxPreparedTransactions *int `json:"max_prepared_transactions,omitempty"`
+
+	// PostgreSQL maximum replication slots
+	MaxReplicationSlots *int `json:"max_replication_slots,omitempty"`
+
+	// Maximum depth of the stack in bytes
+	MaxStackDepth *int `json:"max_stack_depth,omitempty"`
+
+	// Max standby archive delay in milliseconds
+	MaxStandbyArchiveDelay *int `json:"max_standby_archive_delay,omitempty"`
+
+	// Max standby streaming delay in milliseconds
+	MaxStandbyStreamingDelay *int `json:"max_standby_streaming_delay,omitempty"`
+
+	// Sets the maximum number of background processes that the system can support
+	MaxWorkerProcesses *int `json:"max_worker_processes,omitempty"`
+
+	// Sets the time interval to run pg_partman's scheduled tasks
+	PgPartmanBgwInterval *int `json:"pg_partman_bgw.interval,omitempty"`
+
+	// Controls which role to use for pg_partman's scheduled background tasks.
+	PgPartmanBgwRole *string `json:"pg_partman_bgw.role,omitempty"`
+
+	// Enables or disables query plan monitoring
+	PgStatMonitorPgsmEnableQueryPlan *bool `json:"pg_stat_monitor.pgsm_enable_query_plan,omitempty"`
+
+	// Sets the maximum number of buckets
+	PgStatMonitorPgsmMaxBuckets *int `json:"pg_stat_monitor.pgsm_max_buckets,omitempty"`
+
+	// Controls which statements are counted. Specify top to track top-level statements (those issued directly by clients), all to also track nested statements (such as statements invoked within functions), or none to disable statement statistics collection. The default value is top.
+	PgStatStatementsTrack *JsonSchemaPgPgStatStatementsTrack `json:"pg_stat_statements.track,omitempty"`
+
+	// PostgreSQL temporary file limit in KiB, -1 for unlimited
+	TempFileLimit *int `json:"temp_file_limit,omitempty"`
+
+	// PostgreSQL service timezone
+	Timezone *string `json:"timezone,omitempty"`
+
+	// Specifies the number of bytes reserved to track the currently executing command for each active session.
+	TrackActivityQuerySize *int `json:"track_activity_query_size,omitempty"`
+
+	// Record commit time of transactions.
+	TrackCommitTimestamp *JsonSchemaPgTrackCommitTimestamp `json:"track_commit_timestamp,omitempty"`
+
+	// Enables tracking of function call counts and time used.
+	TrackFunctions *JsonSchemaPgTrackFunctions `json:"track_functions,omitempty"`
+
+	// Enables timing of database I/O calls. This parameter is off by default, because it will repeatedly query the operating system for the current time, which may cause significant overhead on some platforms.
+	TrackIoTiming *JsonSchemaPgTrackIoTiming `json:"track_io_timing,omitempty"`
+	Wal           *struct {
+		// PostgreSQL maximum WAL size (MB) reserved for replication slots. Default is -1 (unlimited). wal_keep_size minimum WAL size setting takes precedence over this.
+		MaxSlotWalKeepSize *int `json:"max_slot_wal_keep_size,omitempty"`
+
+		// PostgreSQL maximum WAL senders
+		MaxWalSenders *int `json:"max_wal_senders,omitempty"`
+
+		// Terminate replication connections that are inactive for longer than this amount of time, in milliseconds. Setting this value to zero disables the timeout.
+		WalSenderTimeout *interface{} `json:"wal_sender_timeout,omitempty"`
+
+		// WAL flush interval in milliseconds. Note that setting this value to lower than the default 200ms may negatively impact performance
+		WalWriterDelay *int `json:"wal_writer_delay,omitempty"`
+	} `json:"wal,omitempty"`
+}
+
+// Specifies the default TOAST compression method for values of compressible columns (the default is lz4).
+type JsonSchemaPgDefaultToastCompression string
+
+// Controls the amount of detail written in the server log for each message that is logged.
+type JsonSchemaPgLogErrorVerbosity string
+
+// Choose from one of the available log-formats. These can support popular log analyzers like pgbadger, pganalyze etc.
+type JsonSchemaPgLogLinePrefix string
+
+// Controls which statements are counted. Specify top to track top-level statements (those issued directly by clients), all to also track nested statements (such as statements invoked within functions), or none to disable statement statistics collection. The default value is top.
+type JsonSchemaPgPgStatStatementsTrack string
+
+// Record commit time of transactions.
+type JsonSchemaPgTrackCommitTimestamp string
+
+// Enables tracking of function call counts and time used.
+type JsonSchemaPgTrackFunctions string
+
+// Enables timing of database I/O calls. This parameter is off by default, because it will repeatedly query the operating system for the current time, which may cause significant overhead on some platforms.
+type JsonSchemaPgTrackIoTiming string
+
+// JsonSchemaPgbouncer defines model for json-schema-pgbouncer.
+type JsonSchemaPgbouncer struct {
+	AutodbIdleTimeout       *int                                          `json:"autodb_idle_timeout,omitempty"`
+	AutodbMaxDbConnections  *int                                          `json:"autodb_max_db_connections,omitempty"`
+	AutodbPoolMode          *JsonSchemaPgbouncerAutodbPoolMode            `json:"autodb_pool_mode,omitempty"`
+	AutodbPoolSize          *int                                          `json:"autodb_pool_size,omitempty"`
+	IgnoreStartupParameters *[]JsonSchemaPgbouncerIgnoreStartupParameters `json:"ignore_startup_parameters,omitempty"`
+	MinPoolSize             *int                                          `json:"min_pool_size,omitempty"`
+	ServerIdleTimeout       *int                                          `json:"server_idle_timeout,omitempty"`
+	ServerLifetime          *int                                          `json:"server_lifetime,omitempty"`
+	ServerResetQueryAlways  *bool                                         `json:"server_reset_query_always,omitempty"`
+}
+
+// JsonSchemaPgbouncerAutodbPoolMode defines model for JsonSchemaPgbouncer.AutodbPoolMode.
+type JsonSchemaPgbouncerAutodbPoolMode string
+
+// JsonSchemaPgbouncerIgnoreStartupParameters defines model for JsonSchemaPgbouncer.IgnoreStartupParameters.
+type JsonSchemaPgbouncerIgnoreStartupParameters string
+
+// JsonSchemaPglookout defines model for json-schema-pglookout.
+type JsonSchemaPglookout struct {
+	// Number of seconds of master unavailability before triggering database failover to standby
+	MaxFailoverReplicationTimeLag *int `json:"max_failover_replication_time_lag,omitempty"`
+}
+
+// JsonSchemaRedis defines model for json-schema-redis.
+type JsonSchemaRedis struct {
+	// Determines default pub/sub channels' ACL for new users if ACL is not supplied. When this option is not defined, all_channels is assumed to keep backward compatibility. This option doesn't affect Redis configuration acl-pubsub-default.
+	AclChannelsDefault *JsonSchemaRedisAclChannelsDefault `json:"acl_channels_default,omitempty"`
+
+	// Set Redis IO thread count. Changing this will cause a restart of the Redis service.
+	IoThreads            *int                            `json:"io_threads,omitempty"`
+	LfuDecayTime         *int                            `json:"lfu_decay_time,omitempty"`
+	LfuLogFactor         *int                            `json:"lfu_log_factor,omitempty"`
+	MaxmemoryPolicy      *JsonSchemaRedisMaxmemoryPolicy `json:"maxmemory_policy"`
+	NotifyKeyspaceEvents *string                         `json:"notify_keyspace_events,omitempty"`
+
+	// Set number of Redis databases. Changing this will cause a restart of the Redis service.
+	NumberOfDatabases *int `json:"number_of_databases,omitempty"`
+
+	// When persistence is 'rdb', Redis does RDB dumps each 10 minutes if any key is changed. Also RDB dumps are done according to backup schedule for backup purposes. When persistence is 'off', no RDB dumps and backups are done, so data can be lost at any moment if service is restarted for any reason, or if service is powered off. Also service can't be forked.
+	Persistence *JsonSchemaRedisPersistence `json:"persistence,omitempty"`
+
+	// Set output buffer limit for pub / sub clients in MB. The value is the hard limit, the soft limit is 1/4 of the hard limit. When setting the limit, be mindful of the available memory in the selected service plan.
+	PubsubClientOutputBufferLimit *int  `json:"pubsub_client_output_buffer_limit,omitempty"`
+	Ssl                           *bool `json:"ssl,omitempty"`
+	Timeout                       *int  `json:"timeout,omitempty"`
+}
+
+// Determines default pub/sub channels' ACL for new users if ACL is not supplied. When this option is not defined, all_channels is assumed to keep backward compatibility. This option doesn't affect Redis configuration acl-pubsub-default.
+type JsonSchemaRedisAclChannelsDefault string
+
+// JsonSchemaRedisMaxmemoryPolicy defines model for JsonSchemaRedis.MaxmemoryPolicy.
+type JsonSchemaRedisMaxmemoryPolicy string
+
+// When persistence is 'rdb', Redis does RDB dumps each 10 minutes if any key is changed. Also RDB dumps are done according to backup schedule for backup purposes. When persistence is 'off', no RDB dumps and backups are done, so data can be lost at any moment if service is restarted for any reason, or if service is powered off. Also service can't be forked.
+type JsonSchemaRedisPersistence string
+
+// JsonSchemaSchemaRegistry defines model for json-schema-schema-registry.
+type JsonSchemaSchemaRegistry struct {
+	// If true, Karapace / Schema Registry on the service nodes can participate in leader election. It might be needed to disable this when the schemas topic is replicated to a secondary cluster and Karapace / Schema Registry there must not participate in leader election. Defaults to `true`.
+	LeaderEligibility *bool `json:"leader_eligibility,omitempty"`
+
+	// The durable single partition topic that acts as the durable log for the data. This topic must be compacted to avoid losing data due to retention policy. Please note that changing this configuration in an existing Schema Registry / Karapace setup leads to previous schemas being inaccessible, data encoded with them potentially unreadable and schema ID sequence put out of order. It's only possible to do the switch while Schema Registry / Karapace is disabled. Defaults to `_schemas`.
+	TopicName *string `json:"topic_name,omitempty"`
+}
+
+// JsonSchemaTimescaledb defines model for json-schema-timescaledb.
+type JsonSchemaTimescaledb struct {
+	// The number of background workers for timescaledb operations. You should configure this setting to the sum of your number of databases and the total number of concurrent background workers you want running at any given point in time.
+	MaxBackgroundWorkers *int `json:"max_background_workers,omitempty"`
+}
 
 // Kubelet image GC options
 type KubeletImageGc struct {
@@ -2968,7 +4263,12 @@ type TemplateVisibility string
 
 // Zone
 type Zone struct {
-	Name *ZoneName `json:"name,omitempty"`
+	// Zone API endpoint
+	ApiEndpoint *Endpoint `json:"api-endpoint,omitempty"`
+	Name        *ZoneName `json:"name,omitempty"`
+
+	// Zone SOS endpoint
+	SosEndpoint *Endpoint `json:"sos-endpoint,omitempty"`
 }
 
 // ZoneName defines model for zone-name.
@@ -3007,12 +4307,54 @@ type CreateApiKeyJSONBody struct {
 	RoleId string `json:"role-id"`
 }
 
+// ListBlockStorageVolumesParams defines parameters for ListBlockStorageVolumes.
+type ListBlockStorageVolumesParams struct {
+	InstanceId *string `json:"instance-id,omitempty"`
+}
+
+// CreateBlockStorageVolumeJSONBody defines parameters for CreateBlockStorageVolume.
+type CreateBlockStorageVolumeJSONBody struct {
+	// Target block storage snapshot
+	BlockStorageSnapshot *BlockStorageSnapshotTarget `json:"block-storage-snapshot,omitempty"`
+	Labels               *Labels                     `json:"labels,omitempty"`
+
+	// Volume name
+	Name *string `json:"name,omitempty"`
+
+	// Volume size in GB.
+	//                             When a snapshot ID is supplied, this defaults to the size of the source volume, but can be set to a larger value.
+	Size *int64 `json:"size,omitempty"`
+}
+
+// UpdateBlockStorageVolumeLabelsJSONBody defines parameters for UpdateBlockStorageVolumeLabels.
+type UpdateBlockStorageVolumeLabelsJSONBody struct {
+	Labels *Labels `json:"labels,omitempty"`
+}
+
+// AttachBlockStorageVolumeToInstanceJSONBody defines parameters for AttachBlockStorageVolumeToInstance.
+type AttachBlockStorageVolumeToInstanceJSONBody struct {
+	// Target Instance
+	Instance InstanceTarget `json:"instance"`
+}
+
+// CreateBlockStorageSnapshotJSONBody defines parameters for CreateBlockStorageSnapshot.
+type CreateBlockStorageSnapshotJSONBody struct {
+	Labels *Labels `json:"labels,omitempty"`
+
+	// Snapshot name
+	Name *string `json:"name,omitempty"`
+}
+
+// ResizeBlockStorageVolumeJSONBody defines parameters for ResizeBlockStorageVolume.
+type ResizeBlockStorageVolumeJSONBody struct {
+	// Volume size in GB
+	Size int64 `json:"size"`
+}
+
 // CreateDbaasServiceGrafanaJSONBody defines parameters for CreateDbaasServiceGrafana.
 type CreateDbaasServiceGrafanaJSONBody struct {
-	ForkFromService *DbaasServiceName `json:"fork-from-service,omitempty"`
-
-	// Grafana specific settings
-	GrafanaSettings *map[string]interface{} `json:"grafana-settings,omitempty"`
+	ForkFromService *DbaasServiceName  `json:"fork-from-service,omitempty"`
+	GrafanaSettings *JsonSchemaGrafana `json:"grafana-settings,omitempty"`
 
 	// Allowed CIDR address blocks for incoming connections
 	IpFilter *[]string `json:"ip-filter,omitempty"`
@@ -3038,8 +4380,7 @@ type CreateDbaasServiceGrafanaJSONBodyMaintenanceDow string
 
 // UpdateDbaasServiceGrafanaJSONBody defines parameters for UpdateDbaasServiceGrafana.
 type UpdateDbaasServiceGrafanaJSONBody struct {
-	// Grafana specific settings
-	GrafanaSettings *map[string]interface{} `json:"grafana-settings,omitempty"`
+	GrafanaSettings *JsonSchemaGrafana `json:"grafana-settings,omitempty"`
 
 	// Allowed CIDR address blocks for incoming connections
 	IpFilter *[]string `json:"ip-filter,omitempty"`
@@ -3094,19 +4435,13 @@ type CreateDbaasServiceKafkaJSONBody struct {
 	IpFilter *[]string `json:"ip-filter,omitempty"`
 
 	// Allow clients to connect to kafka_connect from the public internet for service nodes that are in a project VPC or another type of private network
-	KafkaConnectEnabled *bool `json:"kafka-connect-enabled,omitempty"`
-
-	// Kafka Connect configuration values
-	KafkaConnectSettings *map[string]interface{} `json:"kafka-connect-settings,omitempty"`
+	KafkaConnectEnabled  *bool                   `json:"kafka-connect-enabled,omitempty"`
+	KafkaConnectSettings *JsonSchemaKafkaConnect `json:"kafka-connect-settings,omitempty"`
 
 	// Enable Kafka-REST service
-	KafkaRestEnabled *bool `json:"kafka-rest-enabled,omitempty"`
-
-	// Kafka REST configuration
-	KafkaRestSettings *map[string]interface{} `json:"kafka-rest-settings,omitempty"`
-
-	// Kafka-specific settings
-	KafkaSettings *map[string]interface{} `json:"kafka-settings,omitempty"`
+	KafkaRestEnabled  *bool                `json:"kafka-rest-enabled,omitempty"`
+	KafkaRestSettings *JsonSchemaKafkaRest `json:"kafka-rest-settings,omitempty"`
+	KafkaSettings     *JsonSchemaKafka     `json:"kafka-settings,omitempty"`
 
 	// Automatic maintenance settings
 	Maintenance *struct {
@@ -3121,10 +4456,8 @@ type CreateDbaasServiceKafkaJSONBody struct {
 	Plan string `json:"plan"`
 
 	// Enable Schema-Registry service
-	SchemaRegistryEnabled *bool `json:"schema-registry-enabled,omitempty"`
-
-	// Schema Registry configuration
-	SchemaRegistrySettings *map[string]interface{} `json:"schema-registry-settings,omitempty"`
+	SchemaRegistryEnabled  *bool                     `json:"schema-registry-enabled,omitempty"`
+	SchemaRegistrySettings *JsonSchemaSchemaRegistry `json:"schema-registry-settings,omitempty"`
 
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
@@ -3151,19 +4484,13 @@ type UpdateDbaasServiceKafkaJSONBody struct {
 	IpFilter *[]string `json:"ip-filter,omitempty"`
 
 	// Allow clients to connect to kafka_connect from the public internet for service nodes that are in a project VPC or another type of private network
-	KafkaConnectEnabled *bool `json:"kafka-connect-enabled,omitempty"`
-
-	// Kafka Connect configuration values
-	KafkaConnectSettings *map[string]interface{} `json:"kafka-connect-settings,omitempty"`
+	KafkaConnectEnabled  *bool                   `json:"kafka-connect-enabled,omitempty"`
+	KafkaConnectSettings *JsonSchemaKafkaConnect `json:"kafka-connect-settings,omitempty"`
 
 	// Enable Kafka-REST service
-	KafkaRestEnabled *bool `json:"kafka-rest-enabled,omitempty"`
-
-	// Kafka REST configuration
-	KafkaRestSettings *map[string]interface{} `json:"kafka-rest-settings,omitempty"`
-
-	// Kafka-specific settings
-	KafkaSettings *map[string]interface{} `json:"kafka-settings,omitempty"`
+	KafkaRestEnabled  *bool                `json:"kafka-rest-enabled,omitempty"`
+	KafkaRestSettings *JsonSchemaKafkaRest `json:"kafka-rest-settings,omitempty"`
+	KafkaSettings     *JsonSchemaKafka     `json:"kafka-settings,omitempty"`
 
 	// Automatic maintenance settings
 	Maintenance *struct {
@@ -3178,13 +4505,14 @@ type UpdateDbaasServiceKafkaJSONBody struct {
 	Plan *string `json:"plan,omitempty"`
 
 	// Enable Schema-Registry service
-	SchemaRegistryEnabled *bool `json:"schema-registry-enabled,omitempty"`
-
-	// Schema Registry configuration
-	SchemaRegistrySettings *map[string]interface{} `json:"schema-registry-settings,omitempty"`
+	SchemaRegistryEnabled  *bool                     `json:"schema-registry-enabled,omitempty"`
+	SchemaRegistrySettings *JsonSchemaSchemaRegistry `json:"schema-registry-settings,omitempty"`
 
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
+
+	// Kafka major version
+	Version *string `json:"version,omitempty"`
 }
 
 // UpdateDbaasServiceKafkaJSONBodyMaintenanceDow defines parameters for UpdateDbaasServiceKafka.
@@ -3273,9 +4601,7 @@ type CreateDbaasServiceMysqlJSONBody struct {
 		// User name for authentication with the server where to migrate data from
 		Username *string `json:"username,omitempty"`
 	} `json:"migration,omitempty"`
-
-	// MySQL-specific settings
-	MysqlSettings *map[string]interface{} `json:"mysql-settings,omitempty"`
+	MysqlSettings *JsonSchemaMysql `json:"mysql-settings,omitempty"`
 
 	// Subscription plan
 	Plan string `json:"plan"`
@@ -3345,9 +4671,7 @@ type UpdateDbaasServiceMysqlJSONBody struct {
 		// User name for authentication with the server where to migrate data from
 		Username *string `json:"username,omitempty"`
 	} `json:"migration,omitempty"`
-
-	// MySQL-specific settings
-	MysqlSettings *map[string]interface{} `json:"mysql-settings,omitempty"`
+	MysqlSettings *JsonSchemaMysql `json:"mysql-settings,omitempty"`
 
 	// Subscription plan
 	Plan *string `json:"plan,omitempty"`
@@ -3433,9 +4757,7 @@ type CreateDbaasServiceOpensearchJSONBody struct {
 		// Timeout in milliseconds for requests made by OpenSearch Dashboards towards OpenSearch (default: 30000)
 		OpensearchRequestTimeout *int64 `json:"opensearch-request-timeout,omitempty"`
 	} `json:"opensearch-dashboards,omitempty"`
-
-	// OpenSearch-specific settings
-	OpensearchSettings *map[string]interface{} `json:"opensearch-settings,omitempty"`
+	OpensearchSettings *JsonSchemaOpensearch `json:"opensearch-settings,omitempty"`
 
 	// Subscription plan
 	Plan string `json:"plan"`
@@ -3511,9 +4833,7 @@ type UpdateDbaasServiceOpensearchJSONBody struct {
 		// Timeout in milliseconds for requests made by OpenSearch Dashboards towards OpenSearch (default: 30000)
 		OpensearchRequestTimeout *int64 `json:"opensearch-request-timeout,omitempty"`
 	} `json:"opensearch-dashboards,omitempty"`
-
-	// OpenSearch-specific settings
-	OpensearchSettings *map[string]interface{} `json:"opensearch-settings,omitempty"`
+	OpensearchSettings *JsonSchemaOpensearch `json:"opensearch-settings,omitempty"`
 
 	// Subscription plan
 	Plan *string `json:"plan,omitempty"`
@@ -3608,15 +4928,9 @@ type CreateDbaasServicePgJSONBody struct {
 		// User name for authentication with the server where to migrate data from
 		Username *string `json:"username,omitempty"`
 	} `json:"migration,omitempty"`
-
-	// PostgreSQL-specific settings
-	PgSettings *map[string]interface{} `json:"pg-settings,omitempty"`
-
-	// PGBouncer connection pooling settings
-	PgbouncerSettings *map[string]interface{} `json:"pgbouncer-settings,omitempty"`
-
-	// PGLookout settings
-	PglookoutSettings *map[string]interface{} `json:"pglookout-settings,omitempty"`
+	PgSettings        *JsonSchemaPg        `json:"pg-settings,omitempty"`
+	PgbouncerSettings *JsonSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
+	PglookoutSettings *JsonSchemaPglookout `json:"pglookout-settings,omitempty"`
 
 	// Subscription plan
 	Plan string `json:"plan"`
@@ -3629,14 +4943,10 @@ type CreateDbaasServicePgJSONBody struct {
 	SynchronousReplication  *EnumPgSynchronousReplication `json:"synchronous-replication,omitempty"`
 
 	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-
-	// TimescaleDB extension configuration values
-	TimescaledbSettings *map[string]interface{} `json:"timescaledb-settings,omitempty"`
-	Variant             *EnumPgVariant          `json:"variant,omitempty"`
-
-	// PostgreSQL major version
-	Version *string `json:"version,omitempty"`
+	TerminationProtection *bool                  `json:"termination-protection,omitempty"`
+	TimescaledbSettings   *JsonSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
+	Variant               *EnumPgVariant         `json:"variant,omitempty"`
+	Version               *DbaasPgTargetVersions `json:"version,omitempty"`
 
 	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
 	WorkMem *int64 `json:"work-mem,omitempty"`
@@ -3694,15 +5004,9 @@ type UpdateDbaasServicePgJSONBody struct {
 		// User name for authentication with the server where to migrate data from
 		Username *string `json:"username,omitempty"`
 	} `json:"migration,omitempty"`
-
-	// PostgreSQL-specific settings
-	PgSettings *map[string]interface{} `json:"pg-settings,omitempty"`
-
-	// PGBouncer connection pooling settings
-	PgbouncerSettings *map[string]interface{} `json:"pgbouncer-settings,omitempty"`
-
-	// PGLookout settings
-	PglookoutSettings *map[string]interface{} `json:"pglookout-settings,omitempty"`
+	PgSettings        *JsonSchemaPg        `json:"pg-settings,omitempty"`
+	PgbouncerSettings *JsonSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
+	PglookoutSettings *JsonSchemaPglookout `json:"pglookout-settings,omitempty"`
 
 	// Subscription plan
 	Plan *string `json:"plan,omitempty"`
@@ -3712,11 +5016,9 @@ type UpdateDbaasServicePgJSONBody struct {
 	SynchronousReplication  *EnumPgSynchronousReplication `json:"synchronous-replication,omitempty"`
 
 	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-
-	// TimescaleDB extension configuration values
-	TimescaledbSettings *map[string]interface{} `json:"timescaledb-settings,omitempty"`
-	Variant             *EnumPgVariant          `json:"variant,omitempty"`
+	TerminationProtection *bool                  `json:"termination-protection,omitempty"`
+	TimescaledbSettings   *JsonSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
+	Variant               *EnumPgVariant         `json:"variant,omitempty"`
 
 	// Version
 	Version *string `json:"version,omitempty"`
@@ -3774,12 +5076,8 @@ type ResetDbaasPostgresUserPasswordJSONBody struct {
 
 // CreateDbaasPgUpgradeCheckJSONBody defines parameters for CreateDbaasPgUpgradeCheck.
 type CreateDbaasPgUpgradeCheckJSONBody struct {
-	// Target version for upgrade
-	TargetVersion CreateDbaasPgUpgradeCheckJSONBodyTargetVersion `json:"target-version"`
+	TargetVersion DbaasPgTargetVersions `json:"target-version"`
 }
-
-// CreateDbaasPgUpgradeCheckJSONBodyTargetVersion defines parameters for CreateDbaasPgUpgradeCheck.
-type CreateDbaasPgUpgradeCheckJSONBodyTargetVersion string
 
 // CreateDbaasServiceRedisJSONBody defines parameters for CreateDbaasServiceRedis.
 type CreateDbaasServiceRedisJSONBody struct {
@@ -3826,10 +5124,8 @@ type CreateDbaasServiceRedisJSONBody struct {
 	Plan string `json:"plan"`
 
 	// Name of a backup to recover from for services that support backup names
-	RecoveryBackupName *string `json:"recovery-backup-name,omitempty"`
-
-	// Redis.conf settings
-	RedisSettings *map[string]interface{} `json:"redis-settings,omitempty"`
+	RecoveryBackupName *string          `json:"recovery-backup-name,omitempty"`
+	RedisSettings      *JsonSchemaRedis `json:"redis-settings,omitempty"`
 
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
@@ -3878,10 +5174,8 @@ type UpdateDbaasServiceRedisJSONBody struct {
 	} `json:"migration,omitempty"`
 
 	// Subscription plan
-	Plan *string `json:"plan,omitempty"`
-
-	// Redis.conf settings
-	RedisSettings *map[string]interface{} `json:"redis-settings,omitempty"`
+	Plan          *string          `json:"plan,omitempty"`
+	RedisSettings *JsonSchemaRedis `json:"redis-settings,omitempty"`
 
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
@@ -3889,6 +5183,16 @@ type UpdateDbaasServiceRedisJSONBody struct {
 
 // UpdateDbaasServiceRedisJSONBodyMaintenanceDow defines parameters for UpdateDbaasServiceRedis.
 type UpdateDbaasServiceRedisJSONBodyMaintenanceDow string
+
+// CreateDbaasRedisUserJSONBody defines parameters for CreateDbaasRedisUser.
+type CreateDbaasRedisUserJSONBody struct {
+	Username DbaasUserUsername `json:"username"`
+}
+
+// ResetDbaasRedisUserPasswordJSONBody defines parameters for ResetDbaasRedisUserPassword.
+type ResetDbaasRedisUserPasswordJSONBody struct {
+	Password *DbaasUserPassword `json:"password,omitempty"`
+}
 
 // GetDbaasServiceLogsJSONBody defines parameters for GetDbaasServiceLogs.
 type GetDbaasServiceLogsJSONBody struct {
@@ -4424,8 +5728,10 @@ type DetachInstanceFromPrivateNetworkJSONBody struct {
 
 // UpdatePrivateNetworkInstanceIpJSONBody defines parameters for UpdatePrivateNetworkInstanceIp.
 type UpdatePrivateNetworkInstanceIpJSONBody struct {
-	// Instance
-	Instance Instance `json:"instance"`
+	Instance *struct {
+		// Instance ID
+		Id string `json:"id"`
+	} `json:"instance,omitempty"`
 
 	// Static IP address lease for the corresponding network interface
 	Ip *string `json:"ip,omitempty"`
@@ -4712,7 +6018,7 @@ type GetSosPresignedUrlParams struct {
 
 // RegisterSshKeyJSONBody defines parameters for RegisterSshKey.
 type RegisterSshKeyJSONBody struct {
-	// Private Network name
+	// SSH key name
 	Name string `json:"name"`
 
 	// Public key value
@@ -4793,6 +6099,21 @@ type CreateAntiAffinityGroupJSONRequestBody CreateAntiAffinityGroupJSONBody
 
 // CreateApiKeyJSONRequestBody defines body for CreateApiKey for application/json ContentType.
 type CreateApiKeyJSONRequestBody CreateApiKeyJSONBody
+
+// CreateBlockStorageVolumeJSONRequestBody defines body for CreateBlockStorageVolume for application/json ContentType.
+type CreateBlockStorageVolumeJSONRequestBody CreateBlockStorageVolumeJSONBody
+
+// UpdateBlockStorageVolumeLabelsJSONRequestBody defines body for UpdateBlockStorageVolumeLabels for application/json ContentType.
+type UpdateBlockStorageVolumeLabelsJSONRequestBody UpdateBlockStorageVolumeLabelsJSONBody
+
+// AttachBlockStorageVolumeToInstanceJSONRequestBody defines body for AttachBlockStorageVolumeToInstance for application/json ContentType.
+type AttachBlockStorageVolumeToInstanceJSONRequestBody AttachBlockStorageVolumeToInstanceJSONBody
+
+// CreateBlockStorageSnapshotJSONRequestBody defines body for CreateBlockStorageSnapshot for application/json ContentType.
+type CreateBlockStorageSnapshotJSONRequestBody CreateBlockStorageSnapshotJSONBody
+
+// ResizeBlockStorageVolumeJSONRequestBody defines body for ResizeBlockStorageVolume for application/json ContentType.
+type ResizeBlockStorageVolumeJSONRequestBody ResizeBlockStorageVolumeJSONBody
 
 // CreateDbaasServiceGrafanaJSONRequestBody defines body for CreateDbaasServiceGrafana for application/json ContentType.
 type CreateDbaasServiceGrafanaJSONRequestBody CreateDbaasServiceGrafanaJSONBody
@@ -4886,6 +6207,12 @@ type CreateDbaasServiceRedisJSONRequestBody CreateDbaasServiceRedisJSONBody
 
 // UpdateDbaasServiceRedisJSONRequestBody defines body for UpdateDbaasServiceRedis for application/json ContentType.
 type UpdateDbaasServiceRedisJSONRequestBody UpdateDbaasServiceRedisJSONBody
+
+// CreateDbaasRedisUserJSONRequestBody defines body for CreateDbaasRedisUser for application/json ContentType.
+type CreateDbaasRedisUserJSONRequestBody CreateDbaasRedisUserJSONBody
+
+// ResetDbaasRedisUserPasswordJSONRequestBody defines body for ResetDbaasRedisUserPassword for application/json ContentType.
+type ResetDbaasRedisUserPasswordJSONRequestBody ResetDbaasRedisUserPasswordJSONBody
 
 // GetDbaasServiceLogsJSONRequestBody defines body for GetDbaasServiceLogs for application/json ContentType.
 type GetDbaasServiceLogsJSONRequestBody GetDbaasServiceLogsJSONBody
@@ -5438,6 +6765,52 @@ type ClientInterface interface {
 	// GetApiKey request
 	GetApiKey(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListBlockStorageVolumes request
+	ListBlockStorageVolumes(ctx context.Context, params *ListBlockStorageVolumesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateBlockStorageVolume request with any body
+	CreateBlockStorageVolumeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateBlockStorageVolume(ctx context.Context, body CreateBlockStorageVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListBlockStorageSnapshots request
+	ListBlockStorageSnapshots(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteBlockStorageSnapshot request
+	DeleteBlockStorageSnapshot(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetBlockStorageSnapshot request
+	GetBlockStorageSnapshot(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteBlockStorageVolume request
+	DeleteBlockStorageVolume(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetBlockStorageVolume request
+	GetBlockStorageVolume(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateBlockStorageVolumeLabels request with any body
+	UpdateBlockStorageVolumeLabelsWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UpdateBlockStorageVolumeLabels(ctx context.Context, id string, body UpdateBlockStorageVolumeLabelsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AttachBlockStorageVolumeToInstance request with any body
+	AttachBlockStorageVolumeToInstanceWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	AttachBlockStorageVolumeToInstance(ctx context.Context, id string, body AttachBlockStorageVolumeToInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateBlockStorageSnapshot request with any body
+	CreateBlockStorageSnapshotWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateBlockStorageSnapshot(ctx context.Context, id string, body CreateBlockStorageSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DetachBlockStorageVolume request
+	DetachBlockStorageVolume(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResizeBlockStorageVolume request with any body
+	ResizeBlockStorageVolumeWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ResizeBlockStorageVolume(ctx context.Context, id string, body ResizeBlockStorageVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetDbaasCaCertificate request
 	GetDbaasCaCertificate(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5533,6 +6906,9 @@ type ClientInterface interface {
 
 	ResetDbaasKafkaUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasKafkaUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// RevealDbaasKafkaUserPassword request
+	RevealDbaasKafkaUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetDbaasMigrationStatus request
 	GetDbaasMigrationStatus(ctx context.Context, name DbaasServiceName, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5579,6 +6955,9 @@ type ClientInterface interface {
 
 	ResetDbaasMysqlUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasMysqlUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// RevealDbaasMysqlUserPassword request
+	RevealDbaasMysqlUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// DeleteDbaasServiceOpensearch request
 	DeleteDbaasServiceOpensearch(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5618,6 +6997,9 @@ type ClientInterface interface {
 	ResetDbaasOpensearchUserPasswordWithBody(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ResetDbaasOpensearchUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasOpensearchUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RevealDbaasOpensearchUserPassword request
+	RevealDbaasOpensearchUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteDbaasServicePg request
 	DeleteDbaasServicePg(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -5680,6 +7062,9 @@ type ClientInterface interface {
 
 	ResetDbaasPostgresUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasPostgresUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// RevealDbaasPostgresUserPassword request
+	RevealDbaasPostgresUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateDbaasPgUpgradeCheck request with any body
 	CreateDbaasPgUpgradeCheckWithBody(ctx context.Context, service DbaasServiceName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -5706,6 +7091,22 @@ type ClientInterface interface {
 
 	// StopDbaasRedisMigration request
 	StopDbaasRedisMigration(ctx context.Context, name DbaasServiceName, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateDbaasRedisUser request with any body
+	CreateDbaasRedisUserWithBody(ctx context.Context, serviceName DbaasServiceName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateDbaasRedisUser(ctx context.Context, serviceName DbaasServiceName, body CreateDbaasRedisUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteDbaasRedisUser request
+	DeleteDbaasRedisUser(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResetDbaasRedisUserPassword request with any body
+	ResetDbaasRedisUserPasswordWithBody(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ResetDbaasRedisUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasRedisUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RevealDbaasRedisUserPassword request
+	RevealDbaasRedisUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDbaasServices request
 	ListDbaasServices(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -6154,6 +7555,9 @@ type ClientInterface interface {
 	// GetSksClusterAuthorityCert request
 	GetSksClusterAuthorityCert(ctx context.Context, id string, authority GetSksClusterAuthorityCertParamsAuthority, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetSksClusterInspection request
+	GetSksClusterInspection(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateSksNodepool request with any body
 	CreateSksNodepoolWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -6459,6 +7863,210 @@ func (c *Client) DeleteApiKey(ctx context.Context, id string, reqEditors ...Requ
 
 func (c *Client) GetApiKey(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetApiKeyRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListBlockStorageVolumes(ctx context.Context, params *ListBlockStorageVolumesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListBlockStorageVolumesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateBlockStorageVolumeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateBlockStorageVolumeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateBlockStorageVolume(ctx context.Context, body CreateBlockStorageVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateBlockStorageVolumeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListBlockStorageSnapshots(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListBlockStorageSnapshotsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteBlockStorageSnapshot(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteBlockStorageSnapshotRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetBlockStorageSnapshot(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetBlockStorageSnapshotRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteBlockStorageVolume(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteBlockStorageVolumeRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetBlockStorageVolume(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetBlockStorageVolumeRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateBlockStorageVolumeLabelsWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateBlockStorageVolumeLabelsRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateBlockStorageVolumeLabels(ctx context.Context, id string, body UpdateBlockStorageVolumeLabelsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateBlockStorageVolumeLabelsRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AttachBlockStorageVolumeToInstanceWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAttachBlockStorageVolumeToInstanceRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AttachBlockStorageVolumeToInstance(ctx context.Context, id string, body AttachBlockStorageVolumeToInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAttachBlockStorageVolumeToInstanceRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateBlockStorageSnapshotWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateBlockStorageSnapshotRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateBlockStorageSnapshot(ctx context.Context, id string, body CreateBlockStorageSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateBlockStorageSnapshotRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DetachBlockStorageVolume(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDetachBlockStorageVolumeRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResizeBlockStorageVolumeWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResizeBlockStorageVolumeRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResizeBlockStorageVolume(ctx context.Context, id string, body ResizeBlockStorageVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResizeBlockStorageVolumeRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6889,6 +8497,18 @@ func (c *Client) ResetDbaasKafkaUserPassword(ctx context.Context, serviceName Db
 	return c.Client.Do(req)
 }
 
+func (c *Client) RevealDbaasKafkaUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevealDbaasKafkaUserPasswordRequest(c.Server, serviceName, username)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetDbaasMigrationStatus(ctx context.Context, name DbaasServiceName, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetDbaasMigrationStatusRequest(c.Server, name)
 	if err != nil {
@@ -7093,6 +8713,18 @@ func (c *Client) ResetDbaasMysqlUserPassword(ctx context.Context, serviceName Db
 	return c.Client.Do(req)
 }
 
+func (c *Client) RevealDbaasMysqlUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevealDbaasMysqlUserPasswordRequest(c.Server, serviceName, username)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) DeleteDbaasServiceOpensearch(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteDbaasServiceOpensearchRequest(c.Server, name)
 	if err != nil {
@@ -7263,6 +8895,18 @@ func (c *Client) ResetDbaasOpensearchUserPasswordWithBody(ctx context.Context, s
 
 func (c *Client) ResetDbaasOpensearchUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasOpensearchUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewResetDbaasOpensearchUserPasswordRequest(c.Server, serviceName, username, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RevealDbaasOpensearchUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevealDbaasOpensearchUserPasswordRequest(c.Server, serviceName, username)
 	if err != nil {
 		return nil, err
 	}
@@ -7549,6 +9193,18 @@ func (c *Client) ResetDbaasPostgresUserPassword(ctx context.Context, serviceName
 	return c.Client.Do(req)
 }
 
+func (c *Client) RevealDbaasPostgresUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevealDbaasPostgresUserPasswordRequest(c.Server, serviceName, username)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) CreateDbaasPgUpgradeCheckWithBody(ctx context.Context, service DbaasServiceName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateDbaasPgUpgradeCheckRequestWithBody(c.Server, service, contentType, body)
 	if err != nil {
@@ -7659,6 +9315,78 @@ func (c *Client) StartDbaasRedisMaintenance(ctx context.Context, name DbaasServi
 
 func (c *Client) StopDbaasRedisMigration(ctx context.Context, name DbaasServiceName, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewStopDbaasRedisMigrationRequest(c.Server, name)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateDbaasRedisUserWithBody(ctx context.Context, serviceName DbaasServiceName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDbaasRedisUserRequestWithBody(c.Server, serviceName, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateDbaasRedisUser(ctx context.Context, serviceName DbaasServiceName, body CreateDbaasRedisUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDbaasRedisUserRequest(c.Server, serviceName, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteDbaasRedisUser(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDbaasRedisUserRequest(c.Server, serviceName, username)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResetDbaasRedisUserPasswordWithBody(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResetDbaasRedisUserPasswordRequestWithBody(c.Server, serviceName, username, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ResetDbaasRedisUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasRedisUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResetDbaasRedisUserPasswordRequest(c.Server, serviceName, username, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RevealDbaasRedisUserPassword(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevealDbaasRedisUserPasswordRequest(c.Server, serviceName, username)
 	if err != nil {
 		return nil, err
 	}
@@ -9637,6 +11365,18 @@ func (c *Client) GetSksClusterAuthorityCert(ctx context.Context, id string, auth
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetSksClusterInspection(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSksClusterInspectionRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) CreateSksNodepoolWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateSksNodepoolRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
@@ -10572,6 +12312,478 @@ func NewGetApiKeyRequest(server string, id string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewListBlockStorageVolumesRequest generates requests for ListBlockStorageVolumes
+func NewListBlockStorageVolumesRequest(server string, params *ListBlockStorageVolumesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	queryValues := queryURL.Query()
+
+	if params.InstanceId != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "instance-id", runtime.ParamLocationQuery, *params.InstanceId); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	queryURL.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateBlockStorageVolumeRequest calls the generic CreateBlockStorageVolume builder with application/json body
+func NewCreateBlockStorageVolumeRequest(server string, body CreateBlockStorageVolumeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateBlockStorageVolumeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateBlockStorageVolumeRequestWithBody generates requests for CreateBlockStorageVolume with any type of body
+func NewCreateBlockStorageVolumeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListBlockStorageSnapshotsRequest generates requests for ListBlockStorageSnapshots
+func NewListBlockStorageSnapshotsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage-snapshot")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteBlockStorageSnapshotRequest generates requests for DeleteBlockStorageSnapshot
+func NewDeleteBlockStorageSnapshotRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage-snapshot/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetBlockStorageSnapshotRequest generates requests for GetBlockStorageSnapshot
+func NewGetBlockStorageSnapshotRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage-snapshot/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteBlockStorageVolumeRequest generates requests for DeleteBlockStorageVolume
+func NewDeleteBlockStorageVolumeRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetBlockStorageVolumeRequest generates requests for GetBlockStorageVolume
+func NewGetBlockStorageVolumeRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateBlockStorageVolumeLabelsRequest calls the generic UpdateBlockStorageVolumeLabels builder with application/json body
+func NewUpdateBlockStorageVolumeLabelsRequest(server string, id string, body UpdateBlockStorageVolumeLabelsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateBlockStorageVolumeLabelsRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateBlockStorageVolumeLabelsRequestWithBody generates requests for UpdateBlockStorageVolumeLabels with any type of body
+func NewUpdateBlockStorageVolumeLabelsRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewAttachBlockStorageVolumeToInstanceRequest calls the generic AttachBlockStorageVolumeToInstance builder with application/json body
+func NewAttachBlockStorageVolumeToInstanceRequest(server string, id string, body AttachBlockStorageVolumeToInstanceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAttachBlockStorageVolumeToInstanceRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewAttachBlockStorageVolumeToInstanceRequestWithBody generates requests for AttachBlockStorageVolumeToInstance with any type of body
+func NewAttachBlockStorageVolumeToInstanceRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage/%s:attach", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCreateBlockStorageSnapshotRequest calls the generic CreateBlockStorageSnapshot builder with application/json body
+func NewCreateBlockStorageSnapshotRequest(server string, id string, body CreateBlockStorageSnapshotJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateBlockStorageSnapshotRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewCreateBlockStorageSnapshotRequestWithBody generates requests for CreateBlockStorageSnapshot with any type of body
+func NewCreateBlockStorageSnapshotRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage/%s:create-snapshot", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDetachBlockStorageVolumeRequest generates requests for DetachBlockStorageVolume
+func NewDetachBlockStorageVolumeRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage/%s:detach", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewResizeBlockStorageVolumeRequest calls the generic ResizeBlockStorageVolume builder with application/json body
+func NewResizeBlockStorageVolumeRequest(server string, id string, body ResizeBlockStorageVolumeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewResizeBlockStorageVolumeRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewResizeBlockStorageVolumeRequestWithBody generates requests for ResizeBlockStorageVolume with any type of body
+func NewResizeBlockStorageVolumeRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/block-storage/%s:resize-volume", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -11577,6 +13789,47 @@ func NewResetDbaasKafkaUserPasswordRequestWithBody(server string, serviceName Db
 	return req, nil
 }
 
+// NewRevealDbaasKafkaUserPasswordRequest generates requests for RevealDbaasKafkaUserPassword
+func NewRevealDbaasKafkaUserPasswordRequest(server string, serviceName DbaasServiceName, username DbaasUserUsername) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-name", runtime.ParamLocationPath, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "username", runtime.ParamLocationPath, username)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-kafka/%s/user/%s/password/reveal", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetDbaasMigrationStatusRequest generates requests for GetDbaasMigrationStatus
 func NewGetDbaasMigrationStatusRequest(server string, name DbaasServiceName) (*http.Request, error) {
 	var err error
@@ -12071,6 +14324,47 @@ func NewResetDbaasMysqlUserPasswordRequestWithBody(server string, serviceName Db
 	return req, nil
 }
 
+// NewRevealDbaasMysqlUserPasswordRequest generates requests for RevealDbaasMysqlUserPassword
+func NewRevealDbaasMysqlUserPasswordRequest(server string, serviceName DbaasServiceName, username DbaasUserUsername) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-name", runtime.ParamLocationPath, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "username", runtime.ParamLocationPath, username)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-mysql/%s/user/%s/password/reveal", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewDeleteDbaasServiceOpensearchRequest generates requests for DeleteDbaasServiceOpensearch
 func NewDeleteDbaasServiceOpensearchRequest(server string, name string) (*http.Request, error) {
 	var err error
@@ -12486,6 +14780,47 @@ func NewResetDbaasOpensearchUserPasswordRequestWithBody(server string, serviceNa
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRevealDbaasOpensearchUserPasswordRequest generates requests for RevealDbaasOpensearchUserPassword
+func NewRevealDbaasOpensearchUserPasswordRequest(server string, serviceName DbaasServiceName, username DbaasUserUsername) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-name", runtime.ParamLocationPath, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "username", runtime.ParamLocationPath, username)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-opensearch/%s/user/%s/password/reveal", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -13146,6 +15481,47 @@ func NewResetDbaasPostgresUserPasswordRequestWithBody(server string, serviceName
 	return req, nil
 }
 
+// NewRevealDbaasPostgresUserPasswordRequest generates requests for RevealDbaasPostgresUserPassword
+func NewRevealDbaasPostgresUserPasswordRequest(server string, serviceName DbaasServiceName, username DbaasUserUsername) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-name", runtime.ParamLocationPath, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "username", runtime.ParamLocationPath, username)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-postgres/%s/user/%s/password/reveal", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateDbaasPgUpgradeCheckRequest calls the generic CreateDbaasPgUpgradeCheck builder with application/json body
 func NewCreateDbaasPgUpgradeCheckRequest(server string, service DbaasServiceName, body CreateDbaasPgUpgradeCheckJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -13416,6 +15792,189 @@ func NewStopDbaasRedisMigrationRequest(server string, name DbaasServiceName) (*h
 	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateDbaasRedisUserRequest calls the generic CreateDbaasRedisUser builder with application/json body
+func NewCreateDbaasRedisUserRequest(server string, serviceName DbaasServiceName, body CreateDbaasRedisUserJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateDbaasRedisUserRequestWithBody(server, serviceName, "application/json", bodyReader)
+}
+
+// NewCreateDbaasRedisUserRequestWithBody generates requests for CreateDbaasRedisUser with any type of body
+func NewCreateDbaasRedisUserRequestWithBody(server string, serviceName DbaasServiceName, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-name", runtime.ParamLocationPath, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-redis/%s/user", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteDbaasRedisUserRequest generates requests for DeleteDbaasRedisUser
+func NewDeleteDbaasRedisUserRequest(server string, serviceName DbaasServiceName, username DbaasUserUsername) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-name", runtime.ParamLocationPath, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "username", runtime.ParamLocationPath, username)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-redis/%s/user/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewResetDbaasRedisUserPasswordRequest calls the generic ResetDbaasRedisUserPassword builder with application/json body
+func NewResetDbaasRedisUserPasswordRequest(server string, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasRedisUserPasswordJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewResetDbaasRedisUserPasswordRequestWithBody(server, serviceName, username, "application/json", bodyReader)
+}
+
+// NewResetDbaasRedisUserPasswordRequestWithBody generates requests for ResetDbaasRedisUserPassword with any type of body
+func NewResetDbaasRedisUserPasswordRequestWithBody(server string, serviceName DbaasServiceName, username DbaasUserUsername, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-name", runtime.ParamLocationPath, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "username", runtime.ParamLocationPath, username)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-redis/%s/user/%s/password/reset", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRevealDbaasRedisUserPasswordRequest generates requests for RevealDbaasRedisUserPassword
+func NewRevealDbaasRedisUserPasswordRequest(server string, serviceName DbaasServiceName, username DbaasUserUsername) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "service-name", runtime.ParamLocationPath, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "username", runtime.ParamLocationPath, username)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dbaas-redis/%s/user/%s/password/reveal", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -18063,6 +20622,40 @@ func NewGetSksClusterAuthorityCertRequest(server string, id string, authority Ge
 	return req, nil
 }
 
+// NewGetSksClusterInspectionRequest generates requests for GetSksClusterInspection
+func NewGetSksClusterInspectionRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/sks-cluster/%s/inspection", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateSksNodepoolRequest calls the generic CreateSksNodepool builder with application/json body
 func NewCreateSksNodepoolRequest(server string, id string, body CreateSksNodepoolJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -19367,6 +21960,52 @@ type ClientWithResponsesInterface interface {
 	// GetApiKey request
 	GetApiKeyWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetApiKeyResponse, error)
 
+	// ListBlockStorageVolumes request
+	ListBlockStorageVolumesWithResponse(ctx context.Context, params *ListBlockStorageVolumesParams, reqEditors ...RequestEditorFn) (*ListBlockStorageVolumesResponse, error)
+
+	// CreateBlockStorageVolume request with any body
+	CreateBlockStorageVolumeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateBlockStorageVolumeResponse, error)
+
+	CreateBlockStorageVolumeWithResponse(ctx context.Context, body CreateBlockStorageVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateBlockStorageVolumeResponse, error)
+
+	// ListBlockStorageSnapshots request
+	ListBlockStorageSnapshotsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBlockStorageSnapshotsResponse, error)
+
+	// DeleteBlockStorageSnapshot request
+	DeleteBlockStorageSnapshotWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteBlockStorageSnapshotResponse, error)
+
+	// GetBlockStorageSnapshot request
+	GetBlockStorageSnapshotWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetBlockStorageSnapshotResponse, error)
+
+	// DeleteBlockStorageVolume request
+	DeleteBlockStorageVolumeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteBlockStorageVolumeResponse, error)
+
+	// GetBlockStorageVolume request
+	GetBlockStorageVolumeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetBlockStorageVolumeResponse, error)
+
+	// UpdateBlockStorageVolumeLabels request with any body
+	UpdateBlockStorageVolumeLabelsWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateBlockStorageVolumeLabelsResponse, error)
+
+	UpdateBlockStorageVolumeLabelsWithResponse(ctx context.Context, id string, body UpdateBlockStorageVolumeLabelsJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateBlockStorageVolumeLabelsResponse, error)
+
+	// AttachBlockStorageVolumeToInstance request with any body
+	AttachBlockStorageVolumeToInstanceWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AttachBlockStorageVolumeToInstanceResponse, error)
+
+	AttachBlockStorageVolumeToInstanceWithResponse(ctx context.Context, id string, body AttachBlockStorageVolumeToInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*AttachBlockStorageVolumeToInstanceResponse, error)
+
+	// CreateBlockStorageSnapshot request with any body
+	CreateBlockStorageSnapshotWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateBlockStorageSnapshotResponse, error)
+
+	CreateBlockStorageSnapshotWithResponse(ctx context.Context, id string, body CreateBlockStorageSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateBlockStorageSnapshotResponse, error)
+
+	// DetachBlockStorageVolume request
+	DetachBlockStorageVolumeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DetachBlockStorageVolumeResponse, error)
+
+	// ResizeBlockStorageVolume request with any body
+	ResizeBlockStorageVolumeWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResizeBlockStorageVolumeResponse, error)
+
+	ResizeBlockStorageVolumeWithResponse(ctx context.Context, id string, body ResizeBlockStorageVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*ResizeBlockStorageVolumeResponse, error)
+
 	// GetDbaasCaCertificate request
 	GetDbaasCaCertificateWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetDbaasCaCertificateResponse, error)
 
@@ -19462,6 +22101,9 @@ type ClientWithResponsesInterface interface {
 
 	ResetDbaasKafkaUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasKafkaUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetDbaasKafkaUserPasswordResponse, error)
 
+	// RevealDbaasKafkaUserPassword request
+	RevealDbaasKafkaUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*RevealDbaasKafkaUserPasswordResponse, error)
+
 	// GetDbaasMigrationStatus request
 	GetDbaasMigrationStatusWithResponse(ctx context.Context, name DbaasServiceName, reqEditors ...RequestEditorFn) (*GetDbaasMigrationStatusResponse, error)
 
@@ -19508,6 +22150,9 @@ type ClientWithResponsesInterface interface {
 
 	ResetDbaasMysqlUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasMysqlUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetDbaasMysqlUserPasswordResponse, error)
 
+	// RevealDbaasMysqlUserPassword request
+	RevealDbaasMysqlUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*RevealDbaasMysqlUserPasswordResponse, error)
+
 	// DeleteDbaasServiceOpensearch request
 	DeleteDbaasServiceOpensearchWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteDbaasServiceOpensearchResponse, error)
 
@@ -19547,6 +22192,9 @@ type ClientWithResponsesInterface interface {
 	ResetDbaasOpensearchUserPasswordWithBodyWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResetDbaasOpensearchUserPasswordResponse, error)
 
 	ResetDbaasOpensearchUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasOpensearchUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetDbaasOpensearchUserPasswordResponse, error)
+
+	// RevealDbaasOpensearchUserPassword request
+	RevealDbaasOpensearchUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*RevealDbaasOpensearchUserPasswordResponse, error)
 
 	// DeleteDbaasServicePg request
 	DeleteDbaasServicePgWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteDbaasServicePgResponse, error)
@@ -19609,6 +22257,9 @@ type ClientWithResponsesInterface interface {
 
 	ResetDbaasPostgresUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasPostgresUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetDbaasPostgresUserPasswordResponse, error)
 
+	// RevealDbaasPostgresUserPassword request
+	RevealDbaasPostgresUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*RevealDbaasPostgresUserPasswordResponse, error)
+
 	// CreateDbaasPgUpgradeCheck request with any body
 	CreateDbaasPgUpgradeCheckWithBodyWithResponse(ctx context.Context, service DbaasServiceName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDbaasPgUpgradeCheckResponse, error)
 
@@ -19635,6 +22286,22 @@ type ClientWithResponsesInterface interface {
 
 	// StopDbaasRedisMigration request
 	StopDbaasRedisMigrationWithResponse(ctx context.Context, name DbaasServiceName, reqEditors ...RequestEditorFn) (*StopDbaasRedisMigrationResponse, error)
+
+	// CreateDbaasRedisUser request with any body
+	CreateDbaasRedisUserWithBodyWithResponse(ctx context.Context, serviceName DbaasServiceName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDbaasRedisUserResponse, error)
+
+	CreateDbaasRedisUserWithResponse(ctx context.Context, serviceName DbaasServiceName, body CreateDbaasRedisUserJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDbaasRedisUserResponse, error)
+
+	// DeleteDbaasRedisUser request
+	DeleteDbaasRedisUserWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*DeleteDbaasRedisUserResponse, error)
+
+	// ResetDbaasRedisUserPassword request with any body
+	ResetDbaasRedisUserPasswordWithBodyWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResetDbaasRedisUserPasswordResponse, error)
+
+	ResetDbaasRedisUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasRedisUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetDbaasRedisUserPasswordResponse, error)
+
+	// RevealDbaasRedisUserPassword request
+	RevealDbaasRedisUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*RevealDbaasRedisUserPasswordResponse, error)
 
 	// ListDbaasServices request
 	ListDbaasServicesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDbaasServicesResponse, error)
@@ -20083,6 +22750,9 @@ type ClientWithResponsesInterface interface {
 	// GetSksClusterAuthorityCert request
 	GetSksClusterAuthorityCertWithResponse(ctx context.Context, id string, authority GetSksClusterAuthorityCertParamsAuthority, reqEditors ...RequestEditorFn) (*GetSksClusterAuthorityCertResponse, error)
 
+	// GetSksClusterInspection request
+	GetSksClusterInspectionWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetSksClusterInspectionResponse, error)
+
 	// CreateSksNodepool request with any body
 	CreateSksNodepoolWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateSksNodepoolResponse, error)
 
@@ -20506,6 +23176,274 @@ func (r GetApiKeyResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetApiKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListBlockStorageVolumesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		BlockStorageVolumes *[]BlockStorageVolume `json:"block-storage-volumes,omitempty"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r ListBlockStorageVolumesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListBlockStorageVolumesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateBlockStorageVolumeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateBlockStorageVolumeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateBlockStorageVolumeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListBlockStorageSnapshotsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		BlockStorageSnapshots *[]BlockStorageSnapshot `json:"block-storage-snapshots,omitempty"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r ListBlockStorageSnapshotsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListBlockStorageSnapshotsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteBlockStorageSnapshotResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteBlockStorageSnapshotResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteBlockStorageSnapshotResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetBlockStorageSnapshotResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *BlockStorageSnapshot
+}
+
+// Status returns HTTPResponse.Status
+func (r GetBlockStorageSnapshotResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetBlockStorageSnapshotResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteBlockStorageVolumeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteBlockStorageVolumeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteBlockStorageVolumeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetBlockStorageVolumeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *BlockStorageVolume
+}
+
+// Status returns HTTPResponse.Status
+func (r GetBlockStorageVolumeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetBlockStorageVolumeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateBlockStorageVolumeLabelsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateBlockStorageVolumeLabelsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateBlockStorageVolumeLabelsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AttachBlockStorageVolumeToInstanceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r AttachBlockStorageVolumeToInstanceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AttachBlockStorageVolumeToInstanceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateBlockStorageSnapshotResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateBlockStorageSnapshotResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateBlockStorageSnapshotResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DetachBlockStorageVolumeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r DetachBlockStorageVolumeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DetachBlockStorageVolumeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ResizeBlockStorageVolumeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *BlockStorageVolume
+}
+
+// Status returns HTTPResponse.Status
+func (r ResizeBlockStorageVolumeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResizeBlockStorageVolumeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21074,6 +24012,28 @@ func (r ResetDbaasKafkaUserPasswordResponse) StatusCode() int {
 	return 0
 }
 
+type RevealDbaasKafkaUserPasswordResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DbaasUserKafkaSecrets
+}
+
+// Status returns HTTPResponse.Status
+func (r RevealDbaasKafkaUserPasswordResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RevealDbaasKafkaUserPasswordResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetDbaasMigrationStatusResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -21338,6 +24298,28 @@ func (r ResetDbaasMysqlUserPasswordResponse) StatusCode() int {
 	return 0
 }
 
+type RevealDbaasMysqlUserPasswordResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DbaasUserMysqlSecrets
+}
+
+// Status returns HTTPResponse.Status
+func (r RevealDbaasMysqlUserPasswordResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RevealDbaasMysqlUserPasswordResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type DeleteDbaasServiceOpensearchResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -21552,6 +24534,28 @@ func (r ResetDbaasOpensearchUserPasswordResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ResetDbaasOpensearchUserPasswordResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RevealDbaasOpensearchUserPasswordResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DbaasUserOpensearchSecrets
+}
+
+// Status returns HTTPResponse.Status
+func (r RevealDbaasOpensearchUserPasswordResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RevealDbaasOpensearchUserPasswordResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -21888,6 +24892,28 @@ func (r ResetDbaasPostgresUserPasswordResponse) StatusCode() int {
 	return 0
 }
 
+type RevealDbaasPostgresUserPasswordResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DbaasUserPostgresSecrets
+}
+
+// Status returns HTTPResponse.Status
+func (r RevealDbaasPostgresUserPasswordResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RevealDbaasPostgresUserPasswordResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type CreateDbaasPgUpgradeCheckResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -22036,6 +25062,94 @@ func (r StopDbaasRedisMigrationResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r StopDbaasRedisMigrationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateDbaasRedisUserResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateDbaasRedisUserResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateDbaasRedisUserResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteDbaasRedisUserResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteDbaasRedisUserResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteDbaasRedisUserResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ResetDbaasRedisUserPasswordResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Operation
+}
+
+// Status returns HTTPResponse.Status
+func (r ResetDbaasRedisUserPasswordResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResetDbaasRedisUserPasswordResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RevealDbaasRedisUserPasswordResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DbaasUserRedisSecrets
+}
+
+// Status returns HTTPResponse.Status
+func (r RevealDbaasRedisUserPasswordResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RevealDbaasRedisUserPasswordResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -23118,7 +26232,55 @@ type ListInstancesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		Instances *[]Instance `json:"instances,omitempty"`
+		Instances *[]struct {
+			// Instance creation date
+			CreatedAt *time.Time `json:"created-at,omitempty"`
+
+			// Instance ID
+			Id *string `json:"id,omitempty"`
+
+			// Compute instance type
+			InstanceType *InstanceType `json:"instance-type,omitempty"`
+
+			// Instance IPv6 address
+			Ipv6Address *string `json:"ipv6-address,omitempty"`
+			Labels      *Labels `json:"labels,omitempty"`
+
+			// Instance MAC address
+			MacAddress *string `json:"mac-address,omitempty"`
+
+			// Resource manager
+			Manager *Manager `json:"manager,omitempty"`
+
+			// Instance name
+			Name *string `json:"name,omitempty"`
+
+			// Instance Private Networks
+			PrivateNetworks *[]struct {
+				// Private Network ID
+				Id *string `json:"id,omitempty"`
+
+				// Private Network MAC address
+				MacAddress *string `json:"mac-address,omitempty"`
+			} `json:"private-networks,omitempty"`
+
+			// Instance public IPv4 address
+			PublicIp           *string             `json:"public-ip,omitempty"`
+			PublicIpAssignment *PublicIpAssignment `json:"public-ip-assignment,omitempty"`
+
+			// Instance Security Groups
+			SecurityGroups *[]SecurityGroup `json:"security-groups,omitempty"`
+
+			// SSH key
+			SshKey *SshKey `json:"ssh-key,omitempty"`
+
+			// Instance SSH Keys
+			SshKeys *[]SshKey      `json:"ssh-keys,omitempty"`
+			State   *InstanceState `json:"state,omitempty"`
+
+			// Instance template
+			Template *Template `json:"template,omitempty"`
+		} `json:"instances,omitempty"`
 	}
 }
 
@@ -23475,7 +26637,7 @@ func (r ResetInstanceFieldResponse) StatusCode() int {
 type AddInstanceProtectionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *map[string]interface{}
+	JSON200      *Operation
 }
 
 // Status returns HTTPResponse.Status
@@ -23563,7 +26725,7 @@ func (r RebootInstanceResponse) StatusCode() int {
 type RemoveInstanceProtectionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *map[string]interface{}
+	JSON200      *Operation
 }
 
 // Status returns HTTPResponse.Status
@@ -24808,6 +27970,30 @@ func (r GetSksClusterAuthorityCertResponse) StatusCode() int {
 	return 0
 }
 
+type GetSksClusterInspectionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		AdditionalProperties map[string]interface{} `json:"-"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSksClusterInspectionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSksClusterInspectionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type CreateSksNodepoolResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -25630,6 +28816,154 @@ func (c *ClientWithResponses) GetApiKeyWithResponse(ctx context.Context, id stri
 	return ParseGetApiKeyResponse(rsp)
 }
 
+// ListBlockStorageVolumesWithResponse request returning *ListBlockStorageVolumesResponse
+func (c *ClientWithResponses) ListBlockStorageVolumesWithResponse(ctx context.Context, params *ListBlockStorageVolumesParams, reqEditors ...RequestEditorFn) (*ListBlockStorageVolumesResponse, error) {
+	rsp, err := c.ListBlockStorageVolumes(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListBlockStorageVolumesResponse(rsp)
+}
+
+// CreateBlockStorageVolumeWithBodyWithResponse request with arbitrary body returning *CreateBlockStorageVolumeResponse
+func (c *ClientWithResponses) CreateBlockStorageVolumeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateBlockStorageVolumeResponse, error) {
+	rsp, err := c.CreateBlockStorageVolumeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateBlockStorageVolumeResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateBlockStorageVolumeWithResponse(ctx context.Context, body CreateBlockStorageVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateBlockStorageVolumeResponse, error) {
+	rsp, err := c.CreateBlockStorageVolume(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateBlockStorageVolumeResponse(rsp)
+}
+
+// ListBlockStorageSnapshotsWithResponse request returning *ListBlockStorageSnapshotsResponse
+func (c *ClientWithResponses) ListBlockStorageSnapshotsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBlockStorageSnapshotsResponse, error) {
+	rsp, err := c.ListBlockStorageSnapshots(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListBlockStorageSnapshotsResponse(rsp)
+}
+
+// DeleteBlockStorageSnapshotWithResponse request returning *DeleteBlockStorageSnapshotResponse
+func (c *ClientWithResponses) DeleteBlockStorageSnapshotWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteBlockStorageSnapshotResponse, error) {
+	rsp, err := c.DeleteBlockStorageSnapshot(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteBlockStorageSnapshotResponse(rsp)
+}
+
+// GetBlockStorageSnapshotWithResponse request returning *GetBlockStorageSnapshotResponse
+func (c *ClientWithResponses) GetBlockStorageSnapshotWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetBlockStorageSnapshotResponse, error) {
+	rsp, err := c.GetBlockStorageSnapshot(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetBlockStorageSnapshotResponse(rsp)
+}
+
+// DeleteBlockStorageVolumeWithResponse request returning *DeleteBlockStorageVolumeResponse
+func (c *ClientWithResponses) DeleteBlockStorageVolumeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteBlockStorageVolumeResponse, error) {
+	rsp, err := c.DeleteBlockStorageVolume(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteBlockStorageVolumeResponse(rsp)
+}
+
+// GetBlockStorageVolumeWithResponse request returning *GetBlockStorageVolumeResponse
+func (c *ClientWithResponses) GetBlockStorageVolumeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetBlockStorageVolumeResponse, error) {
+	rsp, err := c.GetBlockStorageVolume(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetBlockStorageVolumeResponse(rsp)
+}
+
+// UpdateBlockStorageVolumeLabelsWithBodyWithResponse request with arbitrary body returning *UpdateBlockStorageVolumeLabelsResponse
+func (c *ClientWithResponses) UpdateBlockStorageVolumeLabelsWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateBlockStorageVolumeLabelsResponse, error) {
+	rsp, err := c.UpdateBlockStorageVolumeLabelsWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateBlockStorageVolumeLabelsResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateBlockStorageVolumeLabelsWithResponse(ctx context.Context, id string, body UpdateBlockStorageVolumeLabelsJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateBlockStorageVolumeLabelsResponse, error) {
+	rsp, err := c.UpdateBlockStorageVolumeLabels(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateBlockStorageVolumeLabelsResponse(rsp)
+}
+
+// AttachBlockStorageVolumeToInstanceWithBodyWithResponse request with arbitrary body returning *AttachBlockStorageVolumeToInstanceResponse
+func (c *ClientWithResponses) AttachBlockStorageVolumeToInstanceWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AttachBlockStorageVolumeToInstanceResponse, error) {
+	rsp, err := c.AttachBlockStorageVolumeToInstanceWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAttachBlockStorageVolumeToInstanceResponse(rsp)
+}
+
+func (c *ClientWithResponses) AttachBlockStorageVolumeToInstanceWithResponse(ctx context.Context, id string, body AttachBlockStorageVolumeToInstanceJSONRequestBody, reqEditors ...RequestEditorFn) (*AttachBlockStorageVolumeToInstanceResponse, error) {
+	rsp, err := c.AttachBlockStorageVolumeToInstance(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAttachBlockStorageVolumeToInstanceResponse(rsp)
+}
+
+// CreateBlockStorageSnapshotWithBodyWithResponse request with arbitrary body returning *CreateBlockStorageSnapshotResponse
+func (c *ClientWithResponses) CreateBlockStorageSnapshotWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateBlockStorageSnapshotResponse, error) {
+	rsp, err := c.CreateBlockStorageSnapshotWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateBlockStorageSnapshotResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateBlockStorageSnapshotWithResponse(ctx context.Context, id string, body CreateBlockStorageSnapshotJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateBlockStorageSnapshotResponse, error) {
+	rsp, err := c.CreateBlockStorageSnapshot(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateBlockStorageSnapshotResponse(rsp)
+}
+
+// DetachBlockStorageVolumeWithResponse request returning *DetachBlockStorageVolumeResponse
+func (c *ClientWithResponses) DetachBlockStorageVolumeWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DetachBlockStorageVolumeResponse, error) {
+	rsp, err := c.DetachBlockStorageVolume(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDetachBlockStorageVolumeResponse(rsp)
+}
+
+// ResizeBlockStorageVolumeWithBodyWithResponse request with arbitrary body returning *ResizeBlockStorageVolumeResponse
+func (c *ClientWithResponses) ResizeBlockStorageVolumeWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResizeBlockStorageVolumeResponse, error) {
+	rsp, err := c.ResizeBlockStorageVolumeWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResizeBlockStorageVolumeResponse(rsp)
+}
+
+func (c *ClientWithResponses) ResizeBlockStorageVolumeWithResponse(ctx context.Context, id string, body ResizeBlockStorageVolumeJSONRequestBody, reqEditors ...RequestEditorFn) (*ResizeBlockStorageVolumeResponse, error) {
+	rsp, err := c.ResizeBlockStorageVolume(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResizeBlockStorageVolumeResponse(rsp)
+}
+
 // GetDbaasCaCertificateWithResponse request returning *GetDbaasCaCertificateResponse
 func (c *ClientWithResponses) GetDbaasCaCertificateWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetDbaasCaCertificateResponse, error) {
 	rsp, err := c.GetDbaasCaCertificate(ctx, reqEditors...)
@@ -25935,6 +29269,15 @@ func (c *ClientWithResponses) ResetDbaasKafkaUserPasswordWithResponse(ctx contex
 	return ParseResetDbaasKafkaUserPasswordResponse(rsp)
 }
 
+// RevealDbaasKafkaUserPasswordWithResponse request returning *RevealDbaasKafkaUserPasswordResponse
+func (c *ClientWithResponses) RevealDbaasKafkaUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*RevealDbaasKafkaUserPasswordResponse, error) {
+	rsp, err := c.RevealDbaasKafkaUserPassword(ctx, serviceName, username, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevealDbaasKafkaUserPasswordResponse(rsp)
+}
+
 // GetDbaasMigrationStatusWithResponse request returning *GetDbaasMigrationStatusResponse
 func (c *ClientWithResponses) GetDbaasMigrationStatusWithResponse(ctx context.Context, name DbaasServiceName, reqEditors ...RequestEditorFn) (*GetDbaasMigrationStatusResponse, error) {
 	rsp, err := c.GetDbaasMigrationStatus(ctx, name, reqEditors...)
@@ -26083,6 +29426,15 @@ func (c *ClientWithResponses) ResetDbaasMysqlUserPasswordWithResponse(ctx contex
 	return ParseResetDbaasMysqlUserPasswordResponse(rsp)
 }
 
+// RevealDbaasMysqlUserPasswordWithResponse request returning *RevealDbaasMysqlUserPasswordResponse
+func (c *ClientWithResponses) RevealDbaasMysqlUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*RevealDbaasMysqlUserPasswordResponse, error) {
+	rsp, err := c.RevealDbaasMysqlUserPassword(ctx, serviceName, username, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevealDbaasMysqlUserPasswordResponse(rsp)
+}
+
 // DeleteDbaasServiceOpensearchWithResponse request returning *DeleteDbaasServiceOpensearchResponse
 func (c *ClientWithResponses) DeleteDbaasServiceOpensearchWithResponse(ctx context.Context, name string, reqEditors ...RequestEditorFn) (*DeleteDbaasServiceOpensearchResponse, error) {
 	rsp, err := c.DeleteDbaasServiceOpensearch(ctx, name, reqEditors...)
@@ -26211,6 +29563,15 @@ func (c *ClientWithResponses) ResetDbaasOpensearchUserPasswordWithResponse(ctx c
 		return nil, err
 	}
 	return ParseResetDbaasOpensearchUserPasswordResponse(rsp)
+}
+
+// RevealDbaasOpensearchUserPasswordWithResponse request returning *RevealDbaasOpensearchUserPasswordResponse
+func (c *ClientWithResponses) RevealDbaasOpensearchUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*RevealDbaasOpensearchUserPasswordResponse, error) {
+	rsp, err := c.RevealDbaasOpensearchUserPassword(ctx, serviceName, username, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevealDbaasOpensearchUserPasswordResponse(rsp)
 }
 
 // DeleteDbaasServicePgWithResponse request returning *DeleteDbaasServicePgResponse
@@ -26412,6 +29773,15 @@ func (c *ClientWithResponses) ResetDbaasPostgresUserPasswordWithResponse(ctx con
 	return ParseResetDbaasPostgresUserPasswordResponse(rsp)
 }
 
+// RevealDbaasPostgresUserPasswordWithResponse request returning *RevealDbaasPostgresUserPasswordResponse
+func (c *ClientWithResponses) RevealDbaasPostgresUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*RevealDbaasPostgresUserPasswordResponse, error) {
+	rsp, err := c.RevealDbaasPostgresUserPassword(ctx, serviceName, username, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevealDbaasPostgresUserPasswordResponse(rsp)
+}
+
 // CreateDbaasPgUpgradeCheckWithBodyWithResponse request with arbitrary body returning *CreateDbaasPgUpgradeCheckResponse
 func (c *ClientWithResponses) CreateDbaasPgUpgradeCheckWithBodyWithResponse(ctx context.Context, service DbaasServiceName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDbaasPgUpgradeCheckResponse, error) {
 	rsp, err := c.CreateDbaasPgUpgradeCheckWithBody(ctx, service, contentType, body, reqEditors...)
@@ -26497,6 +29867,58 @@ func (c *ClientWithResponses) StopDbaasRedisMigrationWithResponse(ctx context.Co
 		return nil, err
 	}
 	return ParseStopDbaasRedisMigrationResponse(rsp)
+}
+
+// CreateDbaasRedisUserWithBodyWithResponse request with arbitrary body returning *CreateDbaasRedisUserResponse
+func (c *ClientWithResponses) CreateDbaasRedisUserWithBodyWithResponse(ctx context.Context, serviceName DbaasServiceName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDbaasRedisUserResponse, error) {
+	rsp, err := c.CreateDbaasRedisUserWithBody(ctx, serviceName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateDbaasRedisUserResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateDbaasRedisUserWithResponse(ctx context.Context, serviceName DbaasServiceName, body CreateDbaasRedisUserJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDbaasRedisUserResponse, error) {
+	rsp, err := c.CreateDbaasRedisUser(ctx, serviceName, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateDbaasRedisUserResponse(rsp)
+}
+
+// DeleteDbaasRedisUserWithResponse request returning *DeleteDbaasRedisUserResponse
+func (c *ClientWithResponses) DeleteDbaasRedisUserWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*DeleteDbaasRedisUserResponse, error) {
+	rsp, err := c.DeleteDbaasRedisUser(ctx, serviceName, username, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteDbaasRedisUserResponse(rsp)
+}
+
+// ResetDbaasRedisUserPasswordWithBodyWithResponse request with arbitrary body returning *ResetDbaasRedisUserPasswordResponse
+func (c *ClientWithResponses) ResetDbaasRedisUserPasswordWithBodyWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResetDbaasRedisUserPasswordResponse, error) {
+	rsp, err := c.ResetDbaasRedisUserPasswordWithBody(ctx, serviceName, username, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResetDbaasRedisUserPasswordResponse(rsp)
+}
+
+func (c *ClientWithResponses) ResetDbaasRedisUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, body ResetDbaasRedisUserPasswordJSONRequestBody, reqEditors ...RequestEditorFn) (*ResetDbaasRedisUserPasswordResponse, error) {
+	rsp, err := c.ResetDbaasRedisUserPassword(ctx, serviceName, username, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResetDbaasRedisUserPasswordResponse(rsp)
+}
+
+// RevealDbaasRedisUserPasswordWithResponse request returning *RevealDbaasRedisUserPasswordResponse
+func (c *ClientWithResponses) RevealDbaasRedisUserPasswordWithResponse(ctx context.Context, serviceName DbaasServiceName, username DbaasUserUsername, reqEditors ...RequestEditorFn) (*RevealDbaasRedisUserPasswordResponse, error) {
+	rsp, err := c.RevealDbaasRedisUserPassword(ctx, serviceName, username, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevealDbaasRedisUserPasswordResponse(rsp)
 }
 
 // ListDbaasServicesWithResponse request returning *ListDbaasServicesResponse
@@ -27930,6 +31352,15 @@ func (c *ClientWithResponses) GetSksClusterAuthorityCertWithResponse(ctx context
 	return ParseGetSksClusterAuthorityCertResponse(rsp)
 }
 
+// GetSksClusterInspectionWithResponse request returning *GetSksClusterInspectionResponse
+func (c *ClientWithResponses) GetSksClusterInspectionWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetSksClusterInspectionResponse, error) {
+	rsp, err := c.GetSksClusterInspection(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSksClusterInspectionResponse(rsp)
+}
+
 // CreateSksNodepoolWithBodyWithResponse request with arbitrary body returning *CreateSksNodepoolResponse
 func (c *ClientWithResponses) CreateSksNodepoolWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateSksNodepoolResponse, error) {
 	rsp, err := c.CreateSksNodepoolWithBody(ctx, id, contentType, body, reqEditors...)
@@ -28654,6 +32085,322 @@ func ParseGetApiKeyResponse(rsp *http.Response) (*GetApiKeyResponse, error) {
 	return response, nil
 }
 
+// ParseListBlockStorageVolumesResponse parses an HTTP response from a ListBlockStorageVolumesWithResponse call
+func ParseListBlockStorageVolumesResponse(rsp *http.Response) (*ListBlockStorageVolumesResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListBlockStorageVolumesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			BlockStorageVolumes *[]BlockStorageVolume `json:"block-storage-volumes,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateBlockStorageVolumeResponse parses an HTTP response from a CreateBlockStorageVolumeWithResponse call
+func ParseCreateBlockStorageVolumeResponse(rsp *http.Response) (*CreateBlockStorageVolumeResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateBlockStorageVolumeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListBlockStorageSnapshotsResponse parses an HTTP response from a ListBlockStorageSnapshotsWithResponse call
+func ParseListBlockStorageSnapshotsResponse(rsp *http.Response) (*ListBlockStorageSnapshotsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListBlockStorageSnapshotsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			BlockStorageSnapshots *[]BlockStorageSnapshot `json:"block-storage-snapshots,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteBlockStorageSnapshotResponse parses an HTTP response from a DeleteBlockStorageSnapshotWithResponse call
+func ParseDeleteBlockStorageSnapshotResponse(rsp *http.Response) (*DeleteBlockStorageSnapshotResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteBlockStorageSnapshotResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetBlockStorageSnapshotResponse parses an HTTP response from a GetBlockStorageSnapshotWithResponse call
+func ParseGetBlockStorageSnapshotResponse(rsp *http.Response) (*GetBlockStorageSnapshotResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetBlockStorageSnapshotResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest BlockStorageSnapshot
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteBlockStorageVolumeResponse parses an HTTP response from a DeleteBlockStorageVolumeWithResponse call
+func ParseDeleteBlockStorageVolumeResponse(rsp *http.Response) (*DeleteBlockStorageVolumeResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteBlockStorageVolumeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetBlockStorageVolumeResponse parses an HTTP response from a GetBlockStorageVolumeWithResponse call
+func ParseGetBlockStorageVolumeResponse(rsp *http.Response) (*GetBlockStorageVolumeResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetBlockStorageVolumeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest BlockStorageVolume
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateBlockStorageVolumeLabelsResponse parses an HTTP response from a UpdateBlockStorageVolumeLabelsWithResponse call
+func ParseUpdateBlockStorageVolumeLabelsResponse(rsp *http.Response) (*UpdateBlockStorageVolumeLabelsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateBlockStorageVolumeLabelsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAttachBlockStorageVolumeToInstanceResponse parses an HTTP response from a AttachBlockStorageVolumeToInstanceWithResponse call
+func ParseAttachBlockStorageVolumeToInstanceResponse(rsp *http.Response) (*AttachBlockStorageVolumeToInstanceResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AttachBlockStorageVolumeToInstanceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateBlockStorageSnapshotResponse parses an HTTP response from a CreateBlockStorageSnapshotWithResponse call
+func ParseCreateBlockStorageSnapshotResponse(rsp *http.Response) (*CreateBlockStorageSnapshotResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateBlockStorageSnapshotResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDetachBlockStorageVolumeResponse parses an HTTP response from a DetachBlockStorageVolumeWithResponse call
+func ParseDetachBlockStorageVolumeResponse(rsp *http.Response) (*DetachBlockStorageVolumeResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DetachBlockStorageVolumeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseResizeBlockStorageVolumeResponse parses an HTTP response from a ResizeBlockStorageVolumeWithResponse call
+func ParseResizeBlockStorageVolumeResponse(rsp *http.Response) (*ResizeBlockStorageVolumeResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResizeBlockStorageVolumeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest BlockStorageVolume
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetDbaasCaCertificateResponse parses an HTTP response from a GetDbaasCaCertificateWithResponse call
 func ParseGetDbaasCaCertificateResponse(rsp *http.Response) (*GetDbaasCaCertificateResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -29316,6 +33063,32 @@ func ParseResetDbaasKafkaUserPasswordResponse(rsp *http.Response) (*ResetDbaasKa
 	return response, nil
 }
 
+// ParseRevealDbaasKafkaUserPasswordResponse parses an HTTP response from a RevealDbaasKafkaUserPasswordWithResponse call
+func ParseRevealDbaasKafkaUserPasswordResponse(rsp *http.Response) (*RevealDbaasKafkaUserPasswordResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RevealDbaasKafkaUserPasswordResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DbaasUserKafkaSecrets
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetDbaasMigrationStatusResponse parses an HTTP response from a GetDbaasMigrationStatusWithResponse call
 func ParseGetDbaasMigrationStatusResponse(rsp *http.Response) (*GetDbaasMigrationStatusResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -29628,6 +33401,32 @@ func ParseResetDbaasMysqlUserPasswordResponse(rsp *http.Response) (*ResetDbaasMy
 	return response, nil
 }
 
+// ParseRevealDbaasMysqlUserPasswordResponse parses an HTTP response from a RevealDbaasMysqlUserPasswordWithResponse call
+func ParseRevealDbaasMysqlUserPasswordResponse(rsp *http.Response) (*RevealDbaasMysqlUserPasswordResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RevealDbaasMysqlUserPasswordResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DbaasUserMysqlSecrets
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseDeleteDbaasServiceOpensearchResponse parses an HTTP response from a DeleteDbaasServiceOpensearchWithResponse call
 func ParseDeleteDbaasServiceOpensearchResponse(rsp *http.Response) (*DeleteDbaasServiceOpensearchResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -29878,6 +33677,32 @@ func ParseResetDbaasOpensearchUserPasswordResponse(rsp *http.Response) (*ResetDb
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRevealDbaasOpensearchUserPasswordResponse parses an HTTP response from a RevealDbaasOpensearchUserPasswordWithResponse call
+func ParseRevealDbaasOpensearchUserPasswordResponse(rsp *http.Response) (*RevealDbaasOpensearchUserPasswordResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RevealDbaasOpensearchUserPasswordResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DbaasUserOpensearchSecrets
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -30278,6 +34103,32 @@ func ParseResetDbaasPostgresUserPasswordResponse(rsp *http.Response) (*ResetDbaa
 	return response, nil
 }
 
+// ParseRevealDbaasPostgresUserPasswordResponse parses an HTTP response from a RevealDbaasPostgresUserPasswordWithResponse call
+func ParseRevealDbaasPostgresUserPasswordResponse(rsp *http.Response) (*RevealDbaasPostgresUserPasswordResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RevealDbaasPostgresUserPasswordResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DbaasUserPostgresSecrets
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseCreateDbaasPgUpgradeCheckResponse parses an HTTP response from a CreateDbaasPgUpgradeCheckWithResponse call
 func ParseCreateDbaasPgUpgradeCheckResponse(rsp *http.Response) (*CreateDbaasPgUpgradeCheckResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -30450,6 +34301,110 @@ func ParseStopDbaasRedisMigrationResponse(rsp *http.Response) (*StopDbaasRedisMi
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateDbaasRedisUserResponse parses an HTTP response from a CreateDbaasRedisUserWithResponse call
+func ParseCreateDbaasRedisUserResponse(rsp *http.Response) (*CreateDbaasRedisUserResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateDbaasRedisUserResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteDbaasRedisUserResponse parses an HTTP response from a DeleteDbaasRedisUserWithResponse call
+func ParseDeleteDbaasRedisUserResponse(rsp *http.Response) (*DeleteDbaasRedisUserResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteDbaasRedisUserResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseResetDbaasRedisUserPasswordResponse parses an HTTP response from a ResetDbaasRedisUserPasswordWithResponse call
+func ParseResetDbaasRedisUserPasswordResponse(rsp *http.Response) (*ResetDbaasRedisUserPasswordResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResetDbaasRedisUserPasswordResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Operation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRevealDbaasRedisUserPasswordResponse parses an HTTP response from a RevealDbaasRedisUserPasswordWithResponse call
+func ParseRevealDbaasRedisUserPasswordResponse(rsp *http.Response) (*RevealDbaasRedisUserPasswordResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RevealDbaasRedisUserPasswordResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DbaasUserRedisSecrets
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -31720,7 +35675,55 @@ func ParseListInstancesResponse(rsp *http.Response) (*ListInstancesResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			Instances *[]Instance `json:"instances,omitempty"`
+			Instances *[]struct {
+				// Instance creation date
+				CreatedAt *time.Time `json:"created-at,omitempty"`
+
+				// Instance ID
+				Id *string `json:"id,omitempty"`
+
+				// Compute instance type
+				InstanceType *InstanceType `json:"instance-type,omitempty"`
+
+				// Instance IPv6 address
+				Ipv6Address *string `json:"ipv6-address,omitempty"`
+				Labels      *Labels `json:"labels,omitempty"`
+
+				// Instance MAC address
+				MacAddress *string `json:"mac-address,omitempty"`
+
+				// Resource manager
+				Manager *Manager `json:"manager,omitempty"`
+
+				// Instance name
+				Name *string `json:"name,omitempty"`
+
+				// Instance Private Networks
+				PrivateNetworks *[]struct {
+					// Private Network ID
+					Id *string `json:"id,omitempty"`
+
+					// Private Network MAC address
+					MacAddress *string `json:"mac-address,omitempty"`
+				} `json:"private-networks,omitempty"`
+
+				// Instance public IPv4 address
+				PublicIp           *string             `json:"public-ip,omitempty"`
+				PublicIpAssignment *PublicIpAssignment `json:"public-ip-assignment,omitempty"`
+
+				// Instance Security Groups
+				SecurityGroups *[]SecurityGroup `json:"security-groups,omitempty"`
+
+				// SSH key
+				SshKey *SshKey `json:"ssh-key,omitempty"`
+
+				// Instance SSH Keys
+				SshKeys *[]SshKey      `json:"ssh-keys,omitempty"`
+				State   *InstanceState `json:"state,omitempty"`
+
+				// Instance template
+				Template *Template `json:"template,omitempty"`
+			} `json:"instances,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -32141,7 +36144,7 @@ func ParseAddInstanceProtectionResponse(rsp *http.Response) (*AddInstanceProtect
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest map[string]interface{}
+		var dest Operation
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -32245,7 +36248,7 @@ func ParseRemoveInstanceProtectionResponse(rsp *http.Response) (*RemoveInstanceP
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest map[string]interface{}
+		var dest Operation
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -33691,6 +37694,34 @@ func ParseGetSksClusterAuthorityCertResponse(rsp *http.Response) (*GetSksCluster
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
 			Cacert *string `json:"cacert,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetSksClusterInspectionResponse parses an HTTP response from a GetSksClusterInspectionWithResponse call
+func ParseGetSksClusterInspectionResponse(rsp *http.Response) (*GetSksClusterInspectionResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSksClusterInspectionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			AdditionalProperties map[string]interface{} `json:"-"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

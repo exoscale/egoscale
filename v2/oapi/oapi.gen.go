@@ -4264,11 +4264,11 @@ type TemplateVisibility string
 // Zone
 type Zone struct {
 	// Zone API endpoint
-	ApiEndpoint *Endpoint `json:"api-endpoint,omitempty"`
+	ApiEndpoint *string   `json:"api-endpoint,omitempty"`
 	Name        *ZoneName `json:"name,omitempty"`
 
 	// Zone SOS endpoint
-	SosEndpoint *Endpoint `json:"sos-endpoint,omitempty"`
+	SosEndpoint *string `json:"sos-endpoint,omitempty"`
 }
 
 // ZoneName defines model for zone-name.

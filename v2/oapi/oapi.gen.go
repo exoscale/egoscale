@@ -2661,13 +2661,7 @@ type Instance struct {
 	Name *string `json:"name,omitempty"`
 
 	// Instance Private Networks
-	PrivateNetworks *[]struct {
-		// Private Network ID
-		Id *string `json:"id,omitempty"`
-
-		// Private Network MAC address
-		MacAddress *string `json:"mac-address,omitempty"`
-	} `json:"private-networks,omitempty"`
+	PrivateNetworks *[]PrivateNetwork `json:"private-networks,omitempty"`
 
 	// Instance public IPv4 address
 	PublicIp           *string             `json:"public-ip,omitempty"`
@@ -5728,10 +5722,7 @@ type DetachInstanceFromPrivateNetworkJSONBody struct {
 
 // UpdatePrivateNetworkInstanceIpJSONBody defines parameters for UpdatePrivateNetworkInstanceIp.
 type UpdatePrivateNetworkInstanceIpJSONBody struct {
-	Instance *struct {
-		// Instance ID
-		Id string `json:"id"`
-	} `json:"instance,omitempty"`
+	Instance Instance `json:"instance,omitempty"`
 
 	// Static IP address lease for the corresponding network interface
 	Ip *string `json:"ip,omitempty"`
@@ -26232,55 +26223,7 @@ type ListInstancesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		Instances *[]struct {
-			// Instance creation date
-			CreatedAt *time.Time `json:"created-at,omitempty"`
-
-			// Instance ID
-			Id *string `json:"id,omitempty"`
-
-			// Compute instance type
-			InstanceType *InstanceType `json:"instance-type,omitempty"`
-
-			// Instance IPv6 address
-			Ipv6Address *string `json:"ipv6-address,omitempty"`
-			Labels      *Labels `json:"labels,omitempty"`
-
-			// Instance MAC address
-			MacAddress *string `json:"mac-address,omitempty"`
-
-			// Resource manager
-			Manager *Manager `json:"manager,omitempty"`
-
-			// Instance name
-			Name *string `json:"name,omitempty"`
-
-			// Instance Private Networks
-			PrivateNetworks *[]struct {
-				// Private Network ID
-				Id *string `json:"id,omitempty"`
-
-				// Private Network MAC address
-				MacAddress *string `json:"mac-address,omitempty"`
-			} `json:"private-networks,omitempty"`
-
-			// Instance public IPv4 address
-			PublicIp           *string             `json:"public-ip,omitempty"`
-			PublicIpAssignment *PublicIpAssignment `json:"public-ip-assignment,omitempty"`
-
-			// Instance Security Groups
-			SecurityGroups *[]SecurityGroup `json:"security-groups,omitempty"`
-
-			// SSH key
-			SshKey *SshKey `json:"ssh-key,omitempty"`
-
-			// Instance SSH Keys
-			SshKeys *[]SshKey      `json:"ssh-keys,omitempty"`
-			State   *InstanceState `json:"state,omitempty"`
-
-			// Instance template
-			Template *Template `json:"template,omitempty"`
-		} `json:"instances,omitempty"`
+		Instances *[]Instance `json:"instances,omitempty"`
 	}
 }
 
@@ -35675,55 +35618,7 @@ func ParseListInstancesResponse(rsp *http.Response) (*ListInstancesResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			Instances *[]struct {
-				// Instance creation date
-				CreatedAt *time.Time `json:"created-at,omitempty"`
-
-				// Instance ID
-				Id *string `json:"id,omitempty"`
-
-				// Compute instance type
-				InstanceType *InstanceType `json:"instance-type,omitempty"`
-
-				// Instance IPv6 address
-				Ipv6Address *string `json:"ipv6-address,omitempty"`
-				Labels      *Labels `json:"labels,omitempty"`
-
-				// Instance MAC address
-				MacAddress *string `json:"mac-address,omitempty"`
-
-				// Resource manager
-				Manager *Manager `json:"manager,omitempty"`
-
-				// Instance name
-				Name *string `json:"name,omitempty"`
-
-				// Instance Private Networks
-				PrivateNetworks *[]struct {
-					// Private Network ID
-					Id *string `json:"id,omitempty"`
-
-					// Private Network MAC address
-					MacAddress *string `json:"mac-address,omitempty"`
-				} `json:"private-networks,omitempty"`
-
-				// Instance public IPv4 address
-				PublicIp           *string             `json:"public-ip,omitempty"`
-				PublicIpAssignment *PublicIpAssignment `json:"public-ip-assignment,omitempty"`
-
-				// Instance Security Groups
-				SecurityGroups *[]SecurityGroup `json:"security-groups,omitempty"`
-
-				// SSH key
-				SshKey *SshKey `json:"ssh-key,omitempty"`
-
-				// Instance SSH Keys
-				SshKeys *[]SshKey      `json:"ssh-keys,omitempty"`
-				State   *InstanceState `json:"state,omitempty"`
-
-				// Instance template
-				Template *Template `json:"template,omitempty"`
-			} `json:"instances,omitempty"`
+			Instances *[]Instance `json:"instances,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

@@ -30,7 +30,7 @@ func (c Client) ListAccessKeys(ctx context.Context) (*ListAccessKeysResponse, er
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-access-keys")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -91,7 +91,7 @@ func (c Client) CreateAccessKey(ctx context.Context, req CreateAccessKeyRequest)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-access-key")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -137,7 +137,7 @@ func (c Client) ListAccessKeyKnownOperations(ctx context.Context) (*ListAccessKe
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-access-key-known-operations")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -183,7 +183,7 @@ func (c Client) ListAccessKeyOperations(ctx context.Context) (*ListAccessKeyOper
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-access-key-operations")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -225,7 +225,7 @@ func (c Client) RevokeAccessKey(ctx context.Context, key string) (*Operation, er
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "revoke-access-key")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -267,7 +267,7 @@ func (c Client) GetAccessKey(ctx context.Context, key string) (*AccessKey, error
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-access-key")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -324,7 +324,7 @@ func (c Client) ListAntiAffinityGroups(ctx context.Context) (*ListAntiAffinityGr
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-anti-affinity-groups")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -380,7 +380,7 @@ func (c Client) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffin
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-anti-affinity-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -422,7 +422,7 @@ func (c Client) DeleteAntiAffinityGroup(ctx context.Context, id UUID) (*Operatio
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-anti-affinity-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -464,7 +464,7 @@ func (c Client) GetAntiAffinityGroup(ctx context.Context, id UUID) (*AntiAffinit
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-anti-affinity-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -510,7 +510,7 @@ func (c Client) ListAPIKeys(ctx context.Context) (*ListAPIKeysResponse, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-api-keys")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -566,7 +566,7 @@ func (c Client) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAM
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-api-key")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -608,7 +608,7 @@ func (c Client) DeleteAPIKey(ctx context.Context, id string) (*Operation, error)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-api-key")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -650,7 +650,7 @@ func (c Client) GetAPIKey(ctx context.Context, id string) (*IAMAPIKey, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-api-key")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -723,7 +723,7 @@ func (c Client) ListBlockStorageVolumes(ctx context.Context, opts ...ListBlockSt
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-block-storage-volumes")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -756,7 +756,7 @@ type CreateBlockStorageVolumeRequest struct {
 	BlockStorageSnapshot *BlockStorageSnapshotTarget `json:"block-storage-snapshot,omitempty"`
 	Labels               Labels                      `json:"labels,omitempty"`
 	// Volume name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	Name string `json:"name,omitempty" validate:"omitempty,lte=255"`
 	// Volume size in GB.
 	// When a snapshot ID is supplied, this defaults to the size of the source volume, but can be set to a larger value.
 	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10,lte=10240"`
@@ -783,7 +783,7 @@ func (c Client) CreateBlockStorageVolume(ctx context.Context, req CreateBlockSto
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-block-storage-volume")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -840,7 +840,7 @@ func (c Client) ListBlockStorageSnapshots(ctx context.Context) (*ListBlockStorag
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-block-storage-snapshots")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -882,7 +882,7 @@ func (c Client) DeleteBlockStorageSnapshot(ctx context.Context, id UUID) (*Opera
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-block-storage-snapshot")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -924,7 +924,7 @@ func (c Client) GetBlockStorageSnapshot(ctx context.Context, id UUID) (*BlockSto
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-block-storage-snapshot")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -966,7 +966,7 @@ func (c Client) DeleteBlockStorageVolume(ctx context.Context, id UUID) (*Operati
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-block-storage-volume")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1008,7 +1008,7 @@ func (c Client) GetBlockStorageVolume(ctx context.Context, id UUID) (*BlockStora
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-block-storage-volume")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1061,7 +1061,7 @@ func (c Client) UpdateBlockStorageVolumeLabels(ctx context.Context, id UUID, req
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-block-storage-volume-labels")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1115,7 +1115,7 @@ func (c Client) AttachBlockStorageVolumeToInstance(ctx context.Context, id UUID,
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "attach-block-storage-volume-to-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1170,7 +1170,7 @@ func (c Client) CreateBlockStorageSnapshot(ctx context.Context, id UUID, req Cre
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-block-storage-snapshot")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1212,7 +1212,7 @@ func (c Client) DetachBlockStorageVolume(ctx context.Context, id UUID) (*Operati
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "detach-block-storage-volume")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1266,7 +1266,7 @@ func (c Client) ResizeBlockStorageVolume(ctx context.Context, id UUID, req Resiz
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "resize-block-storage-volume")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1312,7 +1312,7 @@ func (c Client) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertifica
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-ca-certificate")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1354,7 +1354,7 @@ func (c Client) DeleteDBAASServiceGrafana(ctx context.Context, name string) (*Op
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-service-grafana")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1396,7 +1396,7 @@ func (c Client) GetDBAASServiceGrafana(ctx context.Context, name string) (*DBAAS
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-service-grafana")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1480,7 +1480,7 @@ func (c Client) CreateDBAASServiceGrafana(ctx context.Context, name string, req 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-service-grafana")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1563,7 +1563,7 @@ func (c Client) UpdateDBAASServiceGrafana(ctx context.Context, name string, req 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dbaas-service-grafana")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1605,7 +1605,7 @@ func (c Client) StartDBAASGrafanaMaintenance(ctx context.Context, name string) (
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "start-dbaas-grafana-maintenance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1662,7 +1662,7 @@ func (c Client) CreateDBAASIntegration(ctx context.Context, req CreateDBAASInteg
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-integration")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1717,7 +1717,7 @@ func (c Client) ListDBAASIntegrationSettings(ctx context.Context, integrationTyp
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-dbaas-integration-settings")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1763,7 +1763,7 @@ func (c Client) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegr
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-dbaas-integration-types")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1805,7 +1805,7 @@ func (c Client) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-integration")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1847,7 +1847,7 @@ func (c Client) GetDBAASIntegration(ctx context.Context, id UUID) (*DBAASIntegra
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-integration")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1901,7 +1901,7 @@ func (c Client) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateD
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dbaas-integration")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1943,7 +1943,7 @@ func (c Client) DeleteDBAASServiceKafka(ctx context.Context, name string) (*Oper
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-service-kafka")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -1985,7 +1985,7 @@ func (c Client) GetDBAASServiceKafka(ctx context.Context, name string) (*DBAASSe
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-service-kafka")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2092,7 +2092,7 @@ func (c Client) CreateDBAASServiceKafka(ctx context.Context, name string, req Cr
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-service-kafka")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2199,7 +2199,7 @@ func (c Client) UpdateDBAASServiceKafka(ctx context.Context, name string, req Up
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dbaas-service-kafka")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2241,7 +2241,7 @@ func (c Client) GetDBAASKafkaAclConfig(ctx context.Context, name string) (*DBAAS
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-kafka-acl-config")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2283,7 +2283,7 @@ func (c Client) StartDBAASKafkaMaintenance(ctx context.Context, name string) (*O
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "start-dbaas-kafka-maintenance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2332,7 +2332,7 @@ func (c Client) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-kafka-schema-registry-acl-config")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2374,7 +2374,7 @@ func (c Client) DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-kafka-schema-registry-acl-config")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2423,7 +2423,7 @@ func (c Client) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-kafka-topic-acl-config")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2465,7 +2465,7 @@ func (c Client) DeleteDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-kafka-topic-acl-config")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2518,7 +2518,7 @@ func (c Client) CreateDBAASKafkaUser(ctx context.Context, serviceName string, re
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-kafka-user")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2560,7 +2560,7 @@ func (c Client) DeleteDBAASKafkaUser(ctx context.Context, serviceName string, us
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-kafka-user")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2613,7 +2613,7 @@ func (c Client) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName str
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-dbaas-kafka-user-password")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2641,6 +2641,48 @@ func (c Client) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName str
 	return bodyresp, nil
 }
 
+// Reveal the secrets of a DBaaS Kafka user
+func (c Client) RevealDBAASKafkaUserPassword(ctx context.Context, serviceName string, username string) (*DBAASUserKafkaSecrets, error) {
+	path := fmt.Sprintf("/dbaas-kafka/%v/user/%v/password/reveal", serviceName, username)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaUserPassword: new request: %w", err)
+	}
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaUserPassword: execute request editors: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reveal-dbaas-kafka-user-password")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaUserPassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaUserPassword: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaUserPassword: http response: %w", err)
+	}
+
+	bodyresp := &DBAASUserKafkaSecrets{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaUserPassword: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Get a DBaaS migration status
 func (c Client) GetDBAASMigrationStatus(ctx context.Context, name string) (*DBAASMigrationStatus, error) {
 	path := fmt.Sprintf("/dbaas-migration-status/%v", name)
@@ -2655,7 +2697,7 @@ func (c Client) GetDBAASMigrationStatus(ctx context.Context, name string) (*DBAA
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-migration-status")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2697,7 +2739,7 @@ func (c Client) DeleteDBAASServiceMysql(ctx context.Context, name string) (*Oper
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-service-mysql")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2739,7 +2781,7 @@ func (c Client) GetDBAASServiceMysql(ctx context.Context, name string) (*DBAASSe
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-service-mysql")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2879,7 +2921,7 @@ func (c Client) CreateDBAASServiceMysql(ctx context.Context, name string, req Cr
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-service-mysql")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -2993,7 +3035,7 @@ func (c Client) UpdateDBAASServiceMysql(ctx context.Context, name string, req Up
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dbaas-service-mysql")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3035,7 +3077,7 @@ func (c Client) StartDBAASMysqlMaintenance(ctx context.Context, name string) (*O
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "start-dbaas-mysql-maintenance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3077,7 +3119,7 @@ func (c Client) StopDBAASMysqlMigration(ctx context.Context, name string) (*Oper
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "stop-dbaas-mysql-migration")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3130,7 +3172,7 @@ func (c Client) CreateDBAASMysqlDatabase(ctx context.Context, serviceName string
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-mysql-database")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3172,7 +3214,7 @@ func (c Client) DeleteDBAASMysqlDatabase(ctx context.Context, serviceName string
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-mysql-database")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3226,7 +3268,7 @@ func (c Client) CreateDBAASMysqlUser(ctx context.Context, serviceName string, re
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-mysql-user")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3268,7 +3310,7 @@ func (c Client) DeleteDBAASMysqlUser(ctx context.Context, serviceName string, us
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-mysql-user")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3322,7 +3364,7 @@ func (c Client) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName str
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-dbaas-mysql-user-password")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3350,6 +3392,48 @@ func (c Client) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName str
 	return bodyresp, nil
 }
 
+// Reveal the secrets of a DBaaS MySQL user
+func (c Client) RevealDBAASMysqlUserPassword(ctx context.Context, serviceName string, username string) (*DBAASUserMysqlSecrets, error) {
+	path := fmt.Sprintf("/dbaas-mysql/%v/user/%v/password/reveal", serviceName, username)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASMysqlUserPassword: new request: %w", err)
+	}
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASMysqlUserPassword: execute request editors: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reveal-dbaas-mysql-user-password")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASMysqlUserPassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASMysqlUserPassword: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealDBAASMysqlUserPassword: http response: %w", err)
+	}
+
+	bodyresp := &DBAASUserMysqlSecrets{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RevealDBAASMysqlUserPassword: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Delete a OpenSearch service
 func (c Client) DeleteDBAASServiceOpensearch(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
@@ -3364,7 +3448,7 @@ func (c Client) DeleteDBAASServiceOpensearch(ctx context.Context, name string) (
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-service-opensearch")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3406,7 +3490,7 @@ func (c Client) GetDBAASServiceOpensearch(ctx context.Context, name string) (*DB
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-service-opensearch")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3540,7 +3624,7 @@ func (c Client) CreateDBAASServiceOpensearch(ctx context.Context, name string, r
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-service-opensearch")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3671,7 +3755,7 @@ func (c Client) UpdateDBAASServiceOpensearch(ctx context.Context, name string, r
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dbaas-service-opensearch")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3713,7 +3797,7 @@ func (c Client) GetDBAASOpensearchAclConfig(ctx context.Context, name string) (*
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-opensearch-acl-config")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3762,7 +3846,7 @@ func (c Client) UpdateDBAASOpensearchAclConfig(ctx context.Context, name string,
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dbaas-opensearch-acl-config")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3804,7 +3888,7 @@ func (c Client) StartDBAASOpensearchMaintenance(ctx context.Context, name string
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "start-dbaas-opensearch-maintenance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3857,7 +3941,7 @@ func (c Client) CreateDBAASOpensearchUser(ctx context.Context, serviceName strin
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-opensearch-user")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3899,7 +3983,7 @@ func (c Client) DeleteDBAASOpensearchUser(ctx context.Context, serviceName strin
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-opensearch-user")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3952,7 +4036,7 @@ func (c Client) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceNam
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-dbaas-opensearch-user-password")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -3980,6 +4064,48 @@ func (c Client) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceNam
 	return bodyresp, nil
 }
 
+// Reveal the secrets of a DBaaS OpenSearch user
+func (c Client) RevealDBAASOpensearchUserPassword(ctx context.Context, serviceName string, username string) (*DBAASUserOpensearchSecrets, error) {
+	path := fmt.Sprintf("/dbaas-opensearch/%v/user/%v/password/reveal", serviceName, username)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASOpensearchUserPassword: new request: %w", err)
+	}
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASOpensearchUserPassword: execute request editors: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reveal-dbaas-opensearch-user-password")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASOpensearchUserPassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASOpensearchUserPassword: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealDBAASOpensearchUserPassword: http response: %w", err)
+	}
+
+	bodyresp := &DBAASUserOpensearchSecrets{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RevealDBAASOpensearchUserPassword: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Delete a Postgres service
 func (c Client) DeleteDBAASServicePG(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
@@ -3994,7 +4120,7 @@ func (c Client) DeleteDBAASServicePG(ctx context.Context, name string) (*Operati
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-service-pg")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4036,7 +4162,7 @@ func (c Client) GetDBAASServicePG(ctx context.Context, name string) (*DBAASServi
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-service-pg")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4185,7 +4311,7 @@ func (c Client) CreateDBAASServicePG(ctx context.Context, name string, req Creat
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-service-pg")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4311,7 +4437,7 @@ func (c Client) UpdateDBAASServicePG(ctx context.Context, name string, req Updat
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dbaas-service-pg")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4353,7 +4479,7 @@ func (c Client) StartDBAASPGMaintenance(ctx context.Context, name string) (*Oper
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "start-dbaas-pg-maintenance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4395,7 +4521,7 @@ func (c Client) StopDBAASPGMigration(ctx context.Context, name string) (*Operati
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "stop-dbaas-pg-migration")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4452,7 +4578,7 @@ func (c Client) CreateDBAASPGConnectionPool(ctx context.Context, serviceName str
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-pg-connection-pool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4494,7 +4620,7 @@ func (c Client) DeleteDBAASPGConnectionPool(ctx context.Context, serviceName str
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-pg-connection-pool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4550,7 +4676,7 @@ func (c Client) UpdateDBAASPGConnectionPool(ctx context.Context, serviceName str
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dbaas-pg-connection-pool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4607,7 +4733,7 @@ func (c Client) CreateDBAASPGDatabase(ctx context.Context, serviceName string, r
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-pg-database")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4649,7 +4775,7 @@ func (c Client) DeleteDBAASPGDatabase(ctx context.Context, serviceName string, d
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-pg-database")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4703,7 +4829,7 @@ func (c Client) CreateDBAASPostgresUser(ctx context.Context, serviceName string,
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-postgres-user")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4745,7 +4871,7 @@ func (c Client) DeleteDBAASPostgresUser(ctx context.Context, serviceName string,
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-postgres-user")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4798,7 +4924,7 @@ func (c Client) UpdateDBAASPostgresAllowReplication(ctx context.Context, service
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dbaas-postgres-allow-replication")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4851,7 +4977,7 @@ func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-dbaas-postgres-user-password")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4874,6 +5000,48 @@ func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName 
 	bodyresp := &Operation{}
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Reveal the secrets of a DBaaS Postgres user
+func (c Client) RevealDBAASPostgresUserPassword(ctx context.Context, serviceName string, username string) (*DBAASUserPostgresSecrets, error) {
+	path := fmt.Sprintf("/dbaas-postgres/%v/user/%v/password/reveal", serviceName, username)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASPostgresUserPassword: new request: %w", err)
+	}
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASPostgresUserPassword: execute request editors: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reveal-dbaas-postgres-user-password")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASPostgresUserPassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASPostgresUserPassword: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealDBAASPostgresUserPassword: http response: %w", err)
+	}
+
+	bodyresp := &DBAASUserPostgresSecrets{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RevealDBAASPostgresUserPassword: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil
@@ -4904,7 +5072,7 @@ func (c Client) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, r
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-pg-upgrade-check")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4946,7 +5114,7 @@ func (c Client) DeleteDBAASServiceRedis(ctx context.Context, name string) (*Oper
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-service-redis")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -4988,7 +5156,7 @@ func (c Client) GetDBAASServiceRedis(ctx context.Context, name string) (*DBAASSe
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-service-redis")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5095,7 +5263,7 @@ func (c Client) CreateDBAASServiceRedis(ctx context.Context, name string, req Cr
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-service-redis")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5199,7 +5367,7 @@ func (c Client) UpdateDBAASServiceRedis(ctx context.Context, name string, req Up
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dbaas-service-redis")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5241,7 +5409,7 @@ func (c Client) StartDBAASRedisMaintenance(ctx context.Context, name string) (*O
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "start-dbaas-redis-maintenance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5283,7 +5451,7 @@ func (c Client) StopDBAASRedisMigration(ctx context.Context, name string) (*Oper
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "stop-dbaas-redis-migration")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5311,6 +5479,196 @@ func (c Client) StopDBAASRedisMigration(ctx context.Context, name string) (*Oper
 	return bodyresp, nil
 }
 
+type CreateDBAASRedisUserRequest struct {
+	Username DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
+}
+
+// Create a DBaaS Redis user
+func (c Client) CreateDBAASRedisUser(ctx context.Context, serviceName string, req CreateDBAASRedisUserRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-redis/%v/user", serviceName)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASRedisUser: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASRedisUser: new request: %w", err)
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASRedisUser: execute request editors: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-dbaas-redis-user")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASRedisUser: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASRedisUser: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASRedisUser: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateDBAASRedisUser: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Delete a DBaaS Redis user
+func (c Client) DeleteDBAASRedisUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-redis/%v/user/%v", serviceName, username)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASRedisUser: new request: %w", err)
+	}
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASRedisUser: execute request editors: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-dbaas-redis-user")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASRedisUser: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASRedisUser: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASRedisUser: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASRedisUser: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ResetDBAASRedisUserPasswordRequest struct {
+	Password DBAASUserPassword `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
+}
+
+// If no password is provided one will be generated automatically.
+func (c Client) ResetDBAASRedisUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASRedisUserPasswordRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-redis/%v/user/%v/password/reset", serviceName, username)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("ResetDBAASRedisUserPassword: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("ResetDBAASRedisUserPassword: new request: %w", err)
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASRedisUserPassword: execute request editors: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reset-dbaas-redis-user-password")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASRedisUserPassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ResetDBAASRedisUserPassword: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetDBAASRedisUserPassword: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ResetDBAASRedisUserPassword: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Reveal the secrets of a DBaaS Redis user
+func (c Client) RevealDBAASRedisUserPassword(ctx context.Context, serviceName string, username string) (*DBAASUserRedisSecrets, error) {
+	path := fmt.Sprintf("/dbaas-redis/%v/user/%v/password/reveal", serviceName, username)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASRedisUserPassword: new request: %w", err)
+	}
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASRedisUserPassword: execute request editors: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reveal-dbaas-redis-user-password")
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASRedisUserPassword: sign request: %w", err)
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASRedisUserPassword: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealDBAASRedisUserPassword: http response: %w", err)
+	}
+
+	bodyresp := &DBAASUserRedisSecrets{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RevealDBAASRedisUserPassword: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type ListDBAASServicesResponse struct {
 	DBAASServices []DBAASServiceCommon `json:"dbaas-services,omitempty"`
 }
@@ -5329,7 +5687,7 @@ func (c Client) ListDBAASServices(ctx context.Context) (*ListDBAASServicesRespon
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-dbaas-services")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5386,7 +5744,7 @@ func (c Client) GetDBAASServiceLogs(ctx context.Context, serviceName string, req
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-service-logs")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5454,7 +5812,7 @@ func (c Client) GetDBAASServiceMetrics(ctx context.Context, serviceName string, 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-service-metrics")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5500,7 +5858,7 @@ func (c Client) ListDBAASServiceTypes(ctx context.Context) (*ListDBAASServiceTyp
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-dbaas-service-types")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5542,7 +5900,7 @@ func (c Client) GetDBAASServiceType(ctx context.Context, serviceTypeName string)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-service-type")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5584,7 +5942,7 @@ func (c Client) DeleteDBAASService(ctx context.Context, name string) (*Operation
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dbaas-service")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5643,7 +6001,7 @@ func (c Client) GetDBAASSettingsGrafana(ctx context.Context) (*GetDBAASSettingsG
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-settings-grafana")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5732,7 +6090,7 @@ func (c Client) GetDBAASSettingsKafka(ctx context.Context) (*GetDBAASSettingsKaf
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-settings-kafka")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5791,7 +6149,7 @@ func (c Client) GetDBAASSettingsMysql(ctx context.Context) (*GetDBAASSettingsMys
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-settings-mysql")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5850,7 +6208,7 @@ func (c Client) GetDBAASSettingsOpensearch(ctx context.Context) (*GetDBAASSettin
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-settings-opensearch")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5939,7 +6297,7 @@ func (c Client) GetDBAASSettingsPG(ctx context.Context) (*GetDBAASSettingsPGResp
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-settings-pg")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -5998,7 +6356,7 @@ func (c Client) GetDBAASSettingsRedis(ctx context.Context) (*GetDBAASSettingsRed
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-settings-redis")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6055,7 +6413,7 @@ func (c Client) CreateDBAASTaskMigrationCheck(ctx context.Context, service strin
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dbaas-task-migration-check")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6097,7 +6455,7 @@ func (c Client) GetDBAASTask(ctx context.Context, service string, id UUID) (*DBA
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dbaas-task")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6154,7 +6512,7 @@ func (c Client) ListDeployTargets(ctx context.Context) (*ListDeployTargetsRespon
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-deploy-targets")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6196,7 +6554,7 @@ func (c Client) GetDeployTarget(ctx context.Context, id UUID) (*DeployTarget, er
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-deploy-target")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6242,7 +6600,7 @@ func (c Client) ListDNSDomains(ctx context.Context) (*ListDNSDomainsResponse, er
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-dns-domains")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6297,7 +6655,7 @@ func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dns-domain")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6354,7 +6712,7 @@ func (c Client) ListDNSDomainRecords(ctx context.Context, domainID UUID) (*ListD
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-dns-domain-records")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6436,7 +6794,7 @@ func (c Client) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req Cr
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-dns-domain-record")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6478,7 +6836,7 @@ func (c Client) DeleteDNSDomainRecord(ctx context.Context, domainID UUID, record
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dns-domain-record")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6520,7 +6878,7 @@ func (c Client) GetDNSDomainRecord(ctx context.Context, domainID UUID, recordID 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dns-domain-record")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6580,7 +6938,7 @@ func (c Client) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, record
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-dns-domain-record")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6622,7 +6980,7 @@ func (c Client) DeleteDNSDomain(ctx context.Context, id UUID) (*Operation, error
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-dns-domain")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6664,7 +7022,7 @@ func (c Client) GetDNSDomain(ctx context.Context, id UUID) (*DNSDomain, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dns-domain")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6710,7 +7068,7 @@ func (c Client) GetDNSDomainZoneFile(ctx context.Context, id UUID) (*GetDNSDomai
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-dns-domain-zone-file")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6756,7 +7114,7 @@ func (c Client) ListElasticIPS(ctx context.Context) (*ListElasticIPSResponse, er
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-elastic-ips")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6822,7 +7180,7 @@ func (c Client) CreateElasticIP(ctx context.Context, req CreateElasticIPRequest)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-elastic-ip")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6864,7 +7222,7 @@ func (c Client) DeleteElasticIP(ctx context.Context, id UUID) (*Operation, error
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-elastic-ip")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6906,7 +7264,7 @@ func (c Client) GetElasticIP(ctx context.Context, id UUID) (*ElasticIP, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-elastic-ip")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -6963,7 +7321,7 @@ func (c Client) UpdateElasticIP(ctx context.Context, id UUID, req UpdateElasticI
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-elastic-ip")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7011,7 +7369,7 @@ func (c Client) ResetElasticIPField(ctx context.Context, id UUID, field ResetEla
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-elastic-ip-field")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7065,7 +7423,7 @@ func (c Client) AttachInstanceToElasticIP(ctx context.Context, id UUID, req Atta
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "attach-instance-to-elastic-ip")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7119,7 +7477,7 @@ func (c Client) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req De
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "detach-instance-from-elastic-ip")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7185,7 +7543,7 @@ func (c Client) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event,
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-events")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7227,7 +7585,7 @@ func (c Client) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-iam-organization-policy")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7276,7 +7634,7 @@ func (c Client) UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-iam-organization-policy")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7333,7 +7691,7 @@ func (c Client) ListIAMRoles(ctx context.Context) (*ListIAMRolesResponse, error)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-iam-roles")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7396,7 +7754,7 @@ func (c Client) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*O
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-iam-role")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7438,7 +7796,7 @@ func (c Client) DeleteIAMRole(ctx context.Context, id UUID) (*Operation, error) 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-iam-role")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7480,7 +7838,7 @@ func (c Client) GetIAMRole(ctx context.Context, id UUID) (*IAMRole, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-iam-role")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7537,7 +7895,7 @@ func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleReq
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-iam-role")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7586,7 +7944,7 @@ func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-iam-role-policy")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7614,6 +7972,14 @@ func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy)
 	return bodyresp, nil
 }
 
+// Private Network
+type ListInstancesResponseInstancesPrivateNetworks struct {
+	// Private Network ID
+	ID UUID `json:"id,omitempty"`
+	// Private Network MAC address
+	MACAddress string `json:"mac-address,omitempty"`
+}
+
 // Instance
 type ListInstancesResponseInstances struct {
 	// Instance creation date
@@ -7625,12 +7991,14 @@ type ListInstancesResponseInstances struct {
 	// Instance IPv6 address
 	Ipv6Address string `json:"ipv6-address,omitempty"`
 	Labels      Labels `json:"labels,omitempty"`
+	// Instance MAC address
+	MACAddress string `json:"mac-address,omitempty"`
 	// Resource manager
 	Manager *Manager `json:"manager,omitempty"`
 	// Instance name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Instance Private Networks
-	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
+	PrivateNetworks []ListInstancesResponseInstancesPrivateNetworks `json:"private-networks,omitempty"`
 	// Instance public IPv4 address
 	PublicIP           net.IP             `json:"public-ip,omitempty"`
 	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
@@ -7708,7 +8076,7 @@ func (c Client) ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*L
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-instances")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7786,7 +8154,7 @@ func (c Client) CreateInstance(ctx context.Context, req CreateInstanceRequest) (
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7843,7 +8211,7 @@ func (c Client) ListInstancePools(ctx context.Context) (*ListInstancePoolsRespon
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-instance-pools")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7931,7 +8299,7 @@ func (c Client) CreateInstancePool(ctx context.Context, req CreateInstancePoolRe
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-instance-pool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -7973,7 +8341,7 @@ func (c Client) DeleteInstancePool(ctx context.Context, id UUID) (*Operation, er
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-instance-pool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8015,7 +8383,7 @@ func (c Client) GetInstancePool(ctx context.Context, id UUID) (*InstancePool, er
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-instance-pool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8101,7 +8469,7 @@ func (c Client) UpdateInstancePool(ctx context.Context, id UUID, req UpdateInsta
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-instance-pool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8158,7 +8526,7 @@ func (c Client) ResetInstancePoolField(ctx context.Context, id UUID, field Reset
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-instance-pool-field")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8211,7 +8579,7 @@ func (c Client) EvictInstancePoolMembers(ctx context.Context, id UUID, req Evict
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "evict-instance-pool-members")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8265,7 +8633,7 @@ func (c Client) ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstanc
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "scale-instance-pool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8311,7 +8679,7 @@ func (c Client) ListInstanceTypes(ctx context.Context) (*ListInstanceTypesRespon
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-instance-types")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8353,7 +8721,7 @@ func (c Client) GetInstanceType(ctx context.Context, id UUID) (*InstanceType, er
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-instance-type")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8395,7 +8763,7 @@ func (c Client) DeleteInstance(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8437,7 +8805,7 @@ func (c Client) GetInstance(ctx context.Context, id UUID) (*Instance, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8495,7 +8863,7 @@ func (c Client) UpdateInstance(ctx context.Context, id UUID, req UpdateInstanceR
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8543,7 +8911,7 @@ func (c Client) ResetInstanceField(ctx context.Context, id UUID, field ResetInst
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-instance-field")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8571,11 +8939,8 @@ func (c Client) ResetInstanceField(ctx context.Context, id UUID, field ResetInst
 	return bodyresp, nil
 }
 
-type AddInstanceProtectionResponse struct {
-}
-
 // Set instance destruction protection
-func (c Client) AddInstanceProtection(ctx context.Context, id UUID) (*AddInstanceProtectionResponse, error) {
+func (c Client) AddInstanceProtection(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:add-protection", id)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
@@ -8588,7 +8953,7 @@ func (c Client) AddInstanceProtection(ctx context.Context, id UUID) (*AddInstanc
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "add-instance-protection")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8608,7 +8973,7 @@ func (c Client) AddInstanceProtection(ctx context.Context, id UUID) (*AddInstanc
 		return nil, fmt.Errorf("AddInstanceProtection: http response: %w", err)
 	}
 
-	bodyresp := &AddInstanceProtectionResponse{}
+	bodyresp := &Operation{}
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddInstanceProtection: prepare Json response: %w", err)
 	}
@@ -8630,7 +8995,7 @@ func (c Client) CreateSnapshot(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-snapshot")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8676,7 +9041,7 @@ func (c Client) RevealInstancePassword(ctx context.Context, id UUID) (*InstanceP
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reveal-instance-password")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8718,7 +9083,7 @@ func (c Client) RebootInstance(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reboot-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8746,11 +9111,8 @@ func (c Client) RebootInstance(ctx context.Context, id UUID) (*Operation, error)
 	return bodyresp, nil
 }
 
-type RemoveInstanceProtectionResponse struct {
-}
-
 // Remove instance destruction protection
-func (c Client) RemoveInstanceProtection(ctx context.Context, id UUID) (*RemoveInstanceProtectionResponse, error) {
+func (c Client) RemoveInstanceProtection(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:remove-protection", id)
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
@@ -8763,7 +9125,7 @@ func (c Client) RemoveInstanceProtection(ctx context.Context, id UUID) (*RemoveI
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "remove-instance-protection")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8783,7 +9145,7 @@ func (c Client) RemoveInstanceProtection(ctx context.Context, id UUID) (*RemoveI
 		return nil, fmt.Errorf("RemoveInstanceProtection: http response: %w", err)
 	}
 
-	bodyresp := &RemoveInstanceProtectionResponse{}
+	bodyresp := &Operation{}
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RemoveInstanceProtection: prepare Json response: %w", err)
 	}
@@ -8819,7 +9181,7 @@ func (c Client) ResetInstance(ctx context.Context, id UUID, req ResetInstanceReq
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8861,7 +9223,7 @@ func (c Client) ResetInstancePassword(ctx context.Context, id UUID) (*Operation,
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-instance-password")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8915,7 +9277,7 @@ func (c Client) ResizeInstanceDisk(ctx context.Context, id UUID, req ResizeInsta
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "resize-instance-disk")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -8969,7 +9331,7 @@ func (c Client) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceReq
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "scale-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9030,7 +9392,7 @@ func (c Client) StartInstance(ctx context.Context, id UUID, req StartInstanceReq
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "start-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9072,7 +9434,7 @@ func (c Client) StopInstance(ctx context.Context, id UUID) (*Operation, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "stop-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9127,7 +9489,7 @@ func (c Client) RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, r
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "revert-instance-to-snapshot")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9184,7 +9546,7 @@ func (c Client) ListLoadBalancers(ctx context.Context) (*ListLoadBalancersRespon
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-load-balancers")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9241,7 +9603,7 @@ func (c Client) CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRe
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-load-balancer")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9283,7 +9645,7 @@ func (c Client) DeleteLoadBalancer(ctx context.Context, id UUID) (*Operation, er
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-load-balancer")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9325,7 +9687,7 @@ func (c Client) GetLoadBalancer(ctx context.Context, id UUID) (*LoadBalancer, er
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-load-balancer")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9382,7 +9744,7 @@ func (c Client) UpdateLoadBalancer(ctx context.Context, id UUID, req UpdateLoadB
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-load-balancer")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9464,7 +9826,7 @@ func (c Client) AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddSe
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "add-service-to-load-balancer")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9506,7 +9868,7 @@ func (c Client) DeleteLoadBalancerService(ctx context.Context, id UUID, serviceI
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-load-balancer-service")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9548,7 +9910,7 @@ func (c Client) GetLoadBalancerService(ctx context.Context, id UUID, serviceID U
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-load-balancer-service")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9628,7 +9990,7 @@ func (c Client) UpdateLoadBalancerService(ctx context.Context, id UUID, serviceI
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-load-balancer-service")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9676,7 +10038,7 @@ func (c Client) ResetLoadBalancerServiceField(ctx context.Context, id UUID, serv
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-load-balancer-service-field")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9725,7 +10087,7 @@ func (c Client) ResetLoadBalancerField(ctx context.Context, id UUID, field Reset
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-load-balancer-field")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9767,7 +10129,7 @@ func (c Client) GetOperation(ctx context.Context, id UUID) (*Operation, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-operation")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9824,7 +10186,7 @@ func (c Client) ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksRe
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-private-networks")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9887,7 +10249,7 @@ func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetwo
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-private-network")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9929,7 +10291,7 @@ func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-private-network")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -9971,7 +10333,7 @@ func (c Client) GetPrivateNetwork(ctx context.Context, id UUID) (*PrivateNetwork
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-private-network")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10034,7 +10396,7 @@ func (c Client) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePri
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-private-network")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10082,7 +10444,7 @@ func (c Client) ResetPrivateNetworkField(ctx context.Context, id UUID, field Res
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-private-network-field")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10144,7 +10506,7 @@ func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "attach-instance-to-private-network")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10198,7 +10560,7 @@ func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, r
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "detach-instance-from-private-network")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10258,7 +10620,7 @@ func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-private-network-instance-ip")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10304,7 +10666,7 @@ func (c Client) ListQuotas(ctx context.Context) (*ListQuotasResponse, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-quotas")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10346,7 +10708,7 @@ func (c Client) GetQuota(ctx context.Context, entity string) (*Quota, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-quota")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10388,7 +10750,7 @@ func (c Client) DeleteReverseDNSElasticIP(ctx context.Context, id UUID) (*Operat
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-reverse-dns-elastic-ip")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10430,7 +10792,7 @@ func (c Client) GetReverseDNSElasticIP(ctx context.Context, id UUID) (*ReverseDN
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-reverse-dns-elastic-ip")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10483,7 +10845,7 @@ func (c Client) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req Upda
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-reverse-dns-elastic-ip")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10525,7 +10887,7 @@ func (c Client) DeleteReverseDNSInstance(ctx context.Context, id UUID) (*Operati
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-reverse-dns-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10567,7 +10929,7 @@ func (c Client) GetReverseDNSInstance(ctx context.Context, id UUID) (*ReverseDNS
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-reverse-dns-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10620,7 +10982,7 @@ func (c Client) UpdateReverseDNSInstance(ctx context.Context, id UUID, req Updat
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-reverse-dns-instance")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10703,7 +11065,7 @@ func (c Client) ListSecurityGroups(ctx context.Context, opts ...ListSecurityGrou
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-security-groups")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10759,7 +11121,7 @@ func (c Client) CreateSecurityGroup(ctx context.Context, req CreateSecurityGroup
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-security-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10801,7 +11163,7 @@ func (c Client) DeleteSecurityGroup(ctx context.Context, id UUID) (*Operation, e
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-security-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10843,7 +11205,7 @@ func (c Client) GetSecurityGroup(ctx context.Context, id UUID) (*SecurityGroup, 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-security-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10937,7 +11299,7 @@ func (c Client) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRule
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "add-rule-to-security-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -10979,7 +11341,7 @@ func (c Client) DeleteRuleFromSecurityGroup(ctx context.Context, id UUID, ruleID
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-rule-from-security-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11033,7 +11395,7 @@ func (c Client) AddExternalSourceToSecurityGroup(ctx context.Context, id UUID, r
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "add-external-source-to-security-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11087,7 +11449,7 @@ func (c Client) AttachInstanceToSecurityGroup(ctx context.Context, id UUID, req 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "attach-instance-to-security-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11141,7 +11503,7 @@ func (c Client) DetachInstanceFromSecurityGroup(ctx context.Context, id UUID, re
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "detach-instance-from-security-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11195,7 +11557,7 @@ func (c Client) RemoveExternalSourceFromSecurityGroup(ctx context.Context, id UU
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "remove-external-source-from-security-group")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11252,7 +11614,7 @@ func (c Client) ListSKSClusters(ctx context.Context) (*ListSKSClustersResponse, 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-sks-clusters")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11335,7 +11697,7 @@ func (c Client) CreateSKSCluster(ctx context.Context, req CreateSKSClusterReques
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-sks-cluster")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11377,7 +11739,7 @@ func (c Client) ListSKSClusterDeprecatedResources(ctx context.Context, id UUID) 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-sks-cluster-deprecated-resources")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11430,7 +11792,7 @@ func (c Client) GenerateSKSClusterKubeconfig(ctx context.Context, id UUID, req S
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "generate-sks-cluster-kubeconfig")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11492,7 +11854,7 @@ func (c Client) ListSKSClusterVersions(ctx context.Context, opts ...ListSKSClust
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-sks-cluster-versions")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11534,7 +11896,7 @@ func (c Client) DeleteSKSCluster(ctx context.Context, id UUID) (*Operation, erro
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-sks-cluster")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11576,7 +11938,7 @@ func (c Client) GetSKSCluster(ctx context.Context, id UUID) (*SKSCluster, error)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-sks-cluster")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11639,7 +12001,7 @@ func (c Client) UpdateSKSCluster(ctx context.Context, id UUID, req UpdateSKSClus
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-sks-cluster")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11693,7 +12055,7 @@ func (c Client) GetSKSClusterAuthorityCert(ctx context.Context, id UUID, authori
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-sks-cluster-authority-cert")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11737,7 +12099,7 @@ func (c Client) GetSKSClusterInspection(ctx context.Context, id UUID) (*GetSKSCl
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-sks-cluster-inspection")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11815,7 +12177,7 @@ func (c Client) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNod
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "create-sks-nodepool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11857,7 +12219,7 @@ func (c Client) DeleteSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UU
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-sks-nodepool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11899,7 +12261,7 @@ func (c Client) GetSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-sks-nodepool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -11971,7 +12333,7 @@ func (c Client) UpdateSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UU
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-sks-nodepool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12024,7 +12386,7 @@ func (c Client) ResetSKSNodepoolField(ctx context.Context, id UUID, sksNodepoolI
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-sks-nodepool-field")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12077,7 +12439,7 @@ func (c Client) EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoo
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "evict-sks-nodepool-members")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12131,7 +12493,7 @@ func (c Client) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUI
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "scale-sks-nodepool")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12173,7 +12535,7 @@ func (c Client) RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Operatio
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "rotate-sks-ccm-credentials")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12215,7 +12577,7 @@ func (c Client) RotateSKSOperatorsCA(ctx context.Context, id UUID) (*Operation, 
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "rotate-sks-operators-ca")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12269,7 +12631,7 @@ func (c Client) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSCl
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "upgrade-sks-cluster")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12311,7 +12673,7 @@ func (c Client) UpgradeSKSClusterServiceLevel(ctx context.Context, id UUID) (*Op
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "upgrade-sks-cluster-service-level")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12360,7 +12722,7 @@ func (c Client) ResetSKSClusterField(ctx context.Context, id UUID, field ResetSK
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "reset-sks-cluster-field")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12417,7 +12779,7 @@ func (c Client) ListSnapshots(ctx context.Context) (*ListSnapshotsResponse, erro
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-snapshots")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12459,7 +12821,7 @@ func (c Client) DeleteSnapshot(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-snapshot")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12501,7 +12863,7 @@ func (c Client) GetSnapshot(ctx context.Context, id UUID) (*Snapshot, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-snapshot")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12543,7 +12905,7 @@ func (c Client) ExportSnapshot(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "export-snapshot")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12605,7 +12967,7 @@ func (c Client) PromoteSnapshotToTemplate(ctx context.Context, id UUID, req Prom
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "promote-snapshot-to-template")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12651,7 +13013,7 @@ func (c Client) ListSOSBucketsUsage(ctx context.Context) (*ListSOSBucketsUsageRe
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-sos-buckets-usage")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12713,7 +13075,7 @@ func (c Client) GetSOSPresignedURL(ctx context.Context, bucket string, opts ...G
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-sos-presigned-url")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12759,7 +13121,7 @@ func (c Client) ListSSHKeys(ctx context.Context) (*ListSSHKeysResponse, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-ssh-keys")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12815,7 +13177,7 @@ func (c Client) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "register-ssh-key")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12857,7 +13219,7 @@ func (c Client) DeleteSSHKey(ctx context.Context, name string) (*Operation, erro
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-ssh-key")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12899,7 +13261,7 @@ func (c Client) GetSSHKey(ctx context.Context, name string) (*SSHKey, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-ssh-key")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -12985,7 +13347,7 @@ func (c Client) ListTemplates(ctx context.Context, opts ...ListTemplatesOpt) (*L
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-templates")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -13068,7 +13430,7 @@ func (c Client) RegisterTemplate(ctx context.Context, req RegisterTemplateReques
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "register-template")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -13110,7 +13472,7 @@ func (c Client) DeleteTemplate(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "delete-template")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -13152,7 +13514,7 @@ func (c Client) GetTemplate(ctx context.Context, id UUID) (*Template, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "get-template")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -13206,7 +13568,7 @@ func (c Client) CopyTemplate(ctx context.Context, id UUID, req CopyTemplateReque
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "copy-template")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -13262,7 +13624,7 @@ func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateR
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "update-template")
 	}
 
 	if err := c.signRequest(request); err != nil {
@@ -13308,7 +13670,7 @@ func (c Client) ListZones(ctx context.Context) (*ListZonesResponse, error) {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, "list-zones")
 	}
 
 	if err := c.signRequest(request); err != nil {

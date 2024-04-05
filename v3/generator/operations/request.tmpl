@@ -31,7 +31,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	}
 
 	if c.trace {
-		dumpRequest(request)
+		dumpRequest(request, path)
 	}
 
 	if err := c.signRequest(request); err != nil {

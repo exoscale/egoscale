@@ -290,8 +290,9 @@ func handleHTTPErrorResp(resp *http.Response) error {
 	return nil
 }
 
-func dumpRequest(req *http.Request) {
+func dumpRequest(req *http.Request, path string) {
 	if req != nil {
+		fmt.Fprintf(os.Stderr, ">>> %s\n", path)
 		if dump, err := httputil.DumpRequest(req, true); err == nil {
 			fmt.Fprintf(os.Stderr, ">>> %s\n", dump)
 		}

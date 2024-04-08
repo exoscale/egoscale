@@ -9,11 +9,12 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/exoscale/egoscale/v3/generator/helpers"
-	"github.com/exoscale/egoscale/v3/generator/schemas"
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+
+	"github.com/exoscale/egoscale/v3/generator/helpers"
+	"github.com/exoscale/egoscale/v3/generator/schemas"
 )
 
 // Generate go requests from OpenAPI spec paths operations into a go file.
@@ -358,6 +359,7 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 type RequestTmpl struct {
 	Comment        string
 	Name           string
+	OperationId    string
 	Params         string
 	ValueReturn    string
 	URLPathBuilder string
@@ -371,8 +373,9 @@ type RequestTmpl struct {
 // serializeRequest serializes the openAPI spec into the request template.
 func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*RequestTmpl, error) {
 	p := RequestTmpl{
-		Name:       funcName,
-		HTTPMethod: strings.ToUpper(httpMethod),
+		Name:        funcName,
+		OperationId: op.OperationId,
+		HTTPMethod:  strings.ToUpper(httpMethod),
 	}
 	p.Comment = renderDoc(op)
 	params := getParameters(op, funcName)

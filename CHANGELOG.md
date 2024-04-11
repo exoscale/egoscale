@@ -4,6 +4,7 @@ Changelog
 Unreleased
 ----------
 
+- v3: Add the User-Agent header value #623
 - go.mk: remove submodule and initialize through make #618 
 - Makefile: fix targets #619 
 - SKS nodepool: support for kubelet image gc #620 

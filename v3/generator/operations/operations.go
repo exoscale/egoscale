@@ -359,7 +359,7 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 type RequestTmpl struct {
 	Comment        string
 	Name           string
-	OperationId    string
+	OperationID    string
 	Params         string
 	ValueReturn    string
 	URLPathBuilder string
@@ -374,7 +374,7 @@ type RequestTmpl struct {
 func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*RequestTmpl, error) {
 	p := RequestTmpl{
 		Name:        funcName,
-		OperationId: op.OperationId,
+		OperationID: op.OperationId,
 		HTTPMethod:  strings.ToUpper(httpMethod),
 	}
 	p.Comment = renderDoc(op)

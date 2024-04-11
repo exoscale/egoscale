@@ -13,6 +13,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	if err != nil {
 		return nil, fmt.Errorf("{{ .Name }}: new request: %w", err)
 	}
+	request.Header.Add("User-Agent", UserAgent)
 
 	{{ if ne .QueryParams nil }}if len(opts) > 0 {
 		q := request.URL.Query()

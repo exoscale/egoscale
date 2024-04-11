@@ -31,12 +31,12 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 		return nil, fmt.Errorf("{{ .Name }}: execute request editors: %w", err)
 	}
 
-	if c.trace {
-		dumpRequest(request, "{{ .OperationID }}")
-	}
-
 	if err := c.signRequest(request); err != nil {
 		return nil, fmt.Errorf("{{ .Name }}: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "{{ .OperationID }}")
 	}
 
 	response, err := c.httpClient.Do(request)

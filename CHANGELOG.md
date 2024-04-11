@@ -4,6 +4,7 @@ Changelog
 Unreleased
 ----------
 
+- v3: Add the Authorization header value in the dump request #624
 - v3: Add the User-Agent header value #623
 - go.mk: remove submodule and initialize through make #618 
 - Makefile: fix targets #619 

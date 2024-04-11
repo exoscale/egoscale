@@ -32,7 +32,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	}
 
 	if c.trace {
-		dumpRequest(request, "{{ .OperationId }}")
+		dumpRequest(request, "{{ .OperationID }}")
 	}
 
 	if err := c.signRequest(request); err != nil {

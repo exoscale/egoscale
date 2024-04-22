@@ -6,11 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pb33f/libopenapi"
+
 	"github.com/exoscale/egoscale/v3/generator/client"
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/exoscale/egoscale/v3/generator/operations"
 	"github.com/exoscale/egoscale/v3/generator/schemas"
-	"github.com/pb33f/libopenapi"
 )
 
 //go:generate go run main.go ./source.yaml ../ v3

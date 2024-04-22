@@ -9,10 +9,11 @@ import (
 
 	"fmt"
 
-	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	"github.com/pb33f/libopenapi/datamodel/low"
+
+	"github.com/exoscale/egoscale/v3/generator/helpers"
 )
 
 // TODO fix the OpenApi spec (duplicated resources)
@@ -124,6 +125,7 @@ func RenderSimpleType(s *base.Schema) string {
 		)
 		return "any"
 	}
+
 	if s.Type[0] == "boolean" {
 		return "bool"
 	}
@@ -194,7 +196,12 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 		if err != nil {
 			return err
 		}
-		output.WriteString("type " + schemaName + " " + Map + "\n")
+		typeString := "type " + schemaName + " "
+		if s.Nullable != nil && *s.Nullable {
+			typeString += "*"
+		}
+		typeString += Map + "\n"
+		output.WriteString(typeString)
 		return nil
 	default:
 		slog.Error("type not implemented", slog.String("type", typ))

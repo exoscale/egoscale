@@ -2017,7 +2017,7 @@ type KubeletImageGC struct {
 	MinAge        string `json:"min-age,omitempty"`
 }
 
-type Labels map[string]string
+type Labels *map[string]string
 
 type LoadBalancerState string
 

@@ -50,4 +50,7 @@ require (
 
 go 1.20
 
-retract v1.19.0 // Published accidentally.
+retract (
+	v1.19.1 // Retracts the previous version
+	v1.19.0 // Published accidentally.
+)

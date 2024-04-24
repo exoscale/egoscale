@@ -1991,7 +1991,7 @@ type JSONSchemaRedis struct {
 	// Counter logarithm factor for volatile-lfu and allkeys-lfu maxmemory-policies
 	LfuLogFactor int `json:"lfu_log_factor,omitempty" validate:"omitempty,gte=0,lte=100"`
 	// Redis maxmemory-policy
-	MaxmemoryPolicy JSONSchemaRedisMaxmemoryPolicy `json:"maxmemory_policy"`
+	MaxmemoryPolicy JSONSchemaRedisMaxmemoryPolicy `json:"maxmemory_policy,omitempty"`
 	// Set notify-keyspace-events option
 	NotifyKeyspaceEvents string `json:"notify_keyspace_events,omitempty" validate:"omitempty,lte=32"`
 	// Set number of Redis databases. Changing this will cause a restart of the Redis service.

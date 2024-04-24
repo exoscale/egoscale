@@ -8575,14 +8575,14 @@ type UpdateInstancePoolRequest struct {
 	// Instances Elastic IPs
 	ElasticIPS []ElasticIP `json:"elastic-ips"`
 	// Prefix to apply to Instances names (default: pool)
-	InstancePrefix *string `json:"instance-prefix"`
+	InstancePrefix *string `json:"instance-prefix,omitempty"`
 	// Compute instance type
 	InstanceType *InstanceType `json:"instance-type,omitempty"`
 	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
 	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
 	Labels      Labels `json:"labels,omitempty"`
 	// Minimum number of running Instances
-	MinAvailable *int64 `json:"min-available" validate:"omitempty,gte=0"`
+	MinAvailable *int64 `json:"min-available,omitempty" validate:"omitempty,gte=0"`
 	// Instance Pool name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Instance Pool Private Networks
@@ -8597,7 +8597,7 @@ type UpdateInstancePoolRequest struct {
 	// Instance template
 	Template *Template `json:"template,omitempty"`
 	// Instances Cloud-init user-data
-	UserData *string `json:"user-data" validate:"omitempty,gte=1"`
+	UserData *string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
 }
 
 // Update an Instance Pool

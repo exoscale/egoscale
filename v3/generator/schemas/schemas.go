@@ -332,11 +332,12 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		tag := fmt.Sprintf(" `json:\"%s,omitempty\"", propName)
 
 		pointer := "*"
-		req := isRequiredField(propName, s)
-		if req || nullable {
+		required := isRequiredField(propName, s)
+		// Do not remove omitempty on simple nullable types.
+		if required || (nullable && !IsSimpleSchema(prop)) {
 			tag = fmt.Sprintf(" `json:%q", propName)
 		}
-		validation := renderValidation(prop, req)
+		validation := renderValidation(prop, required)
 		if validation != "" {
 			tag += " " + validation
 		}
@@ -493,7 +494,7 @@ func IsSimpleSchema(s *base.Schema) bool {
 		return true
 	}
 
-	return s.Type[0] != "object" && s.Type[0] != "map"
+	return s.Type[0] != "object" && s.Type[0] != "map" && s.Type[0] != "array"
 }
 
 func renderDoc(s *base.Schema) string {

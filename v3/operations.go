@@ -8565,7 +8565,7 @@ func (c Client) GetInstancePool(ctx context.Context, id UUID) (*InstancePool, er
 
 type UpdateInstancePoolRequest struct {
 	// Instance Pool Anti-affinity Groups
-	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups"`
 	// Deploy target
 	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
 	// Instance Pool description
@@ -8573,31 +8573,31 @@ type UpdateInstancePoolRequest struct {
 	// Instances disk size in GB
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=50000"`
 	// Instances Elastic IPs
-	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
+	ElasticIPS []ElasticIP `json:"elastic-ips"`
 	// Prefix to apply to Instances names (default: pool)
-	InstancePrefix *string `json:"instance-prefix,omitempty"`
+	InstancePrefix *string `json:"instance-prefix"`
 	// Compute instance type
 	InstanceType *InstanceType `json:"instance-type,omitempty"`
 	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
 	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
 	Labels      Labels `json:"labels,omitempty"`
 	// Minimum number of running Instances
-	MinAvailable *int64 `json:"min-available,omitempty" validate:"omitempty,gte=0"`
+	MinAvailable *int64 `json:"min-available" validate:"omitempty,gte=0"`
 	// Instance Pool name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Instance Pool Private Networks
-	PrivateNetworks    []PrivateNetwork   `json:"private-networks,omitempty"`
+	PrivateNetworks    []PrivateNetwork   `json:"private-networks"`
 	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Instance Pool Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	SecurityGroups []SecurityGroup `json:"security-groups"`
 	// SSH key
 	SSHKey *SSHKey `json:"ssh-key,omitempty"`
 	// Instances SSH keys
-	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
+	SSHKeys []SSHKey `json:"ssh-keys"`
 	// Instance template
 	Template *Template `json:"template,omitempty"`
 	// Instances Cloud-init user-data
-	UserData *string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
+	UserData *string `json:"user-data" validate:"omitempty,gte=1"`
 }
 
 // Update an Instance Pool

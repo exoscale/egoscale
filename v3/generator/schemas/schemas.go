@@ -333,7 +333,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 
 		pointer := "*"
 		req := isRequiredField(propName, s)
-		if req {
+		if req || nullable {
 			tag = fmt.Sprintf(" `json:%q", propName)
 		}
 		validation := renderValidation(prop, req)

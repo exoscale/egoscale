@@ -486,9 +486,7 @@ func InferType(s *base.Schema) {
 	}
 }
 
-// IsSimpleSchema returns whether this schema is a scalar or array as these
-// can't be circular references. Objects result in `false` and that triggers
-// circular ref checks.
+// IsSimpleSchema returns true if the schema is a scalar type, false otherwise.
 func IsSimpleSchema(s *base.Schema) bool {
 	if len(s.Type) == 0 {
 		return true

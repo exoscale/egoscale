@@ -4,10 +4,8 @@
 package index
 
 import (
-	"gopkg.in/yaml.v3"
-	"net/http"
 	"strings"
-	"time"
+	"sync"
 )
 
 func isHttpMethod(val string) bool {
@@ -30,23 +28,7 @@ func isHttpMethod(val string) bool {
 	return false
 }
 
-func DetermineReferenceResolveType(ref string) int {
-	if ref != "" && ref[0] == '#' {
-		return LocalResolve
-	}
-	if ref != "" && len(ref) >= 5 && (ref[:5] == "https" || ref[:5] == "http:") {
-		return HttpResolve
-	}
-	if strings.Contains(ref, ".json") ||
-		strings.Contains(ref, ".yaml") ||
-		strings.Contains(ref, ".yml") {
-		return FileResolve
-	}
-	return -1
-}
-
-func boostrapIndexCollections(rootNode *yaml.Node, index *SpecIndex) {
-	index.root = rootNode
+func boostrapIndexCollections(index *SpecIndex) {
 	index.allRefs = make(map[string]*Reference)
 	index.allMappedRefs = make(map[string]*Reference)
 	index.refsByLine = make(map[string]map[int]bool)
@@ -69,7 +51,7 @@ func boostrapIndexCollections(rootNode *yaml.Node, index *SpecIndex) {
 	index.linksRefs = make(map[string]map[string][]*Reference)
 	index.callbackRefs = make(map[string]*Reference)
 	index.externalSpecIndex = make(map[string]*SpecIndex)
-	index.allComponentSchemaDefinitions = make(map[string]*Reference)
+	index.allComponentSchemaDefinitions = &sync.Map{}
 	index.allParameters = make(map[string]*Reference)
 	index.allSecuritySchemes = make(map[string]*Reference)
 	index.allRequestBodies = make(map[string]*Reference)
@@ -82,10 +64,7 @@ func boostrapIndexCollections(rootNode *yaml.Node, index *SpecIndex) {
 	index.securityRequirementRefs = make(map[string]map[string][]*Reference)
 	index.polymorphicRefs = make(map[string]*Reference)
 	index.refsWithSiblings = make(map[string]Reference)
-	index.seenRemoteSources = make(map[string]*yaml.Node)
-	index.seenLocalSources = make(map[string]*yaml.Node)
 	index.opServersRefs = make(map[string]map[string][]*Reference)
-	index.httpClient = &http.Client{Timeout: time.Duration(5) * time.Second}
 	index.componentIndexChan = make(chan bool)
 	index.polyComponentIndexChan = make(chan bool)
 }

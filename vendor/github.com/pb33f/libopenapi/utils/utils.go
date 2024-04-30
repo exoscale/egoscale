@@ -1,13 +1,16 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
 	"gopkg.in/yaml.v3"
@@ -91,7 +94,6 @@ func FindLastChildNodeWithLevel(node *yaml.Node, level int) *yaml.Node {
 
 // BuildPath will construct a JSONPath from a base and an array of strings.
 func BuildPath(basePath string, segs []string) string {
-
 	path := strings.Join(segs, ".")
 
 	// trim that last period.
@@ -109,8 +111,23 @@ func FindNodesWithoutDeserializing(node *yaml.Node, jsonPath string) ([]*yaml.No
 	if err != nil {
 		return nil, err
 	}
-	results, _ := path.Find(node)
-	return results, nil
+
+	// this can spin out, to lets gatekeep it.
+	done := make(chan bool)
+	var results []*yaml.Node
+	timeout, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	go func(d chan bool) {
+		results, _ = path.Find(node)
+		done <- true
+	}(done)
+
+	select {
+	case <-done:
+		return results, nil
+	case <-timeout.Done():
+		return nil, fmt.Errorf("node lookup timeout exceeded")
+	}
 }
 
 // ConvertInterfaceIntoStringMap will convert an unknown input into a string map.
@@ -121,6 +138,18 @@ func ConvertInterfaceIntoStringMap(context interface{}) map[string]string {
 			for k, n := range v {
 				if s, okB := n.(string); okB {
 					converted[k] = s
+				}
+				if s, okB := n.(float64); okB {
+					converted[k] = fmt.Sprint(s)
+				}
+				if s, okB := n.(bool); okB {
+					converted[k] = fmt.Sprint(s)
+				}
+				if s, okB := n.(int); okB {
+					converted[k] = fmt.Sprint(s)
+				}
+				if s, okB := n.(int64); okB {
+					converted[k] = fmt.Sprint(s)
 				}
 			}
 		}
@@ -173,7 +202,6 @@ func ConvertInterfaceArrayToStringArray(raw interface{}) []string {
 
 // ExtractValueFromInterfaceMap pulls out an unknown value from a map using a string key
 func ExtractValueFromInterfaceMap(name string, raw interface{}) interface{} {
-
 	if propMap, ok := raw.(map[string]interface{}); ok {
 		if props, okn := propMap[name].([]interface{}); okn {
 			return props
@@ -248,10 +276,12 @@ func FindKeyNodeTop(key string, nodes []*yaml.Node) (keyNode *yaml.Node, valueNo
 // FindKeyNode is a non-recursive search of a *yaml.Node Content for a child node with a key.
 // Returns the key and value
 func FindKeyNode(key string, nodes []*yaml.Node) (keyNode *yaml.Node, valueNode *yaml.Node) {
-
-	//numNodes := len(nodes)
+	// numNodes := len(nodes)
 	for i, v := range nodes {
 		if i%2 == 0 && key == v.Value {
+			if len(nodes) <= i+1 {
+				return v, nodes[i]
+			}
 			return v, nodes[i+1] // next node is what we need.
 		}
 		for x, j := range v.Content {
@@ -278,6 +308,9 @@ func FindKeyNode(key string, nodes []*yaml.Node) (keyNode *yaml.Node, valueNode 
 func FindKeyNodeFull(key string, nodes []*yaml.Node) (keyNode *yaml.Node, labelNode *yaml.Node, valueNode *yaml.Node) {
 	for i := range nodes {
 		if i%2 == 0 && key == nodes[i].Value {
+			if i+1 >= len(nodes) {
+				return nodes[i], nodes[i], nodes[i]
+			}
 			return nodes[i], nodes[i], nodes[i+1] // next node is what we need.
 		}
 	}
@@ -333,15 +366,17 @@ func FindExtensionNodes(nodes []*yaml.Node) []*ExtensionNode {
 	return extensions
 }
 
-var ObjectLabel = "object"
-var IntegerLabel = "integer"
-var NumberLabel = "number"
-var StringLabel = "string"
-var BinaryLabel = "binary"
-var ArrayLabel = "array"
-var BooleanLabel = "boolean"
-var SchemaSource = "https://json-schema.org/draft/2020-12/schema"
-var SchemaId = "https://pb33f.io/openapi-changes/schema"
+var (
+	ObjectLabel  = "object"
+	IntegerLabel = "integer"
+	NumberLabel  = "number"
+	StringLabel  = "string"
+	BinaryLabel  = "binary"
+	ArrayLabel   = "array"
+	BooleanLabel = "boolean"
+	SchemaSource = "https://json-schema.org/draft/2020-12/schema"
+	SchemaId     = "https://pb33f.io/openapi-changes/schema"
+)
 
 func MakeTagReadable(node *yaml.Node) string {
 	switch node.Tag {
@@ -461,7 +496,6 @@ func IsNodeBoolValue(node *yaml.Node) bool {
 }
 
 func IsNodeRefValue(node *yaml.Node) (bool, *yaml.Node, string) {
-
 	if node == nil {
 		return false, nil, ""
 	}
@@ -469,7 +503,9 @@ func IsNodeRefValue(node *yaml.Node) (bool, *yaml.Node, string) {
 	for i, r := range n.Content {
 		if i%2 == 0 {
 			if r.Value == "$ref" {
-				return true, r, n.Content[i+1].Value
+				if i+1 < len(n.Content) {
+					return true, r, n.Content[i+1].Value
+				}
 			}
 		}
 	}
@@ -479,7 +515,7 @@ func IsNodeRefValue(node *yaml.Node) (bool, *yaml.Node, string) {
 // FixContext will clean up a JSONpath string to be correctly traversable.
 func FixContext(context string) string {
 	tokens := strings.Split(context, ".")
-	var cleaned = []string{}
+	cleaned := []string{}
 
 	for i, t := range tokens {
 		if v, err := strconv.Atoi(t); err == nil {
@@ -539,19 +575,6 @@ func ConvertYAMLtoJSON(yamlData []byte) ([]byte, error) {
 	return jsonData, nil
 }
 
-// ConvertYAMLtoJSONPretty will do exactly what you think it will. It will deserialize YAML into serialized JSON.
-// However, this version will apply prefix/indentation to the JSON.
-func ConvertYAMLtoJSONPretty(yamlData []byte, prefix string, indent string) ([]byte, error) {
-	var decodedYaml map[string]interface{}
-	err := yaml.Unmarshal(yamlData, &decodedYaml)
-	if err != nil {
-		return nil, err
-	}
-	// if the data can be decoded, it can be encoded (that's my view anyway). no need for an error check.
-	jsonData, _ := json.MarshalIndent(decodedYaml, prefix, indent)
-	return jsonData, nil
-}
-
 // IsHttpVerb will check if an operation is valid or not.
 func IsHttpVerb(verb string) bool {
 	verbs := []string{"get", "post", "put", "patch", "delete", "options", "trace", "head"}
@@ -564,7 +587,10 @@ func IsHttpVerb(verb string) bool {
 }
 
 // define bracket name expression
-var bracketNameExp = regexp.MustCompile("^(\\w+)\\[(\\w+)\\]$")
+var (
+	bracketNameExp = regexp.MustCompile(`^(\w+)\[(\w+)\]$`)
+	pathCharExp    = regexp.MustCompile(`[%=;~.]`)
+)
 
 func ConvertComponentIdIntoFriendlyPathSearch(id string) (string, string) {
 	segs := strings.Split(id, "/")
@@ -573,8 +599,7 @@ func ConvertComponentIdIntoFriendlyPathSearch(id string) (string, string) {
 
 	// check for strange spaces, chars and if found, wrap them up, clean them and create a new cleaned path.
 	for i := range segs {
-		pathCharExp, _ := regexp.MatchString("[%=;~.]", segs[i])
-		if pathCharExp {
+		if pathCharExp.Match([]byte(segs[i])) {
 			segs[i], _ = url.QueryUnescape(strings.ReplaceAll(segs[i], "~1", "/"))
 			segs[i] = fmt.Sprintf("['%s']", segs[i])
 			if len(cleaned) > 0 {
@@ -612,11 +637,9 @@ func ConvertComponentIdIntoFriendlyPathSearch(id string) (string, string) {
 	_, err := strconv.ParseInt(name, 10, 32)
 	var replaced string
 	if err != nil {
-		replaced = strings.ReplaceAll(fmt.Sprintf("%s",
-			strings.Join(cleaned, ".")), "#", "$")
+		replaced = strings.ReplaceAll(strings.Join(cleaned, "."), "#", "$")
 	} else {
-		replaced = strings.ReplaceAll(fmt.Sprintf("%s",
-			strings.Join(cleaned, ".")), "#", "$")
+		replaced = strings.ReplaceAll(strings.Join(cleaned, "."), "#", "$")
 	}
 
 	if len(replaced) > 0 {
@@ -636,7 +659,6 @@ func ConvertComponentIdIntoPath(id string) (string, string) {
 }
 
 func RenderCodeSnippet(startNode *yaml.Node, specData []string, before, after int) string {
-
 	buf := new(strings.Builder)
 
 	startLine := startNode.Line - before
@@ -711,10 +733,11 @@ func CheckEnumForDuplicates(seq []*yaml.Node) []*yaml.Node {
 	return res
 }
 
+var whitespaceExp = regexp.MustCompile(`\n( +)`)
+
 // DetermineWhitespaceLength will determine the length of the whitespace for a JSON or YAML file.
 func DetermineWhitespaceLength(input string) int {
-	exp := regexp.MustCompile(`\n( +)`)
-	whiteSpace := exp.FindAllStringSubmatch(input, -1)
+	whiteSpace := whitespaceExp.FindAllStringSubmatch(input, -1)
 	var filtered []string
 	for i := range whiteSpace {
 		filtered = append(filtered, whiteSpace[i][1])
@@ -749,3 +772,5 @@ func CheckForMergeNodes(node *yaml.Node) {
 		}
 	}
 }
+
+type RemoteURLHandler = func(url string) (*http.Response, error)

@@ -4,11 +4,12 @@
 package base
 
 import (
+	"context"
 	"crypto/sha256"
-	"fmt"
-	"github.com/pb33f/libopenapi/utils"
-	"sort"
 	"strings"
+
+	"github.com/pb33f/libopenapi/orderedmap"
+	"github.com/pb33f/libopenapi/utils"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
@@ -30,33 +31,37 @@ type Info struct {
 	Contact        low.NodeReference[*Contact]
 	License        low.NodeReference[*License]
 	Version        low.NodeReference[string]
-	Extensions     map[low.KeyReference[string]]low.ValueReference[any]
+	Extensions     *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
+	KeyNode        *yaml.Node
+	RootNode       *yaml.Node
 	*low.Reference
 }
 
 // FindExtension attempts to locate an extension with the supplied key
-func (i *Info) FindExtension(ext string) *low.ValueReference[any] {
-	return low.FindItemInMap(ext, i.Extensions)
+func (i *Info) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
+	return low.FindItemInOrderedMap(ext, i.Extensions)
 }
 
 // GetExtensions returns all extensions for Info
-func (i *Info) GetExtensions() map[low.KeyReference[string]]low.ValueReference[any] {
+func (i *Info) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return i.Extensions
 }
 
 // Build will extract out the Contact and Info objects from the supplied root node.
-func (i *Info) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
+func (i *Info) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
+	i.KeyNode = keyNode
 	root = utils.NodeAlias(root)
+	i.RootNode = root
 	utils.CheckForMergeNodes(root)
 	i.Reference = new(low.Reference)
 	i.Extensions = low.ExtractExtensions(root)
 
 	// extract contact
-	contact, _ := low.ExtractObject[*Contact](ContactLabel, root, idx)
+	contact, _ := low.ExtractObject[*Contact](ctx, ContactLabel, root, idx)
 	i.Contact = contact
 
 	// extract license
-	lic, _ := low.ExtractObject[*License](LicenseLabel, root, idx)
+	lic, _ := low.ExtractObject[*License](ctx, LicenseLabel, root, idx)
 	i.License = lic
 	return nil
 }
@@ -86,13 +91,6 @@ func (i *Info) Hash() [32]byte {
 	if !i.Version.IsEmpty() {
 		f = append(f, i.Version.Value)
 	}
-	keys := make([]string, len(i.Extensions))
-	z := 0
-	for k := range i.Extensions {
-		keys[z] = fmt.Sprintf("%s-%x", k.Value, sha256.Sum256([]byte(fmt.Sprint(i.Extensions[k].Value))))
-		z++
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+	f = append(f, low.HashExtensions(i.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }

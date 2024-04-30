@@ -4,14 +4,17 @@
 package v3
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"sort"
 	"strings"
 	"sync"
 
+	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
 )
@@ -35,7 +38,9 @@ type PathItem struct {
 	Trace       low.NodeReference[*Operation]
 	Servers     low.NodeReference[[]low.ValueReference[*Server]]
 	Parameters  low.NodeReference[[]low.ValueReference[*Parameter]]
-	Extensions  map[low.KeyReference[string]]low.ValueReference[any]
+	Extensions  *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
+	KeyNode     *yaml.Node
+	RootNode    *yaml.Node
 	*low.Reference
 }
 
@@ -84,32 +89,26 @@ func (p *PathItem) Hash() [32]byte {
 	}
 	sort.Strings(keys)
 	f = append(f, keys...)
-
-	keys = make([]string, len(p.Extensions))
-	z := 0
-	for k := range p.Extensions {
-		keys[z] = fmt.Sprintf("%s-%x", k.Value, sha256.Sum256([]byte(fmt.Sprint(p.Extensions[k].Value))))
-		z++
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+	f = append(f, low.HashExtensions(p.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }
 
 // FindExtension attempts to find an extension
-func (p *PathItem) FindExtension(ext string) *low.ValueReference[any] {
-	return low.FindItemInMap[any](ext, p.Extensions)
+func (p *PathItem) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
+	return low.FindItemInOrderedMap(ext, p.Extensions)
 }
 
 // GetExtensions returns all PathItem extensions and satisfies the low.HasExtensions interface.
-func (p *PathItem) GetExtensions() map[low.KeyReference[string]]low.ValueReference[any] {
+func (p *PathItem) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return p.Extensions
 }
 
 // Build extracts extensions, parameters, servers and each http method defined.
 // everything is extracted asynchronously for speed.
-func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
+func (p *PathItem) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	root = utils.NodeAlias(root)
+	p.KeyNode = keyNode
+	p.RootNode = root
 	utils.CheckForMergeNodes(root)
 	p.Reference = new(low.Reference)
 	p.Extensions = low.ExtractExtensions(root)
@@ -122,7 +121,7 @@ func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 	var ops []low.NodeReference[*Operation]
 
 	// extract parameters
-	params, ln, vn, pErr := low.ExtractArray[*Parameter](ParametersLabel, root, idx)
+	params, ln, vn, pErr := low.ExtractArray[*Parameter](ctx, ParametersLabel, root, idx)
 	if pErr != nil {
 		return pErr
 	}
@@ -142,7 +141,7 @@ func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 				if utils.IsNodeMap(srvN) {
 					srvr := new(Server)
 					_ = low.BuildModel(srvN, srvr)
-					srvr.Build(ln, srvN, idx)
+					srvr.Build(ctx, ln, srvN, idx)
 					servers = append(servers, low.ValueReference[*Server]{
 						Value:     srvr,
 						ValueNode: srvN,
@@ -178,28 +177,22 @@ func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 		// the only thing we now care about is handling operations, filter out anything that's not a verb.
 		switch currentNode.Value {
 		case GetLabel:
-			break
 		case PostLabel:
-			break
 		case PutLabel:
-			break
 		case PatchLabel:
-			break
 		case DeleteLabel:
-			break
 		case HeadLabel:
-			break
 		case OptionsLabel:
-			break
 		case TraceLabel:
-			break
 		default:
 			continue // ignore everything else.
 		}
 
+		foundContext := ctx
 		var op Operation
 		opIsRef := false
 		var opRefVal string
+		var opRefNode *yaml.Node
 		if ok, _, ref := utils.IsNodeRefValue(pathNode); ok {
 			// According to OpenAPI spec the only valid $ref for paths is
 			// reference for the whole pathItem. Unfortunately, internet is full of invalid specs
@@ -212,12 +205,16 @@ func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 
 			opIsRef = true
 			opRefVal = ref
-			r, err := low.LocateRefNode(pathNode, idx)
+			opRefNode = pathNode
+			r, newIdx, err, nCtx := low.LocateRefNodeWithContext(ctx, pathNode, idx)
 			if r != nil {
 				if r.Kind == yaml.DocumentNode {
 					r = r.Content[0]
 				}
 				pathNode = r
+				foundContext = nCtx
+				foundContext = context.WithValue(foundContext, index.FoundIndexKey, newIdx)
+
 				if r.Tag == "" {
 					// If it's a node from file, tag is empty
 					pathNode = r.Content[0]
@@ -232,6 +229,8 @@ func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 				return fmt.Errorf("path item build failed: cannot find reference: %s at line %d, col %d",
 					pathNode.Content[1].Value, pathNode.Content[1].Line, pathNode.Content[1].Column)
 			}
+		} else {
+			foundContext = context.WithValue(foundContext, index.FoundIndexKey, idx)
 		}
 		wg.Add(1)
 		low.BuildModelAsync(pathNode, &op, &wg, &errors)
@@ -240,10 +239,10 @@ func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 			Value:     &op,
 			KeyNode:   currentNode,
 			ValueNode: pathNode,
+			Context:   foundContext,
 		}
 		if opIsRef {
-			opRef.Reference = opRefVal
-			opRef.ReferenceNode = true
+			opRef.SetReference(opRefVal, opRefNode)
 		}
 
 		ops = append(ops, opRef)
@@ -270,46 +269,26 @@ func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 
 	// all operations have been superficially built,
 	// now we need to build out the operation, we will do this asynchronously for speed.
-	opBuildChan := make(chan bool)
-	opErrorChan := make(chan error)
-
-	buildOpFunc := func(op low.NodeReference[*Operation], ch chan<- bool, errCh chan<- error, ref string) {
-		er := op.Value.Build(op.KeyNode, op.ValueNode, idx)
-		if ref != "" {
-			op.Value.Reference.Reference = ref
-		}
-		if er != nil {
-			errCh <- er
-		}
-		ch <- true
-	}
-
-	if len(ops) <= 0 {
-		return nil // nothing to do.
-	}
-
-	for _, op := range ops {
+	translateFunc := func(_ int, op low.NodeReference[*Operation]) (any, error) {
 		ref := ""
-		if op.ReferenceNode {
-			ref = op.Reference
+		var refNode *yaml.Node
+		if op.IsReference() {
+			ref = op.GetReference()
+			refNode = op.GetReferenceNode()
 		}
-		go buildOpFunc(op, opBuildChan, opErrorChan, ref)
-	}
 
-	n := 0
-	total := len(ops)
-	for n < total {
-		select {
-		case buildError := <-opErrorChan:
-			return buildError
-		case <-opBuildChan:
-			n++
+		err := op.Value.Build(op.Context, op.KeyNode, op.ValueNode, op.Context.Value(index.FoundIndexKey).(*index.SpecIndex))
+		if ref != "" {
+			op.Value.Reference.SetReference(ref, refNode)
 		}
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
 	}
-
-	// make sure we don't exit before the path is finished building.
-	if len(ops) > 0 {
-		wg.Wait()
+	err := datamodel.TranslateSliceParallel[low.NodeReference[*Operation], any](ops, translateFunc, nil)
+	if err != nil {
+		return err
 	}
 	return nil
 }

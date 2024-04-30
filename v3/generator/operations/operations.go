@@ -40,11 +40,12 @@ import (
 `, packageName))
 
 	// Iterate over all paths.
-	err := helpers.ForEachMapSorted(model.Model.Paths.PathItems, func(path string, item any) error {
-		pathItems := item.(*v3.PathItem)
+	for pair := model.Model.Paths.PathItems.First(); pair != nil; pair = pair.Next() {
+		path, pathItems := pair.Key(), pair.Value()
 		// For each path, render each operations (GET, POST, PUT...etc) schemas and requests.
-		return helpers.ForEachMapSorted(pathItems.GetOperations(), func(opName string, op any) error {
-			operation := op.(*v3.Operation)
+		for pair := pathItems.GetOperations().First(); pair != nil; pair = pair.Next() {
+			opName, operation := pair.Key(), pair.Value()
+
 			funcName := helpers.ToCamel(operation.OperationId)
 			if funcName == "" {
 				funcName = helpers.ToCamel(path)
@@ -74,7 +75,7 @@ import (
 			}
 
 			if request == nil {
-				return nil
+				continue
 			}
 
 			m, err := renderRequest(request)
@@ -82,12 +83,7 @@ import (
 				return err
 			}
 			output.Write(m)
-
-			return nil
-		})
-	})
-	if err != nil {
-		return err
+		}
 	}
 
 	if os.Getenv("GENERATOR_DEBUG") == "operations" {
@@ -105,44 +101,39 @@ import (
 // renderResponseSchema renders all schemas for every HTTP code response.
 func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 	output := bytes.NewBuffer([]byte{})
-	err := helpers.ForEachMapSorted(op.Responses.Codes, func(code string, v any) error {
-		response := v.(*v3.Response)
 
+	for pair := op.Responses.Codes.First(); pair != nil; pair = pair.Next() {
+		response := pair.Value()
 		// TODO support other content type from spec.
-		media, ok := response.Content["application/json"]
+		media, ok := response.Content.Get("application/json")
 		if !ok {
-			return nil
+			continue
 		}
 
 		findable, err := renderFindable(name, media.Schema)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// Skip on reference.
 		if media.Schema.IsReference() {
-			return nil
+			continue
 		}
 
 		// Skip on array referencing a schema.
 		_, ok = isArrayReference(media.Schema)
 		if ok {
-			return nil
+			continue
 		}
 
 		schemaResp, err := schemas.RenderSchema(name+"Response", media.Schema)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		output.Write(schemaResp)
 		if findable != nil {
 			output.Write(findable)
 		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	return output.Bytes(), nil
@@ -158,7 +149,7 @@ func renderRequestSchema(name string, op *v3.Operation) ([]byte, error) {
 	}
 
 	// TODO support other content type from spec.
-	media, ok := op.RequestBody.Content["application/json"]
+	media, ok := op.RequestBody.Content.Get("application/json")
 	if !ok {
 		return nil, nil
 	}
@@ -305,7 +296,8 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 		return nil, nil
 	}
 
-	for propName, propSc := range sc.Properties {
+	for pair := sc.Properties.First(); pair != nil; pair = pair.Next() {
+		propName, propSc := pair.Key(), pair.Value()
 		prop, err := propSc.BuildSchema()
 		if err != nil {
 			return nil, err
@@ -333,8 +325,8 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 			typeName = helpers.RenderReference(prop.Items.A.GetReference())
 		}
 
-		_, hasName := item.Properties["name"]
-		_, hasID := item.Properties["id"]
+		_, hasName := item.Properties.Get("name")
+		_, hasID := item.Properties.Get("id")
 		if hasName && hasID {
 			output := bytes.NewBuffer([]byte{})
 			t, err := template.New("Findable").Parse(findableTemplate)
@@ -456,7 +448,7 @@ func getParameters(op *v3.Operation, funcName string) (params []string) {
 			}
 
 			ptr := ""
-			if !param.Required {
+			if param.Required != nil && !*param.Required {
 				slog.Warn(
 					"path parameter not required in spec",
 					slog.String("operation", funcName),
@@ -489,7 +481,7 @@ func getParameters(op *v3.Operation, funcName string) (params []string) {
 	}
 
 	// TODO support other content type from OpenAPI spec.
-	media, ok := op.RequestBody.Content["application/json"]
+	media, ok := op.RequestBody.Content.Get("application/json")
 	if !ok {
 		return
 	}
@@ -509,18 +501,19 @@ func getValuesReturn(op *v3.Operation, funcName string) (values []string) {
 		values = append(values, "error")
 	}()
 
-	if len(op.Responses.Codes) == 0 {
+	if op.Responses.Codes.Len() == 0 {
 		return values
 	}
 
-	for k, v := range op.Responses.Codes {
+	for pair := op.Responses.Codes.First(); pair != nil; pair = pair.Next() {
+		k, v := pair.Key(), pair.Value()
 		// We support only 200 return as body reply in our OpenAPI spec.
 		// Skip other HTTP response code.
 		if k != "200" {
 			continue
 		}
 
-		media, ok := v.Content["application/json"]
+		media, ok := v.Content.Get("application/json")
 		if !ok {
 			continue
 		}

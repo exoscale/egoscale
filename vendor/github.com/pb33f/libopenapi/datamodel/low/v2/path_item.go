@@ -4,15 +4,18 @@
 package v2
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
-	"github.com/pb33f/libopenapi/datamodel/low"
-	"github.com/pb33f/libopenapi/index"
-	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/pb33f/libopenapi/datamodel/low"
+	"github.com/pb33f/libopenapi/index"
+	"github.com/pb33f/libopenapi/orderedmap"
+	"github.com/pb33f/libopenapi/utils"
+	"gopkg.in/yaml.v3"
 )
 
 // PathItem represents a low-level Swagger / OpenAPI 2 PathItem object.
@@ -32,22 +35,22 @@ type PathItem struct {
 	Head       low.NodeReference[*Operation]
 	Patch      low.NodeReference[*Operation]
 	Parameters low.NodeReference[[]low.ValueReference[*Parameter]]
-	Extensions map[low.KeyReference[string]]low.ValueReference[any]
+	Extensions *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 }
 
 // FindExtension will attempt to locate an extension given a name.
-func (p *PathItem) FindExtension(ext string) *low.ValueReference[any] {
-	return low.FindItemInMap[any](ext, p.Extensions)
+func (p *PathItem) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
+	return low.FindItemInOrderedMap(ext, p.Extensions)
 }
 
 // GetExtensions returns all PathItem extensions and satisfies the low.HasExtensions interface.
-func (p *PathItem) GetExtensions() map[low.KeyReference[string]]low.ValueReference[any] {
+func (p *PathItem) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return p.Extensions
 }
 
 // Build will extract extensions, parameters and operations for all methods. Every method is handled
 // asynchronously, in order to keep things moving quickly for complex operations.
-func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
+func (p *PathItem) Build(ctx context.Context, _, root *yaml.Node, idx *index.SpecIndex) error {
 	root = utils.NodeAlias(root)
 	utils.CheckForMergeNodes(root)
 	p.Extensions = low.ExtractExtensions(root)
@@ -60,7 +63,7 @@ func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 	var ops []low.NodeReference[*Operation]
 
 	// extract parameters
-	params, ln, vn, pErr := low.ExtractArray[*Parameter](ParametersLabel, root, idx)
+	params, ln, vn, pErr := low.ExtractArray[*Parameter](ctx, ParametersLabel, root, idx)
 	if pErr != nil {
 		return pErr
 	}
@@ -102,19 +105,12 @@ func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 		// the only thing we now care about is handling operations, filter out anything that's not a verb.
 		switch currentNode.Value {
 		case GetLabel:
-			break
 		case PostLabel:
-			break
 		case PutLabel:
-			break
 		case PatchLabel:
-			break
 		case DeleteLabel:
-			break
 		case HeadLabel:
-			break
 		case OptionsLabel:
-			break
 		default:
 			continue // ignore everything else.
 		}
@@ -151,13 +147,13 @@ func (p *PathItem) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 		}
 	}
 
-	//all operations have been superficially built,
-	//now we need to build out the operation, we will do this asynchronously for speed.
+	// all operations have been superficially built,
+	// now we need to build out the operation, we will do this asynchronously for speed.
 	opBuildChan := make(chan bool)
 	opErrorChan := make(chan error)
 
 	var buildOpFunc = func(op low.NodeReference[*Operation], ch chan<- bool, errCh chan<- error) {
-		er := op.Value.Build(op.KeyNode, op.ValueNode, idx)
+		er := op.Value.Build(ctx, op.KeyNode, op.ValueNode, idx)
 		if er != nil {
 			errCh <- er
 		}
@@ -221,13 +217,6 @@ func (p *PathItem) Hash() [32]byte {
 	}
 	sort.Strings(keys)
 	f = append(f, keys...)
-	keys = make([]string, len(p.Extensions))
-	z := 0
-	for k := range p.Extensions {
-		keys[z] = fmt.Sprintf("%s-%x", k.Value, sha256.Sum256([]byte(fmt.Sprint(p.Extensions[k].Value))))
-		z++
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+	f = append(f, low.HashExtensions(p.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }

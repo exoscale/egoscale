@@ -1,10 +1,14 @@
 package index
 
-import "strings"
+import (
+	"gopkg.in/yaml.v3"
+	"strings"
+)
 
 // CircularReferenceResult contains a circular reference found when traversing the graph.
 type CircularReferenceResult struct {
 	Journey             []*Reference
+	ParentNode          *yaml.Node
 	Start               *Reference
 	LoopIndex           int
 	LoopPoint           *Reference
@@ -14,6 +18,7 @@ type CircularReferenceResult struct {
 	IsInfiniteLoop      bool   // if all the definitions in the reference loop are marked as required, this is an infinite circular reference, thus is not allowed.
 }
 
+// GenerateJourneyPath generates a string representation of the journey taken to find the circular reference.
 func (c *CircularReferenceResult) GenerateJourneyPath() string {
 	buf := strings.Builder{}
 	for i, ref := range c.Journey {
@@ -22,9 +27,6 @@ func (c *CircularReferenceResult) GenerateJourneyPath() string {
 		}
 
 		buf.WriteString(ref.Name)
-		// buf.WriteString(" (")
-		// buf.WriteString(ref.Definition)
-		// buf.WriteString(")")
 	}
 
 	return buf.String()

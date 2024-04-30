@@ -71,7 +71,9 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 
 func extractAPIName(s *v3.Server) (string, error) {
 	var URL string
-	for k, v := range s.Variables {
+	for pair := s.Variables.First(); pair != nil; pair = pair.Next() {
+		k := pair.Key()
+		v := pair.Value()
 		URL = strings.Replace(s.URL, fmt.Sprintf("{%s}", k), v.Default, 1)
 	}
 
@@ -97,7 +99,11 @@ type Template struct {
 // renderClient using the client.tmpl template.
 func renderClient(s *v3.Server) ([]byte, error) {
 	var client Template
-	for k, v := range s.Variables {
+
+	for pair := s.Variables.First(); pair != nil; pair = pair.Next() {
+		k := pair.Key()
+		v := pair.Value()
+
 		if k != "zone" {
 			// Supporting only zone variable for Exoscale
 			continue

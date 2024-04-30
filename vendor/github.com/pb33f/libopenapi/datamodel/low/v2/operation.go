@@ -4,15 +4,18 @@
 package v2
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/base"
 	"github.com/pb33f/libopenapi/index"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
-	"sort"
-	"strings"
 )
 
 // Operation represents a low-level Swagger / OpenAPI 2 Operation object.
@@ -32,24 +35,24 @@ type Operation struct {
 	Schemes      low.NodeReference[[]low.ValueReference[string]]
 	Deprecated   low.NodeReference[bool]
 	Security     low.NodeReference[[]low.ValueReference[*base.SecurityRequirement]]
-	Extensions   map[low.KeyReference[string]]low.ValueReference[any]
+	Extensions   *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 }
 
 // Build will extract external docs, extensions, parameters, responses and security requirements.
-func (o *Operation) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
+func (o *Operation) Build(ctx context.Context, _, root *yaml.Node, idx *index.SpecIndex) error {
 	root = utils.NodeAlias(root)
 	utils.CheckForMergeNodes(root)
 	o.Extensions = low.ExtractExtensions(root)
 
 	// extract externalDocs
-	extDocs, dErr := low.ExtractObject[*base.ExternalDoc](base.ExternalDocsLabel, root, idx)
+	extDocs, dErr := low.ExtractObject[*base.ExternalDoc](ctx, base.ExternalDocsLabel, root, idx)
 	if dErr != nil {
 		return dErr
 	}
 	o.ExternalDocs = extDocs
 
 	// extract parameters
-	params, ln, vn, pErr := low.ExtractArray[*Parameter](ParametersLabel, root, idx)
+	params, ln, vn, pErr := low.ExtractArray[*Parameter](ctx, ParametersLabel, root, idx)
 	if pErr != nil {
 		return pErr
 	}
@@ -62,14 +65,14 @@ func (o *Operation) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 	}
 
 	// extract responses
-	respBody, respErr := low.ExtractObject[*Responses](ResponsesLabel, root, idx)
+	respBody, respErr := low.ExtractObject[*Responses](ctx, ResponsesLabel, root, idx)
 	if respErr != nil {
 		return respErr
 	}
 	o.Responses = respBody
 
 	// extract security
-	sec, sln, svn, sErr := low.ExtractArray[*base.SecurityRequirement](SecurityLabel, root, idx)
+	sec, sln, svn, sErr := low.ExtractArray[*base.SecurityRequirement](ctx, SecurityLabel, root, idx)
 	if sErr != nil {
 		return sErr
 	}
@@ -149,14 +152,7 @@ func (o *Operation) Hash() [32]byte {
 	}
 	sort.Strings(keys)
 	f = append(f, keys...)
-	keys = make([]string, len(o.Extensions))
-	z := 0
-	for k := range o.Extensions {
-		keys[z] = fmt.Sprintf("%s-%x", k.Value, sha256.Sum256([]byte(fmt.Sprint(o.Extensions[k].Value))))
-		z++
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+	f = append(f, low.HashExtensions(o.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }
 
@@ -184,7 +180,7 @@ func (o *Operation) GetOperationId() low.NodeReference[string] {
 func (o *Operation) GetDeprecated() low.NodeReference[bool] {
 	return o.Deprecated
 }
-func (o *Operation) GetExtensions() map[low.KeyReference[string]]low.ValueReference[any] {
+func (o *Operation) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return o.Extensions
 }
 func (o *Operation) GetResponses() low.NodeReference[any] {

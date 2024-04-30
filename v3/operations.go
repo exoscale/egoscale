@@ -971,6 +971,62 @@ func (c Client) GetBlockStorageSnapshot(ctx context.Context, id UUID) (*BlockSto
 	return bodyresp, nil
 }
 
+type UpdateBlockStorageSnapshotRequest struct {
+	Labels Labels `json:"labels,omitempty"`
+	// Snapshot name
+	Name *string `json:"name,omitempty" validate:"omitempty,lte=255"`
+}
+
+// Update block storage volume snapshot
+func (c Client) UpdateBlockStorageSnapshot(ctx context.Context, id UUID, req UpdateBlockStorageSnapshotRequest) (*Operation, error) {
+	path := fmt.Sprintf("/block-storage-snapshot/%v", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-block-storage-snapshot")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Delete a block storage volume, data will be unrecoverable
 func (c Client) DeleteBlockStorageVolume(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage/%v", id)
@@ -1057,42 +1113,44 @@ func (c Client) GetBlockStorageVolume(ctx context.Context, id UUID) (*BlockStora
 	return bodyresp, nil
 }
 
-type UpdateBlockStorageVolumeLabelsRequest struct {
+type UpdateBlockStorageVolumeRequest struct {
 	Labels Labels `json:"labels,omitempty"`
+	// Volume name
+	Name *string `json:"name,omitempty" validate:"omitempty,lte=255"`
 }
 
-// Set block storage volume labels
-func (c Client) UpdateBlockStorageVolumeLabels(ctx context.Context, id UUID, req UpdateBlockStorageVolumeLabelsRequest) (*Operation, error) {
+// Update block storage volume
+func (c Client) UpdateBlockStorageVolume(ctx context.Context, id UUID, req UpdateBlockStorageVolumeRequest) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage/%v", id)
 
 	body, err := prepareJSONBody(req)
 	if err != nil {
-		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: prepare Json body: %w", err)
+		return nil, fmt.Errorf("UpdateBlockStorageVolume: prepare Json body: %w", err)
 	}
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
-		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: new request: %w", err)
+		return nil, fmt.Errorf("UpdateBlockStorageVolume: new request: %w", err)
 	}
 	request.Header.Add("User-Agent", UserAgent)
 
 	request.Header.Add("Content-Type", "application/json")
 
 	if err := c.executeRequestInterceptors(ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: execute request editors: %w", err)
+		return nil, fmt.Errorf("UpdateBlockStorageVolume: execute request editors: %w", err)
 	}
 
 	if err := c.signRequest(request); err != nil {
-		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: sign request: %w", err)
+		return nil, fmt.Errorf("UpdateBlockStorageVolume: sign request: %w", err)
 	}
 
 	if c.trace {
-		dumpRequest(request, "update-block-storage-volume-labels")
+		dumpRequest(request, "update-block-storage-volume")
 	}
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: http client do: %w", err)
+		return nil, fmt.Errorf("UpdateBlockStorageVolume: http client do: %w", err)
 	}
 
 	if c.trace {
@@ -1100,12 +1158,12 @@ func (c Client) UpdateBlockStorageVolumeLabels(ctx context.Context, id UUID, req
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: http response: %w", err)
+		return nil, fmt.Errorf("UpdateBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := &Operation{}
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
-		return nil, fmt.Errorf("UpdateBlockStorageVolumeLabels: prepare Json response: %w", err)
+		return nil, fmt.Errorf("UpdateBlockStorageVolume: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil
@@ -11878,8 +11936,8 @@ type CreateSKSClusterRequest struct {
 	// Cluster CNI
 	Cni CreateSKSClusterRequestCni `json:"cni,omitempty"`
 	// Cluster description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
-	Labels      Labels `json:"labels,omitempty"`
+	Description *string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	Labels      Labels  `json:"labels,omitempty"`
 	// Cluster service level
 	Level CreateSKSClusterRequestLevel `json:"level" validate:"required"`
 	// Cluster name
@@ -12192,8 +12250,8 @@ type UpdateSKSClusterRequest struct {
 	// Enable auto upgrade of the control plane to the latest patch version available
 	AutoUpgrade *bool `json:"auto-upgrade,omitempty"`
 	// Cluster description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
-	Labels      Labels `json:"labels,omitempty"`
+	Description *string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	Labels      Labels  `json:"labels,omitempty"`
 	// Cluster name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// SKS Cluster OpenID config map

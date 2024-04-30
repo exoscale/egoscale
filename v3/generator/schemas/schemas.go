@@ -332,11 +332,12 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		tag := fmt.Sprintf(" `json:\"%s,omitempty\"", propName)
 
 		pointer := "*"
-		req := isRequiredField(propName, s)
-		if req {
+		required := isRequiredField(propName, s)
+		// Do not remove omitempty on simple nullable types.
+		if required || (nullable && !IsSimpleSchema(prop)) {
 			tag = fmt.Sprintf(" `json:%q", propName)
 		}
-		validation := renderValidation(prop, req)
+		validation := renderValidation(prop, required)
 		if validation != "" {
 			tag += " " + validation
 		}
@@ -485,15 +486,13 @@ func InferType(s *base.Schema) {
 	}
 }
 
-// IsSimpleSchema returns whether this schema is a scalar or array as these
-// can't be circular references. Objects result in `false` and that triggers
-// circular ref checks.
+// IsSimpleSchema returns true if the schema is a scalar type, false otherwise.
 func IsSimpleSchema(s *base.Schema) bool {
 	if len(s.Type) == 0 {
 		return true
 	}
 
-	return s.Type[0] != "object" && s.Type[0] != "map"
+	return s.Type[0] != "object" && s.Type[0] != "map" && s.Type[0] != "array"
 }
 
 func renderDoc(s *base.Schema) string {

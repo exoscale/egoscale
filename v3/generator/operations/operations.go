@@ -40,7 +40,7 @@ import (
 )
 `, packageName))
 
-	if model.Model.Paths.PathItems == nil {
+	if orderedmap.Len(model.Model.Paths.PathItems) == 0 {
 		slog.Warn("no path items defined in the spec")
 		return nil
 	}
@@ -107,11 +107,12 @@ import (
 // renderResponseSchema renders all schemas for every HTTP code response.
 func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 	output := bytes.NewBuffer([]byte{})
-	if op.Responses.Codes == nil {
+
+	if orderedmap.Len(op.Responses.Codes) == 0 {
 		return output.Bytes(), nil
 	}
 
-	for pair := orderedmap.SortAlpha(op.Responses.Codes).First(); pair != nil; pair = pair.Next() {
+	for pair := op.Responses.Codes.First(); pair != nil; pair = pair.Next() {
 		response := pair.Value()
 		// TODO support other content type from spec.
 		media, ok := response.Content.Get("application/json")
@@ -302,6 +303,10 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 	}
 
 	if len(sc.Type) > 0 && sc.Type[0] != "object" {
+		return nil, nil
+	}
+
+	if orderedmap.Len(sc.Properties) == 0 {
 		return nil, nil
 	}
 

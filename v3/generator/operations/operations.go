@@ -494,17 +494,17 @@ func getParameters(op *v3.Operation, funcName string) (params []string) {
 	}
 
 	if op.RequestBody == nil {
-		return
+		return params
 	}
 
 	// TODO support other content type from OpenAPI spec.
 	media, ok := op.RequestBody.Content.Get("application/json")
 	if !ok {
-		return
+		return params
 	}
 	if media.Schema.IsReference() {
 		params = append(params, "req "+helpers.RenderReference(media.Schema.GetReference()))
-		return
+		return params
 	}
 
 	params = append(params, "req "+funcName+"Request")

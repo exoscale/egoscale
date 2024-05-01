@@ -9,6 +9,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.1
 	github.com/pb33f/libopenapi v0.16.4
 	github.com/stretchr/testify v1.8.4
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -49,7 +50,6 @@ require (
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 go 1.21

@@ -2,17 +2,17 @@ package schemas
 
 import (
 	"bytes"
+	"fmt"
 	"go/format"
 	"log/slog"
 	"os"
 	"strings"
 
-	"fmt"
-
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	"github.com/pb33f/libopenapi/orderedmap"
+	"gopkg.in/yaml.v3"
 )
 
 // TODO fix the OpenApi spec (duplicated resources)
@@ -322,7 +322,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 
 		// https://github.com/pb33f/libopenapi/issues/283
 		// Wait for a fix to remove this check func.
-		if helpers.IsNullableReference(properties.GetReferenceNode()) {
+		if isNullableReference(properties.GetReferenceNode()) {
 			nullable = true
 		}
 
@@ -505,4 +505,21 @@ func renderDoc(s *base.Schema) string {
 	}
 
 	return helpers.RenderDoc(doc)
+}
+
+// https://github.com/pb33f/libopenapi/issues/283
+func isNullableReference(node *yaml.Node) bool {
+	if node == nil || node.Content == nil {
+		return false
+	}
+
+	for i, c := range node.Content {
+		if c.Value == "nullable" {
+			if i+1 < len(node.Content) && node.Content[i+1].Value == "true" {
+				return true
+			}
+		}
+	}
+
+	return false
 }

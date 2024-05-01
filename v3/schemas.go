@@ -209,10 +209,6 @@ type DBAASBackupConfig struct {
 
 type DBAASDatabaseName string
 
-// Integration settings
-type DBAASIntegrationSettings struct {
-}
-
 type DBAASIntegration struct {
 	// Description of the integration
 	Description string `json:"description,omitempty"`
@@ -225,7 +221,7 @@ type DBAASIntegration struct {
 	// Whether the integration is enabled or not
 	ISEnabled *bool `json:"is-enabled,omitempty"`
 	// Integration settings
-	Settings *DBAASIntegrationSettings `json:"settings,omitempty"`
+	Settings map[string]any `json:"settings,omitempty"`
 	// Source service name
 	Source string `json:"source,omitempty"`
 	// Integration status
@@ -234,15 +230,12 @@ type DBAASIntegration struct {
 	Type string `json:"type,omitempty"`
 }
 
-type DBAASIntegrationTypeSettingsProperties struct {
-}
-
 // A JSON schema of additional settings of the integration.
 type DBAASIntegrationTypeSettings struct {
-	AdditionalProperties *bool                                   `json:"additionalProperties,omitempty"`
-	Properties           *DBAASIntegrationTypeSettingsProperties `json:"properties,omitempty"`
-	Title                string                                  `json:"title,omitempty"`
-	Type                 string                                  `json:"type,omitempty"`
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 type DBAASIntegrationType struct {
@@ -545,10 +538,6 @@ type DBAASServiceGrafanaConnectionInfo struct {
 	Username string `json:"username,omitempty"`
 }
 
-// service_uri parameterized into key-value pairs
-type DBAASServiceGrafanaURIParams struct {
-}
-
 type DBAASServiceGrafanaUsers struct {
 	Password string `json:"password,omitempty"`
 	Type     string `json:"type,omitempty"`
@@ -598,21 +587,13 @@ type DBAASServiceGrafana struct {
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
-	URIParams *DBAASServiceGrafanaURIParams `json:"uri-params,omitempty"`
+	URIParams map[string]any `json:"uri-params,omitempty"`
 	// List of service users
 	Users []DBAASServiceGrafanaUsers `json:"users,omitempty"`
 	// Grafana version
 	Version string `json:"version,omitempty"`
 	// The zone where the service is running
 	Zone string `json:"zone,omitempty"`
-}
-
-// Integration status
-type DBAASServiceIntegrationIntegrationStatus struct {
-}
-
-// Service integration settings
-type DBAASServiceIntegrationUserConfig struct {
 }
 
 // Integrations with other services
@@ -631,7 +612,7 @@ type DBAASServiceIntegration struct {
 	// True when integration is enabled
 	Enabled *bool `json:"enabled" validate:"required"`
 	// Integration status
-	IntegrationStatus *DBAASServiceIntegrationIntegrationStatus `json:"integration-status,omitempty"`
+	IntegrationStatus map[string]any `json:"integration-status,omitempty"`
 	// Type of the integration
 	IntegrationType string `json:"integration-type" validate:"required"`
 	// Integration ID
@@ -644,7 +625,7 @@ type DBAASServiceIntegration struct {
 	SourceService     string               `json:"source-service" validate:"required"`
 	SourceServiceType DBAASServiceTypeName `json:"source-service-type" validate:"required,gte=0,lte=64"`
 	// Service integration settings
-	UserConfig *DBAASServiceIntegrationUserConfig `json:"user-config,omitempty"`
+	UserConfig map[string]any `json:"user-config,omitempty"`
 }
 
 // Kafka authentication methods
@@ -675,10 +656,6 @@ type DBAASServiceKafkaConnectionInfo struct {
 	Nodes       []string `json:"nodes,omitempty"`
 	RegistryURI string   `json:"registry-uri,omitempty"`
 	RestURI     string   `json:"rest-uri,omitempty"`
-}
-
-// service_uri parameterized into key-value pairs
-type DBAASServiceKafkaURIParams struct {
 }
 
 type DBAASServiceKafkaUsers struct {
@@ -745,7 +722,7 @@ type DBAASServiceKafka struct {
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
-	URIParams *DBAASServiceKafkaURIParams `json:"uri-params,omitempty"`
+	URIParams map[string]any `json:"uri-params,omitempty"`
 	// List of service users
 	Users []DBAASServiceKafkaUsers `json:"users,omitempty"`
 	// Kafka version
@@ -816,10 +793,6 @@ type DBAASServiceMysqlConnectionInfo struct {
 	URI     []string            `json:"uri,omitempty"`
 }
 
-// service_uri parameterized into key-value pairs
-type DBAASServiceMysqlURIParams struct {
-}
-
 type DBAASServiceMysqlUsers struct {
 	Authentication string `json:"authentication,omitempty"`
 	Password       string `json:"password,omitempty"`
@@ -872,7 +845,7 @@ type DBAASServiceMysql struct {
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
-	URIParams *DBAASServiceMysqlURIParams `json:"uri-params,omitempty"`
+	URIParams map[string]any `json:"uri-params,omitempty"`
 	// List of service users
 	Users []DBAASServiceMysqlUsers `json:"users,omitempty"`
 	// MySQL version
@@ -890,10 +863,6 @@ const (
 	DBAASServiceNotificationLevelNotice  DBAASServiceNotificationLevel = "notice"
 )
 
-// Notification type
-type DBAASServiceNotificationMetadata struct {
-}
-
 type DBAASServiceNotificationType string
 
 const (
@@ -908,7 +877,7 @@ type DBAASServiceNotification struct {
 	// Human notification message
 	Message string `json:"message" validate:"required,gte=1,lte=1024"`
 	// Notification type
-	Metadata *DBAASServiceNotificationMetadata `json:"metadata" validate:"required"`
+	Metadata map[string]any `json:"metadata" validate:"required"`
 	// Notification type
 	Type DBAASServiceNotificationType `json:"type" validate:"required"`
 }
@@ -966,10 +935,6 @@ type DBAASServiceOpensearchOpensearchDashboards struct {
 	MaxOldSpaceSize int64 `json:"max-old-space-size,omitempty" validate:"omitempty,gte=64,lte=1024"`
 	// Timeout in milliseconds for requests made by OpenSearch Dashboards towards OpenSearch (default: 30000)
 	OpensearchRequestTimeout int64 `json:"opensearch-request-timeout,omitempty" validate:"omitempty,gte=5000,lte=120000"`
-}
-
-// service_uri parameterized into key-value pairs
-type DBAASServiceOpensearchURIParams struct {
 }
 
 type DBAASServiceOpensearchUsers struct {
@@ -1031,7 +996,7 @@ type DBAASServiceOpensearch struct {
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
-	URIParams *DBAASServiceOpensearchURIParams `json:"uri-params,omitempty"`
+	URIParams map[string]any `json:"uri-params,omitempty"`
 	// List of service users
 	Users []DBAASServiceOpensearchUsers `json:"users,omitempty"`
 	// OpenSearch version
@@ -1075,10 +1040,6 @@ type DBAASServicePGConnectionPools struct {
 	Name          DBAASPGPoolName     `json:"name" validate:"required,gte=1,lte=63"`
 	Size          DBAASPGPoolSize     `json:"size" validate:"required,gte=1,lte=10000"`
 	Username      DBAASPGPoolUsername `json:"username" validate:"required,gte=1,lte=64"`
-}
-
-// service_uri parameterized into key-value pairs
-type DBAASServicePGURIParams struct {
 }
 
 // List of service users
@@ -1150,7 +1111,7 @@ type DBAASServicePG struct {
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
-	URIParams *DBAASServicePGURIParams `json:"uri-params,omitempty"`
+	URIParams map[string]any `json:"uri-params,omitempty"`
 	// List of service users
 	Users []DBAASServicePGUsers `json:"users,omitempty"`
 	// PostgreSQL version
@@ -1181,10 +1142,6 @@ type DBAASServiceRedisConnectionInfo struct {
 	Password string   `json:"password,omitempty"`
 	Slave    []string `json:"slave,omitempty"`
 	URI      []string `json:"uri,omitempty"`
-}
-
-// service_uri parameterized into key-value pairs
-type DBAASServiceRedisURIParams struct {
 }
 
 type DBAASServiceRedisUsersAccessControl struct {
@@ -1242,7 +1199,7 @@ type DBAASServiceRedis struct {
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
-	URIParams *DBAASServiceRedisURIParams `json:"uri-params,omitempty"`
+	URIParams map[string]any `json:"uri-params,omitempty"`
 	// List of service users
 	Users []DBAASServiceRedisUsers `json:"users,omitempty"`
 	// Redis version
@@ -1576,26 +1533,14 @@ const (
 	EnumSortOrderAsc  EnumSortOrder = "asc"
 )
 
-// Body parameters (free form map)
-type EventBodyParams struct {
-}
-
-// Query string parameters (free form map)
-type EventGetParams struct {
-}
-
-// URI path parameters (free form map)
-type EventPathParams struct {
-}
-
 // A notable Mutation Event which happened on the infrastructure
 type Event struct {
 	// Body parameters (free form map)
-	BodyParams *EventBodyParams `json:"body-params,omitempty"`
+	BodyParams map[string]any `json:"body-params,omitempty"`
 	// Operation processing time
 	ElapsedMS int64 `json:"elapsed-ms,omitempty" validate:"omitempty,gt=0"`
 	// Query string parameters (free form map)
-	GetParams *EventGetParams `json:"get-params,omitempty"`
+	GetParams map[string]any `json:"get-params,omitempty"`
 	// Operation handler name
 	Handler string `json:"handler,omitempty"`
 	// IAM API Key
@@ -1605,7 +1550,7 @@ type Event struct {
 	// Operation message
 	Message string `json:"message,omitempty"`
 	// URI path parameters (free form map)
-	PathParams *EventPathParams `json:"path-params,omitempty"`
+	PathParams map[string]any `json:"path-params,omitempty"`
 	// Operation unique identifier
 	RequestID string `json:"request-id,omitempty"`
 	// Client IP address
@@ -1654,7 +1599,7 @@ type IAMPolicy struct {
 	// IAM default service strategy
 	DefaultServiceStrategy IAMPolicyDefaultServiceStrategy `json:"default-service-strategy" validate:"required"`
 	// IAM services
-	Services map[string]IAMServicePolicy `json:"services" validate:"required"`
+	Services map[string]any `json:"services" validate:"required"`
 }
 
 // IAM Role
@@ -2549,7 +2494,7 @@ type SKSOidc struct {
 	// OpenID provider URL
 	IssuerURL string `json:"issuer-url" validate:"required,gte=1,lte=255"`
 	// A key value map that describes a required claim in the ID Token
-	RequiredClaim map[string]string `json:"required-claim,omitempty"`
+	RequiredClaim map[string]any `json:"required-claim,omitempty"`
 	// JWT claim to use as the user name
 	UsernameClaim string `json:"username-claim,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Prefix prepended to username claims

@@ -388,7 +388,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		// This is an OpenAPI free form object (deprecated).
 		// https://docs.42crunch.com/latest/content/oasv3/datavalidation/schema/v3-schema-object-without-properties.htm
 		// We recommend to use AdditionalProperties instead.
-		if prop.Properties != nil && prop.Properties.Len() == 0 && prop.AdditionalProperties == nil {
+		if prop.Properties == nil || (prop.Properties != nil && prop.Properties.Len() == 0) && prop.AdditionalProperties == nil {
 			definition += camelName + " map[string]any" + tag + "\n"
 			continue
 		}

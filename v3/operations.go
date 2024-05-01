@@ -1496,10 +1496,6 @@ type CreateDBAASServiceMysqlRequestBackupSchedule struct {
 	BackupMinute int64 `json:"backup-minute,omitempty" validate:"omitempty,gte=0,lte=59"`
 }
 
-// Integration settings
-type CreateDBAASServiceMysqlRequestIntegrationsSettings struct {
-}
-
 type CreateDBAASServiceMysqlRequestIntegrationsType string
 
 const (
@@ -1509,8 +1505,8 @@ const (
 type CreateDBAASServiceMysqlRequestIntegrations struct {
 	DestService DBAASServiceName `json:"dest-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Integration settings
-	Settings      *CreateDBAASServiceMysqlRequestIntegrationsSettings `json:"settings,omitempty"`
-	SourceService DBAASServiceName                                    `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	Settings      map[string]any   `json:"settings,omitempty"`
+	SourceService DBAASServiceName `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Integration type
 	Type CreateDBAASServiceMysqlRequestIntegrationsType `json:"type" validate:"required"`
 }
@@ -2584,15 +2580,12 @@ func (c Client) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertifica
 	return bodyresp, nil
 }
 
-type GetDBAASSettingsGrafanaResponseSettingsGrafanaProperties struct {
-}
-
 // Grafana configuration values
 type GetDBAASSettingsGrafanaResponseSettingsGrafana struct {
-	AdditionalProperties *bool                                                     `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsGrafanaResponseSettingsGrafanaProperties `json:"properties,omitempty"`
-	Title                string                                                    `json:"title,omitempty"`
-	Type                 string                                                    `json:"type,omitempty"`
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsGrafanaResponseSettings struct {
@@ -3238,15 +3231,12 @@ func (c Client) ResetInstancePassword(ctx context.Context, id UUID) (*Operation,
 	return bodyresp, nil
 }
 
-type GetDBAASSettingsRedisResponseSettingsRedisProperties struct {
-}
-
 // Redis configuration values
 type GetDBAASSettingsRedisResponseSettingsRedis struct {
-	AdditionalProperties *bool                                                 `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsRedisResponseSettingsRedisProperties `json:"properties,omitempty"`
-	Title                string                                                `json:"title,omitempty"`
-	Type                 string                                                `json:"type,omitempty"`
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsRedisResponseSettings struct {
@@ -5852,15 +5842,12 @@ func (c Client) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUI
 	return bodyresp, nil
 }
 
-type GetDBAASSettingsMysqlResponseSettingsMysqlProperties struct {
-}
-
 // mysql.conf configuration values
 type GetDBAASSettingsMysqlResponseSettingsMysql struct {
-	AdditionalProperties *bool                                                 `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsMysqlResponseSettingsMysqlProperties `json:"properties,omitempty"`
-	Title                string                                                `json:"title,omitempty"`
-	Type                 string                                                `json:"type,omitempty"`
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsMysqlResponseSettings struct {
@@ -8474,11 +8461,8 @@ func (c Client) GetSSHKey(ctx context.Context, name string) (*SSHKey, error) {
 	return bodyresp, nil
 }
 
-type GetDBAASServiceMetricsResponseMetrics struct {
-}
-
 type GetDBAASServiceMetricsResponse struct {
-	Metrics *GetDBAASServiceMetricsResponseMetrics `json:"metrics,omitempty"`
+	Metrics map[string]any `json:"metrics,omitempty"`
 }
 
 type GetDBAASServiceMetricsRequestPeriod string
@@ -9270,13 +9254,9 @@ func (c Client) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation
 	return bodyresp, nil
 }
 
-// Integration settings
-type UpdateDBAASIntegrationRequestSettings struct {
-}
-
 type UpdateDBAASIntegrationRequest struct {
 	// Integration settings
-	Settings *UpdateDBAASIntegrationRequestSettings `json:"settings" validate:"required"`
+	Settings map[string]any `json:"settings" validate:"required"`
 }
 
 // Update a existing DBaaS integration
@@ -9624,15 +9604,12 @@ func (c Client) ListQuotas(ctx context.Context) (*ListQuotasResponse, error) {
 	return bodyresp, nil
 }
 
-type ListDBAASIntegrationSettingsResponseSettingsProperties struct {
-}
-
 // The JSON schema representing the settings for the given integration type, source, and destination service types.
 type ListDBAASIntegrationSettingsResponseSettings struct {
-	AdditionalProperties *bool                                                   `json:"additionalProperties,omitempty"`
-	Properties           *ListDBAASIntegrationSettingsResponseSettingsProperties `json:"properties,omitempty"`
-	Title                string                                                  `json:"title,omitempty"`
-	Type                 string                                                  `json:"type,omitempty"`
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 type ListDBAASIntegrationSettingsResponse struct {
@@ -9683,48 +9660,36 @@ func (c Client) ListDBAASIntegrationSettings(ctx context.Context, integrationTyp
 	return bodyresp, nil
 }
 
-type GetDBAASSettingsPGResponseSettingsPGProperties struct {
-}
-
 // postgresql.conf configuration values
 type GetDBAASSettingsPGResponseSettingsPG struct {
-	AdditionalProperties *bool                                           `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsPGResponseSettingsPGProperties `json:"properties,omitempty"`
-	Title                string                                          `json:"title,omitempty"`
-	Type                 string                                          `json:"type,omitempty"`
-}
-
-type GetDBAASSettingsPGResponseSettingsPgbouncerProperties struct {
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 // PGBouncer connection pooling settings
 type GetDBAASSettingsPGResponseSettingsPgbouncer struct {
-	AdditionalProperties *bool                                                  `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsPGResponseSettingsPgbouncerProperties `json:"properties,omitempty"`
-	Title                string                                                 `json:"title,omitempty"`
-	Type                 string                                                 `json:"type,omitempty"`
-}
-
-type GetDBAASSettingsPGResponseSettingsPglookoutProperties struct {
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 // PGLookout settings
 type GetDBAASSettingsPGResponseSettingsPglookout struct {
-	AdditionalProperties *bool                                                  `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsPGResponseSettingsPglookoutProperties `json:"properties,omitempty"`
-	Title                string                                                 `json:"title,omitempty"`
-	Type                 string                                                 `json:"type,omitempty"`
-}
-
-type GetDBAASSettingsPGResponseSettingsTimescaledbProperties struct {
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 // TimescaleDB extension configuration values
 type GetDBAASSettingsPGResponseSettingsTimescaledb struct {
-	AdditionalProperties *bool                                                    `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsPGResponseSettingsTimescaledbProperties `json:"properties,omitempty"`
-	Title                string                                                   `json:"title,omitempty"`
-	Type                 string                                                   `json:"type,omitempty"`
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsPGResponseSettings struct {
@@ -11032,48 +10997,36 @@ func (c Client) RebootInstance(ctx context.Context, id UUID) (*Operation, error)
 	return bodyresp, nil
 }
 
-type GetDBAASSettingsKafkaResponseSettingsKafkaProperties struct {
-}
-
 // Kafka broker configuration values
 type GetDBAASSettingsKafkaResponseSettingsKafka struct {
-	AdditionalProperties *bool                                                 `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsKafkaResponseSettingsKafkaProperties `json:"properties,omitempty"`
-	Title                string                                                `json:"title,omitempty"`
-	Type                 string                                                `json:"type,omitempty"`
-}
-
-type GetDBAASSettingsKafkaResponseSettingsKafkaConnectProperties struct {
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 // Kafka Connect configuration values
 type GetDBAASSettingsKafkaResponseSettingsKafkaConnect struct {
-	AdditionalProperties *bool                                                        `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsKafkaResponseSettingsKafkaConnectProperties `json:"properties,omitempty"`
-	Title                string                                                       `json:"title,omitempty"`
-	Type                 string                                                       `json:"type,omitempty"`
-}
-
-type GetDBAASSettingsKafkaResponseSettingsKafkaRestProperties struct {
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 // Kafka REST configuration
 type GetDBAASSettingsKafkaResponseSettingsKafkaRest struct {
-	AdditionalProperties *bool                                                     `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsKafkaResponseSettingsKafkaRestProperties `json:"properties,omitempty"`
-	Title                string                                                    `json:"title,omitempty"`
-	Type                 string                                                    `json:"type,omitempty"`
-}
-
-type GetDBAASSettingsKafkaResponseSettingsSchemaRegistryProperties struct {
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 // Schema Registry configuration
 type GetDBAASSettingsKafkaResponseSettingsSchemaRegistry struct {
-	AdditionalProperties *bool                                                          `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsKafkaResponseSettingsSchemaRegistryProperties `json:"properties,omitempty"`
-	Title                string                                                         `json:"title,omitempty"`
-	Type                 string                                                         `json:"type,omitempty"`
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsKafkaResponseSettings struct {
@@ -11177,15 +11130,12 @@ func (c Client) RevealDBAASPostgresUserPassword(ctx context.Context, serviceName
 	return bodyresp, nil
 }
 
-type GetDBAASSettingsOpensearchResponseSettingsOpensearchProperties struct {
-}
-
 // OpenSearch configuration values
 type GetDBAASSettingsOpensearchResponseSettingsOpensearch struct {
-	AdditionalProperties *bool                                                           `json:"additionalProperties,omitempty"`
-	Properties           *GetDBAASSettingsOpensearchResponseSettingsOpensearchProperties `json:"properties,omitempty"`
-	Title                string                                                          `json:"title,omitempty"`
-	Type                 string                                                          `json:"type,omitempty"`
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsOpensearchResponseSettings struct {
@@ -12694,10 +12644,6 @@ type CreateDBAASServicePGRequestBackupSchedule struct {
 	BackupMinute int64 `json:"backup-minute,omitempty" validate:"omitempty,gte=0,lte=59"`
 }
 
-// Integration settings
-type CreateDBAASServicePGRequestIntegrationsSettings struct {
-}
-
 type CreateDBAASServicePGRequestIntegrationsType string
 
 const (
@@ -12707,8 +12653,8 @@ const (
 type CreateDBAASServicePGRequestIntegrations struct {
 	DestService DBAASServiceName `json:"dest-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Integration settings
-	Settings      *CreateDBAASServicePGRequestIntegrationsSettings `json:"settings,omitempty"`
-	SourceService DBAASServiceName                                 `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	Settings      map[string]any   `json:"settings,omitempty"`
+	SourceService DBAASServiceName `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Integration type
 	Type CreateDBAASServicePGRequestIntegrationsType `json:"type" validate:"required"`
 }
@@ -12884,16 +12830,12 @@ func (c Client) DeleteDBAASServicePG(ctx context.Context, name string) (*Operati
 	return bodyresp, nil
 }
 
-// Integration settings
-type CreateDBAASIntegrationRequestSettings struct {
-}
-
 type CreateDBAASIntegrationRequest struct {
 	DestService     DBAASServiceName     `json:"dest-service" validate:"required,gte=0,lte=63"`
 	IntegrationType EnumIntegrationTypes `json:"integration-type" validate:"required"`
 	// Integration settings
-	Settings      *CreateDBAASIntegrationRequestSettings `json:"settings,omitempty"`
-	SourceService DBAASServiceName                       `json:"source-service" validate:"required,gte=0,lte=63"`
+	Settings      map[string]any   `json:"settings,omitempty"`
+	SourceService DBAASServiceName `json:"source-service" validate:"required,gte=0,lte=63"`
 }
 
 // Create a new DBaaS integration between two services

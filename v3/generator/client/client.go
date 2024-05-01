@@ -12,6 +12,7 @@ import (
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/pb33f/libopenapi"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
 )
 
 // Generate go client from OpenAPI spec servers into a go file.
@@ -72,6 +73,10 @@ type Template struct {
 // renderClient using the client.tmpl template.
 func renderClient(s *v3.Server) ([]byte, error) {
 	var client Template
+
+	if orderedmap.Len(s.Variables) == 0 {
+		return nil, fmt.Errorf("no server variables defined")
+	}
 
 	for pair := s.Variables.First(); pair != nil; pair = pair.Next() {
 		k := pair.Key()

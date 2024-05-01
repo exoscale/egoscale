@@ -437,7 +437,7 @@ func renderSimpleMap(typeName string, s *base.Schema, output *bytes.Buffer) (str
 		return definition + "any", nil
 	}
 
-	//  - additionalProperties: {}
+	//  - additionalProperties: object
 	if !s.AdditionalProperties.IsA() {
 		return "", fmt.Errorf("additional properties in: %s not supported", typeName)
 	}
@@ -448,6 +448,10 @@ func renderSimpleMap(typeName string, s *base.Schema, output *bytes.Buffer) (str
 	}
 
 	addl := sp.Schema()
+	//  - additionalProperties: {} empty object
+	if len(addl.Type) == 0 && orderedmap.Len(addl.Extensions) == 0 {
+		return definition + "any", nil
+	}
 	simple := IsSimpleSchema(addl)
 	if simple {
 		return definition + RenderSimpleType(addl), nil

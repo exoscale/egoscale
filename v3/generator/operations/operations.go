@@ -12,6 +12,7 @@ import (
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
 
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/exoscale/egoscale/v3/generator/schemas"
@@ -39,11 +40,16 @@ import (
 )
 `, packageName))
 
+	if model.Model.Paths.PathItems == nil {
+		slog.Warn("no path items defined in the spec")
+		return nil
+	}
+
 	// Iterate over all paths.
-	for pair := model.Model.Paths.PathItems.First(); pair != nil; pair = pair.Next() {
+	for pair := orderedmap.SortAlpha(model.Model.Paths.PathItems).First(); pair != nil; pair = pair.Next() {
 		path, pathItems := pair.Key(), pair.Value()
 		// For each path, render each operations (GET, POST, PUT...etc) schemas and requests.
-		for pair := pathItems.GetOperations().First(); pair != nil; pair = pair.Next() {
+		for pair := orderedmap.SortAlpha(pathItems.GetOperations()).First(); pair != nil; pair = pair.Next() {
 			opName, operation := pair.Key(), pair.Value()
 
 			funcName := helpers.ToCamel(operation.OperationId)
@@ -101,8 +107,11 @@ import (
 // renderResponseSchema renders all schemas for every HTTP code response.
 func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 	output := bytes.NewBuffer([]byte{})
+	if op.Responses.Codes == nil {
+		return output.Bytes(), nil
+	}
 
-	for pair := op.Responses.Codes.First(); pair != nil; pair = pair.Next() {
+	for pair := orderedmap.SortAlpha(op.Responses.Codes).First(); pair != nil; pair = pair.Next() {
 		response := pair.Value()
 		// TODO support other content type from spec.
 		media, ok := response.Content.Get("application/json")
@@ -504,7 +513,7 @@ func getValuesReturn(op *v3.Operation, funcName string) (values []string) {
 		values = append(values, "error")
 	}()
 
-	if op.Responses.Codes.Len() == 0 {
+	if orderedmap.Len(op.Responses.Codes) == 0 {
 		return values
 	}
 

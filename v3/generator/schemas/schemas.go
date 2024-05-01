@@ -10,10 +10,11 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	"github.com/pb33f/libopenapi/orderedmap"
+
+	"github.com/exoscale/egoscale/v3/generator/helpers"
 )
 
 // TODO fix the OpenApi spec (duplicated resources)

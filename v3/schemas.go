@@ -1599,7 +1599,7 @@ type IAMPolicy struct {
 	// IAM default service strategy
 	DefaultServiceStrategy IAMPolicyDefaultServiceStrategy `json:"default-service-strategy" validate:"required"`
 	// IAM services
-	Services map[string]any `json:"services" validate:"required"`
+	Services map[string]IAMServicePolicy `json:"services" validate:"required"`
 }
 
 // IAM Role
@@ -2494,7 +2494,7 @@ type SKSOidc struct {
 	// OpenID provider URL
 	IssuerURL string `json:"issuer-url" validate:"required,gte=1,lte=255"`
 	// A key value map that describes a required claim in the ID Token
-	RequiredClaim map[string]any `json:"required-claim,omitempty"`
+	RequiredClaim map[string]string `json:"required-claim,omitempty"`
 	// JWT claim to use as the user name
 	UsernameClaim string `json:"username-claim,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Prefix prepended to username claims

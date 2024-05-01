@@ -320,6 +320,12 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			nullable = *prop.Nullable
 		}
 
+		// https://github.com/pb33f/libopenapi/issues/283
+		// Wait for a fix to remove this check func.
+		if helpers.IsNullableReference(properties.GetReferenceNode()) {
+			nullable = true
+		}
+
 		doc := renderDoc(prop)
 		if doc != "" {
 			definition += doc + "\n"

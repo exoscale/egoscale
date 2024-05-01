@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	abbr "github.com/BluntSporks/abbreviation"
+	"gopkg.in/yaml.v3"
 )
 
 var uppercaseAcronym = sync.Map{}
@@ -19,6 +20,23 @@ func ConfigureAcronym(key, val string) {
 // RenderReference renders OpenAPI reference from path to go style.
 func RenderReference(referencePath string) string {
 	return ToCamel(filepath.Base(referencePath))
+}
+
+// https://github.com/pb33f/libopenapi/issues/283
+func IsNullableReference(node *yaml.Node) bool {
+	if node == nil || node.Content == nil {
+		return false
+	}
+
+	for i, c := range node.Content {
+		if c.Value == "nullable" {
+			if i+1 < len(node.Content) && node.Content[i+1].Value == "true" {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // Header retruns header file for generated go source files.

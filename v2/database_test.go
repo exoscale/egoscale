@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/exoscale/egoscale/v2/oapi"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/exoscale/egoscale/v2/oapi"
 )
 
 var (

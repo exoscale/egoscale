@@ -3,10 +3,6 @@ run:
   skip-dirs:
     - generate
 
-linters-settings:
-  goimports:
-    local-prefixes: github.com/exoscale/egoscale
-
 linters:
   enable:
     - errcheck

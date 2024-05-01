@@ -4,16 +4,15 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
+	"html/template"
 	"log"
 	"os"
 	"strings"
-	"text/template"
 
+	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/pb33f/libopenapi"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
-
-	"github.com/exoscale/egoscale/v3/generator/helpers"
 )
 
 // Generate go client from OpenAPI spec servers into a go file.

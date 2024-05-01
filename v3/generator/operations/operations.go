@@ -9,13 +9,12 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/exoscale/egoscale/v3/generator/helpers"
+	"github.com/exoscale/egoscale/v3/generator/schemas"
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
-
-	"github.com/exoscale/egoscale/v3/generator/helpers"
-	"github.com/exoscale/egoscale/v3/generator/schemas"
 )
 
 // Generate go requests from OpenAPI spec paths operations into a go file.

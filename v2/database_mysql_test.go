@@ -4,9 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/stretchr/testify/mock"
-
 	"github.com/exoscale/egoscale/v2/oapi"
+	"github.com/stretchr/testify/mock"
 )
 
 func (ts *testSuite) TestClient_StopMysqlDatabaseMigration() {

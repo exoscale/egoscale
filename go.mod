@@ -54,8 +54,6 @@ require (
 
 go 1.21
 
-toolchain go1.21.3
-
 retract (
 	v1.19.1 // Retracts the previous version
 	v1.19.0 // Published accidentally.

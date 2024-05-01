@@ -24,22 +24,22 @@ const (
 
 // IAM Access Key
 type AccessKey struct {
-	// IAM Access Key name
-	Name string `json:"name,omitempty"`
 	// IAM Access Key
 	Key string `json:"key,omitempty"`
-	// IAM Access Key Secret
-	Secret string `json:"secret,omitempty"`
-	// IAM Access Key type
-	Type AccessKeyType `json:"type,omitempty"`
-	// IAM Access Key version
-	Version AccessKeyVersion `json:"version,omitempty"`
-	// IAM Access Key tags
-	Tags []string `json:"tags,omitempty"`
+	// IAM Access Key name
+	Name string `json:"name,omitempty"`
 	// IAM Access Key operations
 	Operations []string `json:"operations,omitempty"`
 	// IAM Access Key Resources
 	Resources []AccessKeyResource `json:"resources,omitempty"`
+	// IAM Access Key Secret
+	Secret string `json:"secret,omitempty"`
+	// IAM Access Key tags
+	Tags []string `json:"tags,omitempty"`
+	// IAM Access Key type
+	Type AccessKeyType `json:"type,omitempty"`
+	// IAM Access Key version
+	Version AccessKeyVersion `json:"version,omitempty"`
 }
 
 // Access key operation
@@ -68,22 +68,22 @@ const (
 type AccessKeyResource struct {
 	// Resource domain
 	Domain AccessKeyResourceDomain `json:"domain,omitempty"`
-	// Resource type
-	ResourceType AccessKeyResourceResourceType `json:"resource-type,omitempty"`
 	// Resource name
 	ResourceName string `json:"resource-name,omitempty"`
+	// Resource type
+	ResourceType AccessKeyResourceResourceType `json:"resource-type,omitempty"`
 }
 
 // Anti-affinity Group
 type AntiAffinityGroup struct {
-	// Anti-affinity Group ID
-	ID UUID `json:"id,omitempty"`
-	// Anti-affinity Group name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Anti-affinity Group description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Anti-affinity Group ID
+	ID UUID `json:"id,omitempty"`
 	// Anti-affinity Group instances
 	Instances []Instance `json:"instances,omitempty"`
+	// Anti-affinity Group name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 type BlockStorageSnapshotState string
@@ -101,21 +101,21 @@ const (
 
 // Block storage snapshot
 type BlockStorageSnapshot struct {
+	// Target block storage volume
+	BlockStorageVolume *BlockStorageVolumeTarget `json:"block-storage-volume,omitempty"`
+	// Snapshot creation date
+	CreatedAT time.Time `json:"created-at,omitempty"`
 	// Snapshot ID
-	ID UUID `json:"id,omitempty"`
+	ID     UUID   `json:"id,omitempty"`
+	Labels Labels `json:"labels,omitempty"`
 	// Snapshot name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Snapshot size
 	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10"`
+	// Snapshot state
+	State BlockStorageSnapshotState `json:"state,omitempty"`
 	// Original Volume size
 	VolumeSize int64 `json:"volume-size,omitempty" validate:"omitempty,gte=0"`
-	// Snapshot creation date
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Snapshot state
-	State  BlockStorageSnapshotState `json:"state,omitempty"`
-	Labels Labels                    `json:"labels,omitempty"`
-	// Target block storage volume
-	BlockStorageVolume *BlockStorageVolumeTarget `json:"block-storage-volume,omitempty"`
 }
 
 // Target block storage snapshot
@@ -140,23 +140,23 @@ const (
 
 // Block storage volume
 type BlockStorageVolume struct {
-	Labels Labels `json:"labels,omitempty"`
-	// Target Instance
-	Instance *InstanceTarget `json:"instance,omitempty"`
-	// Volume name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Volume state
-	State BlockStorageVolumeState `json:"state,omitempty"`
-	// Volume size
-	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10"`
-	// Volume block size
-	Blocksize int64 `json:"blocksize,omitempty" validate:"omitempty,gte=0"`
 	// Volume snapshots, if any
 	BlockStorageSnapshots []BlockStorageSnapshotTarget `json:"block-storage-snapshots,omitempty"`
-	// Volume ID
-	ID UUID `json:"id,omitempty"`
+	// Volume block size
+	Blocksize int64 `json:"blocksize,omitempty" validate:"omitempty,gte=0"`
 	// Volume creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Volume ID
+	ID UUID `json:"id,omitempty"`
+	// Target Instance
+	Instance *InstanceTarget `json:"instance,omitempty"`
+	Labels   Labels          `json:"labels,omitempty"`
+	// Volume name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Volume size
+	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10"`
+	// Volume state
+	State BlockStorageVolumeState `json:"state,omitempty"`
 }
 
 // Target block storage volume
@@ -177,26 +177,14 @@ const (
 type CdnConfiguration struct {
 	// CDN configuration bucket name
 	Bucket string `json:"bucket,omitempty"`
-	// CDN configuration status
-	Status CdnConfigurationStatus `json:"status,omitempty"`
 	// FQDN that serves the bucket contents
 	Fqdn string `json:"fqdn,omitempty"`
+	// CDN configuration status
+	Status CdnConfigurationStatus `json:"status,omitempty"`
 }
 
 // DBaaS plan backup config
 type DBAASBackupConfig struct {
-	// Maximum number of backups to keep. Zero when no backups are created.
-	MaxCount int64 `json:"max-count,omitempty" validate:"omitempty,gte=0"`
-	// The interval, in hours, at which backups are generated.
-	// For some services, like PostgreSQL, this is the interval
-	// at which full snapshots are taken and continuous incremental
-	// backup stream is maintained in addition to that.
-	Interval int64 `json:"interval,omitempty" validate:"omitempty,gt=0"`
-	// Mechanism how backups can be restored. 'regular'
-	// means a backup is restored as is so that the system
-	// is restored to the state it was when the backup was generated.
-	// 'pitr' means point-in-time-recovery, which allows restoring the system to any state since the first available full snapshot.
-	RecoveryMode string `json:"recovery-mode,omitempty"`
 	// Interval of taking a frequent backup in service types supporting different backup schedules
 	FrequentIntervalMinutes int64 `json:"frequent-interval-minutes,omitempty" validate:"omitempty,gte=0"`
 	// Maximum age of the oldest frequent backup in service types supporting different backup schedules
@@ -205,6 +193,18 @@ type DBAASBackupConfig struct {
 	InfrequentIntervalMinutes int64 `json:"infrequent-interval-minutes,omitempty" validate:"omitempty,gte=0"`
 	// Maximum age of the oldest infrequent backup in service types supporting different backup schedules
 	InfrequentOldestAgeMinutes int64 `json:"infrequent-oldest-age-minutes,omitempty" validate:"omitempty,gte=0"`
+	// The interval, in hours, at which backups are generated.
+	// For some services, like PostgreSQL, this is the interval
+	// at which full snapshots are taken and continuous incremental
+	// backup stream is maintained in addition to that.
+	Interval int64 `json:"interval,omitempty" validate:"omitempty,gt=0"`
+	// Maximum number of backups to keep. Zero when no backups are created.
+	MaxCount int64 `json:"max-count,omitempty" validate:"omitempty,gte=0"`
+	// Mechanism how backups can be restored. 'regular'
+	// means a backup is restored as is so that the system
+	// is restored to the state it was when the backup was generated.
+	// 'pitr' means point-in-time-recovery, which allows restoring the system to any state since the first available full snapshot.
+	RecoveryMode string `json:"recovery-mode,omitempty"`
 }
 
 type DBAASDatabaseName string
@@ -216,22 +216,22 @@ type DBAASIntegrationSettings struct {
 type DBAASIntegration struct {
 	// Description of the integration
 	Description string `json:"description,omitempty"`
-	// Integration settings
-	Settings *DBAASIntegrationSettings `json:"settings,omitempty"`
-	// Integration type
-	Type string `json:"type,omitempty"`
-	// Whether the integration is enabled or not
-	ISEnabled *bool `json:"is-enabled,omitempty"`
-	// Source service name
-	Source string `json:"source,omitempty"`
-	// Whether the integration is active or not
-	ISActive *bool `json:"is-active,omitempty"`
-	// Integration status
-	Status string `json:"status,omitempty"`
-	// Integration id
-	ID UUID `json:"id,omitempty"`
 	// Destination service name
 	Dest string `json:"dest,omitempty"`
+	// Integration id
+	ID UUID `json:"id,omitempty"`
+	// Whether the integration is active or not
+	ISActive *bool `json:"is-active,omitempty"`
+	// Whether the integration is enabled or not
+	ISEnabled *bool `json:"is-enabled,omitempty"`
+	// Integration settings
+	Settings *DBAASIntegrationSettings `json:"settings,omitempty"`
+	// Source service name
+	Source string `json:"source,omitempty"`
+	// Integration status
+	Status string `json:"status,omitempty"`
+	// Integration type
+	Type string `json:"type,omitempty"`
 }
 
 type DBAASIntegrationTypeSettingsProperties struct {
@@ -239,32 +239,32 @@ type DBAASIntegrationTypeSettingsProperties struct {
 
 // A JSON schema of additional settings of the integration.
 type DBAASIntegrationTypeSettings struct {
-	Properties           *DBAASIntegrationTypeSettingsProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                   `json:"additionalProperties,omitempty"`
-	Type                 string                                  `json:"type,omitempty"`
+	Properties           *DBAASIntegrationTypeSettingsProperties `json:"properties,omitempty"`
 	Title                string                                  `json:"title,omitempty"`
+	Type                 string                                  `json:"type,omitempty"`
 }
 
 type DBAASIntegrationType struct {
-	// The type of the integration.
-	Type string `json:"type,omitempty"`
-	// The description of the source service types.
-	SourceDescription string `json:"source-description,omitempty"`
-	// A list of the source service types the integration supports.
-	SourceServiceTypes []string `json:"source-service-types,omitempty"`
 	// The description of the destination service types.
 	DestDescription string `json:"dest-description,omitempty"`
 	// A list of the destination service types the integration supports.
 	DestServiceTypes []string `json:"dest-service-types,omitempty"`
 	// A JSON schema of additional settings of the integration.
 	Settings *DBAASIntegrationTypeSettings `json:"settings,omitempty"`
+	// The description of the source service types.
+	SourceDescription string `json:"source-description,omitempty"`
+	// A list of the source service types the integration supports.
+	SourceServiceTypes []string `json:"source-service-types,omitempty"`
+	// The type of the integration.
+	Type string `json:"type,omitempty"`
 }
 
 type DBAASKafkaAclID string
 
 type DBAASKafkaAcls struct {
-	TopicAcl          []DBAASKafkaTopicAclEntry          `json:"topic-acl,omitempty"`
 	SchemaRegistryAcl []DBAASKafkaSchemaRegistryAclEntry `json:"schema-registry-acl,omitempty"`
+	TopicAcl          []DBAASKafkaTopicAclEntry          `json:"topic-acl,omitempty"`
 }
 
 type DBAASKafkaSchemaRegistryAclEntryPermission string
@@ -276,12 +276,12 @@ const (
 
 type DBAASKafkaSchemaRegistryAclEntry struct {
 	ID DBAASKafkaAclID `json:"id,omitempty" validate:"omitempty,gte=1,lte=40"`
-	// Kafka username or username pattern
-	Username string `json:"username" validate:"required,gte=1,lte=64"`
-	// Kafka Schema Registry name or pattern
-	Resource string `json:"resource" validate:"required,gte=1,lte=249"`
 	// Kafka Schema Registry permission
 	Permission DBAASKafkaSchemaRegistryAclEntryPermission `json:"permission" validate:"required"`
+	// Kafka Schema Registry name or pattern
+	Resource string `json:"resource" validate:"required,gte=1,lte=249"`
+	// Kafka username or username pattern
+	Username string `json:"username" validate:"required,gte=1,lte=64"`
 }
 
 type DBAASKafkaTopicAclEntryPermission string
@@ -295,12 +295,12 @@ const (
 
 type DBAASKafkaTopicAclEntry struct {
 	ID DBAASKafkaAclID `json:"id,omitempty" validate:"omitempty,gte=1,lte=40"`
-	// Kafka username or username pattern
-	Username string `json:"username" validate:"required,gte=1,lte=64"`
-	// Kafka topic name or pattern
-	Topic string `json:"topic" validate:"required,gte=1,lte=249"`
 	// Kafka permission
 	Permission DBAASKafkaTopicAclEntryPermission `json:"permission" validate:"required"`
+	// Kafka topic name or pattern
+	Topic string `json:"topic" validate:"required,gte=1,lte=249"`
+	// Kafka username or username pattern
+	Username string `json:"username" validate:"required,gte=1,lte=64"`
 }
 
 type DBAASMigrationStatusDetails struct {
@@ -314,6 +314,8 @@ type DBAASMigrationStatusDetails struct {
 }
 
 type DBAASMigrationStatus struct {
+	// Migration status per database
+	Details []DBAASMigrationStatusDetails `json:"details,omitempty"`
 	// Error message in case that migration has failed
 	Error string `json:"error,omitempty"`
 	// Redis only: how many seconds since last I/O with redis master
@@ -323,8 +325,6 @@ type DBAASMigrationStatus struct {
 	Method string `json:"method,omitempty"`
 	// Migration status
 	Status string `json:"status,omitempty"`
-	// Migration status per database
-	Details []DBAASMigrationStatusDetails `json:"details,omitempty"`
 }
 
 type DBAASMysqlDatabaseName string
@@ -397,10 +397,10 @@ type DBAASOpensearchAclConfigAcls struct {
 }
 
 type DBAASOpensearchAclConfig struct {
-	// List of OpenSearch ACLs
-	Acls []DBAASOpensearchAclConfigAcls `json:"acls,omitempty"`
 	// Enable OpenSearch ACLs. When disabled authenticated service users have unrestricted access.
 	AclEnabled *bool `json:"acl-enabled,omitempty"`
+	// List of OpenSearch ACLs
+	Acls []DBAASOpensearchAclConfigAcls `json:"acls,omitempty"`
 	// Enable to enforce index rules in a limited fashion for requests that use the _mget, _msearch, and _bulk APIs
 	ExtendedAclEnabled *bool `json:"extended-acl-enabled,omitempty"`
 }
@@ -425,27 +425,27 @@ const (
 
 // DBaaS plan
 type DBAASPlan struct {
+	// Requires authorization or publicly available
+	Authorized *bool `json:"authorized,omitempty"`
+	// DBaaS plan backup config
+	BackupConfig *DBAASBackupConfig `json:"backup-config,omitempty"`
+	// DBaaS plan disk space
+	DiskSpace int64 `json:"disk-space,omitempty"`
+	// DBaaS plan max memory allocated percentage
+	MaxMemoryPercent int64 `json:"max-memory-percent,omitempty" validate:"omitempty,gt=0"`
 	// DBaaS plan name
 	Name string `json:"name,omitempty"`
 	// DBaaS plan node count
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gt=0"`
 	// DBaaS plan CPU count per node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gt=0"`
-	// DBaaS plan disk space
-	DiskSpace int64 `json:"disk-space,omitempty"`
 	// DBaaS plan memory count per node
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gt=0"`
-	// DBaaS plan max memory allocated percentage
-	MaxMemoryPercent int64 `json:"max-memory-percent,omitempty" validate:"omitempty,gt=0"`
-	// DBaaS plan backup config
-	BackupConfig *DBAASBackupConfig `json:"backup-config,omitempty"`
-	// Requires authorization or publicly available
-	Authorized *bool `json:"authorized,omitempty"`
 }
 
 type DBAASPostgresUsersUsers struct {
-	Username         DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
 	AllowReplication *bool             `json:"allow-replication,omitempty"`
+	Username         DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
 }
 
 type DBAASPostgresUsers struct {
@@ -463,31 +463,31 @@ type DBAASServiceBackup struct {
 }
 
 type DBAASServiceCommon struct {
-	// Service last update timestamp (ISO 8601)
-	UpdatedAT time.Time `json:"updated-at,omitempty"`
+	// Service creation timestamp (ISO 8601)
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// TODO UNIT disk space for data storage
+	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
+	// Service integrations
+	Integrations []DBAASIntegration `json:"integrations,omitempty"`
+	Name         DBAASServiceName   `json:"name" validate:"required,gte=0,lte=63"`
 	// Number of service nodes in the active plan
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
 	// Number of CPUs for each node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// Service integrations
-	Integrations []DBAASIntegration `json:"integrations,omitempty"`
-	// The zone where the service is running
-	Zone  string               `json:"zone,omitempty"`
-	Name  DBAASServiceName     `json:"name" validate:"required,gte=0,lte=63"`
-	Type  DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
-	State EnumServiceState     `json:"state,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-	// Service notifications
-	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
-	// TODO UNIT disk space for data storage
-	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// TODO UNIT of memory for each node
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
-	// Service creation timestamp (ISO 8601)
-	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Service notifications
+	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
 	// Subscription plan
-	Plan string `json:"plan" validate:"required"`
+	Plan  string           `json:"plan" validate:"required"`
+	State EnumServiceState `json:"state,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool                `json:"termination-protection,omitempty"`
+	Type                  DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
+	// Service last update timestamp (ISO 8601)
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
+	// The zone where the service is running
+	Zone string `json:"zone,omitempty"`
 }
 
 type DBAASServiceComponentsRoute string
@@ -527,13 +527,6 @@ type DBAASServiceComponents struct {
 	Usage DBAASServiceComponentsUsage `json:"usage" validate:"required"`
 }
 
-// Grafana connection information properties
-type DBAASServiceGrafanaConnectionInfo struct {
-	URI      string `json:"uri,omitempty"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
-}
-
 type DBAASServiceGrafanaComponents struct {
 	// Service component name
 	Component string `json:"component" validate:"required"`
@@ -545,66 +538,73 @@ type DBAASServiceGrafanaComponents struct {
 	Usage EnumComponentUsage `json:"usage" validate:"required"`
 }
 
+// Grafana connection information properties
+type DBAASServiceGrafanaConnectionInfo struct {
+	Password string `json:"password,omitempty"`
+	URI      string `json:"uri,omitempty"`
+	Username string `json:"username,omitempty"`
+}
+
 // service_uri parameterized into key-value pairs
 type DBAASServiceGrafanaURIParams struct {
 }
 
 type DBAASServiceGrafanaUsers struct {
+	Password string `json:"password,omitempty"`
 	Type     string `json:"type,omitempty"`
 	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
 }
 
 type DBAASServiceGrafana struct {
-	// DbaaS service description
-	Description string `json:"description,omitempty"`
-	// Service last update timestamp (ISO 8601)
-	UpdatedAT time.Time `json:"updated-at,omitempty"`
-	// Number of service nodes in the active plan
-	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
-	// Grafana connection information properties
-	ConnectionInfo *DBAASServiceGrafanaConnectionInfo `json:"connection-info,omitempty"`
-	// Number of CPUs for each node
-	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// Service integrations
-	Integrations []DBAASIntegration `json:"integrations,omitempty"`
-	// The zone where the service is running
-	Zone string `json:"zone,omitempty"`
-	// State of individual service nodes
-	NodeStates []DBAASNodeState     `json:"node-states,omitempty"`
-	Name       DBAASServiceName     `json:"name" validate:"required,gte=0,lte=63"`
-	Type       DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
-	State      EnumServiceState     `json:"state,omitempty"`
-	// Grafana settings
-	GrafanaSettings *JSONSchemaGrafana `json:"grafana-settings,omitempty"`
-	// Allowed CIDR address blocks for incoming connections
-	IPFilter []string `json:"ip-filter,omitempty"`
 	// List of backups for the service
 	Backups []DBAASServiceBackup `json:"backups,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-	// Service notifications
-	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
 	// Service component information objects
 	Components []DBAASServiceGrafanaComponents `json:"components,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	// Grafana connection information properties
+	ConnectionInfo *DBAASServiceGrafanaConnectionInfo `json:"connection-info,omitempty"`
+	// Service creation timestamp (ISO 8601)
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// DbaaS service description
+	Description string `json:"description,omitempty"`
 	// TODO UNIT disk space for data storage
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
+	// Grafana settings
+	GrafanaSettings *JSONSchemaGrafana `json:"grafana-settings,omitempty"`
+	// Service integrations
+	Integrations []DBAASIntegration `json:"integrations,omitempty"`
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	Name        DBAASServiceName         `json:"name" validate:"required,gte=0,lte=63"`
+	// Number of service nodes in the active plan
+	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
+	// Number of CPUs for each node
+	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
 	// TODO UNIT of memory for each node
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
+	// State of individual service nodes
+	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
+	// Service notifications
+	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
+	// Subscription plan
+	Plan  string           `json:"plan" validate:"required"`
+	State EnumServiceState `json:"state,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool                `json:"termination-protection,omitempty"`
+	Type                  DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
+	// Service last update timestamp (ISO 8601)
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
 	URIParams *DBAASServiceGrafanaURIParams `json:"uri-params,omitempty"`
-	// Grafana version
-	Version string `json:"version,omitempty"`
-	// Service creation timestamp (ISO 8601)
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan" validate:"required"`
 	// List of service users
 	Users []DBAASServiceGrafanaUsers `json:"users,omitempty"`
+	// Grafana version
+	Version string `json:"version,omitempty"`
+	// The zone where the service is running
+	Zone string `json:"zone,omitempty"`
 }
 
 // Integration status
@@ -617,34 +617,34 @@ type DBAASServiceIntegrationUserConfig struct {
 
 // Integrations with other services
 type DBAASServiceIntegration struct {
-	// Integration status
-	IntegrationStatus *DBAASServiceIntegrationIntegrationStatus `json:"integration-status,omitempty"`
-	// Description of the integration
-	Description       string               `json:"description" validate:"required"`
-	SourceServiceType DBAASServiceTypeName `json:"source-service-type" validate:"required,gte=0,lte=64"`
-	// Source endpoint name
-	SourceEndpoint  string               `json:"source-endpoint,omitempty"`
-	DestServiceType DBAASServiceTypeName `json:"dest-service-type" validate:"required,gte=0,lte=64"`
-	// Type of the integration
-	IntegrationType string `json:"integration-type" validate:"required"`
-	// Destination endpoint name
-	DestEndpoint string `json:"dest-endpoint,omitempty"`
-	// Service integration settings
-	UserConfig *DBAASServiceIntegrationUserConfig `json:"user-config,omitempty"`
-	// Destination endpoint id
-	DestEndpointID string `json:"dest-endpoint-id,omitempty"`
-	// Integration ID
-	ServiceIntegrationID string `json:"service-integration-id" validate:"required"`
-	// Destination service name
-	DestService string `json:"dest-service" validate:"required"`
 	// True when integration is active
 	Active *bool `json:"active" validate:"required"`
+	// Description of the integration
+	Description string `json:"description" validate:"required"`
+	// Destination endpoint name
+	DestEndpoint string `json:"dest-endpoint,omitempty"`
+	// Destination endpoint id
+	DestEndpointID string `json:"dest-endpoint-id,omitempty"`
+	// Destination service name
+	DestService     string               `json:"dest-service" validate:"required"`
+	DestServiceType DBAASServiceTypeName `json:"dest-service-type" validate:"required,gte=0,lte=64"`
+	// True when integration is enabled
+	Enabled *bool `json:"enabled" validate:"required"`
+	// Integration status
+	IntegrationStatus *DBAASServiceIntegrationIntegrationStatus `json:"integration-status,omitempty"`
+	// Type of the integration
+	IntegrationType string `json:"integration-type" validate:"required"`
+	// Integration ID
+	ServiceIntegrationID string `json:"service-integration-id" validate:"required"`
+	// Source endpoint name
+	SourceEndpoint string `json:"source-endpoint,omitempty"`
 	// Source endpoint ID
 	SourceEndpointID string `json:"source-endpoint-id,omitempty"`
 	// Source service name
-	SourceService string `json:"source-service" validate:"required"`
-	// True when integration is enabled
-	Enabled *bool `json:"enabled" validate:"required"`
+	SourceService     string               `json:"source-service" validate:"required"`
+	SourceServiceType DBAASServiceTypeName `json:"source-service-type" validate:"required,gte=0,lte=64"`
+	// Service integration settings
+	UserConfig *DBAASServiceIntegrationUserConfig `json:"user-config,omitempty"`
 }
 
 // Kafka authentication methods
@@ -653,16 +653,6 @@ type DBAASServiceKafkaAuthenticationMethods struct {
 	Certificate *bool `json:"certificate,omitempty"`
 	// Whether SASL authentication is enabled
 	Sasl *bool `json:"sasl,omitempty"`
-}
-
-// Kafka connection information properties
-type DBAASServiceKafkaConnectionInfo struct {
-	Nodes       []string `json:"nodes,omitempty"`
-	AccessCert  string   `json:"access-cert,omitempty"`
-	AccessKey   string   `json:"access-key,omitempty"`
-	ConnectURI  string   `json:"connect-uri,omitempty"`
-	RestURI     string   `json:"rest-uri,omitempty"`
-	RegistryURI string   `json:"registry-uri,omitempty"`
 }
 
 type DBAASServiceKafkaComponents struct {
@@ -677,94 +667,104 @@ type DBAASServiceKafkaComponents struct {
 	Usage EnumComponentUsage `json:"usage" validate:"required"`
 }
 
+// Kafka connection information properties
+type DBAASServiceKafkaConnectionInfo struct {
+	AccessCert  string   `json:"access-cert,omitempty"`
+	AccessKey   string   `json:"access-key,omitempty"`
+	ConnectURI  string   `json:"connect-uri,omitempty"`
+	Nodes       []string `json:"nodes,omitempty"`
+	RegistryURI string   `json:"registry-uri,omitempty"`
+	RestURI     string   `json:"rest-uri,omitempty"`
+}
+
 // service_uri parameterized into key-value pairs
 type DBAASServiceKafkaURIParams struct {
 }
 
 type DBAASServiceKafkaUsers struct {
-	Type             string    `json:"type,omitempty"`
-	Username         string    `json:"username,omitempty"`
-	Password         string    `json:"password,omitempty"`
 	AccessCert       string    `json:"access-cert,omitempty"`
 	AccessCertExpiry time.Time `json:"access-cert-expiry,omitempty"`
 	AccessKey        string    `json:"access-key,omitempty"`
+	Password         string    `json:"password,omitempty"`
+	Type             string    `json:"type,omitempty"`
+	Username         string    `json:"username,omitempty"`
 }
 
 type DBAASServiceKafka struct {
-	// Service last update timestamp (ISO 8601)
-	UpdatedAT time.Time `json:"updated-at,omitempty"`
 	// Kafka authentication methods
 	AuthenticationMethods *DBAASServiceKafkaAuthenticationMethods `json:"authentication-methods,omitempty"`
-	// Number of service nodes in the active plan
-	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
-	// Kafka connection information properties
-	ConnectionInfo *DBAASServiceKafkaConnectionInfo `json:"connection-info,omitempty"`
-	// Number of CPUs for each node
-	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// Whether Kafka REST is enabled
-	KafkaRestEnabled *bool `json:"kafka-rest-enabled,omitempty"`
-	// Service integrations
-	Integrations []DBAASIntegration `json:"integrations,omitempty"`
-	// The zone where the service is running
-	Zone string `json:"zone,omitempty"`
-	// State of individual service nodes
-	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
-	Name       DBAASServiceName `json:"name" validate:"required,gte=0,lte=63"`
-	// Whether Kafka Connect is enabled
-	KafkaConnectEnabled *bool                `json:"kafka-connect-enabled,omitempty"`
-	Type                DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
-	State               EnumServiceState     `json:"state,omitempty"`
-	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
-	IPFilter []string `json:"ip-filter,omitempty"`
-	// Schema Registry configuration
-	SchemaRegistrySettings JSONSchemaSchemaRegistry `json:"schema-registry-settings,omitempty"`
 	// List of backups for the service
 	Backups []DBAASServiceBackup `json:"backups,omitempty"`
-	// Kafka REST configuration
-	KafkaRestSettings JSONSchemaKafkaRest `json:"kafka-rest-settings,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-	// Service notifications
-	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
-	// Kafka Connect configuration values
-	KafkaConnectSettings JSONSchemaKafkaConnect `json:"kafka-connect-settings,omitempty"`
 	// Service component information objects
 	Components []DBAASServiceKafkaComponents `json:"components,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
-	// Kafka broker configuration values
-	KafkaSettings JSONSchemaKafka `json:"kafka-settings,omitempty"`
+	// Kafka connection information properties
+	ConnectionInfo *DBAASServiceKafkaConnectionInfo `json:"connection-info,omitempty"`
+	// Service creation timestamp (ISO 8601)
+	CreatedAT time.Time `json:"created-at,omitempty"`
 	// TODO UNIT disk space for data storage
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
+	// Service integrations
+	Integrations []DBAASIntegration `json:"integrations,omitempty"`
+	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Whether Kafka Connect is enabled
+	KafkaConnectEnabled *bool `json:"kafka-connect-enabled,omitempty"`
+	// Kafka Connect configuration values
+	KafkaConnectSettings JSONSchemaKafkaConnect `json:"kafka-connect-settings,omitempty"`
+	// Whether Kafka REST is enabled
+	KafkaRestEnabled *bool `json:"kafka-rest-enabled,omitempty"`
+	// Kafka REST configuration
+	KafkaRestSettings JSONSchemaKafkaRest `json:"kafka-rest-settings,omitempty"`
+	// Kafka broker configuration values
+	KafkaSettings JSONSchemaKafka `json:"kafka-settings,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	Name        DBAASServiceName         `json:"name" validate:"required,gte=0,lte=63"`
+	// Number of service nodes in the active plan
+	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
+	// Number of CPUs for each node
+	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
 	// TODO UNIT of memory for each node
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
+	// State of individual service nodes
+	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
+	// Service notifications
+	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required"`
+	// Whether Schema-Registry is enabled
+	SchemaRegistryEnabled *bool `json:"schema-registry-enabled,omitempty"`
+	// Schema Registry configuration
+	SchemaRegistrySettings JSONSchemaSchemaRegistry `json:"schema-registry-settings,omitempty"`
+	State                  EnumServiceState         `json:"state,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool                `json:"termination-protection,omitempty"`
+	Type                  DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
+	// Service last update timestamp (ISO 8601)
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
 	URIParams *DBAASServiceKafkaURIParams `json:"uri-params,omitempty"`
-	// Whether Schema-Registry is enabled
-	SchemaRegistryEnabled *bool `json:"schema-registry-enabled,omitempty"`
-	// Kafka version
-	Version string `json:"version,omitempty"`
-	// Service creation timestamp (ISO 8601)
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan" validate:"required"`
 	// List of service users
 	Users []DBAASServiceKafkaUsers `json:"users,omitempty"`
+	// Kafka version
+	Version string `json:"version,omitempty"`
+	// The zone where the service is running
+	Zone string `json:"zone,omitempty"`
 }
 
 type DBAASServiceLogsLogs struct {
-	Unit    string `json:"unit,omitempty"`
-	Time    string `json:"time,omitempty"`
 	Message string `json:"message,omitempty"`
 	Node    string `json:"node,omitempty"`
+	Time    string `json:"time,omitempty"`
+	Unit    string `json:"unit,omitempty"`
 }
 
 type DBAASServiceLogs struct {
-	Offset         string                 `json:"offset,omitempty"`
 	FirstLogOffset string                 `json:"first-log-offset,omitempty"`
 	Logs           []DBAASServiceLogsLogs `json:"logs,omitempty"`
+	Offset         string                 `json:"offset,omitempty"`
 }
 
 type DBAASServiceMaintenanceDow string
@@ -790,13 +790,6 @@ type DBAASServiceMaintenance struct {
 	Updates []DBAASServiceUpdate `json:"updates" validate:"required"`
 }
 
-// MySQL connection information properties
-type DBAASServiceMysqlConnectionInfo struct {
-	URI     []string            `json:"uri,omitempty"`
-	Params  []map[string]string `json:"params,omitempty"`
-	Standby []string            `json:"standby,omitempty"`
-}
-
 // Backup schedule
 type DBAASServiceMysqlBackupSchedule struct {
 	// The hour of day (in UTC) when backup for the service is started. New backup is only started if previous backup has already completed.
@@ -816,69 +809,76 @@ type DBAASServiceMysqlComponents struct {
 	Usage EnumComponentUsage `json:"usage" validate:"required"`
 }
 
+// MySQL connection information properties
+type DBAASServiceMysqlConnectionInfo struct {
+	Params  []map[string]string `json:"params,omitempty"`
+	Standby []string            `json:"standby,omitempty"`
+	URI     []string            `json:"uri,omitempty"`
+}
+
 // service_uri parameterized into key-value pairs
 type DBAASServiceMysqlURIParams struct {
 }
 
 type DBAASServiceMysqlUsers struct {
+	Authentication string `json:"authentication,omitempty"`
+	Password       string `json:"password,omitempty"`
 	Type           string `json:"type,omitempty"`
 	Username       string `json:"username,omitempty"`
-	Password       string `json:"password,omitempty"`
-	Authentication string `json:"authentication,omitempty"`
 }
 
 type DBAASServiceMysql struct {
-	// Service last update timestamp (ISO 8601)
-	UpdatedAT time.Time `json:"updated-at,omitempty"`
-	// Number of service nodes in the active plan
-	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
-	// MySQL connection information properties
-	ConnectionInfo *DBAASServiceMysqlConnectionInfo `json:"connection-info,omitempty"`
 	// Backup schedule
 	BackupSchedule *DBAASServiceMysqlBackupSchedule `json:"backup-schedule,omitempty"`
-	// Number of CPUs for each node
-	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// Service integrations
-	Integrations []DBAASIntegration `json:"integrations,omitempty"`
-	// The zone where the service is running
-	Zone string `json:"zone,omitempty"`
-	// State of individual service nodes
-	NodeStates []DBAASNodeState     `json:"node-states,omitempty"`
-	Name       DBAASServiceName     `json:"name" validate:"required,gte=0,lte=63"`
-	Type       DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
-	State      EnumServiceState     `json:"state,omitempty"`
-	// List of MySQL databases
-	Databases []DBAASMysqlDatabaseName `json:"databases,omitempty"`
-	// Allowed CIDR address blocks for incoming connections
-	IPFilter []string `json:"ip-filter,omitempty"`
 	// List of backups for the service
 	Backups []DBAASServiceBackup `json:"backups,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-	// Service notifications
-	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
 	// Service component information objects
 	Components []DBAASServiceMysqlComponents `json:"components,omitempty"`
-	// mysql.conf configuration values
-	MysqlSettings JSONSchemaMysql `json:"mysql-settings,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	// MySQL connection information properties
+	ConnectionInfo *DBAASServiceMysqlConnectionInfo `json:"connection-info,omitempty"`
+	// Service creation timestamp (ISO 8601)
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// List of MySQL databases
+	Databases []DBAASMysqlDatabaseName `json:"databases,omitempty"`
 	// TODO UNIT disk space for data storage
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
+	// Service integrations
+	Integrations []DBAASIntegration `json:"integrations,omitempty"`
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	// mysql.conf configuration values
+	MysqlSettings JSONSchemaMysql  `json:"mysql-settings,omitempty"`
+	Name          DBAASServiceName `json:"name" validate:"required,gte=0,lte=63"`
+	// Number of service nodes in the active plan
+	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
+	// Number of CPUs for each node
+	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
 	// TODO UNIT of memory for each node
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
+	// State of individual service nodes
+	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
+	// Service notifications
+	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
+	// Subscription plan
+	Plan  string           `json:"plan" validate:"required"`
+	State EnumServiceState `json:"state,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool                `json:"termination-protection,omitempty"`
+	Type                  DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
+	// Service last update timestamp (ISO 8601)
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
 	URIParams *DBAASServiceMysqlURIParams `json:"uri-params,omitempty"`
-	// MySQL version
-	Version string `json:"version,omitempty"`
-	// Service creation timestamp (ISO 8601)
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan" validate:"required"`
 	// List of service users
 	Users []DBAASServiceMysqlUsers `json:"users,omitempty"`
+	// MySQL version
+	Version string `json:"version,omitempty"`
+	// The zone where the service is running
+	Zone string `json:"zone,omitempty"`
 }
 
 type DBAASServiceName string
@@ -890,16 +890,16 @@ const (
 	DBAASServiceNotificationLevelNotice  DBAASServiceNotificationLevel = "notice"
 )
 
+// Notification type
+type DBAASServiceNotificationMetadata struct {
+}
+
 type DBAASServiceNotificationType string
 
 const (
 	DBAASServiceNotificationTypeServicePoweredOffRemoval DBAASServiceNotificationType = "service_powered_off_removal"
 	DBAASServiceNotificationTypeServiceEndOfLife         DBAASServiceNotificationType = "service_end_of_life"
 )
-
-// Notification type
-type DBAASServiceNotificationMetadata struct {
-}
 
 // Service notifications
 type DBAASServiceNotification struct {
@@ -908,17 +908,9 @@ type DBAASServiceNotification struct {
 	// Human notification message
 	Message string `json:"message" validate:"required,gte=1,lte=1024"`
 	// Notification type
-	Type DBAASServiceNotificationType `json:"type" validate:"required"`
-	// Notification type
 	Metadata *DBAASServiceNotificationMetadata `json:"metadata" validate:"required"`
-}
-
-// Opensearch connection information properties
-type DBAASServiceOpensearchConnectionInfo struct {
-	URI          []string `json:"uri,omitempty"`
-	Username     string   `json:"username,omitempty"`
-	Password     string   `json:"password,omitempty"`
-	DashboardURI string   `json:"dashboard-uri,omitempty"`
+	// Notification type
+	Type DBAASServiceNotificationType `json:"type" validate:"required"`
 }
 
 type DBAASServiceOpensearchComponents struct {
@@ -932,6 +924,14 @@ type DBAASServiceOpensearchComponents struct {
 	Usage EnumComponentUsage `json:"usage" validate:"required"`
 }
 
+// Opensearch connection information properties
+type DBAASServiceOpensearchConnectionInfo struct {
+	DashboardURI string   `json:"dashboard-uri,omitempty"`
+	Password     string   `json:"password,omitempty"`
+	URI          []string `json:"uri,omitempty"`
+	Username     string   `json:"username,omitempty"`
+}
+
 type DBAASServiceOpensearchIndexPatternsSortingAlgorithm string
 
 const (
@@ -942,10 +942,10 @@ const (
 type DBAASServiceOpensearchIndexPatterns struct {
 	// Maximum number of indexes to keep
 	MaxIndexCount int64 `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
-	// Deletion sorting algorithm
-	SortingAlgorithm DBAASServiceOpensearchIndexPatternsSortingAlgorithm `json:"sorting-algorithm,omitempty"`
 	// fnmatch pattern
 	Pattern string `json:"pattern,omitempty" validate:"omitempty,lte=1024"`
+	// Deletion sorting algorithm
+	SortingAlgorithm DBAASServiceOpensearchIndexPatternsSortingAlgorithm `json:"sorting-algorithm,omitempty"`
 }
 
 // Template settings for all new indexes
@@ -958,94 +958,86 @@ type DBAASServiceOpensearchIndexTemplate struct {
 	NumberOfShards int64 `json:"number-of-shards,omitempty" validate:"omitempty,gte=1,lte=1024"`
 }
 
-// service_uri parameterized into key-value pairs
-type DBAASServiceOpensearchURIParams struct {
-}
-
 // OpenSearch Dashboards settings
 type DBAASServiceOpensearchOpensearchDashboards struct {
-	// Timeout in milliseconds for requests made by OpenSearch Dashboards towards OpenSearch (default: 30000)
-	OpensearchRequestTimeout int64 `json:"opensearch-request-timeout,omitempty" validate:"omitempty,gte=5000,lte=120000"`
 	// Enable or disable OpenSearch Dashboards (default: true)
 	Enabled *bool `json:"enabled,omitempty"`
 	// Limits the maximum amount of memory (in MiB) the OpenSearch Dashboards process can use. This sets the max_old_space_size option of the nodejs running the OpenSearch Dashboards. Note: the memory reserved by OpenSearch Dashboards is not available for OpenSearch. (default: 128)
 	MaxOldSpaceSize int64 `json:"max-old-space-size,omitempty" validate:"omitempty,gte=64,lte=1024"`
+	// Timeout in milliseconds for requests made by OpenSearch Dashboards towards OpenSearch (default: 30000)
+	OpensearchRequestTimeout int64 `json:"opensearch-request-timeout,omitempty" validate:"omitempty,gte=5000,lte=120000"`
+}
+
+// service_uri parameterized into key-value pairs
+type DBAASServiceOpensearchURIParams struct {
 }
 
 type DBAASServiceOpensearchUsers struct {
+	Password string `json:"password,omitempty"`
 	Type     string `json:"type,omitempty"`
 	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
 }
 
 type DBAASServiceOpensearch struct {
-	// DbaaS service description
-	Description string `json:"description,omitempty"`
-	// Maximum number of indexes to keep before deleting the oldest one
-	MaxIndexCount int64 `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
-	// Service last update timestamp (ISO 8601)
-	UpdatedAT time.Time `json:"updated-at,omitempty"`
-	// Number of service nodes in the active plan
-	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
-	// Opensearch connection information properties
-	ConnectionInfo *DBAASServiceOpensearchConnectionInfo `json:"connection-info,omitempty"`
-	// Number of CPUs for each node
-	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// Service integrations
-	Integrations []DBAASIntegration `json:"integrations,omitempty"`
-	// The zone where the service is running
-	Zone string `json:"zone,omitempty"`
-	// State of individual service nodes
-	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
-	Name       DBAASServiceName `json:"name" validate:"required,gte=0,lte=63"`
-	// Aiven automation resets index.refresh_interval to default value for every index to be sure that indices are always visible to search. If it doesn't fit your case, you can disable this by setting up this flag to true.
-	KeepIndexRefreshInterval *bool                `json:"keep-index-refresh-interval,omitempty"`
-	Type                     DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
-	State                    EnumServiceState     `json:"state,omitempty"`
-	// Allowed CIDR address blocks for incoming connections
-	IPFilter []string `json:"ip-filter,omitempty"`
 	// List of backups for the service
 	Backups []DBAASServiceBackup `json:"backups,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-	// Service notifications
-	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
 	// Service component information objects
 	Components []DBAASServiceOpensearchComponents `json:"components,omitempty"`
-	// Allows you to create glob style patterns and set a max number of indexes matching this pattern you want to keep. Creating indexes exceeding this value will cause the oldest one to get deleted. You could for example create a pattern looking like 'logs.?' and then create index logs.1, logs.2 etc, it will delete logs.1 once you create logs.6. Do note 'logs.?' does not apply to logs.10. Note: Setting max_index_count to 0 will do nothing and the pattern gets ignored.
-	IndexPatterns []DBAASServiceOpensearchIndexPatterns `json:"index-patterns,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
-	// Template settings for all new indexes
-	IndexTemplate *DBAASServiceOpensearchIndexTemplate `json:"index-template,omitempty"`
-	// TODO UNIT disk space for data storage
-	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
-	// TODO UNIT of memory for each node
-	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
-	// URI for connecting to the service (may be absent)
-	URI string `json:"uri,omitempty"`
-	// OpenSearch settings
-	OpensearchSettings JSONSchemaOpensearch `json:"opensearch-settings,omitempty"`
-	// service_uri parameterized into key-value pairs
-	URIParams *DBAASServiceOpensearchURIParams `json:"uri-params,omitempty"`
-	// OpenSearch version
-	Version string `json:"version,omitempty"`
+	// Opensearch connection information properties
+	ConnectionInfo *DBAASServiceOpensearchConnectionInfo `json:"connection-info,omitempty"`
 	// Service creation timestamp (ISO 8601)
 	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan" validate:"required"`
+	// DbaaS service description
+	Description string `json:"description,omitempty"`
+	// TODO UNIT disk space for data storage
+	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
+	// Allows you to create glob style patterns and set a max number of indexes matching this pattern you want to keep. Creating indexes exceeding this value will cause the oldest one to get deleted. You could for example create a pattern looking like 'logs.?' and then create index logs.1, logs.2 etc, it will delete logs.1 once you create logs.6. Do note 'logs.?' does not apply to logs.10. Note: Setting max_index_count to 0 will do nothing and the pattern gets ignored.
+	IndexPatterns []DBAASServiceOpensearchIndexPatterns `json:"index-patterns,omitempty"`
+	// Template settings for all new indexes
+	IndexTemplate *DBAASServiceOpensearchIndexTemplate `json:"index-template,omitempty"`
+	// Service integrations
+	Integrations []DBAASIntegration `json:"integrations,omitempty"`
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Aiven automation resets index.refresh_interval to default value for every index to be sure that indices are always visible to search. If it doesn't fit your case, you can disable this by setting up this flag to true.
+	KeepIndexRefreshInterval *bool `json:"keep-index-refresh-interval,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	// Maximum number of indexes to keep before deleting the oldest one
+	MaxIndexCount int64            `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
+	Name          DBAASServiceName `json:"name" validate:"required,gte=0,lte=63"`
+	// Number of service nodes in the active plan
+	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
+	// Number of CPUs for each node
+	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
+	// TODO UNIT of memory for each node
+	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
+	// State of individual service nodes
+	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
+	// Service notifications
+	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
 	// OpenSearch Dashboards settings
 	OpensearchDashboards *DBAASServiceOpensearchOpensearchDashboards `json:"opensearch-dashboards,omitempty"`
+	// OpenSearch settings
+	OpensearchSettings JSONSchemaOpensearch `json:"opensearch-settings,omitempty"`
+	// Subscription plan
+	Plan  string           `json:"plan" validate:"required"`
+	State EnumServiceState `json:"state,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool                `json:"termination-protection,omitempty"`
+	Type                  DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
+	// Service last update timestamp (ISO 8601)
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
+	// URI for connecting to the service (may be absent)
+	URI string `json:"uri,omitempty"`
+	// service_uri parameterized into key-value pairs
+	URIParams *DBAASServiceOpensearchURIParams `json:"uri-params,omitempty"`
 	// List of service users
 	Users []DBAASServiceOpensearchUsers `json:"users,omitempty"`
-}
-
-// PG connection information properties
-type DBAASServicePGConnectionInfo struct {
-	URI     []string            `json:"uri,omitempty"`
-	Params  []map[string]string `json:"params,omitempty"`
-	Standby []string            `json:"standby,omitempty"`
-	Syncing []string            `json:"syncing,omitempty"`
+	// OpenSearch version
+	Version string `json:"version,omitempty"`
+	// The zone where the service is running
+	Zone string `json:"zone,omitempty"`
 }
 
 // Backup schedule
@@ -1054,16 +1046,6 @@ type DBAASServicePGBackupSchedule struct {
 	BackupHour int64 `json:"backup-hour,omitempty" validate:"omitempty,gte=0,lte=23"`
 	// The minute of an hour when backup for the service is started. New backup is only started if previous backup has already completed.
 	BackupMinute int64 `json:"backup-minute,omitempty" validate:"omitempty,gte=0,lte=59"`
-}
-
-type DBAASServicePGConnectionPools struct {
-	// Connection URI for the DB pool
-	ConnectionURI string              `json:"connection-uri" validate:"required"`
-	Database      DBAASDatabaseName   `json:"database" validate:"required,gte=1,lte=40"`
-	Mode          EnumPGPoolMode      `json:"mode" validate:"required"`
-	Name          DBAASPGPoolName     `json:"name" validate:"required,gte=1,lte=63"`
-	Size          DBAASPGPoolSize     `json:"size" validate:"required,gte=1,lte=10000"`
-	Username      DBAASPGPoolUsername `json:"username" validate:"required,gte=1,lte=64"`
 }
 
 type DBAASServicePGComponents struct {
@@ -1077,95 +1059,106 @@ type DBAASServicePGComponents struct {
 	Usage EnumComponentUsage `json:"usage" validate:"required"`
 }
 
+// PG connection information properties
+type DBAASServicePGConnectionInfo struct {
+	Params  []map[string]string `json:"params,omitempty"`
+	Standby []string            `json:"standby,omitempty"`
+	Syncing []string            `json:"syncing,omitempty"`
+	URI     []string            `json:"uri,omitempty"`
+}
+
+type DBAASServicePGConnectionPools struct {
+	// Connection URI for the DB pool
+	ConnectionURI string              `json:"connection-uri" validate:"required"`
+	Database      DBAASDatabaseName   `json:"database" validate:"required,gte=1,lte=40"`
+	Mode          EnumPGPoolMode      `json:"mode" validate:"required"`
+	Name          DBAASPGPoolName     `json:"name" validate:"required,gte=1,lte=63"`
+	Size          DBAASPGPoolSize     `json:"size" validate:"required,gte=1,lte=10000"`
+	Username      DBAASPGPoolUsername `json:"username" validate:"required,gte=1,lte=64"`
+}
+
 // service_uri parameterized into key-value pairs
 type DBAASServicePGURIParams struct {
 }
 
 // List of service users
 type DBAASServicePGUsers struct {
+	AllowReplication *bool `json:"allow-replication,omitempty"`
+	// Account password. A missing field indicates a user overridden password.
+	Password string `json:"password,omitempty"`
 	// Account type
 	Type string `json:"type" validate:"required"`
 	// Account username
 	Username string `json:"username" validate:"required"`
-	// Account password. A missing field indicates a user overridden password.
-	Password         string `json:"password,omitempty"`
-	AllowReplication *bool  `json:"allow-replication,omitempty"`
 }
 
 type DBAASServicePG struct {
-	// PGBouncer connection pooling settings
-	PgbouncerSettings JSONSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
-	// Service last update timestamp (ISO 8601)
-	UpdatedAT time.Time `json:"updated-at,omitempty"`
-	// Number of service nodes in the active plan
-	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
-	// PG connection information properties
-	ConnectionInfo *DBAASServicePGConnectionInfo `json:"connection-info,omitempty"`
 	// Backup schedule
 	BackupSchedule *DBAASServicePGBackupSchedule `json:"backup-schedule,omitempty"`
-	// Number of CPUs for each node
-	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// Service integrations
-	Integrations []DBAASIntegration `json:"integrations,omitempty"`
-	// The zone where the service is running
-	Zone string `json:"zone,omitempty"`
-	// State of individual service nodes
-	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
-	Name       DBAASServiceName `json:"name" validate:"required,gte=0,lte=63"`
-	// PostgreSQL PGBouncer connection pools
-	ConnectionPools []DBAASServicePGConnectionPools `json:"connection-pools,omitempty"`
-	Type            DBAASServiceTypeName            `json:"type" validate:"required,gte=0,lte=64"`
-	State           EnumServiceState                `json:"state,omitempty"`
-	// TimescaleDB extension configuration values
-	TimescaledbSettings JSONSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
-	// List of PostgreSQL databases
-	Databases []DBAASDatabaseName `json:"databases,omitempty"`
-	// Allowed CIDR address blocks for incoming connections
-	IPFilter []string `json:"ip-filter,omitempty"`
 	// List of backups for the service
 	Backups []DBAASServiceBackup `json:"backups,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-	// Service notifications
-	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
 	// Service component information objects
-	Components             []DBAASServicePGComponents   `json:"components,omitempty"`
-	SynchronousReplication EnumPGSynchronousReplication `json:"synchronous-replication,omitempty"`
-	// PGLookout settings
-	PglookoutSettings JSONSchemaPglookout `json:"pglookout-settings,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	Components []DBAASServicePGComponents `json:"components,omitempty"`
+	// PG connection information properties
+	ConnectionInfo *DBAASServicePGConnectionInfo `json:"connection-info,omitempty"`
+	// PostgreSQL PGBouncer connection pools
+	ConnectionPools []DBAASServicePGConnectionPools `json:"connection-pools,omitempty"`
+	// Service creation timestamp (ISO 8601)
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// List of PostgreSQL databases
+	Databases []DBAASDatabaseName `json:"databases,omitempty"`
 	// TODO UNIT disk space for data storage
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
+	// Service integrations
+	Integrations []DBAASIntegration `json:"integrations,omitempty"`
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	// Maximum number of connections allowed to an instance
+	MaxConnections int64            `json:"max-connections,omitempty" validate:"omitempty,gt=0"`
+	Name           DBAASServiceName `json:"name" validate:"required,gte=0,lte=63"`
+	// Number of service nodes in the active plan
+	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
+	// Number of CPUs for each node
+	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
 	// TODO UNIT of memory for each node
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
+	// State of individual service nodes
+	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
+	// Service notifications
+	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
+	// postgresql.conf configuration values
+	PGSettings JSONSchemaPG `json:"pg-settings,omitempty"`
+	// PGBouncer connection pooling settings
+	PgbouncerSettings JSONSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
+	// PGLookout settings
+	PglookoutSettings JSONSchemaPglookout `json:"pglookout-settings,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required"`
+	// Percentage of total RAM that the database server uses for shared memory buffers. Valid range is 20-60 (float), which corresponds to 20% - 60%. This setting adjusts the shared_buffers configuration value.
+	SharedBuffersPercentage int64                        `json:"shared-buffers-percentage,omitempty" validate:"omitempty,gte=20,lte=60"`
+	State                   EnumServiceState             `json:"state,omitempty"`
+	SynchronousReplication  EnumPGSynchronousReplication `json:"synchronous-replication,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// TimescaleDB extension configuration values
+	TimescaledbSettings JSONSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
+	Type                DBAASServiceTypeName  `json:"type" validate:"required,gte=0,lte=64"`
+	// Service last update timestamp (ISO 8601)
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
 	URIParams *DBAASServicePGURIParams `json:"uri-params,omitempty"`
-	// PostgreSQL version
-	Version string `json:"version,omitempty"`
-	// Service creation timestamp (ISO 8601)
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan" validate:"required"`
-	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
-	WorkMem int64 `json:"work-mem,omitempty" validate:"omitempty,gte=1,lte=1024"`
-	// Percentage of total RAM that the database server uses for shared memory buffers. Valid range is 20-60 (float), which corresponds to 20% - 60%. This setting adjusts the shared_buffers configuration value.
-	SharedBuffersPercentage int64 `json:"shared-buffers-percentage,omitempty" validate:"omitempty,gte=20,lte=60"`
-	// postgresql.conf configuration values
-	PGSettings JSONSchemaPG `json:"pg-settings,omitempty"`
-	// Maximum number of connections allowed to an instance
-	MaxConnections int64 `json:"max-connections,omitempty" validate:"omitempty,gt=0"`
 	// List of service users
 	Users []DBAASServicePGUsers `json:"users,omitempty"`
-}
-
-// Redis connection information properties
-type DBAASServiceRedisConnectionInfo struct {
-	URI      []string `json:"uri,omitempty"`
-	Password string   `json:"password,omitempty"`
-	Slave    []string `json:"slave,omitempty"`
+	// PostgreSQL version
+	Version string `json:"version,omitempty"`
+	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
+	WorkMem int64 `json:"work-mem,omitempty" validate:"omitempty,gte=1,lte=1024"`
+	// The zone where the service is running
+	Zone string `json:"zone,omitempty"`
 }
 
 type DBAASServiceRedisComponents struct {
@@ -1183,6 +1176,13 @@ type DBAASServiceRedisComponents struct {
 	Usage EnumComponentUsage `json:"usage" validate:"required"`
 }
 
+// Redis connection information properties
+type DBAASServiceRedisConnectionInfo struct {
+	Password string   `json:"password,omitempty"`
+	Slave    []string `json:"slave,omitempty"`
+	URI      []string `json:"uri,omitempty"`
+}
+
 // service_uri parameterized into key-value pairs
 type DBAASServiceRedisURIParams struct {
 }
@@ -1195,71 +1195,71 @@ type DBAASServiceRedisUsersAccessControl struct {
 }
 
 type DBAASServiceRedisUsers struct {
+	AccessControl *DBAASServiceRedisUsersAccessControl `json:"access-control,omitempty"`
+	Password      string                               `json:"password,omitempty"`
 	Type          string                               `json:"type,omitempty"`
 	Username      string                               `json:"username,omitempty"`
-	Password      string                               `json:"password,omitempty"`
-	AccessControl *DBAASServiceRedisUsersAccessControl `json:"access-control,omitempty"`
 }
 
 type DBAASServiceRedis struct {
-	// Service last update timestamp (ISO 8601)
-	UpdatedAT time.Time `json:"updated-at,omitempty"`
-	// Number of service nodes in the active plan
-	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
-	// Redis connection information properties
-	ConnectionInfo *DBAASServiceRedisConnectionInfo `json:"connection-info,omitempty"`
-	// Number of CPUs for each node
-	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// Service integrations
-	Integrations []DBAASIntegration `json:"integrations,omitempty"`
-	// The zone where the service is running
-	Zone string `json:"zone,omitempty"`
-	// State of individual service nodes
-	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
-	Name       DBAASServiceName `json:"name" validate:"required,gte=0,lte=63"`
-	// Redis settings
-	RedisSettings *JSONSchemaRedis     `json:"redis-settings,omitempty"`
-	Type          DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
-	State         EnumServiceState     `json:"state,omitempty"`
-	// Allowed CIDR address blocks for incoming connections
-	IPFilter []string `json:"ip-filter,omitempty"`
 	// List of backups for the service
 	Backups []DBAASServiceBackup `json:"backups,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-	// Service notifications
-	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
 	// Service component information objects
 	Components []DBAASServiceRedisComponents `json:"components,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	// Redis connection information properties
+	ConnectionInfo *DBAASServiceRedisConnectionInfo `json:"connection-info,omitempty"`
+	// Service creation timestamp (ISO 8601)
+	CreatedAT time.Time `json:"created-at,omitempty"`
 	// TODO UNIT disk space for data storage
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
+	// Service integrations
+	Integrations []DBAASIntegration `json:"integrations,omitempty"`
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	Name        DBAASServiceName         `json:"name" validate:"required,gte=0,lte=63"`
+	// Number of service nodes in the active plan
+	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
+	// Number of CPUs for each node
+	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
 	// TODO UNIT of memory for each node
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
+	// State of individual service nodes
+	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
+	// Service notifications
+	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required"`
+	// Redis settings
+	RedisSettings *JSONSchemaRedis `json:"redis-settings,omitempty"`
+	State         EnumServiceState `json:"state,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool                `json:"termination-protection,omitempty"`
+	Type                  DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
+	// Service last update timestamp (ISO 8601)
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
 	// URI for connecting to the service (may be absent)
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
 	URIParams *DBAASServiceRedisURIParams `json:"uri-params,omitempty"`
-	// Redis version
-	Version string `json:"version,omitempty"`
-	// Service creation timestamp (ISO 8601)
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan" validate:"required"`
 	// List of service users
 	Users []DBAASServiceRedisUsers `json:"users,omitempty"`
+	// Redis version
+	Version string `json:"version,omitempty"`
+	// The zone where the service is running
+	Zone string `json:"zone,omitempty"`
 }
 
 // DBaaS service
 type DBAASServiceType struct {
-	Name DBAASServiceTypeName `json:"name,omitempty" validate:"omitempty,gte=0,lte=64"`
 	// DbaaS service available versions
 	AvailableVersions []string `json:"available-versions,omitempty"`
 	// DbaaS service default version
 	DefaultVersion string `json:"default-version,omitempty"`
 	// DbaaS service description
-	Description string `json:"description,omitempty"`
+	Description string               `json:"description,omitempty"`
+	Name        DBAASServiceTypeName `json:"name,omitempty" validate:"omitempty,gte=0,lte=64"`
 	// DbaaS service plans
 	Plans []DBAASPlan `json:"plans,omitempty"`
 }
@@ -1268,10 +1268,10 @@ type DBAASServiceTypeName string
 
 // Update waiting to be installed
 type DBAASServiceUpdate struct {
-	// Description of the update
-	Description string `json:"description,omitempty"`
 	// Deadline for installing the update
 	Deadline time.Time `json:"deadline,omitempty"`
+	// Description of the update
+	Description string `json:"description,omitempty"`
 	// The earliest time the update will be automatically applied
 	StartAfter time.Time `json:"start-after,omitempty"`
 	// The time when the update will be automatically applied
@@ -1284,8 +1284,8 @@ type DBAASTaskResultCodes struct {
 }
 
 type DBAASTask struct {
-	ID          UUID                   `json:"id,omitempty"`
 	CreateTime  time.Time              `json:"create-time,omitempty"`
+	ID          UUID                   `json:"id,omitempty"`
 	Result      string                 `json:"result,omitempty"`
 	ResultCodes []DBAASTaskResultCodes `json:"result-codes,omitempty"`
 	Success     *bool                  `json:"success,omitempty"`
@@ -1294,49 +1294,49 @@ type DBAASTask struct {
 
 // Kafka User secrets
 type DBAASUserKafkaSecrets struct {
-	// Kafka username
-	Username string `json:"username,omitempty"`
-	// Kafka password
-	Password string `json:"password,omitempty"`
 	// Kafka certificate
 	AccessCert       string    `json:"access-cert,omitempty"`
 	AccessCertExpiry time.Time `json:"access-cert-expiry,omitempty"`
 	// Kafka access key
 	AccessKey string `json:"access-key,omitempty"`
+	// Kafka password
+	Password string `json:"password,omitempty"`
+	// Kafka username
+	Username string `json:"username,omitempty"`
 }
 
 // MySQL User secrets
 type DBAASUserMysqlSecrets struct {
-	// MySQL username
-	Username string `json:"username,omitempty"`
 	// MySQL password
 	Password string `json:"password,omitempty"`
+	// MySQL username
+	Username string `json:"username,omitempty"`
 }
 
 // Opensearch User secrets
 type DBAASUserOpensearchSecrets struct {
-	// Opensearch username
-	Username string `json:"username,omitempty"`
 	// Opensearch password
 	Password string `json:"password,omitempty"`
+	// Opensearch username
+	Username string `json:"username,omitempty"`
 }
 
 type DBAASUserPassword string
 
 // Postgres User secrets
 type DBAASUserPostgresSecrets struct {
-	// Postgres username
-	Username string `json:"username,omitempty"`
 	// Postgres password
 	Password string `json:"password,omitempty"`
+	// Postgres username
+	Username string `json:"username,omitempty"`
 }
 
 // Redis User secrets
 type DBAASUserRedisSecrets struct {
-	// Redis username
-	Username string `json:"username,omitempty"`
 	// Redis password
 	Password string `json:"password,omitempty"`
+	// Redis username
+	Username string `json:"username,omitempty"`
 }
 
 type DBAASUserUsername string
@@ -1350,22 +1350,22 @@ const (
 
 // Deploy target
 type DeployTarget struct {
+	// Deploy Target description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Deploy Target ID
 	ID UUID `json:"id" validate:"required"`
 	// Deploy Target name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Deploy Target type
 	Type DeployTargetType `json:"type,omitempty"`
-	// Deploy Target description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 }
 
 // DNS domain
 type DNSDomain struct {
-	// DNS domain ID
-	ID UUID `json:"id,omitempty"`
 	// DNS domain creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
+	// DNS domain ID
+	ID UUID `json:"id,omitempty"`
 	// DNS domain unicode name
 	UnicodeName string `json:"unicode-name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
@@ -1393,20 +1393,20 @@ const (
 
 // DNS domain record
 type DNSDomainRecord struct {
-	// DNS domain record ID
-	ID UUID `json:"id,omitempty"`
-	// DNS domain record priority
-	Priority int64 `json:"priority,omitempty" validate:"omitempty,gte=0"`
 	// DNS domain record content
 	Content string `json:"content,omitempty"`
-	// DNS domain record type
-	Type DNSDomainRecordType `json:"type,omitempty"`
-	// DNS domain record TTL
-	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gte=0"`
-	// DNS domain record name
-	Name string `json:"name,omitempty"`
 	// DNS domain record creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
+	// DNS domain record ID
+	ID UUID `json:"id,omitempty"`
+	// DNS domain record name
+	Name string `json:"name,omitempty"`
+	// DNS domain record priority
+	Priority int64 `json:"priority,omitempty" validate:"omitempty,gte=0"`
+	// DNS domain record TTL
+	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gte=0"`
+	// DNS domain record type
+	Type DNSDomainRecordType `json:"type,omitempty"`
 	// DNS domain record update date
 	UpdatedAT time.Time `json:"updated-at,omitempty"`
 }
@@ -1422,10 +1422,6 @@ const (
 
 // Elastic IP
 type ElasticIP struct {
-	// Elastic IP ID
-	ID UUID `json:"id,omitempty"`
-	// Elastic IP address
-	IP string `json:"ip,omitempty"`
 	// Elastic IP address family
 	Addressfamily ElasticIPAddressfamily `json:"addressfamily,omitempty"`
 	// Elastic IP cidr
@@ -1434,7 +1430,11 @@ type ElasticIP struct {
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Elastic IP address healthcheck
 	Healthcheck *ElasticIPHealthcheck `json:"healthcheck,omitempty"`
-	Labels      Labels                `json:"labels,omitempty"`
+	// Elastic IP ID
+	ID UUID `json:"id,omitempty"`
+	// Elastic IP address
+	IP     string `json:"ip,omitempty"`
+	Labels Labels `json:"labels,omitempty"`
 }
 
 type ElasticIPHealthcheckMode string
@@ -1447,24 +1447,24 @@ const (
 
 // Elastic IP address healthcheck
 type ElasticIPHealthcheck struct {
-	// Number of attempts before considering the target healthy (default: 2)
-	StrikesOk int64 `json:"strikes-ok,omitempty" validate:"omitempty,gte=1,lte=20"`
-	// Skip TLS verification
-	TlsSkipVerify *bool `json:"tls-skip-verify,omitempty"`
-	// An optional domain or subdomain to check TLS against
-	TlsSNI string `json:"tls-sni,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Number of attempts before considering the target unhealthy (default: 3)
-	StrikesFail int64 `json:"strikes-fail,omitempty" validate:"omitempty,gte=1,lte=20"`
+	// Interval between the checks in seconds (default: 10)
+	Interval int64 `json:"interval,omitempty" validate:"omitempty,gte=5,lte=300"`
 	// Health check mode
 	Mode ElasticIPHealthcheckMode `json:"mode" validate:"required"`
 	// Health check port
 	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
-	// An endpoint to use for the health check, for example '/status'
-	URI string `json:"uri,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Interval between the checks in seconds (default: 10)
-	Interval int64 `json:"interval,omitempty" validate:"omitempty,gte=5,lte=300"`
+	// Number of attempts before considering the target unhealthy (default: 3)
+	StrikesFail int64 `json:"strikes-fail,omitempty" validate:"omitempty,gte=1,lte=20"`
+	// Number of attempts before considering the target healthy (default: 2)
+	StrikesOk int64 `json:"strikes-ok,omitempty" validate:"omitempty,gte=1,lte=20"`
 	// Health check timeout value in seconds (default: 2)
 	Timeout int64 `json:"timeout,omitempty" validate:"omitempty,gte=2,lte=60"`
+	// Skip TLS verification
+	TlsSkipVerify *bool `json:"tls-skip-verify,omitempty"`
+	// An optional domain or subdomain to check TLS against
+	TlsSNI string `json:"tls-sni,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// An endpoint to use for the health check, for example '/status'
+	URI string `json:"uri,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 type EnumComponentRoute string
@@ -1576,12 +1576,12 @@ const (
 	EnumSortOrderAsc  EnumSortOrder = "asc"
 )
 
-// Query string parameters (free form map)
-type EventGetParams struct {
-}
-
 // Body parameters (free form map)
 type EventBodyParams struct {
+}
+
+// Query string parameters (free form map)
+type EventGetParams struct {
 }
 
 // URI path parameters (free form map)
@@ -1590,56 +1590,56 @@ type EventPathParams struct {
 
 // A notable Mutation Event which happened on the infrastructure
 type Event struct {
-	// Operation unique identifier
-	RequestID string `json:"request-id,omitempty"`
-	// IAM Role
-	IAMRole *IAMRole `json:"iam-role,omitempty"`
-	// Operation targeted zone
-	Zone string `json:"zone,omitempty"`
-	// Query string parameters (free form map)
-	GetParams *EventGetParams `json:"get-params,omitempty"`
 	// Body parameters (free form map)
 	BodyParams *EventBodyParams `json:"body-params,omitempty"`
-	// Operation HTTP status
-	Status int64 `json:"status,omitempty" validate:"omitempty,gt=0"`
-	// Client IP address
-	SourceIP string `json:"source-ip,omitempty"`
-	// IAM API Key
-	IAMAPIKey *IAMAPIKey `json:"iam-api-key,omitempty"`
-	// Operation request URI
-	URI string `json:"uri,omitempty"`
 	// Operation processing time
 	ElapsedMS int64 `json:"elapsed-ms,omitempty" validate:"omitempty,gt=0"`
-	// Time at which the event happened, millisecond resolution
-	Timestamp time.Time `json:"timestamp,omitempty"`
-	// URI path parameters (free form map)
-	PathParams *EventPathParams `json:"path-params,omitempty"`
+	// Query string parameters (free form map)
+	GetParams *EventGetParams `json:"get-params,omitempty"`
 	// Operation handler name
 	Handler string `json:"handler,omitempty"`
+	// IAM API Key
+	IAMAPIKey *IAMAPIKey `json:"iam-api-key,omitempty"`
+	// IAM Role
+	IAMRole *IAMRole `json:"iam-role,omitempty"`
 	// Operation message
 	Message string `json:"message,omitempty"`
+	// URI path parameters (free form map)
+	PathParams *EventPathParams `json:"path-params,omitempty"`
+	// Operation unique identifier
+	RequestID string `json:"request-id,omitempty"`
+	// Client IP address
+	SourceIP string `json:"source-ip,omitempty"`
+	// Operation HTTP status
+	Status int64 `json:"status,omitempty" validate:"omitempty,gt=0"`
+	// Time at which the event happened, millisecond resolution
+	Timestamp time.Time `json:"timestamp,omitempty"`
+	// Operation request URI
+	URI string `json:"uri,omitempty"`
+	// Operation targeted zone
+	Zone string `json:"zone,omitempty"`
 }
 
 // IAM API Key
 type IAMAPIKey struct {
-	// IAM API Key name
-	Name string `json:"name,omitempty"`
 	// IAM API Key
 	Key string `json:"key,omitempty"`
+	// IAM API Key name
+	Name string `json:"name,omitempty"`
 	// IAM API Key Role ID
 	RoleID UUID `json:"role-id,omitempty"`
 }
 
 // IAM API Key
 type IAMAPIKeyCreated struct {
-	// IAM API Key name
-	Name string `json:"name,omitempty"`
 	// IAM API Key
 	Key string `json:"key,omitempty"`
-	// IAM API Key Secret
-	Secret string `json:"secret,omitempty"`
+	// IAM API Key name
+	Name string `json:"name,omitempty"`
 	// IAM API Key Role ID
 	RoleID UUID `json:"role-id,omitempty"`
+	// IAM API Key Secret
+	Secret string `json:"secret,omitempty"`
 }
 
 type IAMPolicyDefaultServiceStrategy string
@@ -1659,17 +1659,17 @@ type IAMPolicy struct {
 
 // IAM Role
 type IAMRole struct {
-	// IAM Role ID
-	ID UUID `json:"id,omitempty"`
-	// IAM Role name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// IAM Role description
 	Description string `json:"description,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// IAM Role permissions
-	Permissions []string `json:"permissions,omitempty"`
-	Labels      Labels   `json:"labels,omitempty"`
 	// IAM Role mutability
 	Editable *bool `json:"editable,omitempty"`
+	// IAM Role ID
+	ID     UUID   `json:"id,omitempty"`
+	Labels Labels `json:"labels,omitempty"`
+	// IAM Role name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// IAM Role permissions
+	Permissions []string `json:"permissions,omitempty"`
 	// Policy
 	Policy *IAMPolicy `json:"policy,omitempty"`
 }
@@ -1683,8 +1683,8 @@ const (
 )
 
 type IAMServicePolicy struct {
-	Type  IAMServicePolicyType   `json:"type,omitempty"`
 	Rules []IAMServicePolicyRule `json:"rules,omitempty"`
+	Type  IAMServicePolicyType   `json:"type,omitempty"`
 }
 
 type IAMServicePolicyRuleAction string
@@ -1712,45 +1712,45 @@ type InstancePrivateNetworks struct {
 type Instance struct {
 	// Instance Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
-	PublicIPAssignment PublicIPAssignment  `json:"public-ip-assignment,omitempty"`
-	Labels             Labels              `json:"labels,omitempty"`
-	// Instance Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	// Instance creation date
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Deploy target
+	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
+	// Instance disk size in GB
+	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=50000"`
 	// Instance Elastic IPs
 	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
-	// Instance name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Instance ID
+	ID UUID `json:"id,omitempty"`
 	// Compute instance type
 	InstanceType *InstanceType `json:"instance-type,omitempty"`
-	// Instance Private Networks
-	PrivateNetworks []InstancePrivateNetworks `json:"private-networks,omitempty"`
-	// Instance template
-	Template *Template     `json:"template,omitempty"`
-	State    InstanceState `json:"state,omitempty"`
-	// SSH key
-	SSHKey *SSHKey `json:"ssh-key,omitempty"`
-	// Instance Cloud-init user-data (base64 encoded)
-	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
+	// Instance IPv6 address
+	Ipv6Address string `json:"ipv6-address,omitempty"`
+	Labels      Labels `json:"labels,omitempty"`
 	// Instance MAC address
 	MACAddress string `json:"mac-address,omitempty"`
 	// Resource manager
 	Manager *Manager `json:"manager,omitempty"`
-	// Deploy target
-	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
-	// Instance IPv6 address
-	Ipv6Address string `json:"ipv6-address,omitempty"`
-	// Instance ID
-	ID UUID `json:"id,omitempty"`
+	// Instance name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Instance Private Networks
+	PrivateNetworks []InstancePrivateNetworks `json:"private-networks,omitempty"`
+	// Instance public IPv4 address
+	PublicIP           net.IP             `json:"public-ip,omitempty"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	// Instance Security Groups
+	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
 	// Instance Snapshots
 	Snapshots []Snapshot `json:"snapshots,omitempty"`
-	// Instance disk size in GB
-	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=50000"`
+	// SSH key
+	SSHKey *SSHKey `json:"ssh-key,omitempty"`
 	// Instance SSH Keys
-	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
-	// Instance creation date
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Instance public IPv4 address
-	PublicIP net.IP `json:"public-ip,omitempty"`
+	SSHKeys []SSHKey      `json:"ssh-keys,omitempty"`
+	State   InstanceState `json:"state,omitempty"`
+	// Instance template
+	Template *Template `json:"template,omitempty"`
+	// Instance Cloud-init user-data (base64 encoded)
+	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
 }
 
 // Instance password
@@ -1775,48 +1775,48 @@ const (
 type InstancePool struct {
 	// Instance Pool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	// Deploy target
+	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
 	// Instance Pool description
-	Description        string             `json:"description,omitempty" validate:"omitempty,gte=1,lte=255"`
-	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
-	Labels             Labels             `json:"labels,omitempty"`
-	// Instance Pool Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	Description string `json:"description,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Instances disk size in GB
+	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=50000"`
 	// Instances Elastic IPs
 	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
-	// Instance Pool name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Instance Pool ID
+	ID UUID `json:"id,omitempty"`
+	// The instances created by the Instance Pool will be prefixed with this value (default: pool)
+	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
 	// Compute instance type
 	InstanceType *InstanceType `json:"instance-type,omitempty"`
+	// Instances
+	Instances []Instance `json:"instances,omitempty"`
+	// Enable IPv6 for instances
+	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
+	Labels      Labels `json:"labels,omitempty"`
+	// Resource manager
+	Manager *Manager `json:"manager,omitempty"`
 	// Minimum number of running instances
 	MinAvailable int64 `json:"min-available,omitempty" validate:"omitempty,gte=0"`
+	// Instance Pool name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Instance Pool Private Networks
-	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
-	// Instance template
-	Template *Template `json:"template,omitempty"`
-	// Instance Pool state
-	State InstancePoolState `json:"state,omitempty"`
+	PrivateNetworks    []PrivateNetwork   `json:"private-networks,omitempty"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	// Instance Pool Security Groups
+	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
 	// Number of instances
 	Size int64 `json:"size,omitempty" validate:"omitempty,gt=0"`
 	// SSH key
 	SSHKey *SSHKey `json:"ssh-key,omitempty"`
-	// The instances created by the Instance Pool will be prefixed with this value (default: pool)
-	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
-	// Instances Cloud-init user-data
-	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
-	// Resource manager
-	Manager *Manager `json:"manager,omitempty"`
-	// Instances
-	Instances []Instance `json:"instances,omitempty"`
-	// Deploy target
-	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
-	// Enable IPv6 for instances
-	Ipv6Enabled *bool `json:"ipv6-enabled,omitempty"`
-	// Instance Pool ID
-	ID UUID `json:"id,omitempty"`
-	// Instances disk size in GB
-	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=50000"`
 	// Instances SSH keys
 	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
+	// Instance Pool state
+	State InstancePoolState `json:"state,omitempty"`
+	// Instance template
+	Template *Template `json:"template,omitempty"`
+	// Instances Cloud-init user-data
+	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
 }
 
 type InstanceState string
@@ -1839,6 +1839,19 @@ type InstanceTarget struct {
 	ID UUID `json:"id,omitempty"`
 }
 
+type InstanceTypeFamily string
+
+const (
+	InstanceTypeFamilyGpu3     InstanceTypeFamily = "gpu3"
+	InstanceTypeFamilyGpu2     InstanceTypeFamily = "gpu2"
+	InstanceTypeFamilyGpu      InstanceTypeFamily = "gpu"
+	InstanceTypeFamilyMemory   InstanceTypeFamily = "memory"
+	InstanceTypeFamilyStorage  InstanceTypeFamily = "storage"
+	InstanceTypeFamilyStandard InstanceTypeFamily = "standard"
+	InstanceTypeFamilyColossus InstanceTypeFamily = "colossus"
+	InstanceTypeFamilyCPU      InstanceTypeFamily = "cpu"
+)
+
 type InstanceTypeSize string
 
 const (
@@ -1855,45 +1868,31 @@ const (
 	InstanceTypeSizeTiny       InstanceTypeSize = "tiny"
 )
 
-type InstanceTypeFamily string
-
-const (
-	InstanceTypeFamilyGpu3     InstanceTypeFamily = "gpu3"
-	InstanceTypeFamilyGpu2     InstanceTypeFamily = "gpu2"
-	InstanceTypeFamilyGpu      InstanceTypeFamily = "gpu"
-	InstanceTypeFamilyMemory   InstanceTypeFamily = "memory"
-	InstanceTypeFamilyStorage  InstanceTypeFamily = "storage"
-	InstanceTypeFamilyStandard InstanceTypeFamily = "standard"
-	InstanceTypeFamilyColossus InstanceTypeFamily = "colossus"
-	InstanceTypeFamilyCPU      InstanceTypeFamily = "cpu"
-)
-
 // Compute instance type
 type InstanceType struct {
-	// Instance type ID
-	ID UUID `json:"id,omitempty"`
-	// Instance type size
-	Size InstanceTypeSize `json:"size,omitempty"`
-	// Instance type family
-	Family InstanceTypeFamily `json:"family,omitempty"`
-	// CPU count
-	Cpus int64 `json:"cpus,omitempty" validate:"omitempty,gt=0"`
-	// GPU count
-	Gpus int64 `json:"gpus,omitempty" validate:"omitempty,gt=0"`
 	// Requires authorization or publicly available
 	Authorized *bool `json:"authorized,omitempty"`
+	// CPU count
+	Cpus int64 `json:"cpus,omitempty" validate:"omitempty,gt=0"`
+	// Instance type family
+	Family InstanceTypeFamily `json:"family,omitempty"`
+	// GPU count
+	Gpus int64 `json:"gpus,omitempty" validate:"omitempty,gt=0"`
+	// Instance type ID
+	ID UUID `json:"id,omitempty"`
 	// Available memory
 	Memory int64 `json:"memory,omitempty" validate:"omitempty,gt=0"`
+	// Instance type size
+	Size InstanceTypeSize `json:"size,omitempty"`
 	// Instance Type available zones
 	Zones []ZoneName `json:"zones,omitempty"`
 }
 
-type JSONSchemaGrafanaCookieSamesite string
+type JSONSchemaGrafanaAlertingErrorORTimeout string
 
 const (
-	JSONSchemaGrafanaCookieSamesiteLax    JSONSchemaGrafanaCookieSamesite = "lax"
-	JSONSchemaGrafanaCookieSamesiteStrict JSONSchemaGrafanaCookieSamesite = "strict"
-	JSONSchemaGrafanaCookieSamesiteNone   JSONSchemaGrafanaCookieSamesite = "none"
+	JSONSchemaGrafanaAlertingErrorORTimeoutAlerting  JSONSchemaGrafanaAlertingErrorORTimeout = "alerting"
+	JSONSchemaGrafanaAlertingErrorORTimeoutKeepState JSONSchemaGrafanaAlertingErrorORTimeout = "keep_state"
 )
 
 type JSONSchemaGrafanaAlertingNodataORNullvalues string
@@ -1905,6 +1904,14 @@ const (
 	JSONSchemaGrafanaAlertingNodataORNullvaluesOk        JSONSchemaGrafanaAlertingNodataORNullvalues = "ok"
 )
 
+type JSONSchemaGrafanaCookieSamesite string
+
+const (
+	JSONSchemaGrafanaCookieSamesiteLax    JSONSchemaGrafanaCookieSamesite = "lax"
+	JSONSchemaGrafanaCookieSamesiteStrict JSONSchemaGrafanaCookieSamesite = "strict"
+	JSONSchemaGrafanaCookieSamesiteNone   JSONSchemaGrafanaCookieSamesite = "none"
+)
+
 type JSONSchemaGrafanaUserAutoAssignOrgRole string
 
 const (
@@ -1913,75 +1920,68 @@ const (
 	JSONSchemaGrafanaUserAutoAssignOrgRoleEditor JSONSchemaGrafanaUserAutoAssignOrgRole = "Editor"
 )
 
-type JSONSchemaGrafanaAlertingErrorORTimeout string
-
-const (
-	JSONSchemaGrafanaAlertingErrorORTimeoutAlerting  JSONSchemaGrafanaAlertingErrorORTimeout = "alerting"
-	JSONSchemaGrafanaAlertingErrorORTimeoutKeepState JSONSchemaGrafanaAlertingErrorORTimeout = "keep_state"
-)
-
 // Grafana settings
 type JSONSchemaGrafana struct {
+	// Enable or disable Grafana legacy alerting functionality. This should not be enabled with unified_alerting_enabled.
+	AlertingEnabled *bool `json:"alerting_enabled,omitempty"`
+	// Default error or timeout setting for new alerting rules
+	AlertingErrorORTimeout JSONSchemaGrafanaAlertingErrorORTimeout `json:"alerting_error_or_timeout,omitempty"`
+	// Max number of alert annotations that Grafana stores. 0 (default) keeps all alert annotations.
+	AlertingMaxAnnotationsToKeep int `json:"alerting_max_annotations_to_keep,omitempty" validate:"omitempty,gte=0,lte=1e+06"`
+	// Default value for 'no data or null values' for new alerting rules
+	AlertingNodataORNullvalues JSONSchemaGrafanaAlertingNodataORNullvalues `json:"alerting_nodata_or_nullvalues,omitempty"`
 	// Allow embedding Grafana dashboards with iframe/frame/object/embed tags. Disabled by default to limit impact of clickjacking
 	AllowEmbedding *bool `json:"allow_embedding,omitempty"`
+	// Azure AD OAuth integration
+	AuthAzuread map[string]any `json:"auth_azuread,omitempty"`
+	// Enable or disable basic authentication form, used by Grafana built-in login
+	AuthBasicEnabled *bool `json:"auth_basic_enabled,omitempty"`
+	// Generic OAuth integration
+	AuthGenericOauth map[string]any `json:"auth_generic_oauth,omitempty"`
+	// Github Auth integration
+	AuthGithub map[string]any `json:"auth_github,omitempty"`
+	// GitLab Auth integration
+	AuthGitlab map[string]any `json:"auth_gitlab,omitempty"`
+	// Google Auth integration
+	AuthGoogle map[string]any `json:"auth_google,omitempty"`
 	// Cookie SameSite attribute: 'strict' prevents sending cookie for cross-site requests, effectively disabling direct linking from other sites to Grafana. 'lax' is the default value.
 	CookieSamesite JSONSchemaGrafanaCookieSamesite `json:"cookie_samesite,omitempty"`
 	// This feature is new in Grafana 9 and is quite resource intensive. It may cause low-end plans to work more slowly while the dashboard previews are rendering.
 	DashboardPreviewsEnabled *bool `json:"dashboard_previews_enabled,omitempty"`
-	// Enable Grafana /metrics endpoint
-	MetricsEnabled *bool `json:"metrics_enabled,omitempty"`
-	// Name of the basebackup to restore in forked service
-	RecoveryBasebackupName string `json:"recovery_basebackup_name,omitempty" validate:"omitempty,lte=128"`
-	// Azure AD OAuth integration
-	AuthAzuread map[string]any `json:"auth_azuread,omitempty"`
-	// Enable or disable Grafana legacy alerting functionality. This should not be enabled with unified_alerting_enabled.
-	AlertingEnabled *bool `json:"alerting_enabled,omitempty"`
-	// Enable or disable Grafana unified alerting functionality. By default this is enabled and any legacy alerts will be migrated on upgrade to Grafana 9+. To stay on legacy alerting, set unified_alerting_enabled to false and alerting_enabled to true. See https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/ for more details.
-	UnifiedAlertingEnabled *bool `json:"unified_alerting_enabled,omitempty"`
-	// Github Auth integration
-	AuthGithub map[string]any `json:"auth_github,omitempty"`
-	// Auto-assign new users on signup to main organization. Defaults to false
-	UserAutoAssignOrg *bool `json:"user_auto_assign_org,omitempty"`
-	// Send 'X-Grafana-User' header to data source
-	DataproxySendUserHeader *bool `json:"dataproxy_send_user_header,omitempty"`
-	// Allow access to selected service components through Privatelink
-	PrivatelinkAccess map[string]any `json:"privatelink_access,omitempty"`
-	// Google Analytics ID
-	GoogleAnalyticsUAID string `json:"google_analytics_ua_id,omitempty" validate:"omitempty,lte=64"`
+	// Signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s, 1h
+	DashboardsMinRefreshInterval string `json:"dashboards_min_refresh_interval,omitempty" validate:"omitempty,lte=16"`
 	// Dashboard versions to keep per dashboard
 	DashboardsVersionsToKeep int `json:"dashboards_versions_to_keep,omitempty" validate:"omitempty,gte=1,lte=100"`
-	// Editors can manage folders, teams and dashboards created by them
-	EditorsCanAdmin *bool `json:"editors_can_admin,omitempty"`
-	// SMTP server settings
-	SMTPServer map[string]any `json:"smtp_server,omitempty"`
-	// GitLab Auth integration
-	AuthGitlab map[string]any `json:"auth_gitlab,omitempty"`
-	// Default value for 'no data or null values' for new alerting rules
-	AlertingNodataORNullvalues JSONSchemaGrafanaAlertingNodataORNullvalues `json:"alerting_nodata_or_nullvalues,omitempty"`
-	// Enable or disable basic authentication form, used by Grafana built-in login
-	AuthBasicEnabled *bool `json:"auth_basic_enabled,omitempty"`
+	// Send 'X-Grafana-User' header to data source
+	DataproxySendUserHeader *bool `json:"dataproxy_send_user_header,omitempty"`
+	// Timeout for data proxy requests in seconds
+	DataproxyTimeout int `json:"dataproxy_timeout,omitempty" validate:"omitempty,gte=15,lte=90"`
 	// Grafana date format specifications
 	DateFormats map[string]any `json:"date_formats,omitempty"`
 	// Set to true to disable gravatar. Defaults to false (gravatar is enabled)
 	DisableGravatar *bool `json:"disable_gravatar,omitempty"`
-	// Set role for new signups. Defaults to Viewer
-	UserAutoAssignOrgRole JSONSchemaGrafanaUserAutoAssignOrgRole `json:"user_auto_assign_org_role,omitempty"`
-	// Timeout for data proxy requests in seconds
-	DataproxyTimeout int `json:"dataproxy_timeout,omitempty" validate:"omitempty,gte=15,lte=90"`
-	// Users with view-only permission can edit but not save dashboards
-	ViewersCanEdit *bool `json:"viewers_can_edit,omitempty"`
-	// Signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s, 1h
-	DashboardsMinRefreshInterval string `json:"dashboards_min_refresh_interval,omitempty" validate:"omitempty,lte=16"`
-	// Google Auth integration
-	AuthGoogle map[string]any `json:"auth_google,omitempty"`
+	// Editors can manage folders, teams and dashboards created by them
+	EditorsCanAdmin *bool `json:"editors_can_admin,omitempty"`
+	// Google Analytics ID
+	GoogleAnalyticsUAID string `json:"google_analytics_ua_id,omitempty" validate:"omitempty,lte=64"`
+	// Enable Grafana /metrics endpoint
+	MetricsEnabled *bool `json:"metrics_enabled,omitempty"`
 	// Enforce user lookup based on email instead of the unique ID provided by the IdP
 	OauthAllowInsecureEmailLookup *bool `json:"oauth_allow_insecure_email_lookup,omitempty"`
-	// Max number of alert annotations that Grafana stores. 0 (default) keeps all alert annotations.
-	AlertingMaxAnnotationsToKeep int `json:"alerting_max_annotations_to_keep,omitempty" validate:"omitempty,gte=0,lte=1e+06"`
-	// Generic OAuth integration
-	AuthGenericOauth map[string]any `json:"auth_generic_oauth,omitempty"`
-	// Default error or timeout setting for new alerting rules
-	AlertingErrorORTimeout JSONSchemaGrafanaAlertingErrorORTimeout `json:"alerting_error_or_timeout,omitempty"`
+	// Allow access to selected service components through Privatelink
+	PrivatelinkAccess map[string]any `json:"privatelink_access,omitempty"`
+	// Name of the basebackup to restore in forked service
+	RecoveryBasebackupName string `json:"recovery_basebackup_name,omitempty" validate:"omitempty,lte=128"`
+	// SMTP server settings
+	SMTPServer map[string]any `json:"smtp_server,omitempty"`
+	// Enable or disable Grafana unified alerting functionality. By default this is enabled and any legacy alerts will be migrated on upgrade to Grafana 9+. To stay on legacy alerting, set unified_alerting_enabled to false and alerting_enabled to true. See https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/ for more details.
+	UnifiedAlertingEnabled *bool `json:"unified_alerting_enabled,omitempty"`
+	// Auto-assign new users on signup to main organization. Defaults to false
+	UserAutoAssignOrg *bool `json:"user_auto_assign_org,omitempty"`
+	// Set role for new signups. Defaults to Viewer
+	UserAutoAssignOrgRole JSONSchemaGrafanaUserAutoAssignOrgRole `json:"user_auto_assign_org_role,omitempty"`
+	// Users with view-only permission can edit but not save dashboards
+	ViewersCanEdit *bool `json:"viewers_can_edit,omitempty"`
 }
 
 // Kafka broker configuration values
@@ -2008,6 +2008,13 @@ type JSONSchemaPgbouncer map[string]any
 // PGLookout settings
 type JSONSchemaPglookout map[string]any
 
+type JSONSchemaRedisAclChannelsDefault string
+
+const (
+	JSONSchemaRedisAclChannelsDefaultAllchannels   JSONSchemaRedisAclChannelsDefault = "allchannels"
+	JSONSchemaRedisAclChannelsDefaultResetchannels JSONSchemaRedisAclChannelsDefault = "resetchannels"
+)
+
 type JSONSchemaRedisMaxmemoryPolicy string
 
 const (
@@ -2028,37 +2035,30 @@ const (
 	JSONSchemaRedisPersistenceRdb JSONSchemaRedisPersistence = "rdb"
 )
 
-type JSONSchemaRedisAclChannelsDefault string
-
-const (
-	JSONSchemaRedisAclChannelsDefaultAllchannels   JSONSchemaRedisAclChannelsDefault = "allchannels"
-	JSONSchemaRedisAclChannelsDefaultResetchannels JSONSchemaRedisAclChannelsDefault = "resetchannels"
-)
-
 // Redis settings
 type JSONSchemaRedis struct {
-	// Require SSL to access Redis
-	SSL *bool `json:"ssl,omitempty"`
-	// Counter logarithm factor for volatile-lfu and allkeys-lfu maxmemory-policies
-	LfuLogFactor int `json:"lfu_log_factor,omitempty" validate:"omitempty,gte=0,lte=100"`
-	// Redis maxmemory-policy
-	MaxmemoryPolicy JSONSchemaRedisMaxmemoryPolicy `json:"maxmemory_policy,omitempty"`
+	// Determines default pub/sub channels' ACL for new users if ACL is not supplied. When this option is not defined, all_channels is assumed to keep backward compatibility. This option doesn't affect Redis configuration acl-pubsub-default.
+	AclChannelsDefault JSONSchemaRedisAclChannelsDefault `json:"acl_channels_default,omitempty"`
 	// Set Redis IO thread count. Changing this will cause a restart of the Redis service.
 	IoThreads int `json:"io_threads,omitempty" validate:"omitempty,gte=1,lte=32"`
 	// LFU maxmemory-policy counter decay time in minutes
 	LfuDecayTime int `json:"lfu_decay_time,omitempty" validate:"omitempty,gte=1,lte=120"`
-	// Set output buffer limit for pub / sub clients in MB. The value is the hard limit, the soft limit is 1/4 of the hard limit. When setting the limit, be mindful of the available memory in the selected service plan.
-	PubsubClientOutputBufferLimit int `json:"pubsub_client_output_buffer_limit,omitempty" validate:"omitempty,gte=32,lte=512"`
+	// Counter logarithm factor for volatile-lfu and allkeys-lfu maxmemory-policies
+	LfuLogFactor int `json:"lfu_log_factor,omitempty" validate:"omitempty,gte=0,lte=100"`
+	// Redis maxmemory-policy
+	MaxmemoryPolicy JSONSchemaRedisMaxmemoryPolicy `json:"maxmemory_policy,omitempty"`
 	// Set notify-keyspace-events option
 	NotifyKeyspaceEvents string `json:"notify_keyspace_events,omitempty" validate:"omitempty,lte=32"`
-	// When persistence is 'rdb', Redis does RDB dumps each 10 minutes if any key is changed. Also RDB dumps are done according to backup schedule for backup purposes. When persistence is 'off', no RDB dumps and backups are done, so data can be lost at any moment if service is restarted for any reason, or if service is powered off. Also service can't be forked.
-	Persistence JSONSchemaRedisPersistence `json:"persistence,omitempty"`
-	// Redis idle connection timeout in seconds
-	Timeout int `json:"timeout,omitempty" validate:"omitempty,gte=0,lte=3.1536e+07"`
-	// Determines default pub/sub channels' ACL for new users if ACL is not supplied. When this option is not defined, all_channels is assumed to keep backward compatibility. This option doesn't affect Redis configuration acl-pubsub-default.
-	AclChannelsDefault JSONSchemaRedisAclChannelsDefault `json:"acl_channels_default,omitempty"`
 	// Set number of Redis databases. Changing this will cause a restart of the Redis service.
 	NumberOfDatabases int `json:"number_of_databases,omitempty" validate:"omitempty,gte=1,lte=128"`
+	// When persistence is 'rdb', Redis does RDB dumps each 10 minutes if any key is changed. Also RDB dumps are done according to backup schedule for backup purposes. When persistence is 'off', no RDB dumps and backups are done, so data can be lost at any moment if service is restarted for any reason, or if service is powered off. Also service can't be forked.
+	Persistence JSONSchemaRedisPersistence `json:"persistence,omitempty"`
+	// Set output buffer limit for pub / sub clients in MB. The value is the hard limit, the soft limit is 1/4 of the hard limit. When setting the limit, be mindful of the available memory in the selected service plan.
+	PubsubClientOutputBufferLimit int `json:"pubsub_client_output_buffer_limit,omitempty" validate:"omitempty,gte=32,lte=512"`
+	// Require SSL to access Redis
+	SSL *bool `json:"ssl,omitempty"`
+	// Redis idle connection timeout in seconds
+	Timeout int `json:"timeout,omitempty" validate:"omitempty,gte=0,lte=3.1536e+07"`
 }
 
 // Schema Registry configuration
@@ -2089,21 +2089,21 @@ const (
 
 // Load Balancer
 type LoadBalancer struct {
-	// Load Balancer ID
-	ID UUID `json:"id,omitempty"`
-	// Load Balancer description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
-	// Load Balancer name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Load Balancer state
-	State LoadBalancerState `json:"state,omitempty"`
 	// Load Balancer creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Load Balancer description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Load Balancer ID
+	ID UUID `json:"id,omitempty"`
 	// Load Balancer public IP
-	IP net.IP `json:"ip,omitempty"`
+	IP     net.IP `json:"ip,omitempty"`
+	Labels Labels `json:"labels,omitempty"`
+	// Load Balancer name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Load Balancer Services
 	Services []LoadBalancerService `json:"services,omitempty"`
-	Labels   Labels                `json:"labels,omitempty"`
+	// Load Balancer state
+	State LoadBalancerState `json:"state,omitempty"`
 }
 
 type LoadBalancerServerStatusStatus string
@@ -2149,26 +2149,26 @@ const (
 type LoadBalancerService struct {
 	// Load Balancer Service description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
-	// Network traffic protocol
-	Protocol LoadBalancerServiceProtocol `json:"protocol,omitempty"`
-	// Load Balancer Service name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Load Balancer Service state
-	State LoadBalancerServiceState `json:"state,omitempty"`
-	// Port on which the network traffic will be forwarded to on the receiving instance
-	TargetPort int64 `json:"target-port,omitempty" validate:"omitempty,gt=0"`
-	// Port exposed on the Load Balancer's public IP
-	Port int64 `json:"port,omitempty" validate:"omitempty,gt=0"`
-	// Instance Pool
-	InstancePool *InstancePool `json:"instance-pool,omitempty"`
-	// Load balancing strategy
-	Strategy LoadBalancerServiceStrategy `json:"strategy,omitempty"`
 	// Load Balancer Service healthcheck
 	Healthcheck *LoadBalancerServiceHealthcheck `json:"healthcheck,omitempty"`
-	// Load Balancer Service ID
-	ID UUID `json:"id,omitempty"`
 	// Healthcheck status per backend server
 	HealthcheckStatus []LoadBalancerServerStatus `json:"healthcheck-status,omitempty"`
+	// Load Balancer Service ID
+	ID UUID `json:"id,omitempty"`
+	// Instance Pool
+	InstancePool *InstancePool `json:"instance-pool,omitempty"`
+	// Load Balancer Service name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Port exposed on the Load Balancer's public IP
+	Port int64 `json:"port,omitempty" validate:"omitempty,gt=0"`
+	// Network traffic protocol
+	Protocol LoadBalancerServiceProtocol `json:"protocol,omitempty"`
+	// Load Balancer Service state
+	State LoadBalancerServiceState `json:"state,omitempty"`
+	// Load balancing strategy
+	Strategy LoadBalancerServiceStrategy `json:"strategy,omitempty"`
+	// Port on which the network traffic will be forwarded to on the receiving instance
+	TargetPort int64 `json:"target-port,omitempty" validate:"omitempty,gt=0"`
 }
 
 type LoadBalancerServiceHealthcheckMode string
@@ -2181,20 +2181,20 @@ const (
 
 // Load Balancer Service healthcheck
 type LoadBalancerServiceHealthcheck struct {
-	// Healthcheck mode
-	Mode LoadBalancerServiceHealthcheckMode `json:"mode,omitempty"`
 	// Healthcheck interval (default: 10). Must be greater than or equal to Timeout
 	Interval int64 `json:"interval,omitempty" validate:"omitempty,gte=5,lte=300"`
-	// An endpoint to use for the HTTP healthcheck, e.g. '/status'
-	URI string `json:"uri,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Healthcheck mode
+	Mode LoadBalancerServiceHealthcheckMode `json:"mode,omitempty"`
 	// Healthcheck port
 	Port int64 `json:"port,omitempty" validate:"omitempty,gte=1,lte=65535"`
-	// Healthcheck timeout value (default: 2). Must be lower than or equal to Interval
-	Timeout int64 `json:"timeout,omitempty" validate:"omitempty,gte=2,lte=60"`
 	// Number of retries before considering a Service failed
 	Retries int64 `json:"retries,omitempty" validate:"omitempty,gte=1,lte=20"`
+	// Healthcheck timeout value (default: 2). Must be lower than or equal to Interval
+	Timeout int64 `json:"timeout,omitempty" validate:"omitempty,gte=2,lte=60"`
 	// SNI domain for HTTPS healthchecks
 	TlsSNI string `json:"tls-sni,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// An endpoint to use for the HTTP healthcheck, e.g. '/status'
+	URI string `json:"uri,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 type ManagerType string
@@ -2230,12 +2230,12 @@ const (
 
 // Related resource reference
 type OperationReference struct {
+	// Command name
+	Command string `json:"command,omitempty"`
 	// Reference ID
 	ID UUID `json:"id,omitempty"`
 	// Link to the referenced resource
 	Link string `json:"link,omitempty"`
-	// Command name
-	Command string `json:"command,omitempty"`
 }
 
 type OperationState string
@@ -2251,41 +2251,41 @@ const (
 type Operation struct {
 	// Operation ID
 	ID UUID `json:"id,omitempty"`
+	// Operation message
+	Message string `json:"message,omitempty"`
 	// Operation failure reason
 	Reason OperationReason `json:"reason,omitempty"`
 	// Related resource reference
 	Reference *OperationReference `json:"reference,omitempty"`
-	// Operation message
-	Message string `json:"message,omitempty"`
 	// Operation status
 	State OperationState `json:"state,omitempty"`
 }
 
 // Private Network
 type PrivateNetwork struct {
-	// Private Network ID
-	ID UUID `json:"id,omitempty"`
-	// Private Network name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Private Network description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Private Network end IP address
+	EndIP net.IP `json:"end-ip,omitempty"`
+	// Private Network ID
+	ID     UUID   `json:"id,omitempty"`
+	Labels Labels `json:"labels,omitempty"`
+	// Private Network leased IP addresses
+	Leases []PrivateNetworkLease `json:"leases,omitempty"`
+	// Private Network name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Private Network netmask
 	Netmask net.IP `json:"netmask,omitempty"`
 	// Private Network start IP address
 	StartIP net.IP `json:"start-ip,omitempty"`
-	// Private Network end IP address
-	EndIP net.IP `json:"end-ip,omitempty"`
-	// Private Network leased IP addresses
-	Leases []PrivateNetworkLease `json:"leases,omitempty"`
-	Labels Labels                `json:"labels,omitempty"`
 }
 
 // Private Network leased IP address
 type PrivateNetworkLease struct {
-	// Private Network IP address
-	IP net.IP `json:"ip,omitempty"`
 	// Attached instance ID
 	InstanceID UUID `json:"instance-id,omitempty"`
+	// Private Network IP address
+	IP net.IP `json:"ip,omitempty"`
 }
 
 type PublicIPAssignment string
@@ -2298,12 +2298,12 @@ const (
 
 // Organization Quota
 type Quota struct {
+	// Resource Limit. -1 for Unlimited
+	Limit int64 `json:"limit,omitempty"`
 	// Resource Name
 	Resource string `json:"resource,omitempty"`
 	// Resource Usage
 	Usage int64 `json:"usage,omitempty"`
-	// Resource Limit. -1 for Unlimited
-	Limit int64 `json:"limit,omitempty"`
 }
 
 // Resource
@@ -2320,14 +2320,14 @@ type ReverseDNSRecord struct {
 
 // Security Group
 type SecurityGroup struct {
-	// Security Group ID
-	ID UUID `json:"id,omitempty"`
-	// Security Group name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Security Group description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Security Group external sources
 	ExternalSources []string `json:"external-sources,omitempty"`
+	// Security Group ID
+	ID UUID `json:"id,omitempty"`
+	// Security Group name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Security Group rules
 	Rules []SecurityGroupRule `json:"rules,omitempty"`
 }
@@ -2350,6 +2350,19 @@ type SecurityGroupResource struct {
 	Visibility SecurityGroupResourceVisibility `json:"visibility,omitempty"`
 }
 
+type SecurityGroupRuleFlowDirection string
+
+const (
+	SecurityGroupRuleFlowDirectionIngress SecurityGroupRuleFlowDirection = "ingress"
+	SecurityGroupRuleFlowDirectionEgress  SecurityGroupRuleFlowDirection = "egress"
+)
+
+// ICMP details
+type SecurityGroupRuleICMP struct {
+	Code int64 `json:"code,omitempty" validate:"omitempty,gte=-1,lte=254"`
+	Type int64 `json:"type,omitempty" validate:"omitempty,gte=-1,lte=254"`
+}
+
 type SecurityGroupRuleProtocol string
 
 const (
@@ -2363,39 +2376,26 @@ const (
 	SecurityGroupRuleProtocolIcmpv6 SecurityGroupRuleProtocol = "icmpv6"
 )
 
-// ICMP details
-type SecurityGroupRuleICMP struct {
-	Code int64 `json:"code,omitempty" validate:"omitempty,gte=-1,lte=254"`
-	Type int64 `json:"type,omitempty" validate:"omitempty,gte=-1,lte=254"`
-}
-
-type SecurityGroupRuleFlowDirection string
-
-const (
-	SecurityGroupRuleFlowDirectionIngress SecurityGroupRuleFlowDirection = "ingress"
-	SecurityGroupRuleFlowDirectionEgress  SecurityGroupRuleFlowDirection = "egress"
-)
-
 // Security Group rule
 type SecurityGroupRule struct {
 	// Security Group rule description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
-	// Start port of the range
-	StartPort int64 `json:"start-port,omitempty" validate:"omitempty,gte=1,lte=65535"`
-	// Network protocol
-	Protocol SecurityGroupRuleProtocol `json:"protocol,omitempty"`
-	// ICMP details
-	ICMP *SecurityGroupRuleICMP `json:"icmp,omitempty"`
 	// End port of the range
 	EndPort int64 `json:"end-port,omitempty" validate:"omitempty,gte=1,lte=65535"`
-	// Security Group
-	SecurityGroup *SecurityGroupResource `json:"security-group,omitempty"`
+	// Network flow direction to match
+	FlowDirection SecurityGroupRuleFlowDirection `json:"flow-direction,omitempty"`
+	// ICMP details
+	ICMP *SecurityGroupRuleICMP `json:"icmp,omitempty"`
 	// Security Group rule ID
 	ID UUID `json:"id,omitempty"`
 	// CIDR-formatted network allowed
 	Network string `json:"network,omitempty"`
-	// Network flow direction to match
-	FlowDirection SecurityGroupRuleFlowDirection `json:"flow-direction,omitempty"`
+	// Network protocol
+	Protocol SecurityGroupRuleProtocol `json:"protocol,omitempty"`
+	// Security Group
+	SecurityGroup *SecurityGroupResource `json:"security-group,omitempty"`
+	// Start port of the range
+	StartPort int64 `json:"start-port,omitempty" validate:"omitempty,gte=1,lte=65535"`
 }
 
 type SKSClusterCni string
@@ -2403,6 +2403,13 @@ type SKSClusterCni string
 const (
 	SKSClusterCniCalico SKSClusterCni = "calico"
 	SKSClusterCniCilium SKSClusterCni = "cilium"
+)
+
+type SKSClusterLevel string
+
+const (
+	SKSClusterLevelStarter SKSClusterLevel = "starter"
+	SKSClusterLevelPro     SKSClusterLevel = "pro"
 )
 
 type SKSClusterState string
@@ -2418,52 +2425,45 @@ const (
 	SKSClusterStateError                  SKSClusterState = "error"
 )
 
-type SKSClusterLevel string
-
-const (
-	SKSClusterLevelStarter SKSClusterLevel = "starter"
-	SKSClusterLevelPro     SKSClusterLevel = "pro"
-)
-
 // SKS Cluster
 type SKSCluster struct {
-	// Cluster description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
-	Labels      Labels `json:"labels,omitempty"`
-	// Cluster CNI
-	Cni SKSClusterCni `json:"cni,omitempty"`
-	// Enable auto upgrade of the control plane to the latest patch version available
-	AutoUpgrade *bool `json:"auto-upgrade,omitempty"`
-	// Cluster name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Cluster state
-	State SKSClusterState `json:"state,omitempty"`
-	// Cluster Nodepools
-	Nodepools []SKSNodepool `json:"nodepools,omitempty"`
-	// Cluster level
-	Level SKSClusterLevel `json:"level,omitempty"`
 	// Cluster addons
 	Addons []string `json:"addons,omitempty"`
-	// Cluster ID
-	ID UUID `json:"id,omitempty"`
-	// Control plane Kubernetes version
-	Version string `json:"version,omitempty"`
+	// Enable auto upgrade of the control plane to the latest patch version available
+	AutoUpgrade *bool `json:"auto-upgrade,omitempty"`
+	// Cluster CNI
+	Cni SKSClusterCni `json:"cni,omitempty"`
 	// Cluster creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Cluster description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Cluster endpoint
 	Endpoint string `json:"endpoint,omitempty"`
+	// Cluster ID
+	ID     UUID   `json:"id,omitempty"`
+	Labels Labels `json:"labels,omitempty"`
+	// Cluster level
+	Level SKSClusterLevel `json:"level,omitempty"`
+	// Cluster name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Cluster Nodepools
+	Nodepools []SKSNodepool `json:"nodepools,omitempty"`
+	// Cluster state
+	State SKSClusterState `json:"state,omitempty"`
+	// Control plane Kubernetes version
+	Version string `json:"version,omitempty"`
 }
 
 type SKSClusterDeprecatedResource map[string]string
 
 // Kubeconfig request for a SKS cluster
 type SKSKubeconfigRequest struct {
+	// List of roles. The certificate present in the Kubeconfig will have these roles set in the Org field.
+	Groups []string `json:"groups,omitempty"`
 	// Validity in seconds of the Kubeconfig user certificate (default: 30 days)
 	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gt=0"`
 	// User name in the generated Kubeconfig. The certificate present in the Kubeconfig will also have this name set for the CN field.
 	User string `json:"user,omitempty"`
-	// List of roles. The certificate present in the Kubeconfig will have these roles set in the Org field.
-	Groups []string `json:"groups,omitempty"`
 }
 
 type SKSNodepoolState string
@@ -2480,44 +2480,44 @@ const (
 
 // SKS Nodepool
 type SKSNodepool struct {
+	// Nodepool addons
+	Addons []string `json:"addons,omitempty"`
 	// Nodepool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	// Nodepool creation date
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Deploy target
+	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
 	// Nodepool description
-	Description string            `json:"description,omitempty" validate:"omitempty,lte=255"`
-	Labels      Labels            `json:"labels,omitempty"`
-	Taints      SKSNodepoolTaints `json:"taints,omitempty"`
-	// Nodepool Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
-	// Nodepool name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Compute instance type
-	InstanceType *InstanceType `json:"instance-type,omitempty"`
-	// Nodepool Private Networks
-	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
-	// Instance template
-	Template *Template `json:"template,omitempty"`
-	// Nodepool state
-	State SKSNodepoolState `json:"state,omitempty"`
-	// Number of instances
-	Size int64 `json:"size,omitempty" validate:"omitempty,gt=0"`
-	// Kubelet image GC options
-	KubeletImageGC *KubeletImageGC `json:"kubelet-image-gc,omitempty"`
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Nodepool instances disk size in GB
+	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=20,lte=50000"`
+	// Nodepool ID
+	ID UUID `json:"id,omitempty"`
 	// Instance Pool
 	InstancePool *InstancePool `json:"instance-pool,omitempty"`
 	// The instances created by the Nodepool will be prefixed with this value (default: pool)
 	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
-	// Deploy target
-	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
-	// Nodepool addons
-	Addons []string `json:"addons,omitempty"`
-	// Nodepool ID
-	ID UUID `json:"id,omitempty"`
-	// Nodepool instances disk size in GB
-	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=20,lte=50000"`
+	// Compute instance type
+	InstanceType *InstanceType `json:"instance-type,omitempty"`
+	// Kubelet image GC options
+	KubeletImageGC *KubeletImageGC `json:"kubelet-image-gc,omitempty"`
+	Labels         Labels          `json:"labels,omitempty"`
+	// Nodepool name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Nodepool Private Networks
+	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
+	// Nodepool Security Groups
+	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	// Number of instances
+	Size int64 `json:"size,omitempty" validate:"omitempty,gt=0"`
+	// Nodepool state
+	State  SKSNodepoolState  `json:"state,omitempty"`
+	Taints SKSNodepoolTaints `json:"taints,omitempty"`
+	// Instance template
+	Template *Template `json:"template,omitempty"`
 	// Nodepool version
 	Version string `json:"version,omitempty"`
-	// Nodepool creation date
-	CreatedAT time.Time `json:"created-at,omitempty"`
 }
 
 type SKSNodepoolTaintEffect string
@@ -2530,10 +2530,10 @@ const (
 
 // Nodepool taint
 type SKSNodepoolTaint struct {
-	// Nodepool taint value
-	Value string `json:"value" validate:"required,gte=1,lte=255"`
 	// Nodepool taint effect
 	Effect SKSNodepoolTaintEffect `json:"effect" validate:"required"`
+	// Nodepool taint value
+	Value string `json:"value" validate:"required,gte=1,lte=255"`
 }
 
 type SKSNodepoolTaints map[string]SKSNodepoolTaint
@@ -2542,18 +2542,26 @@ type SKSNodepoolTaints map[string]SKSNodepoolTaint
 type SKSOidc struct {
 	// OpenID client ID
 	ClientID string `json:"client-id" validate:"required,gte=1,lte=255"`
-	// OpenID provider URL
-	IssuerURL string `json:"issuer-url" validate:"required,gte=1,lte=255"`
-	// JWT claim to use as the user name
-	UsernameClaim string `json:"username-claim,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Prefix prepended to username claims
-	UsernamePrefix string `json:"username-prefix,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// JWT claim to use as the user's group
 	GroupsClaim string `json:"groups-claim,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Prefix prepended to group claims
 	GroupsPrefix string `json:"groups-prefix,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// OpenID provider URL
+	IssuerURL string `json:"issuer-url" validate:"required,gte=1,lte=255"`
 	// A key value map that describes a required claim in the ID Token
 	RequiredClaim map[string]string `json:"required-claim,omitempty"`
+	// JWT claim to use as the user name
+	UsernameClaim string `json:"username-claim,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Prefix prepended to username claims
+	UsernamePrefix string `json:"username-prefix,omitempty" validate:"omitempty,gte=1,lte=255"`
+}
+
+// Exported snapshot information
+type SnapshotExport struct {
+	// Exported snapshot disk file MD5 checksum
+	Md5sum string `json:"md5sum,omitempty"`
+	// Exported snapshot disk file pre-signed URL
+	PresignedURL string `json:"presigned-url,omitempty"`
 }
 
 type SnapshotState string
@@ -2568,49 +2576,41 @@ const (
 	SnapshotStateExported     SnapshotState = "exported"
 )
 
-// Exported snapshot information
-type SnapshotExport struct {
-	// Exported snapshot disk file pre-signed URL
-	PresignedURL string `json:"presigned-url,omitempty"`
-	// Exported snapshot disk file MD5 checksum
-	Md5sum string `json:"md5sum,omitempty"`
-}
-
 // Snapshot
 type Snapshot struct {
-	// Snapshot ID
-	ID UUID `json:"id,omitempty"`
-	// Snapshot name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Snapshot creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Snapshot state
-	State SnapshotState `json:"state,omitempty"`
-	// Snapshot size in GB
-	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10,lte=50000"`
 	// Exported snapshot information
 	Export *SnapshotExport `json:"export,omitempty"`
+	// Snapshot ID
+	ID UUID `json:"id,omitempty"`
 	// Instance
 	Instance *Instance `json:"instance,omitempty"`
+	// Snapshot name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Snapshot size in GB
+	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10,lte=50000"`
+	// Snapshot state
+	State SnapshotState `json:"state,omitempty"`
 }
 
 // SOS Bucket usage
 type SOSBucketUsage struct {
-	// SOS Bucket name
-	Name string `json:"name,omitempty"`
 	// SOS Bucket creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
-	ZoneName  ZoneName  `json:"zone-name,omitempty"`
+	// SOS Bucket name
+	Name string `json:"name,omitempty"`
 	// SOS Bucket size in B
-	Size int64 `json:"size,omitempty" validate:"omitempty,gte=0"`
+	Size     int64    `json:"size,omitempty" validate:"omitempty,gte=0"`
+	ZoneName ZoneName `json:"zone-name,omitempty"`
 }
 
 // SSH key
 type SSHKey struct {
-	// SSH key name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// SSH key fingerprint
 	Fingerprint string `json:"fingerprint,omitempty"`
+	// SSH key name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 type TemplateBootMode string
@@ -2629,47 +2629,47 @@ const (
 
 // Instance template
 type Template struct {
-	// Template maintainer
-	Maintainer string `json:"maintainer,omitempty"`
-	// Template description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
-	// Enable SSH key-based login
-	SSHKeyEnabled *bool `json:"ssh-key-enabled,omitempty"`
-	// Template family
-	Family string `json:"family,omitempty"`
-	// Template name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Template default user
-	DefaultUser string `json:"default-user,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Template size
-	Size int64 `json:"size,omitempty" validate:"omitempty,gt=0"`
-	// Enable password-based login
-	PasswordEnabled *bool `json:"password-enabled,omitempty"`
+	// Boot mode (default: legacy)
+	BootMode TemplateBootMode `json:"boot-mode,omitempty"`
 	// Template build
 	Build string `json:"build,omitempty"`
 	// Template MD5 checksum
 	Checksum string `json:"checksum,omitempty"`
-	// Boot mode (default: legacy)
-	BootMode TemplateBootMode `json:"boot-mode,omitempty"`
+	// Template creation date
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Template default user
+	DefaultUser string `json:"default-user,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Template description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Template family
+	Family string `json:"family,omitempty"`
 	// Template ID
 	ID UUID `json:"id,omitempty"`
-	// Zones availability
-	Zones []ZoneName `json:"zones,omitempty"`
+	// Template maintainer
+	Maintainer string `json:"maintainer,omitempty"`
+	// Template name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Enable password-based login
+	PasswordEnabled *bool `json:"password-enabled,omitempty"`
+	// Template size
+	Size int64 `json:"size,omitempty" validate:"omitempty,gt=0"`
+	// Enable SSH key-based login
+	SSHKeyEnabled *bool `json:"ssh-key-enabled,omitempty"`
 	// Template source URL
 	URL string `json:"url,omitempty"`
 	// Template version
 	Version string `json:"version,omitempty"`
-	// Template creation date
-	CreatedAT time.Time `json:"created-at,omitempty"`
 	// Template visibility
 	Visibility TemplateVisibility `json:"visibility,omitempty"`
+	// Zones availability
+	Zones []ZoneName `json:"zones,omitempty"`
 }
 
 // Zone
 type Zone struct {
-	Name ZoneName `json:"name,omitempty"`
 	// Zone API endpoint
 	APIEndpoint Endpoint `json:"api-endpoint,omitempty"`
+	Name        ZoneName `json:"name,omitempty"`
 	// Zone SOS endpoint
 	SOSEndpoint Endpoint `json:"sos-endpoint,omitempty"`
 }

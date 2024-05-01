@@ -308,7 +308,7 @@ func renderValidation(s *base.Schema, required bool) string {
 
 func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string, error) {
 	definition := "type " + typeName + " struct {\n"
-	for pair := s.Properties.First(); pair != nil; pair = pair.Next() {
+	for pair := orderedmap.SortAlpha(s.Properties).First(); pair != nil; pair = pair.Next() {
 		propName, properties := pair.Key(), pair.Value()
 		prop := properties.Schema()
 		if prop == nil {

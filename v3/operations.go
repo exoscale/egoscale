@@ -70,20 +70,20 @@ const (
 )
 
 type UpdateLoadBalancerServiceRequest struct {
-	// Load Balancer Service name
-	Name string `json:"name,omitempty" validate:"omitempty,lte=255"`
 	// Load Balancer Service description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Load Balancer Service healthcheck
+	Healthcheck *LoadBalancerServiceHealthcheck `json:"healthcheck,omitempty"`
+	// Load Balancer Service name
+	Name string `json:"name,omitempty" validate:"omitempty,lte=255"`
+	// Port exposed on the Load Balancer's public IP
+	Port int64 `json:"port,omitempty" validate:"omitempty,gte=1,lte=65535"`
 	// Network traffic protocol
 	Protocol UpdateLoadBalancerServiceRequestProtocol `json:"protocol,omitempty"`
 	// Load balancing strategy
 	Strategy UpdateLoadBalancerServiceRequestStrategy `json:"strategy,omitempty"`
-	// Port exposed on the Load Balancer's public IP
-	Port int64 `json:"port,omitempty" validate:"omitempty,gte=1,lte=65535"`
 	// Port on which the network traffic will be forwarded to on the receiving instance
 	TargetPort int64 `json:"target-port,omitempty" validate:"omitempty,gte=1,lte=65535"`
-	// Load Balancer Service healthcheck
-	Healthcheck *LoadBalancerServiceHealthcheck `json:"healthcheck,omitempty"`
 }
 
 // Update a Load Balancer Service
@@ -569,10 +569,10 @@ func (c Client) ListAntiAffinityGroups(ctx context.Context) (*ListAntiAffinityGr
 }
 
 type CreateAntiAffinityGroupRequest struct {
-	// Anti-affinity Group name
-	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Anti-affinity Group description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Anti-affinity Group name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
 }
 
 // Create an Anti-affinity Group
@@ -919,8 +919,8 @@ func (c Client) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, r
 }
 
 type ResetDBAASMysqlUserPasswordRequest struct {
-	Password       DBAASUserPassword             `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
 	Authentication EnumMysqlAuthenticationPlugin `json:"authentication,omitempty"`
+	Password       DBAASUserPassword             `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
 }
 
 // If no password is provided one will be generated automatically.
@@ -1019,9 +1019,9 @@ func (c Client) RevealDBAASRedisUserPassword(ctx context.Context, serviceName st
 type CreateLoadBalancerRequest struct {
 	// Load Balancer description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	Labels      Labels `json:"labels,omitempty"`
 	// Load Balancer name
-	Name   string `json:"name" validate:"required,gte=1,lte=255"`
-	Labels Labels `json:"labels,omitempty"`
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
 }
 
 // Create a Load Balancer
@@ -1133,10 +1133,10 @@ func (c Client) ListLoadBalancers(ctx context.Context) (*ListLoadBalancersRespon
 }
 
 type CreateSecurityGroupRequest struct {
-	// Security Group name
-	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Security Group description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Security Group name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
 }
 
 // Create a Security Group
@@ -1274,9 +1274,9 @@ func (c Client) ListSecurityGroups(ctx context.Context, opts ...ListSecurityGrou
 }
 
 type CreateDBAASPGConnectionPoolRequest struct {
-	Name         DBAASPGPoolName     `json:"name" validate:"required,gte=1,lte=63"`
 	DatabaseName DBAASDatabaseName   `json:"database-name" validate:"required,gte=1,lte=40"`
 	Mode         EnumPGPoolMode      `json:"mode,omitempty"`
+	Name         DBAASPGPoolName     `json:"name" validate:"required,gte=1,lte=63"`
 	Size         DBAASPGPoolSize     `json:"size,omitempty" validate:"omitempty,gte=1,lte=10000"`
 	Username     DBAASPGPoolUsername `json:"username,omitempty" validate:"omitempty,gte=1,lte=64"`
 }
@@ -1331,6 +1331,13 @@ func (c Client) CreateDBAASPGConnectionPool(ctx context.Context, serviceName str
 	return bodyresp, nil
 }
 
+type UpdateDBAASServiceMysqlRequestBackupSchedule struct {
+	// The hour of day (in UTC) when backup for the service is started. New backup is only started if previous backup has already completed.
+	BackupHour int64 `json:"backup-hour,omitempty" validate:"omitempty,gte=0,lte=23"`
+	// The minute of an hour when backup for the service is started. New backup is only started if previous backup has already completed.
+	BackupMinute int64 `json:"backup-minute,omitempty" validate:"omitempty,gte=0,lte=59"`
+}
+
 type UpdateDBAASServiceMysqlRequestMaintenanceDow string
 
 const (
@@ -1354,46 +1361,39 @@ type UpdateDBAASServiceMysqlRequestMaintenance struct {
 
 // Migrate data from existing server
 type UpdateDBAASServiceMysqlRequestMigration struct {
+	// Database name for bootstrapping the initial connection
+	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
-	// Port number of the server where to migrate data from
-	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
+	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Port number of the server where to migrate data from
+	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
 	// The server where to migrate data from is secured with SSL
 	SSL *bool `json:"ssl,omitempty"`
 	// User name for authentication with the server where to migrate data from
 	Username string `json:"username,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Database name for bootstrapping the initial connection
-	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
-	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    EnumMigrationMethod `json:"method,omitempty"`
-}
-
-type UpdateDBAASServiceMysqlRequestBackupSchedule struct {
-	// The hour of day (in UTC) when backup for the service is started. New backup is only started if previous backup has already completed.
-	BackupHour int64 `json:"backup-hour,omitempty" validate:"omitempty,gte=0,lte=23"`
-	// The minute of an hour when backup for the service is started. New backup is only started if previous backup has already completed.
-	BackupMinute int64 `json:"backup-minute,omitempty" validate:"omitempty,gte=0,lte=59"`
 }
 
 type UpdateDBAASServiceMysqlRequest struct {
+	BackupSchedule *UpdateDBAASServiceMysqlRequestBackupSchedule `json:"backup-schedule,omitempty"`
+	// The minimum amount of time in seconds to keep binlog entries before deletion. This may be extended for services that require binlog entries for longer than the default for example if using the MySQL Debezium Kafka connector.
+	BinlogRetentionPeriod int64 `json:"binlog-retention-period,omitempty" validate:"omitempty,gte=600,lte=86400"`
+	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
+	IPFilter []string `json:"ip-filter,omitempty"`
 	// Automatic maintenance settings
 	Maintenance *UpdateDBAASServiceMysqlRequestMaintenance `json:"maintenance,omitempty"`
+	// Migrate data from existing server
+	Migration *UpdateDBAASServiceMysqlRequestMigration `json:"migration,omitempty"`
+	// mysql.conf configuration values
+	MysqlSettings JSONSchemaMysql `json:"mysql-settings,omitempty"`
 	// Subscription plan
 	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
-	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
-	IPFilter []string `json:"ip-filter,omitempty"`
-	// mysql.conf configuration values
-	MysqlSettings JSONSchemaMysql `json:"mysql-settings,omitempty"`
-	// Migrate data from existing server
-	Migration *UpdateDBAASServiceMysqlRequestMigration `json:"migration,omitempty"`
-	// The minimum amount of time in seconds to keep binlog entries before deletion. This may be extended for services that require binlog entries for longer than the default for example if using the MySQL Debezium Kafka connector.
-	BinlogRetentionPeriod int64                                         `json:"binlog-retention-period,omitempty" validate:"omitempty,gte=600,lte=86400"`
-	BackupSchedule        *UpdateDBAASServiceMysqlRequestBackupSchedule `json:"backup-schedule,omitempty"`
 }
 
 // Update a DBaaS MySQL service
@@ -1496,23 +1496,23 @@ type CreateDBAASServiceMysqlRequestBackupSchedule struct {
 	BackupMinute int64 `json:"backup-minute,omitempty" validate:"omitempty,gte=0,lte=59"`
 }
 
+// Integration settings
+type CreateDBAASServiceMysqlRequestIntegrationsSettings struct {
+}
+
 type CreateDBAASServiceMysqlRequestIntegrationsType string
 
 const (
 	CreateDBAASServiceMysqlRequestIntegrationsTypeReadReplica CreateDBAASServiceMysqlRequestIntegrationsType = "read_replica"
 )
 
-// Integration settings
-type CreateDBAASServiceMysqlRequestIntegrationsSettings struct {
-}
-
 type CreateDBAASServiceMysqlRequestIntegrations struct {
-	// Integration type
-	Type          CreateDBAASServiceMysqlRequestIntegrationsType `json:"type" validate:"required"`
-	SourceService DBAASServiceName                               `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
-	DestService   DBAASServiceName                               `json:"dest-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	DestService DBAASServiceName `json:"dest-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Integration settings
-	Settings *CreateDBAASServiceMysqlRequestIntegrationsSettings `json:"settings,omitempty"`
+	Settings      *CreateDBAASServiceMysqlRequestIntegrationsSettings `json:"settings,omitempty"`
+	SourceService DBAASServiceName                                    `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	// Integration type
+	Type CreateDBAASServiceMysqlRequestIntegrationsType `json:"type" validate:"required"`
 }
 
 type CreateDBAASServiceMysqlRequestMaintenanceDow string
@@ -1538,50 +1538,50 @@ type CreateDBAASServiceMysqlRequestMaintenance struct {
 
 // Migrate data from existing server
 type CreateDBAASServiceMysqlRequestMigration struct {
+	// Database name for bootstrapping the initial connection
+	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
-	// Port number of the server where to migrate data from
-	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
+	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Port number of the server where to migrate data from
+	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
 	// The server where to migrate data from is secured with SSL
 	SSL *bool `json:"ssl,omitempty"`
 	// User name for authentication with the server where to migrate data from
 	Username string `json:"username,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Database name for bootstrapping the initial connection
-	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
-	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    EnumMigrationMethod `json:"method,omitempty"`
 }
 
 type CreateDBAASServiceMysqlRequest struct {
+	// Custom password for admin user. Defaults to random string. This must be set only when a new service is being created.
+	AdminPassword string `json:"admin-password,omitempty" validate:"omitempty,gte=8,lte=256"`
+	// Custom username for admin user. This must be set only when a new service is being created.
+	AdminUsername  string                                        `json:"admin-username,omitempty" validate:"omitempty,gte=1,lte=64"`
 	BackupSchedule *CreateDBAASServiceMysqlRequestBackupSchedule `json:"backup-schedule,omitempty"`
+	// The minimum amount of time in seconds to keep binlog entries before deletion. This may be extended for services that require binlog entries for longer than the default for example if using the MySQL Debezium Kafka connector.
+	BinlogRetentionPeriod int64            `json:"binlog-retention-period,omitempty" validate:"omitempty,gte=600,lte=86400"`
+	ForkFromService       DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Service integrations to be enabled when creating the service.
 	Integrations []CreateDBAASServiceMysqlRequestIntegrations `json:"integrations,omitempty"`
 	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
 	IPFilter []string `json:"ip-filter,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool            `json:"termination-protection,omitempty"`
-	ForkFromService       DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
-	// ISO time of a backup to recover from for services that support arbitrary times
-	RecoveryBackupTime string `json:"recovery-backup-time,omitempty" validate:"omitempty,gte=1"`
-	// mysql.conf configuration values
-	MysqlSettings JSONSchemaMysql `json:"mysql-settings,omitempty"`
 	// Automatic maintenance settings
 	Maintenance *CreateDBAASServiceMysqlRequestMaintenance `json:"maintenance,omitempty"`
-	// Custom username for admin user. This must be set only when a new service is being created.
-	AdminUsername string `json:"admin-username,omitempty" validate:"omitempty,gte=1,lte=64"`
-	// MySQL major version
-	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
-	// Subscription plan
-	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
-	// Custom password for admin user. Defaults to random string. This must be set only when a new service is being created.
-	AdminPassword string `json:"admin-password,omitempty" validate:"omitempty,gte=8,lte=256"`
 	// Migrate data from existing server
 	Migration *CreateDBAASServiceMysqlRequestMigration `json:"migration,omitempty"`
-	// The minimum amount of time in seconds to keep binlog entries before deletion. This may be extended for services that require binlog entries for longer than the default for example if using the MySQL Debezium Kafka connector.
-	BinlogRetentionPeriod int64 `json:"binlog-retention-period,omitempty" validate:"omitempty,gte=600,lte=86400"`
+	// mysql.conf configuration values
+	MysqlSettings JSONSchemaMysql `json:"mysql-settings,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
+	// ISO time of a backup to recover from for services that support arbitrary times
+	RecoveryBackupTime string `json:"recovery-backup-time,omitempty" validate:"omitempty,gte=1"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// MySQL major version
+	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
 }
 
 // Create a DBaaS MySQL service
@@ -1684,10 +1684,10 @@ type AttachInstanceToPrivateNetworkRequestInstance struct {
 }
 
 type AttachInstanceToPrivateNetworkRequest struct {
-	// Static IP address lease for the corresponding network interface
-	IP net.IP `json:"ip,omitempty"`
 	// Compute instance
 	Instance *AttachInstanceToPrivateNetworkRequestInstance `json:"instance" validate:"required"`
+	// Static IP address lease for the corresponding network interface
+	IP net.IP `json:"ip,omitempty"`
 }
 
 // Attach a Compute instance to a Private Network
@@ -1741,8 +1741,8 @@ func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req
 }
 
 type CreateDBAASMysqlUserRequest struct {
-	Username       DBAASUserUsername             `json:"username" validate:"required,gte=1,lte=64"`
 	Authentication EnumMysqlAuthenticationPlugin `json:"authentication,omitempty"`
+	Username       DBAASUserUsername             `json:"username" validate:"required,gte=1,lte=64"`
 }
 
 // Create a DBaaS MySQL user
@@ -2256,40 +2256,40 @@ func (c Client) ListInstancePools(ctx context.Context) (*ListInstancePoolsRespon
 type CreateInstancePoolRequest struct {
 	// Instance Pool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	// Deploy target
+	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
 	// Instance Pool description
-	Description        string             `json:"description,omitempty" validate:"omitempty,lte=255"`
-	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
-	Labels             Labels             `json:"labels,omitempty"`
-	// Instance Pool Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Instances disk size in GB
+	DiskSize int64 `json:"disk-size" validate:"required,gte=10,lte=50000"`
 	// Instances Elastic IPs
 	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
-	// Instance Pool name
-	Name string `json:"name" validate:"required,gte=1,lte=255"`
+	// Prefix to apply to Instances names (default: pool)
+	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
 	// Compute instance type
 	InstanceType *InstanceType `json:"instance-type" validate:"required"`
+	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
+	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
+	Labels      Labels `json:"labels,omitempty"`
 	// Minimum number of running Instances
 	MinAvailable int64 `json:"min-available,omitempty" validate:"omitempty,gte=0"`
+	// Instance Pool name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Instance Pool Private Networks
-	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
-	// Instance template
-	Template *Template `json:"template" validate:"required"`
+	PrivateNetworks    []PrivateNetwork   `json:"private-networks,omitempty"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	// Instance Pool Security Groups
+	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
 	// Number of Instances
 	Size int64 `json:"size" validate:"required,gt=0"`
 	// SSH key
 	SSHKey *SSHKey `json:"ssh-key,omitempty"`
-	// Prefix to apply to Instances names (default: pool)
-	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
-	// Instances Cloud-init user-data
-	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
-	// Deploy target
-	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
-	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
-	Ipv6Enabled *bool `json:"ipv6-enabled,omitempty"`
-	// Instances disk size in GB
-	DiskSize int64 `json:"disk-size" validate:"required,gte=10,lte=50000"`
 	// Instances SSH Keys
 	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
+	// Instance template
+	Template *Template `json:"template" validate:"required"`
+	// Instances Cloud-init user-data
+	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
 }
 
 // Create an Instance Pool
@@ -2475,16 +2475,16 @@ const (
 )
 
 type CreateDNSDomainRecordRequest struct {
-	// DNS domain record name
-	Name string `json:"name" validate:"required"`
-	// DNS domain record type
-	Type CreateDNSDomainRecordRequestType `json:"type" validate:"required"`
 	// DNS domain record content
 	Content string `json:"content" validate:"required"`
-	// DNS domain record TTL
-	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gte=0"`
+	// DNS domain record name
+	Name string `json:"name" validate:"required"`
 	// DNS domain record priority
 	Priority int64 `json:"priority,omitempty" validate:"omitempty,gte=0"`
+	// DNS domain record TTL
+	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gte=0"`
+	// DNS domain record type
+	Type CreateDNSDomainRecordRequestType `json:"type" validate:"required"`
 }
 
 // Create DNS domain record
@@ -2589,10 +2589,10 @@ type GetDBAASSettingsGrafanaResponseSettingsGrafanaProperties struct {
 
 // Grafana configuration values
 type GetDBAASSettingsGrafanaResponseSettingsGrafana struct {
-	Properties           *GetDBAASSettingsGrafanaResponseSettingsGrafanaProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                     `json:"additionalProperties,omitempty"`
-	Type                 string                                                    `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsGrafanaResponseSettingsGrafanaProperties `json:"properties,omitempty"`
 	Title                string                                                    `json:"title,omitempty"`
+	Type                 string                                                    `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsGrafanaResponseSettings struct {
@@ -2968,30 +2968,30 @@ type CreateDBAASServiceKafkaRequestMaintenance struct {
 type CreateDBAASServiceKafkaRequest struct {
 	// Kafka authentication methods
 	AuthenticationMethods *CreateDBAASServiceKafkaRequestAuthenticationMethods `json:"authentication-methods,omitempty"`
-	// Enable Kafka-REST service
-	KafkaRestEnabled *bool `json:"kafka-rest-enabled,omitempty"`
-	// Allow clients to connect to kafka_connect from the public internet for service nodes that are in a project VPC or another type of private network
-	KafkaConnectEnabled *bool `json:"kafka-connect-enabled,omitempty"`
 	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
 	IPFilter []string `json:"ip-filter,omitempty"`
-	// Schema Registry configuration
-	SchemaRegistrySettings JSONSchemaSchemaRegistry `json:"schema-registry-settings,omitempty"`
-	// Kafka REST configuration
-	KafkaRestSettings JSONSchemaKafkaRest `json:"kafka-rest-settings,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// Allow clients to connect to kafka_connect from the public internet for service nodes that are in a project VPC or another type of private network
+	KafkaConnectEnabled *bool `json:"kafka-connect-enabled,omitempty"`
 	// Kafka Connect configuration values
 	KafkaConnectSettings JSONSchemaKafkaConnect `json:"kafka-connect-settings,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *CreateDBAASServiceKafkaRequestMaintenance `json:"maintenance,omitempty"`
+	// Enable Kafka-REST service
+	KafkaRestEnabled *bool `json:"kafka-rest-enabled,omitempty"`
+	// Kafka REST configuration
+	KafkaRestSettings JSONSchemaKafkaRest `json:"kafka-rest-settings,omitempty"`
 	// Kafka broker configuration values
 	KafkaSettings JSONSchemaKafka `json:"kafka-settings,omitempty"`
-	// Enable Schema-Registry service
-	SchemaRegistryEnabled *bool `json:"schema-registry-enabled,omitempty"`
-	// Kafka major version
-	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
+	// Automatic maintenance settings
+	Maintenance *CreateDBAASServiceKafkaRequestMaintenance `json:"maintenance,omitempty"`
 	// Subscription plan
 	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
+	// Enable Schema-Registry service
+	SchemaRegistryEnabled *bool `json:"schema-registry-enabled,omitempty"`
+	// Schema Registry configuration
+	SchemaRegistrySettings JSONSchemaSchemaRegistry `json:"schema-registry-settings,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// Kafka major version
+	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
 }
 
 // Create a DBaaS Kafka service
@@ -3076,30 +3076,30 @@ type UpdateDBAASServiceKafkaRequestMaintenance struct {
 type UpdateDBAASServiceKafkaRequest struct {
 	// Kafka authentication methods
 	AuthenticationMethods *UpdateDBAASServiceKafkaRequestAuthenticationMethods `json:"authentication-methods,omitempty"`
-	// Enable Kafka-REST service
-	KafkaRestEnabled *bool `json:"kafka-rest-enabled,omitempty"`
-	// Allow clients to connect to kafka_connect from the public internet for service nodes that are in a project VPC or another type of private network
-	KafkaConnectEnabled *bool `json:"kafka-connect-enabled,omitempty"`
 	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
 	IPFilter []string `json:"ip-filter,omitempty"`
-	// Schema Registry configuration
-	SchemaRegistrySettings JSONSchemaSchemaRegistry `json:"schema-registry-settings,omitempty"`
-	// Kafka REST configuration
-	KafkaRestSettings JSONSchemaKafkaRest `json:"kafka-rest-settings,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// Allow clients to connect to kafka_connect from the public internet for service nodes that are in a project VPC or another type of private network
+	KafkaConnectEnabled *bool `json:"kafka-connect-enabled,omitempty"`
 	// Kafka Connect configuration values
 	KafkaConnectSettings JSONSchemaKafkaConnect `json:"kafka-connect-settings,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *UpdateDBAASServiceKafkaRequestMaintenance `json:"maintenance,omitempty"`
+	// Enable Kafka-REST service
+	KafkaRestEnabled *bool `json:"kafka-rest-enabled,omitempty"`
+	// Kafka REST configuration
+	KafkaRestSettings JSONSchemaKafkaRest `json:"kafka-rest-settings,omitempty"`
 	// Kafka broker configuration values
 	KafkaSettings JSONSchemaKafka `json:"kafka-settings,omitempty"`
-	// Enable Schema-Registry service
-	SchemaRegistryEnabled *bool `json:"schema-registry-enabled,omitempty"`
-	// Kafka major version
-	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
+	// Automatic maintenance settings
+	Maintenance *UpdateDBAASServiceKafkaRequestMaintenance `json:"maintenance,omitempty"`
 	// Subscription plan
 	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
+	// Enable Schema-Registry service
+	SchemaRegistryEnabled *bool `json:"schema-registry-enabled,omitempty"`
+	// Schema Registry configuration
+	SchemaRegistrySettings JSONSchemaSchemaRegistry `json:"schema-registry-settings,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// Kafka major version
+	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
 }
 
 // Update a DBaaS Kafka service
@@ -3243,10 +3243,10 @@ type GetDBAASSettingsRedisResponseSettingsRedisProperties struct {
 
 // Redis configuration values
 type GetDBAASSettingsRedisResponseSettingsRedis struct {
-	Properties           *GetDBAASSettingsRedisResponseSettingsRedisProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                 `json:"additionalProperties,omitempty"`
-	Type                 string                                                `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsRedisResponseSettingsRedisProperties `json:"properties,omitempty"`
 	Title                string                                                `json:"title,omitempty"`
+	Type                 string                                                `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsRedisResponseSettings struct {
@@ -3402,12 +3402,12 @@ func (c Client) ListAccessKeys(ctx context.Context) (*ListAccessKeysResponse, er
 type CreateAccessKeyRequest struct {
 	// IAM Access Key name
 	Name string `json:"name,omitempty"`
-	// IAM Access Key tags
-	Tags []string `json:"tags,omitempty"`
 	// IAM Access Key operations
 	Operations []string `json:"operations,omitempty"`
 	// IAM Access Key Resources
 	Resources []AccessKeyResource `json:"resources,omitempty"`
+	// IAM Access Key tags
+	Tags []string `json:"tags,omitempty"`
 }
 
 // This operation creates a legacy IAM Access Key, to create a key for use with IAM roles use the api-key endpoint.The corresponding secret is only available in the response returned by this operation, the caller must take care of storing it safely as there is no other way to retrieve it.
@@ -3466,9 +3466,9 @@ type UpdatePrivateNetworkInstanceIPRequestInstance struct {
 }
 
 type UpdatePrivateNetworkInstanceIPRequest struct {
-	// Static IP address lease for the corresponding network interface
-	IP       net.IP                                         `json:"ip,omitempty"`
 	Instance *UpdatePrivateNetworkInstanceIPRequestInstance `json:"instance,omitempty"`
+	// Static IP address lease for the corresponding network interface
+	IP net.IP `json:"ip,omitempty"`
 }
 
 // Update the IP address of an instance attached to a managed private network
@@ -3524,24 +3524,24 @@ func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req
 type UpdateSKSNodepoolRequest struct {
 	// Nodepool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
-	// Nodepool description
-	Description string            `json:"description,omitempty" validate:"omitempty,lte=255"`
-	Labels      Labels            `json:"labels,omitempty"`
-	Taints      SKSNodepoolTaints `json:"taints,omitempty"`
-	// Nodepool Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
-	// Nodepool name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Compute instance type
-	InstanceType *InstanceType `json:"instance-type,omitempty"`
-	// Nodepool Private Networks
-	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
-	// Prefix to apply to managed instances names (default: pool)
-	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
 	// Deploy target
 	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
+	// Nodepool description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Nodepool instances disk size in GB
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=20,lte=50000"`
+	// Prefix to apply to managed instances names (default: pool)
+	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
+	// Compute instance type
+	InstanceType *InstanceType `json:"instance-type,omitempty"`
+	Labels       Labels        `json:"labels,omitempty"`
+	// Nodepool name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Nodepool Private Networks
+	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
+	// Nodepool Security Groups
+	SecurityGroups []SecurityGroup   `json:"security-groups,omitempty"`
+	Taints         SKSNodepoolTaints `json:"taints,omitempty"`
 }
 
 // Update an SKS Nodepool
@@ -3724,9 +3724,9 @@ func (c Client) DeleteBlockStorageSnapshot(ctx context.Context, id UUID) (*Opera
 }
 
 type UpdateBlockStorageSnapshotRequest struct {
+	Labels Labels `json:"labels,omitempty"`
 	// Snapshot name
-	Name   *string `json:"name,omitempty" validate:"omitempty,lte=255"`
-	Labels Labels  `json:"labels,omitempty"`
+	Name *string `json:"name,omitempty" validate:"omitempty,lte=255"`
 }
 
 // Update block storage volume snapshot
@@ -3823,8 +3823,8 @@ func (c Client) GetBlockStorageSnapshot(ctx context.Context, id UUID) (*BlockSto
 }
 
 type CreateDBAASPostgresUserRequest struct {
-	Username         DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
 	AllowReplication *bool             `json:"allow-replication,omitempty"`
+	Username         DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
 }
 
 // Create a DBaaS Postgres user
@@ -3966,38 +3966,38 @@ func (c Client) GetInstancePool(ctx context.Context, id UUID) (*InstancePool, er
 type UpdateInstancePoolRequest struct {
 	// Instance Pool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups"`
-	// Instance Pool description
-	Description        string             `json:"description,omitempty" validate:"omitempty,lte=255"`
-	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
-	Labels             Labels             `json:"labels,omitempty"`
-	// Instance Pool Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups"`
-	// Instances Elastic IPs
-	ElasticIPS []ElasticIP `json:"elastic-ips"`
-	// Instance Pool name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Compute instance type
-	InstanceType *InstanceType `json:"instance-type,omitempty"`
-	// Minimum number of running Instances
-	MinAvailable *int64 `json:"min-available,omitempty" validate:"omitempty,gte=0"`
-	// Instance Pool Private Networks
-	PrivateNetworks []PrivateNetwork `json:"private-networks"`
-	// Instance template
-	Template *Template `json:"template,omitempty"`
-	// SSH key
-	SSHKey *SSHKey `json:"ssh-key,omitempty"`
-	// Prefix to apply to Instances names (default: pool)
-	InstancePrefix *string `json:"instance-prefix,omitempty"`
-	// Instances Cloud-init user-data
-	UserData *string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
 	// Deploy target
 	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
-	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
-	Ipv6Enabled *bool `json:"ipv6-enabled,omitempty"`
+	// Instance Pool description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Instances disk size in GB
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=50000"`
+	// Instances Elastic IPs
+	ElasticIPS []ElasticIP `json:"elastic-ips"`
+	// Prefix to apply to Instances names (default: pool)
+	InstancePrefix *string `json:"instance-prefix,omitempty"`
+	// Compute instance type
+	InstanceType *InstanceType `json:"instance-type,omitempty"`
+	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
+	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
+	Labels      Labels `json:"labels,omitempty"`
+	// Minimum number of running Instances
+	MinAvailable *int64 `json:"min-available,omitempty" validate:"omitempty,gte=0"`
+	// Instance Pool name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Instance Pool Private Networks
+	PrivateNetworks    []PrivateNetwork   `json:"private-networks"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	// Instance Pool Security Groups
+	SecurityGroups []SecurityGroup `json:"security-groups"`
+	// SSH key
+	SSHKey *SSHKey `json:"ssh-key,omitempty"`
 	// Instances SSH keys
 	SSHKeys []SSHKey `json:"ssh-keys"`
+	// Instance template
+	Template *Template `json:"template,omitempty"`
+	// Instances Cloud-init user-data
+	UserData *string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
 }
 
 // Update an Instance Pool
@@ -4109,17 +4109,17 @@ func (c Client) ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksRe
 }
 
 type CreatePrivateNetworkRequest struct {
-	// Private Network name
-	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Private Network description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Private Network end IP address
+	EndIP  net.IP `json:"end-ip,omitempty"`
+	Labels Labels `json:"labels,omitempty"`
+	// Private Network name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Private Network netmask
 	Netmask net.IP `json:"netmask,omitempty"`
 	// Private Network start IP address
 	StartIP net.IP `json:"start-ip,omitempty"`
-	// Private Network end IP address
-	EndIP  net.IP `json:"end-ip,omitempty"`
-	Labels Labels `json:"labels,omitempty"`
 }
 
 // Create a Private Network
@@ -4640,9 +4640,9 @@ func (c Client) GetBlockStorageVolume(ctx context.Context, id UUID) (*BlockStora
 }
 
 type UpdateBlockStorageVolumeRequest struct {
+	Labels Labels `json:"labels,omitempty"`
 	// Volume name
-	Name   *string `json:"name,omitempty" validate:"omitempty,lte=255"`
-	Labels Labels  `json:"labels,omitempty"`
+	Name *string `json:"name,omitempty" validate:"omitempty,lte=255"`
 }
 
 // Update block storage volume
@@ -4782,9 +4782,9 @@ func (c Client) DeleteDBAASOpensearchUser(ctx context.Context, serviceName strin
 }
 
 type CreateBlockStorageSnapshotRequest struct {
-	// Snapshot name
-	Name   string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	Labels Labels `json:"labels,omitempty"`
+	// Snapshot name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 // Create a block storage snapshot
@@ -4893,17 +4893,17 @@ func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, r
 }
 
 type UpdatePrivateNetworkRequest struct {
-	// Private Network name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Private Network description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Private Network end IP address
+	EndIP  net.IP `json:"end-ip,omitempty"`
+	Labels Labels `json:"labels,omitempty"`
+	// Private Network name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Private Network netmask
 	Netmask net.IP `json:"netmask,omitempty"`
 	// Private Network start IP address
 	StartIP net.IP `json:"start-ip,omitempty"`
-	// Private Network end IP address
-	EndIP  net.IP `json:"end-ip,omitempty"`
-	Labels Labels `json:"labels,omitempty"`
 }
 
 // Update a Private Network
@@ -5148,10 +5148,10 @@ func (c Client) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceReq
 }
 
 type CreateAPIKeyRequest struct {
-	// IAM API Key Role ID
-	RoleID UUID `json:"role-id" validate:"required"`
 	// IAM API Key Name
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
+	// IAM API Key Role ID
+	RoleID UUID `json:"role-id" validate:"required"`
 }
 
 // Create a new API key
@@ -5499,14 +5499,14 @@ func (c Client) GetDNSDomainRecord(ctx context.Context, domainID UUID, recordID 
 }
 
 type UpdateDNSDomainRecordRequest struct {
-	// DNS domain record name
-	Name string `json:"name,omitempty"`
 	// DNS domain record content
 	Content string `json:"content,omitempty"`
-	// DNS domain record TTL
-	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gt=0"`
+	// DNS domain record name
+	Name string `json:"name,omitempty"`
 	// DNS domain record priority
 	Priority int64 `json:"priority,omitempty" validate:"omitempty,gt=0"`
+	// DNS domain record TTL
+	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gt=0"`
 }
 
 // Update DNS domain record
@@ -5857,10 +5857,10 @@ type GetDBAASSettingsMysqlResponseSettingsMysqlProperties struct {
 
 // mysql.conf configuration values
 type GetDBAASSettingsMysqlResponseSettingsMysql struct {
-	Properties           *GetDBAASSettingsMysqlResponseSettingsMysqlProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                 `json:"additionalProperties,omitempty"`
-	Type                 string                                                `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsMysqlResponseSettingsMysqlProperties `json:"properties,omitempty"`
 	Title                string                                                `json:"title,omitempty"`
+	Type                 string                                                `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsMysqlResponseSettings struct {
@@ -6158,6 +6158,12 @@ const (
 	AddRuleToSecurityGroupRequestFlowDirectionEgress  AddRuleToSecurityGroupRequestFlowDirection = "egress"
 )
 
+// ICMP details (default: -1 (ANY))
+type AddRuleToSecurityGroupRequestICMP struct {
+	Code int64 `json:"code,omitempty" validate:"omitempty,gte=-1,lte=254"`
+	Type int64 `json:"type,omitempty" validate:"omitempty,gte=-1,lte=254"`
+}
+
 type AddRuleToSecurityGroupRequestProtocol string
 
 const (
@@ -6171,29 +6177,23 @@ const (
 	AddRuleToSecurityGroupRequestProtocolIcmpv6 AddRuleToSecurityGroupRequestProtocol = "icmpv6"
 )
 
-// ICMP details (default: -1 (ANY))
-type AddRuleToSecurityGroupRequestICMP struct {
-	Code int64 `json:"code,omitempty" validate:"omitempty,gte=-1,lte=254"`
-	Type int64 `json:"type,omitempty" validate:"omitempty,gte=-1,lte=254"`
-}
-
 type AddRuleToSecurityGroupRequest struct {
-	// Network flow direction to match
-	FlowDirection AddRuleToSecurityGroupRequestFlowDirection `json:"flow-direction" validate:"required"`
 	// Security Group rule description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
-	// CIDR-formatted network allowed
-	Network string `json:"network,omitempty"`
-	// Security Group
-	SecurityGroup *SecurityGroupResource `json:"security-group,omitempty"`
-	// Network protocol
-	Protocol AddRuleToSecurityGroupRequestProtocol `json:"protocol" validate:"required"`
-	// ICMP details (default: -1 (ANY))
-	ICMP *AddRuleToSecurityGroupRequestICMP `json:"icmp,omitempty"`
-	// Start port of the range
-	StartPort int64 `json:"start-port,omitempty" validate:"omitempty,gte=1,lte=65535"`
 	// End port of the range
 	EndPort int64 `json:"end-port,omitempty" validate:"omitempty,gte=1,lte=65535"`
+	// Network flow direction to match
+	FlowDirection AddRuleToSecurityGroupRequestFlowDirection `json:"flow-direction" validate:"required"`
+	// ICMP details (default: -1 (ANY))
+	ICMP *AddRuleToSecurityGroupRequestICMP `json:"icmp,omitempty"`
+	// CIDR-formatted network allowed
+	Network string `json:"network,omitempty"`
+	// Network protocol
+	Protocol AddRuleToSecurityGroupRequestProtocol `json:"protocol" validate:"required"`
+	// Security Group
+	SecurityGroup *SecurityGroupResource `json:"security-group,omitempty"`
+	// Start port of the range
+	StartPort int64 `json:"start-port,omitempty" validate:"omitempty,gte=1,lte=65535"`
 }
 
 // Create a Security Group rule
@@ -6537,9 +6537,9 @@ func (c Client) UpdateDBAASPostgresAllowReplication(ctx context.Context, service
 type UpdateIAMRoleRequest struct {
 	// IAM Role description
 	Description string `json:"description,omitempty" validate:"omitempty,gte=1,lte=255"`
+	Labels      Labels `json:"labels,omitempty"`
 	// IAM Role permissions
 	Permissions []string `json:"permissions,omitempty"`
-	Labels      Labels   `json:"labels,omitempty"`
 }
 
 // Update IAM Role
@@ -7219,10 +7219,10 @@ func (c Client) UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) 
 
 type GetDBAASServiceLogsRequest struct {
 	// How many log entries to receive at most, up to 500 (default: 100)
-	Limit     int64         `json:"limit,omitempty" validate:"omitempty,gte=1,lte=500"`
-	SortOrder EnumSortOrder `json:"sort-order,omitempty"`
+	Limit int64 `json:"limit,omitempty" validate:"omitempty,gte=1,lte=500"`
 	// Opaque offset identifier
-	Offset string `json:"offset,omitempty"`
+	Offset    string        `json:"offset,omitempty"`
+	SortOrder EnumSortOrder `json:"sort-order,omitempty"`
 }
 
 // Get logs of DBaaS service
@@ -7374,10 +7374,10 @@ func (c Client) CopyTemplate(ctx context.Context, id UUID, req CopyTemplateReque
 }
 
 type UpdateTemplateRequest struct {
-	// Template name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Template Description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Template name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 // Update template attributes
@@ -8289,10 +8289,10 @@ func (c Client) ListSOSBucketsUsage(ctx context.Context) (*ListSOSBucketsUsageRe
 }
 
 type ResetInstanceRequest struct {
-	// Instance template
-	Template *Template `json:"template,omitempty"`
 	// Instance disk size in GB
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=50000"`
+	// Instance template
+	Template *Template `json:"template,omitempty"`
 }
 
 // This operation re-installs a Compute instance to a base template. If target template is provided it will be used to recreated instance from. Warning: the operation wipes all data stored on the disk.
@@ -8688,11 +8688,11 @@ func (c Client) RevealDBAASKafkaUserPassword(ctx context.Context, serviceName st
 }
 
 type CreateDBAASTaskMigrationCheckRequest struct {
-	// Service URI of the source MySQL or PostgreSQL database with admin credentials.
-	SourceServiceURI string              `json:"source-service-uri" validate:"required,gte=1,lte=512"`
-	Method           EnumMigrationMethod `json:"method,omitempty"`
 	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
+	// Service URI of the source MySQL or PostgreSQL database with admin credentials.
+	SourceServiceURI string `json:"source-service-uri" validate:"required,gte=1,lte=512"`
 }
 
 // Create a DBaaS task to check migration
@@ -8760,22 +8760,22 @@ const (
 )
 
 type AddServiceToLoadBalancerRequest struct {
-	// Load Balancer Service name
-	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Load Balancer Service description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Load Balancer Service healthcheck
+	Healthcheck *LoadBalancerServiceHealthcheck `json:"healthcheck" validate:"required"`
 	// Instance Pool
 	InstancePool *InstancePool `json:"instance-pool" validate:"required"`
+	// Load Balancer Service name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
+	// Port exposed on the Load Balancer's public IP
+	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
 	// Network traffic protocol
 	Protocol AddServiceToLoadBalancerRequestProtocol `json:"protocol" validate:"required"`
 	// Load balancing strategy
 	Strategy AddServiceToLoadBalancerRequestStrategy `json:"strategy" validate:"required"`
-	// Port exposed on the Load Balancer's public IP
-	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
 	// Port on which the network traffic will be forwarded to on the receiving instance
 	TargetPort int64 `json:"target-port" validate:"required,gte=1,lte=65535"`
-	// Load Balancer Service healthcheck
-	Healthcheck *LoadBalancerServiceHealthcheck `json:"healthcheck" validate:"required"`
 }
 
 // Add a Load Balancer Service
@@ -8980,16 +8980,16 @@ func (c Client) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (
 }
 
 type PromoteSnapshotToTemplateRequest struct {
-	// Template name
-	Name string `json:"name" validate:"required,gte=1,lte=255"`
-	// Template description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
 	// Template default user
 	DefaultUser string `json:"default-user,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Enable SSH key-based login in the template
-	SSHKeyEnabled *bool `json:"ssh-key-enabled,omitempty"`
+	// Template description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	// Template name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Enable password-based login in the template
 	PasswordEnabled *bool `json:"password-enabled,omitempty"`
+	// Enable SSH key-based login in the template
+	SSHKeyEnabled *bool `json:"ssh-key-enabled,omitempty"`
 }
 
 // Promote a Snapshot to a Template
@@ -9057,21 +9057,21 @@ const (
 )
 
 type CreateSKSClusterRequest struct {
+	// Cluster addons
+	Addons []string `json:"addons,omitempty"`
+	// Enable auto upgrade of the control plane to the latest patch version available
+	AutoUpgrade *bool `json:"auto-upgrade,omitempty"`
+	// Cluster CNI
+	Cni CreateSKSClusterRequestCni `json:"cni,omitempty"`
 	// Cluster description
 	Description *string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	Labels      Labels  `json:"labels,omitempty"`
-	// Cluster CNI
-	Cni CreateSKSClusterRequestCni `json:"cni,omitempty"`
-	// Enable auto upgrade of the control plane to the latest patch version available
-	AutoUpgrade *bool `json:"auto-upgrade,omitempty"`
-	// SKS Cluster OpenID config map
-	Oidc *SKSOidc `json:"oidc,omitempty"`
-	// Cluster name
-	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Cluster service level
 	Level CreateSKSClusterRequestLevel `json:"level" validate:"required"`
-	// Cluster addons
-	Addons []string `json:"addons,omitempty"`
+	// Cluster name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
+	// SKS Cluster OpenID config map
+	Oidc *SKSOidc `json:"oidc,omitempty"`
 	// Control plane Kubernetes version
 	Version string `json:"version" validate:"required"`
 }
@@ -9514,17 +9514,17 @@ func (c Client) GetSKSCluster(ctx context.Context, id UUID) (*SKSCluster, error)
 }
 
 type UpdateSKSClusterRequest struct {
-	// Cluster name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Cluster addons
+	Addons []string `json:"addons,omitempty"`
+	// Enable auto upgrade of the control plane to the latest patch version available
+	AutoUpgrade *bool `json:"auto-upgrade,omitempty"`
 	// Cluster description
 	Description *string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	Labels      Labels  `json:"labels,omitempty"`
+	// Cluster name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// SKS Cluster OpenID config map
 	Oidc *SKSOidc `json:"oidc,omitempty"`
-	// Enable auto upgrade of the control plane to the latest patch version available
-	AutoUpgrade *bool `json:"auto-upgrade,omitempty"`
-	// Cluster addons
-	Addons []string `json:"addons,omitempty"`
 }
 
 // Update an SKS cluster
@@ -9629,10 +9629,10 @@ type ListDBAASIntegrationSettingsResponseSettingsProperties struct {
 
 // The JSON schema representing the settings for the given integration type, source, and destination service types.
 type ListDBAASIntegrationSettingsResponseSettings struct {
-	Properties           *ListDBAASIntegrationSettingsResponseSettingsProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                   `json:"additionalProperties,omitempty"`
-	Type                 string                                                  `json:"type,omitempty"`
+	Properties           *ListDBAASIntegrationSettingsResponseSettingsProperties `json:"properties,omitempty"`
 	Title                string                                                  `json:"title,omitempty"`
+	Type                 string                                                  `json:"type,omitempty"`
 }
 
 type ListDBAASIntegrationSettingsResponse struct {
@@ -9688,21 +9688,10 @@ type GetDBAASSettingsPGResponseSettingsPGProperties struct {
 
 // postgresql.conf configuration values
 type GetDBAASSettingsPGResponseSettingsPG struct {
-	Properties           *GetDBAASSettingsPGResponseSettingsPGProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                           `json:"additionalProperties,omitempty"`
-	Type                 string                                          `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsPGResponseSettingsPGProperties `json:"properties,omitempty"`
 	Title                string                                          `json:"title,omitempty"`
-}
-
-type GetDBAASSettingsPGResponseSettingsPglookoutProperties struct {
-}
-
-// PGLookout settings
-type GetDBAASSettingsPGResponseSettingsPglookout struct {
-	Properties           *GetDBAASSettingsPGResponseSettingsPglookoutProperties `json:"properties,omitempty"`
-	AdditionalProperties *bool                                                  `json:"additionalProperties,omitempty"`
-	Type                 string                                                 `json:"type,omitempty"`
-	Title                string                                                 `json:"title,omitempty"`
+	Type                 string                                          `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsPGResponseSettingsPgbouncerProperties struct {
@@ -9710,10 +9699,21 @@ type GetDBAASSettingsPGResponseSettingsPgbouncerProperties struct {
 
 // PGBouncer connection pooling settings
 type GetDBAASSettingsPGResponseSettingsPgbouncer struct {
-	Properties           *GetDBAASSettingsPGResponseSettingsPgbouncerProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                  `json:"additionalProperties,omitempty"`
-	Type                 string                                                 `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsPGResponseSettingsPgbouncerProperties `json:"properties,omitempty"`
 	Title                string                                                 `json:"title,omitempty"`
+	Type                 string                                                 `json:"type,omitempty"`
+}
+
+type GetDBAASSettingsPGResponseSettingsPglookoutProperties struct {
+}
+
+// PGLookout settings
+type GetDBAASSettingsPGResponseSettingsPglookout struct {
+	AdditionalProperties *bool                                                  `json:"additionalProperties,omitempty"`
+	Properties           *GetDBAASSettingsPGResponseSettingsPglookoutProperties `json:"properties,omitempty"`
+	Title                string                                                 `json:"title,omitempty"`
+	Type                 string                                                 `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsPGResponseSettingsTimescaledbProperties struct {
@@ -9721,19 +9721,19 @@ type GetDBAASSettingsPGResponseSettingsTimescaledbProperties struct {
 
 // TimescaleDB extension configuration values
 type GetDBAASSettingsPGResponseSettingsTimescaledb struct {
-	Properties           *GetDBAASSettingsPGResponseSettingsTimescaledbProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                    `json:"additionalProperties,omitempty"`
-	Type                 string                                                   `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsPGResponseSettingsTimescaledbProperties `json:"properties,omitempty"`
 	Title                string                                                   `json:"title,omitempty"`
+	Type                 string                                                   `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsPGResponseSettings struct {
 	// postgresql.conf configuration values
 	PG *GetDBAASSettingsPGResponseSettingsPG `json:"pg,omitempty"`
-	// PGLookout settings
-	Pglookout *GetDBAASSettingsPGResponseSettingsPglookout `json:"pglookout,omitempty"`
 	// PGBouncer connection pooling settings
 	Pgbouncer *GetDBAASSettingsPGResponseSettingsPgbouncer `json:"pgbouncer,omitempty"`
+	// PGLookout settings
+	Pglookout *GetDBAASSettingsPGResponseSettingsPglookout `json:"pglookout,omitempty"`
 	// TimescaleDB extension configuration values
 	Timescaledb *GetDBAASSettingsPGResponseSettingsTimescaledb `json:"timescaledb,omitempty"`
 }
@@ -10061,12 +10061,12 @@ func (c Client) DeleteInstance(ctx context.Context, id UUID) (*Operation, error)
 }
 
 type UpdateInstanceRequest struct {
+	Labels Labels `json:"labels,omitempty"`
 	// Instance name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Instance Cloud-init user-data
-	UserData           string             `json:"user-data,omitempty" validate:"omitempty,gte=1,lte=32768"`
+	Name               string             `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
-	Labels             Labels             `json:"labels,omitempty"`
+	// Instance Cloud-init user-data
+	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1,lte=32768"`
 }
 
 // Update a Compute instance
@@ -10578,11 +10578,11 @@ func (c Client) DeleteDBAASMysqlUser(ctx context.Context, serviceName string, us
 }
 
 type UpdateLoadBalancerRequest struct {
-	// Load Balancer name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Load Balancer description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	Labels      Labels `json:"labels,omitempty"`
+	// Load Balancer name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 // Update a Load Balancer
@@ -10913,26 +10913,26 @@ const (
 )
 
 type RegisterTemplateRequest struct {
-	// Template maintainer
-	Maintainer string `json:"maintainer,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Template description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
-	// Enable SSH key-based login
-	SSHKeyEnabled *bool `json:"ssh-key-enabled" validate:"required"`
-	// Template name
-	Name string `json:"name" validate:"required,gte=1,lte=255"`
-	// Template default user
-	DefaultUser string `json:"default-user,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Template size
-	Size int64 `json:"size,omitempty" validate:"omitempty,gt=0"`
-	// Enable password-based login
-	PasswordEnabled *bool `json:"password-enabled" validate:"required"`
+	// Boot mode (default: legacy)
+	BootMode RegisterTemplateRequestBootMode `json:"boot-mode,omitempty"`
 	// Template build
 	Build string `json:"build,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Template MD5 checksum
 	Checksum string `json:"checksum" validate:"required,gte=1"`
-	// Boot mode (default: legacy)
-	BootMode RegisterTemplateRequestBootMode `json:"boot-mode,omitempty"`
+	// Template default user
+	DefaultUser string `json:"default-user,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Template description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Template maintainer
+	Maintainer string `json:"maintainer,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Template name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
+	// Enable password-based login
+	PasswordEnabled *bool `json:"password-enabled" validate:"required"`
+	// Template size
+	Size int64 `json:"size,omitempty" validate:"omitempty,gt=0"`
+	// Enable SSH key-based login
+	SSHKeyEnabled *bool `json:"ssh-key-enabled" validate:"required"`
 	// Template source URL
 	URL string `json:"url" validate:"required,gte=1"`
 	// Template version
@@ -11037,10 +11037,10 @@ type GetDBAASSettingsKafkaResponseSettingsKafkaProperties struct {
 
 // Kafka broker configuration values
 type GetDBAASSettingsKafkaResponseSettingsKafka struct {
-	Properties           *GetDBAASSettingsKafkaResponseSettingsKafkaProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                 `json:"additionalProperties,omitempty"`
-	Type                 string                                                `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsKafkaResponseSettingsKafkaProperties `json:"properties,omitempty"`
 	Title                string                                                `json:"title,omitempty"`
+	Type                 string                                                `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsKafkaResponseSettingsKafkaConnectProperties struct {
@@ -11048,10 +11048,10 @@ type GetDBAASSettingsKafkaResponseSettingsKafkaConnectProperties struct {
 
 // Kafka Connect configuration values
 type GetDBAASSettingsKafkaResponseSettingsKafkaConnect struct {
-	Properties           *GetDBAASSettingsKafkaResponseSettingsKafkaConnectProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                        `json:"additionalProperties,omitempty"`
-	Type                 string                                                       `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsKafkaResponseSettingsKafkaConnectProperties `json:"properties,omitempty"`
 	Title                string                                                       `json:"title,omitempty"`
+	Type                 string                                                       `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsKafkaResponseSettingsKafkaRestProperties struct {
@@ -11059,10 +11059,10 @@ type GetDBAASSettingsKafkaResponseSettingsKafkaRestProperties struct {
 
 // Kafka REST configuration
 type GetDBAASSettingsKafkaResponseSettingsKafkaRest struct {
-	Properties           *GetDBAASSettingsKafkaResponseSettingsKafkaRestProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                     `json:"additionalProperties,omitempty"`
-	Type                 string                                                    `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsKafkaResponseSettingsKafkaRestProperties `json:"properties,omitempty"`
 	Title                string                                                    `json:"title,omitempty"`
+	Type                 string                                                    `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsKafkaResponseSettingsSchemaRegistryProperties struct {
@@ -11070,10 +11070,10 @@ type GetDBAASSettingsKafkaResponseSettingsSchemaRegistryProperties struct {
 
 // Schema Registry configuration
 type GetDBAASSettingsKafkaResponseSettingsSchemaRegistry struct {
-	Properties           *GetDBAASSettingsKafkaResponseSettingsSchemaRegistryProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                          `json:"additionalProperties,omitempty"`
-	Type                 string                                                         `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsKafkaResponseSettingsSchemaRegistryProperties `json:"properties,omitempty"`
 	Title                string                                                         `json:"title,omitempty"`
+	Type                 string                                                         `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsKafkaResponseSettings struct {
@@ -11182,10 +11182,10 @@ type GetDBAASSettingsOpensearchResponseSettingsOpensearchProperties struct {
 
 // OpenSearch configuration values
 type GetDBAASSettingsOpensearchResponseSettingsOpensearch struct {
-	Properties           *GetDBAASSettingsOpensearchResponseSettingsOpensearchProperties `json:"properties,omitempty"`
 	AdditionalProperties *bool                                                           `json:"additionalProperties,omitempty"`
-	Type                 string                                                          `json:"type,omitempty"`
+	Properties           *GetDBAASSettingsOpensearchResponseSettingsOpensearchProperties `json:"properties,omitempty"`
 	Title                string                                                          `json:"title,omitempty"`
+	Type                 string                                                          `json:"type,omitempty"`
 }
 
 type GetDBAASSettingsOpensearchResponseSettings struct {
@@ -11348,16 +11348,16 @@ type UpdateDBAASServiceGrafanaRequestMaintenance struct {
 }
 
 type UpdateDBAASServiceGrafanaRequest struct {
+	// Grafana settings
+	GrafanaSettings *JSONSchemaGrafana `json:"grafana-settings,omitempty"`
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
 	// Automatic maintenance settings
 	Maintenance *UpdateDBAASServiceGrafanaRequestMaintenance `json:"maintenance,omitempty"`
 	// Subscription plan
 	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
-	// Grafana settings
-	GrafanaSettings *JSONSchemaGrafana `json:"grafana-settings,omitempty"`
-	// Allowed CIDR address blocks for incoming connections
-	IPFilter []string `json:"ip-filter,omitempty"`
 }
 
 // Update a DBaaS Grafana service
@@ -11432,17 +11432,17 @@ type CreateDBAASServiceGrafanaRequestMaintenance struct {
 }
 
 type CreateDBAASServiceGrafanaRequest struct {
+	ForkFromService DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	// Grafana settings
+	GrafanaSettings *JSONSchemaGrafana `json:"grafana-settings,omitempty"`
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
 	// Automatic maintenance settings
 	Maintenance *CreateDBAASServiceGrafanaRequestMaintenance `json:"maintenance,omitempty"`
 	// Subscription plan
 	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
 	// Service is protected against termination and powering off
-	TerminationProtection *bool            `json:"termination-protection,omitempty"`
-	ForkFromService       DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
-	// Grafana settings
-	GrafanaSettings *JSONSchemaGrafana `json:"grafana-settings,omitempty"`
-	// Allowed CIDR address blocks for incoming connections
-	IPFilter []string `json:"ip-filter,omitempty"`
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
 }
 
 // Create a DBaaS Grafana service
@@ -11496,32 +11496,32 @@ func (c Client) CreateDBAASServiceGrafana(ctx context.Context, name string, req 
 }
 
 type CreateSKSNodepoolRequest struct {
-	// Nodepool Anti-affinity Groups
-	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
-	// Nodepool description
-	Description string            `json:"description,omitempty" validate:"omitempty,lte=255"`
-	Labels      Labels            `json:"labels,omitempty"`
-	Taints      SKSNodepoolTaints `json:"taints,omitempty"`
-	// Nodepool Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
-	// Nodepool name
-	Name string `json:"name" validate:"required,gte=1,lte=255"`
-	// Compute instance type
-	InstanceType *InstanceType `json:"instance-type" validate:"required"`
-	// Nodepool Private Networks
-	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
-	// Number of instances
-	Size int64 `json:"size" validate:"required,gt=0"`
-	// Kubelet image GC options
-	KubeletImageGC *KubeletImageGC `json:"kubelet-image-gc,omitempty"`
-	// Prefix to apply to instances names (default: pool)
-	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
-	// Deploy target
-	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
 	// Nodepool addons
 	Addons []string `json:"addons,omitempty"`
+	// Nodepool Anti-affinity Groups
+	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	// Deploy target
+	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
+	// Nodepool description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Nodepool instances disk size in GB
 	DiskSize int64 `json:"disk-size" validate:"required,gte=20,lte=50000"`
+	// Prefix to apply to instances names (default: pool)
+	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
+	// Compute instance type
+	InstanceType *InstanceType `json:"instance-type" validate:"required"`
+	// Kubelet image GC options
+	KubeletImageGC *KubeletImageGC `json:"kubelet-image-gc,omitempty"`
+	Labels         Labels          `json:"labels,omitempty"`
+	// Nodepool name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
+	// Nodepool Private Networks
+	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
+	// Nodepool Security Groups
+	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	// Number of instances
+	Size   int64             `json:"size" validate:"required,gt=0"`
+	Taints SKSNodepoolTaints `json:"taints,omitempty"`
 }
 
 // Create a new SKS Nodepool
@@ -11821,10 +11821,20 @@ const (
 type CreateDBAASServiceOpensearchRequestIndexPatterns struct {
 	// Maximum number of indexes to keep
 	MaxIndexCount int64 `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
-	// Deletion sorting algorithm
-	SortingAlgorithm CreateDBAASServiceOpensearchRequestIndexPatternsSortingAlgorithm `json:"sorting-algorithm,omitempty"`
 	// fnmatch pattern
 	Pattern string `json:"pattern,omitempty" validate:"omitempty,lte=1024"`
+	// Deletion sorting algorithm
+	SortingAlgorithm CreateDBAASServiceOpensearchRequestIndexPatternsSortingAlgorithm `json:"sorting-algorithm,omitempty"`
+}
+
+// Template settings for all new indexes
+type CreateDBAASServiceOpensearchRequestIndexTemplate struct {
+	// The maximum number of nested JSON objects that a single document can contain across all nested types. This limit helps to prevent out of memory errors when a document contains too many nested objects. Default is 10000.
+	MappingNestedObjectsLimit int64 `json:"mapping-nested-objects-limit,omitempty" validate:"omitempty,gte=0,lte=100000"`
+	// The number of replicas each primary shard has.
+	NumberOfReplicas int64 `json:"number-of-replicas,omitempty" validate:"omitempty,gte=0,lte=29"`
+	// The number of primary shards that an index should have.
+	NumberOfShards int64 `json:"number-of-shards,omitempty" validate:"omitempty,gte=1,lte=1024"`
 }
 
 type CreateDBAASServiceOpensearchRequestMaintenanceDow string
@@ -11848,52 +11858,42 @@ type CreateDBAASServiceOpensearchRequestMaintenance struct {
 	Time string `json:"time" validate:"required,gte=8,lte=8"`
 }
 
-// Template settings for all new indexes
-type CreateDBAASServiceOpensearchRequestIndexTemplate struct {
-	// The maximum number of nested JSON objects that a single document can contain across all nested types. This limit helps to prevent out of memory errors when a document contains too many nested objects. Default is 10000.
-	MappingNestedObjectsLimit int64 `json:"mapping-nested-objects-limit,omitempty" validate:"omitempty,gte=0,lte=100000"`
-	// The number of replicas each primary shard has.
-	NumberOfReplicas int64 `json:"number-of-replicas,omitempty" validate:"omitempty,gte=0,lte=29"`
-	// The number of primary shards that an index should have.
-	NumberOfShards int64 `json:"number-of-shards,omitempty" validate:"omitempty,gte=1,lte=1024"`
-}
-
 // OpenSearch Dashboards settings
 type CreateDBAASServiceOpensearchRequestOpensearchDashboards struct {
-	// Timeout in milliseconds for requests made by OpenSearch Dashboards towards OpenSearch (default: 30000)
-	OpensearchRequestTimeout int64 `json:"opensearch-request-timeout,omitempty" validate:"omitempty,gte=5000,lte=120000"`
 	// Enable or disable OpenSearch Dashboards (default: true)
 	Enabled *bool `json:"enabled,omitempty"`
 	// Limits the maximum amount of memory (in MiB) the OpenSearch Dashboards process can use. This sets the max_old_space_size option of the nodejs running the OpenSearch Dashboards. Note: the memory reserved by OpenSearch Dashboards is not available for OpenSearch. (default: 128)
 	MaxOldSpaceSize int64 `json:"max-old-space-size,omitempty" validate:"omitempty,gte=64,lte=1024"`
+	// Timeout in milliseconds for requests made by OpenSearch Dashboards towards OpenSearch (default: 30000)
+	OpensearchRequestTimeout int64 `json:"opensearch-request-timeout,omitempty" validate:"omitempty,gte=5000,lte=120000"`
 }
 
 type CreateDBAASServiceOpensearchRequest struct {
-	// Maximum number of indexes to keep before deleting the oldest one
-	MaxIndexCount int64 `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
-	// Aiven automation resets index.refresh_interval to default value for every index to be sure that indices are always visible to search. If it doesn't fit your case, you can disable this by setting up this flag to true.
-	KeepIndexRefreshInterval *bool `json:"keep-index-refresh-interval,omitempty"`
-	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
-	IPFilter []string `json:"ip-filter,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool            `json:"termination-protection,omitempty"`
-	ForkFromService       DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	ForkFromService DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Allows you to create glob style patterns and set a max number of indexes matching this pattern you want to keep. Creating indexes exceeding this value will cause the oldest one to get deleted. You could for example create a pattern looking like 'logs.?' and then create index logs.1, logs.2 etc, it will delete logs.1 once you create logs.6. Do note 'logs.?' does not apply to logs.10. Note: Setting max_index_count to 0 will do nothing and the pattern gets ignored.
 	IndexPatterns []CreateDBAASServiceOpensearchRequestIndexPatterns `json:"index-patterns,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *CreateDBAASServiceOpensearchRequestMaintenance `json:"maintenance,omitempty"`
 	// Template settings for all new indexes
 	IndexTemplate *CreateDBAASServiceOpensearchRequestIndexTemplate `json:"index-template,omitempty"`
-	// OpenSearch settings
-	OpensearchSettings JSONSchemaOpensearch `json:"opensearch-settings,omitempty"`
-	// OpenSearch major version
-	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
-	// Name of a backup to recover from for services that support backup names
-	RecoveryBackupName string `json:"recovery-backup-name,omitempty" validate:"omitempty,gte=1"`
-	// Subscription plan
-	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
+	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Aiven automation resets index.refresh_interval to default value for every index to be sure that indices are always visible to search. If it doesn't fit your case, you can disable this by setting up this flag to true.
+	KeepIndexRefreshInterval *bool `json:"keep-index-refresh-interval,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *CreateDBAASServiceOpensearchRequestMaintenance `json:"maintenance,omitempty"`
+	// Maximum number of indexes to keep before deleting the oldest one
+	MaxIndexCount int64 `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
 	// OpenSearch Dashboards settings
 	OpensearchDashboards *CreateDBAASServiceOpensearchRequestOpensearchDashboards `json:"opensearch-dashboards,omitempty"`
+	// OpenSearch settings
+	OpensearchSettings JSONSchemaOpensearch `json:"opensearch-settings,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
+	// Name of a backup to recover from for services that support backup names
+	RecoveryBackupName string `json:"recovery-backup-name,omitempty" validate:"omitempty,gte=1"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// OpenSearch major version
+	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
 }
 
 // Create a DBaaS OpenSearch service
@@ -12042,10 +12042,20 @@ const (
 type UpdateDBAASServiceOpensearchRequestIndexPatterns struct {
 	// Maximum number of indexes to keep
 	MaxIndexCount int64 `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
-	// Deletion sorting algorithm
-	SortingAlgorithm UpdateDBAASServiceOpensearchRequestIndexPatternsSortingAlgorithm `json:"sorting-algorithm,omitempty"`
 	// fnmatch pattern
 	Pattern string `json:"pattern,omitempty" validate:"omitempty,lte=1024"`
+	// Deletion sorting algorithm
+	SortingAlgorithm UpdateDBAASServiceOpensearchRequestIndexPatternsSortingAlgorithm `json:"sorting-algorithm,omitempty"`
+}
+
+// Template settings for all new indexes
+type UpdateDBAASServiceOpensearchRequestIndexTemplate struct {
+	// The maximum number of nested JSON objects that a single document can contain across all nested types. This limit helps to prevent out of memory errors when a document contains too many nested objects. Default is 10000.
+	MappingNestedObjectsLimit int64 `json:"mapping-nested-objects-limit,omitempty" validate:"omitempty,gte=0,lte=100000"`
+	// The number of replicas each primary shard has.
+	NumberOfReplicas int64 `json:"number-of-replicas,omitempty" validate:"omitempty,gte=0,lte=29"`
+	// The number of primary shards that an index should have.
+	NumberOfShards int64 `json:"number-of-shards,omitempty" validate:"omitempty,gte=1,lte=1024"`
 }
 
 type UpdateDBAASServiceOpensearchRequestMaintenanceDow string
@@ -12069,49 +12079,39 @@ type UpdateDBAASServiceOpensearchRequestMaintenance struct {
 	Time string `json:"time" validate:"required,gte=8,lte=8"`
 }
 
-// Template settings for all new indexes
-type UpdateDBAASServiceOpensearchRequestIndexTemplate struct {
-	// The maximum number of nested JSON objects that a single document can contain across all nested types. This limit helps to prevent out of memory errors when a document contains too many nested objects. Default is 10000.
-	MappingNestedObjectsLimit int64 `json:"mapping-nested-objects-limit,omitempty" validate:"omitempty,gte=0,lte=100000"`
-	// The number of replicas each primary shard has.
-	NumberOfReplicas int64 `json:"number-of-replicas,omitempty" validate:"omitempty,gte=0,lte=29"`
-	// The number of primary shards that an index should have.
-	NumberOfShards int64 `json:"number-of-shards,omitempty" validate:"omitempty,gte=1,lte=1024"`
-}
-
 // OpenSearch Dashboards settings
 type UpdateDBAASServiceOpensearchRequestOpensearchDashboards struct {
-	// Timeout in milliseconds for requests made by OpenSearch Dashboards towards OpenSearch (default: 30000)
-	OpensearchRequestTimeout int64 `json:"opensearch-request-timeout,omitempty" validate:"omitempty,gte=5000,lte=120000"`
 	// Enable or disable OpenSearch Dashboards (default: true)
 	Enabled *bool `json:"enabled,omitempty"`
 	// Limits the maximum amount of memory (in MiB) the OpenSearch Dashboards process can use. This sets the max_old_space_size option of the nodejs running the OpenSearch Dashboards. Note: the memory reserved by OpenSearch Dashboards is not available for OpenSearch. (default: 128)
 	MaxOldSpaceSize int64 `json:"max-old-space-size,omitempty" validate:"omitempty,gte=64,lte=1024"`
+	// Timeout in milliseconds for requests made by OpenSearch Dashboards towards OpenSearch (default: 30000)
+	OpensearchRequestTimeout int64 `json:"opensearch-request-timeout,omitempty" validate:"omitempty,gte=5000,lte=120000"`
 }
 
 type UpdateDBAASServiceOpensearchRequest struct {
-	// Maximum number of indexes to keep before deleting the oldest one
-	MaxIndexCount int64 `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
-	// Aiven automation resets index.refresh_interval to default value for every index to be sure that indices are always visible to search. If it doesn't fit your case, you can disable this by setting up this flag to true.
-	KeepIndexRefreshInterval *bool `json:"keep-index-refresh-interval,omitempty"`
-	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
-	IPFilter []string `json:"ip-filter,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
 	// Allows you to create glob style patterns and set a max number of indexes matching this pattern you want to keep. Creating indexes exceeding this value will cause the oldest one to get deleted. You could for example create a pattern looking like 'logs.?' and then create index logs.1, logs.2 etc, it will delete logs.1 once you create logs.6. Do note 'logs.?' does not apply to logs.10. Note: Setting max_index_count to 0 will do nothing and the pattern gets ignored.
 	IndexPatterns []UpdateDBAASServiceOpensearchRequestIndexPatterns `json:"index-patterns,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *UpdateDBAASServiceOpensearchRequestMaintenance `json:"maintenance,omitempty"`
 	// Template settings for all new indexes
 	IndexTemplate *UpdateDBAASServiceOpensearchRequestIndexTemplate `json:"index-template,omitempty"`
-	// OpenSearch settings
-	OpensearchSettings JSONSchemaOpensearch `json:"opensearch-settings,omitempty"`
-	// Version
-	Version string `json:"version,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
+	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Aiven automation resets index.refresh_interval to default value for every index to be sure that indices are always visible to search. If it doesn't fit your case, you can disable this by setting up this flag to true.
+	KeepIndexRefreshInterval *bool `json:"keep-index-refresh-interval,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *UpdateDBAASServiceOpensearchRequestMaintenance `json:"maintenance,omitempty"`
+	// Maximum number of indexes to keep before deleting the oldest one
+	MaxIndexCount int64 `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
 	// OpenSearch Dashboards settings
 	OpensearchDashboards *UpdateDBAASServiceOpensearchRequestOpensearchDashboards `json:"opensearch-dashboards,omitempty"`
+	// OpenSearch settings
+	OpensearchSettings JSONSchemaOpensearch `json:"opensearch-settings,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// Version
+	Version string `json:"version,omitempty"`
 }
 
 // Update a DBaaS OpenSearch service
@@ -12284,36 +12284,36 @@ type UpdateDBAASServiceRedisRequestMaintenance struct {
 
 // Migrate data from existing server
 type UpdateDBAASServiceRedisRequestMigration struct {
+	// Database name for bootstrapping the initial connection
+	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
-	// Port number of the server where to migrate data from
-	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
+	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Port number of the server where to migrate data from
+	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
 	// The server where to migrate data from is secured with SSL
 	SSL *bool `json:"ssl,omitempty"`
 	// User name for authentication with the server where to migrate data from
 	Username string `json:"username,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Database name for bootstrapping the initial connection
-	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
-	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    EnumMigrationMethod `json:"method,omitempty"`
 }
 
 type UpdateDBAASServiceRedisRequest struct {
-	// Automatic maintenance settings
-	Maintenance *UpdateDBAASServiceRedisRequestMaintenance `json:"maintenance,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
 	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
 	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *UpdateDBAASServiceRedisRequestMaintenance `json:"maintenance,omitempty"`
 	// Migrate data from existing server
 	Migration *UpdateDBAASServiceRedisRequestMigration `json:"migration,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
 	// Redis settings
 	RedisSettings *JSONSchemaRedis `json:"redis-settings,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
 }
 
 // Update a DBaaS Redis service
@@ -12432,39 +12432,39 @@ type CreateDBAASServiceRedisRequestMaintenance struct {
 
 // Migrate data from existing server
 type CreateDBAASServiceRedisRequestMigration struct {
+	// Database name for bootstrapping the initial connection
+	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
-	// Port number of the server where to migrate data from
-	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
+	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Port number of the server where to migrate data from
+	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
 	// The server where to migrate data from is secured with SSL
 	SSL *bool `json:"ssl,omitempty"`
 	// User name for authentication with the server where to migrate data from
 	Username string `json:"username,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Database name for bootstrapping the initial connection
-	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
-	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    EnumMigrationMethod `json:"method,omitempty"`
 }
 
 type CreateDBAASServiceRedisRequest struct {
-	// Automatic maintenance settings
-	Maintenance *CreateDBAASServiceRedisRequestMaintenance `json:"maintenance,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
-	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	ForkFromService DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
 	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *CreateDBAASServiceRedisRequestMaintenance `json:"maintenance,omitempty"`
 	// Migrate data from existing server
 	Migration *CreateDBAASServiceRedisRequestMigration `json:"migration,omitempty"`
-	// Redis settings
-	RedisSettings   *JSONSchemaRedis `json:"redis-settings,omitempty"`
-	ForkFromService DBAASServiceName `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
 	// Name of a backup to recover from for services that support backup names
 	RecoveryBackupName string `json:"recovery-backup-name,omitempty" validate:"omitempty,gte=1"`
+	// Redis settings
+	RedisSettings *JSONSchemaRedis `json:"redis-settings,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
 }
 
 // Create a DBaaS Redis service
@@ -12547,51 +12547,51 @@ type UpdateDBAASServicePGRequestMaintenance struct {
 
 // Migrate data from existing server
 type UpdateDBAASServicePGRequestMigration struct {
+	// Database name for bootstrapping the initial connection
+	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
-	// Port number of the server where to migrate data from
-	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
+	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Port number of the server where to migrate data from
+	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
 	// The server where to migrate data from is secured with SSL
 	SSL *bool `json:"ssl,omitempty"`
 	// User name for authentication with the server where to migrate data from
 	Username string `json:"username,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Database name for bootstrapping the initial connection
-	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
-	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    EnumMigrationMethod `json:"method,omitempty"`
 }
 
 type UpdateDBAASServicePGRequest struct {
-	// PGBouncer connection pooling settings
-	PgbouncerSettings JSONSchemaPgbouncer                        `json:"pgbouncer-settings,omitempty"`
-	BackupSchedule    *UpdateDBAASServicePGRequestBackupSchedule `json:"backup-schedule,omitempty"`
-	Variant           EnumPGVariant                              `json:"variant,omitempty"`
-	// TimescaleDB extension configuration values
-	TimescaledbSettings JSONSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
+	BackupSchedule *UpdateDBAASServicePGRequestBackupSchedule `json:"backup-schedule,omitempty"`
 	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
 	IPFilter []string `json:"ip-filter,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection  *bool                        `json:"termination-protection,omitempty"`
-	SynchronousReplication EnumPGSynchronousReplication `json:"synchronous-replication,omitempty"`
-	// PGLookout settings
-	PglookoutSettings JSONSchemaPglookout `json:"pglookout-settings,omitempty"`
 	// Automatic maintenance settings
 	Maintenance *UpdateDBAASServicePGRequestMaintenance `json:"maintenance,omitempty"`
-	// Version
-	Version string `json:"version,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
-	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
-	WorkMem int64 `json:"work-mem,omitempty" validate:"omitempty,gte=1,lte=1024"`
-	// Percentage of total RAM that the database server uses for shared memory buffers. Valid range is 20-60 (float), which corresponds to 20% - 60%. This setting adjusts the shared_buffers configuration value.
-	SharedBuffersPercentage int64 `json:"shared-buffers-percentage,omitempty" validate:"omitempty,gte=20,lte=60"`
-	// postgresql.conf configuration values
-	PGSettings JSONSchemaPG `json:"pg-settings,omitempty"`
 	// Migrate data from existing server
 	Migration *UpdateDBAASServicePGRequestMigration `json:"migration,omitempty"`
+	// postgresql.conf configuration values
+	PGSettings JSONSchemaPG `json:"pg-settings,omitempty"`
+	// PGBouncer connection pooling settings
+	PgbouncerSettings JSONSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
+	// PGLookout settings
+	PglookoutSettings JSONSchemaPglookout `json:"pglookout-settings,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
+	// Percentage of total RAM that the database server uses for shared memory buffers. Valid range is 20-60 (float), which corresponds to 20% - 60%. This setting adjusts the shared_buffers configuration value.
+	SharedBuffersPercentage int64                        `json:"shared-buffers-percentage,omitempty" validate:"omitempty,gte=20,lte=60"`
+	SynchronousReplication  EnumPGSynchronousReplication `json:"synchronous-replication,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// TimescaleDB extension configuration values
+	TimescaledbSettings JSONSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
+	Variant             EnumPGVariant         `json:"variant,omitempty"`
+	// Version
+	Version string `json:"version,omitempty"`
+	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
+	WorkMem int64 `json:"work-mem,omitempty" validate:"omitempty,gte=1,lte=1024"`
 }
 
 // Update a DBaaS PostgreSQL service
@@ -12694,23 +12694,23 @@ type CreateDBAASServicePGRequestBackupSchedule struct {
 	BackupMinute int64 `json:"backup-minute,omitempty" validate:"omitempty,gte=0,lte=59"`
 }
 
+// Integration settings
+type CreateDBAASServicePGRequestIntegrationsSettings struct {
+}
+
 type CreateDBAASServicePGRequestIntegrationsType string
 
 const (
 	CreateDBAASServicePGRequestIntegrationsTypeReadReplica CreateDBAASServicePGRequestIntegrationsType = "read_replica"
 )
 
-// Integration settings
-type CreateDBAASServicePGRequestIntegrationsSettings struct {
-}
-
 type CreateDBAASServicePGRequestIntegrations struct {
-	// Integration type
-	Type          CreateDBAASServicePGRequestIntegrationsType `json:"type" validate:"required"`
-	SourceService DBAASServiceName                            `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
-	DestService   DBAASServiceName                            `json:"dest-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	DestService DBAASServiceName `json:"dest-service,omitempty" validate:"omitempty,gte=0,lte=63"`
 	// Integration settings
-	Settings *CreateDBAASServicePGRequestIntegrationsSettings `json:"settings,omitempty"`
+	Settings      *CreateDBAASServicePGRequestIntegrationsSettings `json:"settings,omitempty"`
+	SourceService DBAASServiceName                                 `json:"source-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	// Integration type
+	Type CreateDBAASServicePGRequestIntegrationsType `json:"type" validate:"required"`
 }
 
 type CreateDBAASServicePGRequestMaintenanceDow string
@@ -12736,59 +12736,59 @@ type CreateDBAASServicePGRequestMaintenance struct {
 
 // Migrate data from existing server
 type CreateDBAASServicePGRequestMigration struct {
+	// Database name for bootstrapping the initial connection
+	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
 	// Hostname or IP address of the server where to migrate data from
 	Host string `json:"host" validate:"required,gte=1,lte=255"`
-	// Port number of the server where to migrate data from
-	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
+	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
+	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
+	Method    EnumMigrationMethod `json:"method,omitempty"`
 	// Password for authentication with the server where to migrate data from
 	Password string `json:"password,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Port number of the server where to migrate data from
+	Port int64 `json:"port" validate:"required,gte=1,lte=65535"`
 	// The server where to migrate data from is secured with SSL
 	SSL *bool `json:"ssl,omitempty"`
 	// User name for authentication with the server where to migrate data from
 	Username string `json:"username,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Database name for bootstrapping the initial connection
-	Dbname string `json:"dbname,omitempty" validate:"omitempty,gte=1,lte=63"`
-	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
-	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`
-	Method    EnumMigrationMethod `json:"method,omitempty"`
 }
 
 type CreateDBAASServicePGRequest struct {
-	// PGBouncer connection pooling settings
-	PgbouncerSettings JSONSchemaPgbouncer                        `json:"pgbouncer-settings,omitempty"`
-	BackupSchedule    *CreateDBAASServicePGRequestBackupSchedule `json:"backup-schedule,omitempty"`
-	Variant           EnumPGVariant                              `json:"variant,omitempty"`
-	// Service integrations to be enabled when creating the service.
-	Integrations []CreateDBAASServicePGRequestIntegrations `json:"integrations,omitempty"`
-	// TimescaleDB extension configuration values
-	TimescaledbSettings JSONSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
-	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
-	IPFilter []string `json:"ip-filter,omitempty"`
-	// Service is protected against termination and powering off
-	TerminationProtection  *bool                        `json:"termination-protection,omitempty"`
-	ForkFromService        DBAASServiceName             `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
-	SynchronousReplication EnumPGSynchronousReplication `json:"synchronous-replication,omitempty"`
-	// ISO time of a backup to recover from for services that support arbitrary times
-	RecoveryBackupTime string `json:"recovery-backup-time,omitempty" validate:"omitempty,gte=1"`
-	// PGLookout settings
-	PglookoutSettings JSONSchemaPglookout `json:"pglookout-settings,omitempty"`
-	// Automatic maintenance settings
-	Maintenance *CreateDBAASServicePGRequestMaintenance `json:"maintenance,omitempty"`
-	// Custom username for admin user. This must be set only when a new service is being created.
-	AdminUsername string                `json:"admin-username,omitempty" validate:"omitempty,gte=1,lte=64"`
-	Version       DBAASPGTargetVersions `json:"version,omitempty"`
-	// Subscription plan
-	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
-	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
-	WorkMem int64 `json:"work-mem,omitempty" validate:"omitempty,gte=1,lte=1024"`
-	// Percentage of total RAM that the database server uses for shared memory buffers. Valid range is 20-60 (float), which corresponds to 20% - 60%. This setting adjusts the shared_buffers configuration value.
-	SharedBuffersPercentage int64 `json:"shared-buffers-percentage,omitempty" validate:"omitempty,gte=20,lte=60"`
-	// postgresql.conf configuration values
-	PGSettings JSONSchemaPG `json:"pg-settings,omitempty"`
 	// Custom password for admin user. Defaults to random string. This must be set only when a new service is being created.
 	AdminPassword string `json:"admin-password,omitempty" validate:"omitempty,gte=8,lte=256"`
+	// Custom username for admin user. This must be set only when a new service is being created.
+	AdminUsername   string                                     `json:"admin-username,omitempty" validate:"omitempty,gte=1,lte=64"`
+	BackupSchedule  *CreateDBAASServicePGRequestBackupSchedule `json:"backup-schedule,omitempty"`
+	ForkFromService DBAASServiceName                           `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	// Service integrations to be enabled when creating the service.
+	Integrations []CreateDBAASServicePGRequestIntegrations `json:"integrations,omitempty"`
+	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *CreateDBAASServicePGRequestMaintenance `json:"maintenance,omitempty"`
 	// Migrate data from existing server
 	Migration *CreateDBAASServicePGRequestMigration `json:"migration,omitempty"`
+	// postgresql.conf configuration values
+	PGSettings JSONSchemaPG `json:"pg-settings,omitempty"`
+	// PGBouncer connection pooling settings
+	PgbouncerSettings JSONSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
+	// PGLookout settings
+	PglookoutSettings JSONSchemaPglookout `json:"pglookout-settings,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
+	// ISO time of a backup to recover from for services that support arbitrary times
+	RecoveryBackupTime string `json:"recovery-backup-time,omitempty" validate:"omitempty,gte=1"`
+	// Percentage of total RAM that the database server uses for shared memory buffers. Valid range is 20-60 (float), which corresponds to 20% - 60%. This setting adjusts the shared_buffers configuration value.
+	SharedBuffersPercentage int64                        `json:"shared-buffers-percentage,omitempty" validate:"omitempty,gte=20,lte=60"`
+	SynchronousReplication  EnumPGSynchronousReplication `json:"synchronous-replication,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// TimescaleDB extension configuration values
+	TimescaledbSettings JSONSchemaTimescaledb `json:"timescaledb-settings,omitempty"`
+	Variant             EnumPGVariant         `json:"variant,omitempty"`
+	Version             DBAASPGTargetVersions `json:"version,omitempty"`
+	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
+	WorkMem int64 `json:"work-mem,omitempty" validate:"omitempty,gte=1,lte=1024"`
 }
 
 // Create a DBaaS PostgreSQL service
@@ -12889,11 +12889,11 @@ type CreateDBAASIntegrationRequestSettings struct {
 }
 
 type CreateDBAASIntegrationRequest struct {
-	IntegrationType EnumIntegrationTypes `json:"integration-type" validate:"required"`
-	SourceService   DBAASServiceName     `json:"source-service" validate:"required,gte=0,lte=63"`
 	DestService     DBAASServiceName     `json:"dest-service" validate:"required,gte=0,lte=63"`
+	IntegrationType EnumIntegrationTypes `json:"integration-type" validate:"required"`
 	// Integration settings
-	Settings *CreateDBAASIntegrationRequestSettings `json:"settings,omitempty"`
+	Settings      *CreateDBAASIntegrationRequestSettings `json:"settings,omitempty"`
+	SourceService DBAASServiceName                       `json:"source-service" validate:"required,gte=0,lte=63"`
 }
 
 // Create a new DBaaS integration between two services
@@ -13301,30 +13301,30 @@ func (c Client) CreateDBAASRedisUser(ctx context.Context, serviceName string, re
 type CreateInstanceRequest struct {
 	// Instance Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
-	PublicIPAssignment PublicIPAssignment  `json:"public-ip-assignment,omitempty"`
-	Labels             Labels              `json:"labels,omitempty"`
 	// Start Instance on creation (default: true)
 	AutoStart *bool `json:"auto-start,omitempty"`
-	// Instance Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
-	// Instance name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// Compute instance type
-	InstanceType *InstanceType `json:"instance-type" validate:"required"`
-	// Instance template
-	Template *Template `json:"template" validate:"required"`
-	// SSH key
-	SSHKey *SSHKey `json:"ssh-key,omitempty"`
-	// Instance Cloud-init user-data
-	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1,lte=32768"`
 	// Deploy target
 	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
-	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
-	Ipv6Enabled *bool `json:"ipv6-enabled,omitempty"`
 	// Instance disk size in GB
 	DiskSize int64 `json:"disk-size" validate:"required,gte=10,lte=50000"`
+	// Compute instance type
+	InstanceType *InstanceType `json:"instance-type" validate:"required"`
+	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
+	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
+	Labels      Labels `json:"labels,omitempty"`
+	// Instance name
+	Name               string             `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	// Instance Security Groups
+	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	// SSH key
+	SSHKey *SSHKey `json:"ssh-key,omitempty"`
 	// Instance SSH Keys
 	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
+	// Instance template
+	Template *Template `json:"template" validate:"required"`
+	// Instance Cloud-init user-data
+	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1,lte=32768"`
 }
 
 // Create a Compute instance
@@ -13387,35 +13387,35 @@ type ListInstancesResponseInstancesPrivateNetworks struct {
 
 // Instance
 type ListInstancesResponseInstances struct {
-	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
-	Labels             Labels             `json:"labels,omitempty"`
-	// Instance Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
-	// Instance name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Instance creation date
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Instance ID
+	ID UUID `json:"id,omitempty"`
 	// Compute instance type
 	InstanceType *InstanceType `json:"instance-type,omitempty"`
-	// Instance Private Networks
-	PrivateNetworks []ListInstancesResponseInstancesPrivateNetworks `json:"private-networks,omitempty"`
-	// Instance template
-	Template *Template     `json:"template,omitempty"`
-	State    InstanceState `json:"state,omitempty"`
-	// SSH key
-	SSHKey *SSHKey `json:"ssh-key,omitempty"`
+	// Instance IPv6 address
+	Ipv6Address string `json:"ipv6-address,omitempty"`
+	Labels      Labels `json:"labels,omitempty"`
 	// Instance MAC address
 	MACAddress string `json:"mac-address,omitempty"`
 	// Resource manager
 	Manager *Manager `json:"manager,omitempty"`
-	// Instance IPv6 address
-	Ipv6Address string `json:"ipv6-address,omitempty"`
-	// Instance ID
-	ID UUID `json:"id,omitempty"`
-	// Instance SSH Keys
-	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
-	// Instance creation date
-	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Instance name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Instance Private Networks
+	PrivateNetworks []ListInstancesResponseInstancesPrivateNetworks `json:"private-networks,omitempty"`
 	// Instance public IPv4 address
-	PublicIP net.IP `json:"public-ip,omitempty"`
+	PublicIP           net.IP             `json:"public-ip,omitempty"`
+	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	// Instance Security Groups
+	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	// SSH key
+	SSHKey *SSHKey `json:"ssh-key,omitempty"`
+	// Instance SSH Keys
+	SSHKeys []SSHKey      `json:"ssh-keys,omitempty"`
+	State   InstanceState `json:"state,omitempty"`
+	// Instance template
+	Template *Template `json:"template,omitempty"`
 }
 
 type ListInstancesResponse struct {
@@ -13569,15 +13569,15 @@ func (c Client) ListIAMRoles(ctx context.Context) (*ListIAMRolesResponse, error)
 }
 
 type CreateIAMRoleRequest struct {
-	// IAM Role name
-	Name string `json:"name" validate:"required,gte=1,lte=191"`
 	// IAM Role description
 	Description string `json:"description,omitempty" validate:"omitempty,gte=1,lte=255"`
-	// IAM Role permissions
-	Permissions []string `json:"permissions,omitempty"`
 	// Sets if the IAM Role Policy is editable or not (default: true). This setting cannot be changed after creation
 	Editable *bool  `json:"editable,omitempty"`
 	Labels   Labels `json:"labels,omitempty"`
+	// IAM Role name
+	Name string `json:"name" validate:"required,gte=1,lte=191"`
+	// IAM Role permissions
+	Permissions []string `json:"permissions,omitempty"`
 	// Policy
 	Policy *IAMPolicy `json:"policy,omitempty"`
 }
@@ -13854,14 +13854,14 @@ func (c Client) ListBlockStorageVolumes(ctx context.Context, opts ...ListBlockSt
 }
 
 type CreateBlockStorageVolumeRequest struct {
+	// Target block storage snapshot
+	BlockStorageSnapshot *BlockStorageSnapshotTarget `json:"block-storage-snapshot,omitempty"`
+	Labels               Labels                      `json:"labels,omitempty"`
 	// Volume name
 	Name string `json:"name,omitempty" validate:"omitempty,lte=255"`
 	// Volume size in GB.
 	// When a snapshot ID is supplied, this defaults to the size of the source volume, but can be set to a larger value.
-	Size   int64  `json:"size,omitempty" validate:"omitempty,gte=10"`
-	Labels Labels `json:"labels,omitempty"`
-	// Target block storage snapshot
-	BlockStorageSnapshot *BlockStorageSnapshotTarget `json:"block-storage-snapshot,omitempty"`
+	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10"`
 }
 
 // Create a block storage volume

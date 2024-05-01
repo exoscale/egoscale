@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	abbr "github.com/BluntSporks/abbreviation"
+	abb "github.com/BluntSporks/abbreviation"
 	"gopkg.in/yaml.v3"
 )
 
@@ -78,7 +78,7 @@ func toInitialCamel(s string, lower bool) string {
 			continue
 		}
 
-		_, ok := abbr.Acronyms[strings.ToUpper(w)]
+		_, ok := abb.Acronyms[strings.ToUpper(w)]
 		if ok {
 			words[i] = strings.ToUpper(w)
 		}

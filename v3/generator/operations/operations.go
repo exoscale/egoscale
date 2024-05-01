@@ -325,6 +325,9 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 			typeName = helpers.RenderReference(prop.Items.A.GetReference())
 		}
 
+		if item.Properties == nil {
+			continue
+		}
 		_, hasName := item.Properties.Get("name")
 		_, hasID := item.Properties.Get("id")
 		if hasName && hasID {

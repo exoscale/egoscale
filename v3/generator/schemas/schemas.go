@@ -12,6 +12,7 @@ import (
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
+	"github.com/pb33f/libopenapi/orderedmap"
 )
 
 // TODO fix the OpenApi spec (duplicated resources)
@@ -37,7 +38,12 @@ import (
 )
 `, packageName))
 
-	for pair := result.Model.Components.Schemas.First(); pair != nil; pair = pair.Next() {
+	if result.Model.Components.Schemas == nil {
+		slog.Warn("no schema found in the spec")
+		return nil
+	}
+
+	for pair := orderedmap.SortAlpha(result.Model.Components.Schemas).First(); pair != nil; pair = pair.Next() {
 		schemaName, v := pair.Key(), pair.Value()
 
 		if _, ok := ignoredList[schemaName]; ok {
@@ -86,18 +92,12 @@ func RenderSchema(schemaName string, s *base.SchemaProxy) ([]byte, error) {
 // This function is called if you are sure IsSimpleSchema(s *base.Schema) return true.
 // Add more simple type here.
 func RenderSimpleType(s *base.Schema) string {
-	// typ, ok := s.Extensions.Get("x-go-type")
-	// if ok {
-	// 	t, ok := typ.(string)
-	// 	if ok {
-	// 		return t
-	// 	}
-
-	// 	slog.Error(
-	// 		"invalid x-go-type extension type, fallback on original type",
-	// 		slog.Any("type", typ),
-	// 	)
-	// }
+	if s.Extensions != nil {
+		typ, ok := s.Extensions.Get("x-go-type")
+		if ok {
+			return typ.Value
+		}
+	}
 
 	if s.Format != "" {
 		if s.Format == "date-time" {

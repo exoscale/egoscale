@@ -79,8 +79,7 @@ func renderClient(s *v3.Server) ([]byte, error) {
 	}
 
 	for pair := s.Variables.First(); pair != nil; pair = pair.Next() {
-		k := pair.Key()
-		v := pair.Value()
+		k, v := pair.Key(), pair.Value()
 
 		if k != "zone" {
 			// Supporting only zone variable for Exoscale

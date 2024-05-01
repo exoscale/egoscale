@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/format"
 	"log"
-	"net/url"
 	"os"
 	"strings"
 	"text/template"
@@ -40,12 +39,7 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	`, packageName))
 
 	for _, s := range r.Model.Servers {
-		api, err := extractAPIName(s)
-		if err != nil {
-			return err
-		}
-
-		if api != "api" {
+		if !strings.Contains(s.URL, "api") {
 			// Skip generating code for pre-production "ppapi" server.
 			continue
 		}
@@ -67,27 +61,6 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	}
 
 	return os.WriteFile(path, content, os.ModePerm)
-}
-
-func extractAPIName(s *v3.Server) (string, error) {
-	var URL string
-	for pair := s.Variables.First(); pair != nil; pair = pair.Next() {
-		k := pair.Key()
-		v := pair.Value()
-		URL = strings.Replace(s.URL, fmt.Sprintf("{%s}", k), v.Default, 1)
-	}
-
-	u, err := url.Parse(URL)
-	if err != nil {
-		return "", err
-	}
-
-	h := strings.Split(u.Host, "-")
-	if len(h) < 2 {
-		return "", fmt.Errorf("malformed server host: %s", u.Host)
-	}
-
-	return h[0], nil
 }
 
 // Template use client.tmpl file

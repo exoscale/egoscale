@@ -78,4 +78,4 @@ generate:
 	@go mod vendor
 	@rm source.yaml
 	@cd ..
-	@ls -l *.go
+	@ls -l *.go 1>&2

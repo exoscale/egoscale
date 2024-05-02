@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
-	"html/template"
 	"log"
 	"os"
 	"strings"
+	"text/template"
 
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/pb33f/libopenapi"
@@ -40,8 +40,7 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	`, packageName))
 
 	for _, s := range r.Model.Servers {
-		if !strings.Contains(s.URL, "api") {
-			// Skip generating code for pre-production "ppapi" server.
+		if !strings.Contains(s.URL, "api-{zone}") {
 			continue
 		}
 

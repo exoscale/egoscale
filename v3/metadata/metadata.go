@@ -18,7 +18,7 @@ const (
 	PublicHostname   Endpoint = "public-hostname"
 	PublicIpv4       Endpoint = "public-ipv4"
 	ServiceOffering  Endpoint = "service-offering"
-	VmID             Endpoint = "vm-id"
+	VMID             Endpoint = "vm-id"
 )
 
 const (

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/format"
 	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"text/template"
@@ -39,17 +40,17 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	)
 	`, packageName))
 
-	for _, s := range r.Model.Servers {
-		if !strings.Contains(s.URL, "api-{zone}") {
-			continue
-		}
-
-		srv, err := renderClient(s)
-		if err != nil {
-			return err
-		}
-		output.Write(srv)
+	// The spec is returning only production server.
+	if len(r.Model.Servers) != 1 {
+		slog.Error("skip client generation", slog.Int("servers_len", len(r.Model.Servers)))
+		return nil
 	}
+
+	srv, err := renderClient(r.Model.Servers[0])
+	if err != nil {
+		return err
+	}
+	output.Write(srv)
 
 	if os.Getenv("GENERATOR_DEBUG") == "client" {
 		fmt.Println(output.String())

@@ -1,3 +1,5 @@
+// This package provides functions to interact with the Exoscale metadata server
+// and retrieve user-data (Cloudinit or Ignition data).
 package metadata
 
 import (
@@ -7,8 +9,13 @@ import (
 	"net/url"
 )
 
+// Endpoint represents different types of metadata
+// available on the Exoscale server.
 type Endpoint string
 
+// These constants define the various types of
+// Exoscale metadata you can retrieve.
+// Use the Get function to access specific metadata.
 const (
 	AvailabilityZone Endpoint = "availability-zone"
 	CloudIdentifier  Endpoint = "cloud-identifier"
@@ -27,10 +34,14 @@ const (
 	UserDataURL = URL + "user-data"
 )
 
+// UserData retrieves the user-data associated with the current instance from the Exoscale server.
+// This data is typically used for Cloudinit/Ignition configuration.
 func UserData(ctx context.Context) (string, error) {
 	return httpGet(ctx, UserDataURL)
 }
 
+// Get retrieves the value for a specific type of Exoscale metadata.
+// Provide the desired Endpoint constant as an argument.
 func Get(ctx context.Context, endpoint Endpoint) (string, error) {
 	url, err := url.JoinPath(MetaDataURL, string(endpoint))
 	if err != nil {

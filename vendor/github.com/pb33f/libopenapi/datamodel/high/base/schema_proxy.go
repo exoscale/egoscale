@@ -4,12 +4,14 @@
 package base
 
 import (
+	"sync"
+
 	"github.com/pb33f/libopenapi/datamodel/high"
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/base"
+	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
-	"sync"
 )
 
 // SchemaProxy exists as a stub that will create a Schema once (and only once) the Schema() method is called. An
@@ -74,6 +76,9 @@ func CreateSchemaProxyRef(ref string) *SchemaProxy {
 // If there is a problem building the Schema, then this method will return nil. Use GetBuildError to gain access
 // to that building error.
 func (sp *SchemaProxy) Schema() *Schema {
+	if sp == nil || sp.lock == nil {
+		return nil
+	}
 	sp.lock.Lock()
 	if sp.rendered == nil {
 
@@ -97,11 +102,15 @@ func (sp *SchemaProxy) Schema() *Schema {
 
 // IsReference returns true if the SchemaProxy is a reference to another Schema.
 func (sp *SchemaProxy) IsReference() bool {
+	if sp == nil {
+		return false
+	}
+
 	if sp.refStr != "" {
 		return true
 	}
 	if sp.schema != nil {
-		return sp.schema.Value.IsSchemaReference()
+		return sp.schema.Value.IsReference()
 	}
 	return false
 }
@@ -111,7 +120,30 @@ func (sp *SchemaProxy) GetReference() string {
 	if sp.refStr != "" {
 		return sp.refStr
 	}
-	return sp.schema.Value.GetSchemaReference()
+	return sp.schema.GetValue().GetReference()
+}
+
+func (sp *SchemaProxy) GetSchemaKeyNode() *yaml.Node {
+	if sp.schema != nil {
+		return sp.GoLow().GetKeyNode()
+	}
+	return nil
+}
+
+func (sp *SchemaProxy) GetReferenceNode() *yaml.Node {
+	if sp.refStr != "" {
+		return utils.CreateRefNode(sp.refStr)
+	}
+	return sp.schema.GetValue().GetReferenceNode()
+}
+
+// GetReferenceOrigin returns a pointer to the index.NodeOrigin of the $ref if this SchemaProxy is a reference to another Schema.
+// returns nil if the origin cannot be found (which, means there is a bug, and we need to fix it).
+func (sp *SchemaProxy) GetReferenceOrigin() *index.NodeOrigin {
+	if sp.schema != nil {
+		return sp.schema.Value.GetSchemaReferenceLocation()
+	}
+	return nil
 }
 
 // BuildSchema operates the same way as Schema, except it will return any error along with the *Schema
@@ -161,12 +193,13 @@ func (sp *SchemaProxy) MarshalYAML() (interface{}, error) {
 		nb := high.NewNodeBuilder(s, s.low)
 		return nb.Render(), nil
 	} else {
+		refNode := sp.GetReferenceNode()
+		if refNode != nil {
+			return refNode, nil
+		}
+
 		// do not build out a reference, just marshal the reference.
-		mp := utils.CreateEmptyMapNode()
-		mp.Content = append(mp.Content,
-			utils.CreateStringNode("$ref"),
-			utils.CreateStringNode(sp.GetReference()))
-		return mp, nil
+		return utils.CreateRefNode(sp.GetReference()), nil
 	}
 }
 
@@ -176,6 +209,19 @@ func (sp *SchemaProxy) MarshalYAMLInline() (interface{}, error) {
 	var s *Schema
 	var err error
 	s, err = sp.BuildSchema()
+
+	if s != nil && s.GoLow() != nil && s.GoLow().Index != nil {
+		circ := s.GoLow().Index.GetCircularReferences()
+		for _, c := range circ {
+			if sp.IsReference() {
+				// we cannot proceed.
+				if sp.GetReference() == c.LoopPoint.Definition {
+					return sp.GetReferenceNode(), nil
+				}
+			}
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}

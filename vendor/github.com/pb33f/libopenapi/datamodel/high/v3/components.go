@@ -4,24 +4,16 @@
 package v3
 
 import (
+	"sync"
+
+	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/datamodel/high"
 	highbase "github.com/pb33f/libopenapi/datamodel/high/base"
 	lowmodel "github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/base"
 	low "github.com/pb33f/libopenapi/datamodel/low/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"gopkg.in/yaml.v3"
-)
-
-// used for internal channel co-ordination for building out different component types.
-const (
-	responses = iota
-	parameters
-	examples
-	requestBodies
-	headers
-	securitySchemes
-	links
-	callbacks
 )
 
 // Components represents a high-level OpenAPI 3+ Components Object, that is backed by a low-level one.
@@ -30,16 +22,16 @@ const (
 // will have no effect on the API unless they are explicitly referenced from properties outside the components object.
 //   - https://spec.openapis.org/oas/v3.1.0#components-object
 type Components struct {
-	Schemas         map[string]*highbase.SchemaProxy `json:"schemas,omitempty" yaml:"schemas,omitempty"`
-	Responses       map[string]*Response             `json:"responses,omitempty" yaml:"responses,omitempty"`
-	Parameters      map[string]*Parameter            `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Examples        map[string]*highbase.Example     `json:"examples,omitempty" yaml:"examples,omitempty"`
-	RequestBodies   map[string]*RequestBody          `json:"requestBodies,omitempty" yaml:"requestBodies,omitempty"`
-	Headers         map[string]*Header               `json:"headers,omitempty" yaml:"headers,omitempty"`
-	SecuritySchemes map[string]*SecurityScheme       `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
-	Links           map[string]*Link                 `json:"links,omitempty" yaml:"links,omitempty"`
-	Callbacks       map[string]*Callback             `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
-	Extensions      map[string]any                   `json:"-" yaml:"-"`
+	Schemas         *orderedmap.Map[string, *highbase.SchemaProxy] `json:"schemas,omitempty" yaml:"schemas,omitempty"`
+	Responses       *orderedmap.Map[string, *Response]             `json:"responses,omitempty" yaml:"responses,omitempty"`
+	Parameters      *orderedmap.Map[string, *Parameter]            `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Examples        *orderedmap.Map[string, *highbase.Example]     `json:"examples,omitempty" yaml:"examples,omitempty"`
+	RequestBodies   *orderedmap.Map[string, *RequestBody]          `json:"requestBodies,omitempty" yaml:"requestBodies,omitempty"`
+	Headers         *orderedmap.Map[string, *Header]               `json:"headers,omitempty" yaml:"headers,omitempty"`
+	SecuritySchemes *orderedmap.Map[string, *SecurityScheme]       `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
+	Links           *orderedmap.Map[string, *Link]                 `json:"links,omitempty" yaml:"links,omitempty"`
+	Callbacks       *orderedmap.Map[string, *Callback]             `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
+	Extensions      *orderedmap.Map[string, *yaml.Node]            `json:"-" yaml:"-"`
 	low             *low.Components
 }
 
@@ -49,95 +41,60 @@ type Components struct {
 func NewComponents(comp *low.Components) *Components {
 	c := new(Components)
 	c.low = comp
-	if len(comp.Extensions) > 0 {
+	if orderedmap.Len(comp.Extensions) > 0 {
 		c.Extensions = high.ExtractExtensions(comp.Extensions)
 	}
-	cbMap := make(map[string]*Callback)
-	linkMap := make(map[string]*Link)
-	responseMap := make(map[string]*Response)
-	parameterMap := make(map[string]*Parameter)
-	exampleMap := make(map[string]*highbase.Example)
-	requestBodyMap := make(map[string]*RequestBody)
-	headerMap := make(map[string]*Header)
-	securitySchemeMap := make(map[string]*SecurityScheme)
-	schemas := make(map[string]*highbase.SchemaProxy)
-	schemaChan := make(chan componentResult[*highbase.SchemaProxy])
-	cbChan := make(chan componentResult[*Callback])
-	linkChan := make(chan componentResult[*Link])
-	responseChan := make(chan componentResult[*Response])
-	paramChan := make(chan componentResult[*Parameter])
-	exampleChan := make(chan componentResult[*highbase.Example])
-	requestBodyChan := make(chan componentResult[*RequestBody])
-	headerChan := make(chan componentResult[*Header])
-	securitySchemeChan := make(chan componentResult[*SecurityScheme])
+	cbMap := orderedmap.New[string, *Callback]()
+	linkMap := orderedmap.New[string, *Link]()
+	responseMap := orderedmap.New[string, *Response]()
+	parameterMap := orderedmap.New[string, *Parameter]()
+	exampleMap := orderedmap.New[string, *highbase.Example]()
+	requestBodyMap := orderedmap.New[string, *RequestBody]()
+	headerMap := orderedmap.New[string, *Header]()
+	securitySchemeMap := orderedmap.New[string, *SecurityScheme]()
+	schemas := orderedmap.New[string, *highbase.SchemaProxy]()
 
 	// build all components asynchronously.
-	for k, v := range comp.Callbacks.Value {
-		go buildComponent[*Callback, *low.Callback](callbacks, k.Value, v.Value, cbChan, NewCallback)
-	}
-	for k, v := range comp.Links.Value {
-		go buildComponent[*Link, *low.Link](links, k.Value, v.Value, linkChan, NewLink)
-	}
-	for k, v := range comp.Responses.Value {
-		go buildComponent[*Response, *low.Response](responses, k.Value, v.Value, responseChan, NewResponse)
-	}
-	for k, v := range comp.Parameters.Value {
-		go buildComponent[*Parameter, *low.Parameter](parameters, k.Value, v.Value, paramChan, NewParameter)
-	}
-	for k, v := range comp.Examples.Value {
-		go buildComponent[*highbase.Example, *base.Example](examples, k.Value, v.Value, exampleChan, highbase.NewExample)
-	}
-	for k, v := range comp.RequestBodies.Value {
-		go buildComponent[*RequestBody, *low.RequestBody](requestBodies, k.Value, v.Value,
-			requestBodyChan, NewRequestBody)
-	}
-	for k, v := range comp.Headers.Value {
-		go buildComponent[*Header, *low.Header](headers, k.Value, v.Value, headerChan, NewHeader)
-	}
-	for k, v := range comp.SecuritySchemes.Value {
-		go buildComponent[*SecurityScheme, *low.SecurityScheme](securitySchemes, k.Value, v.Value,
-			securitySchemeChan, NewSecurityScheme)
-	}
-	for k, v := range comp.Schemas.Value {
-		go buildSchema(k, v, schemaChan)
-	}
+	var wg sync.WaitGroup
+	wg.Add(9)
+	go func() {
+		buildComponent[*low.Callback, *Callback](comp.Callbacks.Value, cbMap, NewCallback)
+		wg.Done()
+	}()
+	go func() {
+		buildComponent[*low.Link, *Link](comp.Links.Value, linkMap, NewLink)
+		wg.Done()
+	}()
+	go func() {
+		buildComponent[*low.Response, *Response](comp.Responses.Value, responseMap, NewResponse)
+		wg.Done()
+	}()
+	go func() {
+		buildComponent[*low.Parameter, *Parameter](comp.Parameters.Value, parameterMap, NewParameter)
+		wg.Done()
+	}()
+	go func() {
+		buildComponent[*base.Example, *highbase.Example](comp.Examples.Value, exampleMap, highbase.NewExample)
+		wg.Done()
+	}()
+	go func() {
+		buildComponent[*low.RequestBody, *RequestBody](comp.RequestBodies.Value, requestBodyMap, NewRequestBody)
+		wg.Done()
+	}()
+	go func() {
+		buildComponent[*low.Header, *Header](comp.Headers.Value, headerMap, NewHeader)
+		wg.Done()
+	}()
+	go func() {
+		buildComponent[*low.SecurityScheme, *SecurityScheme](comp.SecuritySchemes.Value, securitySchemeMap, NewSecurityScheme)
+		wg.Done()
+	}()
+	go func() {
+		buildSchema(comp.Schemas.Value, schemas)
+		wg.Done()
+	}()
 
-	totalComponents := len(comp.Callbacks.Value) + len(comp.Links.Value) + len(comp.Responses.Value) +
-		len(comp.Parameters.Value) + len(comp.Examples.Value) + len(comp.RequestBodies.Value) +
-		len(comp.Headers.Value) + len(comp.SecuritySchemes.Value) + len(comp.Schemas.Value)
-
-	processedComponents := 0
-	for processedComponents < totalComponents {
-		select {
-		case sRes := <-schemaChan:
-			processedComponents++
-			schemas[sRes.key] = sRes.res
-		case cbRes := <-cbChan:
-			processedComponents++
-			cbMap[cbRes.key] = cbRes.res
-		case lRes := <-linkChan:
-			processedComponents++
-			linkMap[lRes.key] = lRes.res
-		case respRes := <-responseChan:
-			processedComponents++
-			responseMap[respRes.key] = respRes.res
-		case pRes := <-paramChan:
-			processedComponents++
-			parameterMap[pRes.key] = pRes.res
-		case eRes := <-exampleChan:
-			processedComponents++
-			exampleMap[eRes.key] = eRes.res
-		case rbRes := <-requestBodyChan:
-			processedComponents++
-			requestBodyMap[rbRes.key] = rbRes.res
-		case hRes := <-headerChan:
-			processedComponents++
-			headerMap[hRes.key] = hRes.res
-		case ssRes := <-securitySchemeChan:
-			processedComponents++
-			securitySchemeMap[ssRes.key] = ssRes.res
-		}
-	}
+	wg.Wait()
 	c.Schemas = schemas
 	c.Callbacks = cbMap
 	c.Links = linkMap
@@ -152,25 +109,37 @@ func NewComponents(comp *low.Components) *Components {
 
 // contains a component build result.
 type componentResult[T any] struct {
-	res  T
-	key  string
-	comp int
+	res T
+	key string
 }
 
-// build out a component.
-func buildComponent[N any, O any](comp int, key string, orig O, c chan componentResult[N], f func(O) N) {
-	c <- componentResult[N]{comp: comp, res: f(orig), key: key}
+// buildComponent builds component structs from low level structs.
+func buildComponent[IN any, OUT any](inMap *orderedmap.Map[lowmodel.KeyReference[string], lowmodel.ValueReference[IN]], outMap *orderedmap.Map[string, OUT], translateItem func(IN) OUT) {
+	translateFunc := func(pair orderedmap.Pair[lowmodel.KeyReference[string], lowmodel.ValueReference[IN]]) (componentResult[OUT], error) {
+		return componentResult[OUT]{key: pair.Key().Value, res: translateItem(pair.Value().Value)}, nil
+	}
+	resultFunc := func(value componentResult[OUT]) error {
+		outMap.Set(value.key, value.res)
+		return nil
+	}
+	_ = datamodel.TranslateMapParallel(inMap, translateFunc, resultFunc)
 }
 
-// build out a schema
-func buildSchema(key lowmodel.KeyReference[string], orig lowmodel.ValueReference[*base.SchemaProxy],
-	c chan componentResult[*highbase.SchemaProxy]) {
-	var sch *highbase.SchemaProxy
-	sch = highbase.NewSchemaProxy(&lowmodel.NodeReference[*base.SchemaProxy]{
-		Value:     orig.Value,
-		ValueNode: orig.ValueNode,
-	})
-	c <- componentResult[*highbase.SchemaProxy]{res: sch, key: key.Value}
+// buildSchema builds a schema from low level structs.
+func buildSchema(inMap *orderedmap.Map[lowmodel.KeyReference[string], lowmodel.ValueReference[*base.SchemaProxy]], outMap *orderedmap.Map[string, *highbase.SchemaProxy]) {
+	translateFunc := func(pair orderedmap.Pair[lowmodel.KeyReference[string], lowmodel.ValueReference[*base.SchemaProxy]]) (componentResult[*highbase.SchemaProxy], error) {
+		value := pair.Value()
+		sch := highbase.NewSchemaProxy(&lowmodel.NodeReference[*base.SchemaProxy]{
+			Value:     value.Value,
+			ValueNode: value.ValueNode,
+		})
+		return componentResult[*highbase.SchemaProxy]{res: sch, key: pair.Key().Value}, nil
+	}
+	resultFunc := func(value componentResult[*highbase.SchemaProxy]) error {
+		outMap.Set(value.key, value.res)
+		return nil
+	}
+	_ = datamodel.TranslateMapParallel(inMap, translateFunc, resultFunc)
 }
 
 // GoLow returns the low-level Components instance used to create the high-level one.

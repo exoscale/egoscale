@@ -3,7 +3,6 @@ package helpers
 import (
 	"fmt"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 
@@ -15,23 +14,6 @@ var uppercaseAcronym = sync.Map{}
 // ConfigureAcronym allows you to add additional words which will be considered acronyms
 func ConfigureAcronym(key, val string) {
 	uppercaseAcronym.Store(key, val)
-}
-
-// ForEachMapSorted iterate over a map[string]<T> sorted by keys.
-func ForEachMapSorted[V any](m map[string]V, f func(k string, v any) error) error {
-	keys := []string{}
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		if err := f(k, m[k]); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // RenderReference renders OpenAPI reference from path to go style.

@@ -6,6 +6,8 @@ package index
 import (
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -22,20 +24,24 @@ func (index *SpecIndex) extractDefinitionsAndSchemas(schemasNode *yaml.Node, pat
 		}
 
 		def := fmt.Sprintf("%s%s", pathPrefix, name)
+		fullDef := fmt.Sprintf("%s%s", index.specAbsolutePath, def)
+
 		ref := &Reference{
+			FullDefinition:        fullDef,
 			Definition:            def,
 			Name:                  name,
+			KeyNode:               schemasNode,
 			Node:                  schema,
-			Path:                  fmt.Sprintf("$.components.schemas.%s", name),
+			Path:                  fmt.Sprintf("$.components.schemas['%s']", name),
 			ParentNode:            schemasNode,
-			RequiredRefProperties: index.extractDefinitionRequiredRefProperties(schemasNode, map[string][]string{}),
+			RequiredRefProperties: extractDefinitionRequiredRefProperties(schemasNode, map[string][]string{}, fullDef, index),
 		}
-		index.allComponentSchemaDefinitions[def] = ref
+		index.allComponentSchemaDefinitions.Store(def, ref)
 	}
 }
 
 // extractDefinitionRequiredRefProperties goes through the direct properties of a schema and extracts the map of required definitions from within it
-func (index *SpecIndex) extractDefinitionRequiredRefProperties(schemaNode *yaml.Node, reqRefProps map[string][]string) map[string][]string {
+func extractDefinitionRequiredRefProperties(schemaNode *yaml.Node, reqRefProps map[string][]string, fulldef string, idx *SpecIndex) map[string][]string {
 	if schemaNode == nil {
 		return reqRefProps
 	}
@@ -70,7 +76,7 @@ func (index *SpecIndex) extractDefinitionRequiredRefProperties(schemaNode *yaml.
 		// Check to see if the current property is directly embedded within the current schema, and handle its properties if so
 		_, paramPropertiesMapNode := utils.FindKeyNodeTop("properties", param.Content)
 		if paramPropertiesMapNode != nil {
-			reqRefProps = index.extractDefinitionRequiredRefProperties(param, reqRefProps)
+			reqRefProps = extractDefinitionRequiredRefProperties(param, reqRefProps, fulldef, idx)
 		}
 
 		// Check to see if the current property is polymorphic, and dive into that model if so
@@ -78,7 +84,7 @@ func (index *SpecIndex) extractDefinitionRequiredRefProperties(schemaNode *yaml.
 			_, ofNode := utils.FindKeyNodeTop(key, param.Content)
 			if ofNode != nil {
 				for _, ofNodeItem := range ofNode.Content {
-					reqRefProps = index.extractRequiredReferenceProperties(ofNodeItem, name, reqRefProps)
+					reqRefProps = extractRequiredReferenceProperties(fulldef, idx, ofNodeItem, name, reqRefProps)
 				}
 			}
 		}
@@ -91,24 +97,97 @@ func (index *SpecIndex) extractDefinitionRequiredRefProperties(schemaNode *yaml.
 			continue
 		}
 
-		reqRefProps = index.extractRequiredReferenceProperties(requiredPropDefNode, requiredPropertyNode.Value, reqRefProps)
+		reqRefProps = extractRequiredReferenceProperties(fulldef, idx, requiredPropDefNode, requiredPropertyNode.Value, reqRefProps)
 	}
 
 	return reqRefProps
 }
 
 // extractRequiredReferenceProperties returns a map of definition names to the property or properties which reference it within a node
-func (index *SpecIndex) extractRequiredReferenceProperties(requiredPropDefNode *yaml.Node, propName string, reqRefProps map[string][]string) map[string][]string {
-	isRef, _, defPath := utils.IsNodeRefValue(requiredPropDefNode)
+func extractRequiredReferenceProperties(fulldef string, idx *SpecIndex, requiredPropDefNode *yaml.Node, propName string, reqRefProps map[string][]string) map[string][]string {
+	isRef, _, refName := utils.IsNodeRefValue(requiredPropDefNode)
 	if !isRef {
 		_, defItems := utils.FindKeyNodeTop("items", requiredPropDefNode.Content)
 		if defItems != nil {
-			isRef, _, defPath = utils.IsNodeRefValue(defItems)
+			isRef, _, refName = utils.IsNodeRefValue(defItems)
 		}
 	}
 
 	if /* still */ !isRef {
 		return reqRefProps
+	}
+
+	defPath := fulldef
+
+	if strings.HasPrefix(refName, "http") || filepath.IsAbs(refName) {
+		defPath = refName
+	} else {
+		exp := strings.Split(fulldef, "#/")
+		if len(exp) == 2 {
+			if exp[0] != "" {
+				if strings.HasPrefix(exp[0], "http") {
+					u, _ := url.Parse(exp[0])
+					r := strings.Split(refName, "#/")
+					if len(r) == 2 {
+						var abs string
+						if r[0] == "" {
+							abs = u.Path
+						} else {
+							abs, _ = filepath.Abs(utils.CheckPathOverlap(filepath.Dir(u.Path), r[0],
+								string(os.PathSeparator)))
+						}
+
+						u.Path = utils.ReplaceWindowsDriveWithLinuxPath(abs)
+						u.Fragment = ""
+						defPath = fmt.Sprintf("%s#/%s", u.String(), r[1])
+					} else {
+						u.Path = utils.ReplaceWindowsDriveWithLinuxPath(utils.CheckPathOverlap(filepath.Dir(u.Path),
+							r[0], string(os.PathSeparator)))
+						u.Fragment = ""
+						defPath = u.String()
+					}
+				} else {
+					r := strings.Split(refName, "#/")
+					if len(r) == 2 {
+						var abs string
+						if r[0] == "" {
+							abs, _ = filepath.Abs(exp[0])
+						} else {
+							abs, _ = filepath.Abs(utils.CheckPathOverlap(filepath.Dir(exp[0]), r[0],
+								string(os.PathSeparator)))
+
+							//abs, _ = filepath.Abs(filepath.Join(filepath.Dir(exp[0]), r[0],
+							//	string('J')))
+						}
+
+						defPath = fmt.Sprintf("%s#/%s", abs, r[1])
+					} else {
+						defPath, _ = filepath.Abs(utils.CheckPathOverlap(filepath.Dir(exp[0]),
+							r[0], string(os.PathSeparator)))
+					}
+				}
+			} else {
+				defPath = refName
+			}
+		} else {
+			if strings.HasPrefix(exp[0], "http") {
+				u, _ := url.Parse(exp[0])
+				r := strings.Split(refName, "#/")
+				if len(r) == 2 {
+					abs, _ := filepath.Abs(utils.CheckPathOverlap(filepath.Dir(u.Path), r[0], string(os.PathSeparator)))
+					u.Path = utils.ReplaceWindowsDriveWithLinuxPath(abs)
+					u.Fragment = ""
+					defPath = fmt.Sprintf("%s#/%s", u.String(), r[1])
+				} else {
+					u.Path = utils.ReplaceWindowsDriveWithLinuxPath(utils.CheckPathOverlap(filepath.Dir(u.Path),
+						r[0], string(os.PathSeparator)))
+					u.Fragment = ""
+					defPath = u.String()
+				}
+			} else {
+				defPath, _ = filepath.Abs(utils.CheckPathOverlap(filepath.Dir(exp[0]), refName, string(os.PathSeparator)))
+			}
+		}
 	}
 
 	if _, ok := reqRefProps[defPath]; !ok {
@@ -121,9 +200,11 @@ func (index *SpecIndex) extractRequiredReferenceProperties(requiredPropDefNode *
 
 func (index *SpecIndex) extractComponentParameters(paramsNode *yaml.Node, pathPrefix string) {
 	var name string
+	var keyNode *yaml.Node
 	for i, param := range paramsNode.Content {
 		if i%2 == 0 {
 			name = param.Value
+			keyNode = param
 			continue
 		}
 		def := fmt.Sprintf("%s%s", pathPrefix, name)
@@ -131,6 +212,7 @@ func (index *SpecIndex) extractComponentParameters(paramsNode *yaml.Node, pathPr
 			Definition: def,
 			Name:       name,
 			Node:       param,
+			KeyNode:    keyNode,
 		}
 		index.allParameters[def] = ref
 	}
@@ -138,9 +220,11 @@ func (index *SpecIndex) extractComponentParameters(paramsNode *yaml.Node, pathPr
 
 func (index *SpecIndex) extractComponentRequestBodies(requestBodiesNode *yaml.Node, pathPrefix string) {
 	var name string
+	var keyNode *yaml.Node
 	for i, reqBod := range requestBodiesNode.Content {
 		if i%2 == 0 {
 			name = reqBod.Value
+			keyNode = reqBod
 			continue
 		}
 		def := fmt.Sprintf("%s%s", pathPrefix, name)
@@ -148,6 +232,7 @@ func (index *SpecIndex) extractComponentRequestBodies(requestBodiesNode *yaml.No
 			Definition: def,
 			Name:       name,
 			Node:       reqBod,
+			KeyNode:    keyNode,
 		}
 		index.allRequestBodies[def] = ref
 	}
@@ -155,9 +240,11 @@ func (index *SpecIndex) extractComponentRequestBodies(requestBodiesNode *yaml.No
 
 func (index *SpecIndex) extractComponentResponses(responsesNode *yaml.Node, pathPrefix string) {
 	var name string
+	var keyNode *yaml.Node
 	for i, response := range responsesNode.Content {
 		if i%2 == 0 {
 			name = response.Value
+			keyNode = response
 			continue
 		}
 		def := fmt.Sprintf("%s%s", pathPrefix, name)
@@ -165,6 +252,7 @@ func (index *SpecIndex) extractComponentResponses(responsesNode *yaml.Node, path
 			Definition: def,
 			Name:       name,
 			Node:       response,
+			KeyNode:    keyNode,
 		}
 		index.allResponses[def] = ref
 	}
@@ -172,9 +260,11 @@ func (index *SpecIndex) extractComponentResponses(responsesNode *yaml.Node, path
 
 func (index *SpecIndex) extractComponentHeaders(headersNode *yaml.Node, pathPrefix string) {
 	var name string
+	var keyNode *yaml.Node
 	for i, header := range headersNode.Content {
 		if i%2 == 0 {
 			name = header.Value
+			keyNode = header
 			continue
 		}
 		def := fmt.Sprintf("%s%s", pathPrefix, name)
@@ -182,6 +272,7 @@ func (index *SpecIndex) extractComponentHeaders(headersNode *yaml.Node, pathPref
 			Definition: def,
 			Name:       name,
 			Node:       header,
+			KeyNode:    keyNode,
 		}
 		index.allHeaders[def] = ref
 	}
@@ -189,9 +280,11 @@ func (index *SpecIndex) extractComponentHeaders(headersNode *yaml.Node, pathPref
 
 func (index *SpecIndex) extractComponentCallbacks(callbacksNode *yaml.Node, pathPrefix string) {
 	var name string
+	var keyNode *yaml.Node
 	for i, callback := range callbacksNode.Content {
 		if i%2 == 0 {
 			name = callback.Value
+			keyNode = callback
 			continue
 		}
 		def := fmt.Sprintf("%s%s", pathPrefix, name)
@@ -199,6 +292,7 @@ func (index *SpecIndex) extractComponentCallbacks(callbacksNode *yaml.Node, path
 			Definition: def,
 			Name:       name,
 			Node:       callback,
+			KeyNode:    keyNode,
 		}
 		index.allCallbacks[def] = ref
 	}
@@ -206,9 +300,11 @@ func (index *SpecIndex) extractComponentCallbacks(callbacksNode *yaml.Node, path
 
 func (index *SpecIndex) extractComponentLinks(linksNode *yaml.Node, pathPrefix string) {
 	var name string
+	var keyNode *yaml.Node
 	for i, link := range linksNode.Content {
 		if i%2 == 0 {
 			name = link.Value
+			keyNode = link
 			continue
 		}
 		def := fmt.Sprintf("%s%s", pathPrefix, name)
@@ -216,6 +312,7 @@ func (index *SpecIndex) extractComponentLinks(linksNode *yaml.Node, pathPrefix s
 			Definition: def,
 			Name:       name,
 			Node:       link,
+			KeyNode:    keyNode,
 		}
 		index.allLinks[def] = ref
 	}
@@ -223,9 +320,11 @@ func (index *SpecIndex) extractComponentLinks(linksNode *yaml.Node, pathPrefix s
 
 func (index *SpecIndex) extractComponentExamples(examplesNode *yaml.Node, pathPrefix string) {
 	var name string
+	var keyNode *yaml.Node
 	for i, example := range examplesNode.Content {
 		if i%2 == 0 {
 			name = example.Value
+			keyNode = example
 			continue
 		}
 		def := fmt.Sprintf("%s%s", pathPrefix, name)
@@ -233,6 +332,7 @@ func (index *SpecIndex) extractComponentExamples(examplesNode *yaml.Node, pathPr
 			Definition: def,
 			Name:       name,
 			Node:       example,
+			KeyNode:    keyNode,
 		}
 		index.allExamples[def] = ref
 	}
@@ -240,18 +340,25 @@ func (index *SpecIndex) extractComponentExamples(examplesNode *yaml.Node, pathPr
 
 func (index *SpecIndex) extractComponentSecuritySchemes(securitySchemesNode *yaml.Node, pathPrefix string) {
 	var name string
-	for i, secScheme := range securitySchemesNode.Content {
+	var keyNode *yaml.Node
+	for i, schema := range securitySchemesNode.Content {
 		if i%2 == 0 {
-			name = secScheme.Value
+			name = schema.Value
+			keyNode = schema
 			continue
 		}
 		def := fmt.Sprintf("%s%s", pathPrefix, name)
+		fullDef := fmt.Sprintf("%s%s", index.specAbsolutePath, def)
+
 		ref := &Reference{
-			Definition: def,
-			Name:       name,
-			Node:       secScheme,
-			ParentNode: securitySchemesNode,
-			Path:       fmt.Sprintf("$.components.securitySchemes.%s", name),
+			FullDefinition:        fullDef,
+			Definition:            def,
+			Name:                  name,
+			Node:                  schema,
+			KeyNode:               keyNode,
+			Path:                  fmt.Sprintf("$.components.securitySchemes.%s", name),
+			ParentNode:            securitySchemesNode,
+			RequiredRefProperties: extractDefinitionRequiredRefProperties(securitySchemesNode, map[string][]string{}, fullDef, index),
 		}
 		index.allSecuritySchemes[def] = ref
 	}
@@ -271,13 +378,33 @@ func (index *SpecIndex) countUniqueInlineDuplicates() int {
 	return unique
 }
 
-func (index *SpecIndex) scanOperationParams(params []*yaml.Node, pathItemNode *yaml.Node, method string) {
+func seekRefEnd(index *SpecIndex, refName string) *Reference {
+	ref, _ := index.SearchIndexForReference(refName)
+	if ref != nil {
+		if ok, _, v := utils.IsNodeRefValue(ref.Node); ok {
+			return seekRefEnd(ref.Index, v)
+		}
+	}
+	return ref
+}
+
+func (index *SpecIndex) scanOperationParams(params []*yaml.Node, keyNode, pathItemNode *yaml.Node, method string) {
 	for i, param := range params {
 		// param is ref
 		if len(param.Content) > 0 && param.Content[0].Value == "$ref" {
 
 			paramRefName := param.Content[1].Value
 			paramRef := index.allMappedRefs[paramRefName]
+			if paramRef == nil {
+				// could be in the rolodex
+				ref := seekRefEnd(index, paramRefName)
+				if ref != nil {
+					paramRef = ref
+					if strings.Contains(paramRefName, "%") {
+						paramRefName, _ = url.QueryUnescape(paramRefName)
+					}
+				}
+			}
 
 			if index.paramOpRefs[pathItemNode.Value] == nil {
 				index.paramOpRefs[pathItemNode.Value] = make(map[string]map[string][]*Reference)
@@ -291,9 +418,9 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, pathItemNode *y
 
 			// if this is a duplicate, add an error and ignore it
 			if index.paramOpRefs[pathItemNode.Value][method][paramRefName] != nil {
-				path := fmt.Sprintf("$.paths.%s.%s.parameters[%d]", pathItemNode.Value, method, i)
+				path := fmt.Sprintf("$.paths['%s'].%s.parameters[%d]", pathItemNode.Value, method, i)
 				if method == "top" {
-					path = fmt.Sprintf("$.paths.%s.parameters[%d]", pathItemNode.Value, i)
+					path = fmt.Sprintf("$.paths['%s'].parameters[%d]", pathItemNode.Value, i)
 				}
 
 				index.operationParamErrors = append(index.operationParamErrors, &IndexingError{
@@ -304,8 +431,7 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, pathItemNode *y
 				})
 			} else {
 				if paramRef != nil {
-					index.paramOpRefs[pathItemNode.Value][method][paramRefName] =
-						append(index.paramOpRefs[pathItemNode.Value][method][paramRefName], paramRef)
+					index.paramOpRefs[pathItemNode.Value][method][paramRefName] = append(index.paramOpRefs[pathItemNode.Value][method][paramRefName], paramRef)
 				}
 			}
 
@@ -316,9 +442,9 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, pathItemNode *y
 			// param is inline.
 			_, vn := utils.FindKeyNode("name", param.Content)
 
-			path := fmt.Sprintf("$.paths.%s.%s.parameters[%d]", pathItemNode.Value, method, i)
+			path := fmt.Sprintf("$.paths['%s'].%s.parameters[%d]", pathItemNode.Value, method, i)
 			if method == "top" {
-				path = fmt.Sprintf("$.paths.%s.parameters[%d]", pathItemNode.Value, i)
+				path = fmt.Sprintf("$.paths['%s'].parameters[%d]", pathItemNode.Value, i)
 			}
 
 			if vn == nil {
@@ -335,6 +461,7 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, pathItemNode *y
 				Definition: vn.Value,
 				Name:       vn.Value,
 				Node:       param,
+				KeyNode:    keyNode,
 				Path:       path,
 			}
 			if index.paramOpRefs[pathItemNode.Value] == nil {
@@ -360,9 +487,9 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, pathItemNode *y
 
 					if currentIn != nil && checkIn != nil && currentIn.Value == checkIn.Value {
 
-						path := fmt.Sprintf("$.paths.%s.%s.parameters[%d]", pathItemNode.Value, method, i)
+						path := fmt.Sprintf("$.paths['%s'].%s.parameters[%d]", pathItemNode.Value, method, i)
 						if method == "top" {
-							path = fmt.Sprintf("$.paths.%s.parameters[%d]", pathItemNode.Value, i)
+							path = fmt.Sprintf("$.paths['%s'].parameters[%d]", pathItemNode.Value, i)
 						}
 
 						index.operationParamErrors = append(index.operationParamErrors, &IndexingError{
@@ -372,13 +499,11 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, pathItemNode *y
 							Path: path,
 						})
 					} else {
-						index.paramOpRefs[pathItemNode.Value][method][ref.Name] =
-							append(index.paramOpRefs[pathItemNode.Value][method][ref.Name], ref)
+						index.paramOpRefs[pathItemNode.Value][method][ref.Name] = append(index.paramOpRefs[pathItemNode.Value][method][ref.Name], ref)
 					}
 				}
 			} else {
-				index.paramOpRefs[pathItemNode.Value][method][ref.Name] =
-					append(index.paramOpRefs[pathItemNode.Value][method][ref.Name], ref)
+				index.paramOpRefs[pathItemNode.Value][method][ref.Name] = append(index.paramOpRefs[pathItemNode.Value][method][ref.Name], ref)
 			}
 			continue
 		}
@@ -395,7 +520,6 @@ func runIndexFunction(funcs []func() int, wg *sync.WaitGroup) {
 }
 
 func GenerateCleanSpecConfigBaseURL(baseURL *url.URL, dir string, includeFile bool) string {
-
 	cleanedPath := baseURL.Path // not cleaned yet!
 
 	// create a slice of path segments from existing path
@@ -439,11 +563,21 @@ func GenerateCleanSpecConfigBaseURL(baseURL *url.URL, dir string, includeFile bo
 		} else {
 			p = cleanedPath
 		}
-
 	}
-	if strings.HasSuffix(p, "/") {
-		p = p[:len(p)-1]
-	}
-	return p
+	return strings.TrimSuffix(p, "/")
+}
 
+func syncMapToMap[K comparable, V any](sm *sync.Map) map[K]V {
+	if sm == nil {
+		return nil
+	}
+
+	m := make(map[K]V)
+
+	sm.Range(func(key, value interface{}) bool {
+		m[key.(K)] = value.(V)
+		return true
+	})
+
+	return m
 }

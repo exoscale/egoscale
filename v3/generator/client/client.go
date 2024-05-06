@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"go/format"
 	"log"
-	"net/url"
+	"log/slog"
 	"os"
 	"strings"
 	"text/template"
@@ -13,6 +13,7 @@ import (
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/pb33f/libopenapi"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
 )
 
 // Generate go client from OpenAPI spec servers into a go file.
@@ -39,23 +40,21 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	)
 	`, packageName))
 
-	for _, s := range r.Model.Servers {
-		api, err := extractAPIName(s)
-		if err != nil {
-			return err
-		}
-
-		if api != "api" {
-			// Skip generating code for pre-production "ppapi" server.
-			continue
-		}
-
-		srv, err := renderClient(s)
-		if err != nil {
-			return err
-		}
-		output.Write(srv)
+	if len(r.Model.Servers) == 0 {
+		slog.Error("skip client generation", slog.Int("servers_len", len(r.Model.Servers)))
+		return nil
 	}
+
+	// The spec is returning only production server.
+	if len(r.Model.Servers) != 1 {
+		slog.Error("more than one server found", slog.Int("servers_len", len(r.Model.Servers)))
+	}
+
+	srv, err := renderClient(r.Model.Servers[0])
+	if err != nil {
+		return err
+	}
+	output.Write(srv)
 
 	if os.Getenv("GENERATOR_DEBUG") == "client" {
 		fmt.Println(output.String())
@@ -69,25 +68,6 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	return os.WriteFile(path, content, os.ModePerm)
 }
 
-func extractAPIName(s *v3.Server) (string, error) {
-	var URL string
-	for k, v := range s.Variables {
-		URL = strings.Replace(s.URL, fmt.Sprintf("{%s}", k), v.Default, 1)
-	}
-
-	u, err := url.Parse(URL)
-	if err != nil {
-		return "", err
-	}
-
-	h := strings.Split(u.Host, "-")
-	if len(h) < 2 {
-		return "", fmt.Errorf("malformed server host: %s", u.Host)
-	}
-
-	return h[0], nil
-}
-
 // Template use client.tmpl file
 type Template struct {
 	Enum           string
@@ -97,7 +77,14 @@ type Template struct {
 // renderClient using the client.tmpl template.
 func renderClient(s *v3.Server) ([]byte, error) {
 	var client Template
-	for k, v := range s.Variables {
+
+	if orderedmap.Len(s.Variables) == 0 {
+		return nil, fmt.Errorf("no server variables defined")
+	}
+
+	for pair := s.Variables.First(); pair != nil; pair = pair.Next() {
+		k, v := pair.Key(), pair.Value()
+
 		if k != "zone" {
 			// Supporting only zone variable for Exoscale
 			continue

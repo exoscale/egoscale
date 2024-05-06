@@ -126,7 +126,7 @@ func addSharedOperationProperties(left, right low.SharedOperations, changes *[]*
 	// tags
 	if len(left.GetTags().Value) > 0 || len(right.GetTags().Value) > 0 {
 		ExtractStringValueSliceChanges(left.GetTags().Value, right.GetTags().Value,
-			changes, v3.TagsLabel, false)
+			changes, v3.TagsLabel, true)
 	}
 
 	// summary
@@ -262,8 +262,15 @@ func CompareOperations(l, r any) *OperationChanges {
 				nil)
 		}
 		if lParamsUntyped.IsEmpty() && !rParamsUntyped.IsEmpty() {
+			rParams := rParamsUntyped.Value.([]low.ValueReference[*v2.Parameter])
+			breaking := false
+			for i := range rParams {
+				if rParams[i].Value.Required.Value {
+					breaking = true
+				}
+			}
 			CreateChange(&changes, PropertyAdded, v3.ParametersLabel,
-				nil, rParamsUntyped.ValueNode, true, nil,
+				nil, rParamsUntyped.ValueNode, breaking, nil,
 				rParamsUntyped.Value)
 		}
 
@@ -358,8 +365,15 @@ func CompareOperations(l, r any) *OperationChanges {
 				nil)
 		}
 		if lParamsUntyped.IsEmpty() && !rParamsUntyped.IsEmpty() {
+			rParams := rParamsUntyped.Value.([]low.ValueReference[*v3.Parameter])
+			breaking := false
+			for i := range rParams {
+				if rParams[i].Value.Required.Value {
+					breaking = true
+				}
+			}
 			CreateChange(&changes, PropertyAdded, v3.ParametersLabel,
-				nil, rParamsUntyped.ValueNode, true, nil,
+				nil, rParamsUntyped.ValueNode, breaking, nil,
 				rParamsUntyped.Value)
 		}
 
@@ -405,7 +419,6 @@ func CompareOperations(l, r any) *OperationChanges {
 		oc.ServerChanges = checkServers(lOperation.Servers, rOperation.Servers)
 		oc.ExtensionChanges = CompareExtensions(lOperation.Extensions, rOperation.Extensions)
 
-		// todo: callbacks
 	}
 	CheckProperties(props)
 	oc.PropertyChanges = NewPropertyChanges(changes)

@@ -5,14 +5,15 @@ package model
 
 import (
 	"fmt"
-	"golang.org/x/exp/slices"
 	"sort"
 	"sync"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/base"
 	v3 "github.com/pb33f/libopenapi/datamodel/low/v3"
-	"github.com/pb33f/libopenapi/utils"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -24,16 +25,17 @@ import (
 // PropertyChanges.Changes, and not in the AnyOfChanges property.
 type SchemaChanges struct {
 	*PropertyChanges
-	DiscriminatorChanges  *DiscriminatorChanges     `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
-	AllOfChanges          []*SchemaChanges          `json:"allOf,omitempty" yaml:"allOf,omitempty"`
-	AnyOfChanges          []*SchemaChanges          `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
-	OneOfChanges          []*SchemaChanges          `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
-	NotChanges            *SchemaChanges            `json:"not,omitempty" yaml:"not,omitempty"`
-	ItemsChanges          *SchemaChanges            `json:"items,omitempty" yaml:"items,omitempty"`
-	SchemaPropertyChanges map[string]*SchemaChanges `json:"properties,omitempty" yaml:"properties,omitempty"`
-	ExternalDocChanges    *ExternalDocChanges       `json:"externalDoc,omitempty" yaml:"externalDoc,omitempty"`
-	XMLChanges            *XMLChanges               `json:"xml,omitempty" yaml:"xml,omitempty"`
-	ExtensionChanges      *ExtensionChanges         `json:"extensions,omitempty" yaml:"extensions,omitempty"`
+	DiscriminatorChanges        *DiscriminatorChanges     `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
+	AllOfChanges                []*SchemaChanges          `json:"allOf,omitempty" yaml:"allOf,omitempty"`
+	AnyOfChanges                []*SchemaChanges          `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
+	OneOfChanges                []*SchemaChanges          `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
+	NotChanges                  *SchemaChanges            `json:"not,omitempty" yaml:"not,omitempty"`
+	ItemsChanges                *SchemaChanges            `json:"items,omitempty" yaml:"items,omitempty"`
+	SchemaPropertyChanges       map[string]*SchemaChanges `json:"properties,omitempty" yaml:"properties,omitempty"`
+	ExternalDocChanges          *ExternalDocChanges       `json:"externalDoc,omitempty" yaml:"externalDoc,omitempty"`
+	XMLChanges                  *XMLChanges               `json:"xml,omitempty" yaml:"xml,omitempty"`
+	ExtensionChanges            *ExtensionChanges         `json:"extensions,omitempty" yaml:"extensions,omitempty"`
+	AdditionalPropertiesChanges *SchemaChanges            `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
 
 	// 3.1 specifics
 	IfChanges                    *SchemaChanges            `json:"if,omitempty" yaml:"if,omitempty"`
@@ -102,6 +104,9 @@ func (s *SchemaChanges) GetAllChanges() []*Change {
 	if s.UnevaluatedPropertiesChanges != nil {
 		changes = append(changes, s.UnevaluatedPropertiesChanges.GetAllChanges()...)
 	}
+	if s.AdditionalPropertiesChanges != nil {
+		changes = append(changes, s.AdditionalPropertiesChanges.GetAllChanges()...)
+	}
 	if s.SchemaPropertyChanges != nil {
 		for n := range s.SchemaPropertyChanges {
 			if s.SchemaPropertyChanges[n] != nil {
@@ -137,6 +142,10 @@ func (s *SchemaChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns a count of the total number of changes made to this schema and all sub-schemas
 func (s *SchemaChanges) TotalChanges() int {
+	if s == nil {
+		return 0
+	}
+
 	t := s.PropertyChanges.TotalChanges()
 	if s.DiscriminatorChanges != nil {
 		t += s.DiscriminatorChanges.TotalChanges()
@@ -185,6 +194,9 @@ func (s *SchemaChanges) TotalChanges() int {
 	if s.UnevaluatedPropertiesChanges != nil {
 		t += s.UnevaluatedPropertiesChanges.TotalChanges()
 	}
+	if s.AdditionalPropertiesChanges != nil {
+		t += s.AdditionalPropertiesChanges.TotalChanges()
+	}
 	if s.SchemaPropertyChanges != nil {
 		for n := range s.SchemaPropertyChanges {
 			if s.SchemaPropertyChanges[n] != nil {
@@ -216,6 +228,10 @@ func (s *SchemaChanges) TotalChanges() int {
 
 // TotalBreakingChanges returns the total number of breaking changes made to this schema and all sub-schemas.
 func (s *SchemaChanges) TotalBreakingChanges() int {
+	if s == nil {
+		return 0
+	}
+
 	t := s.PropertyChanges.TotalBreakingChanges()
 	if s.DiscriminatorChanges != nil {
 		t += s.DiscriminatorChanges.TotalBreakingChanges()
@@ -267,6 +283,9 @@ func (s *SchemaChanges) TotalBreakingChanges() int {
 	if s.UnevaluatedPropertiesChanges != nil {
 		t += s.UnevaluatedPropertiesChanges.TotalBreakingChanges()
 	}
+	if s.AdditionalPropertiesChanges != nil {
+		t += s.AdditionalPropertiesChanges.TotalBreakingChanges()
+	}
 	if s.DependentSchemasChanges != nil {
 		for n := range s.DependentSchemasChanges {
 			t += s.DependentSchemasChanges[n].TotalBreakingChanges()
@@ -311,35 +330,47 @@ func CompareSchemas(l, r *base.SchemaProxy) *SchemaChanges {
 	if l != nil && r != nil {
 
 		// if left proxy is a reference and right is a reference (we won't recurse into them)
-		if l.IsSchemaReference() && r.IsSchemaReference() {
+		if l.IsReference() && r.IsReference() {
 			// points to the same schema
-			if l.GetSchemaReference() == r.GetSchemaReference() {
+			if l.GetReference() == r.GetReference() {
 				// there is nothing to be done at this point.
 				return nil
 			} else {
 				// references are different, that's all we care to know.
 				CreateChange(&changes, Modified, v3.RefLabel,
-					l.GetValueNode().Content[1], r.GetValueNode().Content[1], true, l.GetSchemaReference(),
-					r.GetSchemaReference())
+					l.GetValueNode().Content[1], r.GetValueNode().Content[1], true, l.GetReference(),
+					r.GetReference())
 				sc.PropertyChanges = NewPropertyChanges(changes)
 				return sc
 			}
 		}
 
 		// changed from inline to ref
-		if !l.IsSchemaReference() && r.IsSchemaReference() {
-			CreateChange(&changes, Modified, v3.RefLabel,
-				l.GetValueNode(), r.GetValueNode().Content[1], true, l, r.GetSchemaReference())
-			sc.PropertyChanges = NewPropertyChanges(changes)
-			return sc // we're done here
+		if !l.IsReference() && r.IsReference() {
+			// check if the referenced schema matches or not
+			// https://github.com/pb33f/libopenapi/issues/218
+			lHash := l.Schema().Hash()
+			rHash := r.Schema().Hash()
+			if lHash != rHash {
+				CreateChange(&changes, Modified, v3.RefLabel,
+					l.GetValueNode(), r.GetValueNode().Content[1], true, l, r.GetReference())
+				sc.PropertyChanges = NewPropertyChanges(changes)
+				return sc // we're done here
+			}
 		}
 
 		// changed from ref to inline
-		if l.IsSchemaReference() && !r.IsSchemaReference() {
-			CreateChange(&changes, Modified, v3.RefLabel,
-				l.GetValueNode().Content[1], r.GetValueNode(), true, l.GetSchemaReference(), r)
-			sc.PropertyChanges = NewPropertyChanges(changes)
-			return sc // done, nothing else to do.
+		if l.IsReference() && !r.IsReference() {
+			// check if the referenced schema matches or not
+			// https://github.com/pb33f/libopenapi/issues/218
+			lHash := l.Schema().Hash()
+			rHash := r.Schema().Hash()
+			if lHash != rHash {
+				CreateChange(&changes, Modified, v3.RefLabel,
+					l.GetValueNode().Content[1], r.GetValueNode(), true, l.GetReference(), r)
+				sc.PropertyChanges = NewPropertyChanges(changes)
+				return sc // done, nothing else to do.
+			}
 		}
 
 		lSchema := l.Schema()
@@ -384,10 +415,8 @@ func CompareSchemas(l, r *base.SchemaProxy) *SchemaChanges {
 		totalChecks := totalProperties + depsTotal + patternsTotal + 3
 		completedChecks := 0
 		for completedChecks < totalChecks {
-			select {
-			case <-doneChan:
-				completedChecks++
-			}
+			<-doneChan
+			completedChecks++
 		}
 	}
 	// done
@@ -424,7 +453,7 @@ func checkSchemaXML(lSchema *base.Schema, rSchema *base.Schema, changes *[]*Chan
 
 func checkMappedSchemaOfASchema(
 	lSchema,
-	rSchema map[low.KeyReference[string]]low.ValueReference[*base.SchemaProxy],
+	rSchema *orderedmap.Map[low.KeyReference[string], low.ValueReference[*base.SchemaProxy]],
 	changes *[]*Change,
 	doneChan chan bool,
 ) (map[string]*SchemaChanges, int) {
@@ -437,15 +466,15 @@ func checkMappedSchemaOfASchema(
 	rEntities := make(map[string]*base.SchemaProxy)
 	rKeyNodes := make(map[string]*yaml.Node)
 
-	for w := range lSchema {
-		lProps = append(lProps, w.Value)
-		lEntities[w.Value] = lSchema[w].Value
-		lKeyNodes[w.Value] = w.KeyNode
+	for pair := orderedmap.First(lSchema); pair != nil; pair = pair.Next() {
+		lProps = append(lProps, pair.Key().Value)
+		lEntities[pair.Key().Value] = pair.Value().Value
+		lKeyNodes[pair.Key().Value] = pair.Key().KeyNode
 	}
-	for w := range rSchema {
-		rProps = append(rProps, w.Value)
-		rEntities[w.Value] = rSchema[w].Value
-		rKeyNodes[w.Value] = w.KeyNode
+	for pair := orderedmap.First(rSchema); pair != nil; pair = pair.Next() {
+		rProps = append(rProps, pair.Key().Value)
+		rEntities[pair.Key().Value] = pair.Value().Value
+		rKeyNodes[pair.Key().Value] = pair.Key().KeyNode
 	}
 	sort.Strings(lProps)
 	sort.Strings(rProps)
@@ -728,18 +757,36 @@ func checkSchemaPropertyChanges(
 		New:       rSchema,
 	})
 
-	// AdditionalProperties (only if not an object)
-	if !utils.IsNodeMap(lSchema.AdditionalProperties.ValueNode) &&
-		!utils.IsNodeMap(rSchema.AdditionalProperties.ValueNode) {
-		props = append(props, &PropertyCheck{
-			LeftNode:  lSchema.AdditionalProperties.ValueNode,
-			RightNode: rSchema.AdditionalProperties.ValueNode,
-			Label:     v3.AdditionalPropertiesLabel,
-			Changes:   changes,
-			Breaking:  false,
-			Original:  lSchema,
-			New:       rSchema,
-		})
+	// AdditionalProperties
+	if lSchema.AdditionalProperties.Value != nil && rSchema.AdditionalProperties.Value != nil {
+		if lSchema.AdditionalProperties.Value.IsA() && rSchema.AdditionalProperties.Value.IsA() {
+			if !low.AreEqual(lSchema.AdditionalProperties.Value.A, rSchema.AdditionalProperties.Value.A) {
+				sc.AdditionalPropertiesChanges = CompareSchemas(lSchema.AdditionalProperties.Value.A, rSchema.AdditionalProperties.Value.A)
+			}
+		} else {
+			if lSchema.AdditionalProperties.Value.IsB() && rSchema.AdditionalProperties.Value.IsB() {
+				if lSchema.AdditionalProperties.Value.B != rSchema.AdditionalProperties.Value.B {
+					CreateChange(changes, Modified, v3.AdditionalPropertiesLabel,
+						lSchema.AdditionalProperties.ValueNode, rSchema.AdditionalProperties.ValueNode, true,
+						lSchema.AdditionalProperties.Value.B, rSchema.AdditionalProperties.Value.B)
+				}
+			} else {
+				CreateChange(changes, Modified, v3.AdditionalPropertiesLabel,
+					lSchema.AdditionalProperties.ValueNode, rSchema.AdditionalProperties.ValueNode, true,
+					lSchema.AdditionalProperties.Value.B, rSchema.AdditionalProperties.Value.B)
+			}
+		}
+	}
+
+	// added AdditionalProperties
+	if lSchema.AdditionalProperties.Value == nil && rSchema.AdditionalProperties.Value != nil {
+		CreateChange(changes, ObjectAdded, v3.AdditionalPropertiesLabel,
+			nil, rSchema.AdditionalProperties.ValueNode, true, nil, rSchema.AdditionalProperties.Value)
+	}
+	// removed AdditionalProperties
+	if lSchema.AdditionalProperties.Value != nil && rSchema.AdditionalProperties.Value == nil {
+		CreateChange(changes, ObjectRemoved, v3.AdditionalPropertiesLabel,
+			lSchema.AdditionalProperties.ValueNode, nil, true, lSchema.AdditionalProperties.Value, nil)
 	}
 
 	// Description
@@ -880,10 +927,10 @@ func checkSchemaPropertyChanges(
 	j = make(map[string]int)
 	k = make(map[string]int)
 	for i := range lSchema.Enum.Value {
-		j[fmt.Sprint(lSchema.Enum.Value[i].Value)] = i
+		j[toString(lSchema.Enum.Value[i].Value)] = i
 	}
 	for i := range rSchema.Enum.Value {
-		k[fmt.Sprint(rSchema.Enum.Value[i].Value)] = i
+		k[toString(rSchema.Enum.Value[i].Value)] = i
 	}
 	for g := range k {
 		if _, ok := j[g]; !ok {
@@ -1107,20 +1154,6 @@ func checkSchemaPropertyChanges(
 
 	// check extensions
 	sc.ExtensionChanges = CompareExtensions(lSchema.Extensions, rSchema.Extensions)
-
-	// if additional properties is an object, then hash it
-	// AdditionalProperties (only if not an object)
-	if utils.IsNodeMap(lSchema.AdditionalProperties.ValueNode) ||
-		utils.IsNodeMap(rSchema.AdditionalProperties.ValueNode) {
-
-		lHash := low.GenerateHashString(lSchema.AdditionalProperties.ValueNode)
-		rHash := low.GenerateHashString(rSchema.AdditionalProperties.ValueNode)
-		if lHash != rHash {
-			CreateChange(changes, Modified, v3.AdditionalPropertiesLabel,
-				lSchema.AdditionalProperties.ValueNode, rSchema.AdditionalProperties.ValueNode, false,
-				lSchema.AdditionalProperties.Value, rSchema.AdditionalProperties.Value)
-		}
-	}
 
 	// check core properties
 	CheckProperties(props)

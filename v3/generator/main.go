@@ -6,11 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pb33f/libopenapi"
+
 	"github.com/exoscale/egoscale/v3/generator/client"
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/exoscale/egoscale/v3/generator/operations"
 	"github.com/exoscale/egoscale/v3/generator/schemas"
-	"github.com/pb33f/libopenapi"
 )
 
 //go:generate go run main.go ./source.yaml ../ v3
@@ -39,13 +40,13 @@ func main() {
 	}
 
 	if err := schemas.Generate(doc, filepath.Join(genPathDir, "/schemas.go"), packageName); err != nil {
-		log.Fatal(err)
+		log.Fatal("schemas: ", err)
 	}
 	if err := client.Generate(doc, filepath.Join(genPathDir, "/client.go"), packageName); err != nil {
-		log.Fatal(err)
+		log.Fatal("client: ", err)
 	}
 	if err := operations.Generate(doc, filepath.Join(genPathDir, "/operations.go"), packageName); err != nil {
-		log.Fatal(err)
+		log.Fatal("operations: ", err)
 	}
 
 	if err := os.MkdirAll(genPathDir, os.ModePerm); err != nil {

@@ -2,17 +2,17 @@ package schemas
 
 import (
 	"bytes"
+	"fmt"
 	"go/format"
 	"log/slog"
 	"os"
 	"strings"
 
-	"fmt"
-
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
-	"github.com/pb33f/libopenapi/datamodel/low"
+	"github.com/pb33f/libopenapi/orderedmap"
+	"gopkg.in/yaml.v3"
 )
 
 // TODO fix the OpenApi spec (duplicated resources)
@@ -38,21 +38,24 @@ import (
 )
 `, packageName))
 
-	err := helpers.ForEachMapSorted(result.Model.Components.Schemas, func(schemaName string, v any) error {
+	if result.Model.Components.Schemas == nil {
+		slog.Warn("no schema found in the spec")
+		return nil
+	}
+
+	for pair := orderedmap.SortAlpha(result.Model.Components.Schemas).First(); pair != nil; pair = pair.Next() {
+		schemaName, v := pair.Key(), pair.Value()
+
 		if _, ok := ignoredList[schemaName]; ok {
-			return nil
+			continue
 		}
 
-		r, err := RenderSchema(schemaName, v.(*base.SchemaProxy))
+		r, err := RenderSchema(schemaName, v)
 		if err != nil {
 			return err
 		}
 		output.Write(r)
 		output.WriteString("\n")
-		return nil
-	})
-	if err != nil {
-		return err
 	}
 
 	if os.Getenv("GENERATOR_DEBUG") == "schemas" {
@@ -89,17 +92,11 @@ func RenderSchema(schemaName string, s *base.SchemaProxy) ([]byte, error) {
 // This function is called if you are sure IsSimpleSchema(s *base.Schema) return true.
 // Add more simple type here.
 func RenderSimpleType(s *base.Schema) string {
-	typ, ok := s.Extensions["x-go-type"]
-	if ok {
-		t, ok := typ.(string)
+	if s.Extensions != nil {
+		typ, ok := s.Extensions.Get("x-go-type")
 		if ok {
-			return t
+			return typ.Value
 		}
-
-		slog.Error(
-			"invalid x-go-type extension type, fallback on original type",
-			slog.Any("type", typ),
-		)
 	}
 
 	if s.Format != "" {
@@ -208,11 +205,11 @@ func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 	definition += "const (\n"
 
 	for _, e := range s.Enum {
-		value := helpers.ToCamel(fmt.Sprint(e))
+		value := helpers.ToCamel(e.Value)
 		if typ == "string" {
-			value = fmt.Sprintf(`"%v"`, e)
+			value = fmt.Sprintf(`"%v"`, e.Value)
 		}
-		definition += typeName + helpers.ToCamel(fmt.Sprintf("%v", e)) + " " + typeName + " = " + value + "\n"
+		definition += typeName + helpers.ToCamel(e.Value) + " " + typeName + " = " + value + "\n"
 	}
 	definition += ")\n"
 
@@ -311,17 +308,22 @@ func renderValidation(s *base.Schema, required bool) string {
 
 func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string, error) {
 	definition := "type " + typeName + " struct {\n"
-	err := helpers.ForEachMapSorted(s.Properties, func(propName string, v any) error {
-		properties := v.(*base.SchemaProxy)
-
+	for pair := orderedmap.SortAlpha(s.Properties).First(); pair != nil; pair = pair.Next() {
+		propName, properties := pair.Key(), pair.Value()
 		prop := properties.Schema()
 		if prop == nil {
-			return nil
+			continue
 		}
 
 		var nullable = false
 		if prop.Nullable != nil {
 			nullable = *prop.Nullable
+		}
+
+		// https://github.com/pb33f/libopenapi/issues/283
+		// Wait for a fix to remove this check func.
+		if isNullableReference(properties.GetReferenceNode()) {
+			nullable = true
 		}
 
 		doc := renderDoc(prop)
@@ -353,17 +355,18 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			if !nullable && IsSimpleSchema(prop) {
 				pointer = ""
 			}
+
 			definition += camelName + " " + pointer + referenceName + tag + "\n"
-			return nil
+			continue
 		}
 
 		if prop.Type[0] == "array" {
 			array, err := renderArray(typeName+camelName, prop, output)
 			if err != nil {
-				return err
+				return "", err
 			}
 			definition += camelName + " " + array + tag + "\n"
-			return nil
+			continue
 		}
 
 		if IsSimpleSchema(prop) {
@@ -371,7 +374,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			if len(prop.Enum) > 0 {
 				output.WriteString(renderSimpleTypeEnum(typeName+camelName, prop))
 				definition += camelName + " " + typeName + camelName + tag + "\n"
-				return nil
+				continue
 			}
 
 			// To be discuss here, for the moment we bypass pointer on those types,
@@ -381,43 +384,37 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			// (only use custom schema, not schema reference for PUT request).
 			if !nullable && (prop.Type[0] == "string" || prop.Type[0] == "integer") {
 				definition += camelName + " " + RenderSimpleType(prop) + tag + "\n"
-				return nil
+				continue
 			}
 			definition += camelName + " " + pointer + RenderSimpleType(prop) + tag + "\n"
 
-			return nil
+			continue
 		}
 
 		// This is an OpenAPI free form object (deprecated).
 		// https://docs.42crunch.com/latest/content/oasv3/datavalidation/schema/v3-schema-object-without-properties.htm
 		// We recommend to use AdditionalProperties instead.
-		if len(prop.Properties) == 0 && prop.AdditionalProperties == nil {
+		if orderedmap.Len(prop.Properties) == 0 && prop.AdditionalProperties == nil {
 			definition += camelName + " map[string]any" + tag + "\n"
-			return nil
+			continue
 		}
 
 		// Render additional properties (map).
 		if prop.AdditionalProperties != nil {
 			Map, err := renderSimpleMap(typeName+camelName, prop, output)
 			if err != nil {
-				return err
+				return "", err
 			}
 			definition += camelName + " " + Map + tag + "\n"
-			return nil
+			continue
 		}
 
 		// Render new object from object property into the buffer.
 		if err := renderSchemaInternal(typeName+camelName, prop, output); err != nil {
-			return err
+			return "", err
 		}
 		definition += camelName + " " + pointer + typeName + camelName + tag + "\n"
-
-		return nil
-	})
-	if err != nil {
-		return "", err
 	}
-
 	return definition + "}\n\n", nil
 }
 
@@ -435,26 +432,32 @@ func isRequiredField(schemaName string, s *base.Schema) bool {
 func renderSimpleMap(typeName string, s *base.Schema, output *bytes.Buffer) (string, error) {
 	definition := "map[string]"
 
-	switch ap := s.AdditionalProperties.(type) {
-	case *base.SchemaProxy:
-		break
 	// https://swagger.io/docs/specification/data-models/dictionaries/#free-form
 	// There is two case for a free form object:
 	//  - additionalProperties: true
 	//  - additionalProperties: {}
-	// Here is the libopenapi representation of it.
-	case bool, map[low.KeyReference[string]]low.ValueReference[interface{}]:
+	// Here is the libopenapi representation of it:
+
+	//  - additionalProperties: true
+	if s.AdditionalProperties.IsB() {
 		return definition + "any", nil
-	default:
-		return "", fmt.Errorf("additional properties in: %s not supported: %#v", typeName, ap)
 	}
 
-	sp := s.AdditionalProperties.(*base.SchemaProxy)
+	//  - additionalProperties: object
+	if !s.AdditionalProperties.IsA() {
+		return "", fmt.Errorf("additional properties in: %s not supported", typeName)
+	}
+
+	sp := s.AdditionalProperties.A
 	if sp.IsReference() {
 		return definition + helpers.RenderReference(sp.GetReference()), nil
 	}
 
 	addl := sp.Schema()
+	//  - additionalProperties: {} empty object
+	if len(addl.Type) == 0 && orderedmap.Len(addl.Extensions) == 0 {
+		return definition + "any", nil
+	}
 	simple := IsSimpleSchema(addl)
 	if simple {
 		return definition + RenderSimpleType(addl), nil
@@ -475,7 +478,7 @@ func InferType(s *base.Schema) {
 			s.Type = []string{"array"}
 		}
 
-		if len(s.Properties) > 0 {
+		if orderedmap.Len(s.Properties) > 0 {
 			s.Type = []string{"object"}
 		}
 	}
@@ -502,4 +505,21 @@ func renderDoc(s *base.Schema) string {
 	}
 
 	return helpers.RenderDoc(doc)
+}
+
+// https://github.com/pb33f/libopenapi/issues/283
+func isNullableReference(node *yaml.Node) bool {
+	if node == nil || node.Content == nil {
+		return false
+	}
+
+	for i, c := range node.Content {
+		if c.Value == "nullable" {
+			if i+1 < len(node.Content) && node.Content[i+1].Value == "true" {
+				return true
+			}
+		}
+	}
+
+	return false
 }

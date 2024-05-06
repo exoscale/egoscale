@@ -235,7 +235,7 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 	}
 	if lPath.Get.IsEmpty() && !rPath.Get.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.GetLabel,
-			nil, rPath.Get.ValueNode, false, nil, lPath.Get.Value)
+			nil, rPath.Get.ValueNode, false, nil, rPath.Get.Value)
 	}
 
 	// put
@@ -335,41 +335,41 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 			nil)
 	}
 	if lPath.Parameters.IsEmpty() && !rPath.Parameters.IsEmpty() {
+		breaking := false
+		for i := range rPath.Parameters.Value {
+			param := rPath.Parameters.Value[i].Value
+			if param.Required.Value {
+				breaking = true
+				break
+			}
+		}
 		CreateChange(changes, PropertyAdded, v3.ParametersLabel,
-			nil, rPath.Parameters.ValueNode, true, nil,
+			nil, rPath.Parameters.ValueNode, breaking, nil,
 			rPath.Parameters.Value)
 	}
 
 	// collect up operations changes.
 	completedOperations := 0
 	for completedOperations < totalOps {
-		select {
-		case n := <-opChan:
-			switch n.label {
-			case v3.GetLabel:
-				pc.GetChanges = n.changes
-				break
-			case v3.PutLabel:
-				pc.PutChanges = n.changes
-				break
-			case v3.PostLabel:
-				pc.PostChanges = n.changes
-				break
-			case v3.DeleteLabel:
-				pc.DeleteChanges = n.changes
-				break
-			case v3.OptionsLabel:
-				pc.OptionsChanges = n.changes
-				break
-			case v2.HeadLabel:
-				pc.HeadChanges = n.changes
-				break
-			case v2.PatchLabel:
-				pc.PatchChanges = n.changes
-				break
-			}
-			completedOperations++
+		n := <-opChan
+		switch n.label {
+		case v3.GetLabel:
+			pc.GetChanges = n.changes
+		case v3.PutLabel:
+			pc.PutChanges = n.changes
+		case v3.PostLabel:
+			pc.PostChanges = n.changes
+		case v3.DeleteLabel:
+			pc.DeleteChanges = n.changes
+		case v3.OptionsLabel:
+			pc.OptionsChanges = n.changes
+		case v2.HeadLabel:
+			pc.HeadChanges = n.changes
+		case v2.PatchLabel:
+			pc.PatchChanges = n.changes
 		}
+		completedOperations++
+
 	}
 	pc.ExtensionChanges = CompareExtensions(lPath.Extensions, rPath.Extensions)
 	return props
@@ -589,44 +589,42 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 			nil)
 	}
 	if lPath.Parameters.IsEmpty() && !rPath.Parameters.IsEmpty() {
+		breaking := false
+		for i := range rPath.Parameters.Value {
+			param := rPath.Parameters.Value[i].Value
+			if param.Required.Value {
+				breaking = true
+				break
+			}
+		}
 		CreateChange(changes, PropertyAdded, v3.ParametersLabel,
-			nil, rPath.Parameters.ValueNode, true, nil,
+			nil, rPath.Parameters.ValueNode, breaking, nil,
 			rPath.Parameters.Value)
 	}
 
 	// collect up operations changes.
 	completedOperations := 0
 	for completedOperations < totalOps {
-		select {
-		case n := <-opChan:
-			switch n.label {
-			case v3.GetLabel:
-				pc.GetChanges = n.changes
-				break
-			case v3.PutLabel:
-				pc.PutChanges = n.changes
-				break
-			case v3.PostLabel:
-				pc.PostChanges = n.changes
-				break
-			case v3.DeleteLabel:
-				pc.DeleteChanges = n.changes
-				break
-			case v3.OptionsLabel:
-				pc.OptionsChanges = n.changes
-				break
-			case v3.HeadLabel:
-				pc.HeadChanges = n.changes
-				break
-			case v3.PatchLabel:
-				pc.PatchChanges = n.changes
-				break
-			case v3.TraceLabel:
-				pc.TraceChanges = n.changes
-				break
-			}
-			completedOperations++
+		n := <-opChan
+		switch n.label {
+		case v3.GetLabel:
+			pc.GetChanges = n.changes
+		case v3.PutLabel:
+			pc.PutChanges = n.changes
+		case v3.PostLabel:
+			pc.PostChanges = n.changes
+		case v3.DeleteLabel:
+			pc.DeleteChanges = n.changes
+		case v3.OptionsLabel:
+			pc.OptionsChanges = n.changes
+		case v3.HeadLabel:
+			pc.HeadChanges = n.changes
+		case v3.PatchLabel:
+			pc.PatchChanges = n.changes
+		case v3.TraceLabel:
+			pc.TraceChanges = n.changes
 		}
+		completedOperations++
 	}
 	pc.ExtensionChanges = CompareExtensions(lPath.Extensions, rPath.Extensions)
 }

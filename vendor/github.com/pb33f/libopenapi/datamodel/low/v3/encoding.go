@@ -4,29 +4,34 @@
 package v3
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
+	"strings"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
-	"strings"
 )
 
 // Encoding represents a low-level OpenAPI 3+ Encoding object
 //   - https://spec.openapis.org/oas/v3.1.0#encoding-object
 type Encoding struct {
 	ContentType   low.NodeReference[string]
-	Headers       low.NodeReference[map[low.KeyReference[string]]low.ValueReference[*Header]]
+	Headers       low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*Header]]]
 	Style         low.NodeReference[string]
 	Explode       low.NodeReference[bool]
 	AllowReserved low.NodeReference[bool]
+	KeyNode       *yaml.Node
+	RootNode      *yaml.Node
 	*low.Reference
 }
 
 // FindHeader attempts to locate a Header with the supplied name
 func (en *Encoding) FindHeader(hType string) *low.ValueReference[*Header] {
-	return low.FindItemInMap[*Header](hType, en.Headers.Value)
+	return low.FindItemInOrderedMap[*Header](hType, en.Headers.Value)
 }
 
 // Hash will return a consistent SHA256 Hash of the Encoding object
@@ -35,19 +40,8 @@ func (en *Encoding) Hash() [32]byte {
 	if en.ContentType.Value != "" {
 		f = append(f, en.ContentType.Value)
 	}
-	if len(en.Headers.Value) > 0 {
-		l := make([]string, len(en.Headers.Value))
-		keys := make(map[string]low.ValueReference[*Header])
-		z := 0
-		for k := range en.Headers.Value {
-			keys[k.Value] = en.Headers.Value[k]
-			l[z] = k.Value
-			z++
-		}
-
-		for k := range en.Headers.Value {
-			f = append(f, fmt.Sprintf("%s-%x", k.Value, en.Headers.Value[k].Value.Hash()))
-		}
+	for pair := orderedmap.First(orderedmap.SortAlpha(en.Headers.Value)); pair != nil; pair = pair.Next() {
+		f = append(f, fmt.Sprintf("%s-%x", pair.Key().Value, pair.Value().Value.Hash()))
 	}
 	if en.Style.Value != "" {
 		f = append(f, en.Style.Value)
@@ -58,16 +52,18 @@ func (en *Encoding) Hash() [32]byte {
 }
 
 // Build will extract all Header objects from supplied node.
-func (en *Encoding) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
+func (en *Encoding) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
+	en.KeyNode = keyNode
 	root = utils.NodeAlias(root)
+	en.RootNode = root
 	utils.CheckForMergeNodes(root)
 	en.Reference = new(low.Reference)
-	headers, hL, hN, err := low.ExtractMap[*Header](HeadersLabel, root, idx)
+	headers, hL, hN, err := low.ExtractMap[*Header](ctx, HeadersLabel, root, idx)
 	if err != nil {
 		return err
 	}
 	if headers != nil {
-		en.Headers = low.NodeReference[map[low.KeyReference[string]]low.ValueReference[*Header]]{
+		en.Headers = low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*Header]]]{
 			Value:     headers,
 			KeyNode:   hL,
 			ValueNode: hN,

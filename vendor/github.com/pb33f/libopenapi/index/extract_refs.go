@@ -6,6 +6,9 @@ package index
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pb33f/libopenapi/utils"
@@ -23,7 +26,6 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 	if len(node.Content) > 0 {
 		var prev, polyName string
 		for i, n := range node.Content {
-
 			if utils.IsNodeMap(n) || utils.IsNodeArray(n) {
 				level++
 				// check if we're using  polymorphic values. These tend to create rabbit warrens of circular
@@ -44,9 +46,24 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 			// https://github.com/pb33f/libopenapi/issues/76
 			schemaContainingNodes := []string{"schema", "items", "additionalProperties", "contains", "not", "unevaluatedItems", "unevaluatedProperties"}
 			if i%2 == 0 && slices.Contains(schemaContainingNodes, n.Value) && !utils.IsNodeArray(node) && (i+1 < len(node.Content)) {
+
+				var jsonPath, definitionPath, fullDefinitionPath string
+
+				if len(seenPath) > 0 || n.Value != "" {
+					loc := append(seenPath, n.Value)
+					// create definition and full definition paths
+					definitionPath = fmt.Sprintf("#/%s", strings.Join(loc, "/"))
+					fullDefinitionPath = fmt.Sprintf("%s#/%s", index.specAbsolutePath, strings.Join(loc, "/"))
+					_, jsonPath = utils.ConvertComponentIdIntoFriendlyPathSearch(definitionPath)
+				}
 				ref := &Reference{
-					Node: node.Content[i+1],
-					Path: fmt.Sprintf("$.%s.%s", strings.Join(seenPath, "."), n.Value),
+					ParentNode:     parent,
+					FullDefinition: fullDefinitionPath,
+					Definition:     definitionPath,
+					Node:           node.Content[i+1],
+					KeyNode:        node.Content[i],
+					Path:           jsonPath,
+					Index:          index,
 				}
 
 				isRef, _, _ := utils.IsNodeRefValue(node.Content[i+1])
@@ -78,6 +95,29 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 			// https://github.com/pb33f/libopenapi/issues/76
 			mapOfSchemaContainingNodes := []string{"properties", "patternProperties"}
 			if i%2 == 0 && slices.Contains(mapOfSchemaContainingNodes, n.Value) && !utils.IsNodeArray(node) && (i+1 < len(node.Content)) {
+
+				// if 'examples' or 'example' exists in the seenPath, skip this 'properties' node.
+				// https://github.com/pb33f/libopenapi/issues/160
+				if len(seenPath) > 0 {
+					skip := false
+
+					// iterate through the path and look for an item named 'examples' or 'example'
+					for _, p := range seenPath {
+						if p == "examples" || p == "example" {
+							skip = true
+							break
+						}
+						// look for any extension in the path and ignore it
+						if strings.HasPrefix(p, "x-") {
+							skip = true
+							break
+						}
+					}
+					if skip {
+						continue
+					}
+				}
+
 				// for each property add it to our schema definitions
 				label := ""
 				for h, prop := range node.Content[i+1].Content {
@@ -86,9 +126,21 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 						label = prop.Value
 						continue
 					}
+					var jsonPath, definitionPath, fullDefinitionPath string
+					if len(seenPath) > 0 || n.Value != "" && label != "" {
+						loc := append(seenPath, n.Value, label)
+						definitionPath = fmt.Sprintf("#/%s", strings.Join(loc, "/"))
+						fullDefinitionPath = fmt.Sprintf("%s#/%s", index.specAbsolutePath, strings.Join(loc, "/"))
+						_, jsonPath = utils.ConvertComponentIdIntoFriendlyPathSearch(definitionPath)
+					}
 					ref := &Reference{
-						Node: prop,
-						Path: fmt.Sprintf("$.%s.%s.%s", strings.Join(seenPath, "."), n.Value, label),
+						ParentNode:     parent,
+						FullDefinition: fullDefinitionPath,
+						Definition:     definitionPath,
+						Node:           prop,
+						KeyNode:        node.Content[i],
+						Path:           jsonPath,
+						Index:          index,
 					}
 
 					isRef, _, _ := utils.IsNodeRefValue(prop)
@@ -116,9 +168,27 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 			if i%2 == 0 && slices.Contains(arrayOfSchemaContainingNodes, n.Value) && !utils.IsNodeArray(node) && (i+1 < len(node.Content)) {
 				// for each element in the array, add it to our schema definitions
 				for h, element := range node.Content[i+1].Content {
+
+					var jsonPath, definitionPath, fullDefinitionPath string
+					if len(seenPath) > 0 {
+						loc := append(seenPath, n.Value, fmt.Sprintf("%d", h))
+						definitionPath = fmt.Sprintf("#/%s", strings.Join(loc, "/"))
+						fullDefinitionPath = fmt.Sprintf("%s#/%s", index.specAbsolutePath, strings.Join(loc, "/"))
+						_, jsonPath = utils.ConvertComponentIdIntoFriendlyPathSearch(definitionPath)
+					} else {
+						definitionPath = fmt.Sprintf("#/%s", n.Value)
+						fullDefinitionPath = fmt.Sprintf("%s#/%s", index.specAbsolutePath, n.Value)
+						_, jsonPath = utils.ConvertComponentIdIntoFriendlyPathSearch(definitionPath)
+					}
+
 					ref := &Reference{
-						Node: element,
-						Path: fmt.Sprintf("$.%s.%s[%d]", strings.Join(seenPath, "."), n.Value, h),
+						ParentNode:     parent,
+						FullDefinition: fullDefinitionPath,
+						Definition:     definitionPath,
+						Node:           element,
+						KeyNode:        node.Content[i],
+						Path:           jsonPath,
+						Index:          index,
 					}
 
 					isRef, _, _ := utils.IsNodeRefValue(element)
@@ -142,103 +212,227 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 			if i%2 == 0 && n.Value == "$ref" {
 
 				// only look at scalar values, not maps (looking at you k8s)
-				if !utils.IsNodeStringValue(node.Content[i+1]) {
-					continue
+				if len(node.Content) > i+1 {
+					if !utils.IsNodeStringValue(node.Content[i+1]) {
+						continue
+					}
+					// issue #481, don't look at refs in arrays, the next node isn't the value.
+					if utils.IsNodeArray(node) {
+						continue
+					}
 				}
 
 				index.linesWithRefs[n.Line] = true
 
 				fp := make([]string, len(seenPath))
-				for x, foundPathNode := range seenPath {
-					fp[x] = foundPathNode
-				}
+				copy(fp, seenPath)
 
-				value := node.Content[i+1].Value
+				if len(node.Content) > i+1 {
 
-				segs := strings.Split(value, "/")
-				name := segs[len(segs)-1]
-				_, p := utils.ConvertComponentIdIntoFriendlyPathSearch(value)
-				ref := &Reference{
-					Definition: value,
-					Name:       name,
-					Node:       node,
-					Path:       p,
-				}
+					value := node.Content[i+1].Value
+					segs := strings.Split(value, "/")
+					name := segs[len(segs)-1]
+					uri := strings.Split(value, "#/")
 
-				// add to raw sequenced refs
-				index.rawSequencedRefs = append(index.rawSequencedRefs, ref)
-
-				// add ref by line number
-				refNameIndex := strings.LastIndex(value, "/")
-				refName := value[refNameIndex+1:]
-				if len(index.refsByLine[refName]) > 0 {
-					index.refsByLine[refName][n.Line] = true
-				} else {
-					v := make(map[int]bool)
-					v[n.Line] = true
-					index.refsByLine[refName] = v
-				}
-
-				// if this ref value has any siblings (node.Content is larger than two elements)
-				// then add to refs with siblings
-				if len(node.Content) > 2 {
-					copiedNode := *node
-					copied := Reference{
-						Definition: ref.Definition,
-						Name:       ref.Name,
-						Node:       &copiedNode,
-						Path:       p,
-					}
-					// protect this data using a copy, prevent the resolver from destroying things.
-					index.refsWithSiblings[value] = copied
-				}
-
-				// if this is a polymorphic reference, we're going to leave it out
-				// allRefs. We don't ever want these resolved, so instead of polluting
-				// the timeline, we will keep each poly ref in its own collection for later
-				// analysis.
-				if poly {
-					index.polymorphicRefs[value] = ref
-
-					// index each type
-					switch pName {
-					case "anyOf":
-						index.polymorphicAnyOfRefs = append(index.polymorphicAnyOfRefs, ref)
-					case "allOf":
-						index.polymorphicAllOfRefs = append(index.polymorphicAllOfRefs, ref)
-					case "oneOf":
-						index.polymorphicOneOfRefs = append(index.polymorphicOneOfRefs, ref)
-					}
-					continue
-				}
-
-				// check if this is a dupe, if so, skip it, we don't care now.
-				if index.allRefs[value] != nil { // seen before, skip.
-					continue
-				}
-
-				if value == "" {
-
-					completedPath := fmt.Sprintf("$.%s", strings.Join(fp, "."))
-
-					indexError := &IndexingError{
-						Err:  errors.New("schema reference is empty and cannot be processed"),
-						Node: node.Content[i+1],
-						Path: completedPath,
+					// determine absolute path to this definition
+					var defRoot string
+					if strings.HasPrefix(index.specAbsolutePath, "http") {
+						defRoot = index.specAbsolutePath
+					} else {
+						defRoot = filepath.Dir(index.specAbsolutePath)
 					}
 
-					index.refErrors = append(index.refErrors, indexError)
+					var componentName string
+					var fullDefinitionPath string
+					if len(uri) == 2 {
+						if uri[0] == "" {
+							fullDefinitionPath = fmt.Sprintf("%s#/%s", index.specAbsolutePath, uri[1])
+							componentName = value
+						} else {
+							if strings.HasPrefix(uri[0], "http") {
+								fullDefinitionPath = value
+								componentName = fmt.Sprintf("#/%s", uri[1])
+							} else {
+								if filepath.IsAbs(uri[0]) {
+									fullDefinitionPath = value
+									componentName = fmt.Sprintf("#/%s", uri[1])
+								} else {
+									// if the index has a base path, use that to resolve the path
+									if index.config.BasePath != "" && index.config.BaseURL == nil {
+										abs, _ := filepath.Abs(utils.CheckPathOverlap(index.config.BasePath, uri[0], string(os.PathSeparator)))
+										if abs != defRoot {
+											abs, _ = filepath.Abs(utils.CheckPathOverlap(defRoot, uri[0], string(os.PathSeparator)))
+										}
+										fullDefinitionPath = fmt.Sprintf("%s#/%s", abs, uri[1])
+										componentName = fmt.Sprintf("#/%s", uri[1])
+									} else {
+										// if the index has a base URL, use that to resolve the path.
+										if index.config.BaseURL != nil && !filepath.IsAbs(defRoot) {
+											var u url.URL
+											if strings.HasPrefix(defRoot, "http") {
+												up, _ := url.Parse(defRoot)
+												up.Path = utils.ReplaceWindowsDriveWithLinuxPath(filepath.Dir(up.Path))
+												u = *up
+											} else {
+												u = *index.config.BaseURL
+											}
+											// abs, _ := filepath.Abs(filepath.Join(u.Path, uri[0]))
+											// abs, _ := filepath.Abs(utils.CheckPathOverlap(u.Path, uri[0], string(os.PathSeparator)))
+											abs := utils.CheckPathOverlap(u.Path, uri[0], string(os.PathSeparator))
+											u.Path = utils.ReplaceWindowsDriveWithLinuxPath(abs)
+											fullDefinitionPath = fmt.Sprintf("%s#/%s", u.String(), uri[1])
+											componentName = fmt.Sprintf("#/%s", uri[1])
 
-					continue
+										} else {
+											abs, _ := filepath.Abs(utils.CheckPathOverlap(defRoot, uri[0], string(os.PathSeparator)))
+											fullDefinitionPath = fmt.Sprintf("%s#/%s", abs, uri[1])
+											componentName = fmt.Sprintf("#/%s", uri[1])
+										}
+									}
+								}
+							}
+						}
+					} else {
+						if strings.HasPrefix(uri[0], "http") {
+							fullDefinitionPath = value
+						} else {
+							// is it a relative file include?
+							if !strings.Contains(uri[0], "#") {
+								if strings.HasPrefix(defRoot, "http") {
+									if !filepath.IsAbs(uri[0]) {
+										u, _ := url.Parse(defRoot)
+										pathDir := filepath.Dir(u.Path)
+										// pathAbs, _ := filepath.Abs(filepath.Join(pathDir, uri[0]))
+										pathAbs, _ := filepath.Abs(utils.CheckPathOverlap(pathDir, uri[0], string(os.PathSeparator)))
+										pathAbs = utils.ReplaceWindowsDriveWithLinuxPath(pathAbs)
+										u.Path = pathAbs
+										fullDefinitionPath = u.String()
+									}
+								} else {
+									if !filepath.IsAbs(uri[0]) {
+										// if the index has a base path, use that to resolve the path
+										if index.config.BasePath != "" {
+											abs, _ := filepath.Abs(utils.CheckPathOverlap(index.config.BasePath, uri[0], string(os.PathSeparator)))
+											if abs != defRoot {
+												abs, _ = filepath.Abs(utils.CheckPathOverlap(defRoot, uri[0], string(os.PathSeparator)))
+											}
+											fullDefinitionPath = abs
+											componentName = uri[0]
+										} else {
+											// if the index has a base URL, use that to resolve the path.
+											if index.config.BaseURL != nil {
+
+												u := *index.config.BaseURL
+												abs := utils.CheckPathOverlap(u.Path, uri[0], string(os.PathSeparator))
+												abs = utils.ReplaceWindowsDriveWithLinuxPath(abs)
+												u.Path = abs
+												fullDefinitionPath = u.String()
+												componentName = uri[0]
+											} else {
+												abs, _ := filepath.Abs(utils.CheckPathOverlap(defRoot, uri[0], string(os.PathSeparator)))
+												fullDefinitionPath = abs
+												componentName = uri[0]
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+
+					_, p := utils.ConvertComponentIdIntoFriendlyPathSearch(componentName)
+
+					ref := &Reference{
+						ParentNode:     parent,
+						FullDefinition: fullDefinitionPath,
+						Definition:     componentName,
+						Name:           name,
+						Node:           node,
+						KeyNode:        node.Content[i+1],
+						Path:           p,
+						Index:          index,
+					}
+
+					// add to raw sequenced refs
+					index.rawSequencedRefs = append(index.rawSequencedRefs, ref)
+
+					// add ref by line number
+					refNameIndex := strings.LastIndex(value, "/")
+					refName := value[refNameIndex+1:]
+					if len(index.refsByLine[refName]) > 0 {
+						index.refsByLine[refName][n.Line] = true
+					} else {
+						v := make(map[int]bool)
+						v[n.Line] = true
+						index.refsByLine[refName] = v
+					}
+
+					// if this ref value has any siblings (node.Content is larger than two elements)
+					// then add to refs with siblings
+					if len(node.Content) > 2 {
+						copiedNode := *node
+						copied := Reference{
+							ParentNode:     parent,
+							FullDefinition: fullDefinitionPath,
+							Definition:     ref.Definition,
+							Name:           ref.Name,
+							Node:           &copiedNode,
+							Path:           p,
+							Index:          index,
+						}
+						// protect this data using a copy, prevent the resolver from destroying things.
+						index.refsWithSiblings[value] = copied
+					}
+
+					// if this is a polymorphic reference, we're going to leave it out
+					// allRefs. We don't ever want these resolved, so instead of polluting
+					// the timeline, we will keep each poly ref in its own collection for later
+					// analysis.
+					if poly {
+						index.polymorphicRefs[value] = ref
+
+						// index each type
+						switch pName {
+						case "anyOf":
+							index.polymorphicAnyOfRefs = append(index.polymorphicAnyOfRefs, ref)
+						case "allOf":
+							index.polymorphicAllOfRefs = append(index.polymorphicAllOfRefs, ref)
+						case "oneOf":
+							index.polymorphicOneOfRefs = append(index.polymorphicOneOfRefs, ref)
+						}
+						continue
+					}
+
+					// check if this is a dupe, if so, skip it, we don't care now.
+					if index.allRefs[value] != nil { // seen before, skip.
+						continue
+					}
+
+					if value == "" {
+
+						completedPath := fmt.Sprintf("$.%s", strings.Join(fp, "."))
+
+						indexError := &IndexingError{
+							Err:  errors.New("schema reference is empty and cannot be processed"),
+							Node: node.Content[i+1],
+							Path: completedPath,
+						}
+
+						index.refErrors = append(index.refErrors, indexError)
+
+						continue
+					}
+
+					index.allRefs[fullDefinitionPath] = ref
+					found = append(found, ref)
 				}
-
-				index.allRefs[value] = ref
-				found = append(found, ref)
 			}
 
 			if i%2 == 0 && n.Value != "$ref" && n.Value != "" {
 
-				nodePath := fmt.Sprintf("$.%s", strings.Join(seenPath, "."))
+				loc := append(seenPath, n.Value)
+				definitionPath := fmt.Sprintf("#/%s", strings.Join(loc, "/"))
+				_, jsonPath := utils.ConvertComponentIdIntoFriendlyPathSearch(definitionPath)
 
 				// capture descriptions and summaries
 				if n.Value == "description" {
@@ -247,21 +441,28 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 					if utils.IsNodeArray(node) {
 						continue
 					}
+					if !slices.Contains(seenPath, "example") && !slices.Contains(seenPath, "examples") {
+						ref := &DescriptionReference{
+							ParentNode: parent,
+							Content:    node.Content[i+1].Value,
+							Path:       jsonPath,
+							Node:       node.Content[i+1],
+							KeyNode:    node.Content[i],
+							IsSummary:  false,
+						}
 
-					ref := &DescriptionReference{
-						Content:   node.Content[i+1].Value,
-						Path:      nodePath,
-						Node:      node.Content[i+1],
-						IsSummary: false,
-					}
-
-					if !utils.IsNodeMap(ref.Node) {
-						index.allDescriptions = append(index.allDescriptions, ref)
-						index.descriptionCount++
+						if !utils.IsNodeMap(ref.Node) {
+							index.allDescriptions = append(index.allDescriptions, ref)
+							index.descriptionCount++
+						}
 					}
 				}
 
 				if n.Value == "summary" {
+
+					if slices.Contains(seenPath, "example") || slices.Contains(seenPath, "examples") {
+						continue
+					}
 
 					var b *yaml.Node
 					if len(node.Content) == i+1 {
@@ -270,10 +471,12 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 						b = node.Content[i+1]
 					}
 					ref := &DescriptionReference{
-						Content:   b.Value,
-						Path:      nodePath,
-						Node:      b,
-						IsSummary: true,
+						ParentNode: parent,
+						Content:    b.Value,
+						Path:       jsonPath,
+						Node:       b,
+						KeyNode:    n,
+						IsSummary:  true,
 					}
 
 					index.allSummaries = append(index.allSummaries, ref)
@@ -314,8 +517,9 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 
 											refs = append(refs, &Reference{
 												Definition: b.Content[k].Content[g].Content[r].Value,
-												Path:       fmt.Sprintf("%s.security[%d].%s[%d]", nodePath, k, secKey, r),
+												Path:       fmt.Sprintf("%s.security[%d].%s[%d]", jsonPath, k, secKey, r),
 												Node:       b.Content[k].Content[g].Content[r],
+												KeyNode:    b.Content[k].Content[g],
 											})
 
 											index.securityRequirementRefs[secKey][b.Content[k].Content[g].Content[r].Value] = refs
@@ -332,19 +536,23 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 					if len(seenPath) > 0 {
 						lastItem := seenPath[len(seenPath)-1]
 						if lastItem == "properties" {
+							seenPath = append(seenPath, strings.ReplaceAll(n.Value, "/", "~1"))
+							prev = n.Value
 							continue
 						}
 					}
+
 					// all enums need to have a type, extract the type from the node where the enum was found.
 					_, enumKeyValueNode := utils.FindKeyNodeTop("type", node.Content)
 
 					if enumKeyValueNode != nil {
 						ref := &EnumReference{
-							Path:       nodePath,
+							ParentNode: parent,
+							Path:       jsonPath,
 							Node:       node.Content[i+1],
+							KeyNode:    node.Content[i],
 							Type:       enumKeyValueNode,
 							SchemaNode: node,
-							ParentNode: parent,
 						}
 
 						index.allEnums = append(index.allEnums, ref)
@@ -370,15 +578,17 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 
 						if isObject {
 							index.allObjectsWithProperties = append(index.allObjectsWithProperties, &ObjectReference{
-								Path:       nodePath,
+								Path:       jsonPath,
 								Node:       node,
+								KeyNode:    n,
 								ParentNode: parent,
 							})
 						}
 					}
 				}
 
-				seenPath = append(seenPath, n.Value)
+				seenPath = append(seenPath, strings.ReplaceAll(n.Value, "/", "~1"))
+				// seenPath = append(seenPath, n.Value)
 				prev = n.Value
 			}
 
@@ -391,13 +601,6 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 				}
 			}
 		}
-		if len(seenPath) > 0 {
-			seenPath = seenPath[:len(seenPath)-1]
-		}
-
-	}
-	if len(seenPath) > 0 {
-		seenPath = seenPath[:len(seenPath)-1]
 	}
 
 	index.refCount = len(index.allRefs)
@@ -411,65 +614,82 @@ func (index *SpecIndex) ExtractComponentsFromRefs(refs []*Reference) []*Referenc
 	var found []*Reference
 
 	// run this async because when things get recursive, it can take a while
-	c := make(chan bool)
+	var c chan bool
+	if !index.config.ExtractRefsSequentially {
+		c = make(chan bool)
+	}
 
 	locate := func(ref *Reference, refIndex int, sequence []*ReferenceMapped) {
-		located := index.FindComponent(ref.Definition, ref.Node)
-		if located != nil {
-			index.refLock.Lock()
-			if index.allMappedRefs[ref.Definition] == nil {
-				found = append(found, located)
-				index.allMappedRefs[ref.Definition] = located
-				sequence[refIndex] = &ReferenceMapped{
-					Reference:  located,
-					Definition: ref.Definition,
-				}
+		index.refLock.Lock()
+		if index.allMappedRefs[ref.FullDefinition] != nil {
+			rm := &ReferenceMapped{
+				OriginalReference: ref,
+				Reference:         index.allMappedRefs[ref.FullDefinition],
+				Definition:        index.allMappedRefs[ref.FullDefinition].Definition,
+				FullDefinition:    index.allMappedRefs[ref.FullDefinition].FullDefinition,
+			}
+			sequence[refIndex] = rm
+			if !index.config.ExtractRefsSequentially {
+				c <- true
 			}
 			index.refLock.Unlock()
 		} else {
+			index.refLock.Unlock()
+			located := index.FindComponent(ref.FullDefinition)
+			if located != nil {
 
-			_, path := utils.ConvertComponentIdIntoFriendlyPathSearch(ref.Definition)
-			indexError := &IndexingError{
-				Err:  fmt.Errorf("component '%s' does not exist in the specification", ref.Definition),
-				Node: ref.Node,
-				Path: path,
+				// have we already mapped this?
+				index.refLock.Lock()
+				if index.allMappedRefs[ref.FullDefinition] == nil {
+					found = append(found, located)
+					index.allMappedRefs[located.FullDefinition] = located
+				}
+				rm := &ReferenceMapped{
+					OriginalReference: ref,
+					Reference:         located,
+					Definition:        located.Definition,
+					FullDefinition:    located.FullDefinition,
+				}
+				sequence[refIndex] = rm
+				index.refLock.Unlock()
+
+			} else {
+
+				_, path := utils.ConvertComponentIdIntoFriendlyPathSearch(ref.Definition)
+				indexError := &IndexingError{
+					Err:     fmt.Errorf("component '%s' does not exist in the specification", ref.Definition),
+					Node:    ref.Node,
+					Path:    path,
+					KeyNode: ref.KeyNode,
+				}
+				index.errorLock.Lock()
+				index.refErrors = append(index.refErrors, indexError)
+				index.errorLock.Unlock()
 			}
-			index.errorLock.Lock()
-			index.refErrors = append(index.refErrors, indexError)
-			index.errorLock.Unlock()
+			if !index.config.ExtractRefsSequentially {
+				c <- true
+			}
 		}
-		c <- true
 	}
 
 	var refsToCheck []*Reference
-	for _, ref := range refs {
+	refsToCheck = append(refsToCheck, refs...)
 
-		// check reference for backslashes (hah yeah seen this too!)
-		if strings.Contains(ref.Definition, "\\") { // this was from blazemeter.com haha!
-			_, path := utils.ConvertComponentIdIntoFriendlyPathSearch(ref.Definition)
-			indexError := &IndexingError{
-				Err:  fmt.Errorf("component '%s' contains a backslash '\\'. It's not valid", ref.Definition),
-				Node: ref.Node,
-				Path: path,
-			}
-			index.refErrors = append(index.refErrors, indexError)
-			continue
-
-		}
-		refsToCheck = append(refsToCheck, ref)
-	}
 	mappedRefsInSequence := make([]*ReferenceMapped, len(refsToCheck))
 
 	for r := range refsToCheck {
 		// expand our index of all mapped refs
-		go locate(refsToCheck[r], r, mappedRefsInSequence)
-		// locate(refsToCheck[r], r, mappedRefsInSequence) // used for sync testing.
+		if !index.config.ExtractRefsSequentially {
+			go locate(refsToCheck[r], r, mappedRefsInSequence) // run async
+		} else {
+			locate(refsToCheck[r], r, mappedRefsInSequence) // run synchronously
+		}
 	}
 
-	completedRefs := 0
-	for completedRefs < len(refsToCheck) {
-		select {
-		case <-c:
+	if !index.config.ExtractRefsSequentially {
+		completedRefs := 0
+		for completedRefs < len(refsToCheck) {
+			<-c
 			completedRefs++
 		}
 	}

@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - v3: Add a metadata package to interact with #632
+- v3: Libopenapi bump / nullable reference fix #631
 - v3: Remove omitempty on nullable complex types #628
 - v3: Add the Authorization header value in the dump request #624
 - v3: Add the User-Agent header value #623

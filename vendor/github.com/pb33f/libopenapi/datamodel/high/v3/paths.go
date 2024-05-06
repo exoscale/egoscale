@@ -6,8 +6,11 @@ package v3
 import (
 	"sort"
 
+	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/datamodel/high"
-	low "github.com/pb33f/libopenapi/datamodel/low/v3"
+	"github.com/pb33f/libopenapi/datamodel/low"
+	v3low "github.com/pb33f/libopenapi/datamodel/low/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
 )
@@ -19,44 +22,39 @@ import (
 // constraints.
 //   - https://spec.openapis.org/oas/v3.1.0#paths-object
 type Paths struct {
-	PathItems  map[string]*PathItem `json:"-" yaml:"-"`
-	Extensions map[string]any       `json:"-" yaml:"-"`
-	low        *low.Paths
+	PathItems  *orderedmap.Map[string, *PathItem]  `json:"-" yaml:"-"`
+	Extensions *orderedmap.Map[string, *yaml.Node] `json:"-" yaml:"-"`
+	low        *v3low.Paths
 }
 
 // NewPaths creates a new high-level instance of Paths from a low-level one.
-func NewPaths(paths *low.Paths) *Paths {
+func NewPaths(paths *v3low.Paths) *Paths {
 	p := new(Paths)
 	p.low = paths
 	p.Extensions = high.ExtractExtensions(paths.Extensions)
-	items := make(map[string]*PathItem)
+	items := orderedmap.New[string, *PathItem]()
 
-	// build paths async for speed.
-	type pRes struct {
-		k string
-		v *PathItem
+	type pathItemResult struct {
+		key   string
+		value *PathItem
 	}
-	var buildPathItem = func(key string, item *low.PathItem, c chan<- pRes) {
-		c <- pRes{key, NewPathItem(item)}
+
+	translateFunc := func(pair orderedmap.Pair[low.KeyReference[string], low.ValueReference[*v3low.PathItem]]) (pathItemResult, error) {
+		return pathItemResult{key: pair.Key().Value, value: NewPathItem(pair.Value().Value)}, nil
 	}
-	rChan := make(chan pRes)
-	for k := range paths.PathItems {
-		go buildPathItem(k.Value, paths.PathItems[k].Value, rChan)
+	resultFunc := func(value pathItemResult) error {
+		items.Set(value.key, value.value)
+		return nil
 	}
-	pathsBuilt := 0
-	for pathsBuilt < len(paths.PathItems) {
-		select {
-		case r := <-rChan:
-			pathsBuilt++
-			items[r.k] = r.v
-		}
-	}
+	_ = datamodel.TranslateMapParallel[low.KeyReference[string], low.ValueReference[*v3low.PathItem], pathItemResult](
+		paths.PathItems, translateFunc, resultFunc,
+	)
 	p.PathItems = items
 	return p
 }
 
 // GoLow returns the low-level Paths instance used to create the high-level one.
-func (p *Paths) GoLow() *low.Paths {
+func (p *Paths) GoLow() *v3low.Paths {
 	return p.low
 }
 
@@ -83,19 +81,30 @@ func (p *Paths) MarshalYAML() (interface{}, error) {
 		pi       *PathItem
 		path     string
 		line     int
+		style    yaml.Style
 		rendered *yaml.Node
 	}
 	var mapped []*pathItem
 
-	for k, pi := range p.PathItems {
+	for pair := orderedmap.First(p.PathItems); pair != nil; pair = pair.Next() {
+		k := pair.Key()
+		pi := pair.Value()
 		ln := 9999 // default to a high value to weight new content to the bottom.
+		var style yaml.Style
 		if p.low != nil {
 			lpi := p.low.FindPath(k)
 			if lpi != nil {
 				ln = lpi.ValueNode.Line
 			}
+
+			for pair := orderedmap.First(p.low.PathItems); pair != nil; pair = pair.Next() {
+				if pair.Key().Value == k {
+					style = pair.Key().KeyNode.Style
+					break
+				}
+			}
 		}
-		mapped = append(mapped, &pathItem{pi, k, ln, nil})
+		mapped = append(mapped, &pathItem{pi, k, ln, style, nil})
 	}
 
 	nb := high.NewNodeBuilder(p, p.low)
@@ -107,23 +116,29 @@ func (p *Paths) MarshalYAML() (interface{}, error) {
 				label = extNode.Content[u].Value
 				continue
 			}
-			mapped = append(mapped, &pathItem{nil, label,
-				extNode.Content[u].Line, extNode.Content[u]})
+			mapped = append(mapped, &pathItem{
+				nil, label,
+				extNode.Content[u].Line, 0, extNode.Content[u],
+			})
 		}
 	}
 
 	sort.Slice(mapped, func(i, j int) bool {
 		return mapped[i].line < mapped[j].line
 	})
-	for j := range mapped {
-		if mapped[j].pi != nil {
-			rendered, _ := mapped[j].pi.MarshalYAML()
-			m.Content = append(m.Content, utils.CreateStringNode(mapped[j].path))
+	for _, mp := range mapped {
+		if mp.pi != nil {
+			rendered, _ := mp.pi.MarshalYAML()
+
+			kn := utils.CreateStringNode(mp.path)
+			kn.Style = mp.style
+
+			m.Content = append(m.Content, kn)
 			m.Content = append(m.Content, rendered.(*yaml.Node))
 		}
-		if mapped[j].rendered != nil {
-			m.Content = append(m.Content, utils.CreateStringNode(mapped[j].path))
-			m.Content = append(m.Content, mapped[j].rendered)
+		if mp.rendered != nil {
+			m.Content = append(m.Content, utils.CreateStringNode(mp.path))
+			m.Content = append(m.Content, mp.rendered)
 		}
 	}
 
@@ -137,19 +152,30 @@ func (p *Paths) MarshalYAMLInline() (interface{}, error) {
 		pi       *PathItem
 		path     string
 		line     int
+		style    yaml.Style
 		rendered *yaml.Node
 	}
 	var mapped []*pathItem
 
-	for k, pi := range p.PathItems {
+	for pair := orderedmap.First(p.PathItems); pair != nil; pair = pair.Next() {
+		k := pair.Key()
+		pi := pair.Value()
 		ln := 9999 // default to a high value to weight new content to the bottom.
+		var style yaml.Style
 		if p.low != nil {
 			lpi := p.low.FindPath(k)
 			if lpi != nil {
 				ln = lpi.ValueNode.Line
 			}
+
+			for pair := orderedmap.First(p.low.PathItems); pair != nil; pair = pair.Next() {
+				if pair.Key().Value == k {
+					style = pair.Key().KeyNode.Style
+					break
+				}
+			}
 		}
-		mapped = append(mapped, &pathItem{pi, k, ln, nil})
+		mapped = append(mapped, &pathItem{pi, k, ln, style, nil})
 	}
 
 	nb := high.NewNodeBuilder(p, p.low)
@@ -162,23 +188,29 @@ func (p *Paths) MarshalYAMLInline() (interface{}, error) {
 				label = extNode.Content[u].Value
 				continue
 			}
-			mapped = append(mapped, &pathItem{nil, label,
-				extNode.Content[u].Line, extNode.Content[u]})
+			mapped = append(mapped, &pathItem{
+				nil, label,
+				extNode.Content[u].Line, 0, extNode.Content[u],
+			})
 		}
 	}
 
 	sort.Slice(mapped, func(i, j int) bool {
 		return mapped[i].line < mapped[j].line
 	})
-	for j := range mapped {
-		if mapped[j].pi != nil {
-			rendered, _ := mapped[j].pi.MarshalYAMLInline()
-			m.Content = append(m.Content, utils.CreateStringNode(mapped[j].path))
+	for _, mp := range mapped {
+		if mp.pi != nil {
+			rendered, _ := mp.pi.MarshalYAMLInline()
+
+			kn := utils.CreateStringNode(mp.path)
+			kn.Style = mp.style
+
+			m.Content = append(m.Content, kn)
 			m.Content = append(m.Content, rendered.(*yaml.Node))
 		}
-		if mapped[j].rendered != nil {
-			m.Content = append(m.Content, utils.CreateStringNode(mapped[j].path))
-			m.Content = append(m.Content, mapped[j].rendered)
+		if mp.rendered != nil {
+			m.Content = append(m.Content, utils.CreateStringNode(mp.path))
+			m.Content = append(m.Content, mp.rendered)
 		}
 	}
 

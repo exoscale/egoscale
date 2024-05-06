@@ -14,6 +14,8 @@ package index
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -29,17 +31,22 @@ import (
 // how the index is set up.
 func NewSpecIndexWithConfig(rootNode *yaml.Node, config *SpecIndexConfig) *SpecIndex {
 	index := new(SpecIndex)
-	if config != nil && config.seenRemoteSources == nil {
-		config.seenRemoteSources = &syncmap.Map{}
-	}
-	config.remoteLock = &sync.Mutex{}
+	boostrapIndexCollections(index)
 	index.config = config
-	index.parentIndex = config.ParentIndex
+	index.rolodex = config.Rolodex
 	index.uri = config.uri
+	index.specAbsolutePath = config.SpecAbsolutePath
+	if config.Logger != nil {
+		index.logger = config.Logger
+	} else {
+		index.logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelError,
+		}))
+	}
 	if rootNode == nil || len(rootNode.Content) <= 0 {
 		return index
 	}
-	boostrapIndexCollections(rootNode, index)
+	index.root = rootNode
 	return createNewIndex(rootNode, index, config.AvoidBuildIndex)
 }
 
@@ -47,15 +54,13 @@ func NewSpecIndexWithConfig(rootNode *yaml.Node, config *SpecIndexConfig) *SpecI
 // other than a raw index of every node for every content type in the specification. This process runs as fast as
 // possible so dependencies looking through the tree, don't need to walk the entire thing over, and over.
 //
-// Deprecated: Use NewSpecIndexWithConfig instead, this function will be removed in the future because it
-// defaults to allowing remote references and file references. This is a potential security risk and should be controlled by
-// providing a SpecIndexConfig that explicitly sets the AllowRemoteLookup and AllowFileLookup to true.
-// This function also does not support specifications with relative references that may not exist locally.
-//   - https://github.com/pb33f/libopenapi/issues/73
+// This creates a new index using a default 'open' configuration. This means if a BaseURL or BasePath are supplied
+// the rolodex will automatically read those files or open those h
 func NewSpecIndex(rootNode *yaml.Node) *SpecIndex {
 	index := new(SpecIndex)
 	index.config = CreateOpenAPIIndexConfig()
-	boostrapIndexCollections(rootNode, index)
+	index.root = rootNode
+	boostrapIndexCollections(index)
 	return createNewIndex(rootNode, index, false)
 }
 
@@ -64,6 +69,11 @@ func createNewIndex(rootNode *yaml.Node, index *SpecIndex, avoidBuildOut bool) *
 	if rootNode == nil {
 		return index
 	}
+	index.nodeMapCompleted = make(chan bool)
+	index.nodeMap = make(map[int]map[int]*yaml.Node)
+	go index.MapNodes(rootNode) // this can run async.
+
+	index.cache = new(syncmap.Map)
 
 	// boot index.
 	results := index.ExtractRefs(index.root.Content[0], index.root, []string{}, 0, false, "")
@@ -87,19 +97,17 @@ func createNewIndex(rootNode *yaml.Node, index *SpecIndex, avoidBuildOut bool) *
 	if !avoidBuildOut {
 		index.BuildIndex()
 	}
-
-	// do a copy!
-	index.config.seenRemoteSources.Range(func(k, v any) bool {
-		index.seenRemoteSources[k.(string)] = v.(*yaml.Node)
-		return true
-	})
+	<-index.nodeMapCompleted
 	return index
 }
 
-// BuildIndex will run all of the count operations required to build up maps of everything. It's what makes the index
+// BuildIndex will run all the count operations required to build up maps of everything. It's what makes the index
 // useful for looking up things, the count operations are all run in parallel and then the final calculations are run
 // the index is ready.
 func (index *SpecIndex) BuildIndex() {
+	if index.built {
+		return
+	}
 	countFuncs := []func() int{
 		index.GetOperationCount,
 		index.GetComponentSchemaCount,
@@ -129,11 +137,20 @@ func (index *SpecIndex) BuildIndex() {
 	index.GetInlineDuplicateParamCount()
 	index.GetAllDescriptionsCount()
 	index.GetTotalTagsCount()
+	index.built = true
+}
+
+func (index *SpecIndex) GetLogger() *slog.Logger {
+	return index.logger
 }
 
 // GetRootNode returns document root node.
 func (index *SpecIndex) GetRootNode() *yaml.Node {
 	return index.root
+}
+
+func (index *SpecIndex) GetRolodex() *Rolodex {
+	return index.rolodex
 }
 
 // GetGlobalTagsNode returns document root tags node.
@@ -150,6 +167,28 @@ func (index *SpecIndex) SetCircularReferences(refs []*CircularReferenceResult) {
 // GetCircularReferences will return any circular reference results that were found by the resolver.
 func (index *SpecIndex) GetCircularReferences() []*CircularReferenceResult {
 	return index.circularReferences
+}
+
+// SetIgnoredPolymorphicCircularReferences passes on any ignored poly circular refs captured using
+// `IgnorePolymorphicCircularReferences`
+func (index *SpecIndex) SetIgnoredPolymorphicCircularReferences(refs []*CircularReferenceResult) {
+	index.polyCircularReferences = refs
+}
+
+func (index *SpecIndex) SetIgnoredArrayCircularReferences(refs []*CircularReferenceResult) {
+	index.arrayCircularReferences = refs
+}
+
+// GetIgnoredPolymorphicCircularReferences will return any polymorphic circular references that were 'ignored' by
+// using the `IgnorePolymorphicCircularReferences` configuration option.
+func (index *SpecIndex) GetIgnoredPolymorphicCircularReferences() []*CircularReferenceResult {
+	return index.polyCircularReferences
+}
+
+// GetIgnoredArrayCircularReferences will return any array based circular references that were 'ignored' by
+// using the `IgnoreArrayCircularReferences` configuration option.
+func (index *SpecIndex) GetIgnoredArrayCircularReferences() []*CircularReferenceResult {
+	return index.arrayCircularReferences
 }
 
 // GetPathsNode returns document root node.
@@ -212,6 +251,12 @@ func (index *SpecIndex) GetMappedReferences() map[string]*Reference {
 	return index.allMappedRefs
 }
 
+// GetRawReferencesSequenced returns a slice of every single reference found in the document, extracted raw from the doc
+// returned in the exact order they were found in the document.
+func (index *SpecIndex) GetRawReferencesSequenced() []*Reference {
+	return index.rawSequencedRefs
+}
+
 // GetMappedReferencesSequenced will return all references that were mapped successfully to nodes, performed in sequence
 // as they were read in from the document.
 func (index *SpecIndex) GetMappedReferencesSequenced() []*ReferenceMapped {
@@ -270,7 +315,7 @@ func (index *SpecIndex) GetAllReferenceSchemas() []*Reference {
 
 // GetAllComponentSchemas will return all schemas defined in the components section of the document.
 func (index *SpecIndex) GetAllComponentSchemas() map[string]*Reference {
-	return index.allComponentSchemaDefinitions
+	return syncMapToMap[string, *Reference](index.allComponentSchemaDefinitions)
 }
 
 // GetAllSecuritySchemes will return all security schemes / definitions found in the document.
@@ -421,11 +466,6 @@ func (index *SpecIndex) GetAllRootServers() []*Reference {
 // GetAllOperationsServers will return all operation overrides for servers.
 func (index *SpecIndex) GetAllOperationsServers() map[string]map[string][]*Reference {
 	return index.opServersRefs
-}
-
-// GetAllExternalIndexes will return all indexes for external documents
-func (index *SpecIndex) GetAllExternalIndexes() map[string]*SpecIndex {
-	return index.externalSpecIndex
 }
 
 // SetAllowCircularReferenceResolving will flip a bit that can be used by any consumers to determine if they want
@@ -618,14 +658,14 @@ func (index *SpecIndex) GetGlobalCallbacksCount() int {
 		return index.globalCallbacksCount
 	}
 
-	// index.pathRefsLock.Lock()
+	index.pathRefsLock.RLock()
 	for path, p := range index.pathRefs {
 		for _, m := range p {
 
 			// look through method for callbacks
 			callbacks, _ := yamlpath.NewPath("$..callbacks")
-			res, _ := callbacks.Find(m.Node)
-
+			var res []*yaml.Node
+			res, _ = callbacks.Find(m.Node)
 			if len(res) > 0 {
 				for _, callback := range res[0].Content {
 					if utils.IsNodeMap(callback) {
@@ -650,7 +690,7 @@ func (index *SpecIndex) GetGlobalCallbacksCount() int {
 			}
 		}
 	}
-	// index.pathRefsLock.Unlock()
+	index.pathRefsLock.RUnlock()
 	return index.globalCallbacksCount
 }
 
@@ -670,7 +710,9 @@ func (index *SpecIndex) GetGlobalLinksCount() int {
 
 			// look through method for links
 			links, _ := yamlpath.NewPath("$..links")
-			res, _ := links.Find(m.Node)
+			var res []*yaml.Node
+
+			res, _ = links.Find(m.Node)
 
 			if len(res) > 0 {
 				for _, link := range res[0].Content {
@@ -705,7 +747,7 @@ func (index *SpecIndex) GetRawReferenceCount() int {
 
 // GetComponentSchemaCount will return the number of schemas located in the 'components' or 'definitions' node.
 func (index *SpecIndex) GetComponentSchemaCount() int {
-	if index.root == nil {
+	if index.root == nil || len(index.root.Content) == 0 {
 		return -1
 	}
 
@@ -928,6 +970,8 @@ func (index *SpecIndex) GetOperationCount() int {
 
 	opCount := 0
 
+	locatedPathRefs := make(map[string]map[string]*Reference)
+
 	for x, p := range index.pathsNode.Content {
 		if x%2 == 0 {
 
@@ -954,15 +998,13 @@ func (index *SpecIndex) GetOperationCount() int {
 							Definition: m.Value,
 							Name:       m.Value,
 							Node:       method.Content[y+1],
-							Path:       fmt.Sprintf("$.paths.%s.%s", p.Value, m.Value),
+							Path:       fmt.Sprintf("$.paths['%s'].%s", p.Value, m.Value),
 							ParentNode: m,
 						}
-						index.pathRefsLock.Lock()
-						if index.pathRefs[p.Value] == nil {
-							index.pathRefs[p.Value] = make(map[string]*Reference)
+						if locatedPathRefs[p.Value] == nil {
+							locatedPathRefs[p.Value] = make(map[string]*Reference)
 						}
-						index.pathRefs[p.Value][ref.Name] = ref
-						index.pathRefsLock.Unlock()
+						locatedPathRefs[p.Value][ref.Name] = ref
 						// update
 						opCount++
 					}
@@ -970,7 +1012,9 @@ func (index *SpecIndex) GetOperationCount() int {
 			}
 		}
 	}
-
+	for k, v := range locatedPathRefs {
+		index.pathRefs[k] = v
+	}
 	index.operationCount = opCount
 	return opCount
 }
@@ -1005,6 +1049,14 @@ func (index *SpecIndex) GetOperationsParameterCount() int {
 				pathPropertyNode = index.pathsNode.Content[x+1]
 			}
 
+			// is the path a ref?
+			if isRef, _, ref := utils.IsNodeRefValue(pathPropertyNode); isRef {
+				pNode := seekRefEnd(index, ref)
+				if pNode != nil {
+					pathPropertyNode = pNode.Node
+				}
+			}
+
 			// extract methods for later use.
 			for y, prop := range pathPropertyNode.Content {
 				if y%2 == 0 {
@@ -1022,7 +1074,7 @@ func (index *SpecIndex) GetOperationsParameterCount() int {
 								Name:       serverRef.Value,
 								Node:       serverRef,
 								ParentNode: prop,
-								Path:       fmt.Sprintf("$.paths.%s.servers[%d]", pathItemNode.Value, i),
+								Path:       fmt.Sprintf("$.paths['%s'].servers[%d]", pathItemNode.Value, i),
 							}
 							serverRefs = append(serverRefs, ref)
 						}
@@ -1034,7 +1086,7 @@ func (index *SpecIndex) GetOperationsParameterCount() int {
 
 						// let's look at params, check if they are refs or inline.
 						params := pathPropertyNode.Content[y+1].Content
-						index.scanOperationParams(params, pathItemNode, "top")
+						index.scanOperationParams(params, pathPropertyNode.Content[y], pathItemNode, "top")
 					}
 
 					// method level params.
@@ -1043,7 +1095,7 @@ func (index *SpecIndex) GetOperationsParameterCount() int {
 							if z%2 == 0 {
 								if httpMethodProp.Value == "parameters" {
 									params := pathPropertyNode.Content[y+1].Content[z+1].Content
-									index.scanOperationParams(params, pathItemNode, prop.Value)
+									index.scanOperationParams(params, pathPropertyNode.Content[y+1].Content[z], pathItemNode, prop.Value)
 								}
 
 								// extract operation tags if set.
@@ -1106,7 +1158,7 @@ func (index *SpecIndex) GetOperationsParameterCount() int {
 											Name:       "servers",
 											Node:       serverRef,
 											ParentNode: httpMethodProp,
-											Path:       fmt.Sprintf("$.paths.%s.%s.servers[%d]", pathItemNode.Value, prop.Value, i),
+											Path:       fmt.Sprintf("$.paths['%s'].%s.servers[%d]", pathItemNode.Value, prop.Value, i),
 										}
 										serverRefs = append(serverRefs, ref)
 									}
@@ -1184,17 +1236,4 @@ func (index *SpecIndex) GetAllDescriptionsCount() int {
 // GetAllSummariesCount will collect together every single summary found in the document
 func (index *SpecIndex) GetAllSummariesCount() int {
 	return len(index.allSummaries)
-}
-
-// CheckForSeenRemoteSource will check to see if we have already seen this remote source and return it,
-// to avoid making duplicate remote calls for document data.
-func (index *SpecIndex) CheckForSeenRemoteSource(url string) (bool, *yaml.Node) {
-	if index.config == nil || index.config.seenRemoteSources == nil {
-		return false, nil
-	}
-	j, _ := index.config.seenRemoteSources.Load(url)
-	if j != nil {
-		return true, j.(*yaml.Node)
-	}
-	return false, nil
 }

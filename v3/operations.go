@@ -972,7 +972,7 @@ func (c Client) GetBlockStorageSnapshot(ctx context.Context, id UUID) (*BlockSto
 }
 
 type UpdateBlockStorageSnapshotRequest struct {
-	Labels Labels `json:"labels,omitempty"`
+	Labels Labels `json:"labels"`
 	// Snapshot name
 	Name *string `json:"name,omitempty" validate:"omitempty,lte=255"`
 }
@@ -1114,7 +1114,7 @@ func (c Client) GetBlockStorageVolume(ctx context.Context, id UUID) (*BlockStora
 }
 
 type UpdateBlockStorageVolumeRequest struct {
-	Labels Labels `json:"labels,omitempty"`
+	Labels Labels `json:"labels"`
 	// Volume name
 	Name *string `json:"name,omitempty" validate:"omitempty,lte=255"`
 }
@@ -8334,7 +8334,7 @@ type CreateInstanceRequest struct {
 	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
 	// Instance template
 	Template *Template `json:"template" validate:"required"`
-	// Instance Cloud-init user-data
+	// Instance Cloud-init user-data (base64 encoded)
 	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1,lte=32768"`
 }
 
@@ -8625,7 +8625,7 @@ type UpdateInstancePoolRequest struct {
 	// Instance Pool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups"`
 	// Deploy target
-	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
+	DeployTarget *DeployTarget `json:"deploy-target"`
 	// Instance Pool description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Instances disk size in GB
@@ -8649,7 +8649,7 @@ type UpdateInstancePoolRequest struct {
 	// Instance Pool Security Groups
 	SecurityGroups []SecurityGroup `json:"security-groups"`
 	// SSH key
-	SSHKey *SSHKey `json:"ssh-key,omitempty"`
+	SSHKey *SSHKey `json:"ssh-key"`
 	// Instances SSH keys
 	SSHKeys []SSHKey `json:"ssh-keys"`
 	// Instance template
@@ -9056,7 +9056,7 @@ type UpdateInstanceRequest struct {
 	// Instance name
 	Name               string             `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
-	// Instance Cloud-init user-data
+	// Instance Cloud-init user-data (base64 encoded)
 	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1,lte=32768"`
 }
 
@@ -12255,7 +12255,7 @@ type UpdateSKSClusterRequest struct {
 	// Cluster name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// SKS Cluster OpenID config map
-	Oidc *SKSOidc `json:"oidc,omitempty"`
+	Oidc *SKSOidc `json:"oidc"`
 }
 
 // Update an SKS cluster
@@ -12577,7 +12577,7 @@ type UpdateSKSNodepoolRequest struct {
 	// Nodepool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
 	// Deploy target
-	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
+	DeployTarget *DeployTarget `json:"deploy-target"`
 	// Nodepool description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Nodepool instances disk size in GB

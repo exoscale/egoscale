@@ -4,116 +4,152 @@
 package v2
 
 import (
+	"context"
 	"crypto/sha256"
-	"fmt"
+	"strings"
+	"sync"
+
+	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
-	"sort"
-	"strings"
 )
 
 // Paths represents a low-level Swagger / OpenAPI Paths object.
 type Paths struct {
-	PathItems  map[low.KeyReference[string]]low.ValueReference[*PathItem]
-	Extensions map[low.KeyReference[string]]low.ValueReference[any]
+	PathItems  *orderedmap.Map[low.KeyReference[string], low.ValueReference[*PathItem]]
+	Extensions *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 }
 
 // GetExtensions returns all Paths extensions and satisfies the low.HasExtensions interface.
-func (p *Paths) GetExtensions() map[low.KeyReference[string]]low.ValueReference[any] {
+func (p *Paths) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return p.Extensions
 }
 
 // FindPath attempts to locate a PathItem instance, given a path key.
-func (p *Paths) FindPath(path string) *low.ValueReference[*PathItem] {
-	for k, j := range p.PathItems {
-		if k.Value == path {
-			return &j
+func (p *Paths) FindPath(path string) (result *low.ValueReference[*PathItem]) {
+	for pair := orderedmap.First(p.PathItems); pair != nil; pair = pair.Next() {
+		if pair.Key().Value == path {
+			result = pair.ValuePtr()
+			break
 		}
 	}
-	return nil
+	return result
 }
 
 // FindPathAndKey attempts to locate a PathItem instance, given a path key.
-func (p *Paths) FindPathAndKey(path string) (*low.KeyReference[string], *low.ValueReference[*PathItem]) {
-	for k, j := range p.PathItems {
-		if k.Value == path {
-			return &k, &j
+func (p *Paths) FindPathAndKey(path string) (key *low.KeyReference[string], value *low.ValueReference[*PathItem]) {
+	for pair := orderedmap.First(p.PathItems); pair != nil; pair = pair.Next() {
+		if pair.Key().Value == path {
+			key = pair.KeyPtr()
+			value = pair.ValuePtr()
+			break
 		}
 	}
-	return nil, nil
+	return key, value
 }
 
 // FindExtension will attempt to locate an extension value given a name.
-func (p *Paths) FindExtension(ext string) *low.ValueReference[any] {
-	return low.FindItemInMap[any](ext, p.Extensions)
+func (p *Paths) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
+	return low.FindItemInOrderedMap(ext, p.Extensions)
 }
 
 // Build will extract extensions and paths from node.
-func (p *Paths) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
+func (p *Paths) Build(ctx context.Context, _, root *yaml.Node, idx *index.SpecIndex) error {
 	root = utils.NodeAlias(root)
 	utils.CheckForMergeNodes(root)
 	p.Extensions = low.ExtractExtensions(root)
-	skip := false
-	var currentNode *yaml.Node
 
-	pathsMap := make(map[low.KeyReference[string]]low.ValueReference[*PathItem])
-
-	// build each new path, in a new thread.
+	// Translate YAML nodes to pathsMap using `TranslatePipeline`.
 	type pathBuildResult struct {
-		k low.KeyReference[string]
-		v low.ValueReference[*PathItem]
+		key   low.KeyReference[string]
+		value low.ValueReference[*PathItem]
 	}
+	type buildInput struct {
+		currentNode *yaml.Node
+		pathNode    *yaml.Node
+	}
+	pathsMap := orderedmap.New[low.KeyReference[string], low.ValueReference[*PathItem]]()
+	in := make(chan buildInput)
+	out := make(chan pathBuildResult)
+	done := make(chan struct{})
+	var wg sync.WaitGroup
+	wg.Add(2) // input and output goroutines.
 
-	bChan := make(chan pathBuildResult)
-	eChan := make(chan error)
-	var buildPathItem = func(cNode, pNode *yaml.Node, b chan<- pathBuildResult, e chan<- error) {
+	// TranslatePipeline input.
+	go func() {
+		defer func() {
+			close(in)
+			wg.Done()
+		}()
+		skip := false
+		var currentNode *yaml.Node
+		for i, pathNode := range root.Content {
+			if strings.HasPrefix(strings.ToLower(pathNode.Value), "x-") {
+				skip = true
+				continue
+			}
+			if skip {
+				skip = false
+				continue
+			}
+			if i%2 == 0 {
+				currentNode = pathNode
+				continue
+			}
+
+			select {
+			case in <- buildInput{
+				currentNode: currentNode,
+				pathNode:    pathNode,
+			}:
+			case <-done:
+				return
+			}
+		}
+	}()
+
+	// TranslatePipeline output.
+	go func() {
+		for {
+			result, ok := <-out
+			if !ok {
+				break
+			}
+			pathsMap.Set(result.key, result.value)
+		}
+		close(done)
+		wg.Done()
+	}()
+
+	translateFunc := func(value buildInput) (pathBuildResult, error) {
+		pNode := value.pathNode
+		cNode := value.currentNode
 		path := new(PathItem)
 		_ = low.BuildModel(pNode, path)
-		err := path.Build(cNode, pNode, idx)
+		err := path.Build(ctx, cNode, pNode, idx)
 		if err != nil {
-			e <- err
-			return
+			return pathBuildResult{}, err
 		}
-		b <- pathBuildResult{
-			k: low.KeyReference[string]{
+		return pathBuildResult{
+			key: low.KeyReference[string]{
 				Value:   cNode.Value,
 				KeyNode: cNode,
 			},
-			v: low.ValueReference[*PathItem]{
+			value: low.ValueReference[*PathItem]{
 				Value:     path,
 				ValueNode: pNode,
 			},
-		}
+		}, nil
 	}
-	pathCount := 0
-	for i, pathNode := range root.Content {
-		if strings.HasPrefix(strings.ToLower(pathNode.Value), "x-") {
-			skip = true
-			continue
-		}
-		if skip {
-			skip = false
-			continue
-		}
-		if i%2 == 0 {
-			currentNode = pathNode
-			continue
-		}
-		pathCount++
-		go buildPathItem(currentNode, pathNode, bChan, eChan)
+	err := datamodel.TranslatePipeline[buildInput, pathBuildResult](in, out, translateFunc)
+	wg.Wait()
+	if err != nil {
+		return err
 	}
-	completedItems := 0
-	for completedItems < pathCount {
-		select {
-		case err := <-eChan:
-			return err
-		case res := <-bChan:
-			completedItems++
-			pathsMap[res.k] = res.v
-		}
-	}
+
 	p.PathItems = pathsMap
 	return nil
 }
@@ -121,25 +157,9 @@ func (p *Paths) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 // Hash will return a consistent SHA256 Hash of the PathItem object
 func (p *Paths) Hash() [32]byte {
 	var f []string
-	l := make([]string, len(p.PathItems))
-	keys := make(map[string]low.ValueReference[*PathItem])
-	z := 0
-	for k := range p.PathItems {
-		keys[k.Value] = p.PathItems[k]
-		l[z] = k.Value
-		z++
+	for pair := orderedmap.First(orderedmap.SortAlpha(p.PathItems)); pair != nil; pair = pair.Next() {
+		f = append(f, low.GenerateHashString(pair.Value().Value))
 	}
-	sort.Strings(l)
-	for k := range l {
-		f = append(f, low.GenerateHashString(keys[l[k]].Value))
-	}
-	ekeys := make([]string, len(p.Extensions))
-	z = 0
-	for k := range p.Extensions {
-		ekeys[z] = fmt.Sprintf("%s-%x", k.Value, sha256.Sum256([]byte(fmt.Sprint(p.Extensions[k].Value))))
-		z++
-	}
-	sort.Strings(ekeys)
-	f = append(f, ekeys...)
+	f = append(f, low.HashExtensions(p.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }

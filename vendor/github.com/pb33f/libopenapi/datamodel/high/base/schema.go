@@ -7,6 +7,7 @@ import (
 	"github.com/pb33f/libopenapi/datamodel/high"
 	lowmodel "github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/base"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -44,63 +45,63 @@ type Schema struct {
 	Discriminator *Discriminator `json:"discriminator,omitempty" yaml:"discriminator,omitempty"`
 
 	// in 3.1 examples can be an array (which is recommended)
-	Examples []any `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Examples []*yaml.Node `json:"examples,omitempty" yaml:"examples,omitempty"`
 
 	// in 3.1 prefixItems provides tuple validation support.
 	PrefixItems []*SchemaProxy `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
 
 	// 3.1 Specific properties
-	Contains          *SchemaProxy            `json:"contains,omitempty" yaml:"contains,omitempty"`
-	MinContains       *int64                  `json:"minContains,omitempty" yaml:"minContains,omitempty"`
-	MaxContains       *int64                  `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
-	If                *SchemaProxy            `json:"if,omitempty" yaml:"if,omitempty"`
-	Else              *SchemaProxy            `json:"else,omitempty" yaml:"else,omitempty"`
-	Then              *SchemaProxy            `json:"then,omitempty" yaml:"then,omitempty"`
-	DependentSchemas  map[string]*SchemaProxy `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
-	PatternProperties map[string]*SchemaProxy `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
-	PropertyNames     *SchemaProxy            `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	UnevaluatedItems  *SchemaProxy            `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
+	Contains          *SchemaProxy                          `json:"contains,omitempty" yaml:"contains,omitempty"`
+	MinContains       *int64                                `json:"minContains,omitempty" yaml:"minContains,omitempty"`
+	MaxContains       *int64                                `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
+	If                *SchemaProxy                          `json:"if,omitempty" yaml:"if,omitempty"`
+	Else              *SchemaProxy                          `json:"else,omitempty" yaml:"else,omitempty"`
+	Then              *SchemaProxy                          `json:"then,omitempty" yaml:"then,omitempty"`
+	DependentSchemas  *orderedmap.Map[string, *SchemaProxy] `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
+	PatternProperties *orderedmap.Map[string, *SchemaProxy] `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
+	PropertyNames     *SchemaProxy                          `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
+	UnevaluatedItems  *SchemaProxy                          `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
 
 	// in 3.1 UnevaluatedProperties can be a Schema or a boolean
 	// https://github.com/pb33f/libopenapi/issues/118
-	UnevaluatedProperties *DynamicValue[*SchemaProxy, *bool] `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
+	UnevaluatedProperties *DynamicValue[*SchemaProxy, bool] `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
 
 	// in 3.1 Items can be a Schema or a boolean
 	Items *DynamicValue[*SchemaProxy, bool] `json:"items,omitempty" yaml:"items,omitempty"`
 
-	// 3.1 only, part of the JSON Schema spec provides a way to identify a subschema
+	// 3.1 only, part of the JSON Schema spec provides a way to identify a sub-schema
 	Anchor string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`
 
 	// Compatible with all versions
-	Not                  *SchemaProxy            `json:"not,omitempty" yaml:"not,omitempty"`
-	Properties           map[string]*SchemaProxy `json:"properties,omitempty" yaml:"properties,omitempty"`
-	Title                string                  `json:"title,omitempty" yaml:"title,omitempty"`
-	MultipleOf           *float64                `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
-	Maximum              *float64                `json:"maximum,omitempty" yaml:"maximum,omitempty"`
-	Minimum              *float64                `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	MaxLength            *int64                  `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	MinLength            *int64                  `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	Pattern              string                  `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	Format               string                  `json:"format,omitempty" yaml:"format,omitempty"`
-	MaxItems             *int64                  `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
-	MinItems             *int64                  `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	UniqueItems          *bool                   `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
-	MaxProperties        *int64                  `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	MinProperties        *int64                  `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	Required             []string                `json:"required,omitempty" yaml:"required,omitempty"`
-	Enum                 []any                   `json:"enum,omitempty" yaml:"enum,omitempty"`
-	AdditionalProperties any                     `json:"additionalProperties,omitempty" yaml:"additionalProperties,renderZero,omitempty"`
-	Description          string                  `json:"description,omitempty" yaml:"description,omitempty"`
-	Default              any                     `json:"default,omitempty" yaml:"default,renderZero,omitempty"`
-	Const                any                     `json:"const,omitempty" yaml:"const,renderZero,omitempty"`
-	Nullable             *bool                   `json:"nullable,omitempty" yaml:"nullable,omitempty"`
-	ReadOnly             bool                    `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`   // https://github.com/pb33f/libopenapi/issues/30
-	WriteOnly            bool                    `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"` // https://github.com/pb33f/libopenapi/issues/30
-	XML                  *XML                    `json:"xml,omitempty" yaml:"xml,omitempty"`
-	ExternalDocs         *ExternalDoc            `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
-	Example              any                     `json:"example,omitempty" yaml:"example,omitempty"`
-	Deprecated           *bool                   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
-	Extensions           map[string]any          `json:"-" yaml:"-"`
+	Not                  *SchemaProxy                          `json:"not,omitempty" yaml:"not,omitempty"`
+	Properties           *orderedmap.Map[string, *SchemaProxy] `json:"properties,omitempty" yaml:"properties,omitempty"`
+	Title                string                                `json:"title,omitempty" yaml:"title,omitempty"`
+	MultipleOf           *float64                              `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
+	Maximum              *float64                              `json:"maximum,renderZero,omitempty" yaml:"maximum,renderZero,omitempty"`
+	Minimum              *float64                              `json:"minimum,renderZero,omitempty," yaml:"minimum,renderZero,omitempty"`
+	MaxLength            *int64                                `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
+	MinLength            *int64                                `json:"minLength,omitempty" yaml:"minLength,omitempty"`
+	Pattern              string                                `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	Format               string                                `json:"format,omitempty" yaml:"format,omitempty"`
+	MaxItems             *int64                                `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
+	MinItems             *int64                                `json:"minItems,omitempty" yaml:"minItems,omitempty"`
+	UniqueItems          *bool                                 `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
+	MaxProperties        *int64                                `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	MinProperties        *int64                                `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	Required             []string                              `json:"required,omitempty" yaml:"required,omitempty"`
+	Enum                 []*yaml.Node                          `json:"enum,omitempty" yaml:"enum,omitempty"`
+	AdditionalProperties *DynamicValue[*SchemaProxy, bool]     `json:"additionalProperties,renderZero,omitempty" yaml:"additionalProperties,renderZero,omitempty"`
+	Description          string                                `json:"description,omitempty" yaml:"description,omitempty"`
+	Default              *yaml.Node                            `json:"default,omitempty" yaml:"default,renderZero,omitempty"`
+	Const                *yaml.Node                            `json:"const,omitempty" yaml:"const,renderZero,omitempty"`
+	Nullable             *bool                                 `json:"nullable,omitempty" yaml:"nullable,omitempty"`
+	ReadOnly             *bool                                 `json:"readOnly,renderZero,omitempty" yaml:"readOnly,renderZero,omitempty"`   // https://github.com/pb33f/libopenapi/issues/30
+	WriteOnly            *bool                                 `json:"writeOnly,renderZero,omitempty" yaml:"writeOnly,renderZero,omitempty"` // https://github.com/pb33f/libopenapi/issues/30
+	XML                  *XML                                  `json:"xml,omitempty" yaml:"xml,omitempty"`
+	ExternalDocs         *ExternalDoc                          `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Example              *yaml.Node                            `json:"example,omitempty" yaml:"example,omitempty"`
+	Deprecated           *bool                                 `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Extensions           *orderedmap.Map[string, *yaml.Node]   `json:"-" yaml:"-"`
 	low                  *base.Schema
 
 	// Parent Proxy refers back to the low level SchemaProxy that is proxying this schema.
@@ -112,6 +113,9 @@ func NewSchema(schema *base.Schema) *Schema {
 	s := new(Schema)
 	s.low = schema
 	s.Title = schema.Title.Value
+	if !schema.SchemaTypeRef.IsEmpty() {
+		s.SchemaTypeRef = schema.SchemaTypeRef.Value
+	}
 	if !schema.MultipleOf.IsEmpty() {
 		s.MultipleOf = &schema.MultipleOf.Value
 	}
@@ -211,29 +215,22 @@ func NewSchema(schema *base.Schema) *Schema {
 			Value:     schema.UnevaluatedItems.Value,
 		})
 	}
-	// check if unevaluated properties is a schema
-	if !schema.UnevaluatedProperties.IsEmpty() && schema.UnevaluatedProperties.Value.IsA() {
-		s.UnevaluatedProperties = &DynamicValue[*SchemaProxy, *bool]{
-			A: NewSchemaProxy(
-				&lowmodel.NodeReference[*base.SchemaProxy]{
+
+	var unevaluatedProperties *DynamicValue[*SchemaProxy, bool]
+	if !schema.UnevaluatedProperties.IsEmpty() {
+		if schema.UnevaluatedProperties.Value.IsA() {
+			unevaluatedProperties = &DynamicValue[*SchemaProxy, bool]{
+				A: NewSchemaProxy(&lowmodel.NodeReference[*base.SchemaProxy]{
 					ValueNode: schema.UnevaluatedProperties.ValueNode,
 					Value:     schema.UnevaluatedProperties.Value.A,
-				},
-			),
-			N: 0,
+					KeyNode:   schema.UnevaluatedProperties.KeyNode,
+				}),
+			}
+		} else {
+			unevaluatedProperties = &DynamicValue[*SchemaProxy, bool]{N: 1, B: schema.UnevaluatedProperties.Value.B}
 		}
 	}
-
-	// check if unevaluated properties is a bool
-	if !schema.UnevaluatedProperties.IsEmpty() && schema.UnevaluatedProperties.Value.IsB() {
-		s.UnevaluatedProperties = &DynamicValue[*SchemaProxy, *bool]{
-			B: schema.UnevaluatedProperties.Value.B,
-			N: 1,
-		}
-	}
-
-	if !schema.UnevaluatedProperties.IsEmpty() {
-	}
+	s.UnevaluatedProperties = unevaluatedProperties
 
 	s.Pattern = schema.Pattern.Value
 	s.Format = schema.Format.Value
@@ -248,19 +245,23 @@ func NewSchema(schema *base.Schema) *Schema {
 			s.Type = append(s.Type, schema.Type.Value.B[i].Value)
 		}
 	}
-	if schema.AdditionalProperties.Value != nil {
-		if addPropSchema, ok := schema.AdditionalProperties.Value.(*base.SchemaProxy); ok {
-			s.AdditionalProperties = NewSchemaProxy(&lowmodel.NodeReference[*base.SchemaProxy]{
-				KeyNode:   schema.AdditionalProperties.KeyNode,
-				ValueNode: schema.AdditionalProperties.ValueNode,
-				Value:     addPropSchema,
-			})
-		} else {
-			// TODO: check for slice and map types and unpack correctly.
 
-			s.AdditionalProperties = schema.AdditionalProperties.Value
+	var additionalProperties *DynamicValue[*SchemaProxy, bool]
+	if !schema.AdditionalProperties.IsEmpty() {
+		if schema.AdditionalProperties.Value.IsA() {
+			additionalProperties = &DynamicValue[*SchemaProxy, bool]{
+				A: NewSchemaProxy(&lowmodel.NodeReference[*base.SchemaProxy]{
+					ValueNode: schema.AdditionalProperties.ValueNode,
+					Value:     schema.AdditionalProperties.Value.A,
+					KeyNode:   schema.AdditionalProperties.KeyNode,
+				}),
+			}
+		} else {
+			additionalProperties = &DynamicValue[*SchemaProxy, bool]{N: 1, B: schema.AdditionalProperties.Value.B}
 		}
 	}
+	s.AdditionalProperties = additionalProperties
+
 	s.Description = schema.Description.Value
 	s.Default = schema.Default.Value
 	s.Const = schema.Const.Value
@@ -268,17 +269,17 @@ func NewSchema(schema *base.Schema) *Schema {
 		s.Nullable = &schema.Nullable.Value
 	}
 	if !schema.ReadOnly.IsEmpty() {
-		s.ReadOnly = schema.ReadOnly.Value
+		s.ReadOnly = &schema.ReadOnly.Value
 	}
 	if !schema.WriteOnly.IsEmpty() {
-		s.WriteOnly = schema.WriteOnly.Value
+		s.WriteOnly = &schema.WriteOnly.Value
 	}
 	if !schema.Deprecated.IsEmpty() {
 		s.Deprecated = &schema.Deprecated.Value
 	}
 	s.Example = schema.Example.Value
 	if len(schema.Examples.Value) > 0 {
-		examples := make([]any, len(schema.Examples.Value))
+		examples := make([]*yaml.Node, len(schema.Examples.Value))
 		for i := 0; i < len(schema.Examples.Value); i++ {
 			examples[i] = schema.Examples.Value[i].Value
 		}
@@ -300,12 +301,11 @@ func NewSchema(schema *base.Schema) *Schema {
 	}
 	s.Required = req
 
-	var enum []any
 	if !schema.Anchor.IsEmpty() {
 		s.Anchor = schema.Anchor.Value
 	}
 
-	// TODO: check this behavior.
+	var enum []*yaml.Node
 	for i := range schema.Enum.Value {
 		enum = append(enum, schema.Enum.Value[i].Value)
 	}
@@ -325,11 +325,13 @@ func NewSchema(schema *base.Schema) *Schema {
 
 	// for every item, build schema async
 	buildSchema := func(sch lowmodel.ValueReference[*base.SchemaProxy], idx int, bChan chan buildResult) {
-		p := NewSchemaProxy(&lowmodel.NodeReference[*base.SchemaProxy]{
+		n := &lowmodel.NodeReference[*base.SchemaProxy]{
 			ValueNode: sch.ValueNode,
 			Value:     sch.Value,
-			Reference: sch.GetReference(),
-		})
+		}
+		n.SetReference(sch.GetReference(), sch.GetReferenceNode())
+
+		p := NewSchemaProxy(n)
 
 		bChan <- buildResult{idx: idx, s: p}
 	}
@@ -345,25 +347,22 @@ func NewSchema(schema *base.Schema) *Schema {
 		}
 		j := 0
 		for j < totalSchemas {
-			select {
-			case r := <-bChan:
-				j++
-				(*items)[r.idx] = r.s
-			}
+			r := <-bChan
+			j++
+			(*items)[r.idx] = r.s
 		}
 		doneChan <- true
 	}
 
 	// props async
 	buildProps := func(k lowmodel.KeyReference[string], v lowmodel.ValueReference[*base.SchemaProxy],
-		props map[string]*SchemaProxy, sw int,
+		props *orderedmap.Map[string, *SchemaProxy], sw int,
 	) {
-		props[k.Value] = NewSchemaProxy(&lowmodel.NodeReference[*base.SchemaProxy]{
+		props.Set(k.Value, NewSchemaProxy(&lowmodel.NodeReference[*base.SchemaProxy]{
 			Value:     v.Value,
 			KeyNode:   k.KeyNode,
 			ValueNode: v.ValueNode,
-		},
-		)
+		}))
 
 		switch sw {
 		case 0:
@@ -375,18 +374,18 @@ func NewSchema(schema *base.Schema) *Schema {
 		}
 	}
 
-	props := make(map[string]*SchemaProxy)
-	for k, v := range schema.Properties.Value {
-		buildProps(k, v, props, 0)
+	props := orderedmap.New[string, *SchemaProxy]()
+	for pair := orderedmap.First(schema.Properties.Value); pair != nil; pair = pair.Next() {
+		buildProps(pair.Key(), pair.Value(), props, 0)
 	}
 
-	dependents := make(map[string]*SchemaProxy)
-	for k, v := range schema.DependentSchemas.Value {
-		buildProps(k, v, dependents, 1)
+	dependents := orderedmap.New[string, *SchemaProxy]()
+	for pair := orderedmap.First(schema.DependentSchemas.Value); pair != nil; pair = pair.Next() {
+		buildProps(pair.Key(), pair.Value(), dependents, 1)
 	}
-	patternProps := make(map[string]*SchemaProxy)
-	for k, v := range schema.PatternProperties.Value {
-		buildProps(k, v, patternProps, 2)
+	patternProps := orderedmap.New[string, *SchemaProxy]()
+	for pair := orderedmap.First(schema.PatternProperties.Value); pair != nil; pair = pair.Next() {
+		buildProps(pair.Key(), pair.Value(), patternProps, 2)
 	}
 
 	var allOf []*SchemaProxy
@@ -423,7 +422,8 @@ func NewSchema(schema *base.Schema) *Schema {
 					Value:     schema.Items.Value.A,
 					KeyNode:   schema.Items.KeyNode,
 				},
-				)}
+				),
+			}
 		} else {
 			items = &DynamicValue[*SchemaProxy, bool]{N: 1, B: schema.Items.Value.B}
 		}
@@ -437,13 +437,11 @@ func NewSchema(schema *base.Schema) *Schema {
 	completeChildren := 0
 	if children > 0 {
 	allDone:
-		for true {
-			select {
-			case <-polyCompletedChan:
-				completeChildren++
-				if children == completeChildren {
-					break allDone
-				}
+		for {
+			<-polyCompletedChan
+			completeChildren++
+			if children == completeChildren {
+				break allDone
 			}
 		}
 	}
@@ -471,8 +469,8 @@ func (s *Schema) Render() ([]byte, error) {
 	return yaml.Marshal(s)
 }
 
-// RenderInline will return a YAML representation of the Schema object as a byte slice. All of the
-// $ref values will be inlined, as in resolved in place.
+// RenderInline will return a YAML representation of the Schema object as a byte slice.
+// All the $ref values will be inlined, as in resolved in place.
 //
 // Make sure you don't have any circular references!
 func (s *Schema) RenderInline() ([]byte, error) {
@@ -483,11 +481,26 @@ func (s *Schema) RenderInline() ([]byte, error) {
 // MarshalYAML will create a ready to render YAML representation of the ExternalDoc object.
 func (s *Schema) MarshalYAML() (interface{}, error) {
 	nb := high.NewNodeBuilder(s, s.low)
+
+	// determine index version
+	idx := s.GoLow().Index
+	if idx != nil {
+		if idx.GetConfig().SpecInfo != nil {
+			nb.Version = idx.GetConfig().SpecInfo.VersionNumeric
+		}
+	}
 	return nb.Render(), nil
 }
 
 func (s *Schema) MarshalYAMLInline() (interface{}, error) {
 	nb := high.NewNodeBuilder(s, s.low)
 	nb.Resolve = true
+	// determine index version
+	idx := s.GoLow().Index
+	if idx != nil {
+		if idx.GetConfig().SpecInfo != nil {
+			nb.Version = idx.GetConfig().SpecInfo.VersionNumeric
+		}
+	}
 	return nb.Render(), nil
 }

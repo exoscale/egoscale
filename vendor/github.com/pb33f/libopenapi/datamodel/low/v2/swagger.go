@@ -12,20 +12,23 @@
 package v2
 
 import (
+	"context"
+	"errors"
+	"path/filepath"
+
 	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/base"
 	"github.com/pb33f/libopenapi/index"
-	"github.com/pb33f/libopenapi/resolver"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"gopkg.in/yaml.v3"
 )
 
 // processes a property of a Swagger document asynchronously using bool and error channels for signals.
-type documentFunction func(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error)
+type documentFunction func(ctx context.Context, root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error)
 
 // Swagger represents a high-level Swagger / OpenAPI 2 document. An instance of Swagger is the root of the specification.
 type Swagger struct {
-
 	// Swagger is the version of Swagger / OpenAPI being used, extracted from the 'swagger: 2.x' definition.
 	Swagger low.ValueReference[string]
 
@@ -96,7 +99,7 @@ type Swagger struct {
 	ExternalDocs low.NodeReference[*base.ExternalDoc]
 
 	// Extensions contains all custom extensions defined for the top-level document.
-	Extensions map[low.KeyReference[string]]low.ValueReference[any]
+	Extensions *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 
 	// Index is a reference to the index.SpecIndex that was created for the document and used
 	// as a guide when building out the Document. Ideal if further processing is required on the model and
@@ -109,70 +112,117 @@ type Swagger struct {
 	//
 	// This property is not a part of the OpenAPI schema, this is custom to libopenapi.
 	SpecInfo *datamodel.SpecInfo
+
+	// Rolodex is a reference to the index.Rolodex instance created when the specification was read.
+	// The rolodex is used to look up references from file systems (local or remote)
+	Rolodex *index.Rolodex
 }
 
 // FindExtension locates an extension from the root of the Swagger document.
-func (s *Swagger) FindExtension(ext string) *low.ValueReference[any] {
-	return low.FindItemInMap[any](ext, s.Extensions)
+func (s *Swagger) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
+	return low.FindItemInOrderedMap(ext, s.Extensions)
 }
 
 // GetExtensions returns all Swagger/Top level extensions and satisfies the low.HasExtensions interface.
-func (s *Swagger) GetExtensions() map[low.KeyReference[string]]low.ValueReference[any] {
+func (s *Swagger) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return s.Extensions
 }
 
 // CreateDocumentFromConfig will create a new Swagger document from the provided SpecInfo and DocumentConfiguration.
 func CreateDocumentFromConfig(info *datamodel.SpecInfo,
-	configuration *datamodel.DocumentConfiguration) (*Swagger, []error) {
+	configuration *datamodel.DocumentConfiguration) (*Swagger, error) {
 	return createDocument(info, configuration)
 }
 
-// CreateDocument will create a new Swagger document from the provided SpecInfo.
-//
-// Deprecated: Use CreateDocumentFromConfig instead.
-func CreateDocument(info *datamodel.SpecInfo) (*Swagger, []error) {
-	return createDocument(info, &datamodel.DocumentConfiguration{
-		AllowRemoteReferences: true,
-		AllowFileReferences:   true,
-	})
-}
-
-func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfiguration) (*Swagger, []error) {
+func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfiguration) (*Swagger, error) {
 	doc := Swagger{Swagger: low.ValueReference[string]{Value: info.Version, ValueNode: info.RootNode}}
 	doc.Extensions = low.ExtractExtensions(info.RootNode.Content[0])
 
-	// build an index
-	idx := index.NewSpecIndexWithConfig(info.RootNode, &index.SpecIndexConfig{
-		BaseURL:           config.BaseURL,
-		RemoteURLHandler:  config.RemoteURLHandler,
-		AllowRemoteLookup: config.AllowRemoteReferences,
-		AllowFileLookup:   config.AllowFileReferences,
-	})
-	doc.Index = idx
-	doc.SpecInfo = info
+	// create an index config and shadow the document configuration.
+	idxConfig := index.CreateClosedAPIIndexConfig()
+	idxConfig.SpecInfo = info
+	idxConfig.IgnoreArrayCircularReferences = config.IgnoreArrayCircularReferences
+	idxConfig.IgnorePolymorphicCircularReferences = config.IgnorePolymorphicCircularReferences
+	idxConfig.AvoidCircularReferenceCheck = true
+	idxConfig.BaseURL = config.BaseURL
+	idxConfig.BasePath = config.BasePath
+	idxConfig.Logger = config.Logger
+	rolodex := index.NewRolodex(idxConfig)
+	rolodex.SetRootNode(info.RootNode)
+	doc.Rolodex = rolodex
 
-	var errors []error
+	// If basePath is provided, add a local filesystem to the rolodex.
+	if idxConfig.BasePath != "" {
+		var cwd string
+		cwd, _ = filepath.Abs(config.BasePath)
+		// if a supplied local filesystem is provided, add it to the rolodex.
+		if config.LocalFS != nil {
+			rolodex.AddLocalFS(cwd, config.LocalFS)
+		} else {
+
+			// create a local filesystem
+			localFSConf := index.LocalFSConfig{
+				BaseDirectory: cwd,
+				IndexConfig:   idxConfig,
+				FileFilters:   config.FileFilter,
+			}
+			fileFS, _ := index.NewLocalFSWithConfig(&localFSConf)
+			idxConfig.AllowFileLookup = true
+
+			// add the filesystem to the rolodex
+			rolodex.AddLocalFS(cwd, fileFS)
+		}
+	}
+
+	// if base url is provided, add a remote filesystem to the rolodex.
+	if idxConfig.BaseURL != nil {
+
+		// create a remote filesystem
+		remoteFS, _ := index.NewRemoteFSWithConfig(idxConfig)
+		if config.RemoteURLHandler != nil {
+			remoteFS.RemoteHandlerFunc = config.RemoteURLHandler
+		}
+		idxConfig.AllowRemoteLookup = true
+
+		// add to the rolodex
+		rolodex.AddRemoteFS(config.BaseURL.String(), remoteFS)
+
+	}
+
+	doc.Rolodex = rolodex
+
+	var errs []error
+
+	// index all the things!
+	_ = rolodex.IndexTheRolodex()
+
+	// check for circular references
+	if !config.SkipCircularReferenceCheck {
+		rolodex.CheckForCircularReferences()
+	}
+
+	// extract errors
+	roloErrs := rolodex.GetCaughtErrors()
+	if roloErrs != nil {
+		errs = append(errs, roloErrs...)
+	}
+
+	// set the index on the document.
+	doc.Index = rolodex.GetRootIndex()
+	doc.SpecInfo = info
 
 	// build out swagger scalar variables.
 	_ = low.BuildModel(info.RootNode.Content[0], &doc)
 
+	ctx := context.Background()
+
 	// extract externalDocs
-	extDocs, err := low.ExtractObject[*base.ExternalDoc](base.ExternalDocsLabel, info.RootNode, idx)
+	extDocs, err := low.ExtractObject[*base.ExternalDoc](ctx, base.ExternalDocsLabel, info.RootNode, rolodex.GetRootIndex())
 	if err != nil {
-		errors = append(errors, err)
+		errs = append(errs, err)
 	}
 
 	doc.ExternalDocs = extDocs
-
-	// create resolver and check for circular references.
-	resolve := resolver.NewResolver(idx)
-	resolvingErrors := resolve.CheckForCircularReferences()
-
-	if len(resolvingErrors) > 0 {
-		for r := range resolvingErrors {
-			errors = append(errors, resolvingErrors[r])
-		}
-	}
 
 	extractionFuncs := []documentFunction{
 		extractInfo,
@@ -187,7 +237,7 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 	doneChan := make(chan bool)
 	errChan := make(chan error)
 	for i := range extractionFuncs {
-		go extractionFuncs[i](info.RootNode.Content[0], &doc, idx, doneChan, errChan)
+		go extractionFuncs[i](ctx, info.RootNode.Content[0], &doc, rolodex.GetRootIndex(), doneChan, errChan)
 	}
 	completedExtractions := 0
 	for completedExtractions < len(extractionFuncs) {
@@ -196,11 +246,11 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 			completedExtractions++
 		case e := <-errChan:
 			completedExtractions++
-			errors = append(errors, e)
+			errs = append(errs, e)
 		}
 	}
 
-	return &doc, errors
+	return &doc, errors.Join(errs...)
 }
 
 func (s *Swagger) GetExternalDocs() *low.NodeReference[any] {
@@ -211,8 +261,8 @@ func (s *Swagger) GetExternalDocs() *low.NodeReference[any] {
 	}
 }
 
-func extractInfo(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
-	info, err := low.ExtractObject[*base.Info](base.InfoLabel, root, idx)
+func extractInfo(ctx context.Context, root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
+	info, err := low.ExtractObject[*base.Info](ctx, base.InfoLabel, root, idx)
 	if err != nil {
 		e <- err
 		return
@@ -221,8 +271,8 @@ func extractInfo(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- b
 	c <- true
 }
 
-func extractPaths(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
-	paths, err := low.ExtractObject[*Paths](PathsLabel, root, idx)
+func extractPaths(ctx context.Context, root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
+	paths, err := low.ExtractObject[*Paths](ctx, PathsLabel, root, idx)
 	if err != nil {
 		e <- err
 		return
@@ -230,8 +280,9 @@ func extractPaths(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- 
 	doc.Paths = paths
 	c <- true
 }
-func extractDefinitions(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
-	def, err := low.ExtractObject[*Definitions](DefinitionsLabel, root, idx)
+
+func extractDefinitions(ctx context.Context, root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
+	def, err := low.ExtractObject[*Definitions](ctx, DefinitionsLabel, root, idx)
 	if err != nil {
 		e <- err
 		return
@@ -239,8 +290,9 @@ func extractDefinitions(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c c
 	doc.Definitions = def
 	c <- true
 }
-func extractParamDefinitions(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
-	param, err := low.ExtractObject[*ParameterDefinitions](ParametersLabel, root, idx)
+
+func extractParamDefinitions(ctx context.Context, root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
+	param, err := low.ExtractObject[*ParameterDefinitions](ctx, ParametersLabel, root, idx)
 	if err != nil {
 		e <- err
 		return
@@ -249,8 +301,8 @@ func extractParamDefinitions(root *yaml.Node, doc *Swagger, idx *index.SpecIndex
 	c <- true
 }
 
-func extractResponsesDefinitions(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
-	resp, err := low.ExtractObject[*ResponsesDefinitions](ResponsesLabel, root, idx)
+func extractResponsesDefinitions(ctx context.Context, root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
+	resp, err := low.ExtractObject[*ResponsesDefinitions](ctx, ResponsesLabel, root, idx)
 	if err != nil {
 		e <- err
 		return
@@ -259,8 +311,8 @@ func extractResponsesDefinitions(root *yaml.Node, doc *Swagger, idx *index.SpecI
 	c <- true
 }
 
-func extractSecurityDefinitions(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
-	sec, err := low.ExtractObject[*SecurityDefinitions](SecurityDefinitionsLabel, root, idx)
+func extractSecurityDefinitions(ctx context.Context, root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
+	sec, err := low.ExtractObject[*SecurityDefinitions](ctx, SecurityDefinitionsLabel, root, idx)
 	if err != nil {
 		e <- err
 		return
@@ -269,8 +321,8 @@ func extractSecurityDefinitions(root *yaml.Node, doc *Swagger, idx *index.SpecIn
 	c <- true
 }
 
-func extractTags(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
-	tags, ln, vn, err := low.ExtractArray[*base.Tag](base.TagsLabel, root, idx)
+func extractTags(ctx context.Context, root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
+	tags, ln, vn, err := low.ExtractArray[*base.Tag](ctx, base.TagsLabel, root, idx)
 	if err != nil {
 		e <- err
 		return
@@ -283,8 +335,8 @@ func extractTags(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- b
 	c <- true
 }
 
-func extractSecurity(root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
-	sec, ln, vn, err := low.ExtractArray[*base.SecurityRequirement](SecurityLabel, root, idx)
+func extractSecurity(ctx context.Context, root *yaml.Node, doc *Swagger, idx *index.SpecIndex, c chan<- bool, e chan<- error) {
+	sec, ln, vn, err := low.ExtractArray[*base.SecurityRequirement](ctx, SecurityLabel, root, idx)
 	if err != nil {
 		e <- err
 		return

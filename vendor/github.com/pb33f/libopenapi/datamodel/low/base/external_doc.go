@@ -4,14 +4,15 @@
 package base
 
 import (
+	"context"
 	"crypto/sha256"
-	"fmt"
+	"strings"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
-	"sort"
-	"strings"
 )
 
 // ExternalDoc represents a low-level External Documentation object as defined by OpenAPI 2 and 3
@@ -23,18 +24,22 @@ import (
 type ExternalDoc struct {
 	Description low.NodeReference[string]
 	URL         low.NodeReference[string]
-	Extensions  map[low.KeyReference[string]]low.ValueReference[any]
+	Extensions  *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
+	KeyNode     *yaml.Node
+	RootNode    *yaml.Node
 	*low.Reference
 }
 
 // FindExtension returns a ValueReference containing the extension value, if found.
-func (ex *ExternalDoc) FindExtension(ext string) *low.ValueReference[any] {
-	return low.FindItemInMap[any](ext, ex.Extensions)
+func (ex *ExternalDoc) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
+	return low.FindItemInOrderedMap[*yaml.Node](ext, ex.Extensions)
 }
 
 // Build will extract extensions from the ExternalDoc instance.
-func (ex *ExternalDoc) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
+func (ex *ExternalDoc) Build(_ context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
+	ex.KeyNode = keyNode
 	root = utils.NodeAlias(root)
+	ex.RootNode = root
 	utils.CheckForMergeNodes(root)
 	ex.Reference = new(low.Reference)
 	ex.Extensions = low.ExtractExtensions(root)
@@ -42,7 +47,7 @@ func (ex *ExternalDoc) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
 }
 
 // GetExtensions returns all ExternalDoc extensions and satisfies the low.HasExtensions interface.
-func (ex *ExternalDoc) GetExtensions() map[low.KeyReference[string]]low.ValueReference[any] {
+func (ex *ExternalDoc) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return ex.Extensions
 }
 
@@ -52,13 +57,6 @@ func (ex *ExternalDoc) Hash() [32]byte {
 		ex.Description.Value,
 		ex.URL.Value,
 	}
-	keys := make([]string, len(ex.Extensions))
-	z := 0
-	for k := range ex.Extensions {
-		keys[z] = fmt.Sprintf("%s-%x", k.Value, sha256.Sum256([]byte(fmt.Sprint(ex.Extensions[k].Value))))
-		z++
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+	f = append(f, low.HashExtensions(ex.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }

@@ -4,8 +4,11 @@
 package base
 
 import (
+	"context"
 	"crypto/sha256"
+	"log/slog"
 
+	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
@@ -44,24 +47,24 @@ import (
 // it's not actually JSONSchema until 3.1, so lots of times a bad schema will break parsing. Errors are only found
 // when a schema is needed, so the rest of the document is parsed and ready to use.
 type SchemaProxy struct {
-	kn              *yaml.Node
-	vn              *yaml.Node
-	idx             *index.SpecIndex
-	rendered        *Schema
-	buildError      error
-	isReference     bool   // Is the schema underneath originally a $ref?
-	referenceLookup string // If the schema is a $ref, what's its name?
+	low.Reference
+	kn         *yaml.Node
+	vn         *yaml.Node
+	idx        *index.SpecIndex
+	rendered   *Schema
+	buildError error
+	ctx        context.Context
 }
 
 // Build will prepare the SchemaProxy for rendering, it does not build the Schema, only sets up internal state.
 // Key maybe nil if absent.
-func (sp *SchemaProxy) Build(key, value *yaml.Node, idx *index.SpecIndex) error {
+func (sp *SchemaProxy) Build(ctx context.Context, key, value *yaml.Node, idx *index.SpecIndex) error {
 	sp.kn = key
 	sp.vn = value
 	sp.idx = idx
+	sp.ctx = ctx
 	if rf, _, r := utils.IsNodeRefValue(value); rf {
-		sp.isReference = true
-		sp.referenceLookup = r
+		sp.SetReference(r, value)
 	}
 	return nil
 }
@@ -83,7 +86,7 @@ func (sp *SchemaProxy) Schema() *Schema {
 	}
 	schema := new(Schema)
 	utils.CheckForMergeNodes(sp.vn)
-	err := schema.Build(sp.vn, sp.idx)
+	err := schema.Build(sp.ctx, sp.vn, sp.idx)
 	if err != nil {
 		sp.buildError = err
 		return nil
@@ -99,39 +102,28 @@ func (sp *SchemaProxy) GetBuildError() error {
 	return sp.buildError
 }
 
-// IsSchemaReference returns true if the Schema that this SchemaProxy represents, is actually a reference to
-// a Schema contained within Components or Definitions. There is no difference in the mechanism used to resolve the
-// Schema when calling Schema(), however if we want to know if this schema was originally a reference, we won't
-// be able to determine that from the model, without this bit.
-func (sp *SchemaProxy) IsSchemaReference() bool {
-	return sp.isReference
-}
-
-// IsReference is an alias for IsSchemaReference() except it's compatible wih the IsReferenced interface type.
-func (sp *SchemaProxy) IsReference() bool {
-	return sp.IsSchemaReference()
-}
-
-// GetReference is an alias for GetSchemaReference() except it's compatible wih the IsReferenced interface type.
-func (sp *SchemaProxy) GetReference() string {
-	return sp.GetSchemaReference()
-}
-
-// SetReference will set the reference lookup for this SchemaProxy.
-func (sp *SchemaProxy) SetReference(ref string) {
-	sp.referenceLookup = ref
-}
-
-// GetSchemaReference will return the lookup defined by the $ref that this schema points to. If the schema
-// is inline, and not a reference, then this method returns an empty string. Only useful when combined with
-// IsSchemaReference()
-func (sp *SchemaProxy) GetSchemaReference() string {
-	return sp.referenceLookup
+func (sp *SchemaProxy) GetSchemaReferenceLocation() *index.NodeOrigin {
+	if sp.idx != nil {
+		origin := sp.idx.FindNodeOrigin(sp.vn)
+		if origin != nil {
+			return origin
+		}
+		if sp.idx.GetRolodex() != nil {
+			origin = sp.idx.GetRolodex().FindNodeOrigin(sp.vn)
+			return origin
+		}
+	}
+	return nil
 }
 
 // GetKeyNode will return the yaml.Node pointer that is a key for value node.
 func (sp *SchemaProxy) GetKeyNode() *yaml.Node {
 	return sp.kn
+}
+
+// GetKeyNode will return the yaml.Node pointer that is a key for value node.
+func (sp *SchemaProxy) GetContext() context.Context {
+	return sp.ctx
 }
 
 // GetValueNode will return the yaml.Node pointer used by the proxy to generate the Schema.
@@ -142,17 +134,27 @@ func (sp *SchemaProxy) GetValueNode() *yaml.Node {
 // Hash will return a consistent SHA256 Hash of the SchemaProxy object (it will resolve it)
 func (sp *SchemaProxy) Hash() [32]byte {
 	if sp.rendered != nil {
-		if !sp.isReference {
+		if !sp.IsReference() {
 			return sp.rendered.Hash()
 		}
 	} else {
-		if !sp.isReference {
+		if !sp.IsReference() {
 			// only resolve this proxy if it's not a ref.
 			sch := sp.Schema()
 			sp.rendered = sch
-			return sch.Hash()
+			if sch != nil {
+				return sch.Hash()
+			}
+			var logger *slog.Logger
+			if sp.idx != nil {
+				logger = sp.idx.GetLogger()
+			}
+			if logger != nil {
+				logger.Warn("SchemaProxy.Hash() failed to resolve schema, returning empty hash", "error", sp.GetBuildError().Error())
+			}
+			return [32]byte{}
 		}
 	}
 	// hash reference value only, do not resolve!
-	return sha256.Sum256([]byte(sp.referenceLookup))
+	return sha256.Sum256([]byte(sp.GetReference()))
 }

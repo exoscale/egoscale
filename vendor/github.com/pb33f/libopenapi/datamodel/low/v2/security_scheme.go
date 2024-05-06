@@ -4,14 +4,15 @@
 package v2
 
 import (
+	"context"
 	"crypto/sha256"
-	"fmt"
+	"strings"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
-	"sort"
-	"strings"
 )
 
 // SecurityScheme is a low-level representation of a Swagger / OpenAPI 2 SecurityScheme object.
@@ -29,21 +30,21 @@ type SecurityScheme struct {
 	AuthorizationUrl low.NodeReference[string]
 	TokenUrl         low.NodeReference[string]
 	Scopes           low.NodeReference[*Scopes]
-	Extensions       map[low.KeyReference[string]]low.ValueReference[any]
+	Extensions       *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 }
 
 // GetExtensions returns all SecurityScheme extensions and satisfies the low.HasExtensions interface.
-func (ss *SecurityScheme) GetExtensions() map[low.KeyReference[string]]low.ValueReference[any] {
+func (ss *SecurityScheme) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return ss.Extensions
 }
 
 // Build will extract extensions and scopes from the node.
-func (ss *SecurityScheme) Build(_, root *yaml.Node, idx *index.SpecIndex) error {
+func (ss *SecurityScheme) Build(ctx context.Context, _, root *yaml.Node, idx *index.SpecIndex) error {
 	root = utils.NodeAlias(root)
 	utils.CheckForMergeNodes(root)
 	ss.Extensions = low.ExtractExtensions(root)
 
-	scopes, sErr := low.ExtractObject[*Scopes](ScopesLabel, root, idx)
+	scopes, sErr := low.ExtractObject[*Scopes](ctx, ScopesLabel, root, idx)
 	if sErr != nil {
 		return sErr
 	}
@@ -78,13 +79,6 @@ func (ss *SecurityScheme) Hash() [32]byte {
 	if !ss.Scopes.IsEmpty() {
 		f = append(f, low.GenerateHashString(ss.Scopes.Value))
 	}
-	keys := make([]string, len(ss.Extensions))
-	z := 0
-	for k := range ss.Extensions {
-		keys[z] = fmt.Sprintf("%s-%x", k.Value, sha256.Sum256([]byte(fmt.Sprint(ss.Extensions[k].Value))))
-		z++
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+	f = append(f, low.HashExtensions(ss.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }

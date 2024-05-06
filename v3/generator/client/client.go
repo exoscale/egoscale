@@ -40,10 +40,14 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	)
 	`, packageName))
 
-	// The spec is returning only production server.
-	if len(r.Model.Servers) != 1 {
+	if len(r.Model.Servers) == 0 {
 		slog.Error("skip client generation", slog.Int("servers_len", len(r.Model.Servers)))
 		return nil
+	}
+
+	// The spec is returning only production server.
+	if len(r.Model.Servers) != 1 {
+		slog.Error("more than one server found", slog.Int("servers_len", len(r.Model.Servers)))
 	}
 
 	srv, err := renderClient(r.Model.Servers[0])

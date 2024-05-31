@@ -170,7 +170,7 @@ func (c *command) CheckResponse(response []egoscale.APIField) { // nolint: gocyc
 				apiType = p.Type
 			}
 
-			errs[n] = append(errs[n], fmt.Errorf("missing field:\n\t%s %s `json:\"%s,omitempty\"%s`", strings.Title(p.Name), apiType, p.Name, doc))
+			errs[n] = append(errs[n], fmt.Errorf("missing field:\n\t%s %s `json:\"%s,omitempty\"%s`", strings.Title(p.Name), apiType, p.Name, doc)) //lint:ignore SA1019 egoscale v1 is deprecated no need to fix linting issues
 			continue
 		}
 		delete(c.fields, p.Name)
@@ -319,7 +319,7 @@ func (c *command) CheckParams(params []egoscale.APIParam) { // nolint: gocyclo
 				apiType = p.Type
 			}
 
-			c.errors[n] = append(c.errors[n], fmt.Errorf("missing field:\n\t%s %s `json:\"%s%s\"%s`", strings.Title(p.Name), apiType, p.Name, omit, doc))
+			c.errors[n] = append(c.errors[n], fmt.Errorf("missing field:\n\t%s %s `json:\"%s%s\"%s`", strings.Title(p.Name), apiType, p.Name, omit, doc)) //lint:ignore SA1019 egoscale v1 is deprecated no need to fix linting issues
 			continue
 		}
 		delete(c.fields, p.Name)

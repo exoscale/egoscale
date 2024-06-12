@@ -4,6 +4,7 @@ Changelog
 Unreleased
 ----------
 
+- v3 meta-data: private Instance fetch metadata from CD-ROM #634
 - v3: Add a metadata package to interact with #632
 - v3: Libopenapi bump / nullable reference fix #631
 - v3: Remove omitempty on nullable complex types #628

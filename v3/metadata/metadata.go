@@ -3,10 +3,18 @@
 package metadata
 
 import (
+	"bufio"
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"golang.org/x/sys/unix"
 )
 
 // Endpoint represents different types of metadata
@@ -32,6 +40,8 @@ const (
 	URL         = "http://metadata.exoscale.com/latest/"
 	MetaDataURL = URL + "meta-data"
 	UserDataURL = URL + "user-data"
+
+	CdRomPath = "/dev/disk/by-label/cidata"
 )
 
 // UserData retrieves the user-data associated with the current instance from the Exoscale server.
@@ -49,6 +59,33 @@ func Get(ctx context.Context, endpoint Endpoint) (string, error) {
 	}
 
 	return httpGet(ctx, url)
+}
+
+// FromCdRom retrieves metadata for Exoscale Private Instance,
+// from the attached CD-ROM(iso9660) device file system.
+// Important note: Run this code as privileged user.
+// Not Windows compatible.
+func FromCdRom(endpoint Endpoint) (string, error) {
+	const target = "/tmp/cloud-init-mount"
+
+	_, err := os.Stat(CdRomPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return "", fmt.Errorf("CD-ROM(iso9660) %s, not found: %w", CdRomPath, err)
+	}
+	if err != nil {
+		return "", fmt.Errorf("stat %s: %w", CdRomPath, err)
+	}
+
+	if err := os.MkdirAll(target, os.ModePerm); err != nil {
+		return "", fmt.Errorf("create mountpoint directory: %w", err)
+	}
+
+	if err := unix.Mount(CdRomPath, target, "iso9660", unix.MS_RDONLY, ""); err != nil {
+		return "", fmt.Errorf("mount %s: %w", CdRomPath, err)
+	}
+	defer unix.Unmount(target, 0)
+
+	return getFileMetaDataValue(filepath.Join(target, "meta-data"), string(endpoint))
 }
 
 func httpGet(ctx context.Context, url string) (string, error) {
@@ -69,4 +106,27 @@ func httpGet(ctx context.Context, url string) (string, error) {
 	}
 
 	return string(body), nil
+}
+
+func getFileMetaDataValue(fileName, endpoint string) (string, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		if strings.TrimSpace(parts[0]) == endpoint {
+			return strings.TrimSpace(parts[1]), nil
+		}
+	}
+
+	return "", fmt.Errorf("endpoint '%s' not found in file", endpoint)
 }

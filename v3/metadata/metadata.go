@@ -83,7 +83,7 @@ func FromCdRom(endpoint Endpoint) (string, error) {
 	if err := unix.Mount(CdRomPath, target, "iso9660", unix.MS_RDONLY, ""); err != nil {
 		return "", fmt.Errorf("mount %s: %w", CdRomPath, err)
 	}
-	defer unix.Unmount(target, 0)
+	defer unix.Unmount(target, 0) //nolint: errcheck
 
 	return getFileMetaDataValue(filepath.Join(target, "meta-data"), string(endpoint))
 }

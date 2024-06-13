@@ -68,6 +68,7 @@ func FromCdRom(endpoint Endpoint) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("disk open: %w", err)
 	}
+	defer disk.File.Close()
 
 	// TODO: Fix the block size in orchestrator from 512 to 2048
 	disk.DefaultBlocks = true

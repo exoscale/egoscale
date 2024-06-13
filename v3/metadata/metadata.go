@@ -64,13 +64,27 @@ func Get(ctx context.Context, endpoint Endpoint) (string, error) {
 // Important note: Run this code as privileged user.
 // Not Windows compatible.
 func FromCdRom(endpoint Endpoint) (string, error) {
-	iso, err := diskfs.Open(CdRomPath, diskfs.WithOpenMode(diskfs.ReadOnly))
+	disk, err := diskfs.Open(CdRomPath, diskfs.WithOpenMode(diskfs.ReadOnly))
 	if err != nil {
 		return "", fmt.Errorf("disk open: %w", err)
 	}
-	defer iso.File.Close()
 
-	return getFileMetaDataValue(iso.File, string(endpoint))
+	// TODO: Fix the block size in orchestrator from 512 to 2048
+	disk.DefaultBlocks = true
+
+	fs, err := disk.GetFilesystem(0)
+	if err != nil {
+		return "", fmt.Errorf("get filesystem: %w", err)
+	}
+
+	const path = "/meta-data"
+	isoFile, err := fs.OpenFile(path, os.O_RDONLY)
+	if err != nil {
+		return "", fmt.Errorf("open file %s: %w", path, err)
+	}
+	defer isoFile.Close()
+
+	return getFileMetaDataValue(isoFile, string(endpoint))
 }
 
 func httpGet(ctx context.Context, url string) (string, error) {
@@ -93,8 +107,8 @@ func httpGet(ctx context.Context, url string) (string, error) {
 	return string(body), nil
 }
 
-func getFileMetaDataValue(file *os.File, endpoint string) (string, error) {
-	scanner := bufio.NewScanner(file)
+func getFileMetaDataValue(f io.Reader, endpoint string) (string, error) {
+	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
 		parts := strings.SplitN(line, ":", 2)
@@ -102,7 +116,7 @@ func getFileMetaDataValue(file *os.File, endpoint string) (string, error) {
 			continue
 		}
 
-		if strings.Contains(parts[0], endpoint) {
+		if strings.TrimSpace(parts[0]) == endpoint {
 			return strings.TrimSpace(parts[1]), nil
 		}
 	}

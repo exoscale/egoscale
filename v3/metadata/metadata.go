@@ -3,10 +3,16 @@
 package metadata
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"strings"
+
+	diskfs "github.com/diskfs/go-diskfs"
 )
 
 // Endpoint represents different types of metadata
@@ -32,6 +38,8 @@ const (
 	URL         = "http://metadata.exoscale.com/latest/"
 	MetaDataURL = URL + "meta-data"
 	UserDataURL = URL + "user-data"
+
+	CdRomPath = "/dev/disk/by-label/cidata"
 )
 
 // UserData retrieves the user-data associated with the current instance from the Exoscale server.
@@ -49,6 +57,35 @@ func Get(ctx context.Context, endpoint Endpoint) (string, error) {
 	}
 
 	return httpGet(ctx, url)
+}
+
+// FromCdRom retrieves metadata for Exoscale Private Instance,
+// from the attached CD-ROM(iso9660) device file system.
+// Important note: Run this code as privileged user.
+// Not Windows compatible.
+func FromCdRom(endpoint Endpoint) (string, error) {
+	disk, err := diskfs.Open(CdRomPath, diskfs.WithOpenMode(diskfs.ReadOnly))
+	if err != nil {
+		return "", fmt.Errorf("disk open: %w", err)
+	}
+	defer disk.File.Close()
+
+	// TODO: Fix the block size in orchestrator from 512 to 2048
+	disk.DefaultBlocks = true
+
+	fs, err := disk.GetFilesystem(0)
+	if err != nil {
+		return "", fmt.Errorf("get filesystem: %w", err)
+	}
+
+	const path = "/meta-data"
+	isoFile, err := fs.OpenFile(path, os.O_RDONLY)
+	if err != nil {
+		return "", fmt.Errorf("open file %s: %w", path, err)
+	}
+	defer isoFile.Close()
+
+	return getFileMetaDataValue(isoFile, string(endpoint))
 }
 
 func httpGet(ctx context.Context, url string) (string, error) {
@@ -69,4 +106,25 @@ func httpGet(ctx context.Context, url string) (string, error) {
 	}
 
 	return string(body), nil
+}
+
+func getFileMetaDataValue(f io.Reader, endpoint string) (string, error) {
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		if strings.TrimSpace(parts[0]) == endpoint {
+			return strings.TrimSpace(parts[1]), nil
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("get file meta data value scan: %w", err)
+	}
+
+	return "", fmt.Errorf("endpoint '%s' not found in file", endpoint)
 }

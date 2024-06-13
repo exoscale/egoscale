@@ -122,5 +122,9 @@ func getFileMetaDataValue(f io.Reader, endpoint string) (string, error) {
 		}
 	}
 
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("get file meta data value scan: %w", err)
+	}
+
 	return "", fmt.Errorf("endpoint '%s' not found in file", endpoint)
 }

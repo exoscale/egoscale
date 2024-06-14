@@ -586,6 +586,7 @@ func TestClientPaginate(t *testing.T) {
 		case strings.HasSuffix(tt.name, "ses"):
 			end -= 2 // nolint: ineffassign
 		case strings.HasSuffix(tt.name, "jobs"):
+			//lint:ignore SA4011 egoscale v1 is deprecated no need to fix linting issues
 			break
 		default:
 			end-- // nolint: ineffassign

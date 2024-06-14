@@ -579,7 +579,7 @@ func TestRequestWithContextTimeoutPost(t *testing.T) {
 	done := make(chan bool)
 
 	userData := make([]byte, 1<<11)
-	_, err := rand.Read(userData) //nolint:staticcheck
+	_, err := rand.Read(userData) //lint:ignore SA1019 egoscale v1 is deprecated no need to fix linting issues
 	if err != nil {
 		t.Fatal(err)
 	}

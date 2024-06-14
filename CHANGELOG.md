@@ -14,6 +14,7 @@ Unreleased
 - Makefile: fix targets #619 
 - SKS nodepool: support for kubelet image gc #620 
 - v3 trace: print operation IDs #622 
+- go.mk: lint with staticcheck #633 
 
 0.102.3
 -------

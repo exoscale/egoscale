@@ -59,7 +59,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 )
 
-go 1.21
+go 1.22
 
 retract (
 	v1.19.1 // Retracts the previous version

@@ -124,8 +124,11 @@ func RenderSimpleType(s *base.Schema) string {
 	if s.Type[0] == "boolean" {
 		return "bool"
 	}
-	if s.Type[0] == "integer" || s.Type[0] == "number" {
+	if s.Type[0] == "integer" {
 		return "int"
+	}
+	if s.Type[0] == "number" {
+		return "float64"
 	}
 
 	return s.Type[0]

@@ -2233,7 +2233,7 @@ type Organization struct {
 	// Organization address
 	Address string `json:"address,omitempty"`
 	// Organization balance
-	Balance *number `json:"balance,omitempty"`
+	Balance int `json:"balance,omitempty"`
 	// Organization city
 	City string `json:"city,omitempty"`
 	// Organization country

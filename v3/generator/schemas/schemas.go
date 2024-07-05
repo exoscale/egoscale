@@ -127,6 +127,9 @@ func RenderSimpleType(s *base.Schema) string {
 	if s.Type[0] == "integer" {
 		return "int"
 	}
+	if s.Type[0] == "number" {
+		return "float64"
+	}
 
 	return s.Type[0]
 }
@@ -382,7 +385,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			// For the specific types left like in PUT requests schema,
 			// we need to update the spec to put those type as nullable, take the instance-pool as good example,
 			// (only use custom schema, not schema reference for PUT request).
-			if !nullable && (prop.Type[0] == "string" || prop.Type[0] == "integer") {
+			if !nullable && (prop.Type[0] == "string" || prop.Type[0] == "integer" || prop.Type[0] == "number") {
 				definition += camelName + " " + RenderSimpleType(prop) + tag + "\n"
 				continue
 			}

@@ -15,6 +15,7 @@ Unreleased
 - SKS nodepool: support for kubelet image gc #620 
 - v3 trace: print operation IDs #622 
 - go.mk: lint with staticcheck #633 
+- v3: update generated code #637
 
 0.102.3
 -------

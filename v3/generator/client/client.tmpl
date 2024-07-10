@@ -53,7 +53,7 @@ type RequestInterceptorFn func(ctx context.Context, req *http.Request) error
 
 // UserAgent is the "User-Agent" HTTP request header added to outgoing HTTP requests.
 var UserAgent = fmt.Sprintf("egoscale/%s (%s; %s/%s)",
-	version.Version,
+	Version,
 	runtime.Version(),
 	runtime.GOOS,
 	runtime.GOARCH)

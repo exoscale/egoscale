@@ -16,6 +16,7 @@ Unreleased
 - v3 trace: print operation IDs #622 
 - go.mk: lint with staticcheck #633 
 - v3: update generated code #637
+- v3: separate v3 into its own go module #638 
 
 0.102.3
 -------

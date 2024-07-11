@@ -17,6 +17,7 @@ Unreleased
 - go.mk: lint with staticcheck #633 
 - v3: update generated code #637
 - v3: separate v3 into its own go module #638 
+- deprecate v1 and v2 and remove alpha notice for v3 #640 
 
 0.102.3
 -------

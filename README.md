@@ -1,6 +1,6 @@
 ## Deprecated use v3
 
-v1 and v2 of `egoscale` are deprecated, please use [v3](https://pkg.go.dev/github.com/sauterp/egoscale/v3)
+v1 and v2 of `egoscale` are deprecated, please use [v3](https://pkg.go.dev/github.com/exoscale/egoscale/v3)
 
 ---
 title: Egoscale

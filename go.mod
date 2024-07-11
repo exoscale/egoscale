@@ -1,3 +1,4 @@
+// Deprecated: this version is no longer maintained, please use github.com/exoscale/egoscale/v3 instead
 module github.com/exoscale/egoscale
 
 require (

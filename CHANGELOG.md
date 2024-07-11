@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Unreleased
+3.0.0
 ----------
 
 - v3 meta-data: private Instance fetch metadata from CD-ROM #634

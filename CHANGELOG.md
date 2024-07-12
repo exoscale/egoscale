@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v3: Add more listable on Name or(not and) ID #642
+
 3.1.0
 ----------
 

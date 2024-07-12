@@ -271,7 +271,7 @@ const findableTemplate = `
 // Find{{ .TypeName }} attempts to find an {{ .TypeName }} by name or ID.
 func (l {{ .ListTypeName }}) Find{{ .TypeName }}(nameOrID string) ({{ .TypeName }}, error) {
 	for i, elem := range l.{{ .ListFieldName }} {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if {{ .Condition }} {
 			return l.{{ .ListFieldName }}[i], nil
 		}
 	}
@@ -284,6 +284,7 @@ type Findable struct {
 	TypeName      string
 	ListTypeName  string
 	ListFieldName string
+	Condition     string
 }
 
 // renderFindable renders a find method on listable resource.
@@ -343,16 +344,24 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 		}
 		_, hasName := item.Properties.Get("name")
 		_, hasID := item.Properties.Get("id")
-		if hasName && hasID {
+		if hasName || hasID {
 			output := bytes.NewBuffer([]byte{})
 			t, err := template.New("Findable").Parse(findableTemplate)
 			if err != nil {
 				return nil, err
 			}
+			condition := "string(elem.Name) == nameOrID || elem.ID.String() == nameOrID"
+			if !hasID {
+				condition = "string(elem.Name) == nameOrID"
+			}
+			if !hasName {
+				condition = "elem.ID.String() == nameOrID"
+			}
 			if err := t.Execute(output, Findable{
 				ListTypeName:  funcName + "Response",
 				ListFieldName: helpers.ToCamel(propName),
 				TypeName:      typeName,
+				Condition:     condition,
 			}); err != nil {
 				return nil, err
 			}

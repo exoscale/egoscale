@@ -19,7 +19,7 @@ type ListAntiAffinityGroupsResponse struct {
 // FindAntiAffinityGroup attempts to find an AntiAffinityGroup by name or ID.
 func (l ListAntiAffinityGroupsResponse) FindAntiAffinityGroup(nameOrID string) (AntiAffinityGroup, error) {
 	for i, elem := range l.AntiAffinityGroups {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.AntiAffinityGroups[i], nil
 		}
 	}
@@ -217,6 +217,17 @@ type ListAPIKeysResponse struct {
 	APIKeys []IAMAPIKey `json:"api-keys,omitempty"`
 }
 
+// FindIAMAPIKey attempts to find an IAMAPIKey by name or ID.
+func (l ListAPIKeysResponse) FindIAMAPIKey(nameOrID string) (IAMAPIKey, error) {
+	for i, elem := range l.APIKeys {
+		if string(elem.Name) == nameOrID {
+			return l.APIKeys[i], nil
+		}
+	}
+
+	return IAMAPIKey{}, fmt.Errorf("%q not found in ListAPIKeysResponse: %w", nameOrID, ErrNotFound)
+}
+
 // List API keys
 func (c Client) ListAPIKeys(ctx context.Context) (*ListAPIKeysResponse, error) {
 	path := "/api-key"
@@ -410,7 +421,7 @@ type ListBlockStorageVolumesResponse struct {
 // FindBlockStorageVolume attempts to find an BlockStorageVolume by name or ID.
 func (l ListBlockStorageVolumesResponse) FindBlockStorageVolume(nameOrID string) (BlockStorageVolume, error) {
 	for i, elem := range l.BlockStorageVolumes {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.BlockStorageVolumes[i], nil
 		}
 	}
@@ -545,7 +556,7 @@ type ListBlockStorageSnapshotsResponse struct {
 // FindBlockStorageSnapshot attempts to find an BlockStorageSnapshot by name or ID.
 func (l ListBlockStorageSnapshotsResponse) FindBlockStorageSnapshot(nameOrID string) (BlockStorageSnapshot, error) {
 	for i, elem := range l.BlockStorageSnapshots {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.BlockStorageSnapshots[i], nil
 		}
 	}
@@ -5691,6 +5702,17 @@ type ListDBAASServicesResponse struct {
 	DBAASServices []DBAASServiceCommon `json:"dbaas-services,omitempty"`
 }
 
+// FindDBAASServiceCommon attempts to find an DBAASServiceCommon by name or ID.
+func (l ListDBAASServicesResponse) FindDBAASServiceCommon(nameOrID string) (DBAASServiceCommon, error) {
+	for i, elem := range l.DBAASServices {
+		if string(elem.Name) == nameOrID {
+			return l.DBAASServices[i], nil
+		}
+	}
+
+	return DBAASServiceCommon{}, fmt.Errorf("%q not found in ListDBAASServicesResponse: %w", nameOrID, ErrNotFound)
+}
+
 // List DBaaS services
 func (c Client) ListDBAASServices(ctx context.Context) (*ListDBAASServicesResponse, error) {
 	path := "/dbaas-service"
@@ -5863,6 +5885,17 @@ func (c Client) GetDBAASServiceMetrics(ctx context.Context, serviceName string, 
 
 type ListDBAASServiceTypesResponse struct {
 	DBAASServiceTypes []DBAASServiceType `json:"dbaas-service-types,omitempty"`
+}
+
+// FindDBAASServiceType attempts to find an DBAASServiceType by name or ID.
+func (l ListDBAASServiceTypesResponse) FindDBAASServiceType(nameOrID string) (DBAASServiceType, error) {
+	for i, elem := range l.DBAASServiceTypes {
+		if string(elem.Name) == nameOrID {
+			return l.DBAASServiceTypes[i], nil
+		}
+	}
+
+	return DBAASServiceType{}, fmt.Errorf("%q not found in ListDBAASServiceTypesResponse: %w", nameOrID, ErrNotFound)
 }
 
 // List available service types for DBaaS
@@ -6522,7 +6555,7 @@ type ListDeployTargetsResponse struct {
 // FindDeployTarget attempts to find an DeployTarget by name or ID.
 func (l ListDeployTargetsResponse) FindDeployTarget(nameOrID string) (DeployTarget, error) {
 	for i, elem := range l.DeployTargets {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.DeployTargets[i], nil
 		}
 	}
@@ -6618,6 +6651,17 @@ func (c Client) GetDeployTarget(ctx context.Context, id UUID) (*DeployTarget, er
 
 type ListDNSDomainsResponse struct {
 	DNSDomains []DNSDomain `json:"dns-domains,omitempty"`
+}
+
+// FindDNSDomain attempts to find an DNSDomain by name or ID.
+func (l ListDNSDomainsResponse) FindDNSDomain(nameOrID string) (DNSDomain, error) {
+	for i, elem := range l.DNSDomains {
+		if elem.ID.String() == nameOrID {
+			return l.DNSDomains[i], nil
+		}
+	}
+
+	return DNSDomain{}, fmt.Errorf("%q not found in ListDNSDomainsResponse: %w", nameOrID, ErrNotFound)
 }
 
 // List DNS domains
@@ -6726,7 +6770,7 @@ type ListDNSDomainRecordsResponse struct {
 // FindDNSDomainRecord attempts to find an DNSDomainRecord by name or ID.
 func (l ListDNSDomainRecordsResponse) FindDNSDomainRecord(nameOrID string) (DNSDomainRecord, error) {
 	for i, elem := range l.DNSDomainRecords {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.DNSDomainRecords[i], nil
 		}
 	}
@@ -7142,6 +7186,17 @@ func (c Client) GetDNSDomainZoneFile(ctx context.Context, id UUID) (*GetDNSDomai
 
 type ListElasticIPSResponse struct {
 	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
+}
+
+// FindElasticIP attempts to find an ElasticIP by name or ID.
+func (l ListElasticIPSResponse) FindElasticIP(nameOrID string) (ElasticIP, error) {
+	for i, elem := range l.ElasticIPS {
+		if elem.ID.String() == nameOrID {
+			return l.ElasticIPS[i], nil
+		}
+	}
+
+	return ElasticIP{}, fmt.Errorf("%q not found in ListElasticIPSResponse: %w", nameOrID, ErrNotFound)
 }
 
 // List Elastic IPs
@@ -7724,7 +7779,7 @@ type ListIAMRolesResponse struct {
 // FindIAMRole attempts to find an IAMRole by name or ID.
 func (l ListIAMRolesResponse) FindIAMRole(nameOrID string) (IAMRole, error) {
 	for i, elem := range l.IAMRoles {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.IAMRoles[i], nil
 		}
 	}
@@ -8081,7 +8136,7 @@ type ListInstancesResponse struct {
 // FindListInstancesResponseInstances attempts to find an ListInstancesResponseInstances by name or ID.
 func (l ListInstancesResponse) FindListInstancesResponseInstances(nameOrID string) (ListInstancesResponseInstances, error) {
 	for i, elem := range l.Instances {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.Instances[i], nil
 		}
 	}
@@ -8252,7 +8307,7 @@ type ListInstancePoolsResponse struct {
 // FindInstancePool attempts to find an InstancePool by name or ID.
 func (l ListInstancePoolsResponse) FindInstancePool(nameOrID string) (InstancePool, error) {
 	for i, elem := range l.InstancePools {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.InstancePools[i], nil
 		}
 	}
@@ -8751,6 +8806,17 @@ func (c Client) ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstanc
 
 type ListInstanceTypesResponse struct {
 	InstanceTypes []InstanceType `json:"instance-types,omitempty"`
+}
+
+// FindInstanceType attempts to find an InstanceType by name or ID.
+func (l ListInstanceTypesResponse) FindInstanceType(nameOrID string) (InstanceType, error) {
+	for i, elem := range l.InstanceTypes {
+		if elem.ID.String() == nameOrID {
+			return l.InstanceTypes[i], nil
+		}
+	}
+
+	return InstanceType{}, fmt.Errorf("%q not found in ListInstanceTypesResponse: %w", nameOrID, ErrNotFound)
 }
 
 // List Compute instance Types
@@ -9630,7 +9696,7 @@ type ListLoadBalancersResponse struct {
 // FindLoadBalancer attempts to find an LoadBalancer by name or ID.
 func (l ListLoadBalancersResponse) FindLoadBalancer(nameOrID string) (LoadBalancer, error) {
 	for i, elem := range l.LoadBalancers {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.LoadBalancers[i], nil
 		}
 	}
@@ -10327,7 +10393,7 @@ type ListPrivateNetworksResponse struct {
 // FindPrivateNetwork attempts to find an PrivateNetwork by name or ID.
 func (l ListPrivateNetworksResponse) FindPrivateNetwork(nameOrID string) (PrivateNetwork, error) {
 	for i, elem := range l.PrivateNetworks {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.PrivateNetworks[i], nil
 		}
 	}
@@ -11197,7 +11263,7 @@ type ListSecurityGroupsResponse struct {
 // FindSecurityGroup attempts to find an SecurityGroup by name or ID.
 func (l ListSecurityGroupsResponse) FindSecurityGroup(nameOrID string) (SecurityGroup, error) {
 	for i, elem := range l.SecurityGroups {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.SecurityGroups[i], nil
 		}
 	}
@@ -11782,7 +11848,7 @@ type ListSKSClustersResponse struct {
 // FindSKSCluster attempts to find an SKSCluster by name or ID.
 func (l ListSKSClustersResponse) FindSKSCluster(nameOrID string) (SKSCluster, error) {
 	for i, elem := range l.SKSClusters {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.SKSClusters[i], nil
 		}
 	}
@@ -12969,7 +13035,7 @@ type ListSnapshotsResponse struct {
 // FindSnapshot attempts to find an Snapshot by name or ID.
 func (l ListSnapshotsResponse) FindSnapshot(nameOrID string) (Snapshot, error) {
 	for i, elem := range l.Snapshots {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.Snapshots[i], nil
 		}
 	}
@@ -13216,6 +13282,17 @@ type ListSOSBucketsUsageResponse struct {
 	SOSBucketsUsage []SOSBucketUsage `json:"sos-buckets-usage,omitempty"`
 }
 
+// FindSOSBucketUsage attempts to find an SOSBucketUsage by name or ID.
+func (l ListSOSBucketsUsageResponse) FindSOSBucketUsage(nameOrID string) (SOSBucketUsage, error) {
+	for i, elem := range l.SOSBucketsUsage {
+		if string(elem.Name) == nameOrID {
+			return l.SOSBucketsUsage[i], nil
+		}
+	}
+
+	return SOSBucketUsage{}, fmt.Errorf("%q not found in ListSOSBucketsUsageResponse: %w", nameOrID, ErrNotFound)
+}
+
 // List SOS Buckets Usage
 func (c Client) ListSOSBucketsUsage(ctx context.Context) (*ListSOSBucketsUsageResponse, error) {
 	path := "/sos-buckets-usage"
@@ -13324,6 +13401,17 @@ func (c Client) GetSOSPresignedURL(ctx context.Context, bucket string, opts ...G
 
 type ListSSHKeysResponse struct {
 	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
+}
+
+// FindSSHKey attempts to find an SSHKey by name or ID.
+func (l ListSSHKeysResponse) FindSSHKey(nameOrID string) (SSHKey, error) {
+	for i, elem := range l.SSHKeys {
+		if string(elem.Name) == nameOrID {
+			return l.SSHKeys[i], nil
+		}
+	}
+
+	return SSHKey{}, fmt.Errorf("%q not found in ListSSHKeysResponse: %w", nameOrID, ErrNotFound)
 }
 
 // List SSH keys
@@ -13519,7 +13607,7 @@ type ListTemplatesResponse struct {
 // FindTemplate attempts to find an Template by name or ID.
 func (l ListTemplatesResponse) FindTemplate(nameOrID string) (Template, error) {
 	for i, elem := range l.Templates {
-		if elem.Name == nameOrID || elem.ID.String() == nameOrID {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
 			return l.Templates[i], nil
 		}
 	}
@@ -13883,6 +13971,17 @@ func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateR
 
 type ListZonesResponse struct {
 	Zones []Zone `json:"zones,omitempty"`
+}
+
+// FindZone attempts to find an Zone by name or ID.
+func (l ListZonesResponse) FindZone(nameOrID string) (Zone, error) {
+	for i, elem := range l.Zones {
+		if string(elem.Name) == nameOrID {
+			return l.Zones[i], nil
+		}
+	}
+
+	return Zone{}, fmt.Errorf("%q not found in ListZonesResponse: %w", nameOrID, ErrNotFound)
 }
 
 // List Zones

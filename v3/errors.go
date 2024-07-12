@@ -114,9 +114,6 @@ func handleHTTPErrorResp(resp *http.Response) error {
 
 		err, ok := httpStatusCodeErrors[resp.StatusCode]
 		if ok {
-			if err == ErrNotFound {
-				return ErrNotFound
-			}
 			return fmt.Errorf("%w: %s", err, res.Message)
 		}
 

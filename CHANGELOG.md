@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v3: Add more HTTP error types #641
+
 3.0.0
 ----------
 

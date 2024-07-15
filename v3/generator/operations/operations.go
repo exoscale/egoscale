@@ -268,19 +268,20 @@ func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error
 }
 
 const findableTemplate = `
-// Find{{ .TypeName }} attempts to find an {{ .TypeName }} by name or ID.
-func (l {{ .ListTypeName }}) Find{{ .TypeName }}(nameOrID string) ({{ .TypeName }}, error) {
+// Find{{ .TypeName }} attempts to find an {{ .TypeName }} by {{ .ParamName }}.
+func (l {{ .ListTypeName }}) Find{{ .TypeName }}({{ .ParamName }} string) ({{ .TypeName }}, error) {
 	for i, elem := range l.{{ .ListFieldName }} {
 		if {{ .Condition }} {
 			return l.{{ .ListFieldName }}[i], nil
 		}
 	}
 
-	return {{ .TypeName }}{}, fmt.Errorf("%q not found in {{ .ListTypeName }}: %w", nameOrID, ErrNotFound)
+	return {{ .TypeName }}{}, fmt.Errorf("%q not found in {{ .ListTypeName }}: %w", {{ .ParamName }}, ErrNotFound)
 }
 `
 
 type Findable struct {
+	ParamName     string
 	TypeName      string
 	ListTypeName  string
 	ListFieldName string
@@ -350,18 +351,22 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			}
+			paramName := "nameOrID"
 			condition := "string(elem.Name) == nameOrID || elem.ID.String() == nameOrID"
 			if !hasID {
-				condition = "string(elem.Name) == nameOrID"
+				paramName = "name"
+				condition = "string(elem.Name) == " + paramName
 			}
 			if !hasName {
-				condition = "elem.ID.String() == nameOrID"
+				paramName = "ID"
+				condition = "elem.ID.String() == " + paramName
 			}
 			if err := t.Execute(output, Findable{
 				ListTypeName:  funcName + "Response",
 				ListFieldName: helpers.ToCamel(propName),
 				TypeName:      typeName,
 				Condition:     condition,
+				ParamName:     paramName,
 			}); err != nil {
 				return nil, err
 			}

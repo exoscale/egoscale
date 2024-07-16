@@ -1,4 +1,4 @@
-name: Check whether the exoscale API has been updated and regenerate egoscale v3.
+name: check_and_regenerate_v3
 
 # TODO run on a regular basis
 on:
@@ -29,6 +29,7 @@ jobs:
       uses: peter-evans/create-pull-request@v6
       with:
         title: "v3: regenerate from new API spec"
-        body: New changes have appeared in the API spec and egoscale v3 has been regenerated.
-        branch: generate-v3/${{ github.run_id }}
-        draft: true
+        body: "New changes have appeared in the API spec and egoscale v3 has been regenerated."
+        branch: generate-v3
+        delete-branch: true
+        base: master

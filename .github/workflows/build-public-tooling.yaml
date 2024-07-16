@@ -17,6 +17,7 @@ jobs:
       id: build
       run: |
         git clone https://github.com/exoscale/${{ matrix.repo }}
+        cd ${{ matrix.repo }}
         go get github.com/exoscale/egoscale/v3@${{ github.sha }}
         go mod vendor
         make build

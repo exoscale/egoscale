@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: Build ${{ matrix.repo }}
-      id: build_${{ matrix.repo }}
+      id: build
       run: |
         git clone git@github.com:exoscale/${{ matrix.repo }}
         go get github.com/exoscale/egoscale/v3@${{ github.sha }}

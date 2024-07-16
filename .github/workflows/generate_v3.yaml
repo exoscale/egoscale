@@ -1,0 +1,33 @@
+name: check_and_regenerate_v3
+
+on:
+  schedule:
+    - cron: "0 7 * * *" # everyday at 7 AM
+
+jobs:
+  check_changes_and_create_pr:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check for changes
+      id: check_changes
+      run: |
+        make generate
+        git diff --quiet || echo "::set-output name=changes_detected::true"
+
+    - name: Create PR
+      if: steps.check_changes.outputs.changes_detected
+      uses: peter-evans/create-pull-request@v6
+      with:
+        title: "v3: regenerate from new API spec"
+        body: "New changes have appeared in the API spec and egoscale v3 has been regenerated."
+        branch: generate-v3
+        delete-branch: true
+        base: master

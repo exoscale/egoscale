@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v3: automate regeneration when spec changes #643 
+
 3.1.0
 ----------
 

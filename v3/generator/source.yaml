@@ -3070,6 +3070,9 @@ components:
     event:
       type: object
       properties:
+        iam-user:
+          "$ref": "#/components/schemas/user"
+          description: Details about the IAM User
         request-id:
           type: string
           description: Operation unique identifier

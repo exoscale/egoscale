@@ -68,10 +68,9 @@ oapigen: install-oapi-codegen
 	@rm source.json
 	@ls -l oapi.gen.go
 
-# TODO renenable download
-# @wget -q --show-progress --progress=dot https://openapi-v2.exoscale.com/source.yaml -O- > v3/generator/source.yaml
 .PHONY: generate
 generate:
+	@wget -q --show-progress --progress=dot https://openapi-v2.exoscale.com/source.yaml -O- > v3/generator/source.yaml
 	@echo
 	@cd v3/generator/
 	@go generate

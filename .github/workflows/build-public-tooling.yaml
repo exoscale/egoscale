@@ -13,10 +13,10 @@ jobs:
           - exoscale-csi-driver
 
     steps:
-    - name: Build ${{ matrix.repo }}
+    - name: Build
       id: build
       run: |
-        git clone git@github.com:exoscale/${{ matrix.repo }}
+        git clone https://github.com/exoscale/${{ matrix.repo }}
         go get github.com/exoscale/egoscale/v3@${{ github.sha }}
         go mod vendor
         make build

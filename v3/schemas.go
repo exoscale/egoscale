@@ -1537,6 +1537,8 @@ type Event struct {
 	IAMAPIKey *IAMAPIKey `json:"iam-api-key,omitempty"`
 	// IAM Role
 	IAMRole *IAMRole `json:"iam-role,omitempty"`
+	// User
+	IAMUser *User `json:"iam-user,omitempty"`
 	// Operation message
 	Message string `json:"message,omitempty"`
 	// URI path parameters (free form map)

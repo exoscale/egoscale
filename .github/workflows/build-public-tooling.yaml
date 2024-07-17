@@ -9,15 +9,20 @@ jobs:
 
     strategy:
       matrix:
-        repo:
-          - exoscale-csi-driver
+        case:
+          - repo: exoscale-csi-driver
+            build: 'make build'
+          - repo: cli
+            build: 'make build'
+          - repo: terraform-provider-exoscale
+            build: 'go build'
 
     steps:
     - name: Build
       id: build
       run: |
-        git clone https://github.com/exoscale/${{ matrix.repo }}
-        cd ${{ matrix.repo }}
+        git clone https://github.com/exoscale/${{ matrix.case.repo }}
+        cd ${{ matrix.case.repo }}
         go get github.com/exoscale/egoscale/v3@${{ github.sha }}
         go mod vendor
-        make build
+        ${{ matrix.case.build }}

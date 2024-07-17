@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - v3: automate regeneration when spec changes #643 
+- v3: github action to build tooling with new commit #645 
 
 3.1.0
 ----------

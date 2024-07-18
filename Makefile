@@ -76,6 +76,5 @@ generate:
 	@go generate
 	@go mod tidy
 	@go mod vendor
-	@rm source.yaml
 	@cd ..
 	@ls -l *.go 1>&2

@@ -1,0 +1,29 @@
+name: build-public-tooling
+
+on:
+  push
+
+jobs:
+  build_public_tooling:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        case:
+          - repo: exoscale-csi-driver
+            build: 'make build'
+          - repo: cli
+            build: 'make build'
+          - repo: terraform-provider-exoscale
+            build: 'go build'
+
+    steps:
+    - name: Build
+      id: build
+      run: |
+        git clone https://github.com/exoscale/${{ matrix.case.repo }}
+        cd ${{ matrix.case.repo }}
+        go get github.com/exoscale/egoscale/v3@${{ github.sha }}
+        go mod vendor
+        ${{ matrix.case.build }}

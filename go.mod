@@ -3,7 +3,7 @@ module github.com/exoscale/egoscale
 
 require (
 	github.com/deepmap/oapi-codegen v1.9.1
-	github.com/gofrs/uuid v4.4.0+incompatible
+	github.com/gofrs/uuid/v5 v5.2.0
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/stretchr/testify v1.8.4
 )

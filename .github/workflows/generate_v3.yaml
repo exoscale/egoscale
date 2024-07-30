@@ -1,6 +1,7 @@
 name: check_and_regenerate_v3
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "0 7 * * *" # everyday at 7 AM
 
@@ -20,7 +21,7 @@ jobs:
       id: check_changes
       run: |
         make generate
-        git diff --quiet || echo "::set-output name=changes_detected::true"
+        git diff --quiet || echo "changes_detected=true" >> $GITHUB_OUTPUT
 
     - name: Create PR
       if: steps.check_changes.outputs.changes_detected

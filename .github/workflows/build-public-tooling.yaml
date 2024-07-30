@@ -1,7 +1,10 @@
 name: build-public-tooling
 
 on:
-  push
+  pull_request:
+    branches:
+      - generate-v3
+  push:
 
 jobs:
   build_public_tooling:

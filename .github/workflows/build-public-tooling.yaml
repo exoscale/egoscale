@@ -1,9 +1,7 @@
 name: build-public-tooling
 
 on:
-  pull_request:
-    branches:
-      - generate-v3
+  workflow_dispatch:
   push:
 
 jobs:

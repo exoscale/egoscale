@@ -24,7 +24,7 @@ jobs:
       id: check_changes
       run: |
         make generate
-        git diff --quiet || echo "name=changes_detected::true" >> $GITHUB_OUTPUT
+        git diff --quiet || echo "changes_detected=true" >> $GITHUB_OUTPUT
 
     - name: Create PR
       if: steps.check_changes.outputs.changes_detected

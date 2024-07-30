@@ -17,115 +17,98 @@ info:
     * [JSON format](https://openapi-v2.exoscale.com/source.json)
     * [YAML format](https://openapi-v2.exoscale.com/source.yaml)
 tags:
-- description: |2-
-
-    Security Groups are groups of firewall rules that regulate network traffic to and from your Compute instances.
-
-    [Read more](https://community.exoscale.com/documentation/compute/security-groups/)
+- description: |-
+    Security Groups are groups of firewall rules that regulate
+                       network traffic to and from your Compute instances.
   externalDocs:
     description: Read more
     url: https://community.exoscale.com/documentation/compute/security-groups/
   name: security-groups
-- description: |2-
-
-    An Instance Type is a resource describing the amount of CPU, RAM and eventually GPUs your Compute instance will run on.
-
-    [Read more](https://www.exoscale.com/pricing/)
+- description: |-
+    An Instance Type is a resource describing the amount of
+                       CPU, RAM and eventually GPUs your Compute instance will run on.
   externalDocs:
     description: Read more
     url: https://www.exoscale.com/pricing/
   name: instance-types
-- description: |2
-
-    A Network Load Balancer (NLB) is a Layer 4 (TCP/UDP) load balancer that distributes incoming traffic to Compute instances managed by an Instance Pool.
-
-    [Read more](https://community.exoscale.com/documentation/compute/network-load-balancer/)
+- description: |-
+    A Network Load Balancer (NLB) is a Layer 4 (TCP/UDP)
+                       load balancer that distributes incoming traffic to Compute
+                       instances managed by an Instance Pool.
   externalDocs:
     description: Read more
     url: https://community.exoscale.com/documentation/compute/network-load-balancer/
   name: network-load-balancer
-- description: |2-
-
-    Instance Pools is an Exoscale service allowing users to provision managed groups of identical Compute instances automatically.
-
-    [Read more](https://community.exoscale.com/documentation/compute/instance-pools/)
+- description: |-
+    Instance Pools is an Exoscale service allowing users
+                       to provision managed groups of identical Compute
+                       instances automatically.
   externalDocs:
     description: Read more
     url: https://community.exoscale.com/documentation/compute/instance-pools/
   name: instance-pools
-- description: |2-
-
-    Events form the basis of the Exoscale audit-trail, a mechanism to query past events
-    performing mutations on resources which happened on an organization
+- description: |-
+    Events form the basis of the Exoscale audit-trail, a mechanism
+                       to query past events performing mutations on resources
+                       which happened on an organization.
   externalDocs:
     description: Read more
     url: https://www.exoscale.com/support/
   name: event
-- description: |2-
-
-    Instances are the virtual machines at the core of the Exoscale Compute service.
+- description: |-
+    Instances are the virtual machines at the core of the Exoscale
+                       Compute service.
   externalDocs:
     description: Read more
     url: https://www.exoscale.com/compute/
   name: instances
-- description: |2-
-
-    Exoscale's Block Storage offers persistent
-    externally attached volumes for your workloads.
+- description: |-
+    Exoscale's Block Storage offers persistent externally
+                       attached volumes for your workloads.
   externalDocs:
     description: Read more
-    url: https://community.exoscale.com/documentation/compute/
+    url: https://community.exoscale.com/documentation/block-storage/
   name: block-storage
-- description: |2-
-
-    Snapshots provide a way to get point-in-time recovery for your Compute instance.
-
-    [Read more](https://community.exoscale.com/documentation/compute/snapshots/)
+- description: |-
+    Snapshots provide a way to get point-in-time recovery
+                       for your Compute instance.
   externalDocs:
     description: Read more
     url: https://community.exoscale.com/documentation/compute/snapshots/
   name: snapshots
-- description: |2-
-
-    A Zone represents an independent datacenter in which Exoscale infrastructure is deployed into.
-
-    [Read more](https://www.exoscale.com/datacenters/)
+- description: |-
+    A Zone represents an independent datacenter in which Exoscale
+                       infrastructure is deployed into.
   externalDocs:
     description: Read more
     url: https://www.exoscale.com/datacenters/
   name: zones
-- description: |2-
-
-    SSH Keypairs
-
-    [Read more](https://community.exoscale.com/documentation/compute/ssh-keypairs/)
+- description: SSH Keypairs
   externalDocs:
     description: Read more
     url: https://community.exoscale.com/documentation/compute/ssh-keypairs/
   name: ssh-keypair
-- description: |2-
-
-    Operations describe the current state of an asynchronous operation.
+- description: |-
+    Operations describe the current state of an asynchronous
+                       operation.
   externalDocs:
     description: Read more
     url: https://community.exoscale.com/
   name: operations
-- description: |2-
-
-    Templates contain the OS and the initial setup of a Compute instance.
+- description: |-
+    Templates contain the OS and the initial setup of a
+                       Compute instance.
   externalDocs:
     description: Read more
     url: https://www.exoscale.com/templates/
   name: templates
-- description: |2-
-
-    SKS is Exoscale's scalable Kubernetes service which provides managed Kubernetes
-    control planes with integrated support for Exoscale instance pools ands network load
-    balancers.
-    [Read more](https://www.exoscale.com/scalable-kubernetes-service/)
+- description: |-
+    SKS is Exoscale's scalable Kubernetes service which provides
+                       managed Kubernetes control planes with integrated support for
+                       Exoscale instance pools ands network load balancers.
   externalDocs:
     description: Read more
-    url: https://www.exoscale.com/scalable-kubernetes-service/
+    url: https://community.exoscale.com/documentation/sks/
   name: sks
 components:
   schemas:
@@ -4682,6 +4665,16 @@ components:
           type: string
           maxLength: 255
           description: Nodepool description
+        public-ip-assignment:
+          type: string
+          enum:
+          - inet4
+          - dual
+          description: |-
+            Nodepool public IP assignment of the Instances:
+
+            * IPv4 (`inet4`) addressing only;
+            * IPv4 and IPv6 (`dual`) addressing.
         labels:
           "$ref": "#/components/schemas/labels"
           description: Nodepool labels
@@ -8981,6 +8974,16 @@ paths:
                   type: string
                   maxLength: 255
                   description: Nodepool description
+                public-ip-assignment:
+                  type: string
+                  enum:
+                  - inet4
+                  - dual
+                  description: |-
+                    Configures public IP assignment of the Instances with:
+
+                    * IPv4 (`inet4`) addressing only;
+                    * both IPv4 and IPv6 (`dual`) addressing.
                 labels:
                   "$ref": "#/components/schemas/labels"
                   description: Nodepool labels
@@ -13761,6 +13764,16 @@ paths:
                   type: string
                   maxLength: 255
                   description: Nodepool description
+                public-ip-assignment:
+                  type: string
+                  enum:
+                  - inet4
+                  - dual
+                  description: |-
+                    Configures public IP assignment of the Instances with:
+
+                    * IPv4 (`inet4`) addressing only (default);
+                    * both IPv4 and IPv6 (`dual`) addressing.
                 labels:
                   "$ref": "#/components/schemas/labels"
                   description: Nodepool labels

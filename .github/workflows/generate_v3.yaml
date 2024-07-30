@@ -1,6 +1,9 @@
 name: check_and_regenerate_v3
 
 on:
+  push:
+    branches:
+    - philippsauter/fix-generate-v3-action
   workflow_dispatch:
   schedule:
     - cron: "0 7 * * *" # everyday at 7 AM

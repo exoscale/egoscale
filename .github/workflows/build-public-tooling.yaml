@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - generate-v3
-  push
+  push:
 
 jobs:
   build_public_tooling:

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- generate_v3: replace deprecated ::set-output #647 
+
 3.1.1
 ----------
 

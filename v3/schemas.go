@@ -1239,6 +1239,14 @@ type DBAASUserGrafanaSecrets struct {
 	Username string `json:"username,omitempty"`
 }
 
+// Kafka Connect secrets
+type DBAASUserKafkaConnectSecrets struct {
+	// Kafka Connect password
+	Password string `json:"password,omitempty"`
+	// Kafka Connect username
+	Username string `json:"username,omitempty"`
+}
+
 // Kafka User secrets
 type DBAASUserKafkaSecrets struct {
 	// Kafka certificate
@@ -2457,6 +2465,13 @@ type SKSKubeconfigRequest struct {
 	User string `json:"user,omitempty"`
 }
 
+type SKSNodepoolPublicIPAssignment string
+
+const (
+	SKSNodepoolPublicIPAssignmentInet4 SKSNodepoolPublicIPAssignment = "inet4"
+	SKSNodepoolPublicIPAssignmentDual  SKSNodepoolPublicIPAssignment = "dual"
+)
+
 type SKSNodepoolState string
 
 const (
@@ -2498,6 +2513,10 @@ type SKSNodepool struct {
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
+	// Nodepool public IP assignment of the Instances:
+	// * IPv4 and IPv6 (`dual`) addressing.
+	// * IPv4 and IPv6 (`dual`) addressing.
+	PublicIPAssignment SKSNodepoolPublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Nodepool Security Groups
 	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
 	// Number of instances

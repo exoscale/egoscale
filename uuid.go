@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	uuid "github.com/gofrs/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 )
 
 // UUID holds a UUID v4

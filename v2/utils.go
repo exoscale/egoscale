@@ -1,7 +1,7 @@
 package v2
 
 import (
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 )
 
 func mapValueOrNil(src map[string]string, key string) *string {

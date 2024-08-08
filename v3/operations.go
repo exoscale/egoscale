@@ -2467,6 +2467,49 @@ func (c Client) DeleteDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 	return bodyresp, nil
 }
 
+// Reveal the secrets for DBaaS Kafka Connect
+func (c Client) RevealDBAASKafkaConnectPassword(ctx context.Context, serviceName string) (*DBAASUserKafkaConnectSecrets, error) {
+	path := fmt.Sprintf("/dbaas-kafka/%v/connect/password/reveal", serviceName)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaConnectPassword: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaConnectPassword: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaConnectPassword: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reveal-dbaas-kafka-connect-password")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaConnectPassword: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaConnectPassword: http response: %w", err)
+	}
+
+	bodyresp := &DBAASUserKafkaConnectSecrets{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RevealDBAASKafkaConnectPassword: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type CreateDBAASKafkaUserRequest struct {
 	Username DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
 }
@@ -3041,6 +3084,49 @@ func (c Client) UpdateDBAASServiceMysql(ctx context.Context, name string, req Up
 	bodyresp := &Operation{}
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Temporarily enable writes for MySQL services in read-only mode due to filled up storage
+func (c Client) EnableDBAASMysqlWrites(ctx context.Context, name string) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-mysql/%v/enable/writes", name)
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("EnableDBAASMysqlWrites: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("EnableDBAASMysqlWrites: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("EnableDBAASMysqlWrites: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "enable-dbaas-mysql-writes")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("EnableDBAASMysqlWrites: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("EnableDBAASMysqlWrites: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("EnableDBAASMysqlWrites: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil
@@ -12393,6 +12479,13 @@ func (c Client) GetSKSClusterInspection(ctx context.Context, id UUID) (*GetSKSCl
 	return bodyresp, nil
 }
 
+type CreateSKSNodepoolRequestPublicIPAssignment string
+
+const (
+	CreateSKSNodepoolRequestPublicIPAssignmentInet4 CreateSKSNodepoolRequestPublicIPAssignment = "inet4"
+	CreateSKSNodepoolRequestPublicIPAssignmentDual  CreateSKSNodepoolRequestPublicIPAssignment = "dual"
+)
+
 type CreateSKSNodepoolRequest struct {
 	// Nodepool addons
 	Addons []string `json:"addons,omitempty"`
@@ -12415,6 +12508,10 @@ type CreateSKSNodepoolRequest struct {
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
+	// Configures public IP assignment of the Instances with:
+	// * both IPv4 and IPv6 (`dual`) addressing.
+	// * both IPv4 and IPv6 (`dual`) addressing.
+	PublicIPAssignment CreateSKSNodepoolRequestPublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Nodepool Security Groups
 	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
 	// Number of instances
@@ -12558,6 +12655,13 @@ func (c Client) GetSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID)
 	return bodyresp, nil
 }
 
+type UpdateSKSNodepoolRequestPublicIPAssignment string
+
+const (
+	UpdateSKSNodepoolRequestPublicIPAssignmentInet4 UpdateSKSNodepoolRequestPublicIPAssignment = "inet4"
+	UpdateSKSNodepoolRequestPublicIPAssignmentDual  UpdateSKSNodepoolRequestPublicIPAssignment = "dual"
+)
+
 type UpdateSKSNodepoolRequest struct {
 	// Nodepool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
@@ -12576,6 +12680,10 @@ type UpdateSKSNodepoolRequest struct {
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
+	// Configures public IP assignment of the Instances with:
+	// * both IPv4 and IPv6 (`dual`) addressing.
+	// * both IPv4 and IPv6 (`dual`) addressing.
+	PublicIPAssignment UpdateSKSNodepoolRequestPublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Nodepool Security Groups
 	SecurityGroups []SecurityGroup   `json:"security-groups,omitempty"`
 	Taints         SKSNodepoolTaints `json:"taints,omitempty"`

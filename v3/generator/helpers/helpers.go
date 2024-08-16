@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -48,13 +49,10 @@ func toInitialCamel(s string, lower bool) string {
 		return ""
 	}
 
-	sep, ok := containSep(s)
-	if !ok {
-		sep = "-"
-	}
+	pattern := `[-_./\s]`
+	s = trimBySeparators(s,pattern)
+	words := splitBySeparators(s,pattern)
 
-	s = strings.Trim(s, sep)
-	words := strings.Split(s, sep)
 	for i, w := range words {
 		if w == "" {
 			continue
@@ -89,24 +87,22 @@ func toInitialCamel(s string, lower bool) string {
 	return strings.Join(words, "")
 }
 
-func containSep(s string) (string, bool) {
-	if strings.Contains(s, "-") {
-		return "-", true
-	}
-	if strings.Contains(s, "_") {
-		return "_", true
-	}
-	if strings.Contains(s, ".") {
-		return ".", true
-	}
-	if strings.Contains(s, "/") {
-		return "/", true
-	}
-	if strings.Contains(s, " ") {
-		return " ", true
-	}
+func trimBySeparators(s, separators string) string {
+    trimPattern := fmt.Sprintf("^%s+|%s+$", separators, separators)
+    re := regexp.MustCompile(trimPattern)
+    return re.ReplaceAllString(s, "")
+}
 
-	return "", false
+func splitBySeparators(s, separators string) []string {
+    re := regexp.MustCompile(separators)
+    parts := re.Split(s, -1)
+    var result []string
+    for _, part := range parts {
+        if part != "" {
+            result = append(result, part)
+        }
+    }
+    return result
 }
 
 // RenderDoc returns proper go doc comment from

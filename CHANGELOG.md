@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - generate_v3: replace deprecated ::set-output #647 
+- generate_v3: handle multiple separators #650
 
 3.1.1
 ----------

@@ -1,4 +1,4 @@
-GO_MK_REF := v2.0.0
+GO_MK_REF := philippsauter/staticcheck-2024-1-1
 
 # make go.mk a dependency for all targets
 .EXTRA_PREREQS = go.mk

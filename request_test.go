@@ -96,7 +96,7 @@ func TestRequest(t *testing.T) {
 	}
 	resp, err := cs.Request(req)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	apis := resp.(*ListAPIsResponse)
 	if apis.Count != 1 {

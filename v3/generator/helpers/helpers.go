@@ -50,8 +50,8 @@ func toInitialCamel(s string, lower bool) string {
 	}
 
 	pattern := `[-_./\s]`
-	s = trimBySeparators(s,pattern)
-	words := splitBySeparators(s,pattern)
+	s = trimBySeparators(s, pattern)
+	words := splitBySeparators(s, pattern)
 
 	for i, w := range words {
 		if w == "" {
@@ -88,21 +88,21 @@ func toInitialCamel(s string, lower bool) string {
 }
 
 func trimBySeparators(s, separators string) string {
-    trimPattern := fmt.Sprintf("^%s+|%s+$", separators, separators)
-    re := regexp.MustCompile(trimPattern)
-    return re.ReplaceAllString(s, "")
+	trimPattern := fmt.Sprintf("^%s+|%s+$", separators, separators)
+	re := regexp.MustCompile(trimPattern)
+	return re.ReplaceAllString(s, "")
 }
 
 func splitBySeparators(s, separators string) []string {
-    re := regexp.MustCompile(separators)
-    parts := re.Split(s, -1)
-    var result []string
-    for _, part := range parts {
-        if part != "" {
-            result = append(result, part)
-        }
-    }
-    return result
+	re := regexp.MustCompile(separators)
+	parts := re.Split(s, -1)
+	var result []string
+	for _, part := range parts {
+		if part != "" {
+			result = append(result, part)
+		}
+	}
+	return result
 }
 
 // RenderDoc returns proper go doc comment from

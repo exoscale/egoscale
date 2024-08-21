@@ -1196,6 +1196,1299 @@ func (c Client) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertifica
 	return bodyresp, nil
 }
 
+// [BETA] Delete DataDog external integration endpoint
+func (c Client) DeleteDBAASExternalEndpointDatadog(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-datadog/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointDatadog: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointDatadog: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointDatadog: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-dbaas-external-endpoint-datadog")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointDatadog: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointDatadog: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointDatadog: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Get DataDog external endpoint settings
+func (c Client) GetDBAASExternalEndpointDatadog(ctx context.Context, id UUID) (*DBAASExternalEndpointDatadogOutput, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-datadog/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointDatadog: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointDatadog: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointDatadog: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-external-endpoint-datadog")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointDatadog: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointDatadog: http response: %w", err)
+	}
+
+	bodyresp := &DBAASExternalEndpointDatadogOutput{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointDatadog: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateDBAASExternalEndpointDatadogRequest struct {
+	Settings *DBAASEndpointDatadog `json:"settings,omitempty"`
+}
+
+// [BETA] Update DataDog external integration endpoint
+func (c Client) UpdateDBAASExternalEndpointDatadog(ctx context.Context, id UUID, req UpdateDBAASExternalEndpointDatadogRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-datadog/%v", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-dbaas-external-endpoint-datadog")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateDBAASExternalEndpointDatadogRequest struct {
+	Settings *DBAASEndpointDatadog `json:"settings,omitempty"`
+}
+
+// [BETA] Create DataDog external integration endpoint
+func (c Client) CreateDBAASExternalEndpointDatadog(ctx context.Context, name string, req CreateDBAASExternalEndpointDatadogRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-datadog/%v", name)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-dbaas-external-endpoint-datadog")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Delete ElasticSearch logs external integration endpoint
+func (c Client) DeleteDBAASExternalEndpointElasticsearch(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-elasticsearch/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointElasticsearch: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointElasticsearch: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointElasticsearch: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-dbaas-external-endpoint-elasticsearch")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointElasticsearch: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointElasticsearch: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointElasticsearch: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Get ElasticSearch Logs external integration endpoint settings
+func (c Client) GetDBAASExternalEndpointElasticsearch(ctx context.Context, id UUID) (*DBAASEndpointElasticsearchOutput, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-elasticsearch/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointElasticsearch: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointElasticsearch: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointElasticsearch: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-external-endpoint-elasticsearch")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointElasticsearch: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointElasticsearch: http response: %w", err)
+	}
+
+	bodyresp := &DBAASEndpointElasticsearchOutput{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointElasticsearch: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateDBAASExternalEndpointElasticsearchRequest struct {
+	Settings *DBAASEndpointElasticsearch `json:"settings,omitempty"`
+}
+
+// [BETA] Update ElasticSearch Logs external integration endpoint
+func (c Client) UpdateDBAASExternalEndpointElasticsearch(ctx context.Context, id UUID, req UpdateDBAASExternalEndpointElasticsearchRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-elasticsearch/%v", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-dbaas-external-endpoint-elasticsearch")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateDBAASExternalEndpointElasticsearchRequest struct {
+	Settings *DBAASEndpointElasticsearch `json:"settings,omitempty"`
+}
+
+// [BETA] Create ElasticSearch Logs external integration endpoint
+func (c Client) CreateDBAASExternalEndpointElasticsearch(ctx context.Context, name string, req CreateDBAASExternalEndpointElasticsearchRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-elasticsearch/%v", name)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-dbaas-external-endpoint-elasticsearch")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Delete OpenSearch logs external integration endpoint
+func (c Client) DeleteDBAASExternalEndpointOpensearch(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-opensearch/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointOpensearch: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointOpensearch: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointOpensearch: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-dbaas-external-endpoint-opensearch")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointOpensearch: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointOpensearch: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointOpensearch: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Get OpenSearch Logs external integration endpoint settings
+func (c Client) GetDBAASExternalEndpointOpensearch(ctx context.Context, id UUID) (*DBAASEndpointOpensearchOutput, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-opensearch/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointOpensearch: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointOpensearch: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointOpensearch: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-external-endpoint-opensearch")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointOpensearch: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointOpensearch: http response: %w", err)
+	}
+
+	bodyresp := &DBAASEndpointOpensearchOutput{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointOpensearch: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateDBAASExternalEndpointOpensearchRequest struct {
+	Settings *DBAASEndpointOpensearch `json:"settings,omitempty"`
+}
+
+// [BETA] Update OpenSearch Logs external integration endpoint
+func (c Client) UpdateDBAASExternalEndpointOpensearch(ctx context.Context, id UUID, req UpdateDBAASExternalEndpointOpensearchRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-opensearch/%v", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-dbaas-external-endpoint-opensearch")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateDBAASExternalEndpointOpensearchRequest struct {
+	Settings *DBAASEndpointOpensearch `json:"settings,omitempty"`
+}
+
+// [BETA] Create OpenSearch Logs external integration endpoint
+func (c Client) CreateDBAASExternalEndpointOpensearch(ctx context.Context, name string, req CreateDBAASExternalEndpointOpensearchRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-opensearch/%v", name)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-dbaas-external-endpoint-opensearch")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Delete Prometheus external integration endpoint
+func (c Client) DeleteDBAASExternalEndpointPrometheus(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-prometheus/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointPrometheus: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointPrometheus: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointPrometheus: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-dbaas-external-endpoint-prometheus")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointPrometheus: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointPrometheus: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointPrometheus: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Get Prometheus external integration endpoint settings
+func (c Client) GetDBAASExternalEndpointPrometheus(ctx context.Context, id UUID) (*DBAASEndpointExternalPrometheusOutput, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-prometheus/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointPrometheus: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointPrometheus: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointPrometheus: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-external-endpoint-prometheus")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointPrometheus: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointPrometheus: http response: %w", err)
+	}
+
+	bodyresp := &DBAASEndpointExternalPrometheusOutput{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointPrometheus: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateDBAASExternalEndpointPrometheusRequest struct {
+	Settings *DBAASEndpointPrometheus `json:"settings,omitempty"`
+}
+
+// [BETA] Update Prometheus external integration endpoint
+func (c Client) UpdateDBAASExternalEndpointPrometheus(ctx context.Context, id UUID, req UpdateDBAASExternalEndpointPrometheusRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-prometheus/%v", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-dbaas-external-endpoint-prometheus")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateDBAASExternalEndpointPrometheusRequest struct {
+	Settings *DBAASEndpointPrometheus `json:"settings,omitempty"`
+}
+
+// [BETA] Create Prometheus external integration endpoint
+func (c Client) CreateDBAASExternalEndpointPrometheus(ctx context.Context, name string, req CreateDBAASExternalEndpointPrometheusRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-prometheus/%v", name)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-dbaas-external-endpoint-prometheus")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Delete RSyslog external integration endpoint
+func (c Client) DeleteDBAASExternalEndpointRsyslog(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-rsyslog/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointRsyslog: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointRsyslog: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointRsyslog: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-dbaas-external-endpoint-rsyslog")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointRsyslog: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointRsyslog: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASExternalEndpointRsyslog: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Get RSyslog external integration endpoint settings
+func (c Client) GetDBAASExternalEndpointRsyslog(ctx context.Context, id UUID) (*DBAASExternalEndpointRsyslogOutput, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-rsyslog/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointRsyslog: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointRsyslog: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointRsyslog: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-external-endpoint-rsyslog")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointRsyslog: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointRsyslog: http response: %w", err)
+	}
+
+	bodyresp := &DBAASExternalEndpointRsyslogOutput{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalEndpointRsyslog: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateDBAASExternalEndpointRsyslogRequest struct {
+	Settings *DBAASEndpointRsyslog `json:"settings,omitempty"`
+}
+
+// [BETA] Update RSyslog external integration endpoint
+func (c Client) UpdateDBAASExternalEndpointRsyslog(ctx context.Context, id UUID, req UpdateDBAASExternalEndpointRsyslogRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-rsyslog/%v", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-dbaas-external-endpoint-rsyslog")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateDBAASExternalEndpointRsyslogRequest struct {
+	Settings *DBAASEndpointRsyslog `json:"settings,omitempty"`
+}
+
+// [BETA] Create RSyslog external integration endpoint
+func (c Client) CreateDBAASExternalEndpointRsyslog(ctx context.Context, name string, req CreateDBAASExternalEndpointRsyslogRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint-rsyslog/%v", name)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-dbaas-external-endpoint-rsyslog")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ListDBAASExternalEndpointTypesResponseEndpointTypes struct {
+	ServiceTypes []string                  `json:"service-types,omitempty"`
+	Title        string                    `json:"title,omitempty"`
+	Type         EnumExternalEndpointTypes `json:"type,omitempty"`
+}
+
+type ListDBAASExternalEndpointTypesResponse struct {
+	EndpointTypes []ListDBAASExternalEndpointTypesResponseEndpointTypes `json:"endpoint-types,omitempty"`
+}
+
+// [BETA] List available external endpoint types and their schemas for DBaaS external integrations
+func (c Client) ListDBAASExternalEndpointTypes(ctx context.Context) (*ListDBAASExternalEndpointTypesResponse, error) {
+	path := "/dbaas-external-endpoint-types"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpointTypes: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpointTypes: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpointTypes: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-dbaas-external-endpoint-types")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpointTypes: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpointTypes: http response: %w", err)
+	}
+
+	bodyresp := &ListDBAASExternalEndpointTypesResponse{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpointTypes: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type AttachDBAASServiceToEndpointRequest struct {
+	// External endpoint id
+	DestEndpointID UUID                      `json:"dest-endpoint-id" validate:"required"`
+	Type           EnumExternalEndpointTypes `json:"type" validate:"required"`
+}
+
+// [BETA] Create a new DBaaS connection between a DBaaS service and an external service
+func (c Client) AttachDBAASServiceToEndpoint(ctx context.Context, sourceServiceName string, req AttachDBAASServiceToEndpointRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint/%v/attach", sourceServiceName)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "attach-dbaas-service-to-endpoint")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type DetachDBAASServiceFromEndpointRequest struct {
+	// External Integration ID
+	IntegrationID UUID `json:"integration-id" validate:"required"`
+}
+
+// [BETA] Detach a DBaaS external integration from a service
+func (c Client) DetachDBAASServiceFromEndpoint(ctx context.Context, sourceServiceName string, req DetachDBAASServiceFromEndpointRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-endpoint/%v/detach", sourceServiceName)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "detach-dbaas-service-from-endpoint")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ListDBAASExternalEndpointsResponse struct {
+	DBAASEndpoints []DBAASExternalEndpoint `json:"dbaas-endpoints,omitempty"`
+}
+
+// FindDBAASExternalEndpoint attempts to find an DBAASExternalEndpoint by nameOrID.
+func (l ListDBAASExternalEndpointsResponse) FindDBAASExternalEndpoint(nameOrID string) (DBAASExternalEndpoint, error) {
+	for i, elem := range l.DBAASEndpoints {
+		if string(elem.Name) == nameOrID || elem.ID.String() == nameOrID {
+			return l.DBAASEndpoints[i], nil
+		}
+	}
+
+	return DBAASExternalEndpoint{}, fmt.Errorf("%q not found in ListDBAASExternalEndpointsResponse: %w", nameOrID, ErrNotFound)
+}
+
+// [BETA] List available external endpoints for integrations
+func (c Client) ListDBAASExternalEndpoints(ctx context.Context) (*ListDBAASExternalEndpointsResponse, error) {
+	path := "/dbaas-external-endpoints"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpoints: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpoints: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpoints: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-dbaas-external-endpoints")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpoints: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpoints: http response: %w", err)
+	}
+
+	bodyresp := &ListDBAASExternalEndpointsResponse{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalEndpoints: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Get a DBaaS external integration
+func (c Client) GetDBAASExternalIntegration(ctx context.Context, id UUID) (*DBAASExternalIntegration, error) {
+	path := fmt.Sprintf("/dbaas-external-integration/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegration: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegration: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegration: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-external-integration")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegration: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegration: http response: %w", err)
+	}
+
+	bodyresp := &DBAASExternalIntegration{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegration: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ListDBAASExternalIntegrationsResponse struct {
+	ExternalIntegrations []DBAASExternalIntegration `json:"external-integrations,omitempty"`
+}
+
+// FindDBAASExternalIntegration attempts to find an DBAASExternalIntegration by ID.
+func (l ListDBAASExternalIntegrationsResponse) FindDBAASExternalIntegration(ID string) (DBAASExternalIntegration, error) {
+	for i, elem := range l.ExternalIntegrations {
+		if elem.ID.String() == ID {
+			return l.ExternalIntegrations[i], nil
+		}
+	}
+
+	return DBAASExternalIntegration{}, fmt.Errorf("%q not found in ListDBAASExternalIntegrationsResponse: %w", ID, ErrNotFound)
+}
+
+// [BETA] List all DBaaS connections between services and external endpoints
+func (c Client) ListDBAASExternalIntegrations(ctx context.Context, serviceName string) (*ListDBAASExternalIntegrationsResponse, error) {
+	path := fmt.Sprintf("/dbaas-external-integrations/%v", serviceName)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalIntegrations: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalIntegrations: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalIntegrations: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-dbaas-external-integrations")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalIntegrations: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalIntegrations: http response: %w", err)
+	}
+
+	bodyresp := &ListDBAASExternalIntegrationsResponse{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListDBAASExternalIntegrations: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Delete a Grafana service
 func (c Client) DeleteDBAASServiceGrafana(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)

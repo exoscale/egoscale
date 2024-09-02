@@ -4965,6 +4965,20 @@ components:
           readOnly: true
           description: Nodepool creation date
       description: SKS Nodepool
+    dbaas-datadog-tag:
+      type: object
+      properties:
+        comment:
+          type: string
+          maxLength: 1024
+          description: Optional tag explanation
+        tag:
+          type: string
+          maxLength: 200
+          minLength: 1
+          description: Tag value
+      required:
+      - tag
     enum-integration-types:
       type: string
       enum:
@@ -6975,20 +6989,7 @@ components:
         datadog-tags:
           type: array
           items:
-            type: object
-            properties:
-              comment:
-                type: string
-                maxLength: 1024
-                description: Optional tag explanation
-              tag:
-                type: string
-                maxLength: 200
-                minLength: 1
-                pattern: "^(?!aiven-)[^\\W\\d_](?:[:\\w./-]*[\\w./-])?$"
-                description: Tag value
-            required:
-            - tag
+            "$ref": "#/components/schemas/dbaas-datadog-tag"
           description: Custom tags provided by user
         disable-consumer-stats:
           type: boolean
@@ -9476,7 +9477,7 @@ paths:
                   type: string
                   maxLength: 255
                   minLength: 1
-                  description: Nodepool name
+                  description: Nodepool name, lowercase only
                 instance-type:
                   "$ref": "#/components/schemas/instance-type"
                   description: Nodepool instances type
@@ -9491,7 +9492,7 @@ paths:
                   maxLength: 30
                   minLength: 1
                   description: 'Prefix to apply to managed instances names (default:
-                    pool)'
+                    pool), lowercase only'
                 deploy-target:
                   "$ref": "#/components/schemas/deploy-target"
                   nullable: true
@@ -11312,9 +11313,9 @@ paths:
                     type: array
                     items:
                       "$ref": "#/components/schemas/dbaas-integration-type"
-      description: Get DBaaS integration types
+      description: "[BETA] Get DBaaS integration types"
       parameters: []
-      summary: Get DBaaS integration types
+      summary: ''
       operationId: list-dbaas-integration-types
   "/dbaas-postgres/{service-name}/user/{username}":
     delete:
@@ -13199,7 +13200,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: Delete a DBaaS Integration
+      description: "[BETA] Delete a DBaaS Integration"
       parameters:
       - in: path
         required: true
@@ -13207,7 +13208,7 @@ paths:
         schema:
           type: string
           format: uuid
-      summary: Delete a DBaaS Integration
+      summary: ''
       operationId: delete-dbaas-integration
     put:
       tags:
@@ -13219,7 +13220,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: Update a existing DBaaS integration
+      description: "[BETA] Update a existing DBaaS integration"
       parameters:
       - in: path
         required: true
@@ -13227,7 +13228,7 @@ paths:
         schema:
           type: string
           format: uuid
-      summary: Update a existing DBaaS integration
+      summary: ''
       requestBody:
         required: true
         content:
@@ -13251,7 +13252,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-integration"
-      description: Get a DBaaS Integration
+      description: "[BETA] Get a DBaaS Integration"
       parameters:
       - in: path
         required: true
@@ -13259,7 +13260,7 @@ paths:
         schema:
           type: string
           format: uuid
-      summary: Get a DBaaS Integration
+      summary: ''
       operationId: get-dbaas-integration
   "/elastic-ip/{id}:attach":
     put:
@@ -13438,7 +13439,7 @@ paths:
                         type: string
                     description: The JSON schema representing the settings for the
                       given integration type, source, and destination service types.
-      description: Get DBaaS integration settings
+      description: "[BETA] Get DBaaS integration settings"
       parameters:
       - in: path
         required: true
@@ -13455,7 +13456,7 @@ paths:
         name: dest-type
         schema:
           type: string
-      summary: Get DBaaS integration settings
+      summary: ''
       operationId: list-dbaas-integration-settings
   "/dbaas-settings-pg":
     get:
@@ -14648,7 +14649,7 @@ paths:
                   type: string
                   maxLength: 255
                   minLength: 1
-                  description: Nodepool name
+                  description: Nodepool name, lowercase only
                 instance-type:
                   "$ref": "#/components/schemas/instance-type"
                   description: Nodepool instances type
@@ -14671,7 +14672,8 @@ paths:
                   type: string
                   maxLength: 30
                   minLength: 1
-                  description: 'Prefix to apply to instances names (default: pool)'
+                  description: 'Prefix to apply to instances names (default: pool),
+                    lowercase only'
                 deploy-target:
                   "$ref": "#/components/schemas/deploy-target"
                   description: Nodepool Deploy Target
@@ -16161,9 +16163,9 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: Create a new DBaaS integration between two services
+      description: "[BETA] Create a new DBaaS integration between two services"
       parameters: []
-      summary: Create a new DBaaS integration between two services
+      summary: ''
       requestBody:
         required: true
         content:

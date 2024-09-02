@@ -191,7 +191,7 @@ type DBAASBackupConfig struct {
 
 type DBAASDatabaseName string
 
-type DBAASEndpointDatadogDatadogTags struct {
+type DBAASDatadogTag struct {
 	// Optional tag explanation
 	Comment string `json:"comment,omitempty" validate:"omitempty,lte=1024"`
 	// Tag value
@@ -202,7 +202,7 @@ type DBAASEndpointDatadog struct {
 	// Datadog API key
 	DatadogAPIKey string `json:"datadog-api-key" validate:"required,gte=1,lte=256"`
 	// Custom tags provided by user
-	DatadogTags []DBAASEndpointDatadogDatadogTags `json:"datadog-tags,omitempty"`
+	DatadogTags []DBAASDatadogTag `json:"datadog-tags,omitempty"`
 	// Disable consumer group metrics
 	DisableConsumerStats *bool `json:"disable-consumer-stats,omitempty"`
 	// Number of separate instances to fetch kafka consumer statistics with

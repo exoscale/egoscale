@@ -59,6 +59,7 @@ func (c Client) GetZoneAPIEndpoint(ctx context.Context, zoneName ZoneName) (Endp
 type Client struct {
 	apiKey          string
 	apiSecret       string
+	userAgent       string
 	serverEndpoint  string
 	httpClient      *http.Client
 	pollingInterval time.Duration
@@ -73,12 +74,8 @@ type Client struct {
 // RequestInterceptorFn is the function signature for the RequestInterceptor callback function
 type RequestInterceptorFn func(ctx context.Context, req *http.Request) error
 
-// UserAgent is the "User-Agent" HTTP request header added to outgoing HTTP requests.
-var UserAgent = fmt.Sprintf("egoscale/%s (%s; %s/%s)",
-	Version,
-	runtime.Version(),
-	runtime.GOOS,
-	runtime.GOARCH)
+// Deprecated: use ClientUserAgent instead.
+var UserAgent = getDefaultUserAgent()
 
 const pollingInterval = 3 * time.Second
 
@@ -89,6 +86,14 @@ type ClientOpt func(*Client) error
 func ClientOptWithTrace() ClientOpt {
 	return func(c *Client) error {
 		c.trace = true
+		return nil
+	}
+}
+
+// ClientUserAgent returns a ClientOpt setting the user agent header.
+func ClientUserAgent(ua string) ClientOpt {
+	return func(c *Client) error {
+		c.userAgent = ua + " " + getDefaultUserAgent()
 		return nil
 	}
 }
@@ -131,6 +136,15 @@ func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
 	}
 }
 
+// getDefaultUserAgent retuens the "User-Agent" HTTP request header added to outgoing HTTP requests.
+func getDefaultUserAgent() string {
+	return fmt.Sprintf("egoscale/%s (%s; %s/%s)",
+		Version,
+		runtime.Version(),
+		runtime.GOOS,
+		runtime.GOARCH)
+}
+
 // NewClient returns a new Exoscale API client.
 func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client, error) {
 	values, err := credentials.Get()
@@ -145,6 +159,7 @@ func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client
 		httpClient:      http.DefaultClient,
 		pollingInterval: pollingInterval,
 		validate:        validator.New(),
+		userAgent:       getDefaultUserAgent(),
 	}
 
 	for _, opt := range opts {
@@ -154,6 +169,21 @@ func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client
 	}
 
 	return client, nil
+}
+
+// getUserAgent only for compatibility with UserAgent.
+func (c *Client) getUserAgent() string {
+	defaultUA := getDefaultUserAgent()
+
+	if c.userAgent != defaultUA {
+		return c.userAgent
+	}
+
+	if UserAgent != defaultUA {
+		return UserAgent
+	}
+
+	return c.userAgent
 }
 
 // WithEndpoint returns a copy of Client with new zone Endpoint.

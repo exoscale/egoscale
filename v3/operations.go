@@ -2892,7 +2892,7 @@ type CreateDBAASIntegrationRequest struct {
 	SourceService DBAASServiceName `json:"source-service" validate:"required,gte=0,lte=63"`
 }
 
-// Create a new DBaaS integration between two services
+// [BETA] Create a new DBaaS integration between two services
 func (c Client) CreateDBAASIntegration(ctx context.Context, req CreateDBAASIntegrationRequest) (*Operation, error) {
 	path := "/dbaas-integration"
 
@@ -2955,7 +2955,7 @@ type ListDBAASIntegrationSettingsResponse struct {
 	Settings *ListDBAASIntegrationSettingsResponseSettings `json:"settings,omitempty"`
 }
 
-// Get DBaaS integration settings
+// [BETA] Get DBaaS integration settings
 func (c Client) ListDBAASIntegrationSettings(ctx context.Context, integrationType string, sourceType string, destType string) (*ListDBAASIntegrationSettingsResponse, error) {
 	path := fmt.Sprintf("/dbaas-integration-settings/%v/%v/%v", integrationType, sourceType, destType)
 
@@ -3002,7 +3002,7 @@ type ListDBAASIntegrationTypesResponse struct {
 	DBAASIntegrationTypes []DBAASIntegrationType `json:"dbaas-integration-types,omitempty"`
 }
 
-// Get DBaaS integration types
+// [BETA] Get DBaaS integration types
 func (c Client) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegrationTypesResponse, error) {
 	path := "/dbaas-integration-types"
 
@@ -3045,7 +3045,7 @@ func (c Client) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegr
 	return bodyresp, nil
 }
 
-// Delete a DBaaS Integration
+// [BETA] Delete a DBaaS Integration
 func (c Client) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-integration/%v", id)
 
@@ -3088,7 +3088,7 @@ func (c Client) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation
 	return bodyresp, nil
 }
 
-// Get a DBaaS Integration
+// [BETA] Get a DBaaS Integration
 func (c Client) GetDBAASIntegration(ctx context.Context, id UUID) (*DBAASIntegration, error) {
 	path := fmt.Sprintf("/dbaas-integration/%v", id)
 
@@ -3136,7 +3136,7 @@ type UpdateDBAASIntegrationRequest struct {
 	Settings map[string]any `json:"settings" validate:"required"`
 }
 
-// Update a existing DBaaS integration
+// [BETA] Update a existing DBaaS integration
 func (c Client) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateDBAASIntegrationRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-integration/%v", id)
 
@@ -13790,14 +13790,14 @@ type CreateSKSNodepoolRequest struct {
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Nodepool instances disk size in GiB
 	DiskSize int64 `json:"disk-size" validate:"required,gte=20,lte=51200"`
-	// Prefix to apply to instances names (default: pool)
+	// Prefix to apply to instances names (default: pool), lowercase only
 	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
 	// Compute instance type
 	InstanceType *InstanceType `json:"instance-type" validate:"required"`
 	// Kubelet image GC options
 	KubeletImageGC *KubeletImageGC `json:"kubelet-image-gc,omitempty"`
 	Labels         Labels          `json:"labels,omitempty"`
-	// Nodepool name
+	// Nodepool name, lowercase only
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
@@ -13964,12 +13964,12 @@ type UpdateSKSNodepoolRequest struct {
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Nodepool instances disk size in GiB
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=20,lte=51200"`
-	// Prefix to apply to managed instances names (default: pool)
+	// Prefix to apply to managed instances names (default: pool), lowercase only
 	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
 	// Compute instance type
 	InstanceType *InstanceType `json:"instance-type,omitempty"`
 	Labels       Labels        `json:"labels,omitempty"`
-	// Nodepool name
+	// Nodepool name, lowercase only
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`

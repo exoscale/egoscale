@@ -4,6 +4,9 @@ Changelog
 Unreleased
 ----------
 
+3.1.2
+----------
+- generate_v3: DBaaS endpoints and integration schemas #651 #653
 - generate_v3: replace deprecated ::set-output #647 
 - generate_v3: handle multiple separators #650
 - go.mk: upgrade to v2.0.3 #652 

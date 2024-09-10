@@ -5,6 +5,7 @@ import (
 	"errors"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/datamodel/low"
@@ -12,7 +13,6 @@ import (
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"time"
 )
 
 // CreateDocument will create a new Document instance from the provided SpecInfo.
@@ -36,7 +36,7 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 	}
 	version = low.NodeReference[string]{Value: versionNode.Value, KeyNode: labelNode, ValueNode: versionNode}
 	doc := Document{Version: version}
-
+	doc.Nodes = low.ExtractNodes(nil, info.RootNode.Content[0])
 	// create an index config and shadow the document configuration.
 	idxConfig := index.CreateClosedAPIIndexConfig()
 	idxConfig.SpecInfo = info
@@ -45,6 +45,7 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 	idxConfig.AvoidCircularReferenceCheck = true
 	idxConfig.BaseURL = config.BaseURL
 	idxConfig.BasePath = config.BasePath
+	idxConfig.SpecFilePath = config.SpecFilePath
 	idxConfig.Logger = config.Logger
 	extract := config.ExtractRefsSequentially
 	idxConfig.ExtractRefsSequentially = extract
@@ -130,7 +131,12 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 	doc.Index = rolodex.GetRootIndex()
 	var wg sync.WaitGroup
 
+	var cacheMap sync.Map
+	modelContext := base.ModelContext{SchemaCache: &cacheMap}
+	ctx := context.WithValue(context.Background(), "modelCtx", &modelContext)
+
 	doc.Extensions = low.ExtractExtensions(info.RootNode.Content[0])
+	low.ExtractExtensionNodes(ctx, doc.Extensions, doc.Nodes)
 
 	// if set, extract jsonSchemaDialect (3.1)
 	_, dialectLabel, dialectNode := utils.FindKeyNodeFull(JSONSchemaDialectLabel, info.RootNode.Content)
@@ -161,8 +167,6 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 		extractWebhooks,
 	}
 
-	ctx := context.Background()
-
 	wg.Add(len(extractionFuncs))
 	if config.Logger != nil {
 		config.Logger.Debug("running extractions")
@@ -175,7 +179,6 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 	done = time.Duration(time.Since(now).Milliseconds())
 	if config.Logger != nil {
 		config.Logger.Debug("extractions complete", "time", done)
-
 	}
 	return &doc, errors.Join(errs...)
 }
@@ -309,6 +312,9 @@ func extractWebhooks(ctx context.Context, info *datamodel.SpecInfo, doc *Documen
 			Value:     hooks,
 			KeyNode:   hooksL,
 			ValueNode: hooksN,
+		}
+		for k, v := range hooks.FromOldest() {
+			v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
 		}
 	}
 	return nil

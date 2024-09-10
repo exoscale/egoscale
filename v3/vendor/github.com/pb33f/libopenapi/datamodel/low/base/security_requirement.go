@@ -31,15 +31,17 @@ type SecurityRequirement struct {
 	RootNode                 *yaml.Node
 	ContainsEmptyRequirement bool // if a requirement is empty (this means it's optional)
 	*low.Reference
+	low.NodeMap
 }
 
 // Build will extract security requirements from the node (the structure is odd, to be honest)
-func (s *SecurityRequirement) Build(_ context.Context, keyNode, root *yaml.Node, _ *index.SpecIndex) error {
+func (s *SecurityRequirement) Build(ctx context.Context, keyNode, root *yaml.Node, _ *index.SpecIndex) error {
 	s.KeyNode = keyNode
 	root = utils.NodeAlias(root)
 	s.RootNode = root
 	utils.CheckForMergeNodes(root)
 	s.Reference = new(low.Reference)
+	s.Nodes = low.ExtractNodes(ctx, root)
 	var labelNode *yaml.Node
 	valueMap := orderedmap.New[low.KeyReference[string], low.ValueReference[[]low.ValueReference[string]]]()
 	var arr []low.ValueReference[string]
@@ -57,6 +59,7 @@ func (s *SecurityRequirement) Build(_ context.Context, keyNode, root *yaml.Node,
 				Value:     root.Content[i].Content[j].Value,
 				ValueNode: root.Content[i].Content[j],
 			})
+			s.Nodes.Store(root.Content[i].Content[j].Line, root.Content[i].Content[j])
 		}
 		valueMap.Set(
 			low.KeyReference[string]{
@@ -76,14 +79,25 @@ func (s *SecurityRequirement) Build(_ context.Context, keyNode, root *yaml.Node,
 		Value:     valueMap,
 		ValueNode: root,
 	}
+
 	return nil
+}
+
+// GetRootNode will return the root yaml node of the SecurityRequirement object
+func (s *SecurityRequirement) GetRootNode() *yaml.Node {
+	return s.RootNode
+}
+
+// GetKeyNode will return the key yaml node of the SecurityRequirement object
+func (s *SecurityRequirement) GetKeyNode() *yaml.Node {
+	return s.KeyNode
 }
 
 // FindRequirement will attempt to locate a security requirement string from a supplied name.
 func (s *SecurityRequirement) FindRequirement(name string) []low.ValueReference[string] {
-	for pair := orderedmap.First(s.Requirements.Value); pair != nil; pair = pair.Next() {
-		if pair.Key().Value == name {
-			return pair.Value().Value
+	for k, v := range s.Requirements.Value.FromOldest() {
+		if k.Value == name {
+			return v.Value
 		}
 	}
 	return nil
@@ -93,8 +107,9 @@ func (s *SecurityRequirement) FindRequirement(name string) []low.ValueReference[
 func (s *SecurityRequirement) GetKeys() []string {
 	keys := make([]string, orderedmap.Len(s.Requirements.Value))
 	z := 0
-	for pair := orderedmap.First(s.Requirements.Value); pair != nil; pair = pair.Next() {
-		keys[z] = pair.Key().Value
+	for k := range s.Requirements.Value.KeysFromOldest() {
+		keys[z] = k.Value
+		z++
 	}
 	return keys
 }
@@ -102,14 +117,14 @@ func (s *SecurityRequirement) GetKeys() []string {
 // Hash will return a consistent SHA256 Hash of the SecurityRequirement object
 func (s *SecurityRequirement) Hash() [32]byte {
 	var f []string
-	for pair := orderedmap.First(orderedmap.SortAlpha(s.Requirements.Value)); pair != nil; pair = pair.Next() {
+	for k, v := range orderedmap.SortAlpha(s.Requirements.Value).FromOldest() {
 		var vals []string
-		for y := range pair.Value().Value {
-			vals = append(vals, pair.Value().Value[y].Value)
+		for y := range v.Value {
+			vals = append(vals, v.Value[y].Value)
 		}
 		sort.Strings(vals)
 
-		f = append(f, fmt.Sprintf("%s-%s", pair.Key().Value, strings.Join(vals, "|")))
+		f = append(f, fmt.Sprintf("%s-%s", k.Value, strings.Join(vals, "|")))
 	}
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }

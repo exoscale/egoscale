@@ -27,6 +27,7 @@ type OAuthFlows struct {
 	KeyNode           *yaml.Node
 	RootNode          *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // GetExtensions returns all OAuthFlows extensions and satisfies the low.HasExtensions interface.
@@ -39,6 +40,16 @@ func (o *OAuthFlows) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
 	return low.FindItemInOrderedMap(ext, o.Extensions)
 }
 
+// GetRootNode returns the root yaml node of the OAuthFlows object.
+func (o *OAuthFlows) GetRootNode() *yaml.Node {
+	return o.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the OAuthFlows object.
+func (o *OAuthFlows) GetKeyNode() *yaml.Node {
+	return o.KeyNode
+}
+
 // Build will extract extensions and all OAuthFlow types from the supplied node.
 func (o *OAuthFlows) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	o.KeyNode = keyNode
@@ -46,6 +57,7 @@ func (o *OAuthFlows) Build(ctx context.Context, keyNode, root *yaml.Node, idx *i
 	o.RootNode = root
 	utils.CheckForMergeNodes(root)
 	o.Reference = new(low.Reference)
+	o.Nodes = low.ExtractNodes(ctx, root)
 	o.Extensions = low.ExtractExtensions(root)
 
 	v, vErr := low.ExtractObject[*OAuthFlow](ctx, ImplicitLabel, root, idx)
@@ -101,7 +113,9 @@ type OAuthFlow struct {
 	RefreshUrl       low.NodeReference[string]
 	Scopes           low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[string]]]
 	Extensions       *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
+	RootNode         *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // GetExtensions returns all OAuthFlow extensions and satisfies the low.HasExtensions interface.
@@ -119,10 +133,25 @@ func (o *OAuthFlow) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
 	return low.FindItemInOrderedMap(ext, o.Extensions)
 }
 
+// GetRootNode returns the root yaml node of the OAuthFlow object.
+func (o *OAuthFlow) GetRootNode() *yaml.Node {
+	return o.RootNode
+}
+
 // Build will extract extensions from the node.
-func (o *OAuthFlow) Build(_ context.Context, _, root *yaml.Node, idx *index.SpecIndex) error {
+func (o *OAuthFlow) Build(ctx context.Context, _, root *yaml.Node, idx *index.SpecIndex) error {
 	o.Reference = new(low.Reference)
+	o.Nodes = low.ExtractNodes(ctx, root)
 	o.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, o.Extensions, o.Nodes)
+
+	if o.Scopes.Value != nil && o.Scopes.Value.Len() > 0 {
+		for k := range o.Scopes.Value.KeysFromOldest() {
+			o.Nodes.Store(k.KeyNode.Line, k.KeyNode)
+		}
+	}
+
+	o.RootNode = root
 	return nil
 }
 
@@ -138,8 +167,8 @@ func (o *OAuthFlow) Hash() [32]byte {
 	if !o.RefreshUrl.IsEmpty() {
 		f = append(f, o.RefreshUrl.Value)
 	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(o.Scopes.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, fmt.Sprintf("%s-%s", pair.Key().Value, sha256.Sum256([]byte(fmt.Sprint(pair.Value().Value)))))
+	for k, v := range orderedmap.SortAlpha(o.Scopes.Value).FromOldest() {
+		f = append(f, fmt.Sprintf("%s-%s", k.Value, sha256.Sum256([]byte(fmt.Sprint(v.Value)))))
 	}
 	f = append(f, low.HashExtensions(o.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))

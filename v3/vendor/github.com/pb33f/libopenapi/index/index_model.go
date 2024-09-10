@@ -8,10 +8,10 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel"
-	"golang.org/x/sync/syncmap"
 
 	"gopkg.in/yaml.v3"
 )
@@ -88,6 +88,9 @@ type SpecIndexConfig struct {
 	// If resolving locally, the BasePath will be the root from which relative references will be resolved from
 	BasePath string // set the Base Path for resolving relative references if the spec is exploded.
 
+	// SpecFilePath is the name of the root specification file (usually named "openapi.yaml").
+	SpecFilePath string
+
 	// In an earlier version of libopenapi (pre 0.6.0) the index would automatically resolve all references
 	// They could have been local, or they could have been remote. This was a problem because it meant
 	// There was a potential for a remote exploit if a remote reference was malicious. There aren't any known
@@ -150,6 +153,18 @@ type SpecIndexConfig struct {
 
 	// private fields
 	uri []string
+}
+
+// SetTheoreticalRoot sets the spec file paths to point to a theoretical spec file, which does not exist but is required
+// in order to formulate the absolute path to root references correctly.
+func (s *SpecIndexConfig) SetTheoreticalRoot() {
+	s.SpecFilePath = filepath.Join(s.BasePath, theoreticalRoot)
+
+	basePath := s.BasePath
+	if !filepath.IsAbs(basePath) {
+		basePath, _ = filepath.Abs(basePath)
+	}
+	s.SpecAbsolutePath = filepath.Join(basePath, theoreticalRoot)
 }
 
 // CreateOpenAPIIndexConfig is a helper function to create a new SpecIndexConfig with the AllowRemoteLookup and
@@ -236,9 +251,10 @@ type SpecIndex struct {
 	allRefSchemaDefinitions             []*Reference                                  // all schemas found that are references.
 	allInlineSchemaDefinitions          []*Reference                                  // all schemas found in document outside of components (openapi) or definitions (swagger).
 	allInlineSchemaObjectDefinitions    []*Reference                                  // all schemas that are objects found in document outside of components (openapi) or definitions (swagger).
-	allComponentSchemaDefinitions       *syncmap.Map                                  // all schemas found in components (openapi) or definitions (swagger).
+	allComponentSchemaDefinitions       *sync.Map                                     // all schemas found in components (openapi) or definitions (swagger).
 	securitySchemesNode                 *yaml.Node                                    // components/securitySchemes node
 	allSecuritySchemes                  map[string]*Reference                         // all security schemes / definitions.
+	allComponentSchemas                 map[string]*Reference                         // all component schemas
 	requestBodiesNode                   *yaml.Node                                    // components/requestBodies node
 	allRequestBodies                    map[string]*Reference                         // all request bodies
 	responsesNode                       *yaml.Node                                    // components/responses node
@@ -273,7 +289,7 @@ type SpecIndex struct {
 	componentIndexChan                  chan bool
 	polyComponentIndexChan              chan bool
 	resolver                            *Resolver
-	cache                               *syncmap.Map
+	cache                               *sync.Map
 	built                               bool
 	uri                                 []string
 	logger                              *slog.Logger
@@ -292,7 +308,7 @@ func (index *SpecIndex) GetConfig() *SpecIndexConfig {
 	return index.config
 }
 
-func (index *SpecIndex) SetCache(sync *syncmap.Map) {
+func (index *SpecIndex) SetCache(sync *sync.Map) {
 	index.cache = sync
 }
 
@@ -300,7 +316,7 @@ func (index *SpecIndex) GetNodeMap() map[int]map[int]*yaml.Node {
 	return index.nodeMap
 }
 
-func (index *SpecIndex) GetCache() *syncmap.Map {
+func (index *SpecIndex) GetCache() *sync.Map {
 	return index.cache
 }
 

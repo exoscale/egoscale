@@ -29,11 +29,22 @@ type Callback struct {
 	KeyNode    *yaml.Node
 	RootNode   *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // GetExtensions returns all Callback extensions and satisfies the low.HasExtensions interface.
 func (cb *Callback) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return cb.Extensions
+}
+
+// GetRootNode returns the root yaml node of the Callback object
+func (cb *Callback) GetRootNode() *yaml.Node {
+	return cb.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the Callback object
+func (cb *Callback) GetKeyNode() *yaml.Node {
+	return cb.KeyNode
 }
 
 // FindExpression will locate a string expression and return a ValueReference containing the located PathItem
@@ -48,22 +59,26 @@ func (cb *Callback) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 	cb.RootNode = root
 	utils.CheckForMergeNodes(root)
 	cb.Reference = new(low.Reference)
+	cb.Nodes = low.ExtractNodes(ctx, root)
 	cb.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, cb.Extensions, cb.Nodes)
 
 	expressions, err := extractPathItemsMap(ctx, root, idx)
 	if err != nil {
 		return err
 	}
 	cb.Expression = expressions
-
+	for k := range expressions.KeysFromOldest() {
+		cb.Nodes.Store(k.KeyNode.Line, k.KeyNode)
+	}
 	return nil
 }
 
 // Hash will return a consistent SHA256 Hash of the Callback object
 func (cb *Callback) Hash() [32]byte {
 	var f []string
-	for pair := orderedmap.First(orderedmap.SortAlpha(cb.Expression)); pair != nil; pair = pair.Next() {
-		f = append(f, low.GenerateHashString(pair.Value().Value))
+	for v := range orderedmap.SortAlpha(cb.Expression).ValuesFromOldest() {
+		f = append(f, low.GenerateHashString(v.Value))
 	}
 
 	f = append(f, low.HashExtensions(cb.Extensions)...)

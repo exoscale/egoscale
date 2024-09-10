@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
@@ -39,6 +40,17 @@ type Parameter struct {
 	Content         low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*MediaType]]]
 	Extensions      *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 	*low.Reference
+	low.NodeMap
+}
+
+// GetRootNode returns the root yaml node of the Parameter object.
+func (p *Parameter) GetRootNode() *yaml.Node {
+	return p.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the Parameter object.
+func (p *Parameter) GetKeyNode() *yaml.Node {
+	return p.KeyNode
 }
 
 // FindContent will attempt to locate a MediaType instance using the specified name.
@@ -68,12 +80,15 @@ func (p *Parameter) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 	p.RootNode = root
 	utils.CheckForMergeNodes(root)
 	p.Reference = new(low.Reference)
+	p.Nodes = low.ExtractNodes(ctx, root)
 	p.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, p.Extensions, p.Nodes)
 
 	// handle example if set.
 	_, expLabel, expNode := utils.FindKeyNodeFullTop(base.ExampleLabel, root.Content)
 	if expNode != nil {
 		p.Example = low.NodeReference[*yaml.Node]{Value: expNode, KeyNode: expLabel, ValueNode: expNode}
+		p.Nodes.Store(expLabel.Line, expLabel)
 	}
 
 	// handle schema
@@ -90,11 +105,16 @@ func (p *Parameter) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 	if eErr != nil {
 		return eErr
 	}
-	if exps != nil {
+	// Only consider examples if they are defined in the root node.
+	if exps != nil && slices.Contains(root.Content, expsL) {
 		p.Examples = low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*base.Example]]]{
 			Value:     exps,
 			KeyNode:   expsL,
 			ValueNode: expsN,
+		}
+		p.Nodes.Store(expsL.Line, expsL)
+		for k, v := range exps.FromOldest() {
+			v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
 		}
 	}
 
@@ -108,6 +128,13 @@ func (p *Parameter) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 		KeyNode:   cL,
 		ValueNode: cN,
 	}
+	if cL != nil {
+		p.Nodes.Store(cL.Line, cL)
+		for k, v := range con.FromOldest() {
+			v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
+		}
+	}
+
 	return nil
 }
 
@@ -131,17 +158,17 @@ func (p *Parameter) Hash() [32]byte {
 	}
 	f = append(f, fmt.Sprint(p.Explode.Value))
 	f = append(f, fmt.Sprint(p.AllowReserved.Value))
-	if p.Schema.Value != nil {
+	if p.Schema.Value != nil && p.Schema.Value.Schema() != nil {
 		f = append(f, fmt.Sprintf("%x", p.Schema.Value.Schema().Hash()))
 	}
 	if p.Example.Value != nil && !p.Example.Value.IsZero() {
 		f = append(f, low.GenerateHashString(p.Example.Value))
 	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(p.Examples.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, low.GenerateHashString(pair.Value().Value))
+	for v := range orderedmap.SortAlpha(p.Examples.Value).ValuesFromOldest() {
+		f = append(f, low.GenerateHashString(v.Value))
 	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(p.Content.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, low.GenerateHashString(pair.Value().Value))
+	for v := range orderedmap.SortAlpha(p.Content.Value).ValuesFromOldest() {
+		f = append(f, low.GenerateHashString(v.Value))
 	}
 	f = append(f, low.HashExtensions(p.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))

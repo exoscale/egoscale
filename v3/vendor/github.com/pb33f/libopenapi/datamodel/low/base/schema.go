@@ -141,8 +141,10 @@ type Schema struct {
 	ParentProxy *SchemaProxy
 
 	// Index is a reference to the SpecIndex that was used to build this schema.
-	Index *index.SpecIndex
+	Index    *index.SpecIndex
+	RootNode *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // Hash will calculate a SHA256 hash from the values of the schema, This allows equality checking against
@@ -260,9 +262,7 @@ func (s *Schema) Hash() [32]byte {
 	sort.Strings(keys)
 	d = append(d, keys...)
 
-	for pair := orderedmap.First(orderedmap.SortAlpha(s.Properties.Value)); pair != nil; pair = pair.Next() {
-		d = append(d, fmt.Sprintf("%s-%s", pair.Key().Value, low.GenerateHashString(pair.Value().Value)))
-	}
+	d = low.AppendMapHashes(d, s.Properties.Value)
 	if s.XML.Value != nil {
 		d = append(d, low.GenerateHashString(s.XML.Value))
 	}
@@ -362,13 +362,8 @@ func (s *Schema) Hash() [32]byte {
 		d = append(d, fmt.Sprint(s.Anchor.Value))
 	}
 
-	for pair := orderedmap.First(orderedmap.SortAlpha(s.DependentSchemas.Value)); pair != nil; pair = pair.Next() {
-		d = append(d, fmt.Sprintf("%s-%s", pair.Key().Value, low.GenerateHashString(pair.Value().Value)))
-	}
-
-	for pair := orderedmap.First(orderedmap.SortAlpha(s.PatternProperties.Value)); pair != nil; pair = pair.Next() {
-		d = append(d, fmt.Sprintf("%s-%s", pair.Key().Value, low.GenerateHashString(pair.Value().Value)))
-	}
+	d = low.AppendMapHashes(d, orderedmap.SortAlpha(s.DependentSchemas.Value))
+	d = low.AppendMapHashes(d, orderedmap.SortAlpha(s.PatternProperties.Value))
 
 	if len(s.PrefixItems.Value) > 0 {
 		itemsKeys := make([]string, len(s.PrefixItems.Value))
@@ -433,6 +428,11 @@ func (s *Schema) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.V
 	return s.Extensions
 }
 
+// GetRootNode will return the root yaml node of the Schema object
+func (s *Schema) GetRootNode() *yaml.Node {
+	return s.RootNode
+}
+
 // Build will perform a number of operations.
 // Extraction of the following happens in this method:
 //   - Extensions
@@ -464,7 +464,11 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 	root = utils.NodeAlias(root)
 	utils.CheckForMergeNodes(root)
 	s.Reference = new(low.Reference)
+	no := low.ExtractNodes(ctx, root)
+	s.Nodes = no
 	s.Index = idx
+	s.RootNode = root
+
 	if h, _, _ := utils.IsNodeRefValue(root); h {
 		ref, _, err, fctx := low.LocateRefNodeWithContext(ctx, root, idx)
 		if ref != nil {
@@ -489,6 +493,20 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 	}
 
 	s.extractExtensions(root)
+
+	// if the schema has required values, extract the nodes for them.
+	if s.Required.Value != nil {
+		for _, r := range s.Required.Value {
+			s.AddNode(r.ValueNode.Line, r.ValueNode)
+		}
+	}
+
+	// same thing with enums
+	if s.Enum.Value != nil {
+		for _, e := range s.Enum.Value {
+			s.AddNode(e.ValueNode.Line, e.ValueNode)
+		}
+	}
 
 	// determine schema type, singular (3.0) or multiple (3.1), use a variable value
 	_, typeLabel, typeValue := utils.FindKeyNodeFullTop(TypeLabel, root.Content)
@@ -623,6 +641,18 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 	_, expLabel, expNode := utils.FindKeyNodeFullTop(ExampleLabel, root.Content)
 	if expNode != nil {
 		s.Example = low.NodeReference[*yaml.Node]{Value: expNode, KeyNode: expLabel, ValueNode: expNode}
+
+		// extract nodes for all value nodes down the tree.
+		expChildNodes := low.ExtractNodesRecursive(ctx, expNode)
+		// map to the local schema
+		expChildNodes.Range(func(k, v interface{}) bool {
+			if arr, ko := v.([]*yaml.Node); ko {
+				if _, ok := s.Nodes.Load(k); !ok {
+					s.Nodes.Store(k, arr)
+				}
+			}
+			return true
+		})
 	}
 
 	// handle examples if set.(3.1)
@@ -638,6 +668,17 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 				ValueNode: expArrNode,
 				KeyNode:   expArrLabel,
 			}
+			// extract nodes for all value nodes down the tree.
+			expChildNodes := low.ExtractNodesRecursive(ctx, expArrNode)
+			// map to the local schema
+			expChildNodes.Range(func(k, v interface{}) bool {
+				if arr, ko := v.([]*yaml.Node); ko {
+					if _, ok := s.Nodes.Load(k); !ok {
+						s.Nodes.Store(k, arr)
+					}
+				}
+				return true
+			})
 		}
 	}
 
@@ -667,7 +708,20 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 	if discNode != nil {
 		var discriminator Discriminator
 		_ = low.BuildModel(discNode, &discriminator)
+		discriminator.KeyNode = discLabel
+		discriminator.RootNode = discNode
+		discriminator.Nodes = low.ExtractNodes(ctx, discNode)
 		s.Discriminator = low.NodeReference[*Discriminator]{Value: &discriminator, KeyNode: discLabel, ValueNode: discNode}
+		// add discriminator nodes, because there is no build method.
+		dn := low.ExtractNodesRecursive(ctx, discNode)
+		dn.Range(func(key, val any) bool {
+			if n, ok := val.([]*yaml.Node); ok {
+				for _, g := range n {
+					discriminator.AddNode(key.(int), g)
+				}
+			}
+			return true
+		})
 	}
 
 	// handle externalDocs if set.
@@ -676,6 +730,7 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 		var exDoc ExternalDoc
 		_ = low.BuildModel(extDocNode, &exDoc)
 		_ = exDoc.Build(ctx, extDocLabel, extDocNode, idx) // throws no errors, can't check for one.
+		exDoc.Nodes = low.ExtractNodes(ctx, extDocNode)
 		s.ExternalDocs = low.NodeReference[*ExternalDoc]{Value: &exDoc, KeyNode: extDocLabel, ValueNode: extDocNode}
 	}
 
@@ -686,11 +741,12 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 		_ = low.BuildModel(xmlNode, &xml)
 		// extract extensions if set.
 		_ = xml.Build(xmlNode, idx) // returns no errors, can't check for one.
+		xml.Nodes = low.ExtractNodes(ctx, xmlNode)
 		s.XML = low.NodeReference[*XML]{Value: &xml, KeyNode: xmlLabel, ValueNode: xmlNode}
 	}
 
 	// handle properties
-	props, err := buildPropertyMap(ctx, root, idx, PropertiesLabel)
+	props, err := buildPropertyMap(ctx, s, root, idx, PropertiesLabel)
 	if err != nil {
 		return err
 	}
@@ -699,7 +755,7 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 	}
 
 	// handle dependent schemas
-	props, err = buildPropertyMap(ctx, root, idx, DependentSchemasLabel)
+	props, err = buildPropertyMap(ctx, s, root, idx, DependentSchemasLabel)
 	if err != nil {
 		return err
 	}
@@ -708,7 +764,7 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 	}
 
 	// handle pattern properties
-	props, err = buildPropertyMap(ctx, root, idx, PatternPropertiesLabel)
+	props, err = buildPropertyMap(ctx, s, root, idx, PatternPropertiesLabel)
 	if err != nil {
 		return err
 	}
@@ -1006,7 +1062,7 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 	return nil
 }
 
-func buildPropertyMap(ctx context.Context, root *yaml.Node, idx *index.SpecIndex, label string) (*low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*SchemaProxy]]], error) {
+func buildPropertyMap(ctx context.Context, parent *Schema, root *yaml.Node, idx *index.SpecIndex, label string) (*low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*SchemaProxy]]], error) {
 	_, propLabel, propsNode := utils.FindKeyNodeFullTop(label, root.Content)
 	if propsNode != nil {
 		propertyMap := orderedmap.New[low.KeyReference[string], low.ValueReference[*SchemaProxy]]()
@@ -1014,6 +1070,7 @@ func buildPropertyMap(ctx context.Context, root *yaml.Node, idx *index.SpecIndex
 		for i, prop := range propsNode.Content {
 			if i%2 == 0 {
 				currentProp = prop
+				parent.Nodes.Store(prop.Line, prop)
 				continue
 			}
 
@@ -1116,7 +1173,6 @@ func buildSchema(ctx context.Context, schemas chan schemaProxyBuildResult, label
 				res: res,
 				idx: schemaIdx,
 			}
-
 		}
 
 		isRef := false

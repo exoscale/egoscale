@@ -6,6 +6,7 @@ package v3
 import (
 	"context"
 	"crypto/sha256"
+	"slices"
 	"strings"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
@@ -29,6 +30,7 @@ type MediaType struct {
 	KeyNode    *yaml.Node
 	RootNode   *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // GetExtensions returns all MediaType extensions and satisfies the low.HasExtensions interface.
@@ -56,6 +58,16 @@ func (mt *MediaType) GetAllExamples() *orderedmap.Map[low.KeyReference[string], 
 	return mt.Examples.Value
 }
 
+// GetRootNode returns the root yaml node of the MediaType object.
+func (mt *MediaType) GetRootNode() *yaml.Node {
+	return mt.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the MediaType object.
+func (mt *MediaType) GetKeyNode() *yaml.Node {
+	return mt.KeyNode
+}
+
 // Build will extract examples, extensions, schema and encoding from node.
 func (mt *MediaType) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	mt.KeyNode = keyNode
@@ -63,12 +75,20 @@ func (mt *MediaType) Build(ctx context.Context, keyNode, root *yaml.Node, idx *i
 	mt.RootNode = root
 	utils.CheckForMergeNodes(root)
 	mt.Reference = new(low.Reference)
+	mt.Nodes = low.ExtractNodes(ctx, root)
 	mt.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, mt.Extensions, mt.Nodes)
 
 	// handle example if set.
 	_, expLabel, expNode := utils.FindKeyNodeFullTop(base.ExampleLabel, root.Content)
 	if expNode != nil {
 		mt.Example = low.NodeReference[*yaml.Node]{Value: expNode, KeyNode: expLabel, ValueNode: expNode}
+		mt.Nodes.Store(expLabel.Line, expLabel)
+		m := low.ExtractNodesRecursive(ctx, expNode)
+		m.Range(func(key, value any) bool {
+			mt.Nodes.Store(key, value)
+			return true
+		})
 	}
 
 	// handle schema
@@ -85,12 +105,17 @@ func (mt *MediaType) Build(ctx context.Context, keyNode, root *yaml.Node, idx *i
 	if eErr != nil {
 		return eErr
 	}
-	if exps != nil {
+	if exps != nil && slices.Contains(root.Content, expsL) {
+		mt.Nodes.Store(expsL.Line, expsL)
+		for k, v := range exps.FromOldest() {
+			v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
+		}
 		mt.Examples = low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*base.Example]]]{
 			Value:     exps,
 			KeyNode:   expsL,
 			ValueNode: expsN,
 		}
+
 	}
 
 	// handle encoding
@@ -103,6 +128,10 @@ func (mt *MediaType) Build(ctx context.Context, keyNode, root *yaml.Node, idx *i
 			Value:     encs,
 			KeyNode:   encsL,
 			ValueNode: encsN,
+		}
+		mt.Nodes.Store(encsL.Line, encsL)
+		for k, v := range encs.FromOldest() {
+			v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
 		}
 	}
 	return nil
@@ -117,11 +146,11 @@ func (mt *MediaType) Hash() [32]byte {
 	if mt.Example.Value != nil && !mt.Example.Value.IsZero() {
 		f = append(f, low.GenerateHashString(mt.Example.Value))
 	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(mt.Examples.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, low.GenerateHashString(pair.Value().Value))
+	for v := range orderedmap.SortAlpha(mt.Examples.Value).ValuesFromOldest() {
+		f = append(f, low.GenerateHashString(v.Value))
 	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(mt.Encoding.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, low.GenerateHashString(pair.Value().Value))
+	for v := range orderedmap.SortAlpha(mt.Encoding.Value).ValuesFromOldest() {
+		f = append(f, low.GenerateHashString(v.Value))
 	}
 	f = append(f, low.HashExtensions(mt.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))

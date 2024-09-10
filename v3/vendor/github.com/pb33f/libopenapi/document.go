@@ -127,12 +127,11 @@ type DocumentModel[T v2high.Swagger | v3high.Document] struct {
 // After creating a Document, the option to build a model becomes available, in either V2 or V3 flavors. The models
 // are about 70% different between Swagger and OpenAPI 3, which is why two different models are available.
 //
-// This function will automatically follow (meaning load) any file or remote references that are found anywhere.
-// Which means recursively also, like a spider, it will follow every reference found, local or remote.
+// This function will NOT automatically follow (meaning load) any file or remote references that are found.
 //
-// If this isn't the behavior you want, or that you feel this is a potential security risk,
-// then you can use the NewDocumentWithConfiguration() function instead, which allows you to set a configuration that
-// will allow you to control if file or remote references are allowed.
+// If this isn't the behavior you want, then you can use the NewDocumentWithConfiguration() function instead, which allows you to set a configuration that
+// will allow you to control if file or remote references are allowed. In particular the `AllowFileReferences` and `FollowRemoteReferences`
+// properties.
 func NewDocument(specByteArray []byte) (Document, error) {
 	return NewDocumentWithTypeCheck(specByteArray, false)
 }
@@ -198,21 +197,20 @@ func (d *document) Serialize() ([]byte, error) {
 }
 
 func (d *document) RenderAndReload() ([]byte, Document, *DocumentModel[v3high.Document], []error) {
-
 	newBytes, rerr := d.Render()
 	if rerr != nil {
 		return nil, nil, nil, []error{rerr}
 	}
 
-	var errs []error
-
 	newDoc, err := NewDocumentWithConfiguration(newBytes, d.config)
-	errs = append(errs, err)
+	if err != nil {
+		return nil, nil, nil, []error{err}
+	}
 
 	// build the model.
 	m, buildErrs := newDoc.BuildV3Model()
-	if buildErrs != nil {
-		return newBytes, newDoc, m, errs
+	if len(buildErrs) > 0 {
+		return newBytes, newDoc, m, buildErrs
 	}
 	// this document is now dead, long live the new document!
 	return newBytes, newDoc, m, nil
@@ -297,7 +295,7 @@ func (d *document) BuildV3Model() (*DocumentModel[v3high.Document], []error) {
 		errs = append(errs, fmt.Errorf("unable to build document, no specification has been loaded"))
 		return nil, errs
 	}
-	if d.info.SpecFormat != datamodel.OAS3 {
+	if d.info.SpecFormat != datamodel.OAS3 && d.info.SpecFormat != datamodel.OAS31 {
 		errs = append(errs, fmt.Errorf("unable to build openapi document, "+
 			"supplied spec is a different version (%v). Try 'BuildV2Model()'", d.info.SpecFormat))
 		return nil, errs

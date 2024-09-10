@@ -7,6 +7,8 @@ import (
 	"crypto/sha256"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/orderedmap"
 )
@@ -23,14 +25,26 @@ import (
 type Discriminator struct {
 	PropertyName low.NodeReference[string]
 	Mapping      low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[string]]]
+	KeyNode      *yaml.Node
+	RootNode     *yaml.Node
 	low.Reference
+	low.NodeMap
+}
+
+// GetRootNode will return the root yaml node of the Discriminator object
+func (d *Discriminator) GetRootNode() *yaml.Node {
+	return d.RootNode
+}
+
+// GetKeyNode will return the key yaml node of the Discriminator object
+func (d *Discriminator) GetKeyNode() *yaml.Node {
+	return d.KeyNode
 }
 
 // FindMappingValue will return a ValueReference containing the string mapping value
 func (d *Discriminator) FindMappingValue(key string) *low.ValueReference[string] {
-	for pair := orderedmap.First(d.Mapping.Value); pair != nil; pair = pair.Next() {
-		if pair.Key().Value == key {
-			v := pair.Value()
+	for k, v := range d.Mapping.Value.FromOldest() {
+		if k.Value == key {
 			return &v
 		}
 	}
@@ -45,8 +59,8 @@ func (d *Discriminator) Hash() [32]byte {
 		f = append(f, d.PropertyName.Value)
 	}
 
-	for pair := orderedmap.First(orderedmap.SortAlpha(d.Mapping.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, pair.Value().Value)
+	for v := range orderedmap.SortAlpha(d.Mapping.Value).ValuesFromOldest() {
+		f = append(f, v.Value)
 	}
 
 	return sha256.Sum256([]byte(strings.Join(f, "|")))

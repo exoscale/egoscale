@@ -38,6 +38,17 @@ type SecurityScheme struct {
 	KeyNode          *yaml.Node
 	RootNode         *yaml.Node
 	*low.Reference
+	low.NodeMap
+}
+
+// GetRootNode returns the root yaml node of the SecurityScheme object.
+func (ss *SecurityScheme) GetRootNode() *yaml.Node {
+	return ss.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the SecurityScheme object.
+func (ss *SecurityScheme) GetKeyNode() *yaml.Node {
+	return ss.KeyNode
 }
 
 // FindExtension attempts to locate an extension using the supplied key.
@@ -57,7 +68,9 @@ func (ss *SecurityScheme) Build(ctx context.Context, keyNode, root *yaml.Node, i
 	ss.RootNode = root
 	utils.CheckForMergeNodes(root)
 	ss.Reference = new(low.Reference)
+	ss.Nodes = low.ExtractNodes(ctx, root)
 	ss.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, ss.Extensions, ss.Nodes)
 
 	oa, oaErr := low.ExtractObject[*OAuthFlows](ctx, OAuthFlowsLabel, root, idx)
 	if oaErr != nil {

@@ -28,6 +28,7 @@ type ExternalDoc struct {
 	KeyNode     *yaml.Node
 	RootNode    *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // FindExtension returns a ValueReference containing the extension value, if found.
@@ -35,13 +36,24 @@ func (ex *ExternalDoc) FindExtension(ext string) *low.ValueReference[*yaml.Node]
 	return low.FindItemInOrderedMap[*yaml.Node](ext, ex.Extensions)
 }
 
+// GetRootNode will return the root yaml node of the ExternalDoc object
+func (ex *ExternalDoc) GetRootNode() *yaml.Node {
+	return ex.RootNode
+}
+
+// GetKeyNode will return the key yaml node of the ExternalDoc object
+func (ex *ExternalDoc) GetKeyNode() *yaml.Node {
+	return ex.KeyNode
+}
+
 // Build will extract extensions from the ExternalDoc instance.
-func (ex *ExternalDoc) Build(_ context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
+func (ex *ExternalDoc) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	ex.KeyNode = keyNode
 	root = utils.NodeAlias(root)
 	ex.RootNode = root
 	utils.CheckForMergeNodes(root)
 	ex.Reference = new(low.Reference)
+	ex.Nodes = low.ExtractNodes(ctx, root)
 	ex.Extensions = low.ExtractExtensions(root)
 	return nil
 }

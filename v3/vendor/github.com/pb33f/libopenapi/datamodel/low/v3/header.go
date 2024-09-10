@@ -35,6 +35,7 @@ type Header struct {
 	KeyNode         *yaml.Node
 	RootNode        *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // FindExtension will attempt to locate an extension with the supplied name
@@ -50,6 +51,16 @@ func (h *Header) FindExample(eType string) *low.ValueReference[*base.Example] {
 // FindContent will attempt to locate a MediaType definition, with a specified name
 func (h *Header) FindContent(ext string) *low.ValueReference[*MediaType] {
 	return low.FindItemInOrderedMap[*MediaType](ext, h.Content.Value)
+}
+
+// GetRootNode returns the root yaml node of the Header object
+func (h *Header) GetRootNode() *yaml.Node {
+	return h.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the Header object
+func (h *Header) GetKeyNode() *yaml.Node {
+	return h.KeyNode
 }
 
 // GetExtensions returns all Header extensions and satisfies the low.HasExtensions interface.
@@ -77,11 +88,11 @@ func (h *Header) Hash() [32]byte {
 	if h.Example.Value != nil && !h.Example.Value.IsZero() {
 		f = append(f, low.GenerateHashString(h.Example.Value))
 	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(h.Examples.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, fmt.Sprintf("%s-%x", pair.Key().Value, pair.Value().Value.Hash()))
+	for k, v := range orderedmap.SortAlpha(h.Examples.Value).FromOldest() {
+		f = append(f, fmt.Sprintf("%s-%x", k.Value, v.Value.Hash()))
 	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(h.Content.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, fmt.Sprintf("%s-%x", pair.Key().Value, pair.Value().Value.Hash()))
+	for k, v := range orderedmap.SortAlpha(h.Content.Value).FromOldest() {
+		f = append(f, fmt.Sprintf("%s-%x", k.Value, v.Value.Hash()))
 	}
 	f = append(f, low.HashExtensions(h.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
@@ -94,8 +105,9 @@ func (h *Header) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index
 	h.RootNode = root
 	utils.CheckForMergeNodes(root)
 	h.Reference = new(low.Reference)
+	h.Nodes = low.ExtractNodes(ctx, root)
 	h.Extensions = low.ExtractExtensions(root)
-
+	low.ExtractExtensionNodes(ctx, h.Extensions, h.Nodes)
 	// handle example if set.
 	_, expLabel, expNode := utils.FindKeyNodeFull(base.ExampleLabel, root.Content)
 	if expNode != nil {
@@ -104,6 +116,12 @@ func (h *Header) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index
 			ValueNode: expNode,
 			KeyNode:   expLabel,
 		}
+		h.Nodes.Store(expLabel.Line, expLabel)
+		m := low.ExtractNodes(ctx, expNode)
+		m.Range(func(key, value any) bool {
+			h.Nodes.Store(key, value)
+			return true
+		})
 	}
 
 	// handle examples if set.
@@ -117,6 +135,7 @@ func (h *Header) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index
 			KeyNode:   expsL,
 			ValueNode: expsN,
 		}
+		h.Nodes.Store(expsL.Line, expsL)
 	}
 
 	// handle schema
@@ -138,6 +157,9 @@ func (h *Header) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index
 		KeyNode:   cL,
 		ValueNode: cN,
 	}
+	if cL != nil {
+		h.Nodes.Store(cL.Line, cL)
+	}
 	return nil
 }
 
@@ -146,15 +168,19 @@ func (h *Header) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index
 func (h *Header) GetDescription() *low.NodeReference[string] {
 	return &h.Description
 }
+
 func (h *Header) GetRequired() *low.NodeReference[bool] {
 	return &h.Required
 }
+
 func (h *Header) GetDeprecated() *low.NodeReference[bool] {
 	return &h.Deprecated
 }
+
 func (h *Header) GetAllowEmptyValue() *low.NodeReference[bool] {
 	return &h.AllowEmptyValue
 }
+
 func (h *Header) GetSchema() *low.NodeReference[any] {
 	i := low.NodeReference[any]{
 		KeyNode:   h.Schema.KeyNode,
@@ -163,18 +189,23 @@ func (h *Header) GetSchema() *low.NodeReference[any] {
 	}
 	return &i
 }
+
 func (h *Header) GetStyle() *low.NodeReference[string] {
 	return &h.Style
 }
+
 func (h *Header) GetAllowReserved() *low.NodeReference[bool] {
 	return &h.AllowReserved
 }
+
 func (h *Header) GetExplode() *low.NodeReference[bool] {
 	return &h.Explode
 }
+
 func (h *Header) GetExample() *low.NodeReference[*yaml.Node] {
 	return &h.Example
 }
+
 func (h *Header) GetExamples() *low.NodeReference[any] {
 	i := low.NodeReference[any]{
 		KeyNode:   h.Examples.KeyNode,
@@ -183,6 +214,7 @@ func (h *Header) GetExamples() *low.NodeReference[any] {
 	}
 	return &i
 }
+
 func (h *Header) GetContent() *low.NodeReference[any] {
 	c := low.NodeReference[any]{
 		KeyNode:   h.Content.KeyNode,

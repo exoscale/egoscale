@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -34,8 +35,12 @@ type Components struct {
 	SecuritySchemes low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*SecurityScheme]]]
 	Links           low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*Link]]]
 	Callbacks       low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*Callback]]]
+	PathItems       low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*PathItem]]]
 	Extensions      *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
+	KeyNode         *yaml.Node
+	RootNode        *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 type componentBuildResult[T any] struct {
@@ -53,6 +58,16 @@ func (co *Components) GetExtensions() *orderedmap.Map[low.KeyReference[string], 
 	return co.Extensions
 }
 
+// GetRootNode returns the root yaml node of the Components object
+func (co *Components) GetRootNode() *yaml.Node {
+	return co.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the Components object
+func (co *Components) GetKeyNode() *yaml.Node {
+	return co.KeyNode
+}
+
 // Hash will return a consistent SHA256 Hash of the Encoding object
 func (co *Components) Hash() [32]byte {
 	var f []string
@@ -65,13 +80,14 @@ func (co *Components) Hash() [32]byte {
 	generateHashForObjectMap(co.SecuritySchemes.Value, &f)
 	generateHashForObjectMap(co.Links.Value, &f)
 	generateHashForObjectMap(co.Callbacks.Value, &f)
+	generateHashForObjectMap(co.PathItems.Value, &f)
 	f = append(f, low.HashExtensions(co.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }
 
 func generateHashForObjectMap[T any](collection *orderedmap.Map[low.KeyReference[string], low.ValueReference[T]], hash *[]string) {
-	for pair := orderedmap.First(orderedmap.SortAlpha(collection)); pair != nil; pair = pair.Next() {
-		*hash = append(*hash, low.GenerateHashString(pair.Value().Value))
+	for v := range orderedmap.SortAlpha(collection).ValuesFromOldest() {
+		*hash = append(*hash, low.GenerateHashString(v.Value))
 	}
 }
 
@@ -117,6 +133,10 @@ func (co *Components) FindLink(link string) *low.ValueReference[*Link] {
 	return low.FindItemInOrderedMap[*Link](link, co.Links.Value)
 }
 
+func (co *Components) FindPathItem(path string) *low.ValueReference[*PathItem] {
+	return low.FindItemInOrderedMap[*PathItem](path, co.PathItems.Value)
+}
+
 func (co *Components) FindCallback(callback string) *low.ValueReference[*Callback] {
 	return low.FindItemInOrderedMap[*Callback](callback, co.Callbacks.Value)
 }
@@ -127,12 +147,15 @@ func (co *Components) Build(ctx context.Context, root *yaml.Node, idx *index.Spe
 	root = utils.NodeAlias(root)
 	utils.CheckForMergeNodes(root)
 	co.Reference = new(low.Reference)
+	co.Nodes = low.ExtractNodes(ctx, root)
 	co.Extensions = low.ExtractExtensions(root)
-
+	low.ExtractExtensionNodes(ctx, co.Extensions, co.Nodes)
+	co.RootNode = root
+	co.KeyNode = root
 	var reterr error
 	var ceMutex sync.Mutex
 	var wg sync.WaitGroup
-	wg.Add(9)
+	wg.Add(10)
 
 	captureError := func(err error) {
 		ceMutex.Lock()
@@ -143,57 +166,63 @@ func (co *Components) Build(ctx context.Context, root *yaml.Node, idx *index.Spe
 	}
 
 	go func() {
-		schemas, err := extractComponentValues[*base.SchemaProxy](ctx, SchemasLabel, root, idx)
+		schemas, err := extractComponentValues[*base.SchemaProxy](ctx, SchemasLabel, root, idx, co)
 		captureError(err)
 		co.Schemas = schemas
 		wg.Done()
 	}()
 	go func() {
-		parameters, err := extractComponentValues[*Parameter](ctx, ParametersLabel, root, idx)
+		parameters, err := extractComponentValues[*Parameter](ctx, ParametersLabel, root, idx, co)
 		captureError(err)
 		co.Parameters = parameters
 		wg.Done()
 	}()
 	go func() {
-		responses, err := extractComponentValues[*Response](ctx, ResponsesLabel, root, idx)
+		responses, err := extractComponentValues[*Response](ctx, ResponsesLabel, root, idx, co)
 		captureError(err)
 		co.Responses = responses
 		wg.Done()
 	}()
 	go func() {
-		examples, err := extractComponentValues[*base.Example](ctx, base.ExamplesLabel, root, idx)
+		examples, err := extractComponentValues[*base.Example](ctx, base.ExamplesLabel, root, idx, co)
 		captureError(err)
 		co.Examples = examples
 		wg.Done()
 	}()
 	go func() {
-		requestBodies, err := extractComponentValues[*RequestBody](ctx, RequestBodiesLabel, root, idx)
+		requestBodies, err := extractComponentValues[*RequestBody](ctx, RequestBodiesLabel, root, idx, co)
 		captureError(err)
 		co.RequestBodies = requestBodies
 		wg.Done()
 	}()
 	go func() {
-		headers, err := extractComponentValues[*Header](ctx, HeadersLabel, root, idx)
+		headers, err := extractComponentValues[*Header](ctx, HeadersLabel, root, idx, co)
 		captureError(err)
 		co.Headers = headers
 		wg.Done()
 	}()
 	go func() {
-		securitySchemes, err := extractComponentValues[*SecurityScheme](ctx, SecuritySchemesLabel, root, idx)
+		securitySchemes, err := extractComponentValues[*SecurityScheme](ctx, SecuritySchemesLabel, root, idx, co)
 		captureError(err)
 		co.SecuritySchemes = securitySchemes
 		wg.Done()
 	}()
 	go func() {
-		links, err := extractComponentValues[*Link](ctx, LinksLabel, root, idx)
+		links, err := extractComponentValues[*Link](ctx, LinksLabel, root, idx, co)
 		captureError(err)
 		co.Links = links
 		wg.Done()
 	}()
 	go func() {
-		callbacks, err := extractComponentValues[*Callback](ctx, CallbacksLabel, root, idx)
+		callbacks, err := extractComponentValues[*Callback](ctx, CallbacksLabel, root, idx, co)
 		captureError(err)
 		co.Callbacks = callbacks
+		wg.Done()
+	}()
+	go func() {
+		pathItems, err := extractComponentValues[*PathItem](ctx, PathItemsLabel, root, idx, co)
+		captureError(err)
+		co.PathItems = pathItems
 		wg.Done()
 	}()
 
@@ -204,12 +233,13 @@ func (co *Components) Build(ctx context.Context, root *yaml.Node, idx *index.Spe
 // extractComponentValues converts all the YAML nodes of a component type to
 // low level model.
 // Process each node in parallel.
-func extractComponentValues[T low.Buildable[N], N any](ctx context.Context, label string, root *yaml.Node, idx *index.SpecIndex) (low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[T]]], error) {
+func extractComponentValues[T low.Buildable[N], N any](ctx context.Context, label string, root *yaml.Node, idx *index.SpecIndex, co *Components) (low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[T]]], error) {
 	var emptyResult low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[T]]]
 	_, nodeLabel, nodeValue := utils.FindKeyNodeFullTop(label, root.Content)
 	if nodeValue == nil {
 		return emptyResult, nil
 	}
+	co.Nodes.Store(nodeLabel.Line, nodeLabel)
 	componentValues := orderedmap.New[low.KeyReference[string], low.ValueReference[T]]()
 	if utils.IsNodeArray(nodeValue) {
 		return emptyResult, fmt.Errorf("node is array, cannot be used in components: line %d, column %d", nodeValue.Line, nodeValue.Column)
@@ -271,8 +301,9 @@ func extractComponentValues[T low.Buildable[N], N any](ctx context.Context, labe
 		var err error
 		nCtx := ctx
 		fIdx := idx
-		if h, _, _ := utils.IsNodeRefValue(node); h && label != SchemasLabel {
+		if h, rv, _ := utils.IsNodeRefValue(node); h && label != SchemasLabel {
 			node, fIdx, err, nCtx = low.LocateRefNodeWithContext(ctx, node, idx)
+			nCtx = context.WithValue(nCtx, "reference", rv)
 		}
 		if err != nil {
 			return componentBuildResult[T]{}, err
@@ -283,6 +314,21 @@ func extractComponentValues[T low.Buildable[N], N any](ctx context.Context, labe
 		err = n.Build(nCtx, currentLabel, node, fIdx)
 		if err != nil {
 			return componentBuildResult[T]{}, err
+		}
+
+		nType := reflect.TypeOf(n)
+		nValue := reflect.ValueOf(n)
+
+		// Check if the type implements low.HasKeyNode
+		hasKeyNodeType := reflect.TypeOf((*low.HasKeyNode)(nil)).Elem()
+		if nType.Implements(hasKeyNodeType) {
+			r := nValue.Interface()
+			if h, ok := r.(low.HasKeyNode); ok {
+				if k, ko := r.(low.AddNodes); ko {
+					k.AddNode(h.GetKeyNode().Line, h.GetKeyNode())
+				}
+			}
+
 		}
 		return componentBuildResult[T]{
 			key: low.KeyReference[string]{

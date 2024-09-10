@@ -72,6 +72,14 @@ func CreateSchemaProxyRef(ref string) *SchemaProxy {
 	return &SchemaProxy{refStr: ref, lock: &sync.Mutex{}}
 }
 
+// GetValueNode returns the value node of the SchemaProxy.
+func (sp *SchemaProxy) GetValueNode() *yaml.Node {
+	if sp.schema != nil {
+		return sp.schema.ValueNode
+	}
+	return nil
+}
+
 // Schema will create a new Schema instance using NewSchema from the low-level SchemaProxy backing this high-level one.
 // If there is a problem building the Schema, then this method will return nil. Use GetBuildError to gain access
 // to that building error.
@@ -180,7 +188,7 @@ func (sp *SchemaProxy) Render() ([]byte, error) {
 	return yaml.Marshal(sp)
 }
 
-// MarshalYAML will create a ready to render YAML representation of the ExternalDoc object.
+// MarshalYAML will create a ready to render YAML representation of the SchemaProxy object.
 func (sp *SchemaProxy) MarshalYAML() (interface{}, error) {
 	var s *Schema
 	var err error
@@ -203,7 +211,7 @@ func (sp *SchemaProxy) MarshalYAML() (interface{}, error) {
 	}
 }
 
-// MarshalYAMLInline will create a ready to render YAML representation of the ExternalDoc object. The
+// MarshalYAMLInline will create a ready to render YAML representation of the SchemaProxy object. The
 // $ref values will be inlined instead of kept as is.
 func (sp *SchemaProxy) MarshalYAMLInline() (interface{}, error) {
 	var s *Schema

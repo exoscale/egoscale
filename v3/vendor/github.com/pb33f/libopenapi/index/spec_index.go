@@ -16,14 +16,19 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/pb33f/libopenapi/utils"
 	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
-	"golang.org/x/sync/syncmap"
 	"gopkg.in/yaml.v3"
+)
+
+const (
+	// theoreticalRoot is the name of the theoretical spec file used when a root spec file does not exist
+	theoreticalRoot = "root.yaml"
 )
 
 // NewSpecIndexWithConfig will create a new index of an OpenAPI or Swagger spec. It uses the same logic as NewSpecIndex
@@ -73,7 +78,7 @@ func createNewIndex(rootNode *yaml.Node, index *SpecIndex, avoidBuildOut bool) *
 	index.nodeMap = make(map[int]map[int]*yaml.Node)
 	go index.MapNodes(rootNode) // this can run async.
 
-	index.cache = new(syncmap.Map)
+	index.cache = new(sync.Map)
 
 	// boot index.
 	results := index.ExtractRefs(index.root.Content[0], index.root, []string{}, 0, false, "")
@@ -151,6 +156,14 @@ func (index *SpecIndex) GetRootNode() *yaml.Node {
 
 func (index *SpecIndex) GetRolodex() *Rolodex {
 	return index.rolodex
+}
+
+// GetSpecFileName returns the root spec filename, if it exists, otherwise returns the theoretical root spec
+func (index *SpecIndex) GetSpecFileName() string {
+	if index == nil || index.rolodex == nil || index.rolodex.indexConfig == nil || index.rolodex.indexConfig.SpecFilePath == "" {
+		return theoreticalRoot
+	}
+	return filepath.Base(index.rolodex.indexConfig.SpecFilePath)
 }
 
 // GetGlobalTagsNode returns document root tags node.
@@ -315,7 +328,12 @@ func (index *SpecIndex) GetAllReferenceSchemas() []*Reference {
 
 // GetAllComponentSchemas will return all schemas defined in the components section of the document.
 func (index *SpecIndex) GetAllComponentSchemas() map[string]*Reference {
-	return syncMapToMap[string, *Reference](index.allComponentSchemaDefinitions)
+	if index != nil && index.allComponentSchemas != nil {
+		return index.allComponentSchemas
+	}
+	schemaMap := syncMapToMap[string, *Reference](index.allComponentSchemaDefinitions)
+	index.allComponentSchemas = schemaMap
+	return index.allComponentSchemas
 }
 
 // GetAllSecuritySchemes will return all security schemes / definitions found in the document.

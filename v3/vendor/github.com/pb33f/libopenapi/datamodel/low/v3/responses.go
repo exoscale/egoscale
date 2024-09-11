@@ -41,6 +41,17 @@ type Responses struct {
 	KeyNode    *yaml.Node
 	RootNode   *yaml.Node
 	*low.Reference
+	low.NodeMap
+}
+
+// GetRootNode returns the root yaml node of the Responses object.
+func (r *Responses) GetRootNode() *yaml.Node {
+	return r.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the Responses object.
+func (r *Responses) GetKeyNode() *yaml.Node {
+	return r.KeyNode
 }
 
 // GetExtensions returns all Responses extensions and satisfies the low.HasExtensions interface.
@@ -54,7 +65,9 @@ func (r *Responses) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 	root = utils.NodeAlias(root)
 	r.RootNode = root
 	r.Reference = new(low.Reference)
+	r.Nodes = low.ExtractNodes(ctx, root)
 	r.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, r.Extensions, r.Nodes)
 	utils.CheckForMergeNodes(root)
 	if utils.IsNodeMap(root) {
 		codes, err := low.ExtractMapNoLookup[*Response](ctx, root, idx)
@@ -63,12 +76,16 @@ func (r *Responses) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 		}
 		if codes != nil {
 			r.Codes = codes
+			for code := range codes.KeysFromOldest() {
+				r.Nodes.Store(code.KeyNode.Line, code.KeyNode)
+			}
 		}
 
 		def := r.getDefault()
 		if def != nil {
 			// default is bundled into codes, pull it out
 			r.Default = *def
+			r.Nodes.Store(def.KeyNode.Line, def.KeyNode)
 			// remove default from codes
 			r.deleteCode(DefaultLabel)
 		}
@@ -80,12 +97,12 @@ func (r *Responses) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 }
 
 func (r *Responses) getDefault() *low.NodeReference[*Response] {
-	for pair := orderedmap.First(r.Codes); pair != nil; pair = pair.Next() {
-		if strings.ToLower(pair.Key().Value) == DefaultLabel {
+	for code, resp := range r.Codes.FromOldest() {
+		if strings.ToLower(code.Value) == DefaultLabel {
 			return &low.NodeReference[*Response]{
-				ValueNode: pair.Value().ValueNode,
-				KeyNode:   pair.Key().KeyNode,
-				Value:     pair.Value().Value,
+				ValueNode: resp.ValueNode,
+				KeyNode:   code.KeyNode,
+				Value:     resp.Value,
 			}
 		}
 	}
@@ -115,9 +132,7 @@ func (r *Responses) FindResponseByCode(code string) *low.ValueReference[*Respons
 // Hash will return a consistent SHA256 Hash of the Examples object
 func (r *Responses) Hash() [32]byte {
 	var f []string
-	for pair := orderedmap.First(orderedmap.SortAlpha(r.Codes)); pair != nil; pair = pair.Next() {
-		f = append(f, fmt.Sprintf("%s-%s", pair.Key().Value, low.GenerateHashString(pair.Value().Value)))
-	}
+	f = low.AppendMapHashes(f, r.Codes)
 	if !r.Default.IsEmpty() {
 		f = append(f, low.GenerateHashString(r.Default.Value))
 	}

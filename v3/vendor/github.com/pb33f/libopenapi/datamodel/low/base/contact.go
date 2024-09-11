@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"gopkg.in/yaml.v3"
 	"strings"
 )
@@ -17,21 +18,33 @@ import (
 //	v2 - https://swagger.io/specification/v2/#contactObject
 //	v3 - https://spec.openapis.org/oas/v3.1.0#contact-object
 type Contact struct {
-	Name     low.NodeReference[string]
-	URL      low.NodeReference[string]
-	Email    low.NodeReference[string]
-	KeyNode  *yaml.Node
-	RootNode *yaml.Node
+	Name       low.NodeReference[string]
+	URL        low.NodeReference[string]
+	Email      low.NodeReference[string]
+	Extensions *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
+	KeyNode    *yaml.Node
+	RootNode   *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
-// Build is not implemented for Contact (there is nothing to build).
-func (c *Contact) Build(_ context.Context, keyNode, root *yaml.Node, _ *index.SpecIndex) error {
+func (c *Contact) Build(ctx context.Context, keyNode, root *yaml.Node, _ *index.SpecIndex) error {
 	c.KeyNode = keyNode
 	c.RootNode = root
 	c.Reference = new(low.Reference)
-	// not implemented.
+	c.Nodes = low.ExtractNodes(ctx, root)
+	c.Extensions = low.ExtractExtensions(root)
 	return nil
+}
+
+// GetRootNode will return the root yaml node of the Contact object
+func (c *Contact) GetRootNode() *yaml.Node {
+	return c.RootNode
+}
+
+// GetKeyNode will return the key yaml node of the Contact object
+func (c *Contact) GetKeyNode() *yaml.Node {
+	return c.KeyNode
 }
 
 // Hash will return a consistent SHA256 Hash of the Contact object
@@ -47,4 +60,9 @@ func (c *Contact) Hash() [32]byte {
 		f = append(f, c.Email.Value)
 	}
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
+}
+
+// GetExtensions returns all extensions for Contact
+func (c *Contact) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
+	return c.Extensions
 }

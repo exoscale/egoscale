@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
@@ -119,6 +120,11 @@ func (r *Rolodex) GetIndexingDuration() time.Duration {
 // GetRootIndex returns the root index of the rolodex (the entry point, the main document)
 func (r *Rolodex) GetRootIndex() *SpecIndex {
 	return r.rootIndex
+}
+
+// GetConfig returns the index configuration of the rolodex.
+func (r *Rolodex) GetConfig() *SpecIndexConfig {
+	return r.indexConfig
 }
 
 // GetRootNode returns the root index of the rolodex (the entry point, the main document)
@@ -297,7 +303,7 @@ func (r *Rolodex) IndexTheRolodex() error {
 	// indexed and built every supporting file, we can build the root index (our entry point)
 	if r.rootNode != nil {
 
-		// if there is a base path, then we need to set the root spec config to point to a theoretical root.yaml
+		// if there is a base path but no SpecFilePath, then we need to set the root spec config to point to a theoretical root.yaml
 		// which does not exist, but is used to formulate the absolute path to root references correctly.
 		if r.indexConfig.BasePath != "" && r.indexConfig.BaseURL == nil {
 
@@ -307,7 +313,11 @@ func (r *Rolodex) IndexTheRolodex() error {
 			}
 
 			if len(r.localFS) > 0 || len(r.remoteFS) > 0 {
-				r.indexConfig.SpecAbsolutePath = filepath.Join(basePath, "root.yaml")
+				if r.indexConfig.SpecFilePath != "" {
+					r.indexConfig.SpecAbsolutePath = filepath.Join(basePath, filepath.Base(r.indexConfig.SpecFilePath))
+				} else {
+					r.indexConfig.SetTheoreticalRoot()
+				}
 			}
 		}
 
@@ -418,6 +428,32 @@ func (r *Rolodex) BuildIndexes() {
 		r.rootIndex.BuildIndex()
 	}
 	r.manualBuilt = true
+}
+
+// GetAllReferences  returns all references found in the root and all other indices
+func (r *Rolodex) GetAllReferences() map[string]*Reference {
+	allRefs := make(map[string]*Reference)
+	for _, idx := range append(r.GetIndexes(), r.GetRootIndex()) {
+		if idx == nil {
+			continue
+		}
+		refs := idx.GetAllReferences()
+		maps.Copy(allRefs, refs)
+	}
+	return allRefs
+}
+
+// GetAllMappedReferences returns all mapped references found in the root and all other indices
+func (r *Rolodex) GetAllMappedReferences() map[string]*Reference {
+	mappedRefs := make(map[string]*Reference)
+	for _, idx := range append(r.GetIndexes(), r.GetRootIndex()) {
+		if idx == nil {
+			continue
+		}
+		refs := idx.GetMappedReferences()
+		maps.Copy(mappedRefs, refs)
+	}
+	return mappedRefs
 }
 
 // Open opens a file in the rolodex, and returns a RolodexFile.
@@ -620,4 +656,24 @@ func (r *Rolodex) RolodexFileSize() int64 {
 		}
 	}
 	return size
+}
+
+// GetFullLineCount returns the total number of lines from all files in the Rolodex
+func (r *Rolodex) GetFullLineCount() int64 {
+	var lineCount int64
+	for _, v := range r.localFS {
+		if lfs, ok := v.(RolodexFS); ok {
+			for _, f := range lfs.GetFiles() {
+				lineCount += int64(strings.Count(f.GetContent(), "\n")) + 1
+			}
+		}
+	}
+	for _, v := range r.remoteFS {
+		if lfs, ok := v.(RolodexFS); ok {
+			for _, f := range lfs.GetFiles() {
+				lineCount += int64(strings.Count(f.GetContent(), "\n")) + 1
+			}
+		}
+	}
+	return lineCount
 }

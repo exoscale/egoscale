@@ -29,11 +29,22 @@ type Tag struct {
 	KeyNode      *yaml.Node
 	RootNode     *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // FindExtension returns a ValueReference containing the extension value, if found.
 func (t *Tag) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
 	return low.FindItemInOrderedMap(ext, t.Extensions)
+}
+
+// GetRootNode returns the root yaml node of the Tag object
+func (t *Tag) GetRootNode() *yaml.Node {
+	return t.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the Tag object
+func (t *Tag) GetKeyNode() *yaml.Node {
+	return t.KeyNode
 }
 
 // Build will extract extensions and external docs for the Tag.
@@ -43,7 +54,9 @@ func (t *Tag) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.Sp
 	t.RootNode = root
 	utils.CheckForMergeNodes(root)
 	t.Reference = new(low.Reference)
+	t.Nodes = low.ExtractNodes(ctx, root)
 	t.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, t.Extensions, t.Nodes)
 
 	// extract externalDocs
 	extDocs, err := low.ExtractObject[*ExternalDoc](ctx, ExternalDocsLabel, root, idx)

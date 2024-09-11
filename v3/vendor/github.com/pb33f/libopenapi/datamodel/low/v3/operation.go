@@ -40,6 +40,7 @@ type Operation struct {
 	KeyNode      *yaml.Node
 	RootNode     *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // FindCallback will attempt to locate a Callback instance by the supplied name.
@@ -51,13 +52,23 @@ func (o *Operation) FindCallback(callback string) *low.ValueReference[*Callback]
 func (o *Operation) FindSecurityRequirement(name string) []low.ValueReference[string] {
 	for k := range o.Security.Value {
 		requirements := o.Security.Value[k].Value.Requirements
-		for pair := orderedmap.First(requirements.Value); pair != nil; pair = pair.Next() {
-			if pair.Key().Value == name {
-				return pair.Value().Value
+		for k, v := range requirements.Value.FromOldest() {
+			if k.Value == name {
+				return v.Value
 			}
 		}
 	}
 	return nil
+}
+
+// GetRootNode returns the root yaml node of the Operation object
+func (o *Operation) GetRootNode() *yaml.Node {
+	return o.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the Operation object
+func (o *Operation) GetKeyNode() *yaml.Node {
+	return o.KeyNode
 }
 
 // Build will extract external docs, parameters, request body, responses, callbacks, security and servers.
@@ -67,7 +78,9 @@ func (o *Operation) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 	root = utils.NodeAlias(root)
 	utils.CheckForMergeNodes(root)
 	o.Reference = new(low.Reference)
+	o.Nodes = low.ExtractNodes(ctx, root)
 	o.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, o.Extensions, o.Nodes)
 
 	// extract externalDocs
 	extDocs, dErr := low.ExtractObject[*base.ExternalDoc](ctx, base.ExternalDocsLabel, root, idx)
@@ -87,6 +100,7 @@ func (o *Operation) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 			KeyNode:   ln,
 			ValueNode: vn,
 		}
+		o.Nodes.Store(ln.Line, ln)
 	}
 
 	// extract request body
@@ -95,6 +109,17 @@ func (o *Operation) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 		return rErr
 	}
 	o.RequestBody = rBody
+
+	// extract tags, but only extract nodes, the model has already been built
+	k, v := utils.FindKeyNode(TagsLabel, root.Content)
+	if k != nil && v != nil {
+		o.Nodes.Store(k.Line, k)
+		nm := low.ExtractNodesRecursive(ctx, v)
+		nm.Range(func(key, value interface{}) bool {
+			o.Nodes.Store(key, value)
+			return true
+		})
+	}
 
 	// extract responses
 	respBody, respErr := low.ExtractObject[*Responses](ctx, ResponsesLabel, root, idx)
@@ -114,6 +139,10 @@ func (o *Operation) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 			KeyNode:   cbL,
 			ValueNode: cbN,
 		}
+		o.Nodes.Store(cbL.Line, cbL)
+		for k, v := range callbacks.FromOldest() {
+			v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
+		}
 	}
 
 	// extract security
@@ -129,6 +158,7 @@ func (o *Operation) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 			KeyNode:   sln,
 			ValueNode: svn,
 		}
+		o.Nodes.Store(sln.Line, sln)
 	}
 
 	// if security is set, but no requirements are defined.
@@ -139,6 +169,7 @@ func (o *Operation) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 			KeyNode:   sln,
 			ValueNode: svn,
 		}
+		o.Nodes.Store(sln.Line, svn)
 	}
 
 	// extract servers
@@ -152,6 +183,7 @@ func (o *Operation) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 			KeyNode:   sl,
 			ValueNode: sn,
 		}
+		o.Nodes.Store(sl.Line, sl)
 	}
 	return nil
 }
@@ -210,8 +242,8 @@ func (o *Operation) Hash() [32]byte {
 	sort.Strings(keys)
 	f = append(f, keys...)
 
-	for pair := orderedmap.First(orderedmap.SortAlpha(o.Callbacks.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, low.GenerateHashString(pair.Value().Value))
+	for v := range orderedmap.SortAlpha(o.Callbacks.Value).ValuesFromOldest() {
+		f = append(f, low.GenerateHashString(v.Value))
 	}
 	f = append(f, low.HashExtensions(o.Extensions)...)
 

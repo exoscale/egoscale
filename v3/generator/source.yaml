@@ -1311,10 +1311,12 @@ components:
           type: string
           format: uuid
           readOnly: true
+          x-go-findable: '1'
           description: Elastic IP ID
         ip:
           type: string
           readOnly: true
+          x-go-findable: '2'
           description: Elastic IP address
         addressfamily:
           type: string
@@ -2179,6 +2181,7 @@ components:
           type: string
           format: uuid
           readOnly: true
+          x-go-findable: '1'
           description: DNS domain ID
         created-at:
           type: string
@@ -2189,6 +2192,7 @@ components:
           type: string
           maxLength: 255
           minLength: 1
+          x-go-findable: '2'
           description: DNS domain unicode name
       description: DNS domain
     sks-kubeconfig-request:
@@ -3314,9 +3318,11 @@ components:
       properties:
         name:
           type: string
+          x-go-findable: '1'
           description: IAM API Key name
         key:
           type: string
+          x-go-findable: '2'
           description: IAM API Key
         role-id:
           type: string
@@ -3513,10 +3519,12 @@ components:
           type: string
           maxLength: 255
           minLength: 1
+          x-go-findable: '1'
           description: SSH key name
         fingerprint:
           type: string
           readOnly: true
+          x-go-findable: '2'
           description: SSH key fingerprint
       description: SSH key
     load-balancer-service:
@@ -5282,11 +5290,13 @@ components:
         name:
           "$ref": "#/components/schemas/zone-name"
           readOnly: true
+          x-go-findable: '1'
           description: Zone short name
         api-endpoint:
           type: string
           readOnly: true
           x-go-type: Endpoint
+          x-go-findable: '2'
           description: Zone API endpoint
         sos-endpoint:
           type: string

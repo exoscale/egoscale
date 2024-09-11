@@ -30,6 +30,17 @@ type Paths struct {
 	KeyNode    *yaml.Node
 	RootNode   *yaml.Node
 	*low.Reference
+	low.NodeMap
+}
+
+// GetRootNode returns the root yaml node of the Paths object.
+func (p *Paths) GetRootNode() *yaml.Node {
+	return p.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the Paths object.
+func (p *Paths) GetKeyNode() *yaml.Node {
+	return p.KeyNode
 }
 
 // FindPath will attempt to locate a PathItem using the provided path string.
@@ -72,7 +83,9 @@ func (p *Paths) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.
 	p.RootNode = root
 	utils.CheckForMergeNodes(root)
 	p.Reference = new(low.Reference)
+	p.Nodes = low.ExtractNodes(ctx, nil) // don't extract anything.
 	p.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, p.Extensions, p.Nodes)
 
 	pathsMap, err := extractPathItemsMap(ctx, root, idx)
 	if err != nil {
@@ -80,15 +93,19 @@ func (p *Paths) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.
 	}
 
 	p.PathItems = pathsMap
+
+	for k, v := range pathsMap.FromOldest() {
+		// add path as node to path item, not this path object.
+		v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
+	}
+
 	return nil
 }
 
 // Hash will return a consistent SHA256 Hash of the PathItem object
 func (p *Paths) Hash() [32]byte {
 	var f []string
-	for pair := orderedmap.First(orderedmap.SortAlpha(p.PathItems)); pair != nil; pair = pair.Next() {
-		f = append(f, fmt.Sprintf("%s-%s", pair.Key().Value, low.GenerateHashString(pair.Value().Value)))
-	}
+	f = low.AppendMapHashes(f, p.PathItems)
 	f = append(f, low.HashExtensions(p.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }

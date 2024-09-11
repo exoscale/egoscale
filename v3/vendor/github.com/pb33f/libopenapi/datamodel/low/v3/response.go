@@ -6,7 +6,6 @@ package v3
 import (
 	"context"
 	"crypto/sha256"
-	"fmt"
 	"strings"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
@@ -30,6 +29,17 @@ type Response struct {
 	KeyNode     *yaml.Node
 	RootNode    *yaml.Node
 	*low.Reference
+	low.NodeMap
+}
+
+// GetRootNode returns the root yaml node of the Response object.
+func (r *Response) GetRootNode() *yaml.Node {
+	return r.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the Response object.
+func (r *Response) GetKeyNode() *yaml.Node {
+	return r.KeyNode
 }
 
 // FindExtension will attempt to locate an extension using the supplied key
@@ -64,7 +74,9 @@ func (r *Response) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 	r.RootNode = root
 	utils.CheckForMergeNodes(root)
 	r.Reference = new(low.Reference)
+	r.Nodes = low.ExtractNodes(ctx, root)
 	r.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, r.Extensions, r.Nodes)
 
 	// extract headers
 	headers, lN, kN, err := low.ExtractMapExtensions[*Header](ctx, HeadersLabel, root, idx, true)
@@ -77,6 +89,10 @@ func (r *Response) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 			KeyNode:   lN,
 			ValueNode: kN,
 		}
+		r.Nodes.Store(lN.Line, lN)
+		for k, v := range headers.FromOldest() {
+			v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
+		}
 	}
 
 	con, clN, cN, cErr := low.ExtractMap[*MediaType](ctx, ContentLabel, root, idx)
@@ -88,6 +104,10 @@ func (r *Response) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 			Value:     con,
 			KeyNode:   clN,
 			ValueNode: cN,
+		}
+		r.Nodes.Store(clN.Line, clN)
+		for k, v := range con.FromOldest() {
+			v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
 		}
 	}
 
@@ -102,6 +122,10 @@ func (r *Response) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 			KeyNode:   linkLabel,
 			ValueNode: linkValue,
 		}
+		r.Nodes.Store(linkLabel.Line, linkLabel)
+		for k, v := range links.FromOldest() {
+			v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
+		}
 	}
 	return nil
 }
@@ -112,15 +136,9 @@ func (r *Response) Hash() [32]byte {
 	if r.Description.Value != "" {
 		f = append(f, r.Description.Value)
 	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(r.Headers.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, fmt.Sprintf("%s-%s", pair.Key().Value, low.GenerateHashString(pair.Value().Value)))
-	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(r.Content.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, fmt.Sprintf("%s-%s", pair.Key().Value, low.GenerateHashString(pair.Value().Value)))
-	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(r.Links.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, fmt.Sprintf("%s-%s", pair.Key().Value, low.GenerateHashString(pair.Value().Value)))
-	}
+	f = low.AppendMapHashes(f, r.Headers.Value)
+	f = low.AppendMapHashes(f, r.Content.Value)
+	f = low.AppendMapHashes(f, r.Links.Value)
 	f = append(f, low.HashExtensions(r.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))
 }

@@ -86,15 +86,17 @@ type Document struct {
 
 	// Rolodex is a reference to the rolodex used when creating this document.
 	Rolodex *index.Rolodex
+
+	low.NodeMap
 }
 
 // FindSecurityRequirement will attempt to locate a security requirement string from a supplied name.
 func (d *Document) FindSecurityRequirement(name string) []low.ValueReference[string] {
 	for k := range d.Security.Value {
 		requirements := d.Security.Value[k].Value.Requirements
-		for pair := orderedmap.First(requirements.Value); pair != nil; pair = pair.Next() {
-			if pair.Key().Value == name {
-				return pair.Value().Value
+		for k, v := range requirements.Value.FromOldest() {
+			if k.Value == name {
+				return v.Value
 			}
 		}
 	}

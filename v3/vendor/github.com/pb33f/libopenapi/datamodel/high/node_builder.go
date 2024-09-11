@@ -78,18 +78,18 @@ func (n *NodeBuilder) add(key string, i int) {
 		j := 0
 		if lowExtensions != nil {
 			// If we have low extensions get the original lowest line number so we end up in the same place
-			for pair := orderedmap.First(lowExtensions); pair != nil; pair = pair.Next() {
-				if j == 0 || pair.Key().KeyNode.Line < j {
-					j = pair.Key().KeyNode.Line
+			for ext := range lowExtensions.KeysFromOldest() {
+				if j == 0 || ext.KeyNode.Line < j {
+					j = ext.KeyNode.Line
 				}
 			}
 		}
 
-		for pair := orderedmap.First(extensions); pair != nil; pair = pair.Next() {
-			nodeEntry := &nodes.NodeEntry{Tag: pair.Key(), Key: pair.Key(), Value: pair.Value(), Line: j}
+		for ext, node := range extensions.FromOldest() {
+			nodeEntry := &nodes.NodeEntry{Tag: ext, Key: ext, Value: node, Line: j}
 
 			if lowExtensions != nil {
-				lowItem := low.FindItemInOrderedMap(pair.Key(), lowExtensions)
+				lowItem := low.FindItemInOrderedMap(ext, lowExtensions)
 				nodeEntry.LowValue = lowItem
 			}
 			n.Nodes = append(n.Nodes, nodeEntry)
@@ -193,7 +193,9 @@ func (n *NodeBuilder) add(key string, i int) {
 			sort.Slice(lines, func(i, j int) bool {
 				return lines[i] < lines[j]
 			})
-			nodeEntry.Line = lines[0]
+			if len(lines) > 0 {
+				nodeEntry.Line = lines[0]
+			}
 		case reflect.Struct:
 			y := value.Interface()
 			nodeEntry.Line = 9999 + i
@@ -392,9 +394,11 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 			if entry.LowValue != nil {
 				if vnut, ok := entry.LowValue.(low.HasValueNodeUntyped); ok {
 					vn := vnut.GetValueNode()
-					if vn.Kind == yaml.SequenceNode {
+					if vn != nil && vn.Kind == yaml.SequenceNode {
 						for i := range vn.Content {
-							rawNode.Content[i].Style = vn.Content[i].Style
+							if len(rawNode.Content) > i {
+								rawNode.Content[i].Style = vn.Content[i].Style
+							}
 						}
 					}
 				}
@@ -429,7 +433,7 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 			}
 
 			p := m.ToYamlNode(n, l)
-			if len(p.Content) > 0 {
+			if p.Content != nil {
 				valueNode = p
 			}
 		} else if r, ok := value.(Renderable); ok {
@@ -439,7 +443,7 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 					lr := lut.(low.IsReferenced)
 					ut := reflect.ValueOf(lr)
 					if !ut.IsNil() {
-						if lut.(low.IsReferenced).IsReference() {
+						if lr != nil && lr.IsReference() {
 							if !n.Resolve {
 								valueNode = n.renderReference(lut.(low.IsReferenced))
 								break
@@ -509,14 +513,28 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 					valueNode.Line = line
 				}
 			}
+			if b, bok := value.(*yaml.Node); bok && b.Kind == yaml.ScalarNode && b.Tag == "!!null" {
+				encodeSkip = true
+				valueNode = utils.CreateEmptyScalarNode()
+				valueNode.Line = line
+			}
 			if !encodeSkip {
 				var rawNode yaml.Node
-				err := rawNode.Encode(value)
-				if err != nil {
-					return parent
-				} else {
-					valueNode = &rawNode
-					valueNode.Line = line
+				if value != nil {
+					// check if is a node and it's null
+					if v, ko := value.(*yaml.Node); ko {
+						if v.Tag == "!!null" {
+							return parent
+						}
+					}
+
+					err := rawNode.Encode(value)
+					if err != nil {
+						return parent
+					} else {
+						valueNode = &rawNode
+						valueNode.Line = line
+					}
 				}
 			}
 		}

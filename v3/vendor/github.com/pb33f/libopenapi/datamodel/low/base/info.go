@@ -35,11 +35,22 @@ type Info struct {
 	KeyNode        *yaml.Node
 	RootNode       *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // FindExtension attempts to locate an extension with the supplied key
 func (i *Info) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
 	return low.FindItemInOrderedMap(ext, i.Extensions)
+}
+
+// GetRootNode will return the root yaml node of the Info object
+func (i *Info) GetRootNode() *yaml.Node {
+	return i.RootNode
+}
+
+// GetKeyNode will return the key yaml node of the Info object
+func (i *Info) GetKeyNode() *yaml.Node {
+	return i.KeyNode
 }
 
 // GetExtensions returns all extensions for Info
@@ -54,6 +65,7 @@ func (i *Info) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.S
 	i.RootNode = root
 	utils.CheckForMergeNodes(root)
 	i.Reference = new(low.Reference)
+	i.Nodes = low.ExtractNodes(ctx, root)
 	i.Extensions = low.ExtractExtensions(root)
 
 	// extract contact

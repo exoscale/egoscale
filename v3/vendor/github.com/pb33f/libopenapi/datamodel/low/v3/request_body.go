@@ -26,6 +26,17 @@ type RequestBody struct {
 	KeyNode     *yaml.Node
 	RootNode    *yaml.Node
 	*low.Reference
+	low.NodeMap
+}
+
+// GetRootNode returns the root yaml node of the RequestBody object.
+func (rb *RequestBody) GetRootNode() *yaml.Node {
+	return rb.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the RequestBody object.
+func (rb *RequestBody) GetKeyNode() *yaml.Node {
+	return rb.KeyNode
 }
 
 // FindExtension attempts to locate an extension using the provided name.
@@ -50,7 +61,9 @@ func (rb *RequestBody) Build(ctx context.Context, keyNode, root *yaml.Node, idx 
 	rb.RootNode = root
 	utils.CheckForMergeNodes(root)
 	rb.Reference = new(low.Reference)
+	rb.Nodes = low.ExtractNodes(ctx, root)
 	rb.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, rb.Extensions, rb.Nodes)
 
 	// handle content, if set.
 	con, cL, cN, cErr := low.ExtractMap[*MediaType](ctx, ContentLabel, root, idx)
@@ -62,6 +75,10 @@ func (rb *RequestBody) Build(ctx context.Context, keyNode, root *yaml.Node, idx 
 			Value:     con,
 			KeyNode:   cL,
 			ValueNode: cN,
+		}
+		rb.Nodes.Store(cL.Line, cL)
+		for k, v := range con.FromOldest() {
+			v.Value.Nodes.Store(k.KeyNode.Line, k.KeyNode)
 		}
 	}
 	return nil
@@ -76,8 +93,8 @@ func (rb *RequestBody) Hash() [32]byte {
 	if !rb.Required.IsEmpty() {
 		f = append(f, fmt.Sprint(rb.Required.Value))
 	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(rb.Content.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, low.GenerateHashString(pair.Value().Value))
+	for v := range orderedmap.SortAlpha(rb.Content.Value).ValuesFromOldest() {
+		f = append(f, low.GenerateHashString(v.Value))
 	}
 	f = append(f, low.HashExtensions(rb.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))

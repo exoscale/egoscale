@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/pb33f/libopenapi/utils"
-	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
+	"slices"
 )
 
 // ExtractRefs will return a deduplicated slice of references for every unique ref found in the document.
@@ -430,7 +430,12 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 
 			if i%2 == 0 && n.Value != "$ref" && n.Value != "" {
 
-				loc := append(seenPath, n.Value)
+				v := n.Value
+				if strings.HasPrefix(v, "/") {
+					v = strings.Replace(v, "/", "~1", 1)
+				}
+
+				loc := append(seenPath, v)
 				definitionPath := fmt.Sprintf("#/%s", strings.Join(loc, "/"))
 				_, jsonPath := utils.ConvertComponentIdIntoFriendlyPathSearch(definitionPath)
 
@@ -657,7 +662,7 @@ func (index *SpecIndex) ExtractComponentsFromRefs(refs []*Reference) []*Referenc
 
 				_, path := utils.ConvertComponentIdIntoFriendlyPathSearch(ref.Definition)
 				indexError := &IndexingError{
-					Err:     fmt.Errorf("component '%s' does not exist in the specification", ref.Definition),
+					Err:     fmt.Errorf("component `%s` does not exist in the specification", ref.Definition),
 					Node:    ref.Node,
 					Path:    path,
 					KeyNode: ref.KeyNode,

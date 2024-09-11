@@ -38,6 +38,7 @@ type Link struct {
 	KeyNode      *yaml.Node
 	RootNode     *yaml.Node
 	*low.Reference
+	low.NodeMap
 }
 
 // GetExtensions returns all Link extensions and satisfies the low.HasExtensions interface.
@@ -55,14 +56,34 @@ func (l *Link) FindExtension(ext string) *low.ValueReference[*yaml.Node] {
 	return low.FindItemInOrderedMap(ext, l.Extensions)
 }
 
+// GetRootNode returns the root yaml node of the Link object
+func (l *Link) GetRootNode() *yaml.Node {
+	return l.RootNode
+}
+
+// GetKeyNode returns the key yaml node of the Link object
+func (l *Link) GetKeyNode() *yaml.Node {
+	return l.KeyNode
+}
+
 // Build will extract extensions and servers from the node.
 func (l *Link) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	l.KeyNode = keyNode
 	root = utils.NodeAlias(root)
-
+	l.RootNode = root
 	utils.CheckForMergeNodes(root)
 	l.Reference = new(low.Reference)
+	l.Nodes = low.ExtractNodes(ctx, root)
 	l.Extensions = low.ExtractExtensions(root)
+	low.ExtractExtensionNodes(ctx, l.Extensions, l.Nodes)
+
+	// extract parameter nodes.
+	if l.Parameters.Value != nil && l.Parameters.Value.Len() > 0 {
+		for k := range l.Parameters.Value.KeysFromOldest() {
+			l.Nodes.Store(k.KeyNode.Line, k.KeyNode)
+		}
+	}
+
 	// extract server.
 	ser, sErr := low.ExtractObject[*Server](ctx, ServerLabel, root, idx)
 	if sErr != nil {
@@ -90,8 +111,8 @@ func (l *Link) Hash() [32]byte {
 	if l.Server.Value != nil {
 		f = append(f, low.GenerateHashString(l.Server.Value))
 	}
-	for pair := orderedmap.First(orderedmap.SortAlpha(l.Parameters.Value)); pair != nil; pair = pair.Next() {
-		f = append(f, pair.Value().Value)
+	for v := range orderedmap.SortAlpha(l.Parameters.Value).ValuesFromOldest() {
+		f = append(f, v.Value)
 	}
 	f = append(f, low.HashExtensions(l.Extensions)...)
 	return sha256.Sum256([]byte(strings.Join(f, "|")))

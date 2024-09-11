@@ -2388,6 +2388,107 @@ func (c Client) ListDBAASExternalEndpoints(ctx context.Context) (*ListDBAASExter
 	return bodyresp, nil
 }
 
+type GetDBAASExternalIntegrationSettingsDatadogResponse struct {
+	Settings *DBAASIntegrationSettingsDatadog `json:"settings,omitempty"`
+}
+
+// [BETA] Get Datadog integration settings
+func (c Client) GetDBAASExternalIntegrationSettingsDatadog(ctx context.Context, integrationID UUID) (*GetDBAASExternalIntegrationSettingsDatadogResponse, error) {
+	path := fmt.Sprintf("/dbaas-external-integration-settings-datadog/%v", integrationID)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegrationSettingsDatadog: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegrationSettingsDatadog: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegrationSettingsDatadog: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-external-integration-settings-datadog")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegrationSettingsDatadog: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegrationSettingsDatadog: http response: %w", err)
+	}
+
+	bodyresp := &GetDBAASExternalIntegrationSettingsDatadogResponse{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASExternalIntegrationSettingsDatadog: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateDBAASExternalIntegrationSettingsDatadogRequest struct {
+	Settings *DBAASIntegrationSettingsDatadog `json:"settings,omitempty"`
+}
+
+// [BETA] Manage Datadog integration settings
+func (c Client) UpdateDBAASExternalIntegrationSettingsDatadog(ctx context.Context, integrationID UUID, req UpdateDBAASExternalIntegrationSettingsDatadogRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-external-integration-settings-datadog/%v", integrationID)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: new request: %w", err)
+	}
+	request.Header.Add("User-Agent", UserAgent)
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-dbaas-external-integration-settings-datadog")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // [BETA] Get a DBaaS external integration
 func (c Client) GetDBAASExternalIntegration(ctx context.Context, id UUID) (*DBAASExternalIntegration, error) {
 	path := fmt.Sprintf("/dbaas-external-integration/%v", id)

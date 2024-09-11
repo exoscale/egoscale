@@ -343,23 +343,45 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 		if item.Properties == nil {
 			continue
 		}
-		_, hasName := item.Properties.Get("name")
-		_, hasID := item.Properties.Get("id")
-		if hasName || hasID {
+
+		var field1, field2 string
+		if _, ok := item.Properties.Get("name"); ok {
+			field1 = "name"
+		}
+		if _, ok := item.Properties.Get("id"); ok {
+			field2 = "id"
+		}
+		for pair := item.Properties.First(); pair != nil; pair = pair.Next() {
+			sc := pair.Value().Schema()
+			if sc != nil && sc.Extensions != nil {
+				val, ok := sc.Extensions.Get("x-go-findable")
+				if !ok {
+					continue
+				}
+				if val.Value == "1" {
+					field1 = pair.Key()
+				}
+				if val.Value == "2" {
+					field2 = pair.Key()
+				}
+			}
+		}
+
+		if field1 != "" || field2 != "" {
 			output := bytes.NewBuffer([]byte{})
 			t, err := template.New("Findable").Parse(findableTemplate)
 			if err != nil {
 				return nil, err
 			}
-			paramName := "nameOrID"
-			condition := "string(elem.Name) == nameOrID || elem.ID.String() == nameOrID"
-			if !hasID {
-				paramName = "name"
-				condition = "string(elem.Name) == " + paramName
+			paramName := fmt.Sprintf("%sOr%s", helpers.ToLowerCamel(field1), helpers.ToCamel(field2))
+			condition := fmt.Sprintf("string(elem.%s) == %s || string(elem.%s) == %s", helpers.ToCamel(field1), paramName, helpers.ToCamel(field2), paramName)
+			if field2 == "" {
+				paramName = helpers.ToLowerCamel(field1)
+				condition = fmt.Sprintf("string(elem.%s) == %s", helpers.ToCamel(field1), paramName)
 			}
-			if !hasName {
-				paramName = "ID"
-				condition = "elem.ID.String() == " + paramName
+			if field1 == "" {
+				paramName = helpers.ToLowerCamel(field2)
+				condition = fmt.Sprintf("string(elem.%s) == %s", helpers.ToCamel(field2), paramName)
 			}
 			if err := t.Execute(output, Findable{
 				ListTypeName:  funcName + "Response",

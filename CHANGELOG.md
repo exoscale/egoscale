@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Unreleased
+3.1.3
 ----------
 - generator: Add Custom Extension Findable #656
 

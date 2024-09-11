@@ -360,6 +360,7 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 				}
 				if val.Value == "1" {
 					field1 = pair.Key()
+					continue
 				}
 				if val.Value == "2" {
 					field2 = pair.Key()

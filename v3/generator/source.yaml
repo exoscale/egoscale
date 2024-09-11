@@ -4985,6 +4985,17 @@ components:
       - datasource
       - logs
       - metrics
+    dbaas-integration-settings-datadog:
+      type: object
+      properties:
+        datadog-dbm-enabled:
+          type: boolean
+          description: 'Database monitoring: view query metrics, explain plans, and
+            execution details. Correlate queries with host metrics.'
+        datadog-pgbouncer-enabled:
+          type: boolean
+          description: Integrate PgBouncer with Datadog to track connection pool metrics
+            and monitor application traffic.
     template:
       type: object
       properties:
@@ -10818,6 +10829,59 @@ paths:
               required:
               - username
       operationId: create-dbaas-kafka-user
+  "/dbaas-external-integration-settings-datadog/{integration-id}":
+    post:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: "[BETA] Manage Datadog integration settings"
+      parameters:
+      - in: path
+        required: true
+        name: integration-id
+        schema:
+          type: string
+          format: uuid
+      summary: ''
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                settings:
+                  "$ref": "#/components/schemas/dbaas-integration-settings-datadog"
+      operationId: update-dbaas-external-integration-settings-datadog
+    get:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  settings:
+                    "$ref": "#/components/schemas/dbaas-integration-settings-datadog"
+      description: "[BETA] Get Datadog integration settings"
+      parameters:
+      - in: path
+        required: true
+        name: integration-id
+        schema:
+          type: string
+          format: uuid
+      summary: ''
+      operationId: get-dbaas-external-integration-settings-datadog
   "/security-group/{id}:attach":
     put:
       tags:

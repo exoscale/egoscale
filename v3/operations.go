@@ -217,15 +217,15 @@ type ListAPIKeysResponse struct {
 	APIKeys []IAMAPIKey `json:"api-keys,omitempty"`
 }
 
-// FindIAMAPIKey attempts to find an IAMAPIKey by name.
-func (l ListAPIKeysResponse) FindIAMAPIKey(name string) (IAMAPIKey, error) {
+// FindIAMAPIKey attempts to find an IAMAPIKey by nameOrKey.
+func (l ListAPIKeysResponse) FindIAMAPIKey(nameOrKey string) (IAMAPIKey, error) {
 	for i, elem := range l.APIKeys {
-		if string(elem.Name) == name {
+		if string(elem.Name) == nameOrKey || string(elem.Key) == nameOrKey {
 			return l.APIKeys[i], nil
 		}
 	}
 
-	return IAMAPIKey{}, fmt.Errorf("%q not found in ListAPIKeysResponse: %w", name, ErrNotFound)
+	return IAMAPIKey{}, fmt.Errorf("%q not found in ListAPIKeysResponse: %w", nameOrKey, ErrNotFound)
 }
 
 // List API keys
@@ -8133,15 +8133,15 @@ type ListDNSDomainsResponse struct {
 	DNSDomains []DNSDomain `json:"dns-domains,omitempty"`
 }
 
-// FindDNSDomain attempts to find an DNSDomain by id.
-func (l ListDNSDomainsResponse) FindDNSDomain(id string) (DNSDomain, error) {
+// FindDNSDomain attempts to find an DNSDomain by idOrUnicodeName.
+func (l ListDNSDomainsResponse) FindDNSDomain(idOrUnicodeName string) (DNSDomain, error) {
 	for i, elem := range l.DNSDomains {
-		if string(elem.ID) == id {
+		if string(elem.ID) == idOrUnicodeName || string(elem.UnicodeName) == idOrUnicodeName {
 			return l.DNSDomains[i], nil
 		}
 	}
 
-	return DNSDomain{}, fmt.Errorf("%q not found in ListDNSDomainsResponse: %w", id, ErrNotFound)
+	return DNSDomain{}, fmt.Errorf("%q not found in ListDNSDomainsResponse: %w", idOrUnicodeName, ErrNotFound)
 }
 
 // List DNS domains
@@ -8668,15 +8668,15 @@ type ListElasticIPSResponse struct {
 	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
 }
 
-// FindElasticIP attempts to find an ElasticIP by id.
-func (l ListElasticIPSResponse) FindElasticIP(id string) (ElasticIP, error) {
+// FindElasticIP attempts to find an ElasticIP by idOrIP.
+func (l ListElasticIPSResponse) FindElasticIP(idOrIP string) (ElasticIP, error) {
 	for i, elem := range l.ElasticIPS {
-		if string(elem.ID) == id {
+		if string(elem.ID) == idOrIP || string(elem.IP) == idOrIP {
 			return l.ElasticIPS[i], nil
 		}
 	}
 
-	return ElasticIP{}, fmt.Errorf("%q not found in ListElasticIPSResponse: %w", id, ErrNotFound)
+	return ElasticIP{}, fmt.Errorf("%q not found in ListElasticIPSResponse: %w", idOrIP, ErrNotFound)
 }
 
 // List Elastic IPs
@@ -14905,15 +14905,15 @@ type ListSSHKeysResponse struct {
 	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
 }
 
-// FindSSHKey attempts to find an SSHKey by name.
-func (l ListSSHKeysResponse) FindSSHKey(name string) (SSHKey, error) {
+// FindSSHKey attempts to find an SSHKey by nameOrFingerprint.
+func (l ListSSHKeysResponse) FindSSHKey(nameOrFingerprint string) (SSHKey, error) {
 	for i, elem := range l.SSHKeys {
-		if string(elem.Name) == name {
+		if string(elem.Name) == nameOrFingerprint || string(elem.Fingerprint) == nameOrFingerprint {
 			return l.SSHKeys[i], nil
 		}
 	}
 
-	return SSHKey{}, fmt.Errorf("%q not found in ListSSHKeysResponse: %w", name, ErrNotFound)
+	return SSHKey{}, fmt.Errorf("%q not found in ListSSHKeysResponse: %w", nameOrFingerprint, ErrNotFound)
 }
 
 // List SSH keys
@@ -15475,15 +15475,15 @@ type ListZonesResponse struct {
 	Zones []Zone `json:"zones,omitempty"`
 }
 
-// FindZone attempts to find an Zone by name.
-func (l ListZonesResponse) FindZone(name string) (Zone, error) {
+// FindZone attempts to find an Zone by nameOrAPIEndpoint.
+func (l ListZonesResponse) FindZone(nameOrAPIEndpoint string) (Zone, error) {
 	for i, elem := range l.Zones {
-		if string(elem.Name) == name {
+		if string(elem.Name) == nameOrAPIEndpoint || string(elem.APIEndpoint) == nameOrAPIEndpoint {
 			return l.Zones[i], nil
 		}
 	}
 
-	return Zone{}, fmt.Errorf("%q not found in ListZonesResponse: %w", name, ErrNotFound)
+	return Zone{}, fmt.Errorf("%q not found in ListZonesResponse: %w", nameOrAPIEndpoint, ErrNotFound)
 }
 
 // List Zones

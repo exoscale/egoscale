@@ -1,15 +1,3 @@
-# github.com/BluntSporks/abbreviation v0.0.0-20150522120346-096cdb48bafa
-## explicit
-github.com/BluntSporks/abbreviation
-# github.com/bahlo/generic-list-go v0.2.0
-## explicit; go 1.18
-github.com/bahlo/generic-list-go
-# github.com/buger/jsonparser v1.1.1
-## explicit; go 1.13
-github.com/buger/jsonparser
-# github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
-## explicit
-github.com/davecgh/go-spew/spew
 # github.com/diskfs/go-diskfs v1.4.0
 ## explicit; go 1.19
 github.com/diskfs/go-diskfs
@@ -23,9 +11,6 @@ github.com/diskfs/go-diskfs/partition/gpt
 github.com/diskfs/go-diskfs/partition/mbr
 github.com/diskfs/go-diskfs/partition/part
 github.com/diskfs/go-diskfs/util
-# github.com/dprotaso/go-yit v0.0.0-20240618133044-5a0af90af097
-## explicit; go 1.13
-github.com/dprotaso/go-yit
 # github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab
 ## explicit; go 1.11
 github.com/elliotwutingfeng/asciiset
@@ -63,32 +48,9 @@ github.com/leodido/go-urn
 # github.com/magiconair/properties v1.8.7
 ## explicit; go 1.19
 github.com/magiconair/properties
-# github.com/mailru/easyjson v0.7.7
-## explicit; go 1.12
-github.com/mailru/easyjson/buffer
-github.com/mailru/easyjson/jwriter
 # github.com/mitchellh/mapstructure v1.5.0
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
-# github.com/pb33f/libopenapi v0.18.0
-## explicit; go 1.23.0
-github.com/pb33f/libopenapi
-github.com/pb33f/libopenapi/datamodel
-github.com/pb33f/libopenapi/datamodel/high
-github.com/pb33f/libopenapi/datamodel/high/base
-github.com/pb33f/libopenapi/datamodel/high/nodes
-github.com/pb33f/libopenapi/datamodel/high/v2
-github.com/pb33f/libopenapi/datamodel/high/v3
-github.com/pb33f/libopenapi/datamodel/low
-github.com/pb33f/libopenapi/datamodel/low/base
-github.com/pb33f/libopenapi/datamodel/low/v2
-github.com/pb33f/libopenapi/datamodel/low/v3
-github.com/pb33f/libopenapi/index
-github.com/pb33f/libopenapi/json
-github.com/pb33f/libopenapi/orderedmap
-github.com/pb33f/libopenapi/utils
-github.com/pb33f/libopenapi/what-changed
-github.com/pb33f/libopenapi/what-changed/model
 # github.com/pelletier/go-toml/v2 v2.1.0
 ## explicit; go 1.16
 github.com/pelletier/go-toml/v2
@@ -106,9 +68,6 @@ github.com/pierrec/lz4/v4/internal/xxh32
 # github.com/pkg/xattr v0.4.9
 ## explicit; go 1.14
 github.com/pkg/xattr
-# github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
-## explicit
-github.com/pmezard/go-difflib/difflib
 # github.com/sagikazarmark/locafero v0.4.0
 ## explicit; go 1.20
 github.com/sagikazarmark/locafero
@@ -149,8 +108,6 @@ github.com/spf13/viper/internal/encoding/yaml
 github.com/spf13/viper/internal/features
 # github.com/stretchr/testify v1.9.0
 ## explicit; go 1.17
-github.com/stretchr/testify/assert
-github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
@@ -160,12 +117,6 @@ github.com/ulikunitz/xz
 github.com/ulikunitz/xz/internal/hash
 github.com/ulikunitz/xz/internal/xlog
 github.com/ulikunitz/xz/lzma
-# github.com/vmware-labs/yaml-jsonpath v0.3.2
-## explicit; go 1.13
-github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath
-# github.com/wk8/go-ordered-map/v2 v2.1.9-0.20240815153524-6ea36470d1bd
-## explicit; go 1.23
-github.com/wk8/go-ordered-map/v2
 # go.uber.org/atomic v1.9.0
 ## explicit; go 1.13
 go.uber.org/atomic
@@ -182,9 +133,6 @@ golang.org/x/exp/slices
 golang.org/x/exp/slog
 golang.org/x/exp/slog/internal
 golang.org/x/exp/slog/internal/buffer
-# golang.org/x/net v0.19.0
-## explicit; go 1.18
-golang.org/x/net/context
 # golang.org/x/sys v0.20.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu

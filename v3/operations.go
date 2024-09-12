@@ -90,7 +90,7 @@ func (c Client) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffin
 	if err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: new request: %w", err)
 	}
-	request.Header.Add("User-Agent", UserAgent)
+	request.Header.Add("User-Agent", c.userAgentPrefix + UserAgent)
 
 	request.Header.Add("Content-Type", "application/json")
 

@@ -136,7 +136,7 @@ func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
 	}
 }
 
-// getDefaultUserAgent retuens the "User-Agent" HTTP request header added to outgoing HTTP requests.
+// getDefaultUserAgent returns the "User-Agent" HTTP request header added to outgoing HTTP requests.
 func getDefaultUserAgent() string {
 	return fmt.Sprintf("egoscale/%s (%s; %s/%s)",
 		Version,
@@ -191,7 +191,23 @@ func (c *Client) WithEndpoint(endpoint Endpoint) *Client {
 	return &Client{
 		apiKey:              c.apiKey,
 		apiSecret:           c.apiSecret,
+		userAgent:           c.userAgent,
 		serverEndpoint:      string(endpoint),
+		httpClient:          c.httpClient,
+		requestInterceptors: c.requestInterceptors,
+		pollingInterval:     c.pollingInterval,
+		trace:               c.trace,
+		validate:            c.validate,
+	}
+}
+
+// WithUserAgent returns a copy of Client with new User-Agent.
+func (c *Client) WithUserAgent(ua string) *Client {
+	return &Client{
+		apiKey:              c.apiKey,
+		apiSecret:           c.apiSecret,
+		userAgent:           ua + " " + getDefaultUserAgent(),
+		serverEndpoint:      c.serverEndpoint,
 		httpClient:          c.httpClient,
 		requestInterceptors: c.requestInterceptors,
 		pollingInterval:     c.pollingInterval,
@@ -205,6 +221,7 @@ func (c *Client) WithTrace() *Client {
 	return &Client{
 		apiKey:              c.apiKey,
 		apiSecret:           c.apiSecret,
+		userAgent:           c.userAgent,
 		serverEndpoint:      c.serverEndpoint,
 		httpClient:          c.httpClient,
 		requestInterceptors: c.requestInterceptors,
@@ -219,6 +236,7 @@ func (c *Client) WithHttpClient(client *http.Client) *Client {
 	return &Client{
 		apiKey:              c.apiKey,
 		apiSecret:           c.apiSecret,
+		userAgent:           c.userAgent,
 		serverEndpoint:      c.serverEndpoint,
 		httpClient:          client,
 		requestInterceptors: c.requestInterceptors,
@@ -233,6 +251,7 @@ func (c *Client) WithRequestInterceptor(f ...RequestInterceptorFn) *Client {
 	return &Client{
 		apiKey:              c.apiKey,
 		apiSecret:           c.apiSecret,
+		userAgent:           c.userAgent,
 		serverEndpoint:      c.serverEndpoint,
 		httpClient:          c.httpClient,
 		requestInterceptors: append(c.requestInterceptors, f...),

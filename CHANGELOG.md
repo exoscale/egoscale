@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.1.4
+----------
+- v3: downgrade to go1.22 (dedicated module for the generator) #658
+
 3.1.3
 ----------
 - generator: Add Custom Extension Findable #656

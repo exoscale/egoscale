@@ -90,8 +90,8 @@ func ClientOptWithTrace() ClientOpt {
 	}
 }
 
-// ClientUserAgent returns a ClientOpt setting the user agent header.
-func ClientUserAgent(ua string) ClientOpt {
+// ClientOptWithUserAgent returns a ClientOpt setting the user agent header.
+func ClientOptWithUserAgent(ua string) ClientOpt {
 	return func(c *Client) error {
 		c.userAgent = ua + " " + getDefaultUserAgent()
 		return nil

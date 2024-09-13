@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.1.5
+----------
+- v3: user agent as client options #659
+
 3.1.4
 ----------
 - v3: downgrade to go1.22 (dedicated module for the generator) #658

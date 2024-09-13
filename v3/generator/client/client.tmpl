@@ -52,7 +52,7 @@ type Client struct {
 // RequestInterceptorFn is the function signature for the RequestInterceptor callback function
 type RequestInterceptorFn func(ctx context.Context, req *http.Request) error
 
-// Deprecated: use ClientUserAgent instead.
+// Deprecated: use ClientOptWithUserAgent instead.
 var UserAgent = getDefaultUserAgent()
 
 const pollingInterval = 3 * time.Second
@@ -68,8 +68,8 @@ func ClientOptWithTrace() ClientOpt {
 	}
 }
 
-// ClientUserAgent returns a ClientOpt setting the user agent header.
-func ClientUserAgent(ua string) ClientOpt {
+// ClientOptWithUserAgent returns a ClientOpt setting the user agent header.
+func ClientOptWithUserAgent(ua string) ClientOpt {
 	return func(c *Client) error {
 		c.userAgent = ua + " " + getDefaultUserAgent()
 		return nil

@@ -1307,12 +1307,8 @@ func (c Client) GetDBAASExternalEndpointDatadog(ctx context.Context, id UUID) (*
 	return bodyresp, nil
 }
 
-type UpdateDBAASExternalEndpointDatadogRequest struct {
-	Settings *DBAASEndpointDatadog `json:"settings,omitempty"`
-}
-
 // [BETA] Update DataDog external integration endpoint
-func (c Client) UpdateDBAASExternalEndpointDatadog(ctx context.Context, id UUID, req UpdateDBAASExternalEndpointDatadogRequest) (*Operation, error) {
+func (c Client) UpdateDBAASExternalEndpointDatadog(ctx context.Context, id UUID, req DBAASEndpointDatadogPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-datadog/%v", id)
 
 	body, err := prepareJSONBody(req)
@@ -1362,12 +1358,8 @@ func (c Client) UpdateDBAASExternalEndpointDatadog(ctx context.Context, id UUID,
 	return bodyresp, nil
 }
 
-type CreateDBAASExternalEndpointDatadogRequest struct {
-	Settings *DBAASEndpointDatadog `json:"settings,omitempty"`
-}
-
 // [BETA] Create DataDog external integration endpoint
-func (c Client) CreateDBAASExternalEndpointDatadog(ctx context.Context, name string, req CreateDBAASExternalEndpointDatadogRequest) (*Operation, error) {
+func (c Client) CreateDBAASExternalEndpointDatadog(ctx context.Context, name string, req DBAASEndpointDatadogPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-datadog/%v", name)
 
 	body, err := prepareJSONBody(req)
@@ -1505,12 +1497,8 @@ func (c Client) GetDBAASExternalEndpointElasticsearch(ctx context.Context, id UU
 	return bodyresp, nil
 }
 
-type UpdateDBAASExternalEndpointElasticsearchRequest struct {
-	Settings *DBAASEndpointElasticsearch `json:"settings,omitempty"`
-}
-
 // [BETA] Update ElasticSearch Logs external integration endpoint
-func (c Client) UpdateDBAASExternalEndpointElasticsearch(ctx context.Context, id UUID, req UpdateDBAASExternalEndpointElasticsearchRequest) (*Operation, error) {
+func (c Client) UpdateDBAASExternalEndpointElasticsearch(ctx context.Context, id UUID, req DBAASEndpointElasticsearchPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-elasticsearch/%v", id)
 
 	body, err := prepareJSONBody(req)
@@ -1560,12 +1548,8 @@ func (c Client) UpdateDBAASExternalEndpointElasticsearch(ctx context.Context, id
 	return bodyresp, nil
 }
 
-type CreateDBAASExternalEndpointElasticsearchRequest struct {
-	Settings *DBAASEndpointElasticsearch `json:"settings,omitempty"`
-}
-
 // [BETA] Create ElasticSearch Logs external integration endpoint
-func (c Client) CreateDBAASExternalEndpointElasticsearch(ctx context.Context, name string, req CreateDBAASExternalEndpointElasticsearchRequest) (*Operation, error) {
+func (c Client) CreateDBAASExternalEndpointElasticsearch(ctx context.Context, name string, req DBAASEndpointElasticsearchPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-elasticsearch/%v", name)
 
 	body, err := prepareJSONBody(req)
@@ -1703,12 +1687,8 @@ func (c Client) GetDBAASExternalEndpointOpensearch(ctx context.Context, id UUID)
 	return bodyresp, nil
 }
 
-type UpdateDBAASExternalEndpointOpensearchRequest struct {
-	Settings *DBAASEndpointOpensearch `json:"settings,omitempty"`
-}
-
 // [BETA] Update OpenSearch Logs external integration endpoint
-func (c Client) UpdateDBAASExternalEndpointOpensearch(ctx context.Context, id UUID, req UpdateDBAASExternalEndpointOpensearchRequest) (*Operation, error) {
+func (c Client) UpdateDBAASExternalEndpointOpensearch(ctx context.Context, id UUID, req DBAASEndpointOpensearchPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-opensearch/%v", id)
 
 	body, err := prepareJSONBody(req)
@@ -1758,12 +1738,8 @@ func (c Client) UpdateDBAASExternalEndpointOpensearch(ctx context.Context, id UU
 	return bodyresp, nil
 }
 
-type CreateDBAASExternalEndpointOpensearchRequest struct {
-	Settings *DBAASEndpointOpensearch `json:"settings,omitempty"`
-}
-
 // [BETA] Create OpenSearch Logs external integration endpoint
-func (c Client) CreateDBAASExternalEndpointOpensearch(ctx context.Context, name string, req CreateDBAASExternalEndpointOpensearchRequest) (*Operation, error) {
+func (c Client) CreateDBAASExternalEndpointOpensearch(ctx context.Context, name string, req DBAASEndpointOpensearchPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-opensearch/%v", name)
 
 	body, err := prepareJSONBody(req)
@@ -1901,12 +1877,8 @@ func (c Client) GetDBAASExternalEndpointPrometheus(ctx context.Context, id UUID)
 	return bodyresp, nil
 }
 
-type UpdateDBAASExternalEndpointPrometheusRequest struct {
-	Settings *DBAASEndpointPrometheus `json:"settings,omitempty"`
-}
-
 // [BETA] Update Prometheus external integration endpoint
-func (c Client) UpdateDBAASExternalEndpointPrometheus(ctx context.Context, id UUID, req UpdateDBAASExternalEndpointPrometheusRequest) (*Operation, error) {
+func (c Client) UpdateDBAASExternalEndpointPrometheus(ctx context.Context, id UUID, req DBAASEndpointPrometheusPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-prometheus/%v", id)
 
 	body, err := prepareJSONBody(req)
@@ -1956,12 +1928,8 @@ func (c Client) UpdateDBAASExternalEndpointPrometheus(ctx context.Context, id UU
 	return bodyresp, nil
 }
 
-type CreateDBAASExternalEndpointPrometheusRequest struct {
-	Settings *DBAASEndpointPrometheus `json:"settings,omitempty"`
-}
-
 // [BETA] Create Prometheus external integration endpoint
-func (c Client) CreateDBAASExternalEndpointPrometheus(ctx context.Context, name string, req CreateDBAASExternalEndpointPrometheusRequest) (*Operation, error) {
+func (c Client) CreateDBAASExternalEndpointPrometheus(ctx context.Context, name string, req DBAASEndpointPrometheusPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-prometheus/%v", name)
 
 	body, err := prepareJSONBody(req)
@@ -2099,12 +2067,8 @@ func (c Client) GetDBAASExternalEndpointRsyslog(ctx context.Context, id UUID) (*
 	return bodyresp, nil
 }
 
-type UpdateDBAASExternalEndpointRsyslogRequest struct {
-	Settings *DBAASEndpointRsyslog `json:"settings,omitempty"`
-}
-
 // [BETA] Update RSyslog external integration endpoint
-func (c Client) UpdateDBAASExternalEndpointRsyslog(ctx context.Context, id UUID, req UpdateDBAASExternalEndpointRsyslogRequest) (*Operation, error) {
+func (c Client) UpdateDBAASExternalEndpointRsyslog(ctx context.Context, id UUID, req DBAASEndpointRsyslogPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-rsyslog/%v", id)
 
 	body, err := prepareJSONBody(req)
@@ -2154,12 +2118,8 @@ func (c Client) UpdateDBAASExternalEndpointRsyslog(ctx context.Context, id UUID,
 	return bodyresp, nil
 }
 
-type CreateDBAASExternalEndpointRsyslogRequest struct {
-	Settings *DBAASEndpointRsyslog `json:"settings,omitempty"`
-}
-
 // [BETA] Create RSyslog external integration endpoint
-func (c Client) CreateDBAASExternalEndpointRsyslog(ctx context.Context, name string, req CreateDBAASExternalEndpointRsyslogRequest) (*Operation, error) {
+func (c Client) CreateDBAASExternalEndpointRsyslog(ctx context.Context, name string, req DBAASEndpointRsyslogPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-rsyslog/%v", name)
 
 	body, err := prepareJSONBody(req)
@@ -12150,6 +12110,8 @@ type CreatePrivateNetworkRequest struct {
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Private Network netmask
 	Netmask net.IP `json:"netmask,omitempty"`
+	// Private Network DHCP Options
+	Options *PrivateNetworkOptions `json:"options,omitempty"`
 	// Private Network start IP address
 	StartIP net.IP `json:"start-ip,omitempty"`
 }
@@ -12303,6 +12265,8 @@ type UpdatePrivateNetworkRequest struct {
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Private Network netmask
 	Netmask net.IP `json:"netmask,omitempty"`
+	// Private Network DHCP Options
+	Options *PrivateNetworkOptions `json:"options,omitempty"`
 	// Private Network start IP address
 	StartIP net.IP `json:"start-ip,omitempty"`
 }

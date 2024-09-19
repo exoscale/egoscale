@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.1.6
+----------
+- generate_v3: dbaas endpoints schema changes
+
 3.1.5
 ----------
 - v3: user agent as client options #659

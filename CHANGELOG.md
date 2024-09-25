@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.1.7
+----------
+- generate_v3: dbaas endpoints schema changes
+- v3: withHttpClient deprecation 
 3.1.6
 ----------
 - generate_v3: dbaas endpoints schema changes

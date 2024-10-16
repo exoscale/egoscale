@@ -3965,6 +3965,17 @@ components:
             type: string
             format: ipv4
           description: DNS Servers
+        ntp-servers:
+          type: array
+          items:
+            type: string
+            format: ipv4
+          description: NTP Servers
+        domain-search:
+          type: array
+          items:
+            type: string
+          description: Domain search list, limited to 255 octets
       description: Private Network DHCP Options
     dbaas-service-pg:
       type: object

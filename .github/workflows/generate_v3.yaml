@@ -32,3 +32,4 @@ jobs:
         branch: generate-v3
         delete-branch: true
         base: master
+        author: Exoscale <operation+build@exoscale.net>

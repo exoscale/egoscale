@@ -28,7 +28,10 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          make generate
+          cd v3/generator/
+          go generate
+          go mod tidy
+          cd ..
           # The git adds are used to fix EOL problem:
           # warning: in the working copy of 'v3/generator/vendor/github.com/vmware-labs/yaml-jsonpath/NOTICE', CRLF will be replaced by LF the next time Git touches it
           # https://github.com/vmware-labs/yaml-jsonpath/pull/59

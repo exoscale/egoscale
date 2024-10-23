@@ -823,8 +823,6 @@ type DBAASPlan struct {
 	BackupConfig *DBAASBackupConfig `json:"backup-config,omitempty"`
 	// DBaaS plan disk space
 	DiskSpace int64 `json:"disk-space,omitempty"`
-	// Instance family subset which the service can use
-	Family string `json:"family,omitempty"`
 	// DBaaS plan max memory allocated percentage
 	MaxMemoryPercent int64 `json:"max-memory-percent,omitempty" validate:"omitempty,gt=0"`
 	// DBaaS plan name
@@ -835,8 +833,6 @@ type DBAASPlan struct {
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gt=0"`
 	// DBaaS plan memory count per node
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gt=0"`
-	// Zones where the plan is available
-	Zones []string `json:"zones,omitempty"`
 }
 
 type DBAASPostgresUsersUsers struct {

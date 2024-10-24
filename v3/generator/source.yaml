@@ -3811,10 +3811,6 @@ components:
     dbaas-plan:
       type: object
       properties:
-        name:
-          type: string
-          readOnly: true
-          description: DBaaS plan name
         node-count:
           type: integer
           format: int64
@@ -3822,6 +3818,10 @@ components:
           exclusiveMinimum: true
           readOnly: true
           description: DBaaS plan node count
+        backup-config:
+          "$ref": "#/components/schemas/dbaas-backup-config"
+          readOnly: true
+          description: DBaaS plan backup config
         node-cpu-count:
           type: integer
           format: int64
@@ -3829,18 +3829,22 @@ components:
           exclusiveMinimum: true
           readOnly: true
           description: DBaaS plan CPU count per node
+        family:
+          type: string
+          description: Instance family subset which the service can use
         disk-space:
           type: integer
           format: int64
           readOnly: true
           description: DBaaS plan disk space
-        node-memory:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: true
+        authorized:
+          type: boolean
           readOnly: true
-          description: DBaaS plan memory count per node
+          description: Requires authorization or publicly available
+        name:
+          type: string
+          readOnly: true
+          description: DBaaS plan name
         max-memory-percent:
           type: integer
           format: int64
@@ -3848,14 +3852,18 @@ components:
           exclusiveMinimum: true
           readOnly: true
           description: DBaaS plan max memory allocated percentage
-        backup-config:
-          "$ref": "#/components/schemas/dbaas-backup-config"
+        zones:
+          type: array
+          items:
+            type: string
+          description: Zones where the plan is available
+        node-memory:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
           readOnly: true
-          description: DBaaS plan backup config
-        authorized:
-          type: boolean
-          readOnly: true
-          description: Requires authorization or publicly available
+          description: DBaaS plan memory count per node
       description: DBaaS plan
     dbaas-endpoint-opensearch-input-update:
       type: object

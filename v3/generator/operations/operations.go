@@ -270,10 +270,18 @@ func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error
 const findableTemplate = `
 // Find{{ .TypeName }} attempts to find an {{ .TypeName }} by {{ .ParamName }}.
 func (l {{ .ListTypeName }}) Find{{ .TypeName }}({{ .ParamName }} string) ({{ .TypeName }}, error) {
+	var result []{{ .TypeName }}
 	for i, elem := range l.{{ .ListFieldName }} {
 		if {{ .Condition }} {
-			return l.{{ .ListFieldName }}[i], nil
+			result = append(result, l.{{ .ListFieldName }}[i])
 		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return {{ .TypeName }}{}, fmt.Errorf("%q too many found in {{ .ListTypeName }}: %w", {{ .ParamName }}, ErrConflict)
 	}
 
 	return {{ .TypeName }}{}, fmt.Errorf("%q not found in {{ .ListTypeName }}: %w", {{ .ParamName }}, ErrNotFound)

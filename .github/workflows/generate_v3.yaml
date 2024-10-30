@@ -20,6 +20,7 @@ jobs:
     - name: Check for changes
       id: check_changes
       run: |
+        make pull-oapi-spec
         make generate
         git diff --quiet || echo "changes_detected=true" >> $GITHUB_OUTPUT
 

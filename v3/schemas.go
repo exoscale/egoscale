@@ -2559,10 +2559,10 @@ const (
 type JSONSchemaKafkaRestProducerAcks string
 
 const (
-	JSONSchemaKafkaRestProducerAcksAll JSONSchemaKafkaRestProducerAcks = "all"
-	JSONSchemaKafkaRestProducerAcks1   JSONSchemaKafkaRestProducerAcks = "-1"
-	JSONSchemaKafkaRestProducerAcks0   JSONSchemaKafkaRestProducerAcks = "0"
-	JSONSchemaKafkaRestProducerAcks1   JSONSchemaKafkaRestProducerAcks = "1"
+	JSONSchemaKafkaRestProducerAcksAll    JSONSchemaKafkaRestProducerAcks = "all"
+	JSONSchemaKafkaRestProducerAcksMinus1 JSONSchemaKafkaRestProducerAcks = "-1"
+	JSONSchemaKafkaRestProducerAcks0      JSONSchemaKafkaRestProducerAcks = "0"
+	JSONSchemaKafkaRestProducerAcks1      JSONSchemaKafkaRestProducerAcks = "1"
 )
 
 type JSONSchemaKafkaRestProducerCompressionType string

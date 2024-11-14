@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/exoscale/egoscale/v3/generator/helpers"
@@ -214,7 +215,8 @@ func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 			value = fmt.Sprintf("%q", e.Value)
 		}
 
-		name := typeName + helpers.ToCamel(e.Value)
+		// If it's an integer we try to humanize it to prevent duplicated name colision.
+		name := typeName + helpers.ToCamel(humanizeInteger(e.Value))
 		if !isAlphanumeric(name) {
 			name = fmt.Sprintf("%s%d", typeName, i+1)
 		}
@@ -539,4 +541,18 @@ func isNullableReference(node *yaml.Node) bool {
 func isAlphanumeric(s string) bool {
 	reg := regexp.MustCompile("^[a-zA-Z0-9]+$")
 	return reg.MatchString(s)
+}
+
+func humanizeInteger(s string) string {
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return s
+	}
+
+	if n >= 0 {
+		return s
+	}
+
+	// remove the "-" with helper
+	return helpers.ToLowerCamel(fmt.Sprintf("minus%s", s))
 }

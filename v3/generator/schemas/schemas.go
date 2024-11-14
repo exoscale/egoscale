@@ -6,6 +6,7 @@ import (
 	"go/format"
 	"log/slog"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/exoscale/egoscale/v3/generator/helpers"
@@ -207,12 +208,18 @@ func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 	definition := "type " + typeName + " " + typ + "\n"
 	definition += "const (\n"
 
-	for _, e := range s.Enum {
-		value := helpers.ToCamel(e.Value)
+	for i, e := range s.Enum {
+		value := e.Value
 		if typ == "string" {
-			value = fmt.Sprintf(`"%v"`, e.Value)
+			value = fmt.Sprintf("%q", e.Value)
 		}
-		definition += typeName + helpers.ToCamel(e.Value) + " " + typeName + " = " + value + "\n"
+
+		name := typeName + helpers.ToCamel(e.Value)
+		if !isAlphanumeric(name) {
+			name = fmt.Sprintf("%s%d", typeName, i+1)
+		}
+
+		definition += fmt.Sprintf("%s %s = %s\n", name, typeName, value)
 	}
 	definition += ")\n"
 
@@ -488,7 +495,9 @@ func InferType(s *base.Schema) {
 
 	// AdditionalProperties will always be map[string]Type
 	if s.AdditionalProperties != nil {
-		s.Type = []string{"map"}
+		if s.AdditionalProperties.IsA() || (s.AdditionalProperties.IsB() && s.AdditionalProperties.B) {
+			s.Type = []string{"map"}
+		}
 	}
 }
 
@@ -525,4 +534,9 @@ func isNullableReference(node *yaml.Node) bool {
 	}
 
 	return false
+}
+
+func isAlphanumeric(s string) bool {
+	reg := regexp.MustCompile("^[a-zA-Z0-9]+$")
+	return reg.MatchString(s)
 }

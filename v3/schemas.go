@@ -2359,9 +2359,9 @@ const (
 type JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy string
 
 const (
-	JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicyDelete  JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "delete"
-	JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicyCompact JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "compact"
-	JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy3       JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "compact,delete"
+	JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy1 JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "delete"
+	JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy2 JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "compact"
+	JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy3 JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "compact,delete"
 )
 
 // Configure log cleaner for topic compaction
@@ -2559,10 +2559,10 @@ const (
 type JSONSchemaKafkaRestProducerAcks string
 
 const (
-	JSONSchemaKafkaRestProducerAcksAll    JSONSchemaKafkaRestProducerAcks = "all"
-	JSONSchemaKafkaRestProducerAcksMinus1 JSONSchemaKafkaRestProducerAcks = "-1"
-	JSONSchemaKafkaRestProducerAcks0      JSONSchemaKafkaRestProducerAcks = "0"
-	JSONSchemaKafkaRestProducerAcks1      JSONSchemaKafkaRestProducerAcks = "1"
+	JSONSchemaKafkaRestProducerAcks1 JSONSchemaKafkaRestProducerAcks = "all"
+	JSONSchemaKafkaRestProducerAcks2 JSONSchemaKafkaRestProducerAcks = "-1"
+	JSONSchemaKafkaRestProducerAcks3 JSONSchemaKafkaRestProducerAcks = "0"
+	JSONSchemaKafkaRestProducerAcks4 JSONSchemaKafkaRestProducerAcks = "1"
 )
 
 type JSONSchemaKafkaRestProducerCompressionType string

@@ -2532,14 +2532,6 @@ type JSONSchemaKafkaConnect struct {
 	SessionTimeoutMS int `json:"session_timeout_ms,omitempty" validate:"omitempty,gte=1,lte=2.147483647e+09"`
 }
 
-type JSONSchemaKafkaRestConsumerRequestTimeoutMS int
-
-const (
-	JSONSchemaKafkaRestConsumerRequestTimeoutMS1000  JSONSchemaKafkaRestConsumerRequestTimeoutMS = 1000
-	JSONSchemaKafkaRestConsumerRequestTimeoutMS15000 JSONSchemaKafkaRestConsumerRequestTimeoutMS = 15000
-	JSONSchemaKafkaRestConsumerRequestTimeoutMS30000 JSONSchemaKafkaRestConsumerRequestTimeoutMS = 30000
-)
-
 type JSONSchemaKafkaRestNameStrategy string
 
 const (
@@ -2565,7 +2557,7 @@ type JSONSchemaKafkaRest struct {
 	// Maximum number of bytes in unencoded message keys and values by a single request
 	ConsumerRequestMaxBytes int `json:"consumer_request_max_bytes,omitempty" validate:"omitempty,gte=0,lte=6.7108864e+08"`
 	// The maximum total time to wait for messages for a request if the maximum number of messages has not yet been reached
-	ConsumerRequestTimeoutMS JSONSchemaKafkaRestConsumerRequestTimeoutMS `json:"consumer_request_timeout_ms,omitempty" validate:"omitempty,gte=1000,lte=30000"`
+	ConsumerRequestTimeoutMS int `json:"consumer_request_timeout_ms,omitempty" validate:"omitempty,gte=1000,lte=30000"`
 	// Name strategy to use when selecting subject for storing schemas
 	NameStrategy JSONSchemaKafkaRestNameStrategy `json:"name_strategy,omitempty"`
 	// If true, validate that given schema is registered under expected subject name by the used name strategy when producing messages.

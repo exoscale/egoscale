@@ -205,7 +205,15 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 
 func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 	for _, e := range s.Enum {
-		if !isAlphanumeric(helpers.ToCamel(e.Value)) || (len(e.Value) >= 1 && !isAlphanumeric(e.Value[:1])) {
+		if s.Minimum != nil || s.Maximum != nil {
+			return ""
+		}
+
+		if strings.Contains(e.Value, ",") {
+			return ""
+		}
+
+		if len(e.Value) >= 1 && !isAlphanumeric(e.Value[:1]) {
 			return ""
 		}
 	}
@@ -384,9 +392,9 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		if IsSimpleSchema(prop) {
 			// Render property type enum.
 			if len(prop.Enum) > 0 {
-				test := renderSimpleTypeEnum(typeName+camelName, prop)
-				if test != "" {
-					output.WriteString(test)
+				enum := renderSimpleTypeEnum(typeName+camelName, prop)
+				if enum != "" {
+					output.WriteString(enum)
 					definition += camelName + " " + typeName + camelName + tag + "\n"
 					continue
 				}

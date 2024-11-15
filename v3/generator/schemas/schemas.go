@@ -204,10 +204,9 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 }
 
 func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
-	nonPrintableName := false
 	for _, e := range s.Enum {
 		if !isAlphanumeric(helpers.ToCamel(e.Value)) || (len(e.Value) >= 1 && !isAlphanumeric(e.Value[:1])) {
-			nonPrintableName = true
+			return ""
 		}
 	}
 
@@ -215,15 +214,12 @@ func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 	definition := "type " + typeName + " " + typ + "\n"
 	definition += "const (\n"
 
-	for i, e := range s.Enum {
+	for _, e := range s.Enum {
 		value := e.Value
 		if typ == "string" {
 			value = fmt.Sprintf("%q", e.Value)
 		}
 		name := typeName + helpers.ToCamel(e.Value)
-		if nonPrintableName {
-			name = fmt.Sprintf("%s%d", typeName, i+1)
-		}
 
 		definition += fmt.Sprintf("%s %s = %s\n", name, typeName, value)
 	}
@@ -388,8 +384,15 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		if IsSimpleSchema(prop) {
 			// Render property type enum.
 			if len(prop.Enum) > 0 {
-				output.WriteString(renderSimpleTypeEnum(typeName+camelName, prop))
-				definition += camelName + " " + typeName + camelName + tag + "\n"
+				test := renderSimpleTypeEnum(typeName+camelName, prop)
+				if test != "" {
+					output.WriteString(test)
+					definition += camelName + " " + typeName + camelName + tag + "\n"
+					continue
+				}
+
+				definition += camelName + " " + RenderSimpleType(prop) + tag + "\n"
+
 				continue
 			}
 

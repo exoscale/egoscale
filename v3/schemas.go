@@ -2356,14 +2356,6 @@ const (
 	JSONSchemaKafkaCompressionTypeProducer     JSONSchemaKafkaCompressionType = "producer"
 )
 
-type JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy string
-
-const (
-	JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy1 JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "delete"
-	JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy2 JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "compact"
-	JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy3 JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy = "compact,delete"
-)
-
 // Configure log cleaner for topic compaction
 type JSONSchemaKafkaLogCleanupAndCompaction struct {
 	// How long are delete records retained?
@@ -2375,7 +2367,7 @@ type JSONSchemaKafkaLogCleanupAndCompaction struct {
 	// The minimum time a message will remain uncompacted in the log. Only applicable for logs that are being compacted.
 	LogCleanerMinCompactionLagMS int `json:"log_cleaner_min_compaction_lag_ms,omitempty" validate:"omitempty,gte=0,lte=9.223372036854776e+18"`
 	// The default cleanup policy for segments beyond the retention window
-	LogCleanupPolicy JSONSchemaKafkaLogCleanupAndCompactionLogCleanupPolicy `json:"log_cleanup_policy,omitempty"`
+	LogCleanupPolicy string `json:"log_cleanup_policy,omitempty"`
 }
 
 type JSONSchemaKafkaLogMessageTimestampType string
@@ -2556,15 +2548,6 @@ const (
 	JSONSchemaKafkaRestNameStrategyTopicRecordName JSONSchemaKafkaRestNameStrategy = "topic_record_name"
 )
 
-type JSONSchemaKafkaRestProducerAcks string
-
-const (
-	JSONSchemaKafkaRestProducerAcks1 JSONSchemaKafkaRestProducerAcks = "all"
-	JSONSchemaKafkaRestProducerAcks2 JSONSchemaKafkaRestProducerAcks = "-1"
-	JSONSchemaKafkaRestProducerAcks3 JSONSchemaKafkaRestProducerAcks = "0"
-	JSONSchemaKafkaRestProducerAcks4 JSONSchemaKafkaRestProducerAcks = "1"
-)
-
 type JSONSchemaKafkaRestProducerCompressionType string
 
 const (
@@ -2588,7 +2571,7 @@ type JSONSchemaKafkaRest struct {
 	// If true, validate that given schema is registered under expected subject name by the used name strategy when producing messages.
 	NameStrategyValidation *bool `json:"name_strategy_validation,omitempty"`
 	// The number of acknowledgments the producer requires the leader to have received before considering a request complete. If set to 'all' or '-1', the leader will wait for the full set of in-sync replicas to acknowledge the record.
-	ProducerAcks JSONSchemaKafkaRestProducerAcks `json:"producer_acks,omitempty"`
+	ProducerAcks string `json:"producer_acks,omitempty"`
 	// Specify the default compression type for producers. This configuration accepts the standard compression codecs ('gzip', 'snappy', 'lz4', 'zstd'). It additionally accepts 'none' which is the default and equivalent to no compression.
 	ProducerCompressionType JSONSchemaKafkaRestProducerCompressionType `json:"producer_compression_type,omitempty"`
 	// Wait for up to the given delay to allow batching records together
@@ -2817,14 +2800,6 @@ const (
 	JSONSchemaPGLogErrorVerbosityVERBOSE JSONSchemaPGLogErrorVerbosity = "VERBOSE"
 )
 
-type JSONSchemaPGLogLinePrefix string
-
-const (
-	JSONSchemaPGLogLinePrefix1 JSONSchemaPGLogLinePrefix = "'pid=%p,user=%u,db=%d,app=%a,client=%h '"
-	JSONSchemaPGLogLinePrefix2 JSONSchemaPGLogLinePrefix = "'%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '"
-	JSONSchemaPGLogLinePrefix3 JSONSchemaPGLogLinePrefix = "'%m [%p] %q[user=%u,db=%d,app=%a] '"
-)
-
 type JSONSchemaPGPGStatStatementsTrack string
 
 const (
@@ -2884,7 +2859,7 @@ type JSONSchemaPG struct {
 	// Controls the amount of detail written in the server log for each message that is logged.
 	LogErrorVerbosity JSONSchemaPGLogErrorVerbosity `json:"log_error_verbosity,omitempty"`
 	// Choose from one of the available log-formats. These can support popular log analyzers like pgbadger, pganalyze etc.
-	LogLinePrefix JSONSchemaPGLogLinePrefix `json:"log_line_prefix,omitempty"`
+	LogLinePrefix string `json:"log_line_prefix,omitempty"`
 	// Log statements that take more than this number of milliseconds to run, -1 disables
 	LogMinDurationStatement int `json:"log_min_duration_statement,omitempty" validate:"omitempty,gte=-1,lte=8.64e+07"`
 	// Log statements for each temporary file created larger than this number of kilobytes, -1 disables

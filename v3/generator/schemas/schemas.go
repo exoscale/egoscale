@@ -205,10 +205,6 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 
 func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 	for _, e := range s.Enum {
-		if s.Minimum != nil || s.Maximum != nil {
-			return ""
-		}
-
 		if strings.Contains(e.Value, ",") {
 			return ""
 		}

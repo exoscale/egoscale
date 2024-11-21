@@ -233,7 +233,7 @@ type DBAASEndpointDatadogInputCreate struct {
 
 type DBAASEndpointDatadogInputUpdateSettings struct {
 	// Datadog API key
-	DatadogAPIKey string `json:"datadog-api-key,omitempty" validate:"omitempty,gte=1,lte=256"`
+	DatadogAPIKey string `json:"datadog-api-key" validate:"required,gte=1,lte=256"`
 	// Custom tags provided by user
 	DatadogTags []DBAASDatadogTag `json:"datadog-tags,omitempty"`
 	// Disable consumer group metrics
@@ -2309,6 +2309,8 @@ type JSONSchemaGrafana struct {
 	AuthGoogle map[string]any `json:"auth_google,omitempty"`
 	// Cookie SameSite attribute: 'strict' prevents sending cookie for cross-site requests, effectively disabling direct linking from other sites to Grafana. 'lax' is the default value.
 	CookieSamesite JSONSchemaGrafanaCookieSamesite `json:"cookie_samesite,omitempty"`
+	// Serve the web frontend using a custom CNAME pointing to the Aiven DNS name
+	CustomDomain *string `json:"custom_domain,omitempty" validate:"omitempty,lte=255"`
 	// This feature is new in Grafana 9 and is quite resource intensive. It may cause low-end plans to work more slowly while the dashboard previews are rendering.
 	DashboardPreviewsEnabled *bool `json:"dashboard_previews_enabled,omitempty"`
 	// Signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s, 1h
@@ -2343,6 +2345,8 @@ type JSONSchemaGrafana struct {
 	UserAutoAssignOrgRole JSONSchemaGrafanaUserAutoAssignOrgRole `json:"user_auto_assign_org_role,omitempty"`
 	// Users with view-only permission can edit but not save dashboards
 	ViewersCanEdit *bool `json:"viewers_can_edit,omitempty"`
+	// Setting to enable/disable Write-Ahead Logging. The default value is false (disabled).
+	Wal *bool `json:"wal,omitempty"`
 }
 
 type JSONSchemaKafkaCompressionType string
@@ -2532,6 +2536,14 @@ type JSONSchemaKafkaConnect struct {
 	SessionTimeoutMS int `json:"session_timeout_ms,omitempty" validate:"omitempty,gte=1,lte=2.147483647e+09"`
 }
 
+type JSONSchemaKafkaRestConsumerRequestTimeoutMS int
+
+const (
+	JSONSchemaKafkaRestConsumerRequestTimeoutMS1000  JSONSchemaKafkaRestConsumerRequestTimeoutMS = 1000
+	JSONSchemaKafkaRestConsumerRequestTimeoutMS15000 JSONSchemaKafkaRestConsumerRequestTimeoutMS = 15000
+	JSONSchemaKafkaRestConsumerRequestTimeoutMS30000 JSONSchemaKafkaRestConsumerRequestTimeoutMS = 30000
+)
+
 type JSONSchemaKafkaRestNameStrategy string
 
 const (
@@ -2557,7 +2569,7 @@ type JSONSchemaKafkaRest struct {
 	// Maximum number of bytes in unencoded message keys and values by a single request
 	ConsumerRequestMaxBytes int `json:"consumer_request_max_bytes,omitempty" validate:"omitempty,gte=0,lte=6.7108864e+08"`
 	// The maximum total time to wait for messages for a request if the maximum number of messages has not yet been reached
-	ConsumerRequestTimeoutMS int `json:"consumer_request_timeout_ms,omitempty" validate:"omitempty,gte=1000,lte=30000"`
+	ConsumerRequestTimeoutMS JSONSchemaKafkaRestConsumerRequestTimeoutMS `json:"consumer_request_timeout_ms,omitempty"`
 	// Name strategy to use when selecting subject for storing schemas
 	NameStrategy JSONSchemaKafkaRestNameStrategy `json:"name_strategy,omitempty"`
 	// If true, validate that given schema is registered under expected subject name by the used name strategy when producing messages.
@@ -2619,6 +2631,8 @@ type JSONSchemaMysql struct {
 	InteractiveTimeout int `json:"interactive_timeout,omitempty" validate:"omitempty,gte=30,lte=604800"`
 	// The storage engine for in-memory internal temporary tables.
 	InternalTmpMemStorageEngine JSONSchemaMysqlInternalTmpMemStorageEngine `json:"internal_tmp_mem_storage_engine,omitempty"`
+	// The slow log output destination when slow_query_log is ON. To enable MySQL AI Insights, choose INSIGHTS. To use MySQL AI Insights and the mysql.slow_log table at the same time, choose INSIGHTS,TABLE. To only use the mysql.slow_log table, choose TABLE. To silence slow logs, choose NONE.
+	LogOutput string `json:"log_output,omitempty"`
 	// The slow_query_logs work as SQL statements that take more than long_query_time seconds to execute. Default is 10s
 	LongQueryTime float64 `json:"long_query_time,omitempty" validate:"omitempty,gte=0,lte=3600"`
 	// Size of the largest message in bytes that can be received by the server. Default is 67108864 (64M)
@@ -2697,6 +2711,10 @@ type JSONSchemaOpensearch struct {
 	IndicesFielddataCacheSize *int `json:"indices_fielddata_cache_size,omitempty" validate:"omitempty,gte=3,lte=100"`
 	// Percentage value. Default is 10%. Total amount of heap used for indexing buffer, before writing segments to disk. This is an expert setting. Too low value will slow down indexing; too high value will increase indexing performance but causes performance issues for query performance.
 	IndicesMemoryIndexBufferSize int `json:"indices_memory_index_buffer_size,omitempty" validate:"omitempty,gte=3,lte=40"`
+	// Absolute value. Default is unbound. Doesn't work without indices.memory.index_buffer_size. Maximum amount of heap used for query cache, an absolute indices.memory.index_buffer_size maximum hard limit.
+	IndicesMemoryMaxIndexBufferSize int `json:"indices_memory_max_index_buffer_size,omitempty" validate:"omitempty,gte=3,lte=2048"`
+	// Absolute value. Default is 48mb. Doesn't work without indices.memory.index_buffer_size. Minimum amount of heap used for query cache, an absolute indices.memory.index_buffer_size minimal hard limit.
+	IndicesMemoryMinIndexBufferSize int `json:"indices_memory_min_index_buffer_size,omitempty" validate:"omitempty,gte=3,lte=2048"`
 	// Percentage value. Default is 10%. Maximum amount of heap used for query cache. This is an expert setting. Too low value will decrease query performance and increase performance for other operations; too high value will cause issues with other OpenSearch functionality.
 	IndicesQueriesCacheSize int `json:"indices_queries_cache_size,omitempty" validate:"omitempty,gte=3,lte=40"`
 	// Maximum number of clauses Lucene BooleanQuery can have. The default value (1024) is relatively high, and increasing it may cause performance issues. Investigate other approaches first before increasing this value.
@@ -2707,6 +2725,10 @@ type JSONSchemaOpensearch struct {
 	IndicesRecoveryMaxConcurrentFileChunks int `json:"indices_recovery_max_concurrent_file_chunks,omitempty" validate:"omitempty,gte=2,lte=5"`
 	// Opensearch ISM History Settings
 	IsmHistory *JSONSchemaOpensearchIsmHistory `json:"ism-history,omitempty"`
+	// Enable or disable KNN memory circuit breaker. Defaults to true.
+	KnnMemoryCircuitBreakerEnabled *bool `json:"knn_memory_circuit_breaker_enabled,omitempty"`
+	// Maximum amount of memory that can be used for KNN index. Defaults to 50% of the JVM heap size.
+	KnnMemoryCircuitBreakerLimit int `json:"knn_memory_circuit_breaker_limit,omitempty" validate:"omitempty,gte=3,lte=100"`
 	// Compatibility mode sets OpenSearch to report its version as 7.10 so clients continue to work. Default is false
 	OverrideMainResponseVersion *bool `json:"override_main_response_version,omitempty"`
 	// Enable or disable filtering of alerting by backend roles. Requires Security plugin. Defaults to false
@@ -2715,8 +2737,12 @@ type JSONSchemaOpensearch struct {
 	ReindexRemoteWhitelist []string `json:"reindex_remote_whitelist"`
 	// Script compilation circuit breaker limits the number of inline script compilations within a period of time. Default is use-context
 	ScriptMaxCompilationsRate string `json:"script_max_compilations_rate,omitempty" validate:"omitempty,lte=1024"`
+	// Search Backpressure Settings
+	SearchBackpressure map[string]any `json:"search_backpressure,omitempty"`
 	// Maximum number of aggregation buckets allowed in a single response. OpenSearch default value is used when this is not defined.
 	SearchMaxBuckets *int `json:"search_max_buckets,omitempty" validate:"omitempty,gte=1,lte=1e+06"`
+	// Shard indexing back pressure settings
+	ShardIndexingPressure map[string]any `json:"shard_indexing_pressure,omitempty"`
 	// Size for the thread pool queue. See documentation for exact details.
 	ThreadPoolAnalyzeQueueSize int `json:"thread_pool_analyze_queue_size,omitempty" validate:"omitempty,gte=10,lte=2000"`
 	// Size for the thread pool. See documentation for exact details. Do note this may have maximum value depending on CPU count - value is automatically lowered if set to higher than maximum value.
@@ -2926,6 +2952,8 @@ type JSONSchemaPgbouncer struct {
 	AutodbPoolSize int `json:"autodb_pool_size,omitempty" validate:"omitempty,gte=0,lte=10000"`
 	// List of parameters to ignore when given in startup packet
 	IgnoreStartupParameters []string `json:"ignore_startup_parameters,omitempty"`
+	// PgBouncer tracks protocol-level named prepared statements related commands sent by the client in transaction and statement pooling modes when max_prepared_statements is set to a non-zero value. Setting it to 0 disables prepared statements. max_prepared_statements defaults to 100, and its maximum is 3000.
+	MaxPreparedStatements int `json:"max_prepared_statements,omitempty" validate:"omitempty,gte=0,lte=3000"`
 	// Add more server connections to pool if below this number. Improves behavior when usual load comes suddenly back after period of total inactivity. The value is effectively capped at the pool size.
 	MinPoolSize int `json:"min_pool_size,omitempty" validate:"omitempty,gte=0,lte=10000"`
 	// If a server connection has been idle more than this many seconds it will be dropped. If 0 then timeout is disabled. [seconds]

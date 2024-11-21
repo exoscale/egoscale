@@ -6,6 +6,7 @@ import (
 	"go/format"
 	"log/slog"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/exoscale/egoscale/v3/generator/helpers"
@@ -203,16 +204,28 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 }
 
 func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
+	for _, e := range s.Enum {
+		if strings.Contains(e.Value, ",") {
+			return ""
+		}
+
+		if len(e.Value) >= 1 && !isAlphanumeric(e.Value[:1]) {
+			return ""
+		}
+	}
+
 	typ := RenderSimpleType(s)
 	definition := "type " + typeName + " " + typ + "\n"
 	definition += "const (\n"
 
 	for _, e := range s.Enum {
-		value := helpers.ToCamel(e.Value)
+		value := e.Value
 		if typ == "string" {
-			value = fmt.Sprintf(`"%v"`, e.Value)
+			value = fmt.Sprintf("%q", e.Value)
 		}
-		definition += typeName + helpers.ToCamel(e.Value) + " " + typeName + " = " + value + "\n"
+		name := typeName + helpers.ToCamel(e.Value)
+
+		definition += fmt.Sprintf("%s %s = %s\n", name, typeName, value)
 	}
 	definition += ")\n"
 
@@ -375,8 +388,15 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		if IsSimpleSchema(prop) {
 			// Render property type enum.
 			if len(prop.Enum) > 0 {
-				output.WriteString(renderSimpleTypeEnum(typeName+camelName, prop))
-				definition += camelName + " " + typeName + camelName + tag + "\n"
+				enum := renderSimpleTypeEnum(typeName+camelName, prop)
+				if enum != "" {
+					output.WriteString(enum)
+					definition += camelName + " " + typeName + camelName + tag + "\n"
+					continue
+				}
+
+				definition += camelName + " " + RenderSimpleType(prop) + tag + "\n"
+
 				continue
 			}
 
@@ -488,7 +508,9 @@ func InferType(s *base.Schema) {
 
 	// AdditionalProperties will always be map[string]Type
 	if s.AdditionalProperties != nil {
-		s.Type = []string{"map"}
+		if s.AdditionalProperties.IsA() || (s.AdditionalProperties.IsB() && s.AdditionalProperties.B) {
+			s.Type = []string{"map"}
+		}
 	}
 }
 
@@ -525,4 +547,9 @@ func isNullableReference(node *yaml.Node) bool {
 	}
 
 	return false
+}
+
+func isAlphanumeric(s string) bool {
+	reg := regexp.MustCompile("^[a-zA-Z0-9]+$")
+	return reg.MatchString(s)
 }

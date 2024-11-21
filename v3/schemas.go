@@ -233,7 +233,7 @@ type DBAASEndpointDatadogInputCreate struct {
 
 type DBAASEndpointDatadogInputUpdateSettings struct {
 	// Datadog API key
-	DatadogAPIKey string `json:"datadog-api-key,omitempty" validate:"omitempty,gte=1,lte=256"`
+	DatadogAPIKey string `json:"datadog-api-key" validate:"required,gte=1,lte=256"`
 	// Custom tags provided by user
 	DatadogTags []DBAASDatadogTag `json:"datadog-tags,omitempty"`
 	// Disable consumer group metrics
@@ -2309,6 +2309,8 @@ type JSONSchemaGrafana struct {
 	AuthGoogle map[string]any `json:"auth_google,omitempty"`
 	// Cookie SameSite attribute: 'strict' prevents sending cookie for cross-site requests, effectively disabling direct linking from other sites to Grafana. 'lax' is the default value.
 	CookieSamesite JSONSchemaGrafanaCookieSamesite `json:"cookie_samesite,omitempty"`
+	// Serve the web frontend using a custom CNAME pointing to the Aiven DNS name
+	CustomDomain *string `json:"custom_domain,omitempty" validate:"omitempty,lte=255"`
 	// This feature is new in Grafana 9 and is quite resource intensive. It may cause low-end plans to work more slowly while the dashboard previews are rendering.
 	DashboardPreviewsEnabled *bool `json:"dashboard_previews_enabled,omitempty"`
 	// Signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s, 1h
@@ -2343,6 +2345,8 @@ type JSONSchemaGrafana struct {
 	UserAutoAssignOrgRole JSONSchemaGrafanaUserAutoAssignOrgRole `json:"user_auto_assign_org_role,omitempty"`
 	// Users with view-only permission can edit but not save dashboards
 	ViewersCanEdit *bool `json:"viewers_can_edit,omitempty"`
+	// Setting to enable/disable Write-Ahead Logging. The default value is false (disabled).
+	Wal *bool `json:"wal,omitempty"`
 }
 
 // Kafka broker configuration values
@@ -2383,6 +2387,8 @@ type JSONSchemaPgbouncer struct {
 	AutodbPoolSize int `json:"autodb_pool_size,omitempty" validate:"omitempty,gte=0,lte=10000"`
 	// List of parameters to ignore when given in startup packet
 	IgnoreStartupParameters []string `json:"ignore_startup_parameters,omitempty"`
+	// PgBouncer tracks protocol-level named prepared statements related commands sent by the client in transaction and statement pooling modes when max_prepared_statements is set to a non-zero value. Setting it to 0 disables prepared statements. max_prepared_statements defaults to 100, and its maximum is 3000.
+	MaxPreparedStatements int `json:"max_prepared_statements,omitempty" validate:"omitempty,gte=0,lte=3000"`
 	// Add more server connections to pool if below this number. Improves behavior when usual load comes suddenly back after period of total inactivity. The value is effectively capped at the pool size.
 	MinPoolSize int `json:"min_pool_size,omitempty" validate:"omitempty,gte=0,lte=10000"`
 	// If a server connection has been idle more than this many seconds it will be dropped. If 0 then timeout is disabled. [seconds]

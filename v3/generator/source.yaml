@@ -580,6 +580,12 @@ components:
           title: Enable or disable Grafana legacy alerting functionality. This should
             not be enabled with unified_alerting_enabled.
           type: boolean
+        wal:
+          description: Setting to enable/disable Write-Ahead Logging. The default
+            value is false (disabled).
+          example: false
+          title: Write-Ahead Logging
+          type: boolean
         unified_alerting_enabled:
           example: true
           title: Enable or disable Grafana unified alerting functionality. By default
@@ -1023,6 +1029,14 @@ components:
           - token_url
           title: Generic OAuth integration
           type: object
+        custom_domain:
+          example: grafana.example.org
+          description: Serve the web frontend using a custom CNAME pointing to the
+            Aiven DNS name
+          maxLength: 255
+          nullable: true
+          title: Custom domain
+          type: string
         alerting_error_or_timeout:
           enum:
           - alerting
@@ -2451,6 +2465,20 @@ components:
           minimum: 2
           title: connect_timeout
           type: integer
+        log_output:
+          description: The slow log output destination when slow_query_log is ON.
+            To enable MySQL AI Insights, choose INSIGHTS. To use MySQL AI Insights
+            and the mysql.slow_log table at the same time, choose INSIGHTS,TABLE.
+            To only use the mysql.slow_log table, choose TABLE. To silence slow logs,
+            choose NONE.
+          enum:
+          - INSIGHTS
+          - INSIGHTS,TABLE
+          - NONE
+          - TABLE
+          example: INSIGHTS
+          title: log_output
+          type: string
         net_read_timeout:
           description: The number of seconds to wait for more data from a connection
             before aborting the read.
@@ -2725,6 +2753,17 @@ components:
           minimum: 0
           title: Do not allow more than this many server connections per database
             (regardless of user). Setting it to 0 means unlimited.
+          type: integer
+        max_prepared_statements:
+          default: 100
+          example: 100
+          maximum: 3000
+          minimum: 0
+          title: PgBouncer tracks protocol-level named prepared statements related
+            commands sent by the client in transaction and statement pooling modes
+            when max_prepared_statements is set to a non-zero value. Setting it to
+            0 disables prepared statements. max_prepared_statements defaults to 100,
+            and its maximum is 3000.
           type: integer
         server_reset_query_always:
           default: false
@@ -4943,8 +4982,6 @@ components:
           - 1000
           - 15000
           - 30000
-          maximum: 30000
-          minimum: 1000
           title: consumer.request.timeout.ms
           type: integer
       title: Kafka REST configuration
@@ -5835,6 +5872,8 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Maximum number of partition contexts to send
+          required:
+          - datadog-api-key
     dbaas-service-redis:
       type: object
       properties:
@@ -7116,6 +7155,14 @@ components:
           minimum: 10
           title: get thread pool queue size
           type: integer
+        indices_memory_max_index_buffer_size:
+          description: Absolute value. Default is unbound. Doesn't work without indices.memory.index_buffer_size.
+            Maximum amount of heap used for query cache, an absolute indices.memory.index_buffer_size
+            maximum hard limit.
+          maximum: 2048
+          minimum: 3
+          title: indices.memory.max_index_buffer_size
+          type: integer
         indices_recovery_max_concurrent_file_chunks:
           description: Number of file chunks sent in parallel for each recovery. Defaults
             to 2.
@@ -7132,6 +7179,289 @@ components:
           minimum: 3
           title: indices.queries.cache.size
           type: integer
+        search_backpressure:
+          additionalProperties: false
+          properties:
+            mode:
+              description: The search backpressure mode. Valid values are monitor_only,
+                enforced, or disabled. Default is monitor_only
+              enum:
+              - monitor_only
+              - enforced
+              - disabled
+              title: The search backpressure mode
+              type: string
+            node_duress:
+              additionalProperties: false
+              properties:
+                cpu_threshold:
+                  description: The CPU usage threshold (as a percentage) required
+                    for a node to be considered to be under duress. Default is 0.9
+                  maximum: 1.0
+                  minimum: 0.0
+                  title: The CPU usage threshold (as a percentage) required for a
+                    node to be considered to be under duress
+                  type: number
+                heap_threshold:
+                  description: The heap usage threshold (as a percentage) required
+                    for a node to be considered to be under duress. Default is 0.7
+                  maximum: 1.0
+                  minimum: 0.0
+                  title: The heap usage threshold (as a percentage) required for a
+                    node to be considered to be under duress
+                  type: number
+                num_successive_breaches:
+                  description: The number of successive limit breaches after which
+                    the node is considered to be under duress. Default is 3
+                  minimum: 1
+                  title: The number of successive limit breaches after which the node
+                    is considered to be under duress
+                  type: integer
+              title: Node duress settings
+              type: object
+            search_shard_task:
+              additionalProperties: false
+              properties:
+                total_heap_percent_threshold:
+                  description: The heap usage threshold (as a percentage) required
+                    for the sum of heap usages of all search shard tasks before cancellation
+                    is applied. Default is 0.5
+                  maximum: 1.0
+                  minimum: 0.0
+                  title: The heap usage threshold (as a percentage) required for the
+                    sum of heap usages of all search shard tasks before cancellation
+                    is applied
+                  type: number
+                elapsed_time_millis_threshold:
+                  description: The elapsed time threshold (in milliseconds) required
+                    for a single search shard task before it is considered for cancellation.
+                    Default is 30000
+                  minimum: 0
+                  title: The elapsed time threshold (in milliseconds) required for
+                    a single search shard task before it is considered for cancellation
+                  type: integer
+                cancellation_rate:
+                  description: The maximum number of tasks to cancel per millisecond
+                    of elapsed time. Default is 0.003
+                  minimum: 0.0
+                  title: The maximum number of tasks to cancel per millisecond of
+                    elapsed time.
+                  type: number
+                heap_variance:
+                  description: The minimum variance required for a single search shard
+                    task’s heap usage compared to the rolling average of previously
+                    completed tasks before it is considered for cancellation. Default
+                    is 2.0
+                  minimum: 0.0
+                  title: The minimum variance required for a single search shard task’s
+                    heap usage compared to the rolling average of previously completed
+                    tasks before it is considered for cancellation
+                  type: number
+                heap_moving_average_window_size:
+                  description: The number of previously completed search shard tasks
+                    to consider when calculating the rolling average of heap usage.
+                    Default is 100
+                  minimum: 0
+                  title: The number of previously completed search shard tasks to
+                    consider when calculating the rolling average of heap usage
+                  type: integer
+                cancellation_ratio:
+                  description: The maximum number of tasks to cancel, as a percentage
+                    of successful task completions. Default is 0.1
+                  maximum: 1.0
+                  minimum: 0.0
+                  title: The maximum number of tasks to cancel
+                  type: number
+                heap_percent_threshold:
+                  description: The heap usage threshold (as a percentage) required
+                    for a single search shard task before it is considered for cancellation.
+                    Default is 0.5
+                  maximum: 1.0
+                  minimum: 0.0
+                  title: The heap usage threshold (as a percentage) required for a
+                    single search shard task before it is considered for cancellation
+                  type: number
+                cpu_time_millis_threshold:
+                  description: The CPU usage threshold (in milliseconds) required
+                    for a single search shard task before it is considered for cancellation.
+                    Default is 15000
+                  minimum: 0
+                  title: The CPU usage threshold (in milliseconds) required for a
+                    single search shard task before it is considered for cancellation
+                  type: integer
+                cancellation_burst:
+                  description: The maximum number of search tasks to cancel in a single
+                    iteration of the observer thread. Default is 10.0
+                  minimum: 1.0
+                  title: The maximum number of search tasks to cancel in a single
+                    iteration of the observer thread
+                  type: number
+              title: Search shard settings
+              type: object
+            search_task:
+              additionalProperties: false
+              properties:
+                total_heap_percent_threshold:
+                  description: The heap usage threshold (as a percentage) required
+                    for the sum of heap usages of all search tasks before cancellation
+                    is applied. Default is 0.5
+                  maximum: 1.0
+                  minimum: 0.0
+                  title: The heap usage threshold (as a percentage) required for the
+                    sum of heap usages of all search tasks before cancellation is
+                    applied
+                  type: number
+                elapsed_time_millis_threshold:
+                  description: The elapsed time threshold (in milliseconds) required
+                    for an individual parent task before it is considered for cancellation.
+                    Default is 45000
+                  minimum: 0
+                  title: The elapsed time threshold (in milliseconds) required for
+                    an individual parent task before it is considered for cancellation
+                  type: integer
+                cancellation_rate:
+                  description: The maximum number of search tasks to cancel per millisecond
+                    of elapsed time. Default is 0.003
+                  minimum: 0.0
+                  title: The maximum number of search tasks to cancel per millisecond
+                    of elapsed time
+                  type: number
+                heap_variance:
+                  description: The heap usage variance required for an individual
+                    parent task before it is considered for cancellation. A task is
+                    considered for cancellation when taskHeapUsage is greater than
+                    or equal to heapUsageMovingAverage * variance. Default is 2.0
+                  minimum: 0.0
+                  title: The heap usage variance required for an individual parent
+                    task before it is considered for cancellation
+                  type: number
+                heap_moving_average_window_size:
+                  description: The window size used to calculate the rolling average
+                    of the heap usage for the completed parent tasks. Default is 10
+                  minimum: 0
+                  title: The window size used to calculate the rolling average of
+                    the heap usage for the completed parent tasks
+                  type: integer
+                cancellation_ratio:
+                  description: The maximum number of search tasks to cancel, as a
+                    percentage of successful search task completions. Default is 0.1
+                  maximum: 1.0
+                  minimum: 0.0
+                  title: The maximum number of search tasks to cancel, as a percentage
+                    of successful search task completions
+                  type: number
+                heap_percent_threshold:
+                  description: The heap usage threshold (as a percentage) required
+                    for an individual parent task before it is considered for cancellation.
+                    Default is 0.2
+                  maximum: 1.0
+                  minimum: 0.0
+                  title: The heap usage threshold (as a percentage) required for an
+                    individual parent task before it is considered for cancellation
+                  type: number
+                cpu_time_millis_threshold:
+                  description: The CPU usage threshold (in milliseconds) required
+                    for an individual parent task before it is considered for cancellation.
+                    Default is 30000
+                  minimum: 0
+                  title: The CPU usage threshold (in milliseconds) required for an
+                    individual parent task before it is considered for cancellation
+                  type: integer
+                cancellation_burst:
+                  description: The maximum number of search tasks to cancel in a single
+                    iteration of the observer thread. Default is 5.0
+                  minimum: 1.0
+                  title: The maximum number of search tasks to cancel in a single
+                    iteration of the observer thread
+                  type: number
+              title: Search task settings
+              type: object
+          title: Search Backpressure Settings
+          type: object
+        shard_indexing_pressure:
+          additionalProperties: false
+          properties:
+            primary_parameter:
+              additionalProperties: false
+              properties:
+                shard:
+                  additionalProperties: false
+                  properties:
+                    min_limit:
+                      description: Specify the minimum assigned quota for a new shard
+                        in any role (coordinator, primary, or replica). Shard indexing
+                        backpressure increases or decreases this allocated quota based
+                        on the inflow of traffic for the shard. Default is 0.001
+                      minimum: 0.0
+                      title: Shard min limit
+                      type: number
+                  type: object
+                node:
+                  additionalProperties: false
+                  properties:
+                    soft_limit:
+                      description: Define the percentage of the node-level memory
+                        threshold that acts as a soft indicator for strain on a node.
+                        Default is 0.7
+                      minimum: 0.0
+                      title: Node soft limit
+                      type: number
+                  type: object
+              title: Primary parameter
+              type: object
+            operating_factor:
+              additionalProperties: false
+              properties:
+                upper:
+                  description: Specify the upper occupancy limit of the allocated
+                    quota of memory for the shard. If the total memory usage of a
+                    shard is above this limit, shard indexing backpressure increases
+                    the current allocated memory for that shard. Default is 0.95
+                  minimum: 0.0
+                  title: Upper occupancy limit of the allocated quota of memory for
+                    the shard
+                  type: number
+                optimal:
+                  description: Specify the optimal occupancy of the allocated quota
+                    of memory for the shard. If the total memory usage of a shard
+                    is at this level, shard indexing backpressure doesn’t change the
+                    current allocated memory for that shard. Default is 0.85
+                  minimum: 0.0
+                  title: Optimal occupancy of the allocated quota of memory for the
+                    shard
+                  type: number
+                lower:
+                  description: Specify the lower occupancy limit of the allocated
+                    quota of memory for the shard. If the total memory usage of a
+                    shard is below this limit, shard indexing backpressure decreases
+                    the current allocated memory for that shard. Default is 0.75
+                  minimum: 0.0
+                  title: Lower occupancy limit of the allocated quota of memory for
+                    the shard
+                  type: number
+              title: Operating factor
+              type: object
+            enforced:
+              description: Run shard indexing backpressure in shadow mode or enforced
+                mode. In shadow mode (value set as false), shard indexing backpressure
+                tracks all granular-level metrics, but it doesn’t actually reject
+                any indexing requests. In enforced mode (value set as true), shard
+                indexing backpressure rejects any requests to the cluster that might
+                cause a dip in its performance. Default is false
+              title: Run shard indexing backpressure in shadow mode or enforced mode
+              type: boolean
+            enabled:
+              description: Enable or disable shard indexing backpressure. Default
+                is false
+              title: Enable or disable shard indexing backpressure
+              type: boolean
+          title: Shard indexing back pressure settings
+          type: object
+        knn_memory_circuit_breaker_enabled:
+          description: Enable or disable KNN memory circuit breaker. Defaults to true.
+          example: true
+          title: knn.memory.circuit_breaker.enabled
+          type: boolean
         thread_pool_search_size:
           description: Size for the thread pool. See documentation for exact details.
             Do note this may have maximum value depending on CPU count - value is
@@ -7139,6 +7469,14 @@ components:
           maximum: 128
           minimum: 1
           title: search thread pool size
+          type: integer
+        indices_memory_min_index_buffer_size:
+          description: Absolute value. Default is 48mb. Doesn't work without indices.memory.index_buffer_size.
+            Minimum amount of heap used for query cache, an absolute indices.memory.index_buffer_size
+            minimal hard limit.
+          maximum: 2048
+          minimum: 3
+          title: indices.memory.min_index_buffer_size
           type: integer
         indices_recovery_max_bytes_per_sec:
           description: Limits total inbound and outbound recovery traffic for each
@@ -7487,6 +7825,14 @@ components:
           maximum: 2000
           minimum: 10
           title: search thread pool queue size
+          type: integer
+        knn_memory_circuit_breaker_limit:
+          description: Maximum amount of memory that can be used for KNN index. Defaults
+            to 50% of the JVM heap size.
+          example: 50
+          maximum: 100
+          minimum: 3
+          title: knn.memory.circuit_breaker.limit
           type: integer
         indices_query_bool_max_clause_count:
           description: Maximum number of clauses Lucene BooleanQuery can have. The

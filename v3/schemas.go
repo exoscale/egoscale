@@ -201,13 +201,13 @@ type DBAASDatadogTag struct {
 type DBAASEndpointDatadogCommon struct {
 	// Custom tags provided by user
 	DatadogTags []DBAASDatadogTag `json:"datadog-tags,omitempty"`
-	// Disable consumer group metrics
+	// Disable kafka consumer group metrics. Applies only when attached to kafka services.
 	DisableConsumerStats *bool `json:"disable-consumer-stats,omitempty"`
-	// Number of separate instances to fetch kafka consumer statistics with
+	// Number of separate instances to fetch kafka consumer statistics with. Applies only when attached to kafka services.
 	KafkaConsumerCheckInstances int64 `json:"kafka-consumer-check-instances,omitempty" validate:"omitempty,gte=1,lte=100"`
-	// Number of seconds that datadog will wait to get consumer statistics from brokers
+	// Number of seconds that datadog will wait to get consumer statistics from brokers. Applies only when attached to kafka services.
 	KafkaConsumerStatsTimeout int64 `json:"kafka-consumer-stats-timeout,omitempty" validate:"omitempty,gte=2,lte=300"`
-	// Maximum number of partition contexts to send
+	// Maximum number of partition contexts to send. Applies only when attached to kafka services.
 	MaxPartitionContexts int64 `json:"max-partition-contexts,omitempty" validate:"omitempty,gte=200,lte=200000"`
 }
 
@@ -216,13 +216,13 @@ type DBAASEndpointDatadogInputCreateSettings struct {
 	DatadogAPIKey string `json:"datadog-api-key" validate:"required,gte=1,lte=256"`
 	// Custom tags provided by user
 	DatadogTags []DBAASDatadogTag `json:"datadog-tags,omitempty"`
-	// Disable consumer group metrics
+	// Disable kafka consumer group metrics. Applies only when attached to kafka services.
 	DisableConsumerStats *bool `json:"disable-consumer-stats,omitempty"`
-	// Number of separate instances to fetch kafka consumer statistics with
+	// Number of separate instances to fetch kafka consumer statistics with. Applies only when attached to kafka services.
 	KafkaConsumerCheckInstances int64 `json:"kafka-consumer-check-instances,omitempty" validate:"omitempty,gte=1,lte=100"`
-	// Number of seconds that datadog will wait to get consumer statistics from brokers
+	// Number of seconds that datadog will wait to get consumer statistics from brokers. Applies only when attached to kafka services.
 	KafkaConsumerStatsTimeout int64 `json:"kafka-consumer-stats-timeout,omitempty" validate:"omitempty,gte=2,lte=300"`
-	// Maximum number of partition contexts to send
+	// Maximum number of partition contexts to send. Applies only when attached to kafka services.
 	MaxPartitionContexts int64           `json:"max-partition-contexts,omitempty" validate:"omitempty,gte=200,lte=200000"`
 	Site                 EnumDatadogSite `json:"site" validate:"required"`
 }
@@ -236,13 +236,13 @@ type DBAASEndpointDatadogInputUpdateSettings struct {
 	DatadogAPIKey string `json:"datadog-api-key" validate:"required,gte=1,lte=256"`
 	// Custom tags provided by user
 	DatadogTags []DBAASDatadogTag `json:"datadog-tags,omitempty"`
-	// Disable consumer group metrics
+	// Disable kafka consumer group metrics. Applies only when attached to kafka services.
 	DisableConsumerStats *bool `json:"disable-consumer-stats,omitempty"`
-	// Number of separate instances to fetch kafka consumer statistics with
+	// Number of separate instances to fetch kafka consumer statistics with. Applies only when attached to kafka services.
 	KafkaConsumerCheckInstances int64 `json:"kafka-consumer-check-instances,omitempty" validate:"omitempty,gte=1,lte=100"`
-	// Number of seconds that datadog will wait to get consumer statistics from brokers
+	// Number of seconds that datadog will wait to get consumer statistics from brokers. Applies only when attached to kafka services.
 	KafkaConsumerStatsTimeout int64 `json:"kafka-consumer-stats-timeout,omitempty" validate:"omitempty,gte=2,lte=300"`
-	// Maximum number of partition contexts to send
+	// Maximum number of partition contexts to send. Applies only when attached to kafka services.
 	MaxPartitionContexts int64           `json:"max-partition-contexts,omitempty" validate:"omitempty,gte=200,lte=200000"`
 	Site                 EnumDatadogSite `json:"site,omitempty"`
 }
@@ -255,13 +255,13 @@ type DBAASEndpointDatadogInputUpdate struct {
 type DBAASEndpointDatadogSettingsSettings struct {
 	// Custom tags provided by user
 	DatadogTags []DBAASDatadogTag `json:"datadog-tags,omitempty"`
-	// Disable consumer group metrics
+	// Disable kafka consumer group metrics. Applies only when attached to kafka services.
 	DisableConsumerStats *bool `json:"disable-consumer-stats,omitempty"`
-	// Number of separate instances to fetch kafka consumer statistics with
+	// Number of separate instances to fetch kafka consumer statistics with. Applies only when attached to kafka services.
 	KafkaConsumerCheckInstances int64 `json:"kafka-consumer-check-instances,omitempty" validate:"omitempty,gte=1,lte=100"`
-	// Number of seconds that datadog will wait to get consumer statistics from brokers
+	// Number of seconds that datadog will wait to get consumer statistics from brokers. Applies only when attached to kafka services.
 	KafkaConsumerStatsTimeout int64 `json:"kafka-consumer-stats-timeout,omitempty" validate:"omitempty,gte=2,lte=300"`
-	// Maximum number of partition contexts to send
+	// Maximum number of partition contexts to send. Applies only when attached to kafka services.
 	MaxPartitionContexts int64           `json:"max-partition-contexts,omitempty" validate:"omitempty,gte=200,lte=200000"`
 	Site                 EnumDatadogSite `json:"site,omitempty"`
 }
@@ -553,13 +553,13 @@ type DBAASExternalEndpoint struct {
 type DBAASExternalEndpointDatadogOutputSettings struct {
 	// Custom tags provided by user
 	DatadogTags []DBAASDatadogTag `json:"datadog-tags,omitempty"`
-	// Disable consumer group metrics
+	// Disable kafka consumer group metrics. Applies only when attached to kafka services.
 	DisableConsumerStats *bool `json:"disable-consumer-stats,omitempty"`
-	// Number of separate instances to fetch kafka consumer statistics with
+	// Number of separate instances to fetch kafka consumer statistics with. Applies only when attached to kafka services.
 	KafkaConsumerCheckInstances int64 `json:"kafka-consumer-check-instances,omitempty" validate:"omitempty,gte=1,lte=100"`
-	// Number of seconds that datadog will wait to get consumer statistics from brokers
+	// Number of seconds that datadog will wait to get consumer statistics from brokers. Applies only when attached to kafka services.
 	KafkaConsumerStatsTimeout int64 `json:"kafka-consumer-stats-timeout,omitempty" validate:"omitempty,gte=2,lte=300"`
-	// Maximum number of partition contexts to send
+	// Maximum number of partition contexts to send. Applies only when attached to kafka services.
 	MaxPartitionContexts int64           `json:"max-partition-contexts,omitempty" validate:"omitempty,gte=200,lte=200000"`
 	Site                 EnumDatadogSite `json:"site,omitempty"`
 }

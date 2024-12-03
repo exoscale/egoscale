@@ -4651,7 +4651,8 @@ components:
               description: Custom tags provided by user
             disable-consumer-stats:
               type: boolean
-              description: Disable consumer group metrics
+              description: Disable kafka consumer group metrics. Applies only when
+                attached to kafka services.
             kafka-consumer-check-instances:
               type: integer
               format: int64
@@ -4660,7 +4661,7 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Number of separate instances to fetch kafka consumer statistics
-                with
+                with. Applies only when attached to kafka services.
             kafka-consumer-stats-timeout:
               type: integer
               format: int64
@@ -4669,7 +4670,7 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Number of seconds that datadog will wait to get consumer
-                statistics from brokers
+                statistics from brokers. Applies only when attached to kafka services.
             max-partition-contexts:
               type: integer
               format: int64
@@ -4677,7 +4678,8 @@ components:
               maximum: 200000
               exclusiveMinimum: false
               exclusiveMaximum: false
-              description: Maximum number of partition contexts to send
+              description: Maximum number of partition contexts to send. Applies only
+                when attached to kafka services.
           description: External integration DataDog configuration
     sos-bucket-usage:
       type: object
@@ -4849,7 +4851,8 @@ components:
               description: Custom tags provided by user
             disable-consumer-stats:
               type: boolean
-              description: Disable consumer group metrics
+              description: Disable kafka consumer group metrics. Applies only when
+                attached to kafka services.
             kafka-consumer-check-instances:
               type: integer
               format: int64
@@ -4858,7 +4861,7 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Number of separate instances to fetch kafka consumer statistics
-                with
+                with. Applies only when attached to kafka services.
             kafka-consumer-stats-timeout:
               type: integer
               format: int64
@@ -4867,7 +4870,7 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Number of seconds that datadog will wait to get consumer
-                statistics from brokers
+                statistics from brokers. Applies only when attached to kafka services.
             max-partition-contexts:
               type: integer
               format: int64
@@ -4875,7 +4878,8 @@ components:
               maximum: 200000
               exclusiveMinimum: false
               exclusiveMaximum: false
-              description: Maximum number of partition contexts to send
+              description: Maximum number of partition contexts to send. Applies only
+                when attached to kafka services.
           required:
           - datadog-api-key
           - site
@@ -5246,7 +5250,8 @@ components:
           description: Custom tags provided by user
         disable-consumer-stats:
           type: boolean
-          description: Disable consumer group metrics
+          description: Disable kafka consumer group metrics. Applies only when attached
+            to kafka services.
         kafka-consumer-check-instances:
           type: integer
           format: int64
@@ -5255,7 +5260,7 @@ components:
           exclusiveMinimum: false
           exclusiveMaximum: false
           description: Number of separate instances to fetch kafka consumer statistics
-            with
+            with. Applies only when attached to kafka services.
         kafka-consumer-stats-timeout:
           type: integer
           format: int64
@@ -5264,7 +5269,7 @@ components:
           exclusiveMinimum: false
           exclusiveMaximum: false
           description: Number of seconds that datadog will wait to get consumer statistics
-            from brokers
+            from brokers. Applies only when attached to kafka services.
         max-partition-contexts:
           type: integer
           format: int64
@@ -5272,7 +5277,8 @@ components:
           maximum: 200000
           exclusiveMinimum: false
           exclusiveMaximum: false
-          description: Maximum number of partition contexts to send
+          description: Maximum number of partition contexts to send. Applies only
+            when attached to kafka services.
     sks-nodepool:
       type: object
       properties:
@@ -5845,7 +5851,8 @@ components:
               description: Custom tags provided by user
             disable-consumer-stats:
               type: boolean
-              description: Disable consumer group metrics
+              description: Disable kafka consumer group metrics. Applies only when
+                attached to kafka services.
             kafka-consumer-check-instances:
               type: integer
               format: int64
@@ -5854,7 +5861,7 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Number of separate instances to fetch kafka consumer statistics
-                with
+                with. Applies only when attached to kafka services.
             kafka-consumer-stats-timeout:
               type: integer
               format: int64
@@ -5863,7 +5870,7 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Number of seconds that datadog will wait to get consumer
-                statistics from brokers
+                statistics from brokers. Applies only when attached to kafka services.
             max-partition-contexts:
               type: integer
               format: int64
@@ -5871,7 +5878,8 @@ components:
               maximum: 200000
               exclusiveMinimum: false
               exclusiveMaximum: false
-              description: Maximum number of partition contexts to send
+              description: Maximum number of partition contexts to send. Applies only
+                when attached to kafka services.
           required:
           - datadog-api-key
     dbaas-service-redis:
@@ -6080,7 +6088,8 @@ components:
               description: Custom tags provided by user
             disable-consumer-stats:
               type: boolean
-              description: Disable consumer group metrics
+              description: Disable kafka consumer group metrics. Applies only when
+                attached to kafka services.
             kafka-consumer-check-instances:
               type: integer
               format: int64
@@ -6089,7 +6098,7 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Number of separate instances to fetch kafka consumer statistics
-                with
+                with. Applies only when attached to kafka services.
             kafka-consumer-stats-timeout:
               type: integer
               format: int64
@@ -6098,7 +6107,7 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Number of seconds that datadog will wait to get consumer
-                statistics from brokers
+                statistics from brokers. Applies only when attached to kafka services.
             max-partition-contexts:
               type: integer
               format: int64
@@ -6106,7 +6115,8 @@ components:
               maximum: 200000
               exclusiveMinimum: false
               exclusiveMaximum: false
-              description: Maximum number of partition contexts to send
+              description: Maximum number of partition contexts to send. Applies only
+                when attached to kafka services.
           description: External integration DataDog configuration
     dbaas-kafka-acl-id:
       type: string

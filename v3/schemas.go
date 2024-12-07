@@ -2205,14 +2205,16 @@ type InstanceTarget struct {
 type InstanceTypeFamily string
 
 const (
-	InstanceTypeFamilyGpu3     InstanceTypeFamily = "gpu3"
-	InstanceTypeFamilyGpu2     InstanceTypeFamily = "gpu2"
-	InstanceTypeFamilyGpu      InstanceTypeFamily = "gpu"
-	InstanceTypeFamilyMemory   InstanceTypeFamily = "memory"
-	InstanceTypeFamilyStorage  InstanceTypeFamily = "storage"
-	InstanceTypeFamilyStandard InstanceTypeFamily = "standard"
-	InstanceTypeFamilyColossus InstanceTypeFamily = "colossus"
-	InstanceTypeFamilyCPU      InstanceTypeFamily = "cpu"
+	InstanceTypeFamilyGpu3      InstanceTypeFamily = "gpu3"
+	InstanceTypeFamilyGpu3080ti InstanceTypeFamily = "gpu3080ti"
+	InstanceTypeFamilyGpu2      InstanceTypeFamily = "gpu2"
+	InstanceTypeFamilyGpu       InstanceTypeFamily = "gpu"
+	InstanceTypeFamilyMemory    InstanceTypeFamily = "memory"
+	InstanceTypeFamilyGpua5000  InstanceTypeFamily = "gpua5000"
+	InstanceTypeFamilyStorage   InstanceTypeFamily = "storage"
+	InstanceTypeFamilyStandard  InstanceTypeFamily = "standard"
+	InstanceTypeFamilyColossus  InstanceTypeFamily = "colossus"
+	InstanceTypeFamilyCPU       InstanceTypeFamily = "cpu"
 )
 
 type InstanceTypeSize string

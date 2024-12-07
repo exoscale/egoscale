@@ -2657,9 +2657,11 @@ components:
           type: string
           enum:
           - gpu3
+          - gpu3080ti
           - gpu2
           - gpu
           - memory
+          - gpua5000
           - storage
           - standard
           - colossus
@@ -14010,7 +14012,7 @@ paths:
               properties:
                 name:
                   type: string
-                  pattern: "^[a-zA-Z]{1}[a-zA-Z0-9._-]{0,254}$"
+                  pattern: "^[a-zA-Z0-9]{1}[a-zA-Z0-9._-]{0,254}$"
                   description: SSH key name
                 public-key:
                   type: string

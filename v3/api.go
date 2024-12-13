@@ -41,6 +41,8 @@ func ParseUUID(s string) (UUID, error) {
 // Final states are one of: failure, success, timeout.
 // If states argument are given, returns an error if the final state not match on of those.
 func (c Client) Wait(ctx context.Context, op *Operation, states ...OperationState) (*Operation, error) {
+	const abortErrorsCount = 5
+
 	if op == nil {
 		return nil, fmt.Errorf("operation is nil")
 	}
@@ -54,6 +56,7 @@ func (c Client) Wait(ctx context.Context, op *Operation, states ...OperationStat
 		return op, nil
 	}
 
+	var subsequentErrors int
 	var operation *Operation
 polling:
 	for {
@@ -70,7 +73,11 @@ polling:
 
 			o, err := c.GetOperation(ctx, op.ID)
 			if err != nil {
-				return nil, err
+				subsequentErrors++
+				if subsequentErrors >= abortErrorsCount {
+					return nil, err
+				}
+				continue
 			}
 			if o.State == OperationStatePending {
 				continue

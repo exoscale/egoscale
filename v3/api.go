@@ -79,6 +79,8 @@ polling:
 				}
 				continue
 			}
+			subsequentErrors = 0
+
 			if o.State == OperationStatePending {
 				continue
 			}

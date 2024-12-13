@@ -55,8 +55,6 @@ type RequestInterceptorFn func(ctx context.Context, req *http.Request) error
 // Deprecated: use ClientOptWithUserAgent instead.
 var UserAgent = getDefaultUserAgent()
 
-const pollingInterval = 3 * time.Second
-
 // ClientOpt represents a function setting Exoscale API client option.
 type ClientOpt func(*Client) error
 

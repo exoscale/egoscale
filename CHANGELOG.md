@@ -3,6 +3,7 @@ Changelog
 
 Unrelease
 ----------
+- v3: Client introduce a wait timeout with different polling strategy #674
 - v3 generator: Findable return error on too many found #669
 
 3.1.7

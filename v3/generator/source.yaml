@@ -2625,8 +2625,8 @@ components:
       type: string
       enum:
       - '14'
+      - '17'
       - '15'
-      - '12'
       - '13'
       - '16'
     instance-type:

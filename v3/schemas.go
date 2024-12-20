@@ -809,8 +809,8 @@ type DBAASPGTargetVersions string
 
 const (
 	DBAASPGTargetVersions14 DBAASPGTargetVersions = "14"
+	DBAASPGTargetVersions17 DBAASPGTargetVersions = "17"
 	DBAASPGTargetVersions15 DBAASPGTargetVersions = "15"
-	DBAASPGTargetVersions12 DBAASPGTargetVersions = "12"
 	DBAASPGTargetVersions13 DBAASPGTargetVersions = "13"
 	DBAASPGTargetVersions16 DBAASPGTargetVersions = "16"
 )

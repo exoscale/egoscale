@@ -15889,6 +15889,231 @@ func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateR
 	return bodyresp, nil
 }
 
+type ListUsersResponse struct {
+	Users []User `json:"users,omitempty"`
+}
+
+// FindUser attempts to find an User by id.
+func (l ListUsersResponse) FindUser(id string) (User, error) {
+	var result []User
+	for i, elem := range l.Users {
+		if string(elem.ID) == id {
+			result = append(result, l.Users[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return User{}, fmt.Errorf("%q too many found in ListUsersResponse: %w", id, ErrConflict)
+	}
+
+	return User{}, fmt.Errorf("%q not found in ListUsersResponse: %w", id, ErrNotFound)
+}
+
+// List Users
+func (c Client) ListUsers(ctx context.Context) (*ListUsersResponse, error) {
+	path := "/user"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListUsers: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListUsers: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListUsers: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-users")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListUsers: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListUsers: http response: %w", err)
+	}
+
+	bodyresp := &ListUsersResponse{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListUsers: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateUserRequest struct {
+	// User Email
+	Email string `json:"email" validate:"required"`
+	// IAM Role
+	Role *IAMRole `json:"role,omitempty"`
+}
+
+// Create a User
+func (c Client) CreateUser(ctx context.Context, req CreateUserRequest) (*Operation, error) {
+	path := "/user"
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateUser: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateUser: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateUser: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateUser: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-user")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateUser: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateUser: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateUser: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Delete User
+func (c Client) DeleteUser(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/user/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteUser: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteUser: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteUser: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-user")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteUser: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteUser: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteUser: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateUserRoleRequest struct {
+	// IAM Role
+	Role *IAMRole `json:"role,omitempty"`
+}
+
+// Update a User's IAM role
+func (c Client) UpdateUserRole(ctx context.Context, id UUID, req UpdateUserRoleRequest) (*Operation, error) {
+	path := fmt.Sprintf("/user/%v", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateUserRole: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateUserRole: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateUserRole: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateUserRole: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-user-role")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateUserRole: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateUserRole: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateUserRole: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type ListZonesResponse struct {
 	Zones []Zone `json:"zones,omitempty"`
 }

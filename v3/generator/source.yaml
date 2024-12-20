@@ -2625,8 +2625,8 @@ components:
       type: string
       enum:
       - '14'
+      - '17'
       - '15'
-      - '12'
       - '13'
       - '16'
     instance-type:
@@ -13034,6 +13034,57 @@ paths:
           "$ref": "#/components/schemas/dbaas-user-username"
       summary: Reveal the secrets of a DBaaS Grafana user
       operationId: reveal-dbaas-grafana-user-password
+  "/user/{id}":
+    put:
+      tags:
+      - iam
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: 
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: Update a User's IAM role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  "$ref": "#/components/schemas/iam-role"
+                  description: IAM Role
+      operationId: update-user-role
+    delete:
+      tags:
+      - iam
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: 
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: Delete User
+      operationId: delete-user
   "/reverse-dns/instance/{id}":
     post:
       tags:
@@ -17698,6 +17749,55 @@ paths:
           - labels
       summary: Reset Private Network field
       operationId: reset-private-network-field
+  "/user":
+    post:
+      tags:
+      - iam
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: 
+      parameters: []
+      summary: Create a User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: User Email
+                role:
+                  "$ref": "#/components/schemas/iam-role"
+                  description: IAM Role
+              required:
+              - email
+      operationId: create-user
+    get:
+      tags:
+      - iam
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/user"
+      description: 
+      parameters: []
+      summary: List Users
+      operationId: list-users
   "/sks-cluster/{id}/upgrade":
     put:
       tags:

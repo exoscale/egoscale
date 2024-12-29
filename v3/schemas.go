@@ -792,7 +792,7 @@ type DBAASOpensearchAclConfig struct {
 	// Enable OpenSearch ACLs. When disabled authenticated service users have unrestricted access.
 	AclEnabled *bool `json:"acl-enabled,omitempty"`
 	// List of OpenSearch ACLs
-	Acls []DBAASOpensearchAclConfigAcls `json:"acls,omitempty"`
+	Acls []DBAASOpensearchAclConfigAcls `json:"acls"`
 	// Enable to enforce index rules in a limited fashion for requests that use the _mget, _msearch, and _bulk APIs
 	ExtendedAclEnabled *bool `json:"extended-acl-enabled,omitempty"`
 }

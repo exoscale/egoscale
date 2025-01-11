@@ -6487,7 +6487,7 @@ components:
         size:
           type: integer
           format: int64
-          minimum: 10
+          minimum: 1
           exclusiveMinimum: false
           description: Snapshot size
         volume-size:
@@ -7953,7 +7953,7 @@ components:
         size:
           type: integer
           format: int64
-          minimum: 10
+          minimum: 1
           exclusiveMinimum: false
           description: Volume size
         blocksize:
@@ -13399,7 +13399,7 @@ paths:
                 size:
                   type: integer
                   format: int64
-                  minimum: 11
+                  minimum: 0
                   exclusiveMinimum: false
                   description: Volume size in GiB
               required:
@@ -17904,7 +17904,7 @@ paths:
                 size:
                   type: integer
                   format: int64
-                  minimum: 10
+                  minimum: 1
                   exclusiveMinimum: false
                   description: |-
                     Volume size in GiB.

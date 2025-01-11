@@ -111,7 +111,7 @@ type BlockStorageSnapshot struct {
 	// Snapshot name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Snapshot size
-	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10"`
+	Size int64 `json:"size,omitempty" validate:"omitempty,gte=1"`
 	// Snapshot state
 	State BlockStorageSnapshotState `json:"state,omitempty"`
 	// Original Volume size
@@ -154,7 +154,7 @@ type BlockStorageVolume struct {
 	// Volume name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Volume size
-	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10"`
+	Size int64 `json:"size,omitempty" validate:"omitempty,gte=1"`
 	// Volume state
 	State BlockStorageVolumeState `json:"state,omitempty"`
 }

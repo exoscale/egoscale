@@ -3,6 +3,10 @@ name: build-public-tooling
 on:
   workflow_dispatch:
   push:
+  workflow_run:
+    workflows: ["check_and_regenerate_v3"]
+    types:
+      - completed
 
 jobs:
   build_public_tooling:

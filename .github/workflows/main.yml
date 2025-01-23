@@ -10,6 +10,10 @@ on:
     - 'version/*'
     tags-ignore:
     - 'v**' # Don't run CI tests on release tags
+  workflow_run:
+    workflows: ["check_and_regenerate_v3"]
+    types:
+      - completed
 
 jobs:
   CI:

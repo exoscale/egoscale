@@ -111,7 +111,7 @@ type BlockStorageSnapshot struct {
 	// Snapshot name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Snapshot size
-	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10"`
+	Size int64 `json:"size,omitempty" validate:"omitempty,gte=1"`
 	// Snapshot state
 	State BlockStorageSnapshotState `json:"state,omitempty"`
 	// Original Volume size
@@ -154,7 +154,7 @@ type BlockStorageVolume struct {
 	// Volume name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Volume size
-	Size int64 `json:"size,omitempty" validate:"omitempty,gte=10"`
+	Size int64 `json:"size,omitempty" validate:"omitempty,gte=1"`
 	// Volume state
 	State BlockStorageVolumeState `json:"state,omitempty"`
 }
@@ -1747,6 +1747,8 @@ type DNSDomainRecord struct {
 	Name string `json:"name,omitempty"`
 	// DNS domain record priority
 	Priority int64 `json:"priority,omitempty" validate:"omitempty,gte=0"`
+	// DNS domain record system status
+	SystemRecord *bool `json:"system-record,omitempty"`
 	// DNS domain record TTL
 	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gte=0"`
 	// DNS domain record type

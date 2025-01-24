@@ -6487,7 +6487,7 @@ components:
         size:
           type: integer
           format: int64
-          minimum: 10
+          minimum: 1
           exclusiveMinimum: false
           description: Snapshot size
         volume-size:
@@ -6990,20 +6990,17 @@ components:
     dns-domain-record:
       type: object
       properties:
-        id:
+        updated-at:
           type: string
-          format: uuid
+          format: date-time
           readOnly: true
-          description: DNS domain record ID
-        priority:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: false
-          description: DNS domain record priority
+          description: DNS domain record update date
         content:
           type: string
           description: DNS domain record content
+        name:
+          type: string
+          description: DNS domain record name
         type:
           type: string
           enum:
@@ -7030,19 +7027,26 @@ components:
           minimum: 0
           exclusiveMinimum: false
           description: DNS domain record TTL
-        name:
+        priority:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: DNS domain record priority
+        id:
           type: string
-          description: DNS domain record name
+          format: uuid
+          readOnly: true
+          description: DNS domain record ID
         created-at:
           type: string
           format: date-time
           readOnly: true
           description: DNS domain record creation date
-        updated-at:
-          type: string
-          format: date-time
+        system-record:
+          type: boolean
           readOnly: true
-          description: DNS domain record update date
+          description: DNS domain record system status
       description: DNS domain record
     organization:
       type: object
@@ -7953,7 +7957,7 @@ components:
         size:
           type: integer
           format: int64
-          minimum: 10
+          minimum: 1
           exclusiveMinimum: false
           description: Volume size
         blocksize:
@@ -13399,7 +13403,7 @@ paths:
                 size:
                   type: integer
                   format: int64
-                  minimum: 11
+                  minimum: 0
                   exclusiveMinimum: false
                   description: Volume size in GiB
               required:
@@ -17904,7 +17908,7 @@ paths:
                 size:
                   type: integer
                   format: int64
-                  minimum: 10
+                  minimum: 1
                   exclusiveMinimum: false
                   description: |-
                     Volume size in GiB.

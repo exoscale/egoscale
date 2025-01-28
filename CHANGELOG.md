@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.1.9
+----------
+- v3: Reduce minimum blockstorage size to 1GiB from 10GiB
+
 3.1.8
 ----------
 - v3: Client introduce a wait timeout with different polling strategy #674

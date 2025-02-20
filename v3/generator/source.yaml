@@ -3220,6 +3220,99 @@ components:
       - name
       - plan
       - type
+    json-schema-valkey:
+      properties:
+        ssl:
+          default: true
+          title: Require SSL to access Valkey
+          type: boolean
+        lfu_log_factor:
+          default: 10
+          maximum: 100
+          minimum: 0
+          title: Counter logarithm factor for volatile-lfu and allkeys-lfu maxmemory-policies
+          type: integer
+        maxmemory_policy:
+          default: noeviction
+          enum:
+          - noeviction
+          - allkeys-lru
+          - volatile-lru
+          - allkeys-random
+          - volatile-random
+          - volatile-ttl
+          - volatile-lfu
+          - allkeys-lfu
+          nullable: true
+          title: Valkey maxmemory-policy
+          type: string
+        io_threads:
+          description: Set Valkey IO thread count. Changing this will cause a restart
+            of the Valkey service.
+          example: 1
+          maximum: 32
+          minimum: 1
+          title: Valkey IO thread count
+          type: integer
+        lfu_decay_time:
+          default: 1
+          maximum: 120
+          minimum: 1
+          title: LFU maxmemory-policy counter decay time in minutes
+          type: integer
+        pubsub_client_output_buffer_limit:
+          description: Set output buffer limit for pub / sub clients in MB. The value
+            is the hard limit, the soft limit is 1/4 of the hard limit. When setting
+            the limit, be mindful of the available memory in the selected service
+            plan.
+          example: 64
+          maximum: 512
+          minimum: 32
+          title: Pub/sub client output buffer hard limit in MB
+          type: integer
+        notify_keyspace_events:
+          default: ''
+          maxLength: 32
+          pattern: "^[KEg\\$lshzxentdmA]*$"
+          title: Set notify-keyspace-events option
+          type: string
+        persistence:
+          description: When persistence is 'rdb', Valkey does RDB dumps each 10 minutes
+            if any key is changed. Also RDB dumps are done according to backup schedule
+            for backup purposes. When persistence is 'off', no RDB dumps and backups
+            are done, so data can be lost at any moment if service is restarted for
+            any reason, or if service is powered off. Also service can't be forked.
+          enum:
+          - 'off'
+          - rdb
+          title: Valkey persistence
+          type: string
+        timeout:
+          default: 300
+          maximum: 31536000
+          minimum: 0
+          title: Valkey idle connection timeout in seconds
+          type: integer
+        acl_channels_default:
+          description: Determines default pub/sub channels' ACL for new users if ACL
+            is not supplied. When this option is not defined, all_channels is assumed
+            to keep backward compatibility. This option doesn't affect Valkey configuration
+            acl-pubsub-default.
+          enum:
+          - allchannels
+          - resetchannels
+          title: Default ACL for pub/sub channels used when Valkey user is created
+          type: string
+        number_of_databases:
+          description: Set number of Valkey databases. Changing this will cause a
+            restart of the Valkey service.
+          example: 16
+          maximum: 128
+          minimum: 1
+          title: Number of Valkey databases
+          type: integer
+      title: Valkey settings
+      type: object
     dbaas-endpoint-external-prometheus-output:
       type: object
       properties:
@@ -6726,6 +6819,7 @@ components:
             type: string
             enum:
             - bypass-governance-retention
+            - reset-iam-organization-policy
           uniqueItems: true
           description: IAM Role permissions
         labels:
@@ -6801,6 +6895,186 @@ components:
         plan:
           type: string
           description: Subscription plan
+      required:
+      - name
+      - plan
+      - type
+    dbaas-service-valkey:
+      type: object
+      properties:
+        updated-at:
+          type: string
+          format: date-time
+          description: Service last update timestamp (ISO 8601)
+        node-count:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: Number of service nodes in the active plan
+        connection-info:
+          type: object
+          properties:
+            uri:
+              type: array
+              items:
+                type: string
+            password:
+              type: string
+            slave:
+              type: array
+              items:
+                type: string
+          description: Valkey connection information properties
+        node-cpu-count:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: Number of CPUs for each node
+        integrations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/dbaas-integration"
+          description: Service integrations
+        zone:
+          type: string
+          description: The zone where the service is running
+        node-states:
+          type: array
+          items:
+            "$ref": "#/components/schemas/dbaas-node-state"
+          description: State of individual service nodes
+        name:
+          "$ref": "#/components/schemas/dbaas-service-name"
+          description: Service name
+        type:
+          "$ref": "#/components/schemas/dbaas-service-type-name"
+          description: Service type code
+        state:
+          "$ref": "#/components/schemas/enum-service-state"
+          description: State of the service
+        valkey-settings:
+          "$ref": "#/components/schemas/json-schema-valkey"
+          description: Valkey-specific settings
+        ip-filter:
+          type: array
+          items:
+            type: string
+          description: Allowed CIDR address blocks for incoming connections
+        backups:
+          type: array
+          items:
+            "$ref": "#/components/schemas/dbaas-service-backup"
+          description: List of backups for the service
+        termination-protection:
+          type: boolean
+          description: Service is protected against termination and powering off
+        notifications:
+          type: array
+          items:
+            "$ref": "#/components/schemas/dbaas-service-notification"
+          description: Service notifications
+        components:
+          type: array
+          items:
+            type: object
+            properties:
+              component:
+                type: string
+                description: Service component name
+              host:
+                type: string
+                description: DNS name for connecting to the service component
+              port:
+                type: integer
+                format: int64
+                minimum: 0
+                maximum: 65535
+                exclusiveMinimum: false
+                exclusiveMaximum: false
+                description: Port number for connecting to the service component
+              route:
+                "$ref": "#/components/schemas/enum-component-route"
+                description: Network access route
+              ssl:
+                type: boolean
+                description: |-
+                  Whether the endpoint is encrypted or accepts plaintext.
+                               By default endpoints are always encrypted and
+                               this property is only included for service components that may disable encryption.
+              usage:
+                "$ref": "#/components/schemas/enum-component-usage"
+                description: DNS usage name
+            required:
+            - component
+            - host
+            - port
+            - route
+            - usage
+          description: Service component information objects
+        maintenance:
+          "$ref": "#/components/schemas/dbaas-service-maintenance"
+          description: Automatic maintenance settings
+        disk-size:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: TODO UNIT disk space for data storage
+        node-memory:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: TODO UNIT of memory for each node
+        uri:
+          type: string
+          description: URI for connecting to the service (may be absent)
+        uri-params:
+          type: object
+          description: service_uri parameterized into key-value pairs
+        version:
+          type: string
+          description: Valkey version
+        created-at:
+          type: string
+          format: date-time
+          description: Service creation timestamp (ISO 8601)
+        plan:
+          type: string
+          description: Subscription plan
+        users:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              username:
+                type: string
+              password:
+                type: string
+              access-control:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      type: string
+                  channels:
+                    type: array
+                    items:
+                      type: string
+                  commands:
+                    type: array
+                    items:
+                      type: string
+                  keys:
+                    type: array
+                    items:
+                      type: string
+          description: List of service users
       required:
       - name
       - plan
@@ -12500,6 +12774,7 @@ paths:
                     type: string
                     enum:
                     - bypass-governance-retention
+                    - reset-iam-organization-policy
                   uniqueItems: true
                   description: IAM Role permissions
                 labels:
@@ -14174,12 +14449,25 @@ paths:
                   maxLength: 255
                   minLength: 1
                   description: Cluster name
+                enable-kube-proxy:
+                  type: boolean
+                  description: Indicates whether to deploy the Kubernetes network
+                    proxy. When unspecified, defaults to `true` unless Cilium CNI
+                    is selected
                 level:
                   type: string
                   enum:
                   - starter
                   - pro
                   description: Cluster service level
+                feature-gates:
+                  type: array
+                  items:
+                    type: string
+                  uniqueItems: true
+                  nullable: true
+                  description: A list of Kubernetes-only Alpha features to enable
+                    for API server component
                 addons:
                   type: array
                   items:
@@ -14497,6 +14785,14 @@ paths:
                     - metrics-server
                   uniqueItems: true
                   description: Cluster addons
+                feature-gates:
+                  type: array
+                  items:
+                    type: string
+                  uniqueItems: true
+                  nullable: true
+                  description: A list of Kubernetes-only Alpha features to enable
+                    for API server component
       operationId: update-sks-cluster
   "/quota":
     get:
@@ -15443,6 +15739,21 @@ paths:
           "$ref": "#/components/schemas/dbaas-user-username"
       summary: Reveal the secrets of a DBaaS Postgres user
       operationId: reveal-dbaas-postgres-user-password
+  "/iam-organization-policy:reset":
+    post:
+      tags:
+      - iam
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: ''
+      parameters: []
+      summary: Reset IAM Organization Policy
+      operationId: reset-iam-organization-policy
   "/dbaas-settings-opensearch":
     get:
       tags:
@@ -17710,6 +18021,7 @@ paths:
                     type: string
                     enum:
                     - bypass-governance-retention
+                    - reset-iam-organization-policy
                   uniqueItems: true
                   description: IAM Role permissions
                 editable:

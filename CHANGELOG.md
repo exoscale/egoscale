@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Unreleased
+3.1.10
 ----------
 - v3: Support for finding InstanceTypes by family and size #681
 

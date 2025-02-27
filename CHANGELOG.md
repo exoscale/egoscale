@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Unreleased
+----------
+- v3: Support for finding InstanceTypes by family and size #681
+
 3.1.9
 ----------
 - v3: Reduce minimum blockstorage size to 1GiB from 10GiB

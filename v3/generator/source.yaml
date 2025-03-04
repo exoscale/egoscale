@@ -14793,6 +14793,11 @@ paths:
                   nullable: true
                   description: A list of Kubernetes-only Alpha features to enable
                     for API server component
+                enable-operators-ca:
+                  type: boolean
+                  description: Add or remove the operators certificate authority (CA)
+                    from the list of trusted CAs of the api server. The default value
+                    is true
       operationId: update-sks-cluster
   "/quota":
     get:

@@ -8632,6 +8632,26 @@ paths:
           format: uuid
       summary: Create a Snapshot of a Compute instance
       operationId: create-snapshot
+  "/dbaas-valkey/{name}/migration/stop":
+    post:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: 
+      parameters:
+      - in: path
+        required: true
+        name: name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      summary: Stop a DBaaS Valkey migration
+      operationId: stop-dbaas-valkey-migration
   "/reverse-dns/elastic-ip/{id}":
     get:
       tags:
@@ -12174,6 +12194,41 @@ paths:
               required:
               - username
       operationId: create-dbaas-kafka-user
+  "/dbaas-valkey/{service-name}/user/{username}/password/reset":
+    put:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: If no password is provided one will be generated automatically.
+      parameters:
+      - in: path
+        required: true
+        name: service-name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      - in: path
+        required: true
+        name: username
+        schema:
+          "$ref": "#/components/schemas/dbaas-user-username"
+      summary: Reset the credentials of a DBaaS Valkey user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  "$ref": "#/components/schemas/dbaas-user-password"
+                  description: New password
+      operationId: reset-dbaas-valkey-user-password
   "/dbaas-external-integration-settings-datadog/{integration-id}":
     post:
       tags:
@@ -13581,6 +13636,31 @@ paths:
                     format: uuid
                   uniqueItems: true
       operationId: evict-sks-nodepool-members
+  "/dbaas-valkey/{service-name}/user/{username}":
+    delete:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: 
+      parameters:
+      - in: path
+        required: true
+        name: service-name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      - in: path
+        required: true
+        name: username
+        schema:
+          "$ref": "#/components/schemas/dbaas-user-username"
+      summary: Delete a DBaaS Valkey user
+      operationId: delete-dbaas-valkey-user
   "/dbaas-kafka/{name}/schema-registry/acl-config/{acl-id}":
     delete:
       tags:
@@ -14793,6 +14873,11 @@ paths:
                   nullable: true
                   description: A list of Kubernetes-only Alpha features to enable
                     for API server component
+                enable-operators-ca:
+                  type: boolean
+                  description: Add or remove the operators certificate authority (CA)
+                    from the list of trusted CAs of the api server. The default value
+                    is true
       operationId: update-sks-cluster
   "/quota":
     get:
@@ -15026,6 +15111,297 @@ paths:
           format: uuid
       summary: Get the latest inspection result
       operationId: get-sks-cluster-inspection
+  "/dbaas-valkey/{name}":
+    delete:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: 
+      parameters:
+      - in: path
+        required: true
+        name: name
+        schema:
+          type: string
+      summary: Delete a Valkey service
+      operationId: delete-dbaas-service-valkey
+    get:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/dbaas-service-valkey"
+      description: Get a DBaaS Valkey service
+      parameters:
+      - in: path
+        required: true
+        name: name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      summary: ''
+      operationId: get-dbaas-service-valkey
+    post:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: Create a DBaaS Valkey service
+      parameters:
+      - in: path
+        required: true
+        name: name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      summary: Create a DBaaS Valkey service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                maintenance:
+                  type: object
+                  properties:
+                    dow:
+                      type: string
+                      enum:
+                      - saturday
+                      - tuesday
+                      - never
+                      - wednesday
+                      - sunday
+                      - friday
+                      - monday
+                      - thursday
+                      description: Day of week for installing updates
+                    time:
+                      type: string
+                      maxLength: 8
+                      minLength: 8
+                      description: Time for installing updates, UTC
+                  required:
+                  - dow
+                  - time
+                  description: Automatic maintenance settings
+                plan:
+                  type: string
+                  maxLength: 128
+                  minLength: 1
+                  description: Subscription plan
+                termination-protection:
+                  type: boolean
+                  description: Service is protected against termination and powering
+                    off
+                ip-filter:
+                  type: array
+                  items:
+                    type: string
+                  description: Allow incoming connections from CIDR address block,
+                    e.g. '10.20.0.0/16'
+                migration:
+                  type: object
+                  properties:
+                    host:
+                      type: string
+                      maxLength: 255
+                      minLength: 1
+                      description: Hostname or IP address of the server where to migrate
+                        data from
+                    port:
+                      type: integer
+                      format: int64
+                      minimum: 1
+                      maximum: 65535
+                      exclusiveMinimum: false
+                      exclusiveMaximum: false
+                      description: Port number of the server where to migrate data
+                        from
+                    password:
+                      type: string
+                      maxLength: 255
+                      minLength: 1
+                      description: Password for authentication with the server where
+                        to migrate data from
+                    ssl:
+                      type: boolean
+                      description: The server where to migrate data from is secured
+                        with SSL
+                    username:
+                      type: string
+                      maxLength: 255
+                      minLength: 1
+                      description: User name for authentication with the server where
+                        to migrate data from
+                    dbname:
+                      type: string
+                      maxLength: 63
+                      minLength: 1
+                      description: Database name for bootstrapping the initial connection
+                    ignore-dbs:
+                      type: string
+                      maxLength: 2048
+                      minLength: 1
+                      description: Comma-separated list of databases, which should
+                        be ignored during migration (supported by MySQL only at the
+                        moment)
+                    method:
+                      "$ref": "#/components/schemas/enum-migration-method"
+                      description: The migration method to be used
+                  required:
+                  - host
+                  - port
+                  description: Migrate data from existing server
+                valkey-settings:
+                  "$ref": "#/components/schemas/json-schema-valkey"
+                  description: Valkey.conf settings
+                fork-from-service:
+                  "$ref": "#/components/schemas/dbaas-service-name"
+                  description: Service to fork from
+                recovery-backup-name:
+                  type: string
+                  minLength: 1
+                  description: Name of a backup to recover from for services that
+                    support backup names
+              required:
+              - plan
+      operationId: create-dbaas-service-valkey
+    put:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: Update a DBaaS Valkey service
+      parameters:
+      - in: path
+        required: true
+        name: name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      summary: ''
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                maintenance:
+                  type: object
+                  properties:
+                    dow:
+                      type: string
+                      enum:
+                      - saturday
+                      - tuesday
+                      - never
+                      - wednesday
+                      - sunday
+                      - friday
+                      - monday
+                      - thursday
+                      description: Day of week for installing updates
+                    time:
+                      type: string
+                      maxLength: 8
+                      minLength: 8
+                      description: Time for installing updates, UTC
+                  required:
+                  - dow
+                  - time
+                  description: Automatic maintenance settings
+                plan:
+                  type: string
+                  maxLength: 128
+                  minLength: 1
+                  description: Subscription plan
+                termination-protection:
+                  type: boolean
+                  description: Service is protected against termination and powering
+                    off
+                ip-filter:
+                  type: array
+                  items:
+                    type: string
+                  description: Allow incoming connections from CIDR address block,
+                    e.g. '10.20.0.0/16'
+                migration:
+                  type: object
+                  properties:
+                    host:
+                      type: string
+                      maxLength: 255
+                      minLength: 1
+                      description: Hostname or IP address of the server where to migrate
+                        data from
+                    port:
+                      type: integer
+                      format: int64
+                      minimum: 1
+                      maximum: 65535
+                      exclusiveMinimum: false
+                      exclusiveMaximum: false
+                      description: Port number of the server where to migrate data
+                        from
+                    password:
+                      type: string
+                      maxLength: 255
+                      minLength: 1
+                      description: Password for authentication with the server where
+                        to migrate data from
+                    ssl:
+                      type: boolean
+                      description: The server where to migrate data from is secured
+                        with SSL
+                    username:
+                      type: string
+                      maxLength: 255
+                      minLength: 1
+                      description: User name for authentication with the server where
+                        to migrate data from
+                    dbname:
+                      type: string
+                      maxLength: 63
+                      minLength: 1
+                      description: Database name for bootstrapping the initial connection
+                    ignore-dbs:
+                      type: string
+                      maxLength: 2048
+                      minLength: 1
+                      description: Comma-separated list of databases, which should
+                        be ignored during migration (supported by MySQL only at the
+                        moment)
+                    method:
+                      "$ref": "#/components/schemas/enum-migration-method"
+                      description: The migration method to be used
+                  required:
+                  - host
+                  - port
+                  description: Migrate data from existing server
+                valkey-settings:
+                  "$ref": "#/components/schemas/json-schema-valkey"
+                  description: Valkey.conf settings
+      operationId: update-dbaas-service-valkey
   "/dbaas-redis/{name}/migration/stop":
     post:
       tags:
@@ -16181,6 +16557,26 @@ paths:
               - disk-size
               - instance-type
       operationId: create-sks-nodepool
+  "/dbaas-redis/{name}/upgrade-type":
+    put:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: 
+      parameters:
+      - in: path
+        required: true
+        name: name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      summary: Initiate Redis upgrade to Valkey
+      operationId: start-dbaas-redis-to-valkey-upgrade
   "/dbaas-external-endpoint-elasticsearch/{name}":
     post:
       tags:
@@ -16342,6 +16738,26 @@ paths:
           "$ref": "#/components/schemas/dbaas-user-username"
       summary: Reveal the secrets of a DBaaS OpenSearch user
       operationId: reveal-dbaas-opensearch-user-password
+  "/dbaas-valkey/{name}/maintenance/start":
+    put:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: 
+      parameters:
+      - in: path
+        required: true
+        name: name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      summary: Initiate Valkey maintenance update
+      operationId: start-dbaas-valkey-maintenance
   "/dbaas-opensearch/{name}":
     post:
       tags:
@@ -17103,6 +17519,31 @@ paths:
               required:
               - plan
       operationId: create-dbaas-service-redis
+  "/dbaas-valkey/{service-name}/user/{username}/password/reveal":
+    get:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/dbaas-user-valkey-secrets"
+      description: 
+      parameters:
+      - in: path
+        required: true
+        name: service-name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      - in: path
+        required: true
+        name: username
+        schema:
+          "$ref": "#/components/schemas/dbaas-user-username"
+      summary: Reveal the secrets of a DBaaS Valkey user
+      operationId: reveal-dbaas-valkey-user-password
   "/dbaas-postgres/{name}":
     put:
       tags:
@@ -17561,6 +18002,38 @@ paths:
           type: string
       summary: Delete a Postgres service
       operationId: delete-dbaas-service-pg
+  "/dbaas-valkey/{service-name}/user":
+    post:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: 
+      parameters:
+      - in: path
+        required: true
+        name: service-name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      summary: Create a DBaaS Valkey user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  "$ref": "#/components/schemas/dbaas-user-username"
+                  description: Username
+              required:
+              - username
+      operationId: create-dbaas-valkey-user
   "/dbaas-integration":
     post:
       tags:

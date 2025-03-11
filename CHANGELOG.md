@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Unrelease
+----------
+- v3: tune `Not Found` responses for `show` commands #683
+
 3.1.10
 ----------
 - v3: Support for finding InstanceTypes by family and size #681

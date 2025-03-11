@@ -283,8 +283,7 @@ func (l {{ .ListTypeName }}) Find{{ .TypeName }}({{ .ParamName }} string) ({{ .T
 	if len(result) > 1 {
 		return {{ .TypeName }}{}, fmt.Errorf("%q too many found in {{ .ListTypeName }}: %w", {{ .ParamName }}, ErrConflict)
 	}
-
-	return {{ .TypeName }}{}, fmt.Errorf("%q not found in {{ .ListTypeName }}: %w", {{ .ParamName }}, ErrNotFound)
+	return {{ .TypeName }}{}, fmt.Errorf("%q : %w", {{ .ParamName }}, ErrNotFound)
 }
 `
 

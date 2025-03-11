@@ -437,6 +437,16 @@ components:
         settings:
           "$ref": "#/components/schemas/dbaas-endpoint-elasticsearch-optional-fields"
           description: External integration ElasticSearch logs configuration
+    dbaas-user-valkey-secrets:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Valkey username
+        password:
+          type: string
+          description: Valkey password
+      description: Valkey User secrets
     dbaas-endpoint-rsyslog-input-update:
       type: object
       properties:

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Unrelease
+----------
+- v3: fix `Not Found` responses for `show` commands #683
+
 3.1.14
 ------
 

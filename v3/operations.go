@@ -31,8 +31,7 @@ func (l ListAntiAffinityGroupsResponse) FindAntiAffinityGroup(nameOrID string) (
 	if len(result) > 1 {
 		return AntiAffinityGroup{}, fmt.Errorf("%q too many found in ListAntiAffinityGroupsResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return AntiAffinityGroup{}, fmt.Errorf("%q not found in ListAntiAffinityGroupsResponse: %w", nameOrID, ErrNotFound)
+	return AntiAffinityGroup{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // List Anti-affinity Groups
@@ -244,8 +243,7 @@ func (l ListAPIKeysResponse) FindIAMAPIKey(nameOrKey string) (IAMAPIKey, error) 
 	if len(result) > 1 {
 		return IAMAPIKey{}, fmt.Errorf("%q too many found in ListAPIKeysResponse: %w", nameOrKey, ErrConflict)
 	}
-
-	return IAMAPIKey{}, fmt.Errorf("%q not found in ListAPIKeysResponse: %w", nameOrKey, ErrNotFound)
+	return IAMAPIKey{}, fmt.Errorf("%q : %w", nameOrKey, ErrNotFound)
 }
 
 // List API keys
@@ -457,8 +455,7 @@ func (l ListBlockStorageVolumesResponse) FindBlockStorageVolume(nameOrID string)
 	if len(result) > 1 {
 		return BlockStorageVolume{}, fmt.Errorf("%q too many found in ListBlockStorageVolumesResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return BlockStorageVolume{}, fmt.Errorf("%q not found in ListBlockStorageVolumesResponse: %w", nameOrID, ErrNotFound)
+	return BlockStorageVolume{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 type ListBlockStorageVolumesOpt func(url.Values)
@@ -602,8 +599,7 @@ func (l ListBlockStorageSnapshotsResponse) FindBlockStorageSnapshot(nameOrID str
 	if len(result) > 1 {
 		return BlockStorageSnapshot{}, fmt.Errorf("%q too many found in ListBlockStorageSnapshotsResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return BlockStorageSnapshot{}, fmt.Errorf("%q not found in ListBlockStorageSnapshotsResponse: %w", nameOrID, ErrNotFound)
+	return BlockStorageSnapshot{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // List block storage snapshots
@@ -2387,8 +2383,7 @@ func (l ListDBAASExternalEndpointsResponse) FindDBAASExternalEndpoint(nameOrID s
 	if len(result) > 1 {
 		return DBAASExternalEndpoint{}, fmt.Errorf("%q too many found in ListDBAASExternalEndpointsResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return DBAASExternalEndpoint{}, fmt.Errorf("%q not found in ListDBAASExternalEndpointsResponse: %w", nameOrID, ErrNotFound)
+	return DBAASExternalEndpoint{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // [BETA] List available external endpoints for integrations
@@ -7317,8 +7312,7 @@ func (l ListDBAASServicesResponse) FindDBAASServiceCommon(name string) (DBAASSer
 	if len(result) > 1 {
 		return DBAASServiceCommon{}, fmt.Errorf("%q too many found in ListDBAASServicesResponse: %w", name, ErrConflict)
 	}
-
-	return DBAASServiceCommon{}, fmt.Errorf("%q not found in ListDBAASServicesResponse: %w", name, ErrNotFound)
+	return DBAASServiceCommon{}, fmt.Errorf("%q : %w", name, ErrNotFound)
 }
 
 // List DBaaS services
@@ -7513,8 +7507,7 @@ func (l ListDBAASServiceTypesResponse) FindDBAASServiceType(name string) (DBAASS
 	if len(result) > 1 {
 		return DBAASServiceType{}, fmt.Errorf("%q too many found in ListDBAASServiceTypesResponse: %w", name, ErrConflict)
 	}
-
-	return DBAASServiceType{}, fmt.Errorf("%q not found in ListDBAASServiceTypesResponse: %w", name, ErrNotFound)
+	return DBAASServiceType{}, fmt.Errorf("%q : %w", name, ErrNotFound)
 }
 
 // List available service types for DBaaS
@@ -8197,8 +8190,7 @@ func (l ListDeployTargetsResponse) FindDeployTarget(nameOrID string) (DeployTarg
 	if len(result) > 1 {
 		return DeployTarget{}, fmt.Errorf("%q too many found in ListDeployTargetsResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return DeployTarget{}, fmt.Errorf("%q not found in ListDeployTargetsResponse: %w", nameOrID, ErrNotFound)
+	return DeployTarget{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // List Deploy Targets
@@ -8308,8 +8300,7 @@ func (l ListDNSDomainsResponse) FindDNSDomain(idOrUnicodeName string) (DNSDomain
 	if len(result) > 1 {
 		return DNSDomain{}, fmt.Errorf("%q too many found in ListDNSDomainsResponse: %w", idOrUnicodeName, ErrConflict)
 	}
-
-	return DNSDomain{}, fmt.Errorf("%q not found in ListDNSDomainsResponse: %w", idOrUnicodeName, ErrNotFound)
+	return DNSDomain{}, fmt.Errorf("%q : %w", idOrUnicodeName, ErrNotFound)
 }
 
 // List DNS domains
@@ -8432,8 +8423,7 @@ func (l ListDNSDomainRecordsResponse) FindDNSDomainRecord(nameOrID string) (DNSD
 	if len(result) > 1 {
 		return DNSDomainRecord{}, fmt.Errorf("%q too many found in ListDNSDomainRecordsResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return DNSDomainRecord{}, fmt.Errorf("%q not found in ListDNSDomainRecordsResponse: %w", nameOrID, ErrNotFound)
+	return DNSDomainRecord{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // List DNS domain records
@@ -8869,8 +8859,7 @@ func (l ListElasticIPSResponse) FindElasticIP(idOrIP string) (ElasticIP, error) 
 	if len(result) > 1 {
 		return ElasticIP{}, fmt.Errorf("%q too many found in ListElasticIPSResponse: %w", idOrIP, ErrConflict)
 	}
-
-	return ElasticIP{}, fmt.Errorf("%q not found in ListElasticIPSResponse: %w", idOrIP, ErrNotFound)
+	return ElasticIP{}, fmt.Errorf("%q : %w", idOrIP, ErrNotFound)
 }
 
 // List Elastic IPs
@@ -9520,8 +9509,7 @@ func (l ListIAMRolesResponse) FindIAMRole(nameOrID string) (IAMRole, error) {
 	if len(result) > 1 {
 		return IAMRole{}, fmt.Errorf("%q too many found in ListIAMRolesResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return IAMRole{}, fmt.Errorf("%q not found in ListIAMRolesResponse: %w", nameOrID, ErrNotFound)
+	return IAMRole{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // List IAM Roles
@@ -9891,8 +9879,7 @@ func (l ListInstancesResponse) FindListInstancesResponseInstances(nameOrID strin
 	if len(result) > 1 {
 		return ListInstancesResponseInstances{}, fmt.Errorf("%q too many found in ListInstancesResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return ListInstancesResponseInstances{}, fmt.Errorf("%q not found in ListInstancesResponse: %w", nameOrID, ErrNotFound)
+	return ListInstancesResponseInstances{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 type ListInstancesManagerType string
@@ -10072,8 +10059,7 @@ func (l ListInstancePoolsResponse) FindInstancePool(nameOrID string) (InstancePo
 	if len(result) > 1 {
 		return InstancePool{}, fmt.Errorf("%q too many found in ListInstancePoolsResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return InstancePool{}, fmt.Errorf("%q not found in ListInstancePoolsResponse: %w", nameOrID, ErrNotFound)
+	return InstancePool{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // List Instance Pools
@@ -10592,8 +10578,7 @@ func (l ListInstanceTypesResponse) FindInstanceType(id string) (InstanceType, er
 	if len(result) > 1 {
 		return InstanceType{}, fmt.Errorf("%q too many found in ListInstanceTypesResponse: %w", id, ErrConflict)
 	}
-
-	return InstanceType{}, fmt.Errorf("%q not found in ListInstanceTypesResponse: %w", id, ErrNotFound)
+	return InstanceType{}, fmt.Errorf("%q : %w", id, ErrNotFound)
 }
 
 // List Compute instance Types
@@ -11503,8 +11488,7 @@ func (l ListLoadBalancersResponse) FindLoadBalancer(nameOrID string) (LoadBalanc
 	if len(result) > 1 {
 		return LoadBalancer{}, fmt.Errorf("%q too many found in ListLoadBalancersResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return LoadBalancer{}, fmt.Errorf("%q not found in ListLoadBalancersResponse: %w", nameOrID, ErrNotFound)
+	return LoadBalancer{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // List Load Balancers
@@ -12221,8 +12205,7 @@ func (l ListPrivateNetworksResponse) FindPrivateNetwork(nameOrID string) (Privat
 	if len(result) > 1 {
 		return PrivateNetwork{}, fmt.Errorf("%q too many found in ListPrivateNetworksResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return PrivateNetwork{}, fmt.Errorf("%q not found in ListPrivateNetworksResponse: %w", nameOrID, ErrNotFound)
+	return PrivateNetwork{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // List Private Networks
@@ -13120,8 +13103,7 @@ func (l ListSecurityGroupsResponse) FindSecurityGroup(nameOrID string) (Security
 	if len(result) > 1 {
 		return SecurityGroup{}, fmt.Errorf("%q too many found in ListSecurityGroupsResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return SecurityGroup{}, fmt.Errorf("%q not found in ListSecurityGroupsResponse: %w", nameOrID, ErrNotFound)
+	return SecurityGroup{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 type ListSecurityGroupsVisibility string
@@ -13723,8 +13705,7 @@ func (l ListSKSClustersResponse) FindSKSCluster(nameOrID string) (SKSCluster, er
 	if len(result) > 1 {
 		return SKSCluster{}, fmt.Errorf("%q too many found in ListSKSClustersResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return SKSCluster{}, fmt.Errorf("%q not found in ListSKSClustersResponse: %w", nameOrID, ErrNotFound)
+	return SKSCluster{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // List SKS clusters
@@ -14968,8 +14949,7 @@ func (l ListSnapshotsResponse) FindSnapshot(nameOrID string) (Snapshot, error) {
 	if len(result) > 1 {
 		return Snapshot{}, fmt.Errorf("%q too many found in ListSnapshotsResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return Snapshot{}, fmt.Errorf("%q not found in ListSnapshotsResponse: %w", nameOrID, ErrNotFound)
+	return Snapshot{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 // List Snapshots
@@ -15231,8 +15211,7 @@ func (l ListSOSBucketsUsageResponse) FindSOSBucketUsage(name string) (SOSBucketU
 	if len(result) > 1 {
 		return SOSBucketUsage{}, fmt.Errorf("%q too many found in ListSOSBucketsUsageResponse: %w", name, ErrConflict)
 	}
-
-	return SOSBucketUsage{}, fmt.Errorf("%q not found in ListSOSBucketsUsageResponse: %w", name, ErrNotFound)
+	return SOSBucketUsage{}, fmt.Errorf("%q : %w", name, ErrNotFound)
 }
 
 // List SOS Buckets Usage
@@ -15362,8 +15341,7 @@ func (l ListSSHKeysResponse) FindSSHKey(nameOrFingerprint string) (SSHKey, error
 	if len(result) > 1 {
 		return SSHKey{}, fmt.Errorf("%q too many found in ListSSHKeysResponse: %w", nameOrFingerprint, ErrConflict)
 	}
-
-	return SSHKey{}, fmt.Errorf("%q not found in ListSSHKeysResponse: %w", nameOrFingerprint, ErrNotFound)
+	return SSHKey{}, fmt.Errorf("%q : %w", nameOrFingerprint, ErrNotFound)
 }
 
 // List SSH keys
@@ -15575,8 +15553,7 @@ func (l ListTemplatesResponse) FindTemplate(nameOrID string) (Template, error) {
 	if len(result) > 1 {
 		return Template{}, fmt.Errorf("%q too many found in ListTemplatesResponse: %w", nameOrID, ErrConflict)
 	}
-
-	return Template{}, fmt.Errorf("%q not found in ListTemplatesResponse: %w", nameOrID, ErrNotFound)
+	return Template{}, fmt.Errorf("%q : %w", nameOrID, ErrNotFound)
 }
 
 type ListTemplatesVisibility string
@@ -15958,8 +15935,7 @@ func (l ListUsersResponse) FindUser(id string) (User, error) {
 	if len(result) > 1 {
 		return User{}, fmt.Errorf("%q too many found in ListUsersResponse: %w", id, ErrConflict)
 	}
-
-	return User{}, fmt.Errorf("%q not found in ListUsersResponse: %w", id, ErrNotFound)
+	return User{}, fmt.Errorf("%q : %w", id, ErrNotFound)
 }
 
 // List Users
@@ -16183,8 +16159,7 @@ func (l ListZonesResponse) FindZone(nameOrAPIEndpoint string) (Zone, error) {
 	if len(result) > 1 {
 		return Zone{}, fmt.Errorf("%q too many found in ListZonesResponse: %w", nameOrAPIEndpoint, ErrConflict)
 	}
-
-	return Zone{}, fmt.Errorf("%q not found in ListZonesResponse: %w", nameOrAPIEndpoint, ErrNotFound)
+	return Zone{}, fmt.Errorf("%q : %w", nameOrAPIEndpoint, ErrNotFound)
 }
 
 // List Zones

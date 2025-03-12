@@ -12460,6 +12460,37 @@ paths:
           format: uuid
       summary: Upgrade a SKS cluster to pro
       operationId: upgrade-sks-cluster-service-level
+  "/dbaas-settings-valkey":
+    get:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  settings:
+                    type: object
+                    properties:
+                      valkey:
+                        type: object
+                        properties:
+                          properties:
+                            type: object
+                          additionalProperties:
+                            type: boolean
+                          type:
+                            type: string
+                          title:
+                            type: string
+                        description: Valkey configuration values
+      description: Returns the default settings for Valkey.
+      parameters: []
+      summary: Get DBaaS Valkey settings
+      operationId: get-dbaas-settings-valkey
   "/api-key/{id}":
     delete:
       tags:

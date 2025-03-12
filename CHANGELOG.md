@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.1.11
+----------
+- v3: DBaaS Valkey #682
+
 3.1.10
 ----------
 - v3: Support for finding InstanceTypes by family and size #681

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.1.12
+----------
+- v3: DBaaS Valkey Settings #684
+
 3.1.11
 ----------
 - v3: DBaaS Valkey #682

@@ -8119,6 +8119,67 @@ func (c Client) GetDBAASSettingsRedis(ctx context.Context) (*GetDBAASSettingsRed
 	return bodyresp, nil
 }
 
+// Valkey configuration values
+type GetDBAASSettingsValkeyResponseSettingsValkey struct {
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
+}
+
+type GetDBAASSettingsValkeyResponseSettings struct {
+	// Valkey configuration values
+	Valkey *GetDBAASSettingsValkeyResponseSettingsValkey `json:"valkey,omitempty"`
+}
+
+type GetDBAASSettingsValkeyResponse struct {
+	Settings *GetDBAASSettingsValkeyResponseSettings `json:"settings,omitempty"`
+}
+
+// Returns the default settings for Valkey.
+func (c Client) GetDBAASSettingsValkey(ctx context.Context) (*GetDBAASSettingsValkeyResponse, error) {
+	path := "/dbaas-settings-valkey"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsValkey: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsValkey: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsValkey: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-settings-valkey")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsValkey: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsValkey: http response: %w", err)
+	}
+
+	bodyresp := &GetDBAASSettingsValkeyResponse{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsValkey: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type CreateDBAASTaskMigrationCheckRequest struct {
 	// Comma-separated list of databases, which should be ignored during migration (supported by MySQL only at the moment)
 	IgnoreDbs string              `json:"ignore-dbs,omitempty" validate:"omitempty,gte=1,lte=2048"`

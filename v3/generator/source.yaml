@@ -14586,7 +14586,6 @@ paths:
                   items:
                     type: string
                   uniqueItems: true
-                  nullable: true
                   description: A list of Kubernetes-only Alpha features to enable
                     for API server component
                 addons:
@@ -14911,7 +14910,6 @@ paths:
                   items:
                     type: string
                   uniqueItems: true
-                  nullable: true
                   description: A list of Kubernetes-only Alpha features to enable
                     for API server component
                 enable-operators-ca:
@@ -14924,6 +14922,7 @@ paths:
     get:
       tags:
       - quotas
+      - ccm
       responses:
         '200':
           description: '200'

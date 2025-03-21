@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.1.13
+------
+
+- Disallow `null` in **create-sks-cluster** `feature-gate` (#686)
+
 3.1.12
 ----------
 - v3: DBaaS Valkey Settings #684

@@ -2667,6 +2667,7 @@ components:
           type: string
           enum:
           - gpu3
+          - gpua30
           - gpu3080ti
           - gpu2
           - gpu
@@ -2903,6 +2904,19 @@ components:
           minimum: 0
           exclusiveMinimum: false
           description: Number of CPUs for each node
+        prometheus-uri:
+          type: object
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+              format: int64
+              minimum: 0
+              maximum: 65535
+              exclusiveMinimum: false
+              exclusiveMaximum: false
+          description: Prometheus integration URI
         integrations:
           type: array
           items:
@@ -3032,6 +3046,7 @@ components:
       - name
       - plan
       - type
+      - prometheus-uri
     dbaas-service-kafka:
       type: object
       properties:
@@ -3082,6 +3097,19 @@ components:
         kafka-rest-enabled:
           type: boolean
           description: Whether Kafka REST is enabled
+        prometheus-uri:
+          type: object
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+              format: int64
+              minimum: 0
+              maximum: 65535
+              exclusiveMinimum: false
+              exclusiveMaximum: false
+          description: Prometheus integration URI
         integrations:
           type: array
           items:
@@ -3230,6 +3258,7 @@ components:
       - name
       - plan
       - type
+      - prometheus-uri
     json-schema-valkey:
       properties:
         ssl:
@@ -4196,6 +4225,19 @@ components:
           minimum: 0
           exclusiveMinimum: false
           description: Number of CPUs for each node
+        prometheus-uri:
+          type: object
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+              format: int64
+              minimum: 0
+              maximum: 65535
+              exclusiveMinimum: false
+              exclusiveMaximum: false
+          description: Prometheus integration URI
         integrations:
           type: array
           items:
@@ -4400,6 +4442,7 @@ components:
       - name
       - plan
       - type
+      - prometheus-uri
     dbaas-integration:
       type: object
       properties:
@@ -5141,6 +5184,10 @@ components:
           maxLength: 255
           minLength: 1
           description: Cluster name
+        enable-operators-ca:
+          type: boolean
+          description: Indicates whether to add operators certificate authority (CA)
+            as part of trusted CAs for the API server.
         state:
           type: string
           enum:
@@ -5154,6 +5201,9 @@ components:
           - error
           readOnly: true
           description: Cluster state
+        enable-kube-proxy:
+          type: boolean
+          description: Indicates whether to deploy the Kubernetes network proxy.
         nodepools:
           type: array
           items:
@@ -5166,6 +5216,13 @@ components:
           - starter
           - pro
           description: Cluster level
+        feature-gates:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+          description: A list of Kubernetes-only Alpha features to enable for API
+            server component
         addons:
           type: array
           items:
@@ -5642,6 +5699,19 @@ components:
           minimum: 0
           exclusiveMinimum: false
           description: Number of CPUs for each node
+        prometheus-uri:
+          type: object
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+              format: int64
+              minimum: 0
+              maximum: 65535
+              exclusiveMinimum: false
+              exclusiveMaximum: false
+          description: Prometheus integration URI
         integrations:
           type: array
           items:
@@ -5764,6 +5834,7 @@ components:
       - name
       - plan
       - type
+      - prometheus-uri
     enum-migration-status:
       type: string
       enum:
@@ -6020,6 +6091,19 @@ components:
           minimum: 0
           exclusiveMinimum: false
           description: Number of CPUs for each node
+        prometheus-uri:
+          type: object
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+              format: int64
+              minimum: 0
+              maximum: 65535
+              exclusiveMinimum: false
+              exclusiveMaximum: false
+          description: Prometheus integration URI
         integrations:
           type: array
           items:
@@ -6167,6 +6251,7 @@ components:
       - name
       - plan
       - type
+      - prometheus-uri
     zone-name:
       type: string
       enum:
@@ -6270,6 +6355,19 @@ components:
           minimum: 0
           exclusiveMinimum: false
           description: Number of CPUs for each node
+        prometheus-uri:
+          type: object
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+              format: int64
+              minimum: 0
+              maximum: 65535
+              exclusiveMinimum: false
+              exclusiveMaximum: false
+          description: Prometheus integration URI
         integrations:
           type: array
           items:
@@ -6485,6 +6583,7 @@ components:
       - name
       - plan
       - type
+      - prometheus-uri
     manager:
       type: object
       properties:
@@ -6942,6 +7041,19 @@ components:
           minimum: 0
           exclusiveMinimum: false
           description: Number of CPUs for each node
+        prometheus-uri:
+          type: object
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+              format: int64
+              minimum: 0
+              maximum: 65535
+              exclusiveMinimum: false
+              exclusiveMaximum: false
+          description: Prometheus integration URI
         integrations:
           type: array
           items:
@@ -7089,6 +7201,7 @@ components:
       - name
       - plan
       - type
+      - prometheus-uri
     json-schema-timescaledb:
       description: System-wide settings for the timescaledb extension
       properties:
@@ -11305,6 +11418,27 @@ paths:
                   description: 'Boot in Rescue Mode, using named profile (supported:
                     netboot, netboot-efi)'
       operationId: start-instance
+  "/instance/{id}:enable-tpm":
+    post:
+      tags:
+      - instance
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: ''
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: "[Beta] Enable tpm for the instance."
+      operationId: enable-tpm
   "/organization":
     get:
       tags:
@@ -18338,6 +18472,9 @@ paths:
                 template:
                   "$ref": "#/components/schemas/template"
                   description: Instance Template
+                secureboot-enabled:
+                  type: boolean
+                  description: "[Beta] Enable secure boot"
                 ssh-key:
                   "$ref": "#/components/schemas/ssh-key"
                   description: Instance SSH Key
@@ -18346,6 +18483,9 @@ paths:
                   maxLength: 32768
                   minLength: 1
                   description: Instance Cloud-init user-data (base64 encoded)
+                tpm-enabled:
+                  type: boolean
+                  description: "[Beta] Enable Trusted Platform Module (TPM)"
                 deploy-target:
                   "$ref": "#/components/schemas/deploy-target"
                   description: Instance Deploy Target

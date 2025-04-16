@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.1.14
+------
+
+- v3: Prometheus URI for Grafana DBAAS, feature-gates as new readable attribute for SKS clusters and enable secureboot/tpm for instances (beta)
+
 3.1.13
 ------
 

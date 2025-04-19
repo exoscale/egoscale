@@ -9988,6 +9988,81 @@ func (c Client) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req De
 	return bodyresp, nil
 }
 
+type GetEnvImpactResponseEnvImpactTotal struct {
+	// Impact Amount
+	Amount float64 `json:"amount,omitempty"`
+	// Impact Unit
+	Unit string `json:"unit,omitempty"`
+}
+
+type GetEnvImpactResponseEnvImpact struct {
+	Total *GetEnvImpactResponseEnvImpactTotal `json:"total,omitempty"`
+}
+
+type GetEnvImpactResponse struct {
+	EnvImpact map[string]GetEnvImpactResponseEnvImpact `json:"env_impact,omitempty"`
+}
+
+type GetEnvImpactOpt func(url.Values)
+
+func GetEnvImpactWithPeriod(period string) GetEnvImpactOpt {
+	return func(q url.Values) {
+		q.Add("period", fmt.Sprint(period))
+	}
+}
+
+// [BETA] Returns environmental impact reports for an organization
+func (c Client) GetEnvImpact(ctx context.Context, opts ...GetEnvImpactOpt) (*GetEnvImpactResponse, error) {
+	path := "/env-impact"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetEnvImpact: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if len(opts) > 0 {
+		q := request.URL.Query()
+		for _, opt := range opts {
+			opt(q)
+		}
+		request.URL.RawQuery = q.Encode()
+	}
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetEnvImpact: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetEnvImpact: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-env-impact")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetEnvImpact: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetEnvImpact: http response: %w", err)
+	}
+
+	bodyresp := &GetEnvImpactResponse{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetEnvImpact: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type ListEventsOpt func(url.Values)
 
 func ListEventsWithFrom(from time.Time) ListEventsOpt {
@@ -16678,6 +16753,88 @@ func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateR
 	bodyresp := &Operation{}
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Usage
+type GetUsageReportResponseUsage struct {
+	// Description
+	Description string `json:"description,omitempty"`
+	// Period Start Date
+	From string `json:"from,omitempty"`
+	// Product
+	Product string `json:"product,omitempty"`
+	// Quantity
+	Quantity string `json:"quantity,omitempty"`
+	// Period End Date
+	To string `json:"to,omitempty"`
+	// Unit
+	Unit string `json:"unit,omitempty"`
+	// Variable
+	Variable string `json:"variable,omitempty"`
+}
+
+type GetUsageReportResponse struct {
+	Usage []GetUsageReportResponseUsage `json:"usage,omitempty"`
+}
+
+type GetUsageReportOpt func(url.Values)
+
+func GetUsageReportWithPeriod(period string) GetUsageReportOpt {
+	return func(q url.Values) {
+		q.Add("period", fmt.Sprint(period))
+	}
+}
+
+// Returns aggregated usage reports for an organization
+func (c Client) GetUsageReport(ctx context.Context, opts ...GetUsageReportOpt) (*GetUsageReportResponse, error) {
+	path := "/usage-report"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetUsageReport: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if len(opts) > 0 {
+		q := request.URL.Query()
+		for _, opt := range opts {
+			opt(q)
+		}
+		request.URL.RawQuery = q.Encode()
+	}
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetUsageReport: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetUsageReport: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-usage-report")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetUsageReport: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetUsageReport: http response: %w", err)
+	}
+
+	bodyresp := &GetUsageReportResponse{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetUsageReport: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil

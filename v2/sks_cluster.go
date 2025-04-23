@@ -417,6 +417,29 @@ func (c *Client) RotateSKSClusterCCMCredentials(ctx context.Context, zone string
 	return nil
 }
 
+// RotateSKSClusterCSICredentials rotates the Exoscale IAM credentials managed by the SKS control plane for the
+// Kubernetes Exoscale Container Storage Interface Addon.
+func (c *Client) RotateSKSClusterCSICredentials(ctx context.Context, zone string, cluster *SKSCluster) error {
+	if err := validateOperationParams(cluster, "update"); err != nil {
+		return err
+	}
+
+	resp, err := c.RotateSksCsiCredentialsWithResponse(apiv2.WithZone(ctx, zone), *cluster.ID)
+	if err != nil {
+		return err
+	}
+
+	_, err = oapi.NewPoller().
+		WithTimeout(c.timeout).
+		WithInterval(c.pollInterval).
+		Poll(ctx, oapi.OperationPoller(c, zone, *resp.JSON200.Id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UpdateSKSCluster updates an SKS cluster.
 func (c *Client) UpdateSKSCluster(ctx context.Context, zone string, cluster *SKSCluster) error {
 	if err := validateOperationParams(cluster, "update"); err != nil {

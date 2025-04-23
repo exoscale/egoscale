@@ -3631,6 +3631,7 @@ type SKSClusterState string
 
 const (
 	SKSClusterStateRotatingCcmCredentials SKSClusterState = "rotating-ccm-credentials"
+	SKSClusterStateRotatingCsiCredentials SKSClusterState = "rotating-csi-credentials"
 	SKSClusterStateCreating               SKSClusterState = "creating"
 	SKSClusterStateUpgrading              SKSClusterState = "upgrading"
 	SKSClusterStateDeleting               SKSClusterState = "deleting"

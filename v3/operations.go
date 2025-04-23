@@ -15573,6 +15573,50 @@ func (c Client) RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Operatio
 	return bodyresp, nil
 }
 
+// Rotate Exoscale CCM credentials
+func (c Client) RotateSKSCsiCredentials(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/sks-cluster/%v/rotate-csi-credentials", id)
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RotateSKSCsiCredentials: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RotateSKSCsiCredentials: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RotateSKSCsiCredentials: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "rotate-sks-csi-credentials")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RotateSKSCsiCredentials: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RotateSKSCsiCredentials: http response: %w", err)
+	}
+
+	bodyresp := &Operation{}
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RotateSKSCsiCredentials: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Rotate operators certificate authority
 func (c Client) RotateSKSOperatorsCA(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/rotate-operators-ca", id)

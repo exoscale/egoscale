@@ -643,6 +643,50 @@ func (ts *testSuite) TestClient_RotateSKSClusterCCMCredentials() {
 	ts.Require().True(rotated)
 }
 
+func (ts *testSuite) TestClient_RotateSKSClusterCSICredentials() {
+	var (
+		testOperationID    = ts.randomID()
+		testOperationState = oapi.OperationStateSuccess
+		rotated            = false
+	)
+
+	cluster := &SKSCluster{
+		ID: &testSKSClusterID,
+	}
+
+	ts.mock().
+		On(
+			"RotateSksCsiCredentialsWithResponse",
+			mock.Anything,                 // ctx
+			mock.Anything,                 // id
+			([]oapi.RequestEditorFn)(nil), // reqEditors
+		).
+		Run(func(args mock.Arguments) {
+			ts.Require().Equal(testSKSClusterID, args.Get(1))
+			rotated = true
+		}).
+		Return(
+			&oapi.RotateSksCsiCredentialsResponse{
+				HTTPResponse: &http.Response{StatusCode: http.StatusOK},
+				JSON200: &oapi.Operation{
+					Id:        &testOperationID,
+					Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+					State:     &testOperationState,
+				},
+			},
+			nil,
+		)
+
+	ts.mockGetOperation(&oapi.Operation{
+		Id:        &testOperationID,
+		Reference: oapi.NewReference(nil, &testSKSClusterID, nil),
+		State:     &testOperationState,
+	})
+
+	ts.Require().NoError(ts.client.RotateSKSClusterCSICredentials(context.Background(), testZone, cluster))
+	ts.Require().True(rotated)
+}
+
 func (ts *testSuite) TestClient_UpdateSKSCluster() {
 	var (
 		testSKSClusterAutoUpgradeUpdated = false

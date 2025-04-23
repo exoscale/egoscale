@@ -828,6 +828,15 @@ func (m *oapiClientMock) RotateSksCcmCredentialsWithResponse(
 	return args.Get(0).(*oapi.RotateSksCcmCredentialsResponse), args.Error(1)
 }
 
+func (m *oapiClientMock) RotateSksCsiCredentialsWithResponse(
+	ctx context.Context,
+	id string,
+	reqEditors ...oapi.RequestEditorFn,
+) (*oapi.RotateSksCsiCredentialsResponse, error) {
+	args := m.Called(ctx, id, reqEditors)
+	return args.Get(0).(*oapi.RotateSksCsiCredentialsResponse), args.Error(1)
+}
+
 func (m *oapiClientMock) ScaleInstanceWithResponse(
 	ctx context.Context,
 	id string,

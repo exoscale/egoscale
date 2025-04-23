@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- feature: SKS: add SKSCluster.RotateCSICredentials() method
+
 3.1.15
 ------
 

@@ -398,6 +398,10 @@ components:
               minLength: 5
               pattern: "^[a-z0-9\\-@_]{5,32}$"
               description: Prometheus basic authentication username
+    sks-nodepool-labels:
+      type: object
+      additionalProperties:
+        type: string
     enum-component-route:
       type: string
       enum:
@@ -5167,7 +5171,7 @@ components:
           maxLength: 255
           description: Cluster description
         labels:
-          "$ref": "#/components/schemas/labels"
+          "$ref": "#/components/schemas/sks-cluster-labels"
           description: Cluster labels
         cni:
           type: string
@@ -5464,7 +5468,7 @@ components:
             * IPv4 (`inet4`) addressing only;
             * IPv4 and IPv6 (`dual`) addressing.
         labels:
-          "$ref": "#/components/schemas/labels"
+          "$ref": "#/components/schemas/sks-nodepool-labels"
           description: Nodepool labels
         taints:
           "$ref": "#/components/schemas/sks-nodepool-taints"
@@ -5570,6 +5574,10 @@ components:
           description: Tag value
       required:
       - tag
+    sks-cluster-labels:
+      type: object
+      additionalProperties:
+        type: string
     enum-integration-types:
       type: string
       enum:
@@ -8899,6 +8907,61 @@ paths:
               required:
               - name
       operationId: create-anti-affinity-group
+  "/usage-report":
+    get:
+      tags:
+      - organization
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  usage:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        from:
+                          type: string
+                          readOnly: true
+                          description: Period Start Date
+                        to:
+                          type: string
+                          readOnly: true
+                          description: Period End Date
+                        product:
+                          type: string
+                          readOnly: true
+                          description: Product
+                        variable:
+                          type: string
+                          readOnly: true
+                          description: Variable
+                        description:
+                          type: string
+                          readOnly: true
+                          description: Description
+                        quantity:
+                          type: string
+                          readOnly: true
+                          description: Quantity
+                        unit:
+                          type: string
+                          readOnly: true
+                          description: Unit
+                      description: Usage
+      description: Returns aggregated usage reports for an organization
+      parameters:
+      - in: query
+        required: false
+        name: period
+        schema:
+          type: string
+      summary: Retrieve organization usage reports
+      operationId: get-usage-report
   "/event":
     get:
       tags:
@@ -10867,7 +10930,7 @@ paths:
                     * IPv4 (`inet4`) addressing only;
                     * both IPv4 and IPv6 (`dual`) addressing.
                 labels:
-                  "$ref": "#/components/schemas/labels"
+                  "$ref": "#/components/schemas/sks-nodepool-labels"
                   description: Nodepool labels
                 taints:
                   "$ref": "#/components/schemas/sks-nodepool-taints"
@@ -14684,7 +14747,7 @@ paths:
                   nullable: true
                   description: Cluster description
                 labels:
-                  "$ref": "#/components/schemas/labels"
+                  "$ref": "#/components/schemas/sks-cluster-labels"
                   description: Cluster Labels
                 cni:
                   type: string
@@ -15019,7 +15082,7 @@ paths:
                   nullable: true
                   description: Cluster description
                 labels:
-                  "$ref": "#/components/schemas/labels"
+                  "$ref": "#/components/schemas/sks-cluster-labels"
                   description: Cluster labels
                 oidc:
                   "$ref": "#/components/schemas/sks-oidc"
@@ -16666,7 +16729,7 @@ paths:
                     * IPv4 (`inet4`) addressing only (default);
                     * both IPv4 and IPv6 (`dual`) addressing.
                 labels:
-                  "$ref": "#/components/schemas/labels"
+                  "$ref": "#/components/schemas/sks-nodepool-labels"
                   description: Nodepool labels
                 taints:
                   "$ref": "#/components/schemas/sks-nodepool-taints"
@@ -18981,6 +19044,43 @@ paths:
                   "$ref": "#/components/schemas/dbaas-user-password"
                   description: New password
       operationId: reset-dbaas-postgres-user-password
+  "/env-impact":
+    get:
+      tags:
+      - organization
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  env_impact:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        total:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              readOnly: true
+                              description: Impact Amount
+                            unit:
+                              type: string
+                              readOnly: true
+                              description: Impact Unit
+      description: "[BETA] Returns environmental impact reports for an organization"
+      parameters:
+      - in: query
+        required: false
+        name: period
+        schema:
+          type: string
+      summary: "[BETA] Retrieve organization environmental impact reports"
+      operationId: get-env-impact
 x-topics:
 - title: API Request Signature
   content: |2+

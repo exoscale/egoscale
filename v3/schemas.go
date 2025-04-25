@@ -3661,8 +3661,8 @@ type SKSCluster struct {
 	// A list of Kubernetes-only Alpha features to enable for API server component
 	FeatureGates []string `json:"feature-gates,omitempty"`
 	// Cluster ID
-	ID     UUID   `json:"id,omitempty"`
-	Labels Labels `json:"labels,omitempty"`
+	ID     UUID             `json:"id,omitempty"`
+	Labels SKSClusterLabels `json:"labels,omitempty"`
 	// Cluster level
 	Level SKSClusterLevel `json:"level,omitempty"`
 	// Cluster name
@@ -3676,6 +3676,8 @@ type SKSCluster struct {
 }
 
 type SKSClusterDeprecatedResource map[string]string
+
+type SKSClusterLabels map[string]string
 
 // Kubeconfig request for a SKS cluster
 type SKSKubeconfigRequest struct {
@@ -3729,8 +3731,8 @@ type SKSNodepool struct {
 	// Compute instance type
 	InstanceType *InstanceType `json:"instance-type,omitempty"`
 	// Kubelet image GC options
-	KubeletImageGC *KubeletImageGC `json:"kubelet-image-gc,omitempty"`
-	Labels         Labels          `json:"labels,omitempty"`
+	KubeletImageGC *KubeletImageGC   `json:"kubelet-image-gc,omitempty"`
+	Labels         SKSNodepoolLabels `json:"labels,omitempty"`
 	// Nodepool name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Nodepool Private Networks
@@ -3751,6 +3753,8 @@ type SKSNodepool struct {
 	// Nodepool version
 	Version string `json:"version,omitempty"`
 }
+
+type SKSNodepoolLabels map[string]string
 
 type SKSNodepoolTaintEffect string
 

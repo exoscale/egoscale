@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.1.15
+------
+
+- v3: usage-report, env-impact endpoints
+
 3.1.14
 ------
 

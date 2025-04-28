@@ -3630,6 +3630,7 @@ const (
 type SKSClusterState string
 
 const (
+	SKSClusterStateRotatingCsiCredentials SKSClusterState = "rotating-csi-credentials"
 	SKSClusterStateRotatingCcmCredentials SKSClusterState = "rotating-ccm-credentials"
 	SKSClusterStateCreating               SKSClusterState = "creating"
 	SKSClusterStateUpgrading              SKSClusterState = "upgrading"

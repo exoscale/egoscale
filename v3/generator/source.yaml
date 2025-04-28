@@ -5195,6 +5195,7 @@ components:
         state:
           type: string
           enum:
+          - rotating-csi-credentials
           - rotating-ccm-credentials
           - creating
           - upgrading
@@ -13764,6 +13765,27 @@ paths:
                     type: string
                     format: uuid
       operationId: evict-instance-pool-members
+  "/sks-cluster/{id}/rotate-csi-credentials":
+    put:
+      tags:
+      - sks
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: ''
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: Rotate Exoscale CSI credentials
+      operationId: rotate-sks-csi-credentials
   "/dbaas-grafana/{service-name}/user/{username}/password/reset":
     put:
       tags:

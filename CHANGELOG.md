@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.1.16
+------
+
+- v3: rotate-csi-credentials
+
 3.1.15
 ------
 

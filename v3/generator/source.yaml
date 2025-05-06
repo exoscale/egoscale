@@ -15129,6 +15129,7 @@ paths:
                   items:
                     type: string
                   uniqueItems: true
+                  nullable: true
                   description: A list of Kubernetes-only Alpha features to enable
                     for API server component
                 enable-operators-ca:

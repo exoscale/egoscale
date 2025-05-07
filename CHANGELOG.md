@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.1.17
+------
+
+- v3: allow null in **update-sks-cluster** `feature-gates`
+
 3.1.16
 ------
 

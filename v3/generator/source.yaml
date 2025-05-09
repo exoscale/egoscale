@@ -4909,6 +4909,9 @@ components:
           "$ref": "#/components/schemas/instance-state"
           readOnly: true
           description: Instance state
+        secureboot-enabled:
+          type: boolean
+          description: Indicates if the instance has secure boot enabled
         ssh-key:
           "$ref": "#/components/schemas/ssh-key"
           description: Instance SSH Key
@@ -4924,6 +4927,9 @@ components:
           "$ref": "#/components/schemas/manager"
           readOnly: true
           description: Instance manager
+        tpm-enabled:
+          type: boolean
+          description: Indicates if the instance has tpm enabled
         deploy-target:
           "$ref": "#/components/schemas/deploy-target"
           description: Instance Deploy Target

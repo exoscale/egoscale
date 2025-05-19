@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.1.18
+------
+
+- v3: `secureboot-enabled` and `tpm-enabled` fields for instance
+
 3.1.17
 ------
 

@@ -1,5 +1,0 @@
-# Make sure all text files use LF line endings
-* text=auto eol=lf
-
-# Explicitly enforce LF for these vendor files
-/v3/generator/vendor/** text eol=lf

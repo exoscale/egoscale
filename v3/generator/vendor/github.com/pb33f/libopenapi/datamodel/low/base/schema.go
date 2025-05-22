@@ -143,13 +143,28 @@ type Schema struct {
 	// Index is a reference to the SpecIndex that was used to build this schema.
 	Index    *index.SpecIndex
 	RootNode *yaml.Node
+	index    *index.SpecIndex
+	context  context.Context
 	*low.Reference
 	low.NodeMap
+}
+
+// GetIndex will return the index.SpecIndex instance attached to the Schema object
+func (s *Schema) GetIndex() *index.SpecIndex {
+	return s.index
+}
+
+// GetContext will return the context.Context instance used when building the Schema object
+func (s *Schema) GetContext() context.Context {
+	return s.context
 }
 
 // Hash will calculate a SHA256 hash from the values of the schema, This allows equality checking against
 // Schemas defined inside an OpenAPI document. The only way to know if a schema has changed, is to hash it.
 func (s *Schema) Hash() [32]byte {
+	if s == nil {
+		return [32]byte{}
+	}
 	// calculate a hash from every property in the schema.
 	var d []string
 	if !s.SchemaTypeRef.IsEmpty() {
@@ -468,6 +483,8 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 	s.Nodes = no
 	s.Index = idx
 	s.RootNode = root
+	s.context = ctx
+	s.index = idx
 
 	if h, _, _ := utils.IsNodeRefValue(root); h {
 		ref, _, err, fctx := low.LocateRefNodeWithContext(ctx, root, idx)
@@ -625,7 +642,7 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 	_, schemaRefLabel, schemaRefNode := utils.FindKeyNodeFullTop(SchemaTypeLabel, root.Content)
 	if schemaRefNode != nil {
 		s.SchemaTypeRef = low.NodeReference[string]{
-			Value: schemaRefNode.Value, KeyNode: schemaRefLabel, ValueNode: schemaRefLabel,
+			Value: schemaRefNode.Value, KeyNode: schemaRefLabel, ValueNode: schemaRefNode,
 		}
 	}
 
@@ -633,7 +650,7 @@ func (s *Schema) Build(ctx context.Context, root *yaml.Node, idx *index.SpecInde
 	_, anchorLabel, anchorNode := utils.FindKeyNodeFullTop(AnchorLabel, root.Content)
 	if anchorNode != nil {
 		s.Anchor = low.NodeReference[string]{
-			Value: anchorNode.Value, KeyNode: anchorLabel, ValueNode: anchorLabel,
+			Value: anchorNode.Value, KeyNode: anchorLabel, ValueNode: anchorNode,
 		}
 	}
 

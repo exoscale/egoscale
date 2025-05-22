@@ -5,12 +5,13 @@ package index
 
 import (
 	"fmt"
+	jsonpathconfig "github.com/speakeasy-api/jsonpath/pkg/jsonpath/config"
 	"net/url"
 	"path/filepath"
 	"strings"
 
 	"github.com/pb33f/libopenapi/utils"
-	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
+	"github.com/speakeasy-api/jsonpath/pkg/jsonpath"
 	"gopkg.in/yaml.v3"
 )
 
@@ -57,11 +58,11 @@ func FindComponent(root *yaml.Node, componentId, absoluteFilePath string, index 
 	if friendlySearch == "$." {
 		friendlySearch = "$"
 	}
-	path, err := yamlpath.NewPath(friendlySearch)
+	path, err := jsonpath.NewPath(friendlySearch, jsonpathconfig.WithPropertyNameExtension())
 	if path == nil || err != nil || root == nil {
 		return nil // no component found
 	}
-	res, _ := path.Find(root)
+	res := path.Query(root)
 
 	if len(res) == 1 {
 		resNode := res[0]
@@ -95,6 +96,17 @@ func FindComponent(root *yaml.Node, componentId, absoluteFilePath string, index 
 
 func (index *SpecIndex) FindComponentInRoot(componentId string) *Reference {
 	if index.root != nil {
+
+		componentId = utils.ReplaceWindowsDriveWithLinuxPath(componentId)
+		if !strings.HasPrefix(componentId, "#/") {
+			spl := strings.Split(componentId, "#/")
+			if len(spl) == 2 {
+				if spl[0] != "" {
+					componentId = fmt.Sprintf("#/%s", spl[1])
+				}
+			}
+		}
+
 		return FindComponent(index.root, componentId, index.specAbsolutePath, index)
 	}
 	return nil
@@ -117,8 +129,6 @@ func (index *SpecIndex) lookupRolodex(uri []string) *Reference {
 		// if the absolute file location has no file ext, then get the rolodex root.
 		ext := filepath.Ext(absoluteFileLocation)
 		var parsedDocument *yaml.Node
-		var err error
-
 		idx := index
 		if ext != "" {
 			// extract the document from the rolodex.
@@ -139,11 +149,8 @@ func (index *SpecIndex) lookupRolodex(uri []string) *Reference {
 				idx = rFile.GetIndex()
 			}
 
-			parsedDocument, err = rFile.GetContentAsYAMLNode()
-			if err != nil {
-				index.logger.Error("unable to parse rolodex file", "file", absoluteFileLocation, "error", err)
-				return nil
-			}
+			parsedDocument, _ = rFile.GetContentAsYAMLNode()
+
 		} else {
 			parsedDocument = index.root
 		}
@@ -160,8 +167,11 @@ func (index *SpecIndex) lookupRolodex(uri []string) *Reference {
 		// entire root needs to come in.
 		var foundRef *Reference
 		if wholeFile {
-			if parsedDocument.Kind == yaml.DocumentNode {
-				parsedDocument = parsedDocument.Content[0]
+
+			if parsedDocument != nil {
+				if parsedDocument.Kind == yaml.DocumentNode {
+					parsedDocument = parsedDocument.Content[0]
+				}
 			}
 
 			var parentNode *yaml.Node

@@ -14,17 +14,31 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
-	"sync"
 )
 
 const (
 	YAML FileExtension = iota
 	JSON
+	JS
+	GO
+	TS
+	CS
+	C
+	CPP
+	PHP
+	PY
+	HTML
+	MD
+	JAVA
+	RS
+	ZIG
+	RB
 	UNSUPPORTED
 )
 
@@ -441,11 +455,6 @@ func (i *RemoteFS) Open(remoteURL string) (fs.File, error) {
 		i.logger.Debug("[rolodex remote loaded] successfully loaded file", "file", absolutePath)
 	}
 
-	processingWaiter.file = remoteFile
-	processingWaiter.done = true
-
-	// remove from processing
-	i.ProcessingFiles.Delete(remoteParsedURL.Path)
 	i.Files.Store(absolutePath, remoteFile)
 
 	idx, idxError := remoteFile.Index(&copiedCfg)
@@ -462,5 +471,10 @@ func (i *RemoteFS) Open(remoteURL string) (fs.File, error) {
 			i.rolodex.AddExternalIndex(idx, remoteParsedURL.String())
 		}
 	}
+
+	// remove from processing
+	processingWaiter.file = remoteFile
+	processingWaiter.done = true
+	i.ProcessingFiles.Delete(remoteParsedURL.Path)
 	return remoteFile, errors.Join(i.remoteErrors...)
 }

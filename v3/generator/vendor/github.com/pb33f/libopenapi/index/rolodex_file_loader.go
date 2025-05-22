@@ -114,18 +114,16 @@ func (l *LocalFS) Open(name string) (fs.File, error) {
 					copiedCfg := *l.indexConfig
 					copiedCfg.SpecAbsolutePath = name
 					copiedCfg.AvoidBuildIndex = true
+					copiedCfg.SpecInfo = nil
 
-					idx, idxError := extractedFile.Index(&copiedCfg)
+					idx, _ := extractedFile.Index(&copiedCfg)
 
 					if idx != nil && l.rolodex != nil {
 						idx.rolodex = l.rolodex
 					}
 
-					if idxError != nil && idx == nil {
-						extractedFile.readingErrors = append(l.readingErrors, idxError)
-					} else {
-
-						// for each index, we need a resolver
+					// for each index, we need a resolver
+					if idx != nil {
 						resolver := NewResolver(idx)
 						idx.resolver = resolver
 						idx.BuildIndex()
@@ -184,12 +182,12 @@ func (l *LocalFile) Index(config *SpecIndexConfig) (*SpecIndex, error) {
 	}
 	content := l.data
 
-	// first, we must parse the content of the file
-	info, err := datamodel.ExtractSpecInfoWithDocumentCheckSync(content, true)
-	if err != nil {
-		return nil, err
+	// first, we must parse the content of the file,
+	// the check is bypassed, so as long as it's readable, we're good.
+	info, _ := datamodel.ExtractSpecInfoWithDocumentCheck(content, true)
+	if config.SpecInfo == nil {
+		config.SpecInfo = info
 	}
-
 	index := NewSpecIndexWithConfig(info.RootNode, config)
 	index.specAbsolutePath = l.fullPath
 
@@ -217,13 +215,24 @@ func (l *LocalFile) GetContentAsYAMLNode() (*yaml.Node, error) {
 	var root yaml.Node
 	err := yaml.Unmarshal(l.data, &root)
 	if err != nil {
-		return nil, err
+
+		// we can't parse it, so create a fake document node with a single string content
+		root = yaml.Node{
+			Kind: yaml.DocumentNode,
+			Content: []*yaml.Node{
+				{
+					Kind:  yaml.ScalarNode,
+					Tag:   "!!str",
+					Value: string(l.data),
+				},
+			},
+		}
 	}
 	if l.index != nil && l.index.root == nil {
 		l.index.root = &root
 	}
 	l.parsed = &root
-	return &root, nil
+	return &root, err
 }
 
 // GetFileExtension returns the FileExtension of the file.
@@ -393,16 +402,15 @@ func (l *LocalFS) extractFile(p string) (*LocalFile, error) {
 		}
 	}
 	var fileData []byte
-
 	switch extension {
-	case YAML, JSON:
+	case YAML, JSON, JS, GO, TS, CS, C, CPP, PHP, PY, HTML, MD, JAVA, RS, ZIG, RB:
 		var file fs.File
 		var fileError error
 		if config != nil && config.DirFS != nil {
-			l.logger.Debug("[rolodex file loader]: collecting JSON/YAML file from dirFS", "file", abs)
+			l.logger.Debug("[rolodex file loader]: collecting file from dirFS", "file", extension, "location", abs)
 			file, _ = config.DirFS.Open(p)
 		} else {
-			l.logger.Debug("[rolodex file loader]: reading local file from OS", "file", abs)
+			l.logger.Debug("[rolodex file loader]: reading local file from OS", "file", extension, "location", abs)
 			file, fileError = os.Open(abs)
 		}
 
@@ -436,7 +444,7 @@ func (l *LocalFS) extractFile(p string) (*LocalFile, error) {
 		return lf, nil
 	case UNSUPPORTED:
 		if config != nil && config.DirFS != nil {
-			l.logger.Debug("[rolodex file loader]: skipping non JSON/YAML file", "file", abs)
+			l.logger.Warn("[rolodex file loader]: skipping non JSON/YAML file", "file", abs)
 		}
 	}
 	return nil, nil

@@ -4,45 +4,67 @@
 package index
 
 import (
+	"encoding/json"
+	"github.com/pb33f/libopenapi/datamodel"
+	"gopkg.in/yaml.v3"
 	"io/fs"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"sync"
-
-	"github.com/pb33f/libopenapi/datamodel"
-
-	"gopkg.in/yaml.v3"
 )
 
 // Reference is a wrapper around *yaml.Node results to make things more manageable when performing
 // algorithms on data models. the *yaml.Node def is just a bit too low level for tracking state.
 type Reference struct {
-	FullDefinition        string
-	Definition            string
-	Name                  string
-	Node                  *yaml.Node
-	KeyNode               *yaml.Node
-	ParentNode            *yaml.Node
-	ParentNodeSchemaType  string   // used to determine if the parent node is an array or not.
-	ParentNodeTypes       []string // used to capture deep journeys, if any item is an array, we need to know.
-	Resolved              bool
-	Circular              bool
-	Seen                  bool
-	IsRemote              bool
-	Index                 *SpecIndex // index that contains this reference.
-	RemoteLocation        string
-	Path                  string              // this won't always be available.
-	RequiredRefProperties map[string][]string // definition names (eg, #/definitions/One) to a list of required properties on this definition which reference that definition
+	FullDefinition        string              `json:"fullDefinition,omitempty"`
+	Definition            string              `json:"definition,omitempty"`
+	Name                  string              `json:"name,omitempty"`
+	Node                  *yaml.Node          `json:"-"`
+	KeyNode               *yaml.Node          `json:"-"`
+	ParentNode            *yaml.Node          `json:"-"`
+	ParentNodeSchemaType  string              `json:"-"` // used to determine if the parent node is an array or not.
+	ParentNodeTypes       []string            `json:"-"` // used to capture deep journeys, if any item is an array, we need to know.
+	Resolved              bool                `json:"-"`
+	Circular              bool                `json:"-"`
+	Seen                  bool                `json:"-"`
+	IsRemote              bool                `json:"isRemote,omitempty"`
+	Index                 *SpecIndex          `json:"-"` // index that contains this reference.
+	RemoteLocation        string              `json:"remoteLocation,omitempty"`
+	Path                  string              `json:"path,omitempty"`               // this won't always be available.
+	RequiredRefProperties map[string][]string `json:"requiredProperties,omitempty"` // definition names (eg, #/definitions/One) to a list of required properties on this definition which reference that definition
 }
 
 // ReferenceMapped is a helper struct for mapped references put into sequence (we lose the key)
 type ReferenceMapped struct {
-	OriginalReference *Reference
-	Reference         *Reference
-	Definition        string
-	FullDefinition    string
+	OriginalReference *Reference `json:"originalReference,omitempty"`
+	Reference         *Reference `json:"reference,omitempty"`
+	Definition        string     `json:"definition,omitempty"`
+	FullDefinition    string     `json:"fullDefinition,omitempty"`
+	IsPolymorphic     bool       `json:"isPolymorphic,omitempty"`
+}
+
+// MarshalJSON is a custom JSON marshaller for the ReferenceMapped struct.
+func (rm *ReferenceMapped) MarshalJSON() ([]byte, error) {
+	d := map[string]interface{}{
+		"definition":     rm.Definition,
+		"fullDefinition": rm.FullDefinition,
+		"jsonPath":       rm.OriginalReference.Path,
+		"line":           rm.OriginalReference.Node.Line,
+		"startColumn":    rm.OriginalReference.Node.Column,
+		"endColumn": rm.OriginalReference.Node.Content[1].Column +
+			(len(rm.OriginalReference.Node.Content[1].Value) + 2),
+	}
+	if rm.IsPolymorphic {
+		d["isPolymorphic"] = true
+	}
+
+	if rm.Reference != nil && rm.Reference.KeyNode != nil {
+		d["targetLine"] = rm.Reference.KeyNode.Line
+		d["targetColumn"] = rm.Reference.KeyNode.Column
+	}
+	return json.Marshal(d)
 }
 
 // SpecIndexConfig is a configuration struct for the SpecIndex introduced in 0.6.0 that provides an expandable
@@ -151,6 +173,10 @@ type SpecIndexConfig struct {
 	// to be bundled.
 	ExtractRefsSequentially bool
 
+	// ExcludeExtensionReferences will prevent the indexing of any $ref pointers buried under extensions.
+	// defaults to false (which means extensions will be included)
+	ExcludeExtensionRefs bool
+
 	// private fields
 	uri []string
 }
@@ -253,8 +279,9 @@ type SpecIndex struct {
 	allInlineSchemaObjectDefinitions    []*Reference                                  // all schemas that are objects found in document outside of components (openapi) or definitions (swagger).
 	allComponentSchemaDefinitions       *sync.Map                                     // all schemas found in components (openapi) or definitions (swagger).
 	securitySchemesNode                 *yaml.Node                                    // components/securitySchemes node
-	allSecuritySchemes                  map[string]*Reference                         // all security schemes / definitions.
-	allComponentSchemas                 map[string]*Reference                         // all component schemas
+	allSecuritySchemes                  *sync.Map                                     // all security schemes / definitions.
+	allComponentSchemas                 map[string]*Reference                         // all component schema definitions
+	allComponentSchemasLock             sync.RWMutex                                  // prevent concurrent read writes to the schema file which causes a race condition
 	requestBodiesNode                   *yaml.Node                                    // components/requestBodies node
 	allRequestBodies                    map[string]*Reference                         // all request bodies
 	responsesNode                       *yaml.Node                                    // components/responses node
@@ -266,7 +293,9 @@ type SpecIndex struct {
 	linksNode                           *yaml.Node                                    // components/links node
 	allLinks                            map[string]*Reference                         // all links
 	callbacksNode                       *yaml.Node                                    // components/callbacks node
-	allCallbacks                        map[string]*Reference                         // all components examples
+	pathItemsNode                       *yaml.Node                                    // components/pathItems node
+	allCallbacks                        map[string]*Reference                         // all components callbacks
+	allComponentPathItems               map[string]*Reference                         // all components path items examples
 	allExternalDocuments                map[string]*Reference                         // all external documents
 	externalSpecIndex                   map[string]*SpecIndex                         // create a primary index of all external specs and componentIds
 	refErrors                           []error                                       // errors when indexing references
@@ -279,6 +308,7 @@ type SpecIndex struct {
 	descriptionCount                    int
 	summaryCount                        int
 	refLock                             sync.Mutex
+	nodeMapLock                         sync.RWMutex
 	componentLock                       sync.RWMutex
 	errorLock                           sync.RWMutex
 	circularReferences                  []*CircularReferenceResult // only available when the resolver has been used.
@@ -286,16 +316,17 @@ type SpecIndex struct {
 	arrayCircularReferences             []*CircularReferenceResult // only available when the resolver has been used.
 	allowCircularReferences             bool                       // decide if you want to error out, or allow circular references, default is false.
 	config                              *SpecIndexConfig           // configuration for the index
-	componentIndexChan                  chan bool
-	polyComponentIndexChan              chan bool
+	componentIndexChan                  chan struct{}
+	polyComponentIndexChan              chan struct{}
 	resolver                            *Resolver
 	cache                               *sync.Map
 	built                               bool
 	uri                                 []string
 	logger                              *slog.Logger
 	nodeMap                             map[int]map[int]*yaml.Node
-	nodeMapCompleted                    chan bool
+	nodeMapCompleted                    chan struct{}
 	pendingResolve                      []refMap
+	highModelCache                      Cache
 }
 
 // GetResolver returns the resolver for this index.
@@ -306,10 +337,6 @@ func (index *SpecIndex) GetResolver() *Resolver {
 // GetConfig returns the SpecIndexConfig for this index.
 func (index *SpecIndex) GetConfig() *SpecIndexConfig {
 	return index.config
-}
-
-func (index *SpecIndex) SetCache(sync *sync.Map) {
-	index.cache = sync
 }
 
 func (index *SpecIndex) GetNodeMap() map[int]map[int]*yaml.Node {

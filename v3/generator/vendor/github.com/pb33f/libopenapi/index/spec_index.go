@@ -14,6 +14,8 @@ package index
 
 import (
 	"fmt"
+	"github.com/speakeasy-api/jsonpath/pkg/jsonpath"
+	jsonpathconfig "github.com/speakeasy-api/jsonpath/pkg/jsonpath/config"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -22,7 +24,7 @@ import (
 	"sync"
 
 	"github.com/pb33f/libopenapi/utils"
-	"github.com/vmware-labs/yaml-jsonpath/pkg/yamlpath"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -37,6 +39,7 @@ const (
 func NewSpecIndexWithConfig(rootNode *yaml.Node, config *SpecIndexConfig) *SpecIndex {
 	index := new(SpecIndex)
 	boostrapIndexCollections(index)
+	index.InitHighCache()
 	index.config = config
 	index.rolodex = config.Rolodex
 	index.uri = config.uri
@@ -63,6 +66,7 @@ func NewSpecIndexWithConfig(rootNode *yaml.Node, config *SpecIndexConfig) *SpecI
 // the rolodex will automatically read those files or open those h
 func NewSpecIndex(rootNode *yaml.Node) *SpecIndex {
 	index := new(SpecIndex)
+	index.InitHighCache()
 	index.config = CreateOpenAPIIndexConfig()
 	index.root = rootNode
 	boostrapIndexCollections(index)
@@ -74,7 +78,7 @@ func createNewIndex(rootNode *yaml.Node, index *SpecIndex, avoidBuildOut bool) *
 	if rootNode == nil {
 		return index
 	}
-	index.nodeMapCompleted = make(chan bool)
+	index.nodeMapCompleted = make(chan struct{})
 	index.nodeMap = make(map[int]map[int]*yaml.Node)
 	go index.MapNodes(rootNode) // this can run async.
 
@@ -328,17 +332,35 @@ func (index *SpecIndex) GetAllReferenceSchemas() []*Reference {
 
 // GetAllComponentSchemas will return all schemas defined in the components section of the document.
 func (index *SpecIndex) GetAllComponentSchemas() map[string]*Reference {
-	if index != nil && index.allComponentSchemas != nil {
+	if index == nil {
+		return nil
+	}
+
+	// Acquire read lock
+	index.allComponentSchemasLock.RLock()
+	if index.allComponentSchemas != nil {
+		defer index.allComponentSchemasLock.RUnlock()
 		return index.allComponentSchemas
 	}
-	schemaMap := syncMapToMap[string, *Reference](index.allComponentSchemaDefinitions)
-	index.allComponentSchemas = schemaMap
+	// Release the read lock before acquiring write lock
+	index.allComponentSchemasLock.RUnlock()
+
+	// Acquire write lock to initialize the map
+	index.allComponentSchemasLock.Lock()
+	defer index.allComponentSchemasLock.Unlock()
+
+	// Double-check if another goroutine initialized it
+	if index.allComponentSchemas == nil {
+		schemaMap := syncMapToMap[string, *Reference](index.allComponentSchemaDefinitions)
+		index.allComponentSchemas = schemaMap
+	}
+
 	return index.allComponentSchemas
 }
 
 // GetAllSecuritySchemes will return all security schemes / definitions found in the document.
 func (index *SpecIndex) GetAllSecuritySchemes() map[string]*Reference {
-	return index.allSecuritySchemes
+	return syncMapToMap[string, *Reference](index.allSecuritySchemes)
 }
 
 // GetAllHeaders will return all headers found in the document (under components)
@@ -399,6 +421,11 @@ func (index *SpecIndex) GetAllResponses() map[string]*Reference {
 // GetAllCallbacks will return all links found in the document (under components)
 func (index *SpecIndex) GetAllCallbacks() map[string]*Reference {
 	return index.allCallbacks
+}
+
+// GetAllComponentPathItems will return all path items found in the document (under components)
+func (index *SpecIndex) GetAllComponentPathItems() map[string]*Reference {
+	return index.allComponentPathItems
 }
 
 // GetInlineOperationDuplicateParameters will return a map of duplicates located in operation parameters.
@@ -681,9 +708,9 @@ func (index *SpecIndex) GetGlobalCallbacksCount() int {
 		for _, m := range p {
 
 			// look through method for callbacks
-			callbacks, _ := yamlpath.NewPath("$..callbacks")
+			callbacks, _ := jsonpath.NewPath("$..callbacks", jsonpathconfig.WithPropertyNameExtension())
 			var res []*yaml.Node
-			res, _ = callbacks.Find(m.Node)
+			res = callbacks.Query(m.Node)
 			if len(res) > 0 {
 				for _, callback := range res[0].Content {
 					if utils.IsNodeMap(callback) {
@@ -727,10 +754,10 @@ func (index *SpecIndex) GetGlobalLinksCount() int {
 		for _, m := range p {
 
 			// look through method for links
-			links, _ := yamlpath.NewPath("$..links")
+			links, _ := jsonpath.NewPath("$..links", jsonpathconfig.WithPropertyNameExtension())
 			var res []*yaml.Node
 
-			res, _ = links.Find(m.Node)
+			res = links.Query(m.Node)
 
 			if len(res) > 0 {
 				for _, link := range res[0].Content {
@@ -826,6 +853,7 @@ func (index *SpecIndex) GetComponentSchemaCount() int {
 				_, examplesNode := utils.FindKeyNode("examples", index.root.Content[0].Content[i+1].Content)
 				_, linksNode := utils.FindKeyNode("links", index.root.Content[0].Content[i+1].Content)
 				_, callbacksNode := utils.FindKeyNode("callbacks", index.root.Content[0].Content[i+1].Content)
+				_, pathItemsNode := utils.FindKeyNode("pathItems", index.root.Content[0].Content[i+1].Content)
 
 				// extract schemas
 				if schemasNode != nil {
@@ -882,6 +910,12 @@ func (index *SpecIndex) GetComponentSchemaCount() int {
 				if callbacksNode != nil {
 					index.extractComponentCallbacks(callbacksNode, "#/components/callbacks/")
 					index.callbacksNode = callbacksNode
+				}
+
+				// extract pathItems
+				if pathItemsNode != nil {
+					index.extractComponentPathItems(pathItemsNode, "#/components/pathItems/")
+					index.pathItemsNode = pathItemsNode
 				}
 
 			}
@@ -998,6 +1032,14 @@ func (index *SpecIndex) GetOperationCount() int {
 				method = index.pathsNode.Content[x]
 			} else {
 				method = index.pathsNode.Content[x+1]
+			}
+
+			// is the path a ref?
+			if isRef, _, ref := utils.IsNodeRefValue(method); isRef {
+				pNode := seekRefEnd(index, ref)
+				if pNode != nil {
+					method = pNode.Node
+				}
 			}
 
 			// extract methods for later use.

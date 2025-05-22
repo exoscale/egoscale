@@ -1,6 +1,7 @@
 package base
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"strings"
@@ -29,6 +30,8 @@ type XML struct {
 	Wrapped    low.NodeReference[bool]
 	Extensions *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 	RootNode   *yaml.Node
+	index      *index.SpecIndex
+	context    context.Context
 	*low.Reference
 	low.NodeMap
 }
@@ -47,6 +50,11 @@ func (x *XML) Build(root *yaml.Node, _ *index.SpecIndex) error {
 // GetExtensions returns all Tag extensions and satisfies the low.HasExtensions interface.
 func (x *XML) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return x.Extensions
+}
+
+// GetRootNode returns the root yaml node of the Tag object
+func (x *XML) GetRootNode() *yaml.Node {
+	return x.RootNode
 }
 
 // Hash generates a SHA256 hash of the XML object using properties

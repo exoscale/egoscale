@@ -86,16 +86,16 @@ func ComparePaths(l, r any) *PathsChanges {
 
 		// run every comparison in a thread.
 		var mLock sync.Mutex
-		compare := func(path string, _ map[string]*PathItemChanges, l, r *v2.PathItem, doneChan chan bool) {
+		compare := func(path string, _ map[string]*PathItemChanges, l, r *v2.PathItem, doneChan chan struct{}) {
 			if !low.AreEqual(l, r) {
 				mLock.Lock()
 				pathChanges[path] = ComparePathItems(l, r)
 				mLock.Unlock()
 			}
-			doneChan <- true
+			doneChan <- struct{}{}
 		}
 
-		doneChan := make(chan bool)
+		doneChan := make(chan struct{})
 		pathsChecked := 0
 
 		for k := range lKeys {
@@ -147,25 +147,29 @@ func ComparePaths(l, r any) *PathsChanges {
 		lKeys := make(map[string]low.ValueReference[*v3.PathItem])
 		rKeys := make(map[string]low.ValueReference[*v3.PathItem])
 
-		for k, v := range lPath.PathItems.FromOldest() {
-			lKeys[k.Value] = v
+		if lPath != nil && lPath.PathItems != nil {
+			for k, v := range lPath.PathItems.FromOldest() {
+				lKeys[k.Value] = v
+			}
 		}
-		for k, v := range rPath.PathItems.FromOldest() {
-			rKeys[k.Value] = v
+		if rPath != nil && rPath.PathItems != nil {
+			for k, v := range rPath.PathItems.FromOldest() {
+				rKeys[k.Value] = v
+			}
 		}
 
 		// run every comparison in a thread.
 		var mLock sync.Mutex
-		compare := func(path string, _ map[string]*PathItemChanges, l, r *v3.PathItem, doneChan chan bool) {
+		compare := func(path string, _ map[string]*PathItemChanges, l, r *v3.PathItem, doneChan chan struct{}) {
 			if !low.AreEqual(l, r) {
 				mLock.Lock()
 				pathChanges[path] = ComparePathItems(l, r)
 				mLock.Unlock()
 			}
-			doneChan <- true
+			doneChan <- struct{}{}
 		}
 
-		doneChan := make(chan bool)
+		doneChan := make(chan struct{})
 		pathsChecked := 0
 
 		for k := range lKeys {

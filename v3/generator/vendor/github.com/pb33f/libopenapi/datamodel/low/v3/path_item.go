@@ -41,8 +41,20 @@ type PathItem struct {
 	Extensions  *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 	KeyNode     *yaml.Node
 	RootNode    *yaml.Node
+	index       *index.SpecIndex
+	context     context.Context
 	*low.Reference
 	low.NodeMap
+}
+
+// GetIndex returns the index.SpecIndex instance attached to the PathItem object.
+func (p *PathItem) GetIndex() *index.SpecIndex {
+	return p.index
+}
+
+// GetContext returns the context.Context instance used when building the PathItem object.
+func (p *PathItem) GetContext() context.Context {
+	return p.context
 }
 
 // Hash will return a consistent SHA256 Hash of the PathItem object
@@ -117,13 +129,19 @@ func (p *PathItem) GetExtensions() *orderedmap.Map[low.KeyReference[string], low
 // Build extracts extensions, parameters, servers and each http method defined.
 // everything is extracted asynchronously for speed.
 func (p *PathItem) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
+	p.Reference = new(low.Reference)
+	if ok, _, ref := utils.IsNodeRefValue(root); ok {
+		p.SetReference(ref, root)
+	}
 	root = utils.NodeAlias(root)
 	p.KeyNode = keyNode
 	p.RootNode = root
 	utils.CheckForMergeNodes(root)
-	p.Reference = new(low.Reference)
 	p.Nodes = low.ExtractNodes(ctx, root)
 	p.Extensions = low.ExtractExtensions(root)
+	p.index = idx
+	p.context = ctx
+
 	low.ExtractExtensionNodes(ctx, p.Extensions, p.Nodes)
 	skip := false
 	var currentNode *yaml.Node

@@ -4,10 +4,13 @@
 package index
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"hash"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -17,9 +20,11 @@ import (
 
 func (index *SpecIndex) extractDefinitionsAndSchemas(schemasNode *yaml.Node, pathPrefix string) {
 	var name string
+	var keyNode *yaml.Node
 	for i, schema := range schemasNode.Content {
 		if i%2 == 0 {
 			name = schema.Value
+			keyNode = schema
 			continue
 		}
 
@@ -30,7 +35,7 @@ func (index *SpecIndex) extractDefinitionsAndSchemas(schemasNode *yaml.Node, pat
 			FullDefinition:        fullDef,
 			Definition:            def,
 			Name:                  name,
-			KeyNode:               schemasNode,
+			KeyNode:               keyNode,
 			Node:                  schema,
 			Path:                  fmt.Sprintf("$.components.schemas['%s']", name),
 			ParentNode:            schemasNode,
@@ -84,7 +89,7 @@ func extractDefinitionRequiredRefProperties(schemaNode *yaml.Node, reqRefProps m
 			_, ofNode := utils.FindKeyNodeTop(key, param.Content)
 			if ofNode != nil {
 				for _, ofNodeItem := range ofNode.Content {
-					reqRefProps = extractRequiredReferenceProperties(fulldef, idx, ofNodeItem, name, reqRefProps)
+					reqRefProps = extractRequiredReferenceProperties(fulldef, ofNodeItem, name, reqRefProps)
 				}
 			}
 		}
@@ -97,14 +102,14 @@ func extractDefinitionRequiredRefProperties(schemaNode *yaml.Node, reqRefProps m
 			continue
 		}
 
-		reqRefProps = extractRequiredReferenceProperties(fulldef, idx, requiredPropDefNode, requiredPropertyNode.Value, reqRefProps)
+		reqRefProps = extractRequiredReferenceProperties(fulldef, requiredPropDefNode, requiredPropertyNode.Value, reqRefProps)
 	}
 
 	return reqRefProps
 }
 
 // extractRequiredReferenceProperties returns a map of definition names to the property or properties which reference it within a node
-func extractRequiredReferenceProperties(fulldef string, idx *SpecIndex, requiredPropDefNode *yaml.Node, propName string, reqRefProps map[string][]string) map[string][]string {
+func extractRequiredReferenceProperties(fulldef string, requiredPropDefNode *yaml.Node, propName string, reqRefProps map[string][]string) map[string][]string {
 	isRef, _, refName := utils.IsNodeRefValue(requiredPropDefNode)
 	if !isRef {
 		_, defItems := utils.FindKeyNodeTop("items", requiredPropDefNode.Content)
@@ -156,7 +161,7 @@ func extractRequiredReferenceProperties(fulldef string, idx *SpecIndex, required
 							abs, _ = filepath.Abs(utils.CheckPathOverlap(filepath.Dir(exp[0]), r[0],
 								string(os.PathSeparator)))
 
-							//abs, _ = filepath.Abs(filepath.Join(filepath.Dir(exp[0]), r[0],
+							// abs, _ = filepath.Abs(filepath.Join(filepath.Dir(exp[0]), r[0],
 							//	string('J')))
 						}
 
@@ -298,6 +303,26 @@ func (index *SpecIndex) extractComponentCallbacks(callbacksNode *yaml.Node, path
 	}
 }
 
+func (index *SpecIndex) extractComponentPathItems(pathItemsNode *yaml.Node, pathPrefix string) {
+	var name string
+	var keyNode *yaml.Node
+	for i, pathItemName := range pathItemsNode.Content {
+		if i%2 == 0 {
+			name = pathItemName.Value
+			keyNode = pathItemName
+			continue
+		}
+		def := fmt.Sprintf("%s%s", pathPrefix, name)
+		ref := &Reference{
+			Definition: def,
+			Name:       name,
+			Node:       pathItemName,
+			KeyNode:    keyNode,
+		}
+		index.allComponentPathItems[def] = ref
+	}
+}
+
 func (index *SpecIndex) extractComponentLinks(linksNode *yaml.Node, pathPrefix string) {
 	var name string
 	var keyNode *yaml.Node
@@ -360,7 +385,7 @@ func (index *SpecIndex) extractComponentSecuritySchemes(securitySchemesNode *yam
 			ParentNode:            securitySchemesNode,
 			RequiredRefProperties: extractDefinitionRequiredRefProperties(securitySchemesNode, map[string][]string{}, fullDef, index),
 		}
-		index.allSecuritySchemes[def] = ref
+		index.allSecuritySchemes.Store(def, ref)
 	}
 }
 
@@ -397,7 +422,8 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, keyNode, pathIt
 			paramRef := index.allMappedRefs[paramRefName]
 			if paramRef == nil {
 				// could be in the rolodex
-				ref := seekRefEnd(index, paramRefName)
+				searchInIndex := findIndex(index, param.Content[1])
+				ref := seekRefEnd(searchInIndex, paramRefName)
 				if ref != nil {
 					paramRef = ref
 					if strings.Contains(paramRefName, "%") {
@@ -510,6 +536,29 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, keyNode, pathIt
 	}
 }
 
+func findIndex(index *SpecIndex, i *yaml.Node) *SpecIndex {
+	rolodex := index.GetRolodex()
+	if rolodex == nil {
+		return index
+	}
+	allIndexes := rolodex.GetIndexes()
+	for _, searchIndex := range allIndexes {
+		nodeMap := searchIndex.GetNodeMap()
+		line, ok := nodeMap[i.Line]
+		if !ok {
+			continue
+		}
+		node, ok := line[i.Column]
+		if !ok {
+			continue
+		}
+		if node == i {
+			return searchIndex
+		}
+	}
+	return index
+}
+
 func runIndexFunction(funcs []func() int, wg *sync.WaitGroup) {
 	for _, cFunc := range funcs {
 		go func(wg *sync.WaitGroup, cf func() int) {
@@ -580,4 +629,44 @@ func syncMapToMap[K comparable, V any](sm *sync.Map) map[K]V {
 	})
 
 	return m
+}
+
+// HashNode returns a consistent SHA256 hash string of the node and its children.
+// it runs as fast as possible, but it's recursive, with a hard limit of 1000 levels deep.
+func HashNode(n *yaml.Node) string {
+	h := sha256.New()
+	hashNode(n, h, 0)
+	sum := h.Sum(nil)
+	return fmt.Sprintf("%x", sum)
+}
+
+func hashNode(n *yaml.Node, h hash.Hash, depth int) {
+	if n == nil {
+		return
+	}
+	if depth > 1000 {
+		// Prevent extremely deep recursion from using too much stack.
+		return
+	}
+
+	// Write Tag
+	h.Write([]byte(n.Tag))
+
+	// Write Line
+	buf := make([]byte, 0, 32) // small buffer for integer conversion
+	buf = strconv.AppendInt(buf, int64(n.Line), 10)
+	h.Write(buf)
+
+	// Reuse buffer for Column
+	buf = buf[:0]
+	buf = strconv.AppendInt(buf, int64(n.Column), 10)
+	h.Write(buf)
+
+	// Write Value
+	h.Write([]byte(n.Value))
+
+	// Recurse over Content
+	for _, c := range n.Content {
+		hashNode(c, h, depth+1)
+	}
 }

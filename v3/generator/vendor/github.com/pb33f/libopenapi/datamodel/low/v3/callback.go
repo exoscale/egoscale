@@ -28,8 +28,20 @@ type Callback struct {
 	Extensions *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 	KeyNode    *yaml.Node
 	RootNode   *yaml.Node
+	index      *index.SpecIndex
+	context    context.Context
 	*low.Reference
 	low.NodeMap
+}
+
+// GetIndex returns the index.SpecIndex instance attached to the Callback object
+func (cb *Callback) GetIndex() *index.SpecIndex {
+	return cb.index
+}
+
+// GetContext returns the context.Context instance used when building the Callback object
+func (cb *Callback) GetContext() context.Context {
+	return cb.context
 }
 
 // GetExtensions returns all Callback extensions and satisfies the low.HasExtensions interface.
@@ -55,12 +67,18 @@ func (cb *Callback) FindExpression(exp string) *low.ValueReference[*PathItem] {
 // Build will extract extensions, expressions and PathItem objects for Callback
 func (cb *Callback) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	cb.KeyNode = keyNode
+	cb.Reference = new(low.Reference)
+	if ok, _, ref := utils.IsNodeRefValue(root); ok {
+		cb.SetReference(ref, root)
+	}
 	root = utils.NodeAlias(root)
 	cb.RootNode = root
 	utils.CheckForMergeNodes(root)
-	cb.Reference = new(low.Reference)
 	cb.Nodes = low.ExtractNodes(ctx, root)
 	cb.Extensions = low.ExtractExtensions(root)
+	cb.context = ctx
+	cb.index = idx
+
 	low.ExtractExtensionNodes(ctx, cb.Extensions, cb.Nodes)
 
 	expressions, err := extractPathItemsMap(ctx, root, idx)

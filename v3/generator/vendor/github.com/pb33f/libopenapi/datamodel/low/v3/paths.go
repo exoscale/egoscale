@@ -29,8 +29,20 @@ type Paths struct {
 	Extensions *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 	KeyNode    *yaml.Node
 	RootNode   *yaml.Node
+	index      *index.SpecIndex
+	context    context.Context
 	*low.Reference
 	low.NodeMap
+}
+
+// GetIndex returns the index.SpecIndex instance attached to the Paths object.
+func (p *Paths) GetIndex() *index.SpecIndex {
+	return p.index
+}
+
+// GetContext returns the context.Context instance used when building the Paths object.
+func (p *Paths) GetContext() context.Context {
+	return p.context
 }
 
 // GetRootNode returns the root yaml node of the Paths object.
@@ -83,8 +95,11 @@ func (p *Paths) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.
 	p.RootNode = root
 	utils.CheckForMergeNodes(root)
 	p.Reference = new(low.Reference)
-	p.Nodes = low.ExtractNodes(ctx, nil) // don't extract anything.
+	p.Nodes = low.ExtractNodes(ctx, keyNode)
 	p.Extensions = low.ExtractExtensions(root)
+	p.index = idx
+	p.context = ctx
+
 	low.ExtractExtensionNodes(ctx, p.Extensions, p.Nodes)
 
 	pathsMap, err := extractPathItemsMap(ctx, root, idx)
@@ -179,7 +194,11 @@ func extractPathItemsMap(ctx context.Context, root *yaml.Node, idx *index.SpecIn
 			cNode := value.currentNode
 
 			foundContext := ctx
+			var isRef bool
+			var refNode *yaml.Node
 			if ok, _, _ := utils.IsNodeRefValue(pNode); ok {
+				isRef = true
+				refNode = pNode
 				r, _, err, fCtx := low.LocateRefNodeWithContext(ctx, pNode, idx)
 				if r != nil {
 					pNode = r
@@ -198,6 +217,11 @@ func extractPathItemsMap(ctx context.Context, root *yaml.Node, idx *index.SpecIn
 			path := new(PathItem)
 			_ = low.BuildModel(pNode, path)
 			err := path.Build(foundContext, cNode, pNode, idx)
+
+			if isRef {
+				path.SetReference(refNode.Content[1].Value, refNode)
+			}
+
 			if err != nil {
 				if idx != nil && idx.GetLogger() != nil {
 					idx.GetLogger().Error(fmt.Sprintf("error building path item: %s", err.Error()))

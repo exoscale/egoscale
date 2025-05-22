@@ -20,14 +20,23 @@ complex specifications you can think of.
 If your company is using `libopenapi`, please considering [supporting this project](https://github.com/sponsors/daveshanley), 
 like our _very kind_ sponsors:
 
-<a href="https://speakeasy.com/?utm_source=libopenapi+repo&utm_medium=github+sponsorship">
+<a href="https://speakeasy.com/editor?utm_source=libopenapi+repo&utm_medium=github+sponsorship">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-github-sponsor-dark.svg">
   <img alt="speakeasy'" src=".github/sponsors/speakeasy-github-sponsor-light.svg">
 </picture>
 </a>
 
-[Speakeasy](https://speakeasy.com/?utm_source=libopenapi+repo&utm_medium=github+sponsorship)
+[Speakeasy](https://speakeasy.com/editor?utm_source=libopenapi+repo&utm_medium=github+sponsorship)
+
+<a href="https://bump.sh/?utm_source=quobix&utm_campaign=sponsor">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/bump-sh-dark.png">
+  <img alt="bump.sh'" src=".github/sponsors/bump-sh-light.png">
+</picture>
+</a>
+
+[bump.sh](https://bump.sh/?utm_source=quobix&utm_campaign=sponsor)
 
 <a href="https://scalar.com">
 <picture>
@@ -38,7 +47,14 @@ like our _very kind_ sponsors:
 
 [scalar](https://scalar.com)
 
+<a href="https://apideck.com">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/apideck-dark.png">
+  <img alt="apideck'" src=".github/sponsors/apideck-light.png">
+</picture>
+</a>
 
+[apideck](https://apideck.com)
 
 ---
 
@@ -46,11 +62,12 @@ like our _very kind_ sponsors:
 
 - [github.com/daveshanley/vacuum](https://github.com/daveshanley/vacuum) - "The world's fastest and most scalable OpenAPI/Swagger linter/quality tool"
 - [github.com/pb33f/openapi-changes](https://github.com/pb33f/openapi-changes) - "The world's **sexiest** OpenAPI breaking changes detector"
-- [github.com/pb33f/wiretap](https://github.com/pb33f/openapi-changes) - "The world's **coolest** OpenAPI compliance analysis tool"
+- [github.com/pb33f/wiretap](https://github.com/pb33f/wiretap) - "The world's **coolest** OpenAPI compliance analysis tool"
 - [github.com/danielgtaylor/restish](https://github.com/danielgtaylor/restish) - "Restish is a CLI for interacting with REST-ish HTTP APIs"
 - [github.com/speakeasy-api/speakeasy](https://github.com/speakeasy-api/speakeasy) - "Speakeasy CLI makes validating OpenAPI docs and generating idiomatic SDKs easy!"
 - [github.com/apicat/apicat](https://github.com/apicat/apicat) - "AI-powered API development tool"
 - [github.com/mattermost/mattermost](https://github.com/mattermost/mattermost) - "Software development lifecycle platform"
+- [github.com/gopher-fleece/gleece](https://github.com/gopher-fleece/gleece) - "Building and documenting REST APIs through code-first development"
 - Your project here?
 ---
 
@@ -96,7 +113,7 @@ Or, follow these steps and see something in a few seconds.
 #### Step 1: Grab the petstore
 
 ```bash
-curl https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/examples/v3.0/petstore.yaml > petstorev3.json
+curl https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/_archive_/schemas/v3.0/pass/petstore.yaml > petstorev3.json
 ```
 
 #### Step 2: Grab libopenapi

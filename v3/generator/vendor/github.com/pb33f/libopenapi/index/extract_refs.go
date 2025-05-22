@@ -9,11 +9,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/pb33f/libopenapi/utils"
 	"gopkg.in/yaml.v3"
-	"slices"
 )
 
 // ExtractRefs will return a deduplicated slice of references for every unique ref found in the document.
@@ -56,6 +56,7 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 					fullDefinitionPath = fmt.Sprintf("%s#/%s", index.specAbsolutePath, strings.Join(loc, "/"))
 					_, jsonPath = utils.ConvertComponentIdIntoFriendlyPathSearch(definitionPath)
 				}
+
 				ref := &Reference{
 					ParentNode:     parent,
 					FullDefinition: fullDefinitionPath,
@@ -211,6 +212,20 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 
 			if i%2 == 0 && n.Value == "$ref" {
 
+				// check if this reference is under an extension or not, if so, drop it from the index.
+				if index.config.ExcludeExtensionRefs {
+					ext := false
+					for _, spi := range seenPath {
+						if strings.HasPrefix(spi, "x-") {
+							ext = true
+							break
+						}
+					}
+					if ext {
+						continue
+					}
+				}
+
 				// only look at scalar values, not maps (looking at you k8s)
 				if len(node.Content) > i+1 {
 					if !utils.IsNodeStringValue(node.Content[i+1]) {
@@ -245,6 +260,7 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 					var componentName string
 					var fullDefinitionPath string
 					if len(uri) == 2 {
+						// Check if we are dealing with a ref to a local definition.
 						if uri[0] == "" {
 							fullDefinitionPath = fmt.Sprintf("%s#/%s", index.specAbsolutePath, uri[1])
 							componentName = value
@@ -377,6 +393,7 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 							Definition:     ref.Definition,
 							Name:           ref.Name,
 							Node:           &copiedNode,
+							KeyNode:        node.Content[i],
 							Path:           p,
 							Index:          index,
 						}
@@ -411,18 +428,23 @@ func (index *SpecIndex) ExtractRefs(node, parent *yaml.Node, seenPath []string, 
 					if value == "" {
 
 						completedPath := fmt.Sprintf("$.%s", strings.Join(fp, "."))
+						c := node.Content[i]
+						if len(node.Content) > i+1 { // if the next node exists, use that.
+							c = node.Content[i+1]
+						}
 
 						indexError := &IndexingError{
-							Err:  errors.New("schema reference is empty and cannot be processed"),
-							Node: node.Content[i+1],
-							Path: completedPath,
+							Err:     errors.New("schema reference is empty and cannot be processed"),
+							Node:    c,
+							KeyNode: node.Content[i],
+							Path:    completedPath,
 						}
 
 						index.refErrors = append(index.refErrors, indexError)
-
 						continue
 					}
 
+					// This sets the ref in the path using the full URL and sub-path.
 					index.allRefs[fullDefinitionPath] = ref
 					found = append(found, ref)
 				}
@@ -619,9 +641,9 @@ func (index *SpecIndex) ExtractComponentsFromRefs(refs []*Reference) []*Referenc
 	var found []*Reference
 
 	// run this async because when things get recursive, it can take a while
-	var c chan bool
+	var c chan struct{}
 	if !index.config.ExtractRefsSequentially {
-		c = make(chan bool)
+		c = make(chan struct{})
 	}
 
 	locate := func(ref *Reference, refIndex int, sequence []*ReferenceMapped) {
@@ -635,13 +657,36 @@ func (index *SpecIndex) ExtractComponentsFromRefs(refs []*Reference) []*Referenc
 			}
 			sequence[refIndex] = rm
 			if !index.config.ExtractRefsSequentially {
-				c <- true
+				c <- struct{}{}
 			}
 			index.refLock.Unlock()
 		} else {
 			index.refLock.Unlock()
+			// If it's local, this is safe to do unlocked
+			uri := strings.Split(ref.FullDefinition, "#/")
+			unsafeAsync := len(uri) == 2 && len(uri[0]) > 0
+			if unsafeAsync {
+				index.refLock.Lock()
+			}
 			located := index.FindComponent(ref.FullDefinition)
+			if unsafeAsync {
+				index.refLock.Unlock()
+			}
 			if located != nil {
+
+				// key node is always going to be nil when mapping, yamlpath API returns
+				// subnodes only, so we need to rollback in the nodemap a line (if we can) to extract
+				// the keynode.
+				if located.Node != nil {
+					index.nodeMapLock.RLock()
+					if located.Node.Line > 1 && len(index.nodeMap[located.Node.Line-1]) > 0 {
+						for _, v := range index.nodeMap[located.Node.Line-1] {
+							located.KeyNode = v
+							break
+						}
+					}
+					index.nodeMapLock.RUnlock()
+				}
 
 				// have we already mapped this?
 				index.refLock.Lock()
@@ -672,7 +717,7 @@ func (index *SpecIndex) ExtractComponentsFromRefs(refs []*Reference) []*Referenc
 				index.errorLock.Unlock()
 			}
 			if !index.config.ExtractRefsSequentially {
-				c <- true
+				c <- struct{}{}
 			}
 		}
 	}
@@ -703,5 +748,6 @@ func (index *SpecIndex) ExtractComponentsFromRefs(refs []*Reference) []*Referenc
 			index.allMappedRefsSequenced = append(index.allMappedRefsSequenced, mappedRefsInSequence[m])
 		}
 	}
+
 	return found
 }

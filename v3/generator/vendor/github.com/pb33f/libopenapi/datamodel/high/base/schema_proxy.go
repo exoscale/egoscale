@@ -4,7 +4,13 @@
 package base
 
 import (
+	"errors"
+	"fmt"
+	"net/url"
 	"sync"
+
+	"path/filepath"
+	"strings"
 
 	"github.com/pb33f/libopenapi/datamodel/high"
 	"github.com/pb33f/libopenapi/datamodel/low"
@@ -83,29 +89,70 @@ func (sp *SchemaProxy) GetValueNode() *yaml.Node {
 // Schema will create a new Schema instance using NewSchema from the low-level SchemaProxy backing this high-level one.
 // If there is a problem building the Schema, then this method will return nil. Use GetBuildError to gain access
 // to that building error.
+//
+// It's important to note that this method will return nil on a pointer created using NewSchemaProxy or CreateSchema* methods
+// there is no low-level SchemaProxy backing it, and therefore no schema to build, so this will fail. Use BuildSchema
+// instead for proxies created using NewSchemaProxy or CreateSchema* methods.
+// https://github.com/pb33f/libopenapi/issues/403
 func (sp *SchemaProxy) Schema() *Schema {
 	if sp == nil || sp.lock == nil {
 		return nil
 	}
+
 	sp.lock.Lock()
-	if sp.rendered == nil {
+	defer sp.lock.Unlock()
 
-		s := sp.schema.Value.Schema()
-		if s == nil {
-			sp.buildError = sp.schema.Value.GetBuildError()
-			sp.lock.Unlock()
-			return nil
-		}
-		sch := NewSchema(s)
-		sch.ParentProxy = sp
-
-		sp.rendered = sch
-		sp.lock.Unlock()
-		return sch
-	} else {
-		sp.lock.Unlock()
+	if sp.rendered != nil {
 		return sp.rendered
 	}
+
+	if sp.schema == nil || sp.schema.Value == nil {
+		return nil
+	}
+
+	//check the high-level cache first.
+	idx := sp.schema.Value.GetIndex()
+	if idx != nil && sp.schema.Value != nil {
+		if sp.schema.Value.IsReference() && sp.schema.Value.GetReferenceNode() != nil && sp.schema.GetValueNode() != nil {
+			loc := fmt.Sprintf("%s:%d:%d", idx.GetSpecAbsolutePath(), sp.schema.GetValueNode().Line, sp.schema.GetValueNode().Column)
+			if seen, ok := idx.GetHighCache().Load(loc); ok {
+				idx.HighCacheHit()
+				// attribute the parent proxy to the cloned schema
+				schema := (*seen.(*Schema))
+				schema.ParentProxy = sp
+				return &schema
+			} else {
+				idx.HighCacheMiss()
+			}
+		}
+	}
+
+	s := sp.schema.Value.Schema()
+	if s == nil {
+		sp.buildError = sp.schema.Value.GetBuildError()
+		return nil
+	}
+	sch := NewSchema(s)
+
+	if idx != nil {
+
+		// only store the schema in the cache if is a reference!
+		if sp.IsReference() && sp.GetReferenceNode() != nil && sp.schema != nil && sp.schema.GetValueNode() != nil {
+			//if sp.schema.GetValueNode() != nil {
+			loc := fmt.Sprintf("%s:%d:%d", idx.GetSpecAbsolutePath(), sp.schema.GetValueNode().Line, sp.schema.GetValueNode().Column)
+
+			// caching is only performed on traditional $ref nodes with a reference and a value node, any 3.1 additional
+			// will not be cached as libopenapi does not yet support them.
+			if len(sp.GetReferenceNode().Content) == 2 {
+				idx.GetHighCache().Store(loc, sch)
+			}
+		}
+	}
+
+	sch.ParentProxy = sp
+	sp.rendered = sch
+	return sch
+
 }
 
 // IsReference returns true if the SchemaProxy is a reference to another Schema.
@@ -154,7 +201,11 @@ func (sp *SchemaProxy) GetReferenceOrigin() *index.NodeOrigin {
 	return nil
 }
 
-// BuildSchema operates the same way as Schema, except it will return any error along with the *Schema
+// BuildSchema operates the same way as Schema, except it will return any error along with the *Schema. Unlike the Schema
+// method, this will work on a proxy created by the NewSchemaProxy or CreateSchema* methods.
+//
+// It differs from Schema in that it does not require a low-level SchemaProxy to be present,
+// and will build the schema from the high-level one.
 func (sp *SchemaProxy) BuildSchema() (*Schema, error) {
 	if sp.rendered != nil {
 		return sp.rendered, sp.buildError
@@ -212,7 +263,8 @@ func (sp *SchemaProxy) MarshalYAML() (interface{}, error) {
 }
 
 // MarshalYAMLInline will create a ready to render YAML representation of the SchemaProxy object. The
-// $ref values will be inlined instead of kept as is.
+// $ref values will be inlined instead of kept as is. All circular references will be ignored, regardless
+// of the type of circular reference, they are all bad when rendering.
 func (sp *SchemaProxy) MarshalYAMLInline() (interface{}, error) {
 	var s *Schema
 	var err error
@@ -220,10 +272,46 @@ func (sp *SchemaProxy) MarshalYAMLInline() (interface{}, error) {
 
 	if s != nil && s.GoLow() != nil && s.GoLow().Index != nil {
 		circ := s.GoLow().Index.GetCircularReferences()
+
+		// extract the ignored and safe circular references
+		ignored := s.GoLow().Index.GetRolodex().GetIgnoredCircularReferences()
+		safe := s.GoLow().Index.GetRolodex().GetSafeCircularReferences()
+		circ = append(circ, ignored...)
+		circ = append(circ, safe...)
 		for _, c := range circ {
 			if sp.IsReference() {
-				// we cannot proceed.
 				if sp.GetReference() == c.LoopPoint.Definition {
+					// nope
+					return sp.GetReferenceNode(),
+						fmt.Errorf("cannot render circular reference: %s", c.LoopPoint.Definition)
+				}
+				basePath := sp.GoLow().GetIndex().GetSpecAbsolutePath()
+
+				if !filepath.IsAbs(basePath) && !strings.HasPrefix(basePath, "http") {
+					basePath, _ = filepath.Abs(basePath)
+				}
+
+				if basePath == c.LoopPoint.FullDefinition {
+					// we loop on our-self
+					return sp.GetReferenceNode(), nil
+				}
+				a := utils.ReplaceWindowsDriveWithLinuxPath(strings.Replace(c.LoopPoint.FullDefinition, basePath, "", 1))
+				b := sp.GetReference()
+				if strings.HasPrefix(b, "./") {
+					b = strings.Replace(b, "./", "/", 1) // strip any leading ./ from the reference
+				}
+				// if loading things in remotely and references are relative.
+				if strings.HasPrefix(a, "http") {
+					purl, _ := url.Parse(a)
+					if purl != nil {
+						specPath := filepath.Dir(purl.Path)
+						host := fmt.Sprintf("%s://%s", purl.Scheme, purl.Host)
+						a = strings.Replace(a, host, "", 1)
+						a = strings.Replace(a, specPath, "", 1)
+					}
+				}
+				if a == b {
+					// nope
 					return sp.GetReferenceNode(), nil
 				}
 			}
@@ -233,7 +321,10 @@ func (sp *SchemaProxy) MarshalYAMLInline() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	nb := high.NewNodeBuilder(s, s.low)
-	nb.Resolve = true
-	return nb.Render(), nil
+	if s != nil {
+		nb := high.NewNodeBuilder(s, s.low)
+		nb.Resolve = true
+		return nb.Render(), nil
+	}
+	return nil, errors.New("unable to render schema")
 }

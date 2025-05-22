@@ -217,8 +217,15 @@ func (d *document) RenderAndReload() ([]byte, Document, *DocumentModel[v3high.Do
 }
 
 func (d *document) Render() ([]byte, error) {
-	if d.highSwaggerModel != nil && d.highOpenAPI3Model == nil {
-		return nil, errors.New("this method only supports OpenAPI 3 documents, not Swagger")
+	if d.highOpenAPI3Model == nil {
+		// check for Swagger model first, to give a more helpful error message.
+		if d.highSwaggerModel != nil {
+			return nil, errors.New("this method only supports OpenAPI 3 documents, not Swagger")
+		}
+		return nil, errors.New("unable to render, no openapi model has been built for the document")
+	}
+	if d.info == nil {
+		return nil, errors.New("unable to render, no specification has been loaded")
 	}
 
 	var newBytes []byte
@@ -305,7 +312,9 @@ func (d *document) BuildV3Model() (*DocumentModel[v3high.Document], []error) {
 	if d.config == nil {
 		d.config = &datamodel.DocumentConfiguration{
 			AllowFileReferences:   false,
+			BasePath:              "",
 			AllowRemoteReferences: false,
+			BaseURL:               nil,
 		}
 	}
 
@@ -335,6 +344,7 @@ func (d *document) BuildV3Model() (*DocumentModel[v3high.Document], []error) {
 		Model: *highDoc,
 		Index: lowDoc.Index,
 	}
+
 	return d.highOpenAPI3Model, errs
 }
 

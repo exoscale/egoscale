@@ -129,7 +129,13 @@ func (n *NodeBuilder) add(key string, i int) {
 	} else if zeroer, ok := f.(yaml.IsZeroer); ok && zeroer.IsZero() {
 		isZero = true
 	} else if f == nil || value.IsZero() {
-		isZero = true
+		if tagName != "description" {
+			isZero = true
+		} else {
+			if omitEmptyFlag {
+				isZero = true
+			}
+		}
 	}
 	if !renderZeroFlag && isZero || omitEmptyFlag && isZero {
 		return
@@ -170,50 +176,52 @@ func (n *NodeBuilder) add(key string, i int) {
 		nodeEntry.Value = f
 	}
 
-	// if there is no low level object, then we cannot extract line numbers,
+	// if there is no low-level object, then we cannot extract line numbers,
 	// so skip and default to 0, which means a new entry to the spec.
 	// this will place new content and the top of the rendered object.
 	if n.Low != nil && !reflect.ValueOf(n.Low).IsZero() {
 		lowFieldValue := reflect.ValueOf(n.Low).Elem().FieldByName(key)
-		fLow := lowFieldValue.Interface()
-		value = reflect.ValueOf(fLow)
+		if lowFieldValue.IsValid() {
+			fLow := lowFieldValue.Interface()
+			value = reflect.ValueOf(fLow)
 
-		nodeEntry.LowValue = fLow
-		switch value.Kind() {
+			nodeEntry.LowValue = fLow
+			switch value.Kind() {
 
-		case reflect.Slice:
-			l := value.Len()
-			lines := make([]int, l)
-			for g := 0; g < l; g++ {
-				qw := value.Index(g).Interface()
-				if we, wok := qw.(low.HasKeyNode); wok {
-					lines[g] = we.GetKeyNode().Line
-				}
-			}
-			sort.Slice(lines, func(i, j int) bool {
-				return lines[i] < lines[j]
-			})
-			if len(lines) > 0 {
-				nodeEntry.Line = lines[0]
-			}
-		case reflect.Struct:
-			y := value.Interface()
-			nodeEntry.Line = 9999 + i
-			if nb, ok := y.(low.HasValueNodeUntyped); ok {
-				if nb.IsReference() {
-					if jk, kj := y.(low.HasKeyNode); kj {
-						nodeEntry.Line = jk.GetKeyNode().Line
-						break
+			case reflect.Slice:
+				l := value.Len()
+				lines := make([]int, l)
+				for g := 0; g < l; g++ {
+					qw := value.Index(g).Interface()
+					if we, wok := qw.(low.HasKeyNode); wok {
+						lines[g] = we.GetKeyNode().Line
 					}
 				}
-				if nb.GetValueNode() != nil {
-					nodeEntry.Line = nb.GetValueNode().Line
+				sort.Slice(lines, func(i, j int) bool {
+					return lines[i] < lines[j]
+				})
+				if len(lines) > 0 {
+					nodeEntry.Line = lines[0]
 				}
+			case reflect.Struct:
+				y := value.Interface()
+				nodeEntry.Line = 9999 + i
+				if nb, ok := y.(low.HasValueNodeUntyped); ok {
+					if nb.IsReference() {
+						if jk, kj := y.(low.HasKeyNode); kj {
+							nodeEntry.Line = jk.GetKeyNode().Line
+							break
+						}
+					}
+					if nb.GetValueNode() != nil {
+						nodeEntry.Line = nb.GetValueNode().Line
+					}
+				}
+			default:
+				// everything else, weight it to the bottom of the rendered object.
+				// this is things that we have no way of knowing where they should be placed.
+				nodeEntry.Line = 9999 + i
 			}
-		default:
-			// everything else, weight it to the bottom of the rendered object.
-			// this is things that we have no way of knowing where they should be placed.
-			nodeEntry.Line = 9999 + i
 		}
 	}
 	if nodeEntry.Value != nil {
@@ -492,24 +500,22 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 			}
 			if b, bok := value.(*int64); bok {
 				encodeSkip = true
-				if *b > 0 {
+				if *b != 0 {
 					valueNode = utils.CreateIntNode(strconv.Itoa(int(*b)))
 					valueNode.Line = line
 				}
 			}
 			if b, bok := value.(*float64); bok {
 				encodeSkip = true
-				if *b > 0 || (entry.RenderZero && entry.Line > 0) {
+				if *b != 0 || (entry.RenderZero && entry.Line > 0) {
 					formatFloat := strconv.FormatFloat(*b, 'f', -1, 64)
-					if *b > 0 {
-						if *b == math.Trunc(*b) {
-							valueNode = utils.CreateIntNode(formatFloat)
-						} else {
-							valueNode = utils.CreateFloatNode(formatFloat)
-						}
-					} else {
+
+					if *b == math.Trunc(*b) {
 						valueNode = utils.CreateIntNode(formatFloat)
+					} else {
+						valueNode = utils.CreateFloatNode(formatFloat)
 					}
+
 					valueNode.Line = line
 				}
 			}

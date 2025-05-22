@@ -6,7 +6,6 @@ package index
 import (
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io"
 	"io/fs"
 	"log/slog"
@@ -19,6 +18,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // CanBeIndexed is an interface that allows a file to be indexed.
@@ -80,9 +81,13 @@ func NewRolodex(indexConfig *SpecIndexConfig) *Rolodex {
 
 	logger := indexConfig.Logger
 	if logger == nil {
-		logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelError,
-		}))
+		logger = slog.New(
+			slog.NewJSONHandler(
+				os.Stdout, &slog.HandlerOptions{
+					Level: slog.LevelError,
+				},
+			),
+		)
 	}
 
 	r := &Rolodex{
@@ -97,15 +102,56 @@ func NewRolodex(indexConfig *SpecIndexConfig) *Rolodex {
 }
 
 // GetIgnoredCircularReferences returns a list of circular references that were ignored during the indexing process.
-// These can be array or polymorphic references.
+// These can be an array or polymorphic references. Will return an empty slice if no ignored circular references are found.
 func (r *Rolodex) GetIgnoredCircularReferences() []*CircularReferenceResult {
 	debounced := make(map[string]*CircularReferenceResult)
+	var debouncedResults []*CircularReferenceResult
+	if r == nil {
+		return debouncedResults
+	}
 	for _, c := range r.ignoredCircularReferences {
 		if _, ok := debounced[c.LoopPoint.FullDefinition]; !ok {
 			debounced[c.LoopPoint.FullDefinition] = c
 		}
 	}
+	for _, v := range debounced {
+		debouncedResults = append(debouncedResults, v)
+	}
+	return debouncedResults
+}
+
+// GetSafeCircularReferences returns a list of circular references that were found to be safe during the indexing process.
+// These can be an array or polymorphic references. Will return an empty slice if no safe circular references are found.
+func (r *Rolodex) GetSafeCircularReferences() []*CircularReferenceResult {
+	debounced := make(map[string]*CircularReferenceResult)
 	var debouncedResults []*CircularReferenceResult
+	if r == nil {
+		return debouncedResults
+	}
+
+	// if this rolodex has not been manually checked for circular references or resolved,
+	// then we need to perform that check now, looking at all indexes and extracting
+	// results from the resolvers.
+	if !r.circChecked {
+		var extracted []*CircularReferenceResult
+		for _, idx := range append(r.GetIndexes(), r.GetRootIndex()) {
+			if idx != nil {
+				res := idx.resolver
+				if res != nil {
+					extracted = append(extracted, res.GetSafeCircularReferences()...)
+				}
+			}
+		}
+		if len(extracted) > 0 {
+			r.safeCircularReferences = append(r.safeCircularReferences, extracted...)
+		}
+	}
+
+	for _, c := range r.safeCircularReferences {
+		if _, ok := debounced[c.LoopPoint.FullDefinition]; !ok {
+			debounced[c.LoopPoint.FullDefinition] = c
+		}
+	}
 	for _, v := range debounced {
 		debouncedResults = append(debouncedResults, v)
 	}
@@ -159,6 +205,7 @@ func (r *Rolodex) SetRootNode(node *yaml.Node) {
 
 func (r *Rolodex) AddExternalIndex(idx *SpecIndex, location string) {
 	r.indexLock.Lock()
+	r.indexes = append(r.indexes, idx)
 	if r.indexMap[location] == nil {
 		r.indexMap[location] = idx
 	}
@@ -166,7 +213,6 @@ func (r *Rolodex) AddExternalIndex(idx *SpecIndex, location string) {
 }
 
 func (r *Rolodex) AddIndex(idx *SpecIndex) {
-	r.indexes = append(r.indexes, idx)
 	if idx != nil {
 		p := idx.specAbsolutePath
 		r.AddExternalIndex(idx, p)
@@ -194,9 +240,10 @@ func (r *Rolodex) IndexTheRolodex() error {
 
 	indexRolodexFile := func(
 		location string, fs fs.FS,
-		doneChan chan bool,
+		doneChan chan struct{},
 		errChan chan error,
-		indexChan chan *SpecIndex) {
+		indexChan chan *SpecIndex,
+	) {
 
 		var wg sync.WaitGroup
 
@@ -209,11 +256,7 @@ func (r *Rolodex) IndexTheRolodex() error {
 			copiedConfig.AvoidBuildIndex = true // we will build out everything in two steps.
 			idx, err := idxFile.Index(&copiedConfig)
 
-			if err != nil {
-				errChan <- err
-			}
-
-			if err == nil {
+			if err == nil { // Index() does not throw an error anymore.
 				// for each index, we need a resolver
 				resolver := NewResolver(idx)
 
@@ -231,6 +274,7 @@ func (r *Rolodex) IndexTheRolodex() error {
 
 		if lfs, ok := fs.(RolodexFS); ok {
 			wait := false
+
 			for _, f := range lfs.GetFiles() {
 				if idxFile, ko := f.(CanBeIndexed); ko {
 					wg.Add(1)
@@ -241,17 +285,17 @@ func (r *Rolodex) IndexTheRolodex() error {
 			if wait {
 				wg.Wait()
 			}
-			doneChan <- true
+			doneChan <- struct{}{}
 			return
 		} else {
 			errChan <- errors.New("rolodex file system is not a RolodexFS")
-			doneChan <- true
+			doneChan <- struct{}{}
 		}
 	}
 
 	indexingCompleted := 0
 	totalToIndex := len(r.localFS) + len(r.remoteFS)
-	doneChan := make(chan bool)
+	doneChan := make(chan struct{})
 	errChan := make(chan error)
 	indexChan := make(chan *SpecIndex)
 
@@ -279,9 +323,11 @@ func (r *Rolodex) IndexTheRolodex() error {
 	// now that we have indexed all the files, we can build the index.
 	r.indexes = indexBuildQueue
 
-	sort.Slice(indexBuildQueue, func(i, j int) bool {
-		return indexBuildQueue[i].specAbsolutePath < indexBuildQueue[j].specAbsolutePath
-	})
+	sort.Slice(
+		indexBuildQueue, func(i, j int) bool {
+			return indexBuildQueue[i].specAbsolutePath < indexBuildQueue[j].specAbsolutePath
+		},
+	)
 
 	for _, idx := range indexBuildQueue {
 		idx.BuildIndex()
@@ -293,10 +339,14 @@ func (r *Rolodex) IndexTheRolodex() error {
 			caughtErrors = append(caughtErrors, errs[e])
 		}
 		if len(idx.resolver.GetIgnoredCircularPolyReferences()) > 0 {
-			r.ignoredCircularReferences = append(r.ignoredCircularReferences, idx.resolver.GetIgnoredCircularPolyReferences()...)
+			r.ignoredCircularReferences = append(
+				r.ignoredCircularReferences, idx.resolver.GetIgnoredCircularPolyReferences()...,
+			)
 		}
 		if len(idx.resolver.GetIgnoredCircularArrayReferences()) > 0 {
-			r.ignoredCircularReferences = append(r.ignoredCircularReferences, idx.resolver.GetIgnoredCircularArrayReferences()...)
+			r.ignoredCircularReferences = append(
+				r.ignoredCircularReferences, idx.resolver.GetIgnoredCircularArrayReferences()...,
+			)
 		}
 	}
 
@@ -306,7 +356,6 @@ func (r *Rolodex) IndexTheRolodex() error {
 		// if there is a base path but no SpecFilePath, then we need to set the root spec config to point to a theoretical root.yaml
 		// which does not exist, but is used to formulate the absolute path to root references correctly.
 		if r.indexConfig.BasePath != "" && r.indexConfig.BaseURL == nil {
-
 			basePath := r.indexConfig.BasePath
 			if !filepath.IsAbs(basePath) {
 				basePath, _ = filepath.Abs(basePath)
@@ -321,6 +370,8 @@ func (r *Rolodex) IndexTheRolodex() error {
 			}
 		}
 
+		// Here we take the root node and also build the index for it.
+		// This involves extracting references.
 		index := NewSpecIndexWithConfig(r.rootNode, r.indexConfig)
 		resolver := NewResolver(index)
 
@@ -342,10 +393,14 @@ func (r *Rolodex) IndexTheRolodex() error {
 				caughtErrors = append(caughtErrors, resolvingErrors[e])
 			}
 			if len(resolver.GetIgnoredCircularPolyReferences()) > 0 {
-				r.ignoredCircularReferences = append(r.ignoredCircularReferences, resolver.GetIgnoredCircularPolyReferences()...)
+				r.ignoredCircularReferences = append(
+					r.ignoredCircularReferences, resolver.GetIgnoredCircularPolyReferences()...,
+				)
 			}
 			if len(resolver.GetIgnoredCircularArrayReferences()) > 0 {
-				r.ignoredCircularReferences = append(r.ignoredCircularReferences, resolver.GetIgnoredCircularArrayReferences()...)
+				r.ignoredCircularReferences = append(
+					r.ignoredCircularReferences, resolver.GetIgnoredCircularArrayReferences()...,
+				)
 			}
 		}
 
@@ -370,13 +425,21 @@ func (r *Rolodex) CheckForCircularReferences() {
 				r.caughtErrors = append(r.caughtErrors, resolvingErrors[e])
 			}
 			if len(r.rootIndex.resolver.ignoredPolyReferences) > 0 {
-				r.ignoredCircularReferences = append(r.ignoredCircularReferences, r.rootIndex.resolver.ignoredPolyReferences...)
+				r.ignoredCircularReferences = append(
+					r.ignoredCircularReferences, r.rootIndex.resolver.ignoredPolyReferences...,
+				)
 			}
 			if len(r.rootIndex.resolver.ignoredArrayReferences) > 0 {
-				r.ignoredCircularReferences = append(r.ignoredCircularReferences, r.rootIndex.resolver.ignoredArrayReferences...)
+				r.ignoredCircularReferences = append(
+					r.ignoredCircularReferences, r.rootIndex.resolver.ignoredArrayReferences...,
+				)
 			}
-			r.safeCircularReferences = append(r.safeCircularReferences, r.rootIndex.resolver.GetSafeCircularReferences()...)
-			r.infiniteCircularReferences = append(r.infiniteCircularReferences, r.rootIndex.resolver.GetInfiniteCircularReferences()...)
+			r.safeCircularReferences = append(
+				r.safeCircularReferences, r.rootIndex.resolver.GetSafeCircularReferences()...,
+			)
+			r.infiniteCircularReferences = append(
+				r.infiniteCircularReferences, r.rootIndex.resolver.GetInfiniteCircularReferences()...,
+			)
 		}
 		r.circChecked = true
 	}
@@ -464,7 +527,10 @@ func (r *Rolodex) Open(location string) (RolodexFile, error) {
 	}
 
 	if len(r.localFS) <= 0 && len(r.remoteFS) <= 0 {
-		return nil, fmt.Errorf("rolodex has no file systems configured, cannot open '%s'. Add a BaseURL or BasePath to your configuration so the rolodex knows how to resolve references", location)
+		return nil, fmt.Errorf(
+			"rolodex has no file systems configured, cannot open '%s'. Add a BaseURL or BasePath to your configuration so the rolodex knows how to resolve references",
+			location,
+		)
 	}
 
 	var errorStack []error
@@ -479,7 +545,9 @@ func (r *Rolodex) Open(location string) (RolodexFile, error) {
 	if !isUrl {
 		if len(r.localFS) <= 0 {
 			r.logger.Warn("[rolodex] no local file systems configured, cannot open local file", "location", location)
-			return nil, fmt.Errorf("the rolodex has no local file systems configured, cannot open local file '%s'", location)
+			return nil, fmt.Errorf(
+				"the rolodex has no local file systems configured, cannot open local file '%s'", location,
+			)
 		}
 
 		for k, v := range r.localFS {
@@ -532,8 +600,10 @@ func (r *Rolodex) Open(location string) (RolodexFile, error) {
 	} else {
 
 		if !r.indexConfig.AllowRemoteLookup {
-			return nil, fmt.Errorf("remote lookup for '%s' not allowed, please set the index configuration to "+
-				"AllowRemoteLookup to true", fileLookup)
+			return nil, fmt.Errorf(
+				"remote lookup for '%s' not allowed, please set the index configuration to "+
+					"AllowRemoteLookup to true", fileLookup,
+			)
 		}
 
 		for _, v := range r.remoteFS {
@@ -675,5 +745,18 @@ func (r *Rolodex) GetFullLineCount() int64 {
 			}
 		}
 	}
+	// add in root count
+	if r.indexConfig != nil && r.indexConfig.SpecInfo != nil {
+		lineCount += int64(strings.Count(string(*r.indexConfig.SpecInfo.SpecBytes), "\n")) + 1
+	}
 	return lineCount
+}
+
+func (r *Rolodex) ClearIndexCaches() {
+	if r.rootIndex != nil {
+		r.rootIndex.GetHighCache().Clear()
+	}
+	for _, idx := range r.indexes {
+		idx.GetHighCache().Clear()
+	}
 }

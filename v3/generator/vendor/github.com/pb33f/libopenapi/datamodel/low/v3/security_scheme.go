@@ -37,8 +37,20 @@ type SecurityScheme struct {
 	Extensions       *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 	KeyNode          *yaml.Node
 	RootNode         *yaml.Node
+	index            *index.SpecIndex
+	context          context.Context
 	*low.Reference
 	low.NodeMap
+}
+
+// GetIndex returns the index.SpecIndex instance attached to the SecurityScheme object.
+func (ss *SecurityScheme) GetIndex() *index.SpecIndex {
+	return ss.index
+}
+
+// GetContext returns the context.Context instance used when building the SecurityScheme object.
+func (ss *SecurityScheme) GetContext() context.Context {
+	return ss.context
 }
 
 // GetRootNode returns the root yaml node of the SecurityScheme object.
@@ -64,12 +76,18 @@ func (ss *SecurityScheme) GetExtensions() *orderedmap.Map[low.KeyReference[strin
 // Build will extract OAuthFlows and extensions from the node.
 func (ss *SecurityScheme) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	ss.KeyNode = keyNode
+	ss.Reference = new(low.Reference)
+	if ok, _, ref := utils.IsNodeRefValue(root); ok {
+		ss.SetReference(ref, root)
+	}
 	root = utils.NodeAlias(root)
 	ss.RootNode = root
 	utils.CheckForMergeNodes(root)
-	ss.Reference = new(low.Reference)
 	ss.Nodes = low.ExtractNodes(ctx, root)
 	ss.Extensions = low.ExtractExtensions(root)
+	ss.index = idx
+	ss.context = ctx
+
 	low.ExtractExtensionNodes(ctx, ss.Extensions, ss.Nodes)
 
 	oa, oaErr := low.ExtractObject[*OAuthFlows](ctx, OAuthFlowsLabel, root, idx)

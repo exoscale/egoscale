@@ -119,13 +119,29 @@ func (index *SpecIndex) SearchIndexForReferenceByReferenceWithContext(ctx contex
 		return rf, idx, context.WithValue(ctx, CurrentPathKey, rf.RemoteLocation)
 	}
 
+	// check security schemes
+	if index.allSecuritySchemes != nil {
+		if r, ok := index.allSecuritySchemes.Load(refAlt); ok {
+			rf := r.(*Reference)
+			idx := index.extractIndex(rf)
+			index.cache.Store(refAlt, r)
+			return rf, idx, context.WithValue(ctx, CurrentPathKey, rf.RemoteLocation)
+		}
+	}
+
 	// check the rolodex for the reference.
 	if roloLookup != "" {
 
 		if strings.Contains(roloLookup, "#") {
 			roloLookup = strings.Split(roloLookup, "#")[0]
 		}
-		if filepath.Base(roloLookup) == index.GetSpecFileName() {
+
+		b := filepath.Base(roloLookup)
+		sfn := index.GetSpecFileName()
+
+		abp := index.GetSpecAbsolutePath()
+
+		if b == sfn && roloLookup == abp {
 			return nil, index, ctx
 		}
 		rFile, err := index.rolodex.Open(roloLookup)

@@ -39,6 +39,8 @@ type Components struct {
 	Extensions      *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 	KeyNode         *yaml.Node
 	RootNode        *yaml.Node
+	index           *index.SpecIndex
+	context         context.Context
 	*low.Reference
 	low.NodeMap
 }
@@ -51,6 +53,16 @@ type componentBuildResult[T any] struct {
 type componentInput struct {
 	node         *yaml.Node
 	currentLabel *yaml.Node
+}
+
+// GetIndex returns the index.SpecIndex instance attached to the Components object
+func (co *Components) GetIndex() *index.SpecIndex {
+	return co.index
+}
+
+// GetContext returns the context.Context instance used when building the Components object
+func (co *Components) GetContext() context.Context {
+	return co.context
 }
 
 // GetExtensions returns all Components extensions and satisfies the low.HasExtensions interface.
@@ -152,6 +164,9 @@ func (co *Components) Build(ctx context.Context, root *yaml.Node, idx *index.Spe
 	low.ExtractExtensionNodes(ctx, co.Extensions, co.Nodes)
 	co.RootNode = root
 	co.KeyNode = root
+	co.index = idx
+	co.context = ctx
+
 	var reterr error
 	var ceMutex sync.Mutex
 	var wg sync.WaitGroup
@@ -295,23 +310,9 @@ func extractComponentValues[T low.Buildable[N], N any](ctx context.Context, labe
 		currentLabel := value.currentLabel
 		node := value.node
 
-		// if this is a reference, extract it (although components with references is an antipattern)
-		// If you're building components as references... pls... stop, this code should not need to be here.
-		// TODO: check circular crazy on this. It may explode
-		var err error
-		nCtx := ctx
-		fIdx := idx
-		if h, rv, _ := utils.IsNodeRefValue(node); h && label != SchemasLabel {
-			node, fIdx, err, nCtx = low.LocateRefNodeWithContext(ctx, node, idx)
-			nCtx = context.WithValue(nCtx, "reference", rv)
-		}
-		if err != nil {
-			return componentBuildResult[T]{}, err
-		}
-
 		// build.
 		_ = low.BuildModel(node, n)
-		err = n.Build(nCtx, currentLabel, node, fIdx)
+		err := n.Build(ctx, currentLabel, node, idx)
 		if err != nil {
 			return componentBuildResult[T]{}, err
 		}

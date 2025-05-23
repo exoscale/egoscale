@@ -30,10 +30,14 @@ jobs:
       - run: make test-verbose
 
       - name: Check for changes
-        id: check_changes
+        id: check_changes in v3/generator
         run: |
-          cd v3/generator/
+          cd v3/
+          go mod tidy
+          go mod vendor
+          cd generator/
           go generate
           go mod tidy
+          go mod vendor
           cd ..
           git diff --exit-code

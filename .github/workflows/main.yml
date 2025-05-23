@@ -30,7 +30,7 @@ jobs:
       - run: make test-verbose
 
       - name: Check for changes
-        id: check_changes in v3
+        id: check_changes_in_v3
         run: |
           cd v3/
           go mod tidy

@@ -22,6 +22,7 @@ type cliCommand struct {
 	OperationID    string
 	Params         []string
 	HelpAndParse   string
+	OptsBuilder    string
 	RequestBuilder string
 	Args           string
 }
@@ -45,10 +46,9 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
-	"strings"
+	flag "github.com/spf13/pflag"
 	v3 "github.com/exoscale/egoscale/v3"
 	"github.com/exoscale/egoscale/v3/credentials"
 )
@@ -108,6 +108,7 @@ func {{ .FuncName }}Cmd(client *v3.Client) {
 {{- end }}
 {{ .HelpAndParse }}
 {{ end -}}
+{{ .OptsBuilder }}
 {{ .RequestBuilder }}
 	resp, err := client.{{ .FuncName }}({{ .Args }})
 	if err != nil {
@@ -139,6 +140,10 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 		for opPair := orderedmap.SortAlpha(pathItems.GetOperations()).First(); opPair != nil; opPair = opPair.Next() {
 			_, operation := opPair.Key(), opPair.Value()
 
+			if operation.OperationId != "list-block-storage-volumes" && operation.OperationId != "update-block-storage-snapshot" && operation.OperationId != "update-dbaas-external-endpoint-datadog" && operation.OperationId != "create-instance-pool" {
+				continue
+			}
+
 			funcName := helpers.ToCamel(operation.OperationId)
 			if funcName == "" {
 				funcName = helpers.ToCamel(pathStr)
@@ -164,11 +169,15 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 				if paramType == "UUID" {
 					paramType = "string"
 				}
-				params = append(params, fmt.Sprintf("var %s %s\n\tflagset.%sVar(&%s, \"%s\", %s, \"\")", paramVar, paramType, helpers.ToCamel(paramType), paramVar, helpers.ToCamel(param.Name), zeroValue(paramType)))
+
+				params = append(params, fmt.Sprintf("var %s %s\n\tflagset.%sVarP(&%s, \"%s\", \"\", %s, \"\")", paramVar, paramType, helpers.ToCamel(paramType), paramVar, param.Name, zeroValue(paramType)))
 				if schemas.RenderSimpleType(param.Schema.Schema()) == "UUID" {
 					paramVar = "v3.UUID(" + paramVar + ")"
 				}
-				args = append(args, paramVar)
+
+				if param.In != "query" {
+					args = append(args, paramVar)
+				}
 			}
 
 			// Request body: generate flags for each field in the request struct
@@ -188,9 +197,33 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 						}
 						flagDefault := zeroValue(flagType)
 						params = append(params, fmt.Sprintf("var %s %s", flagVar, flagType))
-						params = append(params, fmt.Sprintf("flagset.%sVar(&%s, \"%s\", %s, %q)", strings.Title(flagType), flagVar, f.Flag, flagDefault, f.Doc))
+						params = append(params, fmt.Sprintf("flagset.%sVarP(&%s, \"%s\", \"\", %s, %q)", strings.Title(flagType), flagVar, f.Flag, flagDefault, f.Doc))
 					}
 				}
+			}
+
+			var optsBuilder strings.Builder
+			var isOpts bool
+			for _, param := range operation.Parameters {
+				if param.In != "query" {
+					continue
+				}
+
+				if !isOpts {
+					optsBuilder.WriteString("var opts []v3." + helpers.ToCamel(operation.OperationId) + "Opt\n")
+					isOpts = true
+				}
+
+				paramVar := helpers.ToLowerCamel(param.Name) + "Flag"
+				paramType := schemas.RenderSimpleType(param.Schema.Schema())
+				// Use flagset.Lookup to check if set
+				optsBuilder.WriteString(fmt.Sprintf("if flagset.Lookup(\"%s\").Changed {\n", param.Name))
+				if paramType == "UUID" {
+					optsBuilder.WriteString(fmt.Sprintf("opts = append(opts, v3.%sWith%s(v3.UUID(%s)))\n", helpers.ToCamel(operation.OperationId), helpers.ToCamel(param.Name), paramVar))
+				} else {
+					optsBuilder.WriteString(fmt.Sprintf("opts = append(opts, v3.%sWith%s(%s))\n", helpers.ToCamel(operation.OperationId), helpers.ToCamel(param.Name), paramVar))
+				}
+				optsBuilder.WriteString("}\n")
 			}
 
 			var requestBuilder strings.Builder
@@ -199,6 +232,10 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 				requestBuilder.WriteString(fmt.Sprintf("\tvar req v3.%s\n", reqBodyType))
 				requestBuilder.WriteString(buildNestedAssignments(reqBodyFields, "req"))
 				args = append(args, "req")
+			}
+
+			if isOpts {
+				args = append(args, "opts...")
 			}
 
 			helpAndParse := ""
@@ -218,6 +255,7 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 				OperationID:    operation.OperationId,
 				Params:         params,
 				HelpAndParse:   helpAndParse,
+				OptsBuilder:    optsBuilder.String(),
 				RequestBuilder: requestBuilder.String(),
 				Args:           strings.Join(args, ", "),
 			})
@@ -267,6 +305,7 @@ func zeroValue(goType string) string {
 // Now supports nested objects with flag prefixing.
 type reqBodyField struct {
 	Type       string
+	Schema     *base.SchemaProxy
 	StructPath string
 	Flag       string
 	Doc        string
@@ -326,6 +365,7 @@ func getRequestBodyFields(schemaProxy *base.SchemaProxy, schemaName string, pare
 
 		fields = append(fields, reqBodyField{
 			Type:       goType,
+			Schema:     propSchema,
 			StructPath: structPath,
 			Flag:       flagName,
 			Doc:        doc,
@@ -344,31 +384,36 @@ func buildNestedAssignments(fields []reqBodyField, rootVar string) string {
 	for i := len(fields) - 1; i >= 0; i-- {
 		f := fields[i]
 
+		varRef := "req" + helpers.ToCamel(f.StructPath) + "Flag"
+		flagName := f.Flag
+		if f.Type == "UUID" {
+			varRef = "v3.UUID(" + varRef + ")"
+		}
+
+		// Assign	ment guarded by flagset.Lookup(...).Changed
+		assignLine := fmt.Sprintf("if flagset.Lookup(\"%s\").Changed {\n", flagName)
+
 		if f.ParentType != "" {
 			paths := strings.Split(f.StructPath, ".")
 			path := strings.TrimRight(f.StructPath, "."+paths[len(paths)-1])
-
-			varRef := "req" + helpers.ToCamel(f.StructPath) + "Flag"
-			if f.Type == "UUID" {
-				varRef = "v3.UUID(" + varRef + ")"
-			}
 
 			createStruct := ""
 			if f.ParentType != lastParent {
 				createStruct = fmt.Sprintf("req.%s = &v3.%s{}", path, f.ParentType)
 			}
 
-			assignments.WriteString(fmt.Sprintf(`if %s != %s {
-				%s
-				req.%s = %s
-			}
-			`, varRef, zeroValue(f.Type), createStruct, f.StructPath, varRef))
-
+			assignLine += fmt.Sprintf("\t%s\n\treq.%s = %s\n}\n", createStruct, f.StructPath, varRef)
+			assignments.WriteString(assignLine)
 			lastParent = f.ParentType
 			continue
 		}
 
-		assignments.WriteString(fmt.Sprintf("req.%s = req%sFlag\n", f.StructPath, f.StructPath))
+		if f.Schema.Schema().Nullable != nil && *f.Schema.Schema().Nullable {
+			varRef = "&" + varRef
+		}
+
+		assignLine += fmt.Sprintf("\treq.%s = %s\n}\n", f.StructPath, varRef)
+		assignments.WriteString(assignLine)
 	}
 
 	return assignments.String()

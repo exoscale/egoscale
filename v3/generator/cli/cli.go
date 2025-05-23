@@ -140,9 +140,9 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 		for opPair := orderedmap.SortAlpha(pathItems.GetOperations()).First(); opPair != nil; opPair = opPair.Next() {
 			_, operation := opPair.Key(), opPair.Value()
 
-			if operation.OperationId != "list-block-storage-volumes" && operation.OperationId != "update-block-storage-snapshot" && operation.OperationId != "update-dbaas-external-endpoint-datadog" && operation.OperationId != "create-instance-pool" {
-				continue
-			}
+			// if operation.OperationId != "list-block-storage-volumes" && operation.OperationId != "update-block-storage-snapshot" && operation.OperationId != "update-dbaas-external-endpoint-datadog" && operation.OperationId != "create-instance-pool" {
+			// 	continue
+			// }
 
 			funcName := helpers.ToCamel(operation.OperationId)
 			if funcName == "" {
@@ -169,6 +169,9 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 				if paramType == "UUID" {
 					paramType = "string"
 				}
+				if paramType == "time.Time" {
+					paramType = "caca"
+				}
 
 				params = append(params, fmt.Sprintf("var %s %s\n\tflagset.%sVarP(&%s, \"%s\", \"\", %s, \"\")", paramVar, paramType, helpers.ToCamel(paramType), paramVar, param.Name, zeroValue(paramType)))
 				if schemas.RenderSimpleType(param.Schema.Schema()) == "UUID" {
@@ -187,12 +190,18 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 			if operation.RequestBody != nil {
 				if media, ok := operation.RequestBody.Content.Get("application/json"); ok && media.Schema != nil {
 					hasRequestBody = true
-					schemaName := reqBodyType
-					reqBodyFields = getRequestBodyFields(media.Schema, schemaName, "")
+					if media.Schema.IsReference() {
+						reqBodyType = helpers.RenderReference(media.Schema.GetReference())
+					}
+					reqBodyFields = getRequestBodyFields(media.Schema, reqBodyType, "")
 					for _, f := range reqBodyFields {
 						flagVar := "req" + helpers.ToCamel(f.StructPath) + "Flag"
 						flagType := f.Type
 						if f.Type == "UUID" {
+							flagType = "string"
+						}
+
+						if f.Type == "time.Time" {
 							flagType = "string"
 						}
 						flagDefault := zeroValue(flagType)
@@ -230,7 +239,7 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 			if hasRequestBody {
 				requestBuilder.WriteString("\t// Build request body struct from flags\n")
 				requestBuilder.WriteString(fmt.Sprintf("\tvar req v3.%s\n", reqBodyType))
-				requestBuilder.WriteString(buildNestedAssignments(reqBodyFields, "req"))
+				requestBuilder.WriteString(buildNestedAssignments(reqBodyType, reqBodyFields, "req"))
 				args = append(args, "req")
 			}
 
@@ -377,10 +386,9 @@ func getRequestBodyFields(schemaProxy *base.SchemaProxy, schemaName string, pare
 
 // buildNestedAssignments generates Go code to assign flat flags to nested struct fields.
 // It instantiates nested structs only if any of their fields are set.
-func buildNestedAssignments(fields []reqBodyField, rootVar string) string {
+func buildNestedAssignments(reqBodyType string, fields []reqBodyField, rootVar string) string {
 	var assignments strings.Builder
 
-	var lastParent string
 	for i := len(fields) - 1; i >= 0; i-- {
 		f := fields[i]
 
@@ -390,26 +398,48 @@ func buildNestedAssignments(fields []reqBodyField, rootVar string) string {
 			varRef = "v3.UUID(" + varRef + ")"
 		}
 
+		if f.Type == "time.Time" {
+			//t, _ = time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
+			//todo add time parse to var
+			continue
+		}
+		// TODO remove it and handle pointer not depending on type
+		if f.Type == "bool" {
+			varRef = "&" + varRef
+		}
+
+		if f.Schema.IsReference() {
+			varRef = "v3." + helpers.RenderReference(f.Schema.GetReference()) + "(" + varRef + ")"
+		}
+
+		if len(f.Schema.Schema().Enum) > 0 && !f.Schema.IsReference() {
+			if f.ParentType != "" {
+				varRef = "v3." + helpers.ToCamel(f.StructPath) + "(" + varRef + ")"
+			} else {
+				varRef = "v3." + reqBodyType + helpers.ToCamel(f.StructPath) + "(" + varRef + ")"
+			}
+		}
+
+		if f.Schema.Schema().Nullable != nil && *f.Schema.Schema().Nullable && f.Type != "bool" {
+			varRef = "&" + varRef
+		}
+
 		// Assign	ment guarded by flagset.Lookup(...).Changed
 		assignLine := fmt.Sprintf("if flagset.Lookup(\"%s\").Changed {\n", flagName)
 
 		if f.ParentType != "" {
 			paths := strings.Split(f.StructPath, ".")
-			path := strings.TrimRight(f.StructPath, "."+paths[len(paths)-1])
+			path := strings.Join(paths[:len(paths)-1], ".")
 
-			createStruct := ""
-			if f.ParentType != lastParent {
-				createStruct = fmt.Sprintf("req.%s = &v3.%s{}", path, f.ParentType)
-			}
+			assignLine += fmt.Sprintf(`if req.%s != nil {
+					req.%s = &v3.%s{}
+				}
+`, path, path, f.ParentType)
 
-			assignLine += fmt.Sprintf("\t%s\n\treq.%s = %s\n}\n", createStruct, f.StructPath, varRef)
+			assignLine += fmt.Sprintf("\treq.%s = %s\n}\n", f.StructPath, varRef)
 			assignments.WriteString(assignLine)
-			lastParent = f.ParentType
-			continue
-		}
 
-		if f.Schema.Schema().Nullable != nil && *f.Schema.Schema().Nullable {
-			varRef = "&" + varRef
+			continue
 		}
 
 		assignLine += fmt.Sprintf("\treq.%s = %s\n}\n", f.StructPath, varRef)

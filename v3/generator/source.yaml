@@ -5159,6 +5159,34 @@ components:
           type: string
           maxLength: 16384
           description: PEM encoded CA certificate
+    networking:
+      type: object
+      properties:
+        cluster-cidr:
+          type: string
+          description: |-
+            CIDR Range for Pods in cluster. This must not overlap with any IP ranges assigned to pods. Max of two, comma-separated, dual-stack CIDRs is allowed.
+                          If not specified, defaults to 192.168.0.0/16.
+        service-cluster-ip-range:
+          type: string
+          description: |-
+            CIDR range for service cluster IPs. This must not overlap with any IP ranges assigned to nodes or pods. Max of two, comma-separated, dual-stack CIDRs is allowed.
+                          If not specified, defaults to 10.96.0.0/12.
+        node-cidr-mask-size-ipv4:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: Mask size for node cidr in cluster. It must be larger than
+            the Pod CIDR subnet mask. Defaults to 24
+        node-cidr-mask-size-ipv6:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: Mask size for node cidr in cluster. It must be larger than
+            the Pod CIDR subnet mask. Defaults to 64
+      description: Cluster networking configuration.
     dbaas-user-grafana-secrets:
       type: object
       properties:
@@ -14787,6 +14815,9 @@ paths:
                   type: boolean
                   description: Enable auto upgrade of the control plane to the latest
                     patch version available
+                networking:
+                  "$ref": "#/components/schemas/networking"
+                  description: Cluster networking configuration
                 oidc:
                   "$ref": "#/components/schemas/sks-oidc"
                   description: Cluster OpenID configmap

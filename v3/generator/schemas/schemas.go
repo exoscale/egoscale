@@ -331,6 +331,16 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			continue
 		}
 
+		InferType(prop)
+
+		propType := ""
+		for _, t := range prop.Type {
+			if t != "null" {
+				propType = t
+				break
+			}
+		}
+
 		var nullable = false
 		if prop.Nullable != nil {
 			nullable = *prop.Nullable
@@ -365,10 +375,10 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 
 		if properties.IsReference() {
 			referenceName := helpers.RenderReference(properties.GetReference())
-			if prop.AdditionalProperties != nil {
+			if propType == "map" {
 				pointer = ""
 			}
-			if !nullable && IsSimpleSchema(prop) {
+			if !nullable && IsSimpleSchema(prop) && propType != "boolean" {
 				pointer = ""
 			}
 
@@ -376,7 +386,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			continue
 		}
 
-		if prop.Type[0] == "array" {
+		if propType == "array" {
 			array, err := renderArray(typeName+camelName, prop, output)
 			if err != nil {
 				return "", err
@@ -400,12 +410,11 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 				continue
 			}
 
-			// To be discuss here, for the moment we bypass pointer on those types,
-			// and use JSON omitempty. This will cover most of all case.
-			// For the specific types left like in PUT requests schema,
-			// we need to update the spec to put those type as nullable, take the instance-pool as good example,
-			// (only use custom schema, not schema reference for PUT request).
-			if !nullable && (prop.Type[0] == "string" || prop.Type[0] == "integer" || prop.Type[0] == "number") {
+			// For simple types, we generate fields without pointers and rely on the JSON "omitempty" tag
+			// to represent unset values in most cases. The exception is for boolean types, where we must
+			// use a pointer to distinguish between "false" and "unset". If an unset value is required for
+			// any other simple type, the OpenAPI spec must explicitly set "nullable: true" for that field.
+			if !nullable && IsSimpleSchema(prop) && propType != "boolean" {
 				definition += camelName + " " + RenderSimpleType(prop) + tag + "\n"
 				continue
 			}
@@ -423,7 +432,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		}
 
 		// Render additional properties (map).
-		if prop.AdditionalProperties != nil {
+		if propType == "map" {
 			Map, err := renderSimpleMap(typeName+camelName, prop, output)
 			if err != nil {
 				return "", err

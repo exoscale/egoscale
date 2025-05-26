@@ -331,6 +331,16 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			continue
 		}
 
+		InferType(prop)
+
+		propType := ""
+		for _, t := range prop.Type {
+			if t != "null" {
+				propType = t
+				break
+			}
+		}
+
 		var nullable = false
 		if prop.Nullable != nil {
 			nullable = *prop.Nullable
@@ -376,7 +386,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			continue
 		}
 
-		if prop.Type[0] == "array" {
+		if propType == "array" {
 			array, err := renderArray(typeName+camelName, prop, output)
 			if err != nil {
 				return "", err
@@ -405,7 +415,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 			// For the specific types left like in PUT requests schema,
 			// we need to update the spec to put those type as nullable, take the instance-pool as good example,
 			// (only use custom schema, not schema reference for PUT request).
-			if !nullable && (prop.Type[0] == "string" || prop.Type[0] == "integer" || prop.Type[0] == "number") {
+			if !nullable && (propType == "string" || propType == "integer" || propType == "number") {
 				definition += camelName + " " + RenderSimpleType(prop) + tag + "\n"
 				continue
 			}
@@ -423,7 +433,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		}
 
 		// Render additional properties (map).
-		if prop.AdditionalProperties != nil {
+		if propType == "map" {
 			Map, err := renderSimpleMap(typeName+camelName, prop, output)
 			if err != nil {
 				return "", err

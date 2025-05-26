@@ -375,7 +375,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 
 		if properties.IsReference() {
 			referenceName := helpers.RenderReference(properties.GetReference())
-			if prop.AdditionalProperties != nil {
+			if propType == "map" {
 				pointer = ""
 			}
 			if !nullable && IsSimpleSchema(prop) {

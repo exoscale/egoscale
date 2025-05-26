@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.1.19
+------
+
+- v3 Generator: Fix false additional properties in object #700
+
 3.1.18
 ------
 

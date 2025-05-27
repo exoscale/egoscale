@@ -14620,6 +14620,8 @@ type CreateSKSClusterRequest struct {
 	Level CreateSKSClusterRequestLevel `json:"level" validate:"required"`
 	// Cluster name
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
+	// Cluster networking configuration.
+	Networking *Networking `json:"networking,omitempty"`
 	// SKS Cluster OpenID config map
 	Oidc *SKSOidc `json:"oidc,omitempty"`
 	// Control plane Kubernetes version

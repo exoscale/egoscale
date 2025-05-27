@@ -184,9 +184,9 @@ func renderRequestSchema(name string, op *v3.Operation) ([]byte, error) {
 }
 
 const queryParamTemplate = `
-func {{ .FuncName }}({{ .ParamName }} {{ .ParamType }}) {{ .FuncReturn }} {
+func {{ .FuncName }}({{ .FieldName }} {{ .ParamType }}) {{ .FuncReturn }} {
 	return func(q url.Values) {
-		q.Add("{{ .ParamName }}", fmt.Sprint({{ .ParamName }}))
+		q.Add("{{ .ParamName }}", fmt.Sprint({{ .FieldName }}))
 	}
 }
 `
@@ -196,6 +196,7 @@ type QueryParam struct {
 	ParamName  string
 	ParamType  string
 	FuncReturn string
+	FieldName  string
 }
 
 // renderRequestParametersSchema renders the schemas for optional query params and path params.
@@ -224,7 +225,8 @@ func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error
 			}
 			if err := t.Execute(query, QueryParam{
 				FuncName:   name + "With" + helpers.ToCamel(p.Name),
-				ParamName:  helpers.ToLowerCamel(p.Name),
+				FieldName:  helpers.ToLowerCamel(p.Name),
+				ParamName:  p.Name,
 				ParamType:  typ,
 				FuncReturn: name + "Opt",
 			}); err != nil {

@@ -10759,7 +10759,7 @@ type CreateInstanceRequest struct {
 	// Instance name
 	Name               string             `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
-	// [Beta] Enable secure boot
+	// Enable secure boot
 	SecurebootEnabled *bool `json:"secureboot-enabled,omitempty"`
 	// Instance Security Groups
 	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
@@ -10769,7 +10769,7 @@ type CreateInstanceRequest struct {
 	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
 	// Instance template
 	Template *Template `json:"template" validate:"required"`
-	// [Beta] Enable Trusted Platform Module (TPM)
+	// Enable Trusted Platform Module (TPM)
 	TpmEnabled *bool `json:"tpm-enabled,omitempty"`
 	// Instance Cloud-init user-data (base64 encoded)
 	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1,lte=32768"`
@@ -11743,7 +11743,7 @@ func (c Client) CreateSnapshot(ctx context.Context, id UUID) (*Operation, error)
 	return bodyresp, nil
 }
 
-// [Beta] Enable tpm for the instance.
+// Enable tpm for the instance.
 func (c Client) EnableTpm(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:enable-tpm", id)
 

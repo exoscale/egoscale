@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v3 Generator: correctly build parameter keys for queries #701 
+
 3.1.19
 ------
 

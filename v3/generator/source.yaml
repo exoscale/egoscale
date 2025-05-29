@@ -11535,7 +11535,7 @@ paths:
         schema:
           type: string
           format: uuid
-      summary: "[Beta] Enable tpm for the instance."
+      summary: Enable tpm for the instance.
       operationId: enable-tpm
   "/organization":
     get:
@@ -18597,7 +18597,7 @@ paths:
                   description: Instance Template
                 secureboot-enabled:
                   type: boolean
-                  description: "[Beta] Enable secure boot"
+                  description: Enable secure boot
                 ssh-key:
                   "$ref": "#/components/schemas/ssh-key"
                   description: Instance SSH Key
@@ -18608,7 +18608,7 @@ paths:
                   description: Instance Cloud-init user-data (base64 encoded)
                 tpm-enabled:
                   type: boolean
-                  description: "[Beta] Enable Trusted Platform Module (TPM)"
+                  description: Enable Trusted Platform Module (TPM)
                 deploy-target:
                   "$ref": "#/components/schemas/deploy-target"
                   description: Instance Deploy Target

@@ -2342,6 +2342,9 @@ components:
             type: string
           description: List of roles. The certificate present in the Kubeconfig will
             have these roles set in the Org field.
+      required:
+      - user
+      - groups
       description: Kubeconfig request for a SKS cluster
     dbaas-service-notification:
       type: object
@@ -6305,6 +6308,7 @@ components:
       - de-fra-1
       - bg-sof-1
       - at-vie-2
+      - hr-zag-1
     dbaas-endpoint-datadog-settings:
       type: object
       properties:
@@ -12263,7 +12267,7 @@ paths:
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/dns-domain"
+                "$ref": "#/components/schemas/operation"
       description: ''
       parameters: []
       summary: Create DNS domain
@@ -12904,6 +12908,7 @@ paths:
                       maximum: 254
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                     type:
                       type: integer
                       format: int64
@@ -12911,6 +12916,7 @@ paths:
                       maximum: 254
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                   description: 'ICMP details (default: -1 (ANY))'
                 start-port:
                   type: integer

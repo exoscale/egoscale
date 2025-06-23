@@ -1,10 +1,15 @@
 Changelog
 =========
 
+3.1.21
+----------
+
+- v3: regenerate from new API spec #703 #702
+
 3.1.20
 ----------
 
-- v3 Generator: correctly build parameter keys for queries #701 
+- v3 Generator: correctly build parameter keys for queries #701
 
 3.1.19
 ------

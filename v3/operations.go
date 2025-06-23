@@ -9057,7 +9057,7 @@ type CreateDNSDomainRequest struct {
 }
 
 // Create DNS domain
-func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest) (*DNSDomain, error) {
+func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest) (*Operation, error) {
 	path := "/dns-domain"
 
 	body, err := prepareJSONBody(req)
@@ -9099,7 +9099,7 @@ func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest)
 		return nil, fmt.Errorf("CreateDNSDomain: http response: %w", err)
 	}
 
-	bodyresp := &DNSDomain{}
+	bodyresp := &Operation{}
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: prepare Json response: %w", err)
 	}
@@ -14166,8 +14166,8 @@ const (
 
 // ICMP details (default: -1 (ANY))
 type AddRuleToSecurityGroupRequestICMP struct {
-	Code int64 `json:"code,omitempty" validate:"omitempty,gte=-1,lte=254"`
-	Type int64 `json:"type,omitempty" validate:"omitempty,gte=-1,lte=254"`
+	Code *int64 `json:"code,omitempty" validate:"omitempty,gte=-1,lte=254"`
+	Type *int64 `json:"type,omitempty" validate:"omitempty,gte=-1,lte=254"`
 }
 
 type AddRuleToSecurityGroupRequestProtocol string

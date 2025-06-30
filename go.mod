@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 )
 
-go 1.23.8
+go 1.24
 
 retract (
 	v1.19.1 // Retracts the previous version

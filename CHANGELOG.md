@@ -1,13 +1,19 @@
 Changelog
 =========
 
+3.1.22
+------
+
+- v2: manually add zag1 zone (#705)
+- v2: bump Go version to 1.24 (#706)
+
 3.1.21
-----------
+------
 
 - v3: regenerate from new API spec #703 #702
 
 3.1.20
-----------
+------
 
 - v3 Generator: correctly build parameter keys for queries #701
 

@@ -412,17 +412,18 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 }
 
 type RequestTmpl struct {
-	Comment        string
-	Name           string
-	OperationID    string
-	Params         string
-	ValueReturn    string
-	URLPathBuilder string
-	HTTPMethod     string
-	BodyRequest    bool
-	BodyRespType   string
-	ContentType    string
-	QueryParams    map[string]string
+	Comment            string
+	Name               string
+	OperationID        string
+	Params             string
+	ValueReturn        string
+	URLPathBuilder     string
+	HTTPMethod         string
+	BodyRequest        bool
+	BodyRespType       string
+	JSONResponseTarget string
+	ContentType        string
+	QueryParams        map[string]string
 }
 
 // serializeRequest serializes the openAPI spec into the request template.
@@ -438,8 +439,11 @@ func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*Req
 	valuesReturn := getValuesReturn(op, funcName)
 	if len(valuesReturn) == 2 {
 		p.BodyRespType = valuesReturn[0]
+		p.JSONResponseTarget = "bodyresp"
 		if !strings.HasPrefix(valuesReturn[0], "[]") {
 			p.BodyRespType = "&" + p.BodyRespType[1:]
+		} else {
+			p.JSONResponseTarget = "&" + p.JSONResponseTarget
 		}
 	}
 	p.ValueReturn = fmt.Sprintf("(%s)", strings.Join(valuesReturn, ", "))

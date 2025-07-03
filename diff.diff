@@ -1,0 +1,81 @@
+diff --git a/v3/generator/operations/operations.go b/v3/generator/operations/operations.go
+index a593a83..2d0ee24 100644
+--- a/v3/generator/operations/operations.go
++++ b/v3/generator/operations/operations.go
+@@ -412,17 +412,18 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
+ }
+ 
+ type RequestTmpl struct {
+-	Comment        string
+-	Name           string
+-	OperationID    string
+-	Params         string
+-	ValueReturn    string
+-	URLPathBuilder string
+-	HTTPMethod     string
+-	BodyRequest    bool
+-	BodyRespType   string
+-	ContentType    string
+-	QueryParams    map[string]string
++	Comment            string
++	Name               string
++	OperationID        string
++	Params             string
++	ValueReturn        string
++	URLPathBuilder     string
++	HTTPMethod         string
++	BodyRequest        bool
++	BodyRespType       string
++	JSONResponseTarget string
++	ContentType        string
++	QueryParams        map[string]string
+ }
+ 
+ // serializeRequest serializes the openAPI spec into the request template.
+@@ -438,8 +439,11 @@ func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*Req
+ 	valuesReturn := getValuesReturn(op, funcName)
+ 	if len(valuesReturn) == 2 {
+ 		p.BodyRespType = valuesReturn[0]
++		p.JSONResponseTarget = "bodyresp"
+ 		if !strings.HasPrefix(valuesReturn[0], "[]") {
+ 			p.BodyRespType = "&" + p.BodyRespType[1:]
++		} else {
++			p.JSONResponseTarget = "&" + p.JSONResponseTarget
+ 		}
+ 	}
+ 	p.ValueReturn = fmt.Sprintf("(%s)", strings.Join(valuesReturn, ", "))
+diff --git a/v3/generator/operations/request.tmpl b/v3/generator/operations/request.tmpl
+index d1fcff0..698b561 100644
+--- a/v3/generator/operations/request.tmpl
++++ b/v3/generator/operations/request.tmpl
+@@ -54,7 +54,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
+ 	}
+ 
+ 	bodyresp := {{ .BodyRespType }}{}
+-	if err := prepareJSONResponse(response, bodyresp); err != nil {
++	if err := prepareJSONResponse(response, {{ .JSONResponseTarget }}); err != nil {
+ 		return nil, fmt.Errorf("{{ .Name }}: prepare Json response: %w", err)
+ 	}
+ 
+diff --git a/v3/operations.go b/v3/operations.go
+index 4f3cf77..fc8bd13 100755
+--- a/v3/operations.go
++++ b/v3/operations.go
+@@ -10124,7 +10124,7 @@ func (c Client) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event,
+ 	}
+ 
+ 	bodyresp := []Event{}
+-	if err := prepareJSONResponse(response, bodyresp); err != nil {
++	if err := prepareJSONResponse(response, &bodyresp); err != nil {
+ 		return nil, fmt.Errorf("ListEvents: prepare Json response: %w", err)
+ 	}
+ 
+@@ -14716,7 +14716,7 @@ func (c Client) ListSKSClusterDeprecatedResources(ctx context.Context, id UUID)
+ 	}
+ 
+ 	bodyresp := []SKSClusterDeprecatedResource{}
+-	if err := prepareJSONResponse(response, bodyresp); err != nil {
++	if err := prepareJSONResponse(response, &bodyresp); err != nil {
+ 		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: prepare Json response: %w", err)
+ 	}
+ 

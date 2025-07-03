@@ -54,7 +54,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	}
 
 	bodyresp := {{ .BodyRespType }}{}
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := prepareJSONResponse(response, {{ .JSONResponseTarget }}); err != nil {
 		return nil, fmt.Errorf("{{ .Name }}: prepare Json response: %w", err)
 	}
 

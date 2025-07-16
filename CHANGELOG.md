@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+3.1.24
+------
 
 - Generator: use a pointer before unmarshalling into non-pointer structs #707
 

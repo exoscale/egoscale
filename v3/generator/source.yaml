@@ -7747,7 +7747,7 @@ components:
           title: Opensearch Email Sender Settings
           type: object
         indices_fielddata_cache_size:
-          default: 
+          default:
           description: Relative amount. Maximum amount of heap memory used for field
             data cache. This is an expert setting; decreasing the value too much will
             increase overhead of loading field data; too much memory used for field
@@ -8416,7 +8416,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-opensearch-acl-config"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -8435,7 +8435,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -8519,7 +8519,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -8777,7 +8777,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -9411,7 +9411,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -9541,7 +9541,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -10162,7 +10162,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -10221,7 +10221,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -10241,7 +10241,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-service-kafka"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -10466,7 +10466,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -10507,7 +10507,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -10803,7 +10803,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -11313,7 +11313,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-user-kafka-connect-secrets"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -11481,7 +11481,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -11801,7 +11801,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/iam-api-key-created"
-      description: 
+      description:
       parameters: []
       summary: Create a new API key
       requestBody:
@@ -11839,7 +11839,7 @@ paths:
                     type: array
                     items:
                       "$ref": "#/components/schemas/iam-api-key"
-      description: 
+      description:
       parameters: []
       summary: List API keys
       operationId: list-api-keys
@@ -12044,7 +12044,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -12363,7 +12363,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -12382,7 +12382,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/iam-api-key"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -12437,7 +12437,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -12574,7 +12574,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -12626,7 +12626,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -12672,7 +12672,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-postgres-users"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -12877,7 +12877,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -12994,7 +12994,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -13238,7 +13238,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -13258,7 +13258,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-user-grafana-secrets"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -13283,7 +13283,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -13313,7 +13313,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -13572,7 +13572,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -13597,7 +13597,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -13700,7 +13700,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -13804,7 +13804,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -13920,7 +13920,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-user-mysql-secrets"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -14077,7 +14077,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -14098,7 +14098,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-user-kafka-secrets"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -15055,7 +15055,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -15431,7 +15431,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -15471,7 +15471,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -15656,7 +15656,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -15780,7 +15780,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -16015,7 +16015,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-user-postgres-secrets"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -16124,7 +16124,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -16143,7 +16143,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-service-grafana"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -16162,7 +16162,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -16508,7 +16508,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -16528,7 +16528,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-kafka-acls"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -16583,7 +16583,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-user-opensearch-secrets"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -16608,7 +16608,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -16832,7 +16832,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -17098,7 +17098,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/dbaas-user-valkey-secrets"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -17328,7 +17328,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -17561,7 +17561,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -17581,7 +17581,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true
@@ -18091,7 +18091,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters: []
       summary: Create a User
       requestBody:
@@ -18125,7 +18125,7 @@ paths:
                     type: array
                     items:
                       "$ref": "#/components/schemas/user"
-      description: 
+      description:
       parameters: []
       summary: List Users
       operationId: list-users
@@ -18238,7 +18238,7 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/operation"
-      description: 
+      description:
       parameters:
       - in: path
         required: true

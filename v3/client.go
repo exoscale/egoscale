@@ -6,7 +6,7 @@ package v3
 import (
 	"context"
 	"fmt"
-	"go"
+	"io"
 	"net/http"
 	"runtime"
 	"time"

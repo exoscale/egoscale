@@ -6,7 +6,10 @@ require (
 	github.com/diskfs/go-diskfs v1.4.0
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/google/uuid v1.4.0
+	github.com/hashicorp/go-retryablehttp v0.7.7
 )
+
+require github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 
 require (
 	github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab // indirect

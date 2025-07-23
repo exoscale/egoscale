@@ -34,9 +34,11 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 		"context"
 		"runtime"
 		"time"
+		"go"
 
 		"github.com/exoscale/egoscale/v3/credentials"
 		"github.com/go-playground/validator/v10"
+	"github.com/hashicorp/go-retryablehttp"
 	)
 	`, packageName))
 

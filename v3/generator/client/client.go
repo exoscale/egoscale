@@ -30,11 +30,12 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	output.WriteString(fmt.Sprintf(`package %s
 	import (
 		"fmt"
+		"io"
+		"log"
 		"net/http"
 		"context"
 		"runtime"
 		"time"
-		"io"
 
 		"github.com/exoscale/egoscale/v3/credentials"
 		"github.com/go-playground/validator/v10"

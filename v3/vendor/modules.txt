@@ -30,6 +30,12 @@ github.com/go-playground/validator/v10
 # github.com/google/uuid v1.4.0
 ## explicit
 github.com/google/uuid
+# github.com/hashicorp/go-cleanhttp v0.5.2
+## explicit; go 1.13
+github.com/hashicorp/go-cleanhttp
+# github.com/hashicorp/go-retryablehttp v0.7.7
+## explicit; go 1.19
+github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/hcl v1.0.0
 ## explicit
 github.com/hashicorp/hcl

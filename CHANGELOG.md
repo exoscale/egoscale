@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v3: use go-retryabble as default HTTP client #710
+
 3.1.24
 ------
 

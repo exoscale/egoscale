@@ -3417,44 +3417,6 @@ type JSONSchemaSchemaRegistry struct {
 	TopicName string `json:"topic_name,omitempty" validate:"omitempty,gte=1,lte=249"`
 }
 
-// Configuration options for Thanos Compactor.
-type JSONSchemaThanosCompactor struct {
-	// Retention time for data in days for each resolution (5m, 1h, raw)
-	RetentionDays int `json:"retention.days,omitempty" validate:"omitempty,gte=0"`
-}
-
-// Configuration options for Thanos Query.
-type JSONSchemaThanosQuery struct {
-	// Set the default evaluation interval for subqueries.
-	QueryDefaultEvaluationInterval string `json:"query.default-evaluation-interval,omitempty" validate:"omitempty,lte=20"`
-	// The maximum lookback duration for retrieving metrics during expression evaluations in PromQL. PromQL always evaluates the query for a certain timestamp, and it looks back for the given amount of time to get the latest sample. If it exceeds the maximum lookback delta, it assumes the series is stale and returns none (a gap). The lookback delta should be set to at least 2 times the slowest scrape interval. If unset, it will use the promql default of 5m.
-	QueryLookbackDelta string `json:"query.lookback-delta,omitempty" validate:"omitempty,lte=20"`
-	// The default metadata time range duration for retrieving labels through Labels and Series API when the range parameters are not specified. The zero value means the range covers the time since the beginning.
-	QueryMetadataDefaultTimeRange string `json:"query.metadata.default-time-range,omitempty" validate:"omitempty,lte=20"`
-	// Maximum time to process a query by the query node.
-	QueryTimeout string `json:"query.timeout,omitempty" validate:"omitempty,lte=20"`
-	// The maximum samples allowed for a single Series request. The Series call fails if this limit is exceeded. Set to 0 for no limit. NOTE: For efficiency, the limit is internally implemented as 'chunks limit' considering each chunk contains a maximum of 120 samples. The default value is 100 * store.limits.request-series.
-	StoreLimitsRequestSamples int `json:"store.limits.request-samples,omitempty" validate:"omitempty,gte=0,lte=1e+08"`
-	// The maximum series allowed for a single Series request. The Series call fails if this limit is exceeded. Set to 0 for no limit. The default value is 1000 * cpu_count.
-	StoreLimitsRequestSeries int `json:"store.limits.request-series,omitempty" validate:"omitempty,gte=0,lte=1e+08"`
-}
-
-// Configuration options for Thanos Query Frontend.
-type JSONSchemaThanosQueryFrontend struct {
-	// Whether to align the query range boundaries with the step. If enabled, the query range boundaries will be aligned to the step, providing more accurate results for queries with high-resolution data.
-	QueryRangeAlignRangeWithStep *bool `json:"query-range.align-range-with-step,omitempty"`
-}
-
-// Thanos settings
-type JSONSchemaThanos struct {
-	// Configuration options for Thanos Compactor.
-	Compactor *JSONSchemaThanosCompactor `json:"compactor,omitempty"`
-	// Configuration options for Thanos Query.
-	Query *JSONSchemaThanosQuery `json:"query,omitempty"`
-	// Configuration options for Thanos Query Frontend.
-	QueryFrontend *JSONSchemaThanosQueryFrontend `json:"query_frontend,omitempty"`
-}
-
 // System-wide settings for the timescaledb extension
 type JSONSchemaTimescaledb struct {
 	// The number of background workers for timescaledb operations. You should configure this setting to the sum of your number of databases and the total number of concurrent background workers you want running at any given point in time.

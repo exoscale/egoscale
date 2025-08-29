@@ -183,6 +183,10 @@ components:
           required:
           - url
           - index-prefix
+    sks-audit-endpoint:
+      type: string
+      maxLength: 2000
+      minLength: 1
     json-schema-schema-registry:
       additionalProperties: false
       properties:
@@ -409,6 +413,10 @@ components:
       - private
       - public
       - privatelink
+    sks-audit-bearer-token:
+      type: string
+      maxLength: 2000
+      minLength: 1
     dbaas-endpoint-opensearch-output:
       type: object
       properties:
@@ -1372,6 +1380,95 @@ components:
                 type: string
               node:
                 type: string
+    json-schema-thanos:
+      properties:
+        compactor:
+          additionalProperties: false
+          description: Configuration options for Thanos Compactor.
+          properties:
+            retention.days:
+              description: Retention time for data in days for each resolution (5m,
+                1h, raw)
+              minimum: 0
+              title: Retention time for data in days
+              type: integer
+          title: Thanos Compactor User Configuration
+          type: object
+        query:
+          additionalProperties: false
+          description: Configuration options for Thanos Query.
+          properties:
+            query.default-evaluation-interval:
+              default: 1m
+              description: Set the default evaluation interval for subqueries.
+              maxLength: 20
+              title: Set the default evaluation interval for subqueries.
+              type: string
+            query.lookback-delta:
+              default: 5m
+              description: The maximum lookback duration for retrieving metrics during
+                expression evaluations in PromQL. PromQL always evaluates the query
+                for a certain timestamp, and it looks back for the given amount of
+                time to get the latest sample. If it exceeds the maximum lookback
+                delta, it assumes the series is stale and returns none (a gap). The
+                lookback delta should be set to at least 2 times the slowest scrape
+                interval. If unset, it will use the promql default of 5m.
+              maxLength: 20
+              title: Maximum lookback duration for retrieving metrics during expression
+                evaluations in PromQL
+              type: string
+            query.metadata.default-time-range:
+              default: 0s
+              description: The default metadata time range duration for retrieving
+                labels through Labels and Series API when the range parameters are
+                not specified. The zero value means the range covers the time since
+                the beginning.
+              maxLength: 20
+              title: Default metadata time range duration for retrieving labels
+              type: string
+            query.timeout:
+              default: 2m
+              description: Maximum time to process a query by the query node.
+              maxLength: 20
+              title: Maximum time to process a query by the query node.
+              type: string
+            store.limits.request-samples:
+              default: 0
+              description: 'The maximum samples allowed for a single Series request.
+                The Series call fails if this limit is exceeded. Set to 0 for no limit.
+                NOTE: For efficiency, the limit is internally implemented as ''chunks
+                limit'' considering each chunk contains a maximum of 120 samples.
+                The default value is 100 * store.limits.request-series.'
+              maximum: 100000000
+              minimum: 0
+              title: Store.Limits.Request-Samples
+              type: integer
+            store.limits.request-series:
+              default: 0
+              description: The maximum series allowed for a single Series request.
+                The Series call fails if this limit is exceeded. Set to 0 for no limit.
+                The default value is 1000 * cpu_count.
+              maximum: 100000000
+              minimum: 0
+              title: Store.Limits.Request-Series
+              type: integer
+          title: Thanos Query User Configuration
+          type: object
+        query_frontend:
+          additionalProperties: false
+          description: Configuration options for Thanos Query Frontend.
+          properties:
+            query-range.align-range-with-step:
+              default: true
+              description: Whether to align the query range boundaries with the step.
+                If enabled, the query range boundaries will be aligned to the step,
+                providing more accurate results for queries with high-resolution data.
+              title: Whether to align the query range boundaries with the step.
+              type: boolean
+          title: Thanos Query Frontend User Configuration
+          type: object
+      title: Thanos settings
+      type: object
     instance-password:
       type: object
       properties:
@@ -3410,6 +3507,10 @@ components:
           format: int64
           description: Resource Limit. -1 for Unlimited
       description: Organization Quota
+    sks-audit-initial-backoff:
+      type: string
+      maxLength: 10
+      minLength: 1
     dbaas-pg-pool-name:
       type: string
       maxLength: 63
@@ -4119,6 +4220,23 @@ components:
       - time
       - updates
       description: Automatic maintenance settings
+    sks-audit-update:
+      type: object
+      properties:
+        endpoint:
+          "$ref": "#/components/schemas/sks-audit-endpoint"
+          description: Target Webserver URL
+        bearer-token:
+          "$ref": "#/components/schemas/sks-audit-bearer-token"
+          description: Bearer token
+        initial-backoff:
+          "$ref": "#/components/schemas/sks-audit-initial-backoff"
+          description: Initial backoff (default '10s')
+        enabled:
+          type: boolean
+          nullable: true
+          description: Enable or Disable Kubernetes Audit
+      description: Kubernetes Audit parameters
     enum-service-state:
       type: string
       enum:
@@ -4739,6 +4857,159 @@ components:
       - transaction
       - statement
       - session
+    dbaas-service-thanos:
+      type: object
+      properties:
+        updated-at:
+          type: string
+          format: date-time
+          description: Service last update timestamp (ISO 8601)
+        node-count:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: Number of service nodes in the active plan
+        connection-info:
+          type: object
+          properties:
+            query-frontend-uri:
+              type: string
+            query-uri:
+              type: string
+            receiver-remote-write-uri:
+              type: string
+            ruler-uri:
+              type: string
+          description: Thanos connection information properties
+        node-cpu-count:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: Number of CPUs for each node
+        prometheus-uri:
+          type: object
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+              format: int64
+              minimum: 0
+              maximum: 65535
+              exclusiveMinimum: false
+              exclusiveMaximum: false
+          description: Prometheus integration URI
+        integrations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/dbaas-integration"
+          description: Service integrations
+        zone:
+          type: string
+          description: The zone where the service is running
+        node-states:
+          type: array
+          items:
+            "$ref": "#/components/schemas/dbaas-node-state"
+          description: State of individual service nodes
+        name:
+          "$ref": "#/components/schemas/dbaas-service-name"
+          description: Service name
+        type:
+          "$ref": "#/components/schemas/dbaas-service-type-name"
+          description: Service type code
+        state:
+          "$ref": "#/components/schemas/enum-service-state"
+          description: State of the service
+        backups:
+          type: array
+          items:
+            "$ref": "#/components/schemas/dbaas-service-backup"
+          description: List of backups for the service
+        termination-protection:
+          type: boolean
+          description: Service is protected against termination and powering off
+        notifications:
+          type: array
+          items:
+            "$ref": "#/components/schemas/dbaas-service-notification"
+          description: Service notifications
+        components:
+          type: array
+          items:
+            type: object
+            properties:
+              component:
+                type: string
+                description: Service component name
+              host:
+                type: string
+                description: DNS name for connecting to the service component
+              port:
+                type: integer
+                format: int64
+                minimum: 0
+                maximum: 65535
+                exclusiveMinimum: false
+                exclusiveMaximum: false
+                description: Port number for connecting to the service component
+              route:
+                "$ref": "#/components/schemas/enum-component-route"
+                description: Network access route
+              ssl:
+                type: boolean
+                description: |-
+                  Whether the endpoint is encrypted or accepts plaintext.
+                               By default endpoints are always encrypted and
+                               this property is only included for service components that may disable encryption.
+              usage:
+                "$ref": "#/components/schemas/enum-component-usage"
+                description: DNS usage name
+            required:
+            - component
+            - host
+            - port
+            - route
+            - usage
+          description: Service component information objects
+        maintenance:
+          "$ref": "#/components/schemas/dbaas-service-maintenance"
+          description: Automatic maintenance settings
+        disk-size:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: TODO UNIT disk space for data storage
+        node-memory:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: TODO UNIT of memory for each node
+        uri:
+          type: string
+          description: URI for connecting to the service (may be absent)
+        uri-params:
+          type: object
+          description: service_uri parameterized into key-value pairs
+        thanos-settings:
+          "$ref": "#/components/schemas/json-schema-thanos"
+          description: Thanos specific settings
+        created-at:
+          type: string
+          format: date-time
+          description: Service creation timestamp (ISO 8601)
+        plan:
+          type: string
+          description: Subscription plan
+      required:
+      - name
+      - plan
+      - type
+      - prometheus-uri
     dbaas-endpoint-elasticsearch:
       type: object
       properties:
@@ -5273,6 +5544,10 @@ components:
           format: uuid
           readOnly: true
           description: Cluster ID
+        audit:
+          "$ref": "#/components/schemas/sks-audit"
+          nullable: true
+          description: Kubernetes Audit
         version:
           type: string
           description: Control plane Kubernetes version
@@ -6169,6 +6444,7 @@ components:
           format: int64
           minimum: 0
           exclusiveMinimum: false
+          nullable: true
           description: Maximum number of indexes to keep before deleting the oldest
             one
         updated-at:
@@ -6302,6 +6578,7 @@ components:
                 format: int64
                 minimum: 0
                 exclusiveMinimum: false
+                nullable: true
                 description: Maximum number of indexes to keep
               sorting-algorithm:
                 type: string
@@ -8025,6 +8302,19 @@ components:
           type: integer
       title: OpenSearch settings
       type: object
+    sks-audit:
+      type: object
+      properties:
+        endpoint:
+          "$ref": "#/components/schemas/sks-audit-endpoint"
+          description: Target Webserver URL
+        enabled:
+          type: boolean
+          description: Enabled
+        initial-backoff:
+          "$ref": "#/components/schemas/sks-audit-initial-backoff"
+          description: Enabled
+      description: Kubernetes Audit parameters
     dbaas-endpoint-elasticsearch-optional-fields:
       type: object
       properties:
@@ -8148,6 +8438,22 @@ components:
       enum:
       - timescale
       - aiven
+    sks-audit-create:
+      type: object
+      properties:
+        endpoint:
+          "$ref": "#/components/schemas/sks-audit-endpoint"
+          description: Target Webserver URL
+        bearer-token:
+          "$ref": "#/components/schemas/sks-audit-bearer-token"
+          description: Bearer token
+        initial-backoff:
+          "$ref": "#/components/schemas/sks-audit-initial-backoff"
+          description: Initial backoff (default '10s')
+      required:
+      - endpoint
+      - bearer-token
+      description: Kubernetes Audit parameters
     enum-rsyslog-format:
       type: string
       enum:
@@ -8210,6 +8516,7 @@ servers:
       - at-vie-1
       - at-vie-2
       - bg-sof-1
+      - hr-zag-1
 paths:
   "/load-balancer/{id}/service/{service-id}":
     delete:
@@ -9162,6 +9469,7 @@ paths:
                       maximum: 23
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The hour of day (in UTC) when backup for the service
                         is started. New backup is only started if previous backup
                         has already completed.
@@ -9172,6 +9480,7 @@ paths:
                       maximum: 59
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The minute of an hour when backup for the service
                         is started. New backup is only started if previous backup
                         has already completed.
@@ -9230,6 +9539,7 @@ paths:
                       maximum: 23
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The hour of day (in UTC) when backup for the service
                         is started. New backup is only started if previous backup
                         has already completed.
@@ -9240,6 +9550,7 @@ paths:
                       maximum: 59
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The minute of an hour when backup for the service
                         is started. New backup is only started if previous backup
                         has already completed.
@@ -10039,7 +10350,6 @@ paths:
                   - TXT
                   - ALIAS
                   - URL
-                  - SPF
                   description: DNS domain record type
                 content:
                   type: string
@@ -13664,7 +13974,8 @@ paths:
               schema:
                 "$ref": "#/components/schemas/block-storage-volume"
       description: 'This operation resizes a Block storage volume. Note: the volume
-        can only grow, cannot be shrunk.'
+        can only grow, cannot be shrunk. Only detached volumes or volumes attached
+        to stopped instances can be resized.'
       parameters:
       - in: path
         required: true
@@ -14490,6 +14801,9 @@ paths:
                     - metrics-server
                   uniqueItems: true
                   description: Cluster addons
+                audit:
+                  "$ref": "#/components/schemas/sks-audit-create"
+                  description: Kubernetes Audit Log Configuration
                 version:
                   type: string
                   description: Control plane Kubernetes version
@@ -14766,11 +15080,6 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  maxLength: 255
-                  minLength: 1
-                  description: Cluster name
                 description:
                   type: string
                   maxLength: 255
@@ -14779,14 +15088,32 @@ paths:
                 labels:
                   "$ref": "#/components/schemas/sks-cluster-labels"
                   description: Cluster labels
-                oidc:
-                  "$ref": "#/components/schemas/sks-oidc"
-                  nullable: true
-                  description: Cluster OpenID configmap
                 auto-upgrade:
                   type: boolean
                   description: Enable auto upgrade of the control plane to the latest
                     patch version available
+                oidc:
+                  "$ref": "#/components/schemas/sks-oidc"
+                  nullable: true
+                  description: Cluster OpenID configmap
+                name:
+                  type: string
+                  maxLength: 255
+                  minLength: 1
+                  description: Cluster name
+                enable-operators-ca:
+                  type: boolean
+                  description: Add or remove the operators certificate authority (CA)
+                    from the list of trusted CAs of the api server. The default value
+                    is true
+                feature-gates:
+                  type: array
+                  items:
+                    type: string
+                  uniqueItems: true
+                  nullable: true
+                  description: A list of Kubernetes-only Alpha features to enable
+                    for API server component
                 addons:
                   type: array
                   items:
@@ -14797,19 +15124,9 @@ paths:
                     - metrics-server
                   uniqueItems: true
                   description: Cluster addons
-                feature-gates:
-                  type: array
-                  items:
-                    type: string
-                  uniqueItems: true
-                  nullable: true
-                  description: A list of Kubernetes-only Alpha features to enable
-                    for API server component
-                enable-operators-ca:
-                  type: boolean
-                  description: Add or remove the operators certificate authority (CA)
-                    from the list of trusted CAs of the api server. The default value
-                    is true
+                audit:
+                  "$ref": "#/components/schemas/sks-audit-update"
+                  description: Kubernetes Audit Log Configuration
       operationId: update-sks-cluster
   "/quota":
     get:
@@ -16648,6 +16965,7 @@ paths:
                   format: int64
                   minimum: 0
                   exclusiveMinimum: false
+                  nullable: true
                   description: Maximum number of indexes to keep before deleting the
                     oldest one
                 keep-index-refresh-interval:
@@ -16679,6 +16997,7 @@ paths:
                         format: int64
                         minimum: 0
                         exclusiveMinimum: false
+                        nullable: true
                         description: Maximum number of indexes to keep
                       sorting-algorithm:
                         type: string
@@ -16732,6 +17051,7 @@ paths:
                       maximum: 100000
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The maximum number of nested JSON objects that
                         a single document can contain across all nested types. This
                         limit helps to prevent out of memory errors when a document
@@ -16743,6 +17063,7 @@ paths:
                       maximum: 29
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The number of replicas each primary shard has.
                     number-of-shards:
                       type: integer
@@ -16871,6 +17192,7 @@ paths:
                   format: int64
                   minimum: 0
                   exclusiveMinimum: false
+                  nullable: true
                   description: Maximum number of indexes to keep before deleting the
                     oldest one
                 keep-index-refresh-interval:
@@ -16899,6 +17221,7 @@ paths:
                         format: int64
                         minimum: 0
                         exclusiveMinimum: false
+                        nullable: true
                         description: Maximum number of indexes to keep
                       sorting-algorithm:
                         type: string
@@ -16952,6 +17275,7 @@ paths:
                       maximum: 100000
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The maximum number of nested JSON objects that
                         a single document can contain across all nested types. This
                         limit helps to prevent out of memory errors when a document
@@ -16963,6 +17287,7 @@ paths:
                       maximum: 29
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The number of replicas each primary shard has.
                     number-of-shards:
                       type: integer
@@ -17151,6 +17476,7 @@ paths:
                       maximum: 23
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The hour of day (in UTC) when backup for the service
                         is started. New backup is only started if previous backup
                         has already completed.
@@ -17161,6 +17487,7 @@ paths:
                       maximum: 59
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The minute of an hour when backup for the service
                         is started. New backup is only started if previous backup
                         has already completed.
@@ -17356,6 +17683,7 @@ paths:
                       maximum: 23
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The hour of day (in UTC) when backup for the service
                         is started. New backup is only started if previous backup
                         has already completed.
@@ -17366,6 +17694,7 @@ paths:
                       maximum: 59
                       exclusiveMinimum: false
                       exclusiveMaximum: false
+                      nullable: true
                       description: The minute of an hour when backup for the service
                         is started. New backup is only started if previous backup
                         has already completed.

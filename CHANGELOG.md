@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Bump go.mk (and goreleaser) #714
+
 3.1.26
 ------
 

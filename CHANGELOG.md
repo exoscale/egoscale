@@ -4,7 +4,7 @@ Changelog
 Unreleased
 ----------
 
-- v3: bump openapi schema - thanos + v3
+- v3: bump openapi schema - thanos + kube audit
 
 3.1.25
 ------

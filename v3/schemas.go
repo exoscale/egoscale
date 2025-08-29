@@ -1591,10 +1591,8 @@ type DBAASServiceThanos struct {
 	PrometheusURI *DBAASServiceThanosPrometheusURI `json:"prometheus-uri" validate:"required"`
 	State         EnumServiceState                 `json:"state,omitempty"`
 	// Service is protected against termination and powering off
-	TerminationProtection *bool `json:"termination-protection,omitempty"`
-	// Thanos settings
-	ThanosSettings *JSONSchemaThanos    `json:"thanos-settings,omitempty"`
-	Type           DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
+	TerminationProtection *bool                `json:"termination-protection,omitempty"`
+	Type                  DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
 	// Service last update timestamp (ISO 8601)
 	UpdatedAT time.Time `json:"updated-at,omitempty"`
 	// URI for connecting to the service (may be absent)

@@ -4995,9 +4995,6 @@ components:
         uri-params:
           type: object
           description: service_uri parameterized into key-value pairs
-        thanos-settings:
-          "$ref": "#/components/schemas/json-schema-thanos"
-          description: Thanos specific settings
         created-at:
           type: string
           format: date-time

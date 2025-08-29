@@ -1302,7 +1302,7 @@ const (
 
 type DBAASServiceOpensearchIndexPatterns struct {
 	// Maximum number of indexes to keep
-	MaxIndexCount int64 `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
+	MaxIndexCount *int64 `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
 	// fnmatch pattern
 	Pattern string `json:"pattern,omitempty" validate:"omitempty,lte=1024"`
 	// Deletion sorting algorithm
@@ -1367,7 +1367,7 @@ type DBAASServiceOpensearch struct {
 	// Automatic maintenance settings
 	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
 	// Maximum number of indexes to keep before deleting the oldest one
-	MaxIndexCount int64            `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
+	MaxIndexCount *int64           `json:"max-index-count,omitempty" validate:"omitempty,gte=0"`
 	Name          DBAASServiceName `json:"name" validate:"required,gte=0,lte=63"`
 	// Number of service nodes in the active plan
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
@@ -1526,6 +1526,79 @@ type DBAASServicePG struct {
 	Version string `json:"version,omitempty"`
 	// Sets the maximum amount of memory to be used by a query operation (such as a sort or hash table) before writing to temporary disk files, in MB. Default is 1MB + 0.075% of total RAM (up to 32MB).
 	WorkMem int64 `json:"work-mem,omitempty" validate:"omitempty,gte=1,lte=1024"`
+	// The zone where the service is running
+	Zone string `json:"zone,omitempty"`
+}
+
+type DBAASServiceThanosComponents struct {
+	// Service component name
+	Component string `json:"component" validate:"required"`
+	// DNS name for connecting to the service component
+	Host string `json:"host" validate:"required"`
+	// Port number for connecting to the service component
+	Port  int64              `json:"port" validate:"required,gte=0,lte=65535"`
+	Route EnumComponentRoute `json:"route" validate:"required"`
+	// Whether the endpoint is encrypted or accepts plaintext.
+	// By default endpoints are always encrypted and
+	// this property is only included for service components that may disable encryption.
+	SSL   *bool              `json:"ssl,omitempty"`
+	Usage EnumComponentUsage `json:"usage" validate:"required"`
+}
+
+// Thanos connection information properties
+type DBAASServiceThanosConnectionInfo struct {
+	QueryFrontendURI       string `json:"query-frontend-uri,omitempty"`
+	QueryURI               string `json:"query-uri,omitempty"`
+	ReceiverRemoteWriteURI string `json:"receiver-remote-write-uri,omitempty"`
+	RulerURI               string `json:"ruler-uri,omitempty"`
+}
+
+// Prometheus integration URI
+type DBAASServiceThanosPrometheusURI struct {
+	Host string `json:"host,omitempty"`
+	Port int64  `json:"port,omitempty" validate:"omitempty,gte=0,lte=65535"`
+}
+
+type DBAASServiceThanos struct {
+	// List of backups for the service
+	Backups []DBAASServiceBackup `json:"backups,omitempty"`
+	// Service component information objects
+	Components []DBAASServiceThanosComponents `json:"components,omitempty"`
+	// Thanos connection information properties
+	ConnectionInfo *DBAASServiceThanosConnectionInfo `json:"connection-info,omitempty"`
+	// Service creation timestamp (ISO 8601)
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// TODO UNIT disk space for data storage
+	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
+	// Service integrations
+	Integrations []DBAASIntegration `json:"integrations,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	Name        DBAASServiceName         `json:"name" validate:"required,gte=0,lte=63"`
+	// Number of service nodes in the active plan
+	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
+	// Number of CPUs for each node
+	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
+	// TODO UNIT of memory for each node
+	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
+	// State of individual service nodes
+	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
+	// Service notifications
+	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required"`
+	// Prometheus integration URI
+	PrometheusURI *DBAASServiceThanosPrometheusURI `json:"prometheus-uri" validate:"required"`
+	State         EnumServiceState                 `json:"state,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool                `json:"termination-protection,omitempty"`
+	Type                  DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
+	// Service last update timestamp (ISO 8601)
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
+	// URI for connecting to the service (may be absent)
+	URI string `json:"uri,omitempty"`
+	// service_uri parameterized into key-value pairs
+	URIParams map[string]any `json:"uri-params,omitempty"`
 	// The zone where the service is running
 	Zone string `json:"zone,omitempty"`
 }
@@ -3785,6 +3858,36 @@ type SecurityGroupRule struct {
 	StartPort int64 `json:"start-port,omitempty" validate:"omitempty,gte=1,lte=65535"`
 }
 
+// Kubernetes Audit parameters
+type SKSAudit struct {
+	// Enabled
+	Enabled        *bool                  `json:"enabled,omitempty"`
+	Endpoint       SKSAuditEndpoint       `json:"endpoint,omitempty" validate:"omitempty,gte=1,lte=2000"`
+	InitialBackoff SKSAuditInitialBackoff `json:"initial-backoff,omitempty" validate:"omitempty,gte=1,lte=10"`
+}
+
+type SKSAuditBearerToken string
+
+// Kubernetes Audit parameters
+type SKSAuditCreate struct {
+	BearerToken    SKSAuditBearerToken    `json:"bearer-token" validate:"required,gte=1,lte=2000"`
+	Endpoint       SKSAuditEndpoint       `json:"endpoint" validate:"required,gte=1,lte=2000"`
+	InitialBackoff SKSAuditInitialBackoff `json:"initial-backoff,omitempty" validate:"omitempty,gte=1,lte=10"`
+}
+
+type SKSAuditEndpoint string
+
+type SKSAuditInitialBackoff string
+
+// Kubernetes Audit parameters
+type SKSAuditUpdate struct {
+	BearerToken SKSAuditBearerToken `json:"bearer-token,omitempty" validate:"omitempty,gte=1,lte=2000"`
+	// Enable or Disable Kubernetes Audit
+	Enabled        *bool                  `json:"enabled,omitempty"`
+	Endpoint       SKSAuditEndpoint       `json:"endpoint,omitempty" validate:"omitempty,gte=1,lte=2000"`
+	InitialBackoff SKSAuditInitialBackoff `json:"initial-backoff,omitempty" validate:"omitempty,gte=1,lte=10"`
+}
+
 type SKSClusterCni string
 
 const (
@@ -3818,6 +3921,8 @@ const (
 type SKSCluster struct {
 	// Cluster addons
 	Addons []string `json:"addons,omitempty"`
+	// Kubernetes Audit parameters
+	Audit *SKSAudit `json:"audit"`
 	// Enable auto upgrade of the control plane to the latest patch version available
 	AutoUpgrade *bool `json:"auto-upgrade,omitempty"`
 	// Cluster CNI

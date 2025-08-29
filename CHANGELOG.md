@@ -1,6 +1,13 @@
 Changelog
 =========
 
+3.1.26
+------
+
+- build(deps): bump github.com/ulikunitz/xz from 0.5.11 to 0.5.14 in /v3 (#712)
+- build(deps): bump golang.org/x/crypto from 0.31.0 to 0.35.0 in /v3 (#688)
+- v3: regenerate from new API spec (#709)
+
 3.1.25
 ------
 

@@ -1,0 +1,450 @@
+package cli
+
+import (
+	"bytes"
+	"fmt"
+	"go/format"
+	"os"
+	"path/filepath"
+	"strings"
+	"text/template"
+
+	"github.com/exoscale/egoscale/v3/generator/helpers"
+	"github.com/exoscale/egoscale/v3/generator/schemas"
+	"github.com/pb33f/libopenapi"
+	"github.com/pb33f/libopenapi/datamodel/high/base"
+	"github.com/pb33f/libopenapi/orderedmap"
+)
+
+// cliCommand holds data for a single CLI command function.
+type cliCommand struct {
+	FuncName       string
+	OperationID    string
+	Params         []string
+	HelpAndParse   string
+	OptsBuilder    string
+	RequestBuilder string
+	Args           string
+}
+
+// switchCase holds data for a single switch case in main().
+type switchCase struct {
+	OperationID string
+	FuncName    string
+	Summary     string
+	Description string
+}
+
+// cliTemplateData is the root data passed to the CLI template.
+type cliTemplateData struct {
+	Commands    []cliCommand
+	SwitchCases []switchCase
+}
+
+const mainTemplate = `
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	flag "github.com/spf13/pflag"
+	v3 "github.com/exoscale/egoscale/v3"
+	"github.com/exoscale/egoscale/v3/credentials"
+)
+
+func printUsage() {
+	commands := []struct {
+		Name, Doc string
+	}{
+		{{- range .SwitchCases }}
+		{"{{ .OperationID }}", {{ if .Summary }}{{ printf "%q" .Summary }}{{ else }}""{{ end }}},
+		{{- end }}
+	}
+	maxLen := 0
+	for _, c := range commands {
+		if l := len(c.Name); l > maxLen {
+			maxLen = l
+		}
+	}
+	fmt.Println("Usage: " + os.Args[0] + " <command>")
+	fmt.Println("Available commands:")
+	for _, c := range commands {
+		fmt.Printf("  %-*s %s\n", maxLen, c.Name, c.Doc)
+	}
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		printUsage()
+		os.Exit(1)
+	}
+
+	// TODO: Make credentials configurable via flags/env
+	client, err := v3.NewClient(credentials.NewEnvCredentials())
+	if err != nil {
+		fmt.Println("failed to create client:", err)
+		os.Exit(1)
+	}
+
+	switch os.Args[1] {
+	{{- range .SwitchCases }}
+	case "{{ .OperationID }}":
+		{{ .FuncName }}Cmd(client)
+	{{- end }}
+	default:
+		fmt.Println("unknown command:", os.Args[1])
+		printUsage()
+		os.Exit(1)
+	}
+}
+
+{{ range .Commands }}
+func {{ .FuncName }}Cmd(client *v3.Client) {
+{{- if .Params }}
+	flagset := flag.NewFlagSet("{{ .OperationID }}", flag.ExitOnError)
+{{- range .Params }}
+	{{ . }}
+{{- end }}
+{{ .HelpAndParse }}
+{{ end -}}
+{{ .OptsBuilder }}
+{{ .RequestBuilder }}
+	resp, err := client.{{ .FuncName }}({{ .Args }})
+	if err != nil {
+		fmt.Println("error:", err)
+		os.Exit(1)
+	}
+	fmt.Printf("response: %+v\n", resp)
+}
+{{ end }}
+`
+
+func Generate(doc libopenapi.Document, path, packageName string) error {
+	model, errs := doc.BuildV3Model()
+	for _, err := range errs {
+		if err != nil {
+			return fmt.Errorf("errors %v", errs)
+		}
+	}
+
+	var (
+		data        cliTemplateData
+		switchCases = make([]switchCase, 0)
+		commands    = make([]cliCommand, 0)
+	)
+
+	// Prepare switch cases and commands
+	for pair := orderedmap.SortAlpha(model.Model.Paths.PathItems).First(); pair != nil; pair = pair.Next() {
+		pathStr, pathItems := pair.Key(), pair.Value()
+		for opPair := orderedmap.SortAlpha(pathItems.GetOperations()).First(); opPair != nil; opPair = opPair.Next() {
+			_, operation := opPair.Key(), opPair.Value()
+
+			// if operation.OperationId != "list-block-storage-volumes" && operation.OperationId != "update-block-storage-snapshot" && operation.OperationId != "update-dbaas-external-endpoint-datadog" && operation.OperationId != "create-instance-pool" {
+			// 	continue
+			// }
+
+			funcName := helpers.ToCamel(operation.OperationId)
+			if funcName == "" {
+				funcName = helpers.ToCamel(pathStr)
+			}
+
+			// Add operation doc (summary/description) for usage
+			summary := strings.TrimSpace(operation.Summary)
+			description := strings.TrimSpace(operation.Description)
+			switchCases = append(switchCases, switchCase{
+				OperationID: operation.OperationId,
+				FuncName:    funcName,
+				Summary:     summary,
+				Description: description,
+			})
+
+			params := make([]string, 0)
+			args := []string{"context.Background()"}
+
+			// Parameters (path/query)
+			for _, param := range operation.Parameters {
+				paramVar := helpers.ToLowerCamel(param.Name) + "Flag"
+				paramType := schemas.RenderSimpleType(param.Schema.Schema())
+				if paramType == "UUID" {
+					paramType = "string"
+				}
+				if paramType == "time.Time" {
+					paramType = "caca"
+				}
+
+				params = append(params, fmt.Sprintf("var %s %s\n\tflagset.%sVarP(&%s, \"%s\", \"\", %s, \"\")", paramVar, paramType, helpers.ToCamel(paramType), paramVar, param.Name, zeroValue(paramType)))
+				if schemas.RenderSimpleType(param.Schema.Schema()) == "UUID" {
+					paramVar = "v3.UUID(" + paramVar + ")"
+				}
+
+				if param.In != "query" {
+					args = append(args, paramVar)
+				}
+			}
+
+			// Request body: generate flags for each field in the request struct
+			reqBodyType := funcName + "Request"
+			hasRequestBody := false
+			var reqBodyFields []reqBodyField
+			if operation.RequestBody != nil {
+				if media, ok := operation.RequestBody.Content.Get("application/json"); ok && media.Schema != nil {
+					hasRequestBody = true
+					if media.Schema.IsReference() {
+						reqBodyType = helpers.RenderReference(media.Schema.GetReference())
+					}
+					reqBodyFields = getRequestBodyFields(media.Schema, reqBodyType, "")
+					for _, f := range reqBodyFields {
+						flagVar := "req" + helpers.ToCamel(f.StructPath) + "Flag"
+						flagType := f.Type
+						if f.Type == "UUID" {
+							flagType = "string"
+						}
+
+						if f.Type == "time.Time" {
+							flagType = "string"
+						}
+						flagDefault := zeroValue(flagType)
+						params = append(params, fmt.Sprintf("var %s %s", flagVar, flagType))
+						params = append(params, fmt.Sprintf("flagset.%sVarP(&%s, \"%s\", \"\", %s, %q)", strings.Title(flagType), flagVar, f.Flag, flagDefault, f.Doc))
+					}
+				}
+			}
+
+			var optsBuilder strings.Builder
+			var isOpts bool
+			for _, param := range operation.Parameters {
+				if param.In != "query" {
+					continue
+				}
+
+				if !isOpts {
+					optsBuilder.WriteString("var opts []v3." + helpers.ToCamel(operation.OperationId) + "Opt\n")
+					isOpts = true
+				}
+
+				paramVar := helpers.ToLowerCamel(param.Name) + "Flag"
+				paramType := schemas.RenderSimpleType(param.Schema.Schema())
+				// Use flagset.Lookup to check if set
+				optsBuilder.WriteString(fmt.Sprintf("if flagset.Lookup(\"%s\").Changed {\n", param.Name))
+				if paramType == "UUID" {
+					optsBuilder.WriteString(fmt.Sprintf("opts = append(opts, v3.%sWith%s(v3.UUID(%s)))\n", helpers.ToCamel(operation.OperationId), helpers.ToCamel(param.Name), paramVar))
+				} else {
+					optsBuilder.WriteString(fmt.Sprintf("opts = append(opts, v3.%sWith%s(%s))\n", helpers.ToCamel(operation.OperationId), helpers.ToCamel(param.Name), paramVar))
+				}
+				optsBuilder.WriteString("}\n")
+			}
+
+			var requestBuilder strings.Builder
+			if hasRequestBody {
+				requestBuilder.WriteString("\t// Build request body struct from flags\n")
+				requestBuilder.WriteString(fmt.Sprintf("\tvar req v3.%s\n", reqBodyType))
+				requestBuilder.WriteString(buildNestedAssignments(reqBodyType, reqBodyFields, "req"))
+				args = append(args, "req")
+			}
+
+			if isOpts {
+				args = append(args, "opts...")
+			}
+
+			helpAndParse := ""
+			if len(params) > 0 {
+				helpAndParse = `
+	// Print help if no args or --help is present
+	if len(os.Args) <= 2 || (len(os.Args) > 2 && (os.Args[2] == "-h" || os.Args[2] == "--help")) {
+		flagset.Usage()
+		os.Exit(0)
+	}
+	flagset.Parse(os.Args[2:])
+`
+			}
+
+			commands = append(commands, cliCommand{
+				FuncName:       funcName,
+				OperationID:    operation.OperationId,
+				Params:         params,
+				HelpAndParse:   helpAndParse,
+				OptsBuilder:    optsBuilder.String(),
+				RequestBuilder: requestBuilder.String(),
+				Args:           strings.Join(args, ", "),
+			})
+		}
+	}
+
+	data.SwitchCases = switchCases
+	data.Commands = commands
+
+	tmpl := template.Must(template.New("cli").Parse(mainTemplate))
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return err
+	}
+
+	if os.Getenv("GENERATOR_DEBUG") == "cli" {
+		fmt.Println(buf.String())
+	}
+
+	// Format and write the generated code
+	content, err := format.Source(buf.Bytes())
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
+		return err
+	}
+	return os.WriteFile(path, content, 0644)
+}
+
+// zeroValue returns the zero value for a Go type as a string.
+func zeroValue(goType string) string {
+	switch goType {
+	case "int", "int64", "float64":
+		return "0"
+	case "bool":
+		return "false"
+	default:
+		return "\"\""
+	}
+}
+
+// getRequestBodyFields extracts the fields for a request body struct from the schema.
+// Returns a slice of {Name, Type, Flag, Doc}.
+// Now supports nested objects with flag prefixing.
+type reqBodyField struct {
+	Type       string
+	Schema     *base.SchemaProxy
+	StructPath string
+	Flag       string
+	Doc        string
+	ParentType string
+}
+
+func getRequestBodyFields(schemaProxy *base.SchemaProxy, schemaName string, parentObj string) []reqBodyField {
+	fields := []reqBodyField{}
+	s, err := schemaProxy.BuildSchema()
+	if err != nil || s == nil {
+		return fields
+	}
+	// Only handle object type
+	if len(s.Type) == 0 || s.Type[0] != "object" {
+		return fields
+	}
+	for pair := orderedmap.SortAlpha(s.Properties).First(); pair != nil; pair = pair.Next() {
+		propName, propSchema := pair.Key(), pair.Value()
+		prop := propSchema.Schema()
+		if prop == nil {
+			continue
+		}
+
+		flagName := propName
+		if parentObj != "" {
+			flagName = schemaName + "." + propName
+		}
+
+		structPath := helpers.ToCamel(propName)
+		if parentObj != "" {
+			structPath = helpers.ToCamel(schemaName) + "." + helpers.ToCamel(propName)
+		}
+
+		if !schemas.IsSimpleSchema(prop) {
+
+			parentObj := helpers.ToCamel(schemaName) + helpers.ToCamel(propName)
+			if propSchema.IsReference() {
+				parentObj = helpers.RenderReference(propSchema.GetReference())
+			}
+			// Nested object: recurse, prefix flag and name
+			nestedFields := getRequestBodyFields(propSchema, flagName, parentObj)
+			// Do NOT append a flag for the object itself, only for its children
+			fields = append(fields, nestedFields...)
+			continue
+		}
+		goType := schemas.RenderSimpleType(prop)
+		doc := ""
+		if prop.Description != "" {
+			doc = prop.Description
+		} else if prop.Title != "" {
+			doc = prop.Title
+		}
+
+		doc = strings.ReplaceAll(doc, "\n", " ")
+		doc = strings.ReplaceAll(doc, "\t", "")
+		// REMOVE trailing space between words
+
+		fields = append(fields, reqBodyField{
+			Type:       goType,
+			Schema:     propSchema,
+			StructPath: structPath,
+			Flag:       flagName,
+			Doc:        doc,
+			ParentType: parentObj,
+		})
+	}
+	return fields
+}
+
+// buildNestedAssignments generates Go code to assign flat flags to nested struct fields.
+// It instantiates nested structs only if any of their fields are set.
+func buildNestedAssignments(reqBodyType string, fields []reqBodyField, rootVar string) string {
+	var assignments strings.Builder
+
+	for i := len(fields) - 1; i >= 0; i-- {
+		f := fields[i]
+
+		varRef := "req" + helpers.ToCamel(f.StructPath) + "Flag"
+		flagName := f.Flag
+		if f.Type == "UUID" {
+			varRef = "v3.UUID(" + varRef + ")"
+		}
+
+		if f.Type == "time.Time" {
+			//t, _ = time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
+			//todo add time parse to var
+			continue
+		}
+		// TODO remove it and handle pointer not depending on type
+		if f.Type == "bool" {
+			varRef = "&" + varRef
+		}
+
+		if f.Schema.IsReference() {
+			varRef = "v3." + helpers.RenderReference(f.Schema.GetReference()) + "(" + varRef + ")"
+		}
+
+		if len(f.Schema.Schema().Enum) > 0 && !f.Schema.IsReference() {
+			if f.ParentType != "" {
+				varRef = "v3." + helpers.ToCamel(f.StructPath) + "(" + varRef + ")"
+			} else {
+				varRef = "v3." + reqBodyType + helpers.ToCamel(f.StructPath) + "(" + varRef + ")"
+			}
+		}
+
+		if f.Schema.Schema().Nullable != nil && *f.Schema.Schema().Nullable && f.Type != "bool" {
+			varRef = "&" + varRef
+		}
+
+		// Assign	ment guarded by flagset.Lookup(...).Changed
+		assignLine := fmt.Sprintf("if flagset.Lookup(\"%s\").Changed {\n", flagName)
+
+		if f.ParentType != "" {
+			paths := strings.Split(f.StructPath, ".")
+			path := strings.Join(paths[:len(paths)-1], ".")
+
+			assignLine += fmt.Sprintf(`if req.%s != nil {
+					req.%s = &v3.%s{}
+				}
+`, path, path, f.ParentType)
+
+			assignLine += fmt.Sprintf("\treq.%s = %s\n}\n", f.StructPath, varRef)
+			assignments.WriteString(assignLine)
+
+			continue
+		}
+
+		assignLine += fmt.Sprintf("\treq.%s = %s\n}\n", f.StructPath, varRef)
+		assignments.WriteString(assignLine)
+	}
+
+	return assignments.String()
+}

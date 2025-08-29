@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v3: bump openapi schema - thanos + v3
+
 3.1.25
 ------
 

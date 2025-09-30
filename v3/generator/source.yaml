@@ -514,6 +514,16 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Rsyslog max message size
+    sks-cluster-addons:
+      type: array
+      items:
+        type: string
+        enum:
+        - exoscale-cloud-controller
+        - exoscale-container-storage-interface
+        - metrics-server
+        - karpenter
+      uniqueItems: true
     json-schema-grafana:
       properties:
         allow_embedding:
@@ -4234,7 +4244,6 @@ components:
           description: Initial backoff (default '10s')
         enabled:
           type: boolean
-          nullable: true
           description: Enable or Disable Kubernetes Audit
       description: Kubernetes Audit parameters
     enum-service-state:
@@ -5504,6 +5513,7 @@ components:
           - suspending
           - updating
           - error
+          - rotating-karpenter-credentials
           - resuming
           readOnly: true
           description: Cluster state
@@ -5530,14 +5540,7 @@ components:
           description: A list of Kubernetes-only Alpha features to enable for API
             server component
         addons:
-          type: array
-          items:
-            type: string
-            enum:
-            - exoscale-cloud-controller
-            - exoscale-container-storage-interface
-            - metrics-server
-          uniqueItems: true
+          "$ref": "#/components/schemas/sks-cluster-addons"
           description: Cluster addons
         id:
           type: string
@@ -5546,7 +5549,6 @@ components:
           description: Cluster ID
         audit:
           "$ref": "#/components/schemas/sks-audit"
-          nullable: true
           description: Kubernetes Audit
         version:
           type: string
@@ -8313,7 +8315,7 @@ components:
           description: Enabled
         initial-backoff:
           "$ref": "#/components/schemas/sks-audit-initial-backoff"
-          description: Enabled
+          description: Initial Backoff (default '10s')
       description: Kubernetes Audit parameters
     dbaas-endpoint-elasticsearch-optional-fields:
       type: object
@@ -9945,6 +9947,38 @@ paths:
       summary: Reveal the password used during instance creation or the latest password
         reset.
       operationId: reveal-instance-password
+  "/sks-template/{kube-version}/{variant}":
+    get:
+      tags: []
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active-template:
+                    type: string
+                    format: uuid
+      description: Get the active template for a given kube version and variant (standard
+        | nvidia)
+      parameters:
+      - in: path
+        required: true
+        name: kube-version
+        schema:
+          type: string
+      - in: path
+        required: true
+        name: variant
+        schema:
+          type: string
+          enum:
+          - standard
+          - nvidia
+      summary: ''
+      operationId: get-active-nodepool-template
   "/instance/{id}:resize-disk":
     put:
       tags:
@@ -14792,14 +14826,7 @@ paths:
                   description: A list of Kubernetes-only Alpha features to enable
                     for API server component
                 addons:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - exoscale-cloud-controller
-                    - exoscale-container-storage-interface
-                    - metrics-server
-                  uniqueItems: true
+                  "$ref": "#/components/schemas/sks-cluster-addons"
                   description: Cluster addons
                 audit:
                   "$ref": "#/components/schemas/sks-audit-create"
@@ -15115,14 +15142,7 @@ paths:
                   description: A list of Kubernetes-only Alpha features to enable
                     for API server component
                 addons:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - exoscale-cloud-controller
-                    - exoscale-container-storage-interface
-                    - metrics-server
-                  uniqueItems: true
+                  "$ref": "#/components/schemas/sks-cluster-addons"
                   description: Cluster addons
                 audit:
                   "$ref": "#/components/schemas/sks-audit-update"
@@ -17931,6 +17951,27 @@ paths:
               required:
               - username
       operationId: create-dbaas-valkey-user
+  "/sks-cluster/{id}/rotate-karpenter-credentials":
+    put:
+      tags:
+      - sks
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: ''
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: Rotate Exoscale Karpenter credentials
+      operationId: rotate-sks-karpenter-credentials
   "/dbaas-integration":
     post:
       tags:

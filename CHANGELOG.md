@@ -1,10 +1,11 @@
 Changelog
 =========
 
-Unreleased
-----------
+3.1.27
+------
 
 - Bump go.mk (and goreleaser) #714
+- v3: regenerate from new API spec (#715)
 
 3.1.26
 ------

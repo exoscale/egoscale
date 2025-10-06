@@ -2195,6 +2195,8 @@ type InstancePrivateNetworks struct {
 
 // Instance
 type Instance struct {
+	// Instance Agent Enabled
+	AgentEnabled *bool `json:"agent-enabled,omitempty"`
 	// Instance Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
 	// Instance creation date
@@ -4192,6 +4194,8 @@ const (
 
 // Instance template
 type Template struct {
+	// Agent Enabled Field
+	AgentEnabled *bool `json:"agent-enabled,omitempty"`
 	// Boot mode (default: legacy)
 	BootMode TemplateBootMode `json:"boot-mode,omitempty"`
 	// Template build

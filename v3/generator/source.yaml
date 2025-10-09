@@ -5134,6 +5134,9 @@ components:
     instance:
       type: object
       properties:
+        agent-enabled:
+          type: boolean
+          description: Enable agent communication channel used for application-consistent snapshot
         anti-affinity-groups:
           type: array
           items:
@@ -5906,6 +5909,9 @@ components:
     template:
       type: object
       properties:
+        agent-enabled:
+          type: boolean
+          description: Indicates whether the template has an agent installed. Used for application-consistent snapshots.
         maintainer:
           type: string
           readOnly: true
@@ -16191,6 +16197,9 @@ paths:
             schema:
               type: object
               properties:
+                agent-enabled:
+                  type: boolean
+                  description: Indicates template has agent communication channel enabled
                 maintainer:
                   type: string
                   maxLength: 255
@@ -18172,6 +18181,9 @@ paths:
             schema:
               type: object
               properties:
+                agent-enabled:
+                  type: boolean
+                  description: 'Enable Agent communcation. Used for application-consistent snapshots.'
                 anti-affinity-groups:
                   type: array
                   items:

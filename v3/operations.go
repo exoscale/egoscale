@@ -10048,7 +10048,7 @@ func (c Client) ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*L
 }
 
 type CreateInstanceRequest struct {
-	// Intance Agent Enable. Allow application-consistent snapshots
+	// Enable Agent communcation. Used for application-consistent snapshots.
 	AgentEnabled *bool `json:"agent-enabled,omitempty"`
 	// Instance Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
@@ -15935,8 +15935,8 @@ const (
 )
 
 type RegisterTemplateRequest struct {
-	// Agent Enabled
-	AgentEnabled bool `json:"agent-enabled"`
+	// Indicates template has agent communication channel enabled
+	AgentEnabled *bool `json:"agent-enabled,omitempty"`
 	// Boot mode (default: legacy)
 	BootMode RegisterTemplateRequestBootMode `json:"boot-mode,omitempty"`
 	// Template build

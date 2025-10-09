@@ -2195,7 +2195,7 @@ type InstancePrivateNetworks struct {
 
 // Instance
 type Instance struct {
-	// Instance Agent Enabled
+	// Enable agent communication channel used for application-consistent snapshot
 	AgentEnabled *bool `json:"agent-enabled,omitempty"`
 	// Instance Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
@@ -4194,7 +4194,7 @@ const (
 
 // Instance template
 type Template struct {
-	// Agent Enabled Field
+	// Indicates whether the template has an agent installed. Used for application-consistent snapshots.
 	AgentEnabled *bool `json:"agent-enabled,omitempty"`
 	// Boot mode (default: legacy)
 	BootMode TemplateBootMode `json:"boot-mode,omitempty"`

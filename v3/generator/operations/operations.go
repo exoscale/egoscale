@@ -186,7 +186,7 @@ func renderRequestSchema(name string, op *v3.Operation) ([]byte, error) {
 const queryParamTemplate = `
 func {{ .FuncName }}({{ .FieldName }} {{ .ParamType }}) {{ .FuncReturn }} {
 	return func(q url.Values) {
-		q.Add("{{ .ParamName }}", fmt.Sprint({{ .FieldName }}))
+		q.Add("{{ .ParamName }}", {{ .FormatType }})
 	}
 }
 `
@@ -197,6 +197,7 @@ type QueryParam struct {
 	ParamType  string
 	FuncReturn string
 	FieldName  string
+	FormatType string
 }
 
 // renderRequestParametersSchema renders the schemas for optional query params and path params.
@@ -223,12 +224,21 @@ func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error
 			if schemas.IsSimpleSchema(s) && len(s.Enum) == 0 {
 				typ = schemas.RenderSimpleType(s)
 			}
+
+			fieldName := helpers.ToLowerCamel(p.Name)
+
+			formatType := fmt.Sprintf("fmt.Sprint(%s)", fieldName)
+			if typ == "time.Time" {
+				formatType = fmt.Sprintf("%s.Format(time.RFC3339)", fieldName)
+			}
+
 			if err := t.Execute(query, QueryParam{
 				FuncName:   name + "With" + helpers.ToCamel(p.Name),
-				FieldName:  helpers.ToLowerCamel(p.Name),
+				FieldName:  fieldName,
 				ParamName:  p.Name,
 				ParamType:  typ,
 				FuncReturn: name + "Opt",
+				FormatType: formatType,
 			}); err != nil {
 				return nil, err
 			}

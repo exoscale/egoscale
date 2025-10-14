@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Generator: Fix time query param format #719
+
 3.1.27
 ------
 

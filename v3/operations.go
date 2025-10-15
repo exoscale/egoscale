@@ -9372,13 +9372,13 @@ type ListEventsOpt func(url.Values)
 
 func ListEventsWithFrom(from time.Time) ListEventsOpt {
 	return func(q url.Values) {
-		q.Add("from", fmt.Sprint(from))
+		q.Add("from", from.Format(time.RFC3339))
 	}
 }
 
 func ListEventsWithTo(to time.Time) ListEventsOpt {
 	return func(q url.Values) {
-		q.Add("to", fmt.Sprint(to))
+		q.Add("to", to.Format(time.RFC3339))
 	}
 }
 

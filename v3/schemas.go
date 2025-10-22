@@ -696,7 +696,7 @@ type DBAASKafkaTopicAclEntry struct {
 }
 
 type DBAASMigrationStatusDetails struct {
-	// Migrated db name (PG) or number (Valkey)
+	// Migrated db name
 	Dbname string `json:"dbname,omitempty"`
 	// Error message in case that migration has failed
 	Error string `json:"error,omitempty"`
@@ -808,6 +808,7 @@ const (
 	DBAASPGTargetVersions14 DBAASPGTargetVersions = "14"
 	DBAASPGTargetVersions17 DBAASPGTargetVersions = "17"
 	DBAASPGTargetVersions15 DBAASPGTargetVersions = "15"
+	DBAASPGTargetVersions18 DBAASPGTargetVersions = "18"
 	DBAASPGTargetVersions13 DBAASPGTargetVersions = "13"
 	DBAASPGTargetVersions16 DBAASPGTargetVersions = "16"
 )
@@ -3960,7 +3961,8 @@ const (
 
 // SKS Cluster
 type SKSCluster struct {
-	Addons *SKSClusterAddons `json:"addons,omitempty"`
+	// Cluster addons
+	Addons []string `json:"addons,omitempty"`
 	// Kubernetes Audit parameters
 	Audit *SKSAudit `json:"audit,omitempty"`
 	// Enable auto upgrade of the control plane to the latest patch version available
@@ -3993,8 +3995,6 @@ type SKSCluster struct {
 	// Control plane Kubernetes version
 	Version string `json:"version,omitempty"`
 }
-
-type SKSClusterAddons []string
 
 type SKSClusterDeprecatedResource struct {
 	Group          string `json:"group,omitempty"`

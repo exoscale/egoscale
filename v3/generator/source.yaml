@@ -514,16 +514,6 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Rsyslog max message size
-    sks-cluster-addons:
-      type: array
-      items:
-        type: string
-        enum:
-        - exoscale-cloud-controller
-        - exoscale-container-storage-interface
-        - metrics-server
-        - karpenter
-      uniqueItems: true
     json-schema-grafana:
       properties:
         allow_embedding:
@@ -2760,6 +2750,7 @@ components:
       - '14'
       - '17'
       - '15'
+      - '18'
       - '13'
       - '16'
     instance-type:
@@ -4849,7 +4840,7 @@ components:
             properties:
               dbname:
                 type: string
-                description: Migrated db name (PG) or number (Valkey)
+                description: Migrated db name
               error:
                 type: string
                 description: Error message in case that migration has failed
@@ -5540,7 +5531,15 @@ components:
           description: A list of Kubernetes-only Alpha features to enable for API
             server component
         addons:
-          "$ref": "#/components/schemas/sks-cluster-addons"
+          type: array
+          items:
+            type: string
+            enum:
+            - exoscale-cloud-controller
+            - exoscale-container-storage-interface
+            - metrics-server
+            - karpenter
+          uniqueItems: true
           description: Cluster addons
         id:
           type: string
@@ -10227,6 +10226,7 @@ paths:
                   description: 'Prefix to apply to Instances names (default: pool)'
                 user-data:
                   type: string
+                  maxLength: 32768
                   minLength: 1
                   description: Instances Cloud-init user-data
                 deploy-target:
@@ -14826,7 +14826,15 @@ paths:
                   description: A list of Kubernetes-only Alpha features to enable
                     for API server component
                 addons:
-                  "$ref": "#/components/schemas/sks-cluster-addons"
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - exoscale-cloud-controller
+                    - exoscale-container-storage-interface
+                    - metrics-server
+                    - karpenter
+                  uniqueItems: true
                   description: Cluster addons
                 audit:
                   "$ref": "#/components/schemas/sks-audit-create"
@@ -15142,7 +15150,15 @@ paths:
                   description: A list of Kubernetes-only Alpha features to enable
                     for API server component
                 addons:
-                  "$ref": "#/components/schemas/sks-cluster-addons"
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - exoscale-cloud-controller
+                    - exoscale-container-storage-interface
+                    - metrics-server
+                    - karpenter
+                  uniqueItems: true
                   description: Cluster addons
                 audit:
                   "$ref": "#/components/schemas/sks-audit-update"
@@ -15933,35 +15949,6 @@ paths:
             schema:
               "$ref": "#/components/schemas/iam-policy"
       operationId: update-iam-role-policy
-  "/sks-cluster/{id}/{field}":
-    delete:
-      tags:
-      - sks
-      responses:
-        '200':
-          description: '200'
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/operation"
-      description: ''
-      parameters:
-      - in: path
-        required: true
-        name: id
-        schema:
-          type: string
-          format: uuid
-      - in: path
-        required: true
-        name: field
-        schema:
-          type: string
-          enum:
-          - description
-          - labels
-      summary: Reset an SKS cluster field to its default value
-      operationId: reset-sks-cluster-field
   "/dbaas-migration-status/{name}":
     get:
       tags:
@@ -17360,45 +17347,6 @@ paths:
                         for OpenSearch. (default: 128)'
                   description: OpenSearch Dashboards settings
       operationId: update-dbaas-service-opensearch
-  "/sks-cluster/{id}/nodepool/{sks-nodepool-id}/{field}":
-    delete:
-      tags:
-      - sks
-      responses:
-        '200':
-          description: '200'
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/operation"
-      description: ''
-      parameters:
-      - in: path
-        required: true
-        name: id
-        schema:
-          type: string
-          format: uuid
-      - in: path
-        required: true
-        name: sks-nodepool-id
-        schema:
-          type: string
-          format: uuid
-      - in: path
-        required: true
-        name: field
-        schema:
-          type: string
-          enum:
-          - anti-affinity-groups
-          - description
-          - labels
-          - security-groups
-          - private-networks
-          - deploy-target
-      summary: Reset an SKS Nodepool field to its default value
-      operationId: reset-sks-nodepool-field
   "/dbaas-external-endpoint/{source-service-name}/detach":
     put:
       tags:

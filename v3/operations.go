@@ -9293,32 +9293,9 @@ func (c Client) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req De
 	return bodyresp, nil
 }
 
-type GetEnvImpactResponseEnvImpactTotal struct {
-	// Impact Amount
-	Amount float64 `json:"amount,omitempty"`
-	// Impact Unit
-	Unit string `json:"unit,omitempty"`
-}
-
-type GetEnvImpactResponseEnvImpact struct {
-	Total *GetEnvImpactResponseEnvImpactTotal `json:"total,omitempty"`
-}
-
-type GetEnvImpactResponse struct {
-	EnvImpact map[string]GetEnvImpactResponseEnvImpact `json:"env_impact,omitempty"`
-}
-
-type GetEnvImpactOpt func(url.Values)
-
-func GetEnvImpactWithPeriod(period string) GetEnvImpactOpt {
-	return func(q url.Values) {
-		q.Add("period", fmt.Sprint(period))
-	}
-}
-
 // [BETA] Returns environmental impact reports for an organization
-func (c Client) GetEnvImpact(ctx context.Context, opts ...GetEnvImpactOpt) (*GetEnvImpactResponse, error) {
-	path := "/env-impact"
+func (c Client) GetEnvImpact(ctx context.Context, period string) (*EnvImpactReport, error) {
+	path := fmt.Sprintf("/env-impact/%v", period)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
@@ -9326,14 +9303,6 @@ func (c Client) GetEnvImpact(ctx context.Context, opts ...GetEnvImpactOpt) (*Get
 	}
 
 	request.Header.Add("User-Agent", c.getUserAgent())
-
-	if len(opts) > 0 {
-		q := request.URL.Query()
-		for _, opt := range opts {
-			opt(q)
-		}
-		request.URL.RawQuery = q.Encode()
-	}
 
 	if err := c.executeRequestInterceptors(ctx, request); err != nil {
 		return nil, fmt.Errorf("GetEnvImpact: execute request editors: %w", err)
@@ -9360,7 +9329,7 @@ func (c Client) GetEnvImpact(ctx context.Context, opts ...GetEnvImpactOpt) (*Get
 		return nil, fmt.Errorf("GetEnvImpact: http response: %w", err)
 	}
 
-	bodyresp := &GetEnvImpactResponse{}
+	bodyresp := &EnvImpactReport{}
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetEnvImpact: prepare Json response: %w", err)
 	}

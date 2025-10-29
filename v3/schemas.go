@@ -74,6 +74,52 @@ type AccessKeyResource struct {
 	ResourceType AccessKeyResourceResourceType `json:"resource-type,omitempty"`
 }
 
+// AI deployment
+type Aideployment struct {
+	// Creation time
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Deployment size (>=1)
+	DeploymentSize int64 `json:"deployment-size,omitempty" validate:"omitempty,gt=0"`
+	// Deployment URL (nullable)
+	DeploymentURL string `json:"deployment-url,omitempty"`
+	// Endpoint URL (nullable)
+	EndpointURL string `json:"endpoint-url,omitempty"`
+	// Deployment ID
+	ID UUID `json:"id,omitempty"`
+	// Instance type
+	InstanceType string `json:"instance-type,omitempty" validate:"omitempty,gte=1"`
+	// Associated model ID
+	ModelID UUID `json:"model-id,omitempty"`
+	// Deployment name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
+	// Organization ID
+	OrganizationID UUID `json:"organization-id,omitempty"`
+	// Service level
+	ServiceLevel string `json:"service-level,omitempty" validate:"omitempty,gte=1"`
+	// Deployment status
+	Status string `json:"status,omitempty"`
+	// Update time
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
+}
+
+// AI model
+type Aimodel struct {
+	// Creation time
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Model ID
+	ID UUID `json:"id,omitempty"`
+	// Model size (nullable)
+	ModelSize int64 `json:"model-size,omitempty" validate:"omitempty,gte=0"`
+	// Model name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
+	// Organization ID
+	OrganizationID UUID `json:"organization-id,omitempty"`
+	// Model status
+	Status string `json:"status,omitempty"`
+	// Update time
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
+}
+
 // Anti-affinity Group
 type AntiAffinityGroup struct {
 	// Anti-affinity Group description
@@ -2072,6 +2118,51 @@ const (
 	EnumSortOrderAsc  EnumSortOrder = "asc"
 )
 
+type EnvImpactDetail struct {
+	// Amount
+	Amount float64 `json:"amount,omitempty"`
+	// Unit
+	Unit string `json:"unit,omitempty"`
+	// Value
+	Value string `json:"value,omitempty"`
+}
+
+type EnvImpactIndicator struct {
+	// Amount
+	Amount float64 `json:"amount,omitempty"`
+	// Details
+	Details []EnvImpactDetail `json:"details,omitempty"`
+	// Unit
+	Unit string `json:"unit,omitempty"`
+	// Value
+	Value string `json:"value,omitempty"`
+}
+
+type EnvImpactReport struct {
+	// Metadata
+	Metadata []EnvMetadataEntry `json:"metadata,omitempty"`
+	// Products
+	Products []EnvProduct `json:"products,omitempty"`
+}
+
+type EnvMetadataEntry struct {
+	// Amount
+	Amount float64 `json:"amount,omitempty"`
+	// Unit
+	Unit string `json:"unit,omitempty"`
+	// Value
+	Value string `json:"value,omitempty"`
+}
+
+type EnvProduct struct {
+	// Impacts
+	Impacts []EnvImpactIndicator `json:"impacts,omitempty"`
+	// Metadata
+	Metadata []EnvMetadataEntry `json:"metadata,omitempty"`
+	// Value
+	Value string `json:"value,omitempty"`
+}
+
 // A notable Mutation Event which happened on the infrastructure
 type Event struct {
 	// Body parameters (free form map)
@@ -2355,6 +2446,7 @@ const (
 	InstanceTypeSizeMega       InstanceTypeSize = "mega"
 	InstanceTypeSizeSmall      InstanceTypeSize = "small"
 	InstanceTypeSizeExtraLarge InstanceTypeSize = "extra-large"
+	InstanceTypeSizeTitan48c   InstanceTypeSize = "titan48c"
 	InstanceTypeSizeTitan      InstanceTypeSize = "titan"
 	InstanceTypeSizeMicro      InstanceTypeSize = "micro"
 	InstanceTypeSizeColossus   InstanceTypeSize = "colossus"

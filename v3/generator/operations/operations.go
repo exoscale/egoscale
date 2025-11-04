@@ -448,10 +448,10 @@ func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*Req
 	p.Params = strings.Join(params, ", ")
 	valuesReturn := getValuesReturn(op, funcName)
 	if len(valuesReturn) == 2 {
-		p.BodyRespType = valuesReturn[0]
+		p.BodyRespType = valuesReturn[0] + "{}"
 		p.JSONResponseTarget = "bodyresp"
 		if !strings.HasPrefix(valuesReturn[0], "[]") {
-			p.BodyRespType = "&" + p.BodyRespType[1:]
+			p.BodyRespType = fmt.Sprintf("new(%s)", valuesReturn[0][1:])
 		} else {
 			p.JSONResponseTarget = "&" + p.JSONResponseTarget
 		}
@@ -604,10 +604,12 @@ func getValuesReturn(op *v3.Operation, funcName string) (values []string) {
 			values = append(values, a)
 			return values
 		}
+
+		values = append(values, "*"+funcName+"Response")
+		return values
 	}
 
-	values = append(values, "*"+funcName+"Response")
-	return values
+	return
 }
 
 func renderDoc(op *v3.Operation) string {

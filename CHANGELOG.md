@@ -1,10 +1,12 @@
 Changelog
 =========
 
-Unreleased
-----------
+3.1.28
+------
 
 - Generator: Fix time query param format #719
+- v3: regenerate from new API spec (#720)
+- v3: regenerate from new API spec (#717)
 
 3.1.27
 ------

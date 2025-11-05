@@ -174,7 +174,7 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 		return nil
 	case "array":
 		output.WriteString(doc)
-		array, err := renderArray(schemaName, s, output)
+		array, err := renderArray(schemaName, s, output, true)
 		if err != nil {
 			return err
 		}
@@ -232,7 +232,7 @@ func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 	return definition
 }
 
-func renderArray(typeName string, s *base.Schema, output *bytes.Buffer) (string, error) {
+func renderArray(typeName string, s *base.Schema, output *bytes.Buffer, rootSchema bool) (string, error) {
 	definition := "[]"
 
 	if s.Items == nil {
@@ -262,6 +262,10 @@ func renderArray(typeName string, s *base.Schema, output *bytes.Buffer) (string,
 	simple := IsSimpleSchema(item)
 	if simple {
 		return definition + RenderSimpleType(item), nil
+	}
+
+	if rootSchema {
+		typeName = typeName + "Items"
 	}
 
 	// Render new object from array schema into the buffer.
@@ -387,7 +391,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		}
 
 		if propType == "array" {
-			array, err := renderArray(typeName+camelName, prop, output)
+			array, err := renderArray(typeName+camelName, prop, output, false)
 			if err != nil {
 				return "", err
 			}

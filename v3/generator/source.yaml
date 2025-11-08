@@ -204,6 +204,8 @@ components:
       type: string
       maxLength: 2000
       minLength: 1
+    get-deployment-logs-response:
+      type: string
     json-schema-schema-registry:
       additionalProperties: false
       properties:
@@ -324,6 +326,17 @@ components:
       - rsyslog
       - datadog
       - elasticsearch
+    model-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Associated model ID
+        name:
+          type: string
+          minLength: 1
+          description: Associated model name
     dbaas-pg-pool-size:
       type: integer
       format: int64
@@ -1095,6 +1108,15 @@ components:
           type: string
           description: Kafka Connect password
       description: Kafka Connect secrets
+    delete-model-conflict-response:
+      type: object
+      properties:
+        deployments:
+          type: array
+          items:
+            type: string
+          description: Deployments using models
+      description: 'Model is in use: deletion forbidden'
     dbaas-service-type:
       type: object
       properties:
@@ -1400,7 +1422,6 @@ components:
     json-schema-thanos:
       properties:
         compactor:
-          additionalProperties: false
           description: Configuration options for Thanos Compactor.
           properties:
             retention.days:
@@ -1409,10 +1430,9 @@ components:
               minimum: 0
               title: Retention time for data in days
               type: integer
-          title: Thanos Compactor User Configuration
+          title: ThanosCompactorUserConfig
           type: object
         query:
-          additionalProperties: false
           description: Configuration options for Thanos Query.
           properties:
             query.default-evaluation-interval:
@@ -1469,10 +1489,9 @@ components:
               minimum: 0
               title: Store.Limits.Request-Series
               type: integer
-          title: Thanos Query User Configuration
+          title: ThanosQueryUserConfig
           type: object
-        query_frontend:
-          additionalProperties: false
+        query-frontend:
           description: Configuration options for Thanos Query Frontend.
           properties:
             query-range.align-range-with-step:
@@ -1482,7 +1501,7 @@ components:
                 providing more accurate results for queries with high-resolution data.
               title: Whether to align the query range boundaries with the step.
               type: boolean
-          title: Thanos Query Frontend User Configuration
+          title: ThanosQueryFrontendUserConfig
           type: object
       title: Thanos settings
       type: object
@@ -1594,6 +1613,17 @@ components:
       type: string
       maxLength: 253
       minLength: 1
+    create-model-request:
+      type: object
+      properties:
+        huggingface-token:
+          type: string
+          description: Huggingface Token
+        name:
+          type: string
+          minLength: 1
+          description: Model name
+      description: AI model
     dbaas-user-opensearch-secrets:
       type: object
       properties:
@@ -1623,6 +1653,12 @@ components:
           type: string
           description: Resource name
       description: Access key resource
+    reveal-deployment-api-key-response:
+      type: object
+      properties:
+        api-key:
+          type: string
+      description: AI deployment inference endpoint authentication key
     json-schema-kafka:
       additionalProperties: false
       properties:
@@ -2035,7 +2071,8 @@ components:
       properties:
         track_activity_query_size:
           description: Specifies the number of bytes reserved to track the currently
-            executing command for each active session.
+            executing command for each active session. Changing this parameter causes
+            a service restart.
           example: 1024
           maximum: 10240
           minimum: 1024
@@ -2049,9 +2086,9 @@ components:
           title: timezone
           type: string
         track_io_timing:
-          description: Enables timing of database I/O calls. This parameter is off
-            by default, because it will repeatedly query the operating system for
-            the current time, which may cause significant overhead on some platforms.
+          description: Enables timing of database I/O calls. The default is `off`.
+            When on, it will repeatedly query the operating system for the current
+            time, which may cause significant overhead on some platforms.
           enum:
           - 'off'
           - 'on'
@@ -2059,36 +2096,51 @@ components:
           title: track_io_timing
           type: string
         pg_stat_monitor.pgsm_enable_query_plan:
-          description: Enables or disables query plan monitoring
+          description: Enables or disables query plan monitoring. Changing this parameter
+            causes a service restart. Only available for PostgreSQL 13+.
           example: false
           title: pg_stat_monitor.pgsm_enable_query_plan
           type: boolean
         max_files_per_process:
-          description: PostgreSQL maximum number of files that can be open per process
+          description: PostgreSQL maximum number of files that can be open per process.
+            The default is `1000` (upstream default). Changing this parameter causes
+            a service restart.
           maximum: 4096
           minimum: 1000
           title: max_files_per_process
           type: integer
         pg_stat_monitor.pgsm_max_buckets:
-          description: 'Sets the maximum number of buckets '
+          description: Sets the maximum number of buckets. Changing this parameter
+            causes a service restart. Only available for PostgreSQL 13+.
           example: 10
           maximum: 10
           minimum: 1
           title: pg_stat_monitor.pgsm_max_buckets
           type: integer
+        io_max_concurrency:
+          default: -1
+          description: 'EXPERIMENTAL: Controls the maximum number of I/O operations
+            that one process can execute simultaneously. Version 18 and up only. Changing
+            this parameter causes a service restart.'
+          maximum: 1024
+          minimum: -1
+          title: io_max_concurrency
+          type: integer
         wal:
           properties:
             max_slot_wal_keep_size:
               description: PostgreSQL maximum WAL size (MB) reserved for replication
-                slots. Default is -1 (unlimited). wal_keep_size minimum WAL size setting
-                takes precedence over this.
+                slots. If `-1` is specified, replication slots may retain an unlimited
+                amount of WAL files. The default is `-1` (upstream default). wal_keep_size
+                minimum WAL size setting takes precedence over this.
               maximum: 2147483647
               minimum: -1
               title: max_slot_wal_keep_size
               type: integer
             max_wal_senders:
-              description: PostgreSQL maximum WAL senders
-              maximum: 64
+              description: PostgreSQL maximum WAL senders. The default is `20`. Changing
+                this parameter causes a service restart.
+              maximum: 256
               minimum: 20
               title: max_wal_senders
               type: integer
@@ -2101,8 +2153,8 @@ components:
                 10800000 millis
               type: integer
             wal_writer_delay:
-              description: WAL flush interval in milliseconds. Note that setting this
-                value to lower than the default 200ms may negatively impact performance
+              description: WAL flush interval in milliseconds. The default is `200`.
+                Setting this parameter to a lower value may negatively impact performance.
               example: 50
               maximum: 200
               minimum: 10
@@ -2112,7 +2164,8 @@ components:
           type: object
         default_toast_compression:
           description: Specifies the default TOAST compression method for values of
-            compressible columns (the default is lz4).
+            compressible columns. The default is `lz4`. Only available for PostgreSQL
+            14+.
           enum:
           - lz4
           - pglz
@@ -2121,7 +2174,8 @@ components:
           type: string
         deadlock_timeout:
           description: This is the amount of time, in milliseconds, to wait on a lock
-            before checking to see if there is a deadlock condition.
+            before checking to see if there is a deadlock condition. The default is
+            `1000` (upstream default).
           example: 1000
           maximum: 1800000
           minimum: 500
@@ -2135,32 +2189,41 @@ components:
           title: idle_in_transaction_session_timeout
           type: integer
         max_pred_locks_per_transaction:
-          description: PostgreSQL maximum predicate locks per transaction
+          description: PostgreSQL maximum predicate locks per transaction. The default
+            is `64` (upstream default). Changing this parameter causes a service restart.
           maximum: 5120
           minimum: 64
           title: max_pred_locks_per_transaction
           type: integer
         max_replication_slots:
-          description: PostgreSQL maximum replication slots
-          maximum: 64
+          description: PostgreSQL maximum replication slots. The default is `20`.
+            Changing this parameter causes a service restart.
+          maximum: 256
           minimum: 8
           title: max_replication_slots
+          type: integer
+        max_sync_workers_per_subscription:
+          description: Maximum number of synchronization workers per subscription.
+            The default is `2`.
+          maximum: 8
+          minimum: 2
+          title: max_sync_workers_per_subscription
           type: integer
         autovacuum:
           properties:
             log_autovacuum_min_duration:
               description: Causes each action executed by autovacuum to be logged
                 if it ran for at least the specified number of milliseconds. Setting
-                this to zero logs all autovacuum actions. Minus-one (the default)
-                disables logging autovacuum actions.
+                this to zero logs all autovacuum actions. Minus-one disables logging
+                autovacuum actions. The default is `1000`.
               maximum: 2147483647
               minimum: -1
               title: log_autovacuum_min_duration
               type: integer
             autovacuum_vacuum_cost_limit:
               description: Specifies the cost limit value that will be used in automatic
-                VACUUM operations. If -1 is specified (which is the default), the
-                regular vacuum_cost_limit value will be used.
+                VACUUM operations. If `-1` is specified, the regular vacuum_cost_limit
+                value will be used. The default is `-1` (upstream default).
               maximum: 10000
               minimum: -1
               title: autovacuum_vacuum_cost_limit
@@ -2168,46 +2231,46 @@ components:
             autovacuum_max_workers:
               description: Specifies the maximum number of autovacuum processes (other
                 than the autovacuum launcher) that may be running at any one time.
-                The default is three. This parameter can only be set at server start.
+                The default is `3`. Changing this parameter causes a service restart.
               maximum: 20
               minimum: 1
               title: autovacuum_max_workers
               type: integer
             autovacuum_vacuum_threshold:
               description: Specifies the minimum number of updated or deleted tuples
-                needed to trigger a VACUUM in any one table. The default is 50 tuples
+                needed to trigger a VACUUM in any one table. The default is `50`.
               maximum: 2147483647
               minimum: 0
               title: autovacuum_vacuum_threshold
               type: integer
             autovacuum_naptime:
               description: Specifies the minimum delay between autovacuum runs on
-                any given database. The delay is measured in seconds, and the default
-                is one minute
+                any given database. The delay is measured in seconds. The default
+                is `60`.
               maximum: 86400
               minimum: 1
               title: autovacuum_naptime
               type: integer
             autovacuum_vacuum_scale_factor:
               description: Specifies a fraction of the table size to add to autovacuum_vacuum_threshold
-                when deciding whether to trigger a VACUUM. The default is 0.2 (20%
-                of table size)
+                when deciding whether to trigger a VACUUM (e.g. `0.2` for 20% of the
+                table size). The default is `0.2`.
               maximum: 1.0
               minimum: 0.0
               title: autovacuum_vacuum_scale_factor
               type: number
             autovacuum_vacuum_cost_delay:
               description: Specifies the cost delay value that will be used in automatic
-                VACUUM operations. If -1 is specified, the regular vacuum_cost_delay
-                value will be used. The default value is 20 milliseconds
+                VACUUM operations. If `-1` is specified, the regular vacuum_cost_delay
+                value will be used. The default is `2` (upstream default).
               maximum: 100
               minimum: -1
               title: autovacuum_vacuum_cost_delay
               type: integer
             autovacuum_analyze_scale_factor:
               description: Specifies a fraction of the table size to add to autovacuum_analyze_threshold
-                when deciding whether to trigger an ANALYZE. The default is 0.2 (20%
-                of table size)
+                when deciding whether to trigger an ANALYZE (e.g. `0.2` for 20% of
+                the table size). The default is `0.2`.
               maximum: 1.0
               minimum: 0.0
               title: autovacuum_analyze_scale_factor
@@ -2215,7 +2278,7 @@ components:
             autovacuum_analyze_threshold:
               description: Specifies the minimum number of inserted, updated or deleted
                 tuples needed to trigger an ANALYZE in any one table. The default
-                is 50 tuples.
+                is `50`.
               maximum: 2147483647
               minimum: 0
               title: autovacuum_analyze_threshold
@@ -2223,10 +2286,10 @@ components:
             autovacuum_freeze_max_age:
               description: Specifies the maximum age (in transactions) that a table's
                 pg_class.relfrozenxid field can attain before a VACUUM operation is
-                forced to prevent transaction ID wraparound within the table. Note
-                that the system will launch autovacuum processes to prevent wraparound
-                even when autovacuum is otherwise disabled. This parameter will cause
-                the server to be restarted.
+                forced to prevent transaction ID wraparound within the table. The
+                system launches autovacuum processes to prevent wraparound even when
+                autovacuum is otherwise disabled. Changing this parameter causes a
+                service restart.
               example: 200000000
               maximum: 1500000000
               minimum: 200000000
@@ -2236,23 +2299,49 @@ components:
           type: object
         max_parallel_workers_per_gather:
           description: Sets the maximum number of workers that can be started by a
-            single Gather or Gather Merge node
+            single Gather or Gather Merge node. The default is `2` (upstream default).
           maximum: 96
           minimum: 0
           title: max_parallel_workers_per_gather
           type: integer
+        io_combine_limit:
+          default: 16
+          description: 'EXPERIMENTAL: Controls the largest I/O size in operations
+            that combine I/O in 8kB units. Version 17 and up only.'
+          maximum: 32
+          minimum: 1
+          title: io_combine_limit
+          type: integer
+        password_encryption:
+          description: Chooses the algorithm for encrypting passwords.
+          enum:
+          - md5
+          - scram-sha-256
+          example: scram-sha-256
+          nullable: true
+          title: password_encryption
+          type: string
+        io_workers:
+          default: 3
+          description: 'EXPERIMENTAL: Number of IO worker processes, for io_method=worker.
+            Version 18 and up only. Changing this parameter causes a service restart.'
+          maximum: 32
+          minimum: 1
+          title: io_max_concurrency
+          type: integer
         pg_partman_bgw.interval:
-          description: Sets the time interval to run pg_partman's scheduled tasks
+          description: Sets the time interval in seconds to run pg_partman's scheduled
+            tasks. The default is `3600`.
           example: 3600
           maximum: 604800
           minimum: 3600
           title: pg_partman_bgw.interval
           type: integer
         log_line_prefix:
-          description: Choose from one of the available log-formats. These can support
-            popular log analyzers like pgbadger, pganalyze etc.
+          description: Choose from one of the available log formats.
           enum:
           - "'pid=%p,user=%u,db=%d,app=%a,client=%h '"
+          - "'pid=%p,user=%u,db=%d,app=%a,client=%h,txid=%x,qid=%Q '"
           - "'%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '"
           - "'%m [%p] %q[user=%u,db=%d,app=%a] '"
           title: log_line_prefix
@@ -2265,13 +2354,15 @@ components:
           title: log_temp_files
           type: integer
         max_locks_per_transaction:
-          description: PostgreSQL maximum locks per transaction
+          description: PostgreSQL maximum locks per transaction. Changing this parameter
+            causes a service restart.
           maximum: 6400
           minimum: 64
           title: max_locks_per_transaction
           type: integer
         track_commit_timestamp:
-          description: Record commit time of transactions.
+          description: Record commit time of transactions. Changing this parameter
+            causes a service restart.
           enum:
           - 'off'
           - 'on'
@@ -2286,15 +2377,37 @@ components:
           - none
           title: track_functions
           type: string
+        io_max_combine_limit:
+          default: 16
+          description: 'EXPERIMENTAL: Controls the largest I/O size in operations
+            that combine I/O in 8kB units, and silently limits the user-settable parameter
+            io_combine_limit. Version 18 and up only. Changing this parameter causes
+            a service restart.'
+          maximum: 128
+          minimum: 1
+          title: io_max_combine_limit
+          type: integer
+        io_method:
+          default: worker
+          description: 'EXPERIMENTAL: Controls the maximum number of I/O operations
+            that one process can execute simultaneously. Version 18 and up only. Changing
+            this parameter causes a service restart.'
+          enum:
+          - worker
+          - sync
+          - io_uring
+          title: io_method
+          type: string
         max_stack_depth:
-          description: Maximum depth of the stack in bytes
+          description: Maximum depth of the stack in bytes. The default is `2097152`
+            (upstream default).
           maximum: 6291456
           minimum: 2097152
           title: max_stack_depth
           type: integer
         max_parallel_workers:
           description: Sets the maximum number of workers that the system can support
-            for parallel queries
+            for parallel queries. The default is `8` (upstream default).
           maximum: 96
           minimum: 0
           title: max_parallel_workers
@@ -2309,21 +2422,24 @@ components:
           type: string
         max_logical_replication_workers:
           description: PostgreSQL maximum logical replication workers (taken from
-            the pool of max_parallel_workers)
-          maximum: 64
+            the pool of max_parallel_workers). The default is `4` (upstream default).
+            Changing this parameter causes a service restart.
+          maximum: 256
           minimum: 4
           title: max_logical_replication_workers
           type: integer
         max_prepared_transactions:
-          description: PostgreSQL maximum prepared transactions
+          description: PostgreSQL maximum prepared transactions. The default is `0`.
+            Changing this parameter causes a service restart.
           maximum: 10000
           minimum: 0
           title: max_prepared_transactions
           type: integer
         max_worker_processes:
           description: Sets the maximum number of background processes that the system
-            can support
-          maximum: 96
+            can support. The default is `8`. Changing this parameter causes a service
+            restart.
+          maximum: 288
           minimum: 8
           title: max_worker_processes
           type: integer
@@ -2331,7 +2447,7 @@ components:
           description: Controls which statements are counted. Specify top to track
             top-level statements (those issued directly by clients), all to also track
             nested statements (such as statements invoked within functions), or none
-            to disable statement statistics collection. The default value is top.
+            to disable statement statistics collection. The default is `top`.
           enum:
           - all
           - top
@@ -2362,7 +2478,8 @@ components:
           title: log_min_duration_statement
           type: integer
         max_standby_streaming_delay:
-          description: Max standby streaming delay in milliseconds
+          description: Max standby streaming delay in milliseconds. The default is
+            `30000` (upstream default).
           maximum: 43200000
           minimum: 1
           title: max_standby_streaming_delay
@@ -2373,7 +2490,8 @@ components:
           title: jit
           type: boolean
         max_standby_archive_delay:
-          description: Max standby archive delay in milliseconds
+          description: Max standby archive delay in milliseconds. The default is `30000`
+            (upstream default).
           maximum: 43200000
           minimum: 1
           title: max_standby_archive_delay
@@ -2382,7 +2500,7 @@ components:
           properties:
             bgwriter_delay:
               description: Specifies the delay between activity rounds for the background
-                writer in milliseconds. Default is 200.
+                writer in milliseconds. The default is `200`.
               example: 200
               maximum: 10000
               minimum: 10
@@ -2391,8 +2509,8 @@ components:
             bgwriter_flush_after:
               description: Whenever more than bgwriter_flush_after bytes have been
                 written by the background writer, attempt to force the OS to issue
-                these writes to the underlying storage. Specified in kilobytes, default
-                is 512. Setting of 0 disables forced writeback.
+                these writes to the underlying storage. Specified in kilobytes. Setting
+                of 0 disables forced writeback. The default is `512`.
               example: 512
               maximum: 2048
               minimum: 0
@@ -2401,7 +2519,7 @@ components:
             bgwriter_lru_maxpages:
               description: In each round, no more than this many buffers will be written
                 by the background writer. Setting this to zero disables background
-                writing. Default is 100.
+                writing. The default is `100`.
               example: 100
               maximum: 1073741823
               minimum: 0
@@ -2414,7 +2532,7 @@ components:
                 1.0 represents a “just in time” policy of writing exactly the number
                 of buffers predicted to be needed. Larger values provide some cushion
                 against spikes in demand, while smaller values intentionally leave
-                writes to be done by server processes. The default is 2.0.
+                writes to be done by server processes. The default is `2.0`.
               example: 2.0
               maximum: 10
               minimum: 0
@@ -3179,60 +3297,6 @@ components:
       - plan
       - type
       - prometheus-uri
-    aideployment:
-      type: object
-      properties:
-        updated-at:
-          type: string
-          format: date-time
-          readOnly: true
-          description: Update time
-        deployment-url:
-          type: string
-          description: Deployment URL (nullable)
-        model-id:
-          type: string
-          format: uuid
-          description: Associated model ID
-        service-level:
-          type: string
-          minLength: 1
-          description: Service level
-        name:
-          type: string
-          minLength: 1
-          description: Deployment name
-        endpoint-url:
-          type: string
-          description: Endpoint URL (nullable)
-        instance-type:
-          type: string
-          minLength: 1
-          description: Instance type
-        organization-id:
-          type: string
-          format: uuid
-          description: Organization ID
-        status:
-          type: string
-          description: Deployment status
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-          description: Deployment ID
-        created-at:
-          type: string
-          format: date-time
-          readOnly: true
-          description: Creation time
-        deployment-size:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: true
-          description: Deployment size (>=1)
-      description: AI deployment
     dbaas-service-kafka:
       type: object
       properties:
@@ -3734,6 +3798,11 @@ components:
         instance:
           "$ref": "#/components/schemas/instance"
           description: Compute Instance snapshotted
+        application-consistent:
+          type: boolean
+          readOnly: true
+          description: Indicates whether the snapshot was taken using an application-consistent
+            method
       description: Snapshot
     dbaas-endpoint-rsyslog-secrets:
       type: object
@@ -4171,6 +4240,14 @@ components:
           format: date-time
           description: The time when the update will be automatically applied
       description: Update waiting to be installed
+    error-response:
+      type: object
+      properties:
+        error:
+          type: string
+          readOnly: true
+          description: Error description
+      description: Error
     enum-kafka-auth-method:
       type: string
       enum:
@@ -4185,7 +4262,7 @@ components:
             database failover to standby
           maximum: 9223372036854775807
           minimum: 10
-          title: max_failover_replication_time_lag
+          title: Max Failover Replication Time Lag
           type: integer
       title: PGLookout settings
       type: object
@@ -5212,6 +5289,14 @@ components:
               description: Maximum number of partition contexts to send. Applies only
                 when attached to kafka services.
           description: External integration DataDog configuration
+    list-models-response:
+      type: object
+      properties:
+        models:
+          type: array
+          items:
+            "$ref": "#/components/schemas/list-models-response-entry"
+      description: AI model list
     sos-bucket-usage:
       type: object
       properties:
@@ -5247,7 +5332,10 @@ components:
           "$ref": "#/components/schemas/public-ip-assignment"
           description: Instance public IP assignment
         labels:
-          "$ref": "#/components/schemas/labels"
+          type: object
+          patternProperties:
+            "*":
+              type: string
           description: Resource labels
         security-groups:
           type: array
@@ -5531,6 +5619,62 @@ components:
       type: string
       maxLength: 63
       minLength: 0
+    list-deployments-response-entry:
+      type: object
+      properties:
+        gpu-count:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: Number of GPUs
+        updated-at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Update time
+        deployment-url:
+          type: string
+          description: Deployment URL (nullable)
+        service-level:
+          type: string
+          minLength: 1
+          description: Service level
+        name:
+          type: string
+          minLength: 1
+          description: Deployment name
+        gpu-type:
+          type: string
+          minLength: 1
+          description: GPU type family
+        status:
+          type: string
+          enum:
+          - ready
+          - creating
+          - error
+          - deploying
+          description: Deployment status
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Deployment ID
+        replicas:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: Number of replicas (>=0)
+        created-at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Creation time
+        model:
+          "$ref": "#/components/schemas/model-ref"
+      description: AI deployment
     dbaas-endpoint-elasticsearch-secrets:
       type: object
       properties:
@@ -5792,6 +5936,16 @@ components:
             "$ref": "#/components/schemas/ssh-key"
           description: Instances SSH keys
       description: Instance Pool
+    scale-deployment-request:
+      type: object
+      properties:
+        replicas:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: Number of replicas (>=0)
+      description: Scale AI deployment
     dbaas-integration-type:
       type: object
       properties:
@@ -6886,6 +7040,14 @@ components:
       enum:
       - up
       - down
+    list-deployments-response:
+      type: object
+      properties:
+        deployments:
+          type: array
+          items:
+            "$ref": "#/components/schemas/list-deployments-response-entry"
+      description: AI model list
     anti-affinity-group:
       type: object
       properties:
@@ -7083,6 +7245,43 @@ components:
           - port
           - tls
           - format
+    list-models-response-entry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Model ID
+        name:
+          type: string
+          minLength: 1
+          description: Model name
+        status:
+          type: string
+          enum:
+          - ready
+          - creating
+          - downloading
+          - error
+          description: Model status
+        model-size:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: Model size (nullable)
+        created-at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Creation time
+        updated-at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Update time
+      description: AI model
     dbaas-endpoint-opensearch-input-create:
       type: object
       properties:
@@ -7447,7 +7646,7 @@ components:
           description: The number of background workers for timescaledb operations.
             You should configure this setting to the sum of your number of databases
             and the total number of concurrent background workers you want running
-            at any given point in time.
+            at any given point in time. Changing this parameter causes a service restart.
           example: 8
           maximum: 4096
           minimum: 1
@@ -7589,42 +7788,6 @@ components:
           readOnly: true
           description: DNS domain record system status
       description: DNS domain record
-    aimodel:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-          description: Model ID
-        organization-id:
-          type: string
-          format: uuid
-          description: Organization ID
-        name:
-          type: string
-          minLength: 1
-          description: Model name
-        status:
-          type: string
-          description: Model status
-        model-size:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: false
-          description: Model size (nullable)
-        created-at:
-          type: string
-          format: date-time
-          readOnly: true
-          description: Creation time
-        updated-at:
-          type: string
-          format: date-time
-          readOnly: true
-          description: Update time
-      description: AI model
     organization:
       type: object
       properties:
@@ -8585,6 +8748,34 @@ components:
           readOnly: true
           description: Volume creation date
       description: Block storage volume
+    create-deployment-request:
+      type: object
+      properties:
+        model:
+          "$ref": "#/components/schemas/model-ref"
+        name:
+          type: string
+          minLength: 1
+          description: Deployment name
+        gpu-type:
+          type: string
+          description: GPU type family (e.g., gpua5000, gpu3080ti)
+        gpu-count:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: Number of GPUs (1-8)
+        replicas:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: Number of replicas (>=1)
+      required:
+      - gpu-type
+      - gpu-count
+      description: Deployment an AI model onto a set of GPUs
     enum-migration-method:
       type: string
       enum:
@@ -10003,6 +10194,46 @@ paths:
             schema:
               "$ref": "#/components/schemas/dbaas-endpoint-elasticsearch-input-update"
       operationId: update-dbaas-external-endpoint-elasticsearch
+  "/ai/model":
+    post:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: |-
+        Model files will be downloaded from Huggingface.
+
+        Name must be the exact name of the model on huggingface (ex: openai/gpt-oss-120b or ggml-org/gpt-oss-120b-GGUF).
+
+        If the model is under a license then you must provide a Huggingface access token for an account that signed the license agreement
+      parameters: []
+      summary: "[BETA] Create Model"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/create-model-request"
+      operationId: create-model
+    get:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/list-models-response"
+      description: ''
+      parameters: []
+      summary: "[BETA] List Models"
+      operationId: list-models
   "/dbaas-mysql/{service-name}/user":
     post:
       tags:
@@ -10058,6 +10289,33 @@ paths:
       parameters: []
       summary: DBaaS Service Types
       operationId: list-dbaas-service-types
+  "/ai/deployment/{id}/scale":
+    post:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: ''
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: "[BETA] Scale Deployment"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/scale-deployment-request"
+      operationId: scale-deployment
   "/instance-type/{id}":
     get:
       tags:
@@ -10656,6 +10914,47 @@ paths:
       parameters: []
       summary: List Compute instance Types
       operationId: list-instance-types
+  "/ai/deployment":
+    post:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+        '400':
+          description: '400'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error-response"
+      description: Deploy a model on an inference server
+      parameters: []
+      summary: "[BETA] Create Deployment"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/create-deployment-request"
+      operationId: create-deployment
+    get:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/list-deployments-response"
+      description: ''
+      parameters: []
+      summary: "[BETA] List Deployments"
+      operationId: list-deployments
   "/dbaas-postgres/{service-name}/database/{database-name}":
     delete:
       tags:
@@ -11807,6 +12106,27 @@ paths:
           format: uuid
       summary: Export a Snapshot
       operationId: export-snapshot
+  "/ai/deployment/{id}":
+    delete:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+      description: ''
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: "[BETA] Delete Deployment"
+      operationId: delete-deployment
   "/dbaas-kafka/{service-name}/connect/password/reveal":
     get:
       tags:
@@ -14374,6 +14694,33 @@ paths:
                   "$ref": "#/components/schemas/dbaas-user-password"
                   description: New password
       operationId: reset-dbaas-opensearch-user-password
+  "/ai/model/{id}":
+    delete:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/operation"
+        '412':
+          description: '412'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/delete-model-conflict-response"
+      description: ''
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: "[BETA] Delete Model"
+      operationId: delete-model
   "/sos-buckets-usage":
     get:
       tags:
@@ -15930,7 +16277,10 @@ paths:
                   "$ref": "#/components/schemas/public-ip-assignment"
                   description: Assign public IP to the Instance
                 labels:
-                  "$ref": "#/components/schemas/labels"
+                  type: object
+                  patternProperties:
+                    "*":
+                      type: string
                   nullable: true
                   description: Resource labels
       operationId: update-instance
@@ -18214,6 +18564,27 @@ paths:
           format: uuid
       summary: Rotate operators certificate authority
       operationId: rotate-sks-operators-ca
+  "/ai/deployment/{id}/api-key":
+    get:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/reveal-deployment-api-key-response"
+      description: ''
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: "[BETA] Reveal Deployment API Key"
+      operationId: reveal-deployment-api-key
   "/anti-affinity-group/{id}":
     get:
       tags:
@@ -18311,7 +18682,10 @@ paths:
                   "$ref": "#/components/schemas/public-ip-assignment"
                   description: Assign public IP to the Instance
                 labels:
-                  "$ref": "#/components/schemas/labels"
+                  type: object
+                  patternProperties:
+                    "*":
+                      type: string
                   description: Resource labels
                 auto-start:
                   type: boolean
@@ -18628,6 +19002,46 @@ paths:
       parameters: []
       summary: List Users
       operationId: list-users
+  "/ai/deployment/{id}/logs":
+    get:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/get-deployment-logs-response"
+        '400':
+          description: '400'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error-response"
+        '404':
+          description: '404'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error-response"
+        '500':
+          description: '500'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error-response"
+      description: Return logs for the vLLM deployment (deploy/<release-name>--deployment-vllm).
+        Optional ?stream=true to request streaming (may not be supported).
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: "[BETA] Get Deployment Logs"
+      operationId: get-deployment-logs
   "/sks-cluster/{id}/upgrade":
     put:
       tags:

@@ -4966,6 +4966,62 @@ components:
           format: uuid
           description: IAM API Key Role ID
       description: IAM API Key
+    get-deployment-response:
+      type: object
+      properties:
+        gpu-count:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: Number of GPUs
+        updated-at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Update time
+        deployment-url:
+          type: string
+          description: Deployment URL (nullable)
+        service-level:
+          type: string
+          minLength: 1
+          description: Service level
+        name:
+          type: string
+          minLength: 1
+          description: Deployment name
+        gpu-type:
+          type: string
+          minLength: 1
+          description: GPU type family
+        status:
+          type: string
+          enum:
+          - ready
+          - creating
+          - error
+          - deploying
+          description: Deployment status
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Deployment ID
+        replicas:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: Number of replicas (>=0)
+        created-at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Creation time
+        model:
+          "$ref": "#/components/schemas/model-ref"
+      description: AI deployment
     iam-policy:
       type: object
       properties:
@@ -7138,6 +7194,43 @@ components:
         settings:
           "$ref": "#/components/schemas/dbaas-endpoint-rsyslog-optional-fields"
           description: External integration RSyslog configuration
+    get-model-response:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Model ID
+        name:
+          type: string
+          minLength: 1
+          description: Model name
+        status:
+          type: string
+          enum:
+          - ready
+          - creating
+          - downloading
+          - error
+          description: Model status
+        model-size:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          description: Model size (nullable)
+        created-at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Creation time
+        updated-at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Update time
+      description: AI model
     dbaas-endpoint-elasticsearch-input-update:
       type: object
       properties:
@@ -12107,6 +12200,32 @@ paths:
       summary: Export a Snapshot
       operationId: export-snapshot
   "/ai/deployment/{id}":
+    get:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/get-deployment-response"
+        '404':
+          description: '404'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error-response"
+      description: ''
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: "[BETA] Get Deployment"
+      operationId: get-deployment
     delete:
       tags:
       - dedicated-inference
@@ -14721,6 +14840,32 @@ paths:
           format: uuid
       summary: "[BETA] Delete Model"
       operationId: delete-model
+    get:
+      tags:
+      - dedicated-inference
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/get-model-response"
+        '404':
+          description: '404'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error-response"
+      description: ''
+      parameters:
+      - in: path
+        required: true
+        name: id
+        schema:
+          type: string
+          format: uuid
+      summary: "[BETA] Get Model"
+      operationId: get-model
   "/sos-buckets-usage":
     get:
       tags:

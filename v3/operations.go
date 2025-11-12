@@ -151,6 +151,50 @@ func (c Client) DeleteDeployment(ctx context.Context, id UUID) (*Operation, erro
 	return bodyresp, nil
 }
 
+// [BETA] Get Deployment
+func (c Client) GetDeployment(ctx context.Context, id UUID) (*GetDeploymentResponse, error) {
+	path := fmt.Sprintf("/ai/deployment/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDeployment: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDeployment: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDeployment: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-deployment")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDeployment: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDeployment: http response: %w", err)
+	}
+
+	bodyresp := new(GetDeploymentResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDeployment: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // [BETA] Reveal Deployment API Key
 func (c Client) RevealDeploymentAPIKey(ctx context.Context, id UUID) (*RevealDeploymentAPIKeyResponse, error) {
 	path := fmt.Sprintf("/ai/deployment/%v/api-key", id)
@@ -426,6 +470,50 @@ func (c Client) DeleteModel(ctx context.Context, id UUID) (*Operation, error) {
 	bodyresp := new(Operation)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteModel: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Get Model
+func (c Client) GetModel(ctx context.Context, id UUID) (*GetModelResponse, error) {
+	path := fmt.Sprintf("/ai/model/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetModel: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetModel: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetModel: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-model")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetModel: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetModel: http response: %w", err)
+	}
+
+	bodyresp := new(GetModelResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetModel: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil

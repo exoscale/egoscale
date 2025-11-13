@@ -1,6 +1,13 @@
 Changelog
 =========
 
+3.1.29
+------
+
+- Generator v3: Add Root schema objct array & change resp init (#722)
+- v3: regenerate from new API spec (#721)
+- v3: regenerate from new API spec (#723)
+
 3.1.28
 ------
 

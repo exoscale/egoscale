@@ -5388,10 +5388,7 @@ components:
           "$ref": "#/components/schemas/public-ip-assignment"
           description: Instance public IP assignment
         labels:
-          type: object
-          patternProperties:
-            "*":
-              type: string
+          "$ref": "#/components/schemas/labels"
           description: Resource labels
         security-groups:
           type: array
@@ -16422,12 +16419,9 @@ paths:
                   "$ref": "#/components/schemas/public-ip-assignment"
                   description: Assign public IP to the Instance
                 labels:
-                  type: object
-                  patternProperties:
-                    "*":
-                      type: string
-                  nullable: true
+                  "$ref": "#/components/schemas/labels"
                   description: Resource labels
+                  nullable: true
       operationId: update-instance
     get:
       tags:
@@ -18827,10 +18821,7 @@ paths:
                   "$ref": "#/components/schemas/public-ip-assignment"
                   description: Assign public IP to the Instance
                 labels:
-                  type: object
-                  patternProperties:
-                    "*":
-                      type: string
+                  "$ref": "#/components/schemas/labels"
                   description: Resource labels
                 auto-start:
                   type: boolean

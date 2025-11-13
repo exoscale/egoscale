@@ -2351,8 +2351,7 @@ type Instance struct {
 	InstanceType *InstanceType `json:"instance-type,omitempty"`
 	// Instance IPv6 address
 	Ipv6Address string `json:"ipv6-address,omitempty"`
-	// Resource labels
-	Labels map[string]any `json:"labels,omitempty"`
+	Labels      Labels `json:"labels,omitempty"`
 	// Instance MAC address
 	MACAddress string `json:"mac-address,omitempty"`
 	// Resource manager

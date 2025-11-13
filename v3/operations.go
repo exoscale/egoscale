@@ -10535,9 +10535,8 @@ type CreateInstanceRequest struct {
 	// Compute instance type
 	InstanceType *InstanceType `json:"instance-type" validate:"required"`
 	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
-	Ipv6Enabled *bool `json:"ipv6-enabled,omitempty"`
-	// Resource labels
-	Labels map[string]any `json:"labels,omitempty"`
+	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
+	Labels      Labels `json:"labels,omitempty"`
 	// Instance name
 	Name               string             `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
@@ -11328,8 +11327,7 @@ func (c Client) GetInstance(ctx context.Context, id UUID) (*Instance, error) {
 }
 
 type UpdateInstanceRequest struct {
-	// Resource labels
-	Labels map[string]any `json:"labels"`
+	Labels Labels `json:"labels"`
 	// Instance name
 	Name               string             `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`

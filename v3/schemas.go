@@ -2186,6 +2186,65 @@ type Event struct {
 
 type GetDeploymentLogsResponse string
 
+type GetDeploymentResponseStatus string
+
+const (
+	GetDeploymentResponseStatusReady     GetDeploymentResponseStatus = "ready"
+	GetDeploymentResponseStatusCreating  GetDeploymentResponseStatus = "creating"
+	GetDeploymentResponseStatusError     GetDeploymentResponseStatus = "error"
+	GetDeploymentResponseStatusDeploying GetDeploymentResponseStatus = "deploying"
+)
+
+// AI deployment
+type GetDeploymentResponse struct {
+	// Creation time
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Deployment URL (nullable)
+	DeploymentURL string `json:"deployment-url,omitempty"`
+	// Number of GPUs
+	GpuCount int64 `json:"gpu-count,omitempty" validate:"omitempty,gt=0"`
+	// GPU type family
+	GpuType string `json:"gpu-type,omitempty" validate:"omitempty,gte=1"`
+	// Deployment ID
+	ID    UUID      `json:"id,omitempty"`
+	Model *ModelRef `json:"model,omitempty"`
+	// Deployment name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
+	// Number of replicas (>=0)
+	Replicas int64 `json:"replicas,omitempty" validate:"omitempty,gte=0"`
+	// Service level
+	ServiceLevel string `json:"service-level,omitempty" validate:"omitempty,gte=1"`
+	// Deployment status
+	Status GetDeploymentResponseStatus `json:"status,omitempty"`
+	// Update time
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
+}
+
+type GetModelResponseStatus string
+
+const (
+	GetModelResponseStatusReady       GetModelResponseStatus = "ready"
+	GetModelResponseStatusCreating    GetModelResponseStatus = "creating"
+	GetModelResponseStatusDownloading GetModelResponseStatus = "downloading"
+	GetModelResponseStatusError       GetModelResponseStatus = "error"
+)
+
+// AI model
+type GetModelResponse struct {
+	// Creation time
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Model ID
+	ID UUID `json:"id,omitempty"`
+	// Model size (nullable)
+	ModelSize int64 `json:"model-size,omitempty" validate:"omitempty,gte=0"`
+	// Model name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
+	// Model status
+	Status GetModelResponseStatus `json:"status,omitempty"`
+	// Update time
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
+}
+
 // IAM API Key
 type IAMAPIKey struct {
 	// IAM API Key

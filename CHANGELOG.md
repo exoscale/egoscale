@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.1.30
+------
+
+- Manually generate v3 from spec (#724)
+
 3.1.29
 ------
 

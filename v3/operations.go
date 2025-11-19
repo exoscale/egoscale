@@ -12,6 +12,25 @@ import (
 	"time"
 )
 
+// FindListDeploymentsResponseEntry attempts to find an ListDeploymentsResponseEntry by nameOrID.
+func (l ListDeploymentsResponse) FindListDeploymentsResponseEntry(nameOrID string) (ListDeploymentsResponseEntry, error) {
+	var result []ListDeploymentsResponseEntry
+	for i, elem := range l.Deployments {
+		if string(elem.Name) == nameOrID || string(elem.ID) == nameOrID {
+			result = append(result, l.Deployments[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return ListDeploymentsResponseEntry{}, fmt.Errorf("%q too many found in ListDeploymentsResponse: %w", nameOrID, ErrConflict)
+	}
+
+	return ListDeploymentsResponseEntry{}, fmt.Errorf("%q not found in ListDeploymentsResponse: %w", nameOrID, ErrNotFound)
+}
+
 // [BETA] List Deployments
 func (c Client) ListDeployments(ctx context.Context) (*ListDeploymentsResponse, error) {
 	path := "/ai/deployment"
@@ -332,6 +351,25 @@ func (c Client) ScaleDeployment(ctx context.Context, id UUID, req ScaleDeploymen
 	}
 
 	return bodyresp, nil
+}
+
+// FindListModelsResponseEntry attempts to find an ListModelsResponseEntry by nameOrID.
+func (l ListModelsResponse) FindListModelsResponseEntry(nameOrID string) (ListModelsResponseEntry, error) {
+	var result []ListModelsResponseEntry
+	for i, elem := range l.Models {
+		if string(elem.Name) == nameOrID || string(elem.ID) == nameOrID {
+			result = append(result, l.Models[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return ListModelsResponseEntry{}, fmt.Errorf("%q too many found in ListModelsResponse: %w", nameOrID, ErrConflict)
+	}
+
+	return ListModelsResponseEntry{}, fmt.Errorf("%q not found in ListModelsResponse: %w", nameOrID, ErrNotFound)
 }
 
 // [BETA] List Models

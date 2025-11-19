@@ -126,6 +126,10 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 
 		// Skip on reference.
 		if media.Schema.IsReference() {
+			if findable != nil {
+				output.Write(findable)
+			}
+
 			continue
 		}
 

@@ -10564,6 +10564,8 @@ func (c Client) ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*L
 type CreateInstanceRequest struct {
 	// Instance Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	// Enable application-consistent snapshot for the instance
+	ApplicationConsistentSnapshotEnabled *bool `json:"application-consistent-snapshot-enabled,omitempty"`
 	// Start Instance on creation (default: true)
 	AutoStart *bool `json:"auto-start,omitempty"`
 	// Deploy target
@@ -11365,7 +11367,9 @@ func (c Client) GetInstance(ctx context.Context, id UUID) (*Instance, error) {
 }
 
 type UpdateInstanceRequest struct {
-	Labels Labels `json:"labels"`
+	// Enable/Disable Application Consistent Snapshot for Instance
+	ApplicationConsistentSnapshotEnabled *bool  `json:"application-consistent-snapshot-enabled,omitempty"`
+	Labels                               Labels `json:"labels"`
 	// Instance name
 	Name               string             `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`

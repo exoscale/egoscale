@@ -80,7 +80,7 @@ github.com/sagikazarmark/locafero
 # github.com/sagikazarmark/slog-shim v0.1.0
 ## explicit; go 1.20
 github.com/sagikazarmark/slog-shim
-# github.com/sirupsen/logrus v1.9.0
+# github.com/sirupsen/logrus v1.9.1
 ## explicit; go 1.13
 github.com/sirupsen/logrus
 # github.com/sourcegraph/conc v0.3.0

@@ -8134,6 +8134,50 @@ func (c Client) GetDBAASTask(ctx context.Context, service string, id UUID) (*DBA
 	return bodyresp, nil
 }
 
+// Reveal the secrets of a DBaaS Thanos user
+func (c Client) RevealDBAASThanosUserPassword(ctx context.Context, serviceName string, username string) (*DBAASUserThanosSecrets, error) {
+	path := fmt.Sprintf("/dbaas-thanos/%v/user/%v/password/reveal", serviceName, username)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASThanosUserPassword: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASThanosUserPassword: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASThanosUserPassword: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reveal-dbaas-thanos-user-password")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASThanosUserPassword: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealDBAASThanosUserPassword: http response: %w", err)
+	}
+
+	bodyresp := new(DBAASUserThanosSecrets)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RevealDBAASThanosUserPassword: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Delete a Valkey service
 func (c Client) DeleteDBAASServiceValkey(ctx context.Context, name string) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-valkey/%v", name)
@@ -16347,6 +16391,8 @@ const (
 )
 
 type RegisterTemplateRequest struct {
+	// Template with support for Application Consistent Snapshots
+	ApplicationConsistentSnapshotEnabled *bool `json:"application-consistent-snapshot-enabled,omitempty"`
 	// Boot mode (default: legacy)
 	BootMode RegisterTemplateRequestBootMode `json:"boot-mode,omitempty"`
 	// Template build

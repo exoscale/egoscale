@@ -14,8 +14,7 @@ info:
 
     The [OpenAPI Specification](http://spec.openapis.org/oas/v3.0.3.html) source of this documentation can be obtained here:
 
-    * [JSON format](https://openapi-v2.exoscale.com/source.json)
-    * [YAML format](https://openapi-v2.exoscale.com/source.yaml)
+    * [JSON format](https://api-ch-gva-2.exoscale.com/v2/openapi.json)
 tags:
 - description: |-
     Security Groups are groups of firewall rules that regulate
@@ -5252,6 +5251,18 @@ components:
         plan:
           type: string
           description: Subscription plan
+        users:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              username:
+                type: string
+              password:
+                type: string
+          description: List of service users
       required:
       - name
       - plan
@@ -6239,6 +6250,10 @@ components:
     template:
       type: object
       properties:
+        application-consistent-snapshot-enabled:
+          type: boolean
+          description: Template with Qemu Guest Agent installed for application consistent
+            snapshot
         maintainer:
           type: string
           readOnly: true
@@ -8912,6 +8927,16 @@ components:
       - endpoint
       - bearer-token
       description: Kubernetes Audit parameters
+    dbaas-user-thanos-secrets:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Thanos username
+        password:
+          type: string
+          description: Thanos password
+      description: Thanos User secrets
     enum-rsyslog-format:
       type: string
       enum:
@@ -15917,6 +15942,31 @@ paths:
           type: string
       summary: ''
       operationId: list-dbaas-integration-settings
+  "/dbaas-thanos/{service-name}/user/{username}/password/reveal":
+    get:
+      tags:
+      - dbaas
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/dbaas-user-thanos-secrets"
+      description:
+      parameters:
+      - in: path
+        required: true
+        name: service-name
+        schema:
+          "$ref": "#/components/schemas/dbaas-service-name"
+      - in: path
+        required: true
+        name: username
+        schema:
+          "$ref": "#/components/schemas/dbaas-user-username"
+      summary: Reveal the secrets of a DBaaS Thanos user
+      operationId: reveal-dbaas-thanos-user-password
   "/dbaas-settings-pg":
     get:
       tags:
@@ -16870,6 +16920,9 @@ paths:
             schema:
               type: object
               properties:
+                application-consistent-snapshot-enabled:
+                  type: boolean
+                  description: Template with support for Application Consistent Snapshots
                 maintainer:
                   type: string
                   maxLength: 255

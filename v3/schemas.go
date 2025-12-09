@@ -1581,6 +1581,12 @@ type DBAASServiceThanosPrometheusURI struct {
 	Port int64  `json:"port,omitempty" validate:"omitempty,gte=0,lte=65535"`
 }
 
+type DBAASServiceThanosUsers struct {
+	Password string `json:"password,omitempty"`
+	Type     string `json:"type,omitempty"`
+	Username string `json:"username,omitempty"`
+}
+
 type DBAASServiceThanos struct {
 	// List of backups for the service
 	Backups []DBAASServiceBackup `json:"backups,omitempty"`
@@ -1623,6 +1629,8 @@ type DBAASServiceThanos struct {
 	URI string `json:"uri,omitempty"`
 	// service_uri parameterized into key-value pairs
 	URIParams map[string]any `json:"uri-params,omitempty"`
+	// List of service users
+	Users []DBAASServiceThanosUsers `json:"users,omitempty"`
 	// The zone where the service is running
 	Zone string `json:"zone,omitempty"`
 }
@@ -1814,6 +1822,14 @@ type DBAASUserPostgresSecrets struct {
 	// Postgres password
 	Password string `json:"password,omitempty"`
 	// Postgres username
+	Username string `json:"username,omitempty"`
+}
+
+// Thanos User secrets
+type DBAASUserThanosSecrets struct {
+	// Thanos password
+	Password string `json:"password,omitempty"`
+	// Thanos username
 	Username string `json:"username,omitempty"`
 }
 
@@ -4453,6 +4469,8 @@ const (
 
 // Instance template
 type Template struct {
+	// Template with Qemu Guest Agent installed for application consistent snapshot
+	ApplicationConsistentSnapshotEnabled *bool `json:"application-consistent-snapshot-enabled,omitempty"`
 	// Boot mode (default: legacy)
 	BootMode TemplateBootMode `json:"boot-mode,omitempty"`
 	// Template build

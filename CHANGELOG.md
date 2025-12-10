@@ -144,16 +144,16 @@ Changelog
 3.1.2
 ----------
 - generate_v3: DBaaS endpoints and integration schemas #651 #653
-- generate_v3: replace deprecated ::set-output #647 
+- generate_v3: replace deprecated ::set-output #647
 - generate_v3: handle multiple separators #650
-- go.mk: upgrade to v2.0.3 #652 
+- go.mk: upgrade to v2.0.3 #652
 
 3.1.1
 ----------
 
 - v3: Add more listable on Name or(not and) ID #642
-- v3: automate regeneration when spec changes #643 
-- v3: github action to build tooling with new commit #645 
+- v3: automate regeneration when spec changes #643
+- v3: github action to build tooling with new commit #645
 
 3.1.0
 ----------
@@ -169,14 +169,14 @@ Changelog
 - v3: Remove omitempty on nullable complex types #628
 - v3: Add the Authorization header value in the dump request #624
 - v3: Add the User-Agent header value #623
-- go.mk: remove submodule and initialize through make #618 
-- Makefile: fix targets #619 
-- SKS nodepool: support for kubelet image gc #620 
-- v3 trace: print operation IDs #622 
-- go.mk: lint with staticcheck #633 
+- go.mk: remove submodule and initialize through make #618
+- Makefile: fix targets #619
+- SKS nodepool: support for kubelet image gc #620
+- v3 trace: print operation IDs #622
+- go.mk: lint with staticcheck #633
 - v3: update generated code #637
-- v3: separate v3 into its own go module #638 
-- deprecate v1 and v2 and remove alpha notice for v3 #640 
+- v3: separate v3 into its own go module #638
+- deprecate v1 and v2 and remove alpha notice for v3 #640
 
 0.102.3
 -------
@@ -701,7 +701,7 @@ Changelog
 0.43.0
 ------
 
-- change: [Exoscale API V2](https://openapi-v2.exoscale.com/) related code has been relocated under the `github.com/exoscale/egoscale/v2` package.
+- change: [Exoscale API V2](https://community.exoscale.com/reference/api/) related code has been relocated under the `github.com/exoscale/egoscale/v2` package.
   Note: `egoscale.Client` embeds a `v2.Client` initialized implicitly as a convenience.
 
 0.42.0

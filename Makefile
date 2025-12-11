@@ -62,7 +62,7 @@ install-oapi-codegen:
 # OpenAPI specifications (JSON)
 .PHONY: oapigen
 oapigen: install-oapi-codegen
-	@wget -q --show-progress --progress=dot https://openapi-v2.exoscale.com/source.json -O- > v2/oapi/source.json
+	@wget -q --show-progress --progress=dot https://api-ch-gva-2.exoscale.com/v2/openapi.json -O- > v2/oapi/source.json
 	@cd v2/oapi/
 	@go generate
 	@rm source.json
@@ -70,7 +70,7 @@ oapigen: install-oapi-codegen
 
 .PHONY: pull-oapi-spec
 pull-oapi-spec:
-	@wget -q --show-progress --progress=dot https://openapi-v2.exoscale.com/source.yaml -O- > v3/generator/source.yaml
+	@wget -q --show-progress --progress=dot https://api-ch-gva-2.exoscale.com/v2/openapi.json -O- > v3/generator/source.yaml
 
 .PHONY: generate
 generate:

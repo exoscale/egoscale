@@ -467,6 +467,14 @@ components:
         settings:
           $ref: '#/components/schemas/dbaas-endpoint-elasticsearch-optional-fields'
           description: External integration ElasticSearch logs configuration
+    get-inference-engine-help-response:
+      type: object
+      properties:
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/inference-engine-parameter-entry'
+      description: List of allowed inference-engine parameters
     dbaas-user-valkey-secrets:
       type: object
       properties:
@@ -4685,6 +4693,11 @@ components:
           format: date-time
           readOnly: true
           description: Creation time
+        inference-engine-parameters:
+          type: array
+          items:
+            type: string
+          description: Optional extra inference engine server CLI args
         model:
           $ref: '#/components/schemas/model-ref'
       description: AI deployment
@@ -5238,6 +5251,35 @@ components:
       type: string
       maxLength: 64
       minLength: 1
+    inference-engine-parameter-entry:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Parameter name
+        flags:
+          type: array
+          items:
+            type: string
+          description: Flag name
+        type:
+          type: string
+          description: Parameter type
+        default:
+          type: string
+          description: Default value if nothing is specified
+        section:
+          type: string
+          description: Section
+        allowed-values:
+          type: array
+          items:
+            type: string
+          description: Allowed values
+        description:
+          type: string
+          description: Parameter description
+      description: inference-engine parameter definition
     dbaas-user-mysql-secrets:
       type: object
       properties:
@@ -5532,6 +5574,9 @@ components:
     instance-pool:
       type: object
       properties:
+        application-consistent-snapshot-enabled:
+          type: boolean
+          description: Enable application consistent snapshots
         anti-affinity-groups:
           type: array
           items:
@@ -5798,7 +5843,7 @@ components:
           type: integer
           format: int64
           minimum: 0
-          exclusiveMinimum: true
+          exclusiveMinimum: false
           description: Number of instances
         kubelet-image-gc:
           $ref: '#/components/schemas/kubelet-image-gc'
@@ -8340,6 +8385,11 @@ components:
           minimum: 0
           exclusiveMinimum: true
           description: Number of replicas (>=1)
+        inference-engine-parameters:
+          type: array
+          items:
+            type: string
+          description: Optional extra inference engine server CLI args
       required:
         - gpu-type
         - gpu-count
@@ -9094,6 +9144,27 @@ paths:
                   $ref: '#/components/schemas/enum-mysql-authentication-plugin'
                   description: Authentication method
       operationId: reset-dbaas-mysql-user-password
+  /ai/help/inference-engine-parameters:
+    get:
+      tags:
+        - dedicated-inference
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get-inference-engine-help-response'
+        "500":
+          description: "500"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+      description: Get list of allowed inference engine parameters with their descriptions, types, allowed values, and defaults
+      parameters: []
+      summary: '[BETA] Get inference-engine Help'
+      operationId: get-inference-engine-help
   /load-balancer:
     post:
       tags:
@@ -9668,6 +9739,26 @@ paths:
               required:
                 - instance
       operationId: attach-instance-to-private-network
+  /dbaas-thanos/{name}/maintenance/start:
+    put:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: null
+      parameters:
+        - in: path
+          required: true
+          name: name
+          schema:
+            $ref: '#/components/schemas/dbaas-service-name'
+      summary: Initiate Thanos maintenance update
+      operationId: start-dbaas-thanos-maintenance
   /dbaas-external-endpoint-elasticsearch/{endpoint-id}:
     delete:
       tags:
@@ -10111,6 +10202,9 @@ paths:
             schema:
               type: object
               properties:
+                application-consistent-snapshot-enabled:
+                  type: boolean
+                  description: Enable application consistent snapshots
                 anti-affinity-groups:
                   type: array
                   items:
@@ -11270,6 +11364,9 @@ paths:
             schema:
               type: object
               properties:
+                application-consistent-snapshot-enabled:
+                  type: boolean
+                  description: Enable application consistent snapshots
                 anti-affinity-groups:
                   type: array
                   items:
@@ -12635,7 +12732,7 @@ paths:
                   type: integer
                   format: int64
                   minimum: 0
-                  exclusiveMinimum: true
+                  exclusiveMinimum: false
                   description: Number of instances
               required:
                 - size
@@ -16003,6 +16100,111 @@ paths:
             $ref: '#/components/schemas/dbaas-pg-pool-name'
       summary: Delete a DBaaS PostgreSQL connection pool
       operationId: delete-dbaas-pg-connection-pool
+  /dbaas-thanos/{name}:
+    get:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dbaas-service-thanos'
+      description: Get a DBaaS Thanos service
+      parameters:
+        - in: path
+          required: true
+          name: name
+          schema:
+            $ref: '#/components/schemas/dbaas-service-name'
+      summary: ""
+      operationId: get-dbaas-service-thanos
+    put:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: Update a DBaaS Thanos service
+      parameters:
+        - in: path
+          required: true
+          name: name
+          schema:
+            $ref: '#/components/schemas/dbaas-service-name'
+      summary: ""
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                maintenance:
+                  type: object
+                  properties:
+                    dow:
+                      type: string
+                      enum:
+                        - saturday
+                        - tuesday
+                        - never
+                        - wednesday
+                        - sunday
+                        - friday
+                        - monday
+                        - thursday
+                      description: Day of week for installing updates
+                    time:
+                      type: string
+                      maxLength: 8
+                      minLength: 8
+                      description: Time for installing updates, UTC
+                  required:
+                    - dow
+                    - time
+                  description: Automatic maintenance settings
+                plan:
+                  type: string
+                  maxLength: 128
+                  minLength: 1
+                  description: Subscription plan
+                termination-protection:
+                  type: boolean
+                  description: Service is protected against termination and powering off
+                ip-filter:
+                  type: array
+                  items:
+                    type: string
+                  description: Allowed CIDR address blocks for incoming connections
+                thanos-settings:
+                  $ref: '#/components/schemas/json-schema-thanos'
+                  description: Thanos specific settings
+      operationId: update-dbaas-service-thanos
+    delete:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: null
+      parameters:
+        - in: path
+          required: true
+          name: name
+          schema:
+            type: string
+      summary: Delete a Thanos service
+      operationId: delete-dbaas-service-thanos
   /iam-role/{id}:policy:
     put:
       tags:

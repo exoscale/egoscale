@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.1.31
+------
+
+- Cache zoneName and zoneEndpoint for the client (#733)
+
 3.1.30
 ------
 

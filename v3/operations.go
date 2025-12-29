@@ -353,6 +353,50 @@ func (c Client) ScaleDeployment(ctx context.Context, id UUID, req ScaleDeploymen
 	return bodyresp, nil
 }
 
+// Get list of allowed inference engine parameters with their descriptions, types, allowed values, and defaults
+func (c Client) GetInferenceEngineHelp(ctx context.Context) (*GetInferenceEngineHelpResponse, error) {
+	path := "/ai/help/inference-engine-parameters"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetInferenceEngineHelp: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetInferenceEngineHelp: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetInferenceEngineHelp: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-inference-engine-help")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetInferenceEngineHelp: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetInferenceEngineHelp: http response: %w", err)
+	}
+
+	bodyresp := new(GetInferenceEngineHelpResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetInferenceEngineHelp: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // FindListModelsResponseEntry attempts to find an ListModelsResponseEntry by nameOrID.
 func (l ListModelsResponse) FindListModelsResponseEntry(nameOrID string) (ListModelsResponseEntry, error) {
 	var result []ListModelsResponseEntry
@@ -8087,6 +8131,221 @@ func (c Client) GetDBAASTask(ctx context.Context, service string, id UUID) (*DBA
 	return bodyresp, nil
 }
 
+func (c Client) DeleteDBAASServiceThanos(ctx context.Context, name string) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-thanos/%v", name)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceThanos: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceThanos: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceThanos: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-dbaas-service-thanos")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceThanos: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceThanos: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceThanos: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Get a DBaaS Thanos service
+func (c Client) GetDBAASServiceThanos(ctx context.Context, name string) (*DBAASServiceThanos, error) {
+	path := fmt.Sprintf("/dbaas-thanos/%v", name)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceThanos: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceThanos: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceThanos: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-service-thanos")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceThanos: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceThanos: http response: %w", err)
+	}
+
+	bodyresp := new(DBAASServiceThanos)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceThanos: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateDBAASServiceThanosRequestMaintenanceDow string
+
+const (
+	UpdateDBAASServiceThanosRequestMaintenanceDowSaturday  UpdateDBAASServiceThanosRequestMaintenanceDow = "saturday"
+	UpdateDBAASServiceThanosRequestMaintenanceDowTuesday   UpdateDBAASServiceThanosRequestMaintenanceDow = "tuesday"
+	UpdateDBAASServiceThanosRequestMaintenanceDowNever     UpdateDBAASServiceThanosRequestMaintenanceDow = "never"
+	UpdateDBAASServiceThanosRequestMaintenanceDowWednesday UpdateDBAASServiceThanosRequestMaintenanceDow = "wednesday"
+	UpdateDBAASServiceThanosRequestMaintenanceDowSunday    UpdateDBAASServiceThanosRequestMaintenanceDow = "sunday"
+	UpdateDBAASServiceThanosRequestMaintenanceDowFriday    UpdateDBAASServiceThanosRequestMaintenanceDow = "friday"
+	UpdateDBAASServiceThanosRequestMaintenanceDowMonday    UpdateDBAASServiceThanosRequestMaintenanceDow = "monday"
+	UpdateDBAASServiceThanosRequestMaintenanceDowThursday  UpdateDBAASServiceThanosRequestMaintenanceDow = "thursday"
+)
+
+// Automatic maintenance settings
+type UpdateDBAASServiceThanosRequestMaintenance struct {
+	// Day of week for installing updates
+	Dow UpdateDBAASServiceThanosRequestMaintenanceDow `json:"dow" validate:"required"`
+	// Time for installing updates, UTC
+	Time string `json:"time" validate:"required,gte=8,lte=8"`
+}
+
+type UpdateDBAASServiceThanosRequest struct {
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *UpdateDBAASServiceThanosRequestMaintenance `json:"maintenance,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// Thanos settings
+	ThanosSettings *JSONSchemaThanos `json:"thanos-settings,omitempty"`
+}
+
+// Update a DBaaS Thanos service
+func (c Client) UpdateDBAASServiceThanos(ctx context.Context, name string, req UpdateDBAASServiceThanosRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-thanos/%v", name)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceThanos: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceThanos: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceThanos: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceThanos: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-dbaas-service-thanos")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceThanos: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceThanos: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceThanos: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+func (c Client) StartDBAASThanosMaintenance(ctx context.Context, name string) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-thanos/%v/maintenance/start", name)
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("StartDBAASThanosMaintenance: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StartDBAASThanosMaintenance: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StartDBAASThanosMaintenance: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "start-dbaas-thanos-maintenance")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("StartDBAASThanosMaintenance: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StartDBAASThanosMaintenance: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("StartDBAASThanosMaintenance: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 func (c Client) RevealDBAASThanosUserPassword(ctx context.Context, serviceName string, username string) (*DBAASUserThanosSecrets, error) {
 	path := fmt.Sprintf("/dbaas-thanos/%v/user/%v/password/reveal", serviceName, username)
 
@@ -10715,6 +10974,8 @@ const (
 type CreateInstancePoolRequest struct {
 	// Instance Pool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	// Enable application consistent snapshots
+	ApplicationConsistentSnapshotEnabled *bool `json:"application-consistent-snapshot-enabled,omitempty"`
 	// Deploy target
 	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
 	// Instance Pool description
@@ -10901,6 +11162,8 @@ const (
 type UpdateInstancePoolRequest struct {
 	// Instance Pool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups"`
+	// Enable application consistent snapshots
+	ApplicationConsistentSnapshotEnabled *bool `json:"application-consistent-snapshot-enabled,omitempty"`
 	// Deploy target
 	DeployTarget *DeployTarget `json:"deploy-target"`
 	// Instance Pool description
@@ -15241,7 +15504,7 @@ func (c Client) EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoo
 
 type ScaleSKSNodepoolRequest struct {
 	// Number of instances
-	Size int64 `json:"size" validate:"required,gt=0"`
+	Size int64 `json:"size" validate:"required,gte=0"`
 }
 
 // Scale a SKS Nodepool

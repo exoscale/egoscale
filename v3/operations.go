@@ -8218,6 +8218,91 @@ func (c Client) GetDBAASServiceThanos(ctx context.Context, name string) (*DBAASS
 	return bodyresp, nil
 }
 
+type CreateDBAASServiceThanosRequestMaintenanceDow string
+
+const (
+	CreateDBAASServiceThanosRequestMaintenanceDowSaturday  CreateDBAASServiceThanosRequestMaintenanceDow = "saturday"
+	CreateDBAASServiceThanosRequestMaintenanceDowTuesday   CreateDBAASServiceThanosRequestMaintenanceDow = "tuesday"
+	CreateDBAASServiceThanosRequestMaintenanceDowNever     CreateDBAASServiceThanosRequestMaintenanceDow = "never"
+	CreateDBAASServiceThanosRequestMaintenanceDowWednesday CreateDBAASServiceThanosRequestMaintenanceDow = "wednesday"
+	CreateDBAASServiceThanosRequestMaintenanceDowSunday    CreateDBAASServiceThanosRequestMaintenanceDow = "sunday"
+	CreateDBAASServiceThanosRequestMaintenanceDowFriday    CreateDBAASServiceThanosRequestMaintenanceDow = "friday"
+	CreateDBAASServiceThanosRequestMaintenanceDowMonday    CreateDBAASServiceThanosRequestMaintenanceDow = "monday"
+	CreateDBAASServiceThanosRequestMaintenanceDowThursday  CreateDBAASServiceThanosRequestMaintenanceDow = "thursday"
+)
+
+// Automatic maintenance settings
+type CreateDBAASServiceThanosRequestMaintenance struct {
+	// Day of week for installing updates
+	Dow CreateDBAASServiceThanosRequestMaintenanceDow `json:"dow" validate:"required"`
+	// Time for installing updates, UTC
+	Time string `json:"time" validate:"required,gte=8,lte=8"`
+}
+
+type CreateDBAASServiceThanosRequest struct {
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *CreateDBAASServiceThanosRequestMaintenance `json:"maintenance,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// Thanos settings
+	ThanosSettings *JSONSchemaThanos `json:"thanos-settings,omitempty"`
+}
+
+// Create a DBaaS Thanos service
+func (c Client) CreateDBAASServiceThanos(ctx context.Context, name string, req CreateDBAASServiceThanosRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-thanos/%v", name)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceThanos: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceThanos: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceThanos: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceThanos: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-dbaas-service-thanos")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceThanos: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceThanos: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceThanos: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type UpdateDBAASServiceThanosRequestMaintenanceDow string
 
 const (

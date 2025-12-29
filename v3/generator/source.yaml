@@ -4848,6 +4848,11 @@ components:
         state:
           $ref: '#/components/schemas/enum-service-state'
           description: State of the service
+        ip-filter:
+          type: array
+          items:
+            type: string
+          description: Allowed CIDR address blocks for incoming connections
         backups:
           type: array
           items:
@@ -12934,6 +12939,37 @@ paths:
               required:
                 - database-name
       operationId: create-dbaas-pg-database
+  /dbaas-settings-thanos:
+    get:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  settings:
+                    type: object
+                    properties:
+                      thanos:
+                        type: object
+                        properties:
+                          properties:
+                            type: object
+                          additionalProperties:
+                            type: boolean
+                          type:
+                            type: string
+                          title:
+                            type: string
+                        description: Thanos configuration values
+      description: Get DBaaS Thanos settings
+      parameters: []
+      summary: Get DBaaS Thanos settings
+      operationId: get-dbaas-settings-thanos
   /security-group/{id}/rules:
     post:
       tags:

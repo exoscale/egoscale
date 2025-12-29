@@ -1602,6 +1602,8 @@ type DBAASServiceThanos struct {
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// Service integrations
 	Integrations []DBAASIntegration `json:"integrations,omitempty"`
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
 	// Automatic maintenance settings
 	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
 	Name        DBAASServiceName         `json:"name" validate:"required,gte=0,lte=63"`

@@ -1,6 +1,15 @@
 Changelog
 =========
 
+3.1.31
+------
+
+- v3: regenerate from new API spec (#734)
+- v3: regenerate from new API spec (#732)
+- Re-introduce yaml spec for API generation
+- api spec: pull from API endpoint directly (#731)
+- v2: update pointer to API reference (#730)
+
 3.1.30
 ------
 

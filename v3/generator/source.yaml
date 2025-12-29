@@ -16120,6 +16120,74 @@ paths:
             $ref: '#/components/schemas/dbaas-service-name'
       summary: ""
       operationId: get-dbaas-service-thanos
+    post:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: Create a DBaaS Thanos service
+      parameters:
+        - in: path
+          required: true
+          name: name
+          schema:
+            $ref: '#/components/schemas/dbaas-service-name'
+      summary: Create a DBaaS Thanos service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                maintenance:
+                  type: object
+                  properties:
+                    dow:
+                      type: string
+                      enum:
+                        - saturday
+                        - tuesday
+                        - never
+                        - wednesday
+                        - sunday
+                        - friday
+                        - monday
+                        - thursday
+                      description: Day of week for installing updates
+                    time:
+                      type: string
+                      maxLength: 8
+                      minLength: 8
+                      description: Time for installing updates, UTC
+                  required:
+                    - dow
+                    - time
+                  description: Automatic maintenance settings
+                plan:
+                  type: string
+                  maxLength: 128
+                  minLength: 1
+                  description: Subscription plan
+                termination-protection:
+                  type: boolean
+                  description: Service is protected against termination and powering off
+                ip-filter:
+                  type: array
+                  items:
+                    type: string
+                  description: Allowed CIDR address blocks for incoming connections
+                thanos-settings:
+                  $ref: '#/components/schemas/json-schema-thanos'
+                  description: Thanos specific settings
+              required:
+                - plan
+      operationId: create-dbaas-service-thanos
     put:
       tags:
         - dbaas

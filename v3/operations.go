@@ -7967,6 +7967,67 @@ func (c Client) GetDBAASSettingsPG(ctx context.Context) (*GetDBAASSettingsPGResp
 	return bodyresp, nil
 }
 
+// Thanos configuration values
+type GetDBAASSettingsThanosResponseSettingsThanos struct {
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
+}
+
+type GetDBAASSettingsThanosResponseSettings struct {
+	// Thanos configuration values
+	Thanos *GetDBAASSettingsThanosResponseSettingsThanos `json:"thanos,omitempty"`
+}
+
+type GetDBAASSettingsThanosResponse struct {
+	Settings *GetDBAASSettingsThanosResponseSettings `json:"settings,omitempty"`
+}
+
+// Get DBaaS Thanos settings
+func (c Client) GetDBAASSettingsThanos(ctx context.Context) (*GetDBAASSettingsThanosResponse, error) {
+	path := "/dbaas-settings-thanos"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsThanos: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsThanos: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsThanos: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-settings-thanos")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsThanos: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsThanos: http response: %w", err)
+	}
+
+	bodyresp := new(GetDBAASSettingsThanosResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsThanos: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Valkey configuration values
 type GetDBAASSettingsValkeyResponseSettingsValkey struct {
 	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`

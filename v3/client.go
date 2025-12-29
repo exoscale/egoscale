@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/exoscale/egoscale/v3/credentials"
@@ -40,7 +41,15 @@ var defaultHTTPClient = func() *http.Client {
 	return rc.StandardClient()
 }()
 
-func (c Client) GetZoneName(ctx context.Context, endpoint Endpoint) (ZoneName, error) {
+func (c *Client) GetZoneName(ctx context.Context, endpoint Endpoint) (ZoneName, error) {
+	c.RLock()
+	name, ok := c.zoneNameCache[endpoint]
+	c.RUnlock()
+
+	if ok {
+		return name, nil
+	}
+
 	resp, err := c.ListZones(ctx)
 	if err != nil {
 		return "", fmt.Errorf("get zone name: list zones: %w", err)
@@ -51,10 +60,25 @@ func (c Client) GetZoneName(ctx context.Context, endpoint Endpoint) (ZoneName, e
 		return "", fmt.Errorf("get zone name: find zone: %w", err)
 	}
 
+	c.Lock()
+	if c.zoneNameCache == nil {
+		c.zoneNameCache = make(map[Endpoint]ZoneName)
+	}
+	c.zoneNameCache[endpoint] = zone.Name
+	c.Unlock()
+
 	return zone.Name, nil
 }
 
-func (c Client) GetZoneAPIEndpoint(ctx context.Context, zoneName ZoneName) (Endpoint, error) {
+func (c *Client) GetZoneAPIEndpoint(ctx context.Context, zoneName ZoneName) (Endpoint, error) {
+	c.RLock()
+	endpoint, ok := c.zoneEndpointCache[zoneName]
+	c.RUnlock()
+
+	if ok {
+		return endpoint, nil
+	}
+
 	resp, err := c.ListZones(ctx)
 	if err != nil {
 		return "", fmt.Errorf("get zone api endpoint: list zones: %w", err)
@@ -64,6 +88,13 @@ func (c Client) GetZoneAPIEndpoint(ctx context.Context, zoneName ZoneName) (Endp
 	if err != nil {
 		return "", fmt.Errorf("get zone api endpoint: find zone: %w", err)
 	}
+
+	c.Lock()
+	if c.zoneEndpointCache == nil {
+		c.zoneEndpointCache = make(map[ZoneName]Endpoint)
+	}
+	c.zoneEndpointCache[zoneName] = zone.APIEndpoint
+	c.Unlock()
 
 	return zone.APIEndpoint, nil
 }
@@ -82,6 +113,11 @@ type Client struct {
 	// A list of callbacks for modifying requests which are generated before sending over
 	// the network.
 	requestInterceptors []RequestInterceptorFn
+
+	// Zone lookup caching
+	sync.RWMutex
+	zoneNameCache     map[Endpoint]ZoneName
+	zoneEndpointCache map[ZoneName]Endpoint
 }
 
 // RequestInterceptorFn is the function signature for the RequestInterceptor callback function
@@ -172,12 +208,14 @@ func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client
 	}
 
 	client := &Client{
-		apiKey:         values.APIKey,
-		apiSecret:      values.APISecret,
-		serverEndpoint: string(CHGva2),
-		httpClient:     defaultHTTPClient,
-		validate:       validator.New(),
-		userAgent:      getDefaultUserAgent(),
+		apiKey:            values.APIKey,
+		apiSecret:         values.APISecret,
+		serverEndpoint:    string(CHGva2),
+		httpClient:        defaultHTTPClient,
+		validate:          validator.New(),
+		userAgent:         getDefaultUserAgent(),
+		zoneNameCache:     make(map[Endpoint]ZoneName),
+		zoneEndpointCache: make(map[ZoneName]Endpoint),
 	}
 
 	for _, opt := range opts {
@@ -187,6 +225,13 @@ func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client
 	}
 
 	return client, nil
+}
+
+func (c *Client) ClearZoneCache() {
+	c.Lock()
+	c.zoneNameCache = make(map[Endpoint]ZoneName)
+	c.zoneEndpointCache = make(map[ZoneName]Endpoint)
+	c.Unlock()
 }
 
 // getUserAgent only for compatibility with UserAgent.
@@ -289,5 +334,7 @@ func cloneClient(c *Client) *Client {
 		waitTimeout:         c.waitTimeout,
 		trace:               c.trace,
 		validate:            c.validate,
+		zoneNameCache:       make(map[Endpoint]ZoneName),
+		zoneEndpointCache:   make(map[ZoneName]Endpoint),
 	}
 }

@@ -3,10 +3,10 @@ info:
   version: 2.0.0
   termsOfService: https://exoscale.com/terms
   contact:
-    email: api@exoscale.com
-    name: API support
+    email: support@exoscale.com
+    name: Exoscale Support
     url: https://portal.exoscale.com/tickets
-  title: Exoscale Public API
+  title: Exoscale API
   description: |2-
 
     Infrastructure automation API, allowing programmatic access to all Exoscale products and services.
@@ -15,20 +15,62 @@ info:
 
     * [JSON format](https://api-ch-gva-2.exoscale.com/v2/openapi.json)
 tags:
-  - description: |-
-      Security Groups are groups of firewall rules that regulate
-                         network traffic to and from your Compute instances.
+  - description: MySQL, the popular open-source, object-relational database.
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/security-groups/
-    name: security-groups
+      url: https://community.exoscale.com/product/dbaas/service-specific/mysql/
+    name: dbaas-mysql
+  - description: Elastic IPs are additional public IPv4/6 addresses that can be attached to Compute instances, with optional healthcheck support.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/networking/eip/
+    name: elastic-ip
+  - description: Reverse DNS lets you record PTR records for Compute instance public IP addresses or Elastic IPs.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/compute/instances/
+    name: reverse-dns
+  - description: |-
+      Instances are the virtual machines at the core of the Exoscale
+                         Compute service.
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/compute/
+    name: instance
+  - description: Kafka is a distributed, open-source data platform for optimized real-time processing of streaming data.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/dbaas/service-specific/kafka/
+    name: dbaas-kafka
+  - description: Databases as a Service (DBaaS) provides scalable and fully-managed database solutions with high availability and performance backed by Exoscale's Compute and Storage services.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/dbaas/
+    name: dbaas-general
+  - description: Anti-affinity groups let you define placement constraints for your Compute instances.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/compute/instances/how-to/anti-affinity/
+    name: anti-affinity-group
+  - description: External integrations allow you to connect your Exoscale DBaaS services with third-party monitoring, logging, or analytics tools.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/dbaas/how-to/external-integrations/
+    name: dbaas-external-endpoints
   - description: |-
       An Instance Type is a resource describing the amount of
-                         CPU, RAM and eventually GPUs your Compute instance will run on.
+                         CPU, RAM and GPUs allocated to a Compute instance.
     externalDocs:
       description: Read more
       url: https://www.exoscale.com/pricing/
-    name: instance-types
+    name: instance-type
+  - description: |-
+      Templates contain the OS and the initial setup of a
+                         Compute instance.
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/templates/
+    name: template
   - description: |-
       A Network Load Balancer (NLB) is a Layer 4 (TCP/UDP)
                          load balancer that distributes incoming traffic to Compute
@@ -37,6 +79,16 @@ tags:
       description: Read more
       url: https://community.exoscale.com/documentation/compute/network-load-balancer/
     name: network-load-balancer
+  - description: Valkey, the open-source key-value store with a Redis®-compatible interface.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/dbaas/service-specific/valkey/
+    name: dbaas-valkey
+  - description: SSH Keypairs
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/compute/ssh-keypairs/
+    name: ssh-key
   - description: |-
       Instance Pools is an Exoscale service allowing users
                          to provision managed groups of identical Compute
@@ -44,7 +96,31 @@ tags:
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/documentation/compute/instance-pools/
-    name: instance-pools
+    name: instance-pool
+  - description: PostgreSQL, open-source database known for its wide range of features and popularity with developers.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/dbaas/service-specific/postgresql/
+    name: dbaas-postgresql
+  - description: Exoscale Simple Object Storage (SOS) is an S3-compatible object storage service.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/storage/object-storage/
+    name: sos
+  - description: |-
+      Snapshots provide a way to get point-in-time recovery
+                         for your Compute instance.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/compute/snapshots/
+    name: snapshot
+  - description: |-
+      Security Groups are groups of firewall rules that regulate
+                         network traffic to and from your Compute instances.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/compute/security-groups/
+    name: security-group
   - description: |-
       Events form the basis of the Exoscale audit-trail, a mechanism
                          to query past events performing mutations on resources
@@ -54,26 +130,17 @@ tags:
       url: https://www.exoscale.com/support/
     name: event
   - description: |-
-      Instances are the virtual machines at the core of the Exoscale
-                         Compute service.
-    externalDocs:
-      description: Read more
-      url: https://www.exoscale.com/compute/
-    name: instances
-  - description: |-
       Exoscale's Block Storage offers persistent externally
-                         attached volumes for your workloads.
+                         attached volumes for your Compute instances.
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/documentation/block-storage/
     name: block-storage
-  - description: |-
-      Snapshots provide a way to get point-in-time recovery
-                         for your Compute instance.
+  - description: Deploy Target lets you spin up Compute instances on dedicated hypervisors.
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/snapshots/
-    name: snapshots
+      url: https://www.exoscale.com/virtual-private-cloud/
+    name: deploy-target
   - description: |-
       A Zone represents an independent datacenter in which Exoscale
                          infrastructure is deployed into.
@@ -81,11 +148,11 @@ tags:
       description: Read more
       url: https://www.exoscale.com/datacenters/
     name: zones
-  - description: SSH Keypairs
+  - description: DNS zone hosting and records management.
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/ssh-keypairs/
-    name: ssh-keypair
+      url: https://community.exoscale.com/product/networking/dns/
+    name: dns
   - description: |-
       Operations describe the current state of an asynchronous
                          operation.
@@ -93,13 +160,31 @@ tags:
       description: Read more
       url: https://community.exoscale.com/
     name: operations
-  - description: |-
-      Templates contain the OS and the initial setup of a
-                         Compute instance.
+  - description: Grafana, the open-source software that lets you query and visualize metrics, logs and traces from any storage source.
     externalDocs:
       description: Read more
-      url: https://www.exoscale.com/templates/
-    name: templates
+      url: https://community.exoscale.com/product/dbaas/service-specific/grafana/
+    name: dbaas-grafana
+  - description: 'Identity and Access Management: roles, users, policies and credentials for accessing the Exoscale API.'
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/iam/
+    name: iam
+  - description: Private Network provides private L2 networking functionality between Compute instances.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/networking/private-network/
+    name: private-network
+  - description: Dedicated Inference lets you run Large Language Models (LLMs) on Exoscale GPU infrastructure.
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/gpu/
+    name: dedicated-inference
+  - description: Opensearch, the popular open-source search and analytics database.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/dbaas/service-specific/opensearch/
+    name: dbaas-opensearch
   - description: |-
       SKS is Exoscale's scalable Kubernetes service which provides
                          managed Kubernetes control planes with integrated support for
@@ -203,7 +288,14 @@ components:
       maxLength: 2000
       minLength: 1
     get-deployment-logs-response:
-      type: string
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/get-deployment-logs-entry'
+          description: List of log entries
+      description: Deployment logs
     json-schema-schema-registry:
       additionalProperties: false
       properties:
@@ -431,6 +523,19 @@ components:
         - private
         - public
         - privatelink
+    get-deployment-logs-entry:
+      type: object
+      properties:
+        time:
+          type: string
+          description: Timestamp of the log entry
+        message:
+          type: string
+          description: Log message content
+        node:
+          type: string
+          description: Node identifier
+      description: A single log entry
     sks-audit-bearer-token:
       type: string
       maxLength: 2000
@@ -4665,6 +4770,9 @@ components:
           type: string
           minLength: 1
           description: Deployment name
+        status-details:
+          type: string
+          description: Deployment status details
         gpu-type:
           type: string
           minLength: 1
@@ -19071,8 +19179,6 @@ x-topics:
   - title: Zone local resources
     content: |2
 
-      The API is deployed across multiple zones: `ch-gva-2`, `ch-dk-2`, `de-fra-1`, `de-muc-1`, `at-vie-1`, `at-vie-2`, `bg-sof-1`. When performing a compute call, you should use the relevant zone for your resource.
+      The API is deployed across all Exoscale zones. When performing a compute call, you should use the relevant zone for your resource.
       For example: https://api-de-fra-1.exoscale.com/v2/instance would return only the instances from `de-fra-1`, https://api-ch-gva-2.exoscale.com/v2/instance from `ch-gva-2`.
-      To obtain a list of all instances across all zones, you would need to do the corresponding request per zone.
-
-      Note that if no zone is specified during the call `ch-gva-2` will be used by default.
+      To obtain a list of all instances across all zones, you would need to do the corresponding request for each zone.

@@ -15,7 +15,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Install yq
       run: |
@@ -31,11 +31,12 @@ jobs:
 
     - name: Create PR
       if: steps.check_changes.outputs.changes_detected
-      uses: peter-evans/create-pull-request@v6
+      uses: peter-evans/create-pull-request@v8
       with:
         title: "v3: regenerate from new API spec"
         body: "New changes have appeared in the API spec and egoscale v3 has been regenerated."
         branch: generate-v3
         delete-branch: true
         base: master
-        author: Exoscale <operation+build@exoscale.net>
+        author: "Exoscale <operation+build@exoscale.net>"
+        committer: "Exoscale <operation+build@exoscale.net>"

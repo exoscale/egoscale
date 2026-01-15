@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write
 
     steps:
     - name: Checkout code
@@ -30,6 +31,7 @@ jobs:
         git diff --quiet || echo "changes_detected=true" >> $GITHUB_OUTPUT
 
     - name: Create PR
+      id: create_pr
       if: steps.check_changes.outputs.changes_detected
       uses: peter-evans/create-pull-request@v8
       with:
@@ -40,3 +42,11 @@ jobs:
         base: master
         author: "Exoscale <operation+build@exoscale.net>"
         committer: "Exoscale <operation+build@exoscale.net>"
+    - name: Start CI on newly created PR
+      if: steps.check_changes.outputs.changes_detected && steps.create_pr.outputs.pull-request-number
+      run: |
+        gh workflow run build-public-tooling.yaml --ref generate-v3
+        gh workflow run main.yml --ref generate-v3
+        gh workflow run govulncheck.yml --ref generate-v3
+      env:
+        GH_TOKEN: ${{ github.token }}

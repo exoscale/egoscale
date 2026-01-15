@@ -7,13 +7,7 @@ info:
     name: Exoscale Support
     url: https://portal.exoscale.com/tickets
   title: Exoscale API
-  description: |2-
-
-    Infrastructure automation API, allowing programmatic access to all Exoscale products and services.
-
-    The [OpenAPI Specification](http://spec.openapis.org/oas/v3.0.3.html) source of this documentation can be obtained here:
-
-    * [JSON format](https://api-ch-gva-2.exoscale.com/v2/openapi.json)
+  description: Infrastructure automation API, allowing programmatic access to all Exoscale products and services.
 tags:
   - description: MySQL, the popular open-source, object-relational database.
     externalDocs:
@@ -42,16 +36,35 @@ tags:
       description: Read more
       url: https://community.exoscale.com/product/dbaas/service-specific/kafka/
     name: dbaas-kafka
+  - description: |-
+      A Zone represents an independent datacenter in which Exoscale
+                         infrastructure is deployed into.
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/datacenters/
+    name: zone
   - description: Databases as a Service (DBaaS) provides scalable and fully-managed database solutions with high availability and performance backed by Exoscale's Compute and Storage services.
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/dbaas/
-    name: dbaas-general
+    name: dbaas
   - description: Anti-affinity groups let you define placement constraints for your Compute instances.
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/compute/instances/how-to/anti-affinity/
     name: anti-affinity-group
+  - description: |-
+      Operations describe the current state of an asynchronous
+                         operation.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/
+    name: operation
+  - description: Host anything from simple applications to complex architectures. Start a compute instance in seconds and scale as your infrastructure grows.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/compute/
+    name: compute
   - description: External integrations allow you to connect your Exoscale DBaaS services with third-party monitoring, logging, or analytics tools.
     externalDocs:
       description: Read more
@@ -64,6 +77,11 @@ tags:
       description: Read more
       url: https://www.exoscale.com/pricing/
     name: instance-type
+  - description: Thanos is a large-scale metrics management system.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/dbaas/service-specific/thanos/
+    name: dbaas-thanos
   - description: |-
       Templates contain the OS and the initial setup of a
                          Compute instance.
@@ -141,25 +159,16 @@ tags:
       description: Read more
       url: https://www.exoscale.com/virtual-private-cloud/
     name: deploy-target
-  - description: |-
-      A Zone represents an independent datacenter in which Exoscale
-                         infrastructure is deployed into.
+  - description: 'Operational management for DBaaS services: logs, metrics, service types and lifecycle.'
     externalDocs:
       description: Read more
-      url: https://www.exoscale.com/datacenters/
-    name: zones
+      url: https://community.exoscale.com/product/dbaas/
+    name: dbaas-management
   - description: DNS zone hosting and records management.
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/networking/dns/
     name: dns
-  - description: |-
-      Operations describe the current state of an asynchronous
-                         operation.
-    externalDocs:
-      description: Read more
-      url: https://community.exoscale.com/
-    name: operations
   - description: Grafana, the open-source software that lets you query and visualize metrics, logs and traces from any storage source.
     externalDocs:
       description: Read more
@@ -6354,6 +6363,11 @@ components:
           x-go-type: Endpoint
           description: Zone SOS endpoint
       description: Zone
+    dbaas-mysql-user-password:
+      type: string
+      maxLength: 256
+      minLength: 8
+      pattern: ^[a-zA-Z0-9!#%^*_+={}()<>|.,;~?-]+$
     dbaas-opensearch-acl-config:
       type: object
       properties:
@@ -9251,7 +9265,7 @@ paths:
               type: object
               properties:
                 password:
-                  $ref: '#/components/schemas/dbaas-user-password'
+                  $ref: '#/components/schemas/dbaas-mysql-user-password'
                   description: New password
                 authentication:
                   $ref: '#/components/schemas/enum-mysql-authentication-plugin'
@@ -9729,10 +9743,7 @@ paths:
                   minLength: 1
                   description: Subscription plan
                 admin-password:
-                  type: string
-                  maxLength: 256
-                  minLength: 8
-                  pattern: ^[a-zA-Z0-9-_]+$
+                  $ref: '#/components/schemas/dbaas-mysql-user-password'
                   description: Custom password for admin user. Defaults to random string. This must be set only when a new service is being created.
                 migration:
                   type: object

@@ -741,6 +741,8 @@ type DBAASMigrationStatus struct {
 
 type DBAASMysqlDatabaseName string
 
+type DBAASMysqlUserPassword string
+
 type DBAASNodeStateRole string
 
 const (

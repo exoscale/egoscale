@@ -42,14 +42,11 @@ jobs:
         base: master
         author: "Exoscale <operation+build@exoscale.net>"
         committer: "Exoscale <operation+build@exoscale.net>"
-    
-    - name: Trigger CI checks on PR
+    - name: Start CI on newly created PR
       if: steps.check_changes.outputs.changes_detected && steps.create_pr.outputs.pull-request-number
       run: |
-        git config user.name "Exoscale"
-        git config user.email "operation+build@exoscale.net"
-        git checkout generate-v3
-        git commit --allow-empty -m "Trigger CI checks"
-        git push origin generate-v3
+        gh workflow run build-public-tooling.yaml --ref generate-v3
+        gh workflow run main.yml --ref generate-v3
+        gh workflow run govulncheck.yml --ref generate-v3
       env:
         GH_TOKEN: ${{ github.token }}

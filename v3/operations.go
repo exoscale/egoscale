@@ -258,8 +258,16 @@ func (c Client) RevealDeploymentAPIKey(ctx context.Context, id UUID) (*RevealDep
 	return bodyresp, nil
 }
 
+type GetDeploymentLogsOpt func(url.Values)
+
+func GetDeploymentLogsWithTail(tail int64) GetDeploymentLogsOpt {
+	return func(q url.Values) {
+		q.Add("tail", fmt.Sprint(tail))
+	}
+}
+
 // Return logs for the vLLM deployment (deploy/<release-name>--deployment-vllm). Optional ?stream=true to request streaming (may not be supported).
-func (c Client) GetDeploymentLogs(ctx context.Context, id UUID) (*GetDeploymentLogsResponse, error) {
+func (c Client) GetDeploymentLogs(ctx context.Context, id UUID, opts ...GetDeploymentLogsOpt) (*GetDeploymentLogsResponse, error) {
 	path := fmt.Sprintf("/ai/deployment/%v/logs", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
@@ -268,6 +276,14 @@ func (c Client) GetDeploymentLogs(ctx context.Context, id UUID) (*GetDeploymentL
 	}
 
 	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if len(opts) > 0 {
+		q := request.URL.Query()
+		for _, opt := range opts {
+			opt(q)
+		}
+		request.URL.RawQuery = q.Encode()
+	}
 
 	if err := c.executeRequestInterceptors(ctx, request); err != nil {
 		return nil, fmt.Errorf("GetDeploymentLogs: execute request editors: %w", err)
@@ -4928,8 +4944,7 @@ type CreateDBAASServiceMysqlRequestMigration struct {
 }
 
 type CreateDBAASServiceMysqlRequest struct {
-	// Custom password for admin user. Defaults to random string. This must be set only when a new service is being created.
-	AdminPassword string `json:"admin-password,omitempty" validate:"omitempty,gte=8,lte=256"`
+	AdminPassword DBAASMysqlUserPassword `json:"admin-password,omitempty" validate:"omitempty,gte=8,lte=256"`
 	// Custom username for admin user. This must be set only when a new service is being created.
 	AdminUsername  string                                        `json:"admin-username,omitempty" validate:"omitempty,gte=1,lte=64"`
 	BackupSchedule *CreateDBAASServiceMysqlRequestBackupSchedule `json:"backup-schedule,omitempty"`
@@ -5449,7 +5464,7 @@ func (c Client) DeleteDBAASMysqlUser(ctx context.Context, serviceName string, us
 
 type ResetDBAASMysqlUserPasswordRequest struct {
 	Authentication EnumMysqlAuthenticationPlugin `json:"authentication,omitempty"`
-	Password       DBAASUserPassword             `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
+	Password       DBAASMysqlUserPassword        `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
 }
 
 // If no password is provided one will be generated automatically.
@@ -11512,7 +11527,7 @@ func (c Client) EvictInstancePoolMembers(ctx context.Context, id UUID, req Evict
 
 type ScaleInstancePoolRequest struct {
 	// Number of managed Instances
-	Size int64 `json:"size" validate:"required,gt=0"`
+	Size int64 `json:"size" validate:"required,gte=0"`
 }
 
 // Scale an Instance Pool

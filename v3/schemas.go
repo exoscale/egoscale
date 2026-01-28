@@ -741,6 +741,8 @@ type DBAASMigrationStatus struct {
 
 type DBAASMysqlDatabaseName string
 
+type DBAASMysqlUserPassword string
+
 type DBAASNodeStateRole string
 
 const (
@@ -2286,6 +2288,12 @@ type GetModelResponse struct {
 	Status GetModelResponseStatus `json:"status,omitempty"`
 	// Update time
 	UpdatedAT time.Time `json:"updated-at,omitempty"`
+}
+
+// GPU usage for an organization
+type GetOrganizationUsageResponse struct {
+	// Total GPU count
+	Gpu int64 `json:"gpu,omitempty" validate:"omitempty,gte=0"`
 }
 
 // IAM API Key

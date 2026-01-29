@@ -155,3 +155,27 @@ The generator support two types of extension:
 		return ElasticIP{}, fmt.Errorf("%q not found in ListElasticIPSResponse: %w", idOrIP, ErrNotFound)
 	}
 	```
+
+## Generator Overrides System
+
+The Egoscale v3 generator incorporates an overrides system to preserve backwards compatibility in the Go API when the OpenAPI specification changes, such as renaming schemas or references. This prevents breaking existing code that relies on specific type names, field names, or JSON tags.
+
+The system consists of several components working together during code generation.
+
+### Reference overrides
+
+Defined in `generator/helpers/helpers.go`: they intercept OpenAPI `$ref` paths and redirect them to custom Go type names, bypassing the default camel-case conversion. For example, a schema referencing `"#/components/schemas/ssh-key-ref"` will generate code using the type `SSHKey` instead of `SSHKeyRef`.
+
+### Property overrides
+
+Also in `generator/helpers/helpers.go`: they adjust property names within schemas to maintain historical field names and JSON tags in the generated Go structs. This ensures that changes to property names in the OpenAPI spec do not alter the API surface. For instance, a property named `"block-storage-volume-ref"` can be overridden to generate a field named `BlockStorageVolume` with a JSON tag `"block-storage-volume"`.
+
+### Backwards compatibility aliases
+
+Configured in `generator/schemas/schemas.go`: they map updated schema names back to their original names, producing `type Old = New` declarations in the output. This allows legacy type names to remain valid even after spec updates. An alias like `"ssh-key": "ssh-key-ref"` generates `type SSHKey = SSHKeyRef`, letting code continue using `SSHKey` while the spec defines `ssh-key-ref`.
+
+For cases requiring manual intervention, special aliases are hardcoded in the `Generate` function of `generator/schemas/schemas.go`. These add specific type equivalences, such as `type InstanceTarget = Instance` or `type BlockStorageSnapshotTarget = BlockStorageSnapshot`, to support operations needing distinct field names.
+
+During generation, the system applies these overrides sequentially: first resolving references, then adjusting properties for struct fields, and finally appending aliases. To modify overrides, edit the relevant files and regenerate with `make generate`, followed by `go build ./...` to verify. Debugging output can be obtained using `GENERATOR_DEBUG=schemas make generate`.
+
+This approach enables the SDK to track OpenAPI spec evolution without disrupting user-facing APIs.

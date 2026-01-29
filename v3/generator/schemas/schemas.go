@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/exoscale/egoscale/v3/generator/helpers"
@@ -19,6 +20,21 @@ import (
 // TODO fix the OpenApi spec (duplicated resources)
 var ignoredList = map[string]struct{}{
 	"snapshot-export": {},
+}
+
+// backwardsCompatibilityAliases maps new schema names (as in OpenAPI spec) to old ones for backwards compatibility
+var backwardsCompatibilityAliases = map[string]string{
+	"block-storage-volume-ref":   "block-storage-volume",
+	"block-storage-snapshot-ref": "block-storage-snapshot",
+	"anti-affinity-group-ref":    "anti-affinity-group",
+	"security-group-ref":         "security-group",
+	"template-ref":               "template",
+	"elastic-ip-ref":             "elastic-ip",
+	"ssh-key-ref":                "ssh-key",
+	"deploy-target-ref":          "deploy-target",
+	"instance-type-ref":          "instance-type",
+	"sks-cluster-ref":            "sks-cluster",
+	"instance-ref":               "instance",
 }
 
 // Generate go models from OpenAPI spec schemas into a go file.
@@ -51,11 +67,45 @@ import (
 			continue
 		}
 
+		// Skip generating new schemas that are aliased to old ones for backwards compatibility
+		isAliasedNew := false
+		for _, new := range backwardsCompatibilityAliases {
+			if new == schemaName {
+				isAliasedNew = true
+				break
+			}
+		}
+		if isAliasedNew {
+			continue
+		}
+
 		r, err := RenderSchema(schemaName, v)
 		if err != nil {
 			return err
 		}
 		output.Write(r)
+		output.WriteString("\n")
+	}
+
+	// Add backwards compatibility type aliases
+	if len(backwardsCompatibilityAliases) > 0 {
+		output.WriteString("\n// Backwards compatibility type aliases\n")
+		// Sort keys for consistent output
+		keys := make([]string, 0, len(backwardsCompatibilityAliases))
+		for k := range backwardsCompatibilityAliases {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, new := range keys {
+			old := backwardsCompatibilityAliases[new]
+			oldCamel := helpers.ToCamel(old)
+			newCamel := helpers.ToCamel(new)
+			output.WriteString(fmt.Sprintf("type %s = %s\n", oldCamel, newCamel))
+		}
+		output.WriteString("\n")
+		output.WriteString("type InstanceTarget = Instance\n")
+		output.WriteString("type BlockStorageSnapshotTarget = BlockStorageSnapshot\n")
 		output.WriteString("\n")
 	}
 
@@ -333,6 +383,10 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		prop := properties.Schema()
 		if prop == nil {
 			continue
+		}
+
+		if override, ok := helpers.PropertyOverrides[propName]; ok {
+			propName = override
 		}
 
 		InferType(prop)

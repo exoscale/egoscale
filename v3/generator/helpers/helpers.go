@@ -17,8 +17,33 @@ func ConfigureAcronym(key, val string) {
 	uppercaseAcronym.Store(key, val)
 }
 
+var referenceOverrides = map[string]string{
+	"#/components/schemas/ssh-key-ref":                "SSHKey",
+	"#/components/schemas/instance-ref":               "InstanceTarget",
+	"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolume",
+	"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+	"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+	"#/components/schemas/security-group-ref":         "SecurityGroup",
+	"#/components/schemas/template-ref":               "Template",
+	"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+	"#/components/schemas/deploy-target-ref":          "DeployTarget",
+	"#/components/schemas/instance-type-ref":          "InstanceType",
+	"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+}
+
+var PropertyOverrides = map[string]string{
+	"block-storage-volume-ref": "block-storage-volume",
+	"elastic-ip-ref":           "elastic-ip",
+	"instance-ref":             "instance",
+	"instance-target":          "instance",
+	"block-storage-snapshot":   "block-storage-snapshot-target",
+}
+
 // RenderReference renders OpenAPI reference from path to go style.
 func RenderReference(referencePath string) string {
+	if override, ok := referenceOverrides[referencePath]; ok {
+		return override
+	}
 	return ToCamel(filepath.Base(referencePath))
 }
 

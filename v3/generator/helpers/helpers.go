@@ -66,6 +66,12 @@ var SchemaPropertyOverrides = map[string]map[string]string{
 	},
 }
 
+var SpecialAliases = []string{
+	"type InstanceTarget = InstanceRef",
+	"type BlockStorageSnapshotTarget = BlockStorageSnapshotRef",
+	"type BlockStorageVolumeTarget = BlockStorageVolumeRef",
+}
+
 // RenderReference renders OpenAPI reference from path to go style.
 func RenderReference(referencePath string, schemaName string) string {
 	if _, isLegacy := legacySchemas[schemaName]; isLegacy {

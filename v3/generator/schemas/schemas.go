@@ -76,9 +76,9 @@ import (
 
 	// Special backwards compatibility aliases
 	output.WriteString("\n")
-	output.WriteString("type InstanceTarget = InstanceRef\n")
-	output.WriteString("type BlockStorageSnapshotTarget = BlockStorageSnapshotRef\n")
-	output.WriteString("type BlockStorageVolumeTarget = BlockStorageVolumeRef\n")
+	for _, alias := range helpers.SpecialAliases {
+		output.WriteString(alias + "\n")
+	}
 	output.WriteString("\n")
 
 	if os.Getenv("GENERATOR_DEBUG") == "schemas" {

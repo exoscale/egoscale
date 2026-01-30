@@ -20,7 +20,7 @@ func ConfigureAcronym(key, val string) {
 var referenceOverrides = map[string]string{
 	"#/components/schemas/ssh-key-ref":                "SSHKey",
 	"#/components/schemas/instance-ref":               "InstanceTarget",
-	"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolume",
+	"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
 	"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
 	"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
 	"#/components/schemas/security-group-ref":         "SecurityGroup",
@@ -39,10 +39,39 @@ var PropertyOverrides = map[string]string{
 	"block-storage-snapshot":   "block-storage-snapshot-target",
 }
 
+var legacySchemas = map[string]bool{
+	"CreateInstance":                            true,
+	"ScaleInstance":                             true,
+	"ResetInstance":                             true,
+	"AttachInstanceToElasticIPRequest":          true,
+	"DetachInstanceFromElasticIPRequest":        true,
+	"CreateBlockStorageVolumeRequest":           true,
+	"AttachBlockStorageVolumeToInstanceRequest": true,
+	"CreateInstanceRequest":                     true,
+	"ResetInstanceRequest":                      true,
+	"ScaleInstanceRequest":                      true,
+	"BlockStorageSnapshot":                      true,
+	"BlockStorageVolume":                        true,
+}
+
+var SchemaPropertyOverrides = map[string]map[string]string{
+	"AttachInstanceToElasticIPRequest": {
+		"instance-target": "instance",
+	},
+	"DetachInstanceFromElasticIPRequest": {
+		"instance-target": "instance",
+	},
+	"AttachBlockStorageVolumeToInstanceRequest": {
+		"block-storage-volume-ref": "block-storage-volume",
+	},
+}
+
 // RenderReference renders OpenAPI reference from path to go style.
-func RenderReference(referencePath string) string {
-	if override, ok := referenceOverrides[referencePath]; ok {
-		return override
+func RenderReference(referencePath string, schemaName string) string {
+	if _, isLegacy := legacySchemas[schemaName]; isLegacy {
+		if override, ok := referenceOverrides[referencePath]; ok {
+			return override
+		}
 	}
 	return ToCamel(filepath.Base(referencePath))
 }

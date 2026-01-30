@@ -361,7 +361,7 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 
 		typeName := funcName + "Response" + helpers.ToCamel(propName)
 		if prop.Items.A.IsReference() {
-			typeName = helpers.RenderReference(prop.Items.A.GetReference())
+			typeName = helpers.RenderReference(prop.Items.A.GetReference(), "")
 		}
 
 		if item.Properties == nil {
@@ -567,7 +567,7 @@ func getParameters(op *v3.Operation, funcName string) (params []string) {
 		return params
 	}
 	if media.Schema.IsReference() {
-		params = append(params, "req "+helpers.RenderReference(media.Schema.GetReference()))
+		params = append(params, "req "+helpers.RenderReference(media.Schema.GetReference(), ""))
 		return params
 	}
 
@@ -599,7 +599,7 @@ func getValuesReturn(op *v3.Operation, funcName string) (values []string) {
 			continue
 		}
 		if media.Schema.IsReference() {
-			values = append(values, "*"+helpers.RenderReference(media.Schema.GetReference()))
+			values = append(values, "*"+helpers.RenderReference(media.Schema.GetReference(), ""))
 			return values
 		}
 
@@ -688,7 +688,7 @@ func isArrayReference(sp *base.SchemaProxy) (string, bool) {
 
 		isReference := s.Items.A.IsReference()
 		if isReference {
-			return "[]" + helpers.RenderReference(s.Items.A.GetReference()), true
+			return "[]" + helpers.RenderReference(s.Items.A.GetReference(), ""), true
 		}
 	}
 

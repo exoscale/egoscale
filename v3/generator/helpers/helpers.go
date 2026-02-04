@@ -112,6 +112,18 @@ var SchemaPropertyOverrides = map[string]*Overrides{
 			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
 		},
 	},
+	"CreateDBAASServiceMysqlRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/dbaas-mysql-user-password": "string",
+		},
+	},
+	"ResetDBAASMysqlUserPasswordRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/dbaas-mysql-user-password": "DBAASUserPassword",
+		},
+	},
 }
 
 var SpecialAliases = []string{

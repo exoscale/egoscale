@@ -7,128 +7,261 @@ info:
     name: Exoscale Support
     url: https://portal.exoscale.com/tickets
   title: Exoscale API
-  description: |2-
-
-    Infrastructure automation API, allowing programmatic access to all Exoscale products and services.
-
-    The [OpenAPI Specification](http://spec.openapis.org/oas/v3.0.3.html) source of this documentation can be obtained here:
-
-    * [JSON format](https://api-ch-gva-2.exoscale.com/v2/openapi.json)
+  description: Infrastructure automation API, allowing programmatic access to all Exoscale products and services.
 tags:
+  - description: IAM roles lets you define logical sets of policies to grant to users and API keys.
+    parent: iam
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/iam/operation/role-mgmt/
+    name: role
+    x-display-name: Role
+    x-weight: 820
+    x-icon: exo-iam
   - description: MySQL, the popular open-source, object-relational database.
+    parent: dbaas
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/dbaas/service-specific/mysql/
     name: dbaas-mysql
+    x-display-name: DBaaS Mysql
+    x-weight: 420
+    x-icon: exo-db-mysql
   - description: Elastic IPs are additional public IPv4/6 addresses that can be attached to Compute instances, with optional healthcheck support.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/networking/eip/
     name: elastic-ip
+    x-display-name: Elastic IP
+    x-weight: 170
+    x-icon: exo-eip
   - description: Reverse DNS lets you record PTR records for Compute instance public IP addresses or Elastic IPs.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/compute/instances/
     name: reverse-dns
+    x-display-name: Reverse DNS
+    x-weight: 210
+    x-icon: exo-dns
+  - description: Clusters are managed Kubernetes control planes.
+    parent: sks
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/sks/
+    name: cluster
+    x-display-name: Cluster
+    x-weight: 310
+    x-icon: exo-sks
   - description: |-
       Instances are the virtual machines at the core of the Exoscale
                          Compute service.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://www.exoscale.com/compute/
     name: instance
+    x-display-name: Instance
+    x-weight: 110
+    x-icon: exo-vm
   - description: Kafka is a distributed, open-source data platform for optimized real-time processing of streaming data.
+    parent: dbaas
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/dbaas/service-specific/kafka/
     name: dbaas-kafka
+    x-display-name: DBaaS Kafka
+    x-weight: 440
+    x-icon: exo-db-kafka
+  - description: |-
+      A Zone represents an independent datacenter in which Exoscale
+                         infrastructure is deployed into.
+    parent: general
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/datacenters/
+    name: zone
+    x-display-name: Zone
+    x-weight: 1110
+    x-icon: exo-network
   - description: Databases as a Service (DBaaS) provides scalable and fully-managed database solutions with high availability and performance backed by Exoscale's Compute and Storage services.
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/dbaas/
-    name: dbaas-general
+    name: dbaas
+    x-display-name: DBaaS
+    x-weight: 400
+    x-icon: exo-dbaas
+  - description: Exoscale AI services provide GPU-powered infrastructure for running machine learning workloads and large language models.
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/ai-cloud-infrastructure/
+    name: ai
+    x-display-name: AI
+    x-weight: 900
+    x-icon: exo-ai-prod
   - description: Anti-affinity groups let you define placement constraints for your Compute instances.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/compute/instances/how-to/anti-affinity/
     name: anti-affinity-group
+    x-display-name: Anti-Affinity Group
+    x-weight: 220
+    x-icon: exo-gpu
+  - description: |-
+      Operations describe the current state of an asynchronous
+                         operation.
+    parent: general
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/
+    name: operation
+    x-display-name: Operation
+    x-weight: 1100
+    x-icon: exo-logo
+  - description: Host anything from simple applications to complex architectures. Start a compute instance in seconds and scale as your infrastructure grows.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/compute/
+    name: compute
+    x-display-name: Compute
+    x-weight: 100
+    x-icon: exo-vm
   - description: External integrations allow you to connect your Exoscale DBaaS services with third-party monitoring, logging, or analytics tools.
+    parent: dbaas
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/dbaas/how-to/external-integrations/
     name: dbaas-external-endpoints
+    x-display-name: DBaaS External Endpoints
+    x-weight: 490
+    x-icon: exo-dbaas
   - description: |-
       An Instance Type is a resource describing the amount of
                          CPU, RAM and GPUs allocated to a Compute instance.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://www.exoscale.com/pricing/
     name: instance-type
+    x-display-name: Instance Type
+    x-weight: 200
+    x-icon: exo-gpu
+  - description: Thanos is a large-scale metrics management system.
+    parent: dbaas
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/dbaas/service-specific/thanos/
+    name: dbaas-thanos
+    x-display-name: DBaaS Thanos
+    x-weight: 470
+    x-icon: exo-db-thanos
   - description: |-
       Templates contain the OS and the initial setup of a
                          Compute instance.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://www.exoscale.com/templates/
     name: template
+    x-display-name: Template
+    x-weight: 140
+    x-icon: exo-template
   - description: |-
       A Network Load Balancer (NLB) is a Layer 4 (TCP/UDP)
                          load balancer that distributes incoming traffic to Compute
                          instances managed by an Instance Pool.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/documentation/compute/network-load-balancer/
     name: network-load-balancer
+    x-display-name: Network Load Balancer
+    x-weight: 180
+    x-icon: exo-nlb
   - description: Valkey, the open-source key-value store with a Redis®-compatible interface.
+    parent: dbaas
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/dbaas/service-specific/valkey/
     name: dbaas-valkey
+    x-display-name: DBaaS Valkey
+    x-weight: 460
+    x-icon: exo-db-valkey
   - description: SSH Keypairs
+    parent: compute
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/documentation/compute/ssh-keypairs/
     name: ssh-key
+    x-display-name: SSH Key
+    x-weight: 160
+    x-icon: exo-cli
   - description: |-
       Instance Pools is an Exoscale service allowing users
                          to provision managed groups of identical Compute
                          instances automatically.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/documentation/compute/instance-pools/
     name: instance-pool
+    x-display-name: Instance Pool
+    x-weight: 120
+    x-icon: exo-vmpool
   - description: PostgreSQL, open-source database known for its wide range of features and popularity with developers.
+    parent: dbaas
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/dbaas/service-specific/postgresql/
     name: dbaas-postgresql
+    x-display-name: DBaaS Postgresql
+    x-weight: 410
+    x-icon: exo-db-postgresql
   - description: Exoscale Simple Object Storage (SOS) is an S3-compatible object storage service.
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/storage/object-storage/
     name: sos
+    x-display-name: Object Storage
+    x-weight: 500
+    x-icon: exo-object-storage
   - description: |-
       Snapshots provide a way to get point-in-time recovery
                          for your Compute instance.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/documentation/compute/snapshots/
     name: snapshot
+    x-display-name: Snapshot
+    x-weight: 130
+    x-icon: exo-snapshot
   - description: |-
       Security Groups are groups of firewall rules that regulate
                          network traffic to and from your Compute instances.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/documentation/compute/security-groups/
     name: security-group
+    x-display-name: Security Group
+    x-weight: 150
+    x-icon: exo-vpc
   - description: |-
       Events form the basis of the Exoscale audit-trail, a mechanism
                          to query past events performing mutations on resources
                          which happened on an organization.
+    parent: audit-trail
     externalDocs:
       description: Read more
-      url: https://www.exoscale.com/support/
+      url: https://community.exoscale.com/platform/audit-trail/
     name: event
+    x-display-name: Event
+    x-weight: 1010
+    x-icon: exo-license
   - description: |-
       Exoscale's Block Storage offers persistent externally
                          attached volumes for your Compute instances.
@@ -136,55 +269,141 @@ tags:
       description: Read more
       url: https://community.exoscale.com/documentation/block-storage/
     name: block-storage
+    x-display-name: Block Storage
+    x-weight: 600
+    x-icon: exo-block-storage
   - description: Deploy Target lets you spin up Compute instances on dedicated hypervisors.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://www.exoscale.com/virtual-private-cloud/
     name: deploy-target
-  - description: |-
-      A Zone represents an independent datacenter in which Exoscale
-                         infrastructure is deployed into.
+    x-display-name: Deploy Target
+    x-weight: 230
+    x-icon: exo-gpu
+  - description: 'Operational management for DBaaS services: logs, metrics, service types and lifecycle.'
+    parent: dbaas
     externalDocs:
       description: Read more
-      url: https://www.exoscale.com/datacenters/
-    name: zones
+      url: https://community.exoscale.com/product/dbaas/
+    name: dbaas-management
+    x-display-name: DBaaS Management
+    x-weight: 480
+    x-icon: exo-dbaas
+  - description: DNS zone records management.
+    parent: dns
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/networking/dns/overview/
+    name: record
+    x-display-name: Record
+    x-weight: 720
+    x-icon: exo-dns
   - description: DNS zone hosting and records management.
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/networking/dns/
     name: dns
-  - description: |-
-      Operations describe the current state of an asynchronous
-                         operation.
+    x-display-name: DNS
+    x-weight: 700
+    x-icon: exo-dns
+  - description: Deployments are loaded model instances ready for inference.
+    parent: dedicated-inference
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/
-    name: operations
+      url: https://www.exoscale.com/ai-cloud-infrastructure/dedicated-inference/
+    name: deployment
+    x-display-name: Deployment
+    x-weight: 930
+    x-icon: exo-gpu
+  - description: The Exoscale audit-trail provides a mechanism to query past events performing mutations on resources which happened on an organization.
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/platform/audit-trail/
+    name: audit-trail
+    x-display-name: Audit Trail
+    x-weight: 1000
+    x-icon: exo-license
+  - description: Nodepools are groups of compute instances managed by SKS, serving as worker nodes in your Kubernetes cluster.
+    parent: sks
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/sks/
+    name: nodepool
+    x-display-name: Nodepool
+    x-weight: 320
+    x-icon: exo-vmpool
   - description: Grafana, the open-source software that lets you query and visualize metrics, logs and traces from any storage source.
+    parent: dbaas
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/dbaas/service-specific/grafana/
     name: dbaas-grafana
+    x-display-name: DBaaS Grafana
+    x-weight: 430
+    x-icon: exo-db-grafana
   - description: 'Identity and Access Management: roles, users, policies and credentials for accessing the Exoscale API.'
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/iam/
     name: iam
+    x-display-name: IAM
+    x-weight: 800
+    x-icon: exo-iam
+  - description: DNS zone management.
+    parent: dns
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/networking/dns/quick-start/
+    name: domain
+    x-display-name: Domain
+    x-weight: 710
+    x-icon: exo-dns
   - description: Private Network provides private L2 networking functionality between Compute instances.
+    parent: compute
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/networking/private-network/
     name: private-network
+    x-display-name: Private Network
+    x-weight: 190
+    x-icon: exo-network
   - description: Dedicated Inference lets you run Large Language Models (LLMs) on Exoscale GPU infrastructure.
+    parent: ai
     externalDocs:
       description: Read more
-      url: https://www.exoscale.com/gpu/
+      url: https://www.exoscale.com/ai-cloud-infrastructure/dedicated-inference/
     name: dedicated-inference
+    x-display-name: Dedicated Inference
+    x-weight: 910
+    x-icon: exo-ai-prod
   - description: Opensearch, the popular open-source search and analytics database.
+    parent: dbaas
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/dbaas/service-specific/opensearch/
     name: dbaas-opensearch
+    x-display-name: DBaaS Opensearch
+    x-weight: 450
+    x-icon: exo-db-opensearch
+  - description: IAM users map to humans empowered with access to Exoscale resources.
+    parent: iam
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/iam/operation/users-keys/
+    name: user
+    x-display-name: User
+    x-weight: 830
+    x-icon: exo-iam
+  - description: Nodepool templates are Exoscale-managed instance templates for SKS worker nodes.
+    parent: sks
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/sks/
+    name: nodepool-template
+    x-display-name: Nodepool Template
+    x-weight: 330
+    x-icon: exo-template
   - description: |-
       SKS is Exoscale's scalable Kubernetes service which provides
                          managed Kubernetes control planes with integrated support for
@@ -193,6 +412,36 @@ tags:
       description: Read more
       url: https://community.exoscale.com/documentation/sks/
     name: sks
+    x-display-name: SKS
+    x-weight: 300
+    x-icon: exo-sks
+  - description: The Organization Policy is an IAM policy that applies as a first layer across your entire Exoscale organization.
+    parent: iam
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/iam/operation/roles-policies/
+    name: organization-policy
+    x-display-name: Organization Policy
+    x-weight: 840
+    x-icon: exo-iam
+  - description: API keys are credentials for programmatic access to Exoscale APIs and services.
+    parent: iam
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/iam/how-to/key-mgmt/
+    name: api-key
+    x-display-name: API Key
+    x-weight: 810
+    x-icon: exo-iam
+  - description: Lifecycle of AI Models.
+    parent: dedicated-inference
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/ai-cloud-infrastructure/dedicated-inference/
+    name: model
+    x-display-name: AI Model
+    x-weight: 920
+    x-icon: exo-gpu
 components:
   schemas:
     dbaas-node-state:
@@ -283,6 +532,14 @@ components:
           required:
             - url
             - index-prefix
+    private-network-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Private network ID
+      description: Private network reference
     sks-audit-endpoint:
       type: string
       maxLength: 2000
@@ -424,6 +681,14 @@ components:
       maximum: 10000
       exclusiveMinimum: false
       exclusiveMaximum: false
+    block-storage-snapshot-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Block storage snapshot ID
+      description: Target block storage snapshot
     security-group-rule:
       type: object
       properties:
@@ -536,6 +801,14 @@ components:
           type: string
           description: Node identifier
       description: A single log entry
+    anti-affinity-group-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Anti-affinity group ID
+      description: Anti-affinity group reference
     sks-audit-bearer-token:
       type: string
       maxLength: 2000
@@ -1974,14 +2247,6 @@ components:
           type: integer
       title: Kafka broker configuration values
       type: object
-    instance-target:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Instance ID
-      description: Target Instance
     dbaas-external-integration:
       type: object
       properties:
@@ -3432,6 +3697,14 @@ components:
               pattern: ^[a-z0-9\-@_]{5,32}$
               description: Prometheus basic authentication username
           description: External integration Prometheus configuration
+    instance-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Instance ID
+      description: Target Instance
     dbaas-user-password:
       type: string
       maxLength: 256
@@ -3498,6 +3771,14 @@ components:
           readOnly: true
           description: Attached instance ID
       description: Private Network leased IP address
+    template-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Template ID
+      description: Template reference
     sks-nodepool-taint:
       type: object
       properties:
@@ -4156,6 +4437,14 @@ components:
       type: string
       maxLength: 64
       minLength: 1
+    elastic-ip-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Elastic IP ID
+      description: Elastic IP reference
     dbaas-service-maintenance:
       type: object
       properties:
@@ -4186,6 +4475,15 @@ components:
         - time
         - updates
       description: Automatic maintenance settings
+    ssh-key-ref:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: SSH key name
+      description: SSH key reference
     sks-audit-update:
       type: object
       properties:
@@ -4567,6 +4865,14 @@ components:
           items:
             $ref: '#/components/schemas/env-product'
           description: Products
+    security-group-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Security group ID
+      description: Security group reference
     sks-oidc:
       type: object
       properties:
@@ -5803,6 +6109,14 @@ components:
             $ref: '#/components/schemas/ssh-key'
           description: Instances SSH keys
       description: Instance Pool
+    block-storage-volume-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Block storage volume ID
+      description: Target block storage volume
     scale-deployment-request:
       type: object
       properties:
@@ -5884,6 +6198,14 @@ components:
           exclusiveMinimum: false
           exclusiveMaximum: false
           description: Maximum number of partition contexts to send. Applies only when attached to kafka services.
+    deploy-target-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Deploy target ID
+      description: Deploy target reference
     sks-nodepool:
       type: object
       properties:
@@ -6295,6 +6617,14 @@ components:
         - syncing
         - failed
         - done
+    instance-type-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Instance type ID
+      description: Instance type reference
     enum-opensearch-rule-permission:
       type: string
       enum:
@@ -6354,6 +6684,11 @@ components:
           x-go-type: Endpoint
           description: Zone SOS endpoint
       description: Zone
+    dbaas-mysql-user-password:
+      type: string
+      maxLength: 256
+      minLength: 8
+      pattern: ^[a-zA-Z0-9!#%^*_+={}()<>|.,;~?-]+$
     dbaas-opensearch-acl-config:
       type: object
       properties:
@@ -6385,14 +6720,6 @@ components:
         extended-acl-enabled:
           type: boolean
           description: Enable to enforce index rules in a limited fashion for requests that use the _mget, _msearch, and _bulk APIs
-    block-storage-volume-target:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Block storage volume ID
-      description: Target block storage volume
     dbaas-backup-config:
       type: object
       properties:
@@ -6877,6 +7204,14 @@ components:
       enum:
         - up
         - down
+    sks-cluster-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: SKS cluster ID
+      description: SKS cluster reference
     list-deployments-response:
       type: object
       properties:
@@ -6956,7 +7291,7 @@ components:
           $ref: '#/components/schemas/labels'
           description: Resource labels
         block-storage-volume:
-          $ref: '#/components/schemas/block-storage-volume-target'
+          $ref: '#/components/schemas/block-storage-volume-ref'
           description: Referenced volume
       description: Block storage snapshot
     dbaas-external-endpoint-rsyslog-output:
@@ -7196,6 +7531,17 @@ components:
           required:
             - url
             - index-prefix
+    get-organization-usage-response:
+      type: object
+      properties:
+        gpu:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: false
+          readOnly: true
+          description: Total GPU count
+      description: GPU usage for an organization
     dbaas-service-type-name:
       type: string
       maxLength: 64
@@ -7217,21 +7563,14 @@ components:
     iam-role:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-          description: IAM Role ID
-        name:
-          type: string
-          maxLength: 255
-          minLength: 1
-          description: IAM Role name
         description:
           type: string
           maxLength: 255
           minLength: 1
           description: IAM Role description
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: IAM Role Labels
         permissions:
           type: array
           items:
@@ -7241,15 +7580,31 @@ components:
               - reset-iam-organization-policy
           uniqueItems: true
           description: IAM Role permissions
-        labels:
-          $ref: '#/components/schemas/labels'
-          description: IAM Role Labels
+        assume-role-policy:
+          $ref: '#/components/schemas/iam-policy'
+          description: IAM Assume Role Policy
         editable:
           type: boolean
           description: IAM Role mutability
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: IAM Role name
+        max-session-ttl:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: Maximum TTL requester is allowed to ask for when assuming a role
         policy:
           $ref: '#/components/schemas/iam-policy'
           description: IAM Role Policy
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: IAM Role ID
       description: IAM Role
     dbaas-service-common:
       type: object
@@ -8409,14 +8764,6 @@ components:
       enum:
         - quorum
         - "off"
-    block-storage-snapshot-target:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Block storage snapshot ID
-      description: Target block storage snapshot
     block-storage-volume:
       type: object
       properties:
@@ -8424,7 +8771,7 @@ components:
           $ref: '#/components/schemas/labels'
           description: Resource labels
         instance:
-          $ref: '#/components/schemas/instance-target'
+          $ref: '#/components/schemas/instance-ref'
           description: Volume attached instance, if any
         name:
           type: string
@@ -8461,7 +8808,7 @@ components:
         block-storage-snapshots:
           type: array
           items:
-            $ref: '#/components/schemas/block-storage-snapshot-target'
+            $ref: '#/components/schemas/block-storage-snapshot-ref'
           description: Volume snapshots, if any
         id:
           type: string
@@ -8882,7 +9229,7 @@ paths:
                   type: integer
                   format: int64
                   minimum: 0
-                  exclusiveMinimum: true
+                  exclusiveMinimum: false
                   description: Number of managed Instances
               required:
                 - size
@@ -9251,7 +9598,7 @@ paths:
               type: object
               properties:
                 password:
-                  $ref: '#/components/schemas/dbaas-user-password'
+                  $ref: '#/components/schemas/dbaas-mysql-user-password'
                   description: New password
                 authentication:
                   $ref: '#/components/schemas/enum-mysql-authentication-plugin'
@@ -9260,7 +9607,7 @@ paths:
   /ai/help/inference-engine-parameters:
     get:
       tags:
-        - dedicated-inference
+        - deployment
       responses:
         "200":
           description: "200"
@@ -9729,10 +10076,7 @@ paths:
                   minLength: 1
                   description: Subscription plan
                 admin-password:
-                  type: string
-                  maxLength: 256
-                  minLength: 8
-                  pattern: ^[a-zA-Z0-9-_]+$
+                  $ref: '#/components/schemas/dbaas-mysql-user-password'
                   description: Custom password for admin user. Defaults to random string. This must be set only when a new service is being created.
                 migration:
                   type: object
@@ -9942,7 +10286,7 @@ paths:
   /ai/model:
     post:
       tags:
-        - dedicated-inference
+        - model
       responses:
         "200":
           description: "200"
@@ -9967,7 +10311,7 @@ paths:
       operationId: create-model
     get:
       tags:
-        - dedicated-inference
+        - model
       responses:
         "200":
           description: "200"
@@ -10037,7 +10381,7 @@ paths:
   /ai/deployment/{id}/scale:
     post:
       tags:
-        - dedicated-inference
+        - deployment
       responses:
         "200":
           description: "200"
@@ -10111,7 +10455,8 @@ paths:
       operationId: reveal-instance-password
   /sks-template/{kube-version}/{variant}:
     get:
-      tags: []
+      tags:
+        - nodepool-template
       responses:
         "200":
           description: "200"
@@ -10448,7 +10793,7 @@ paths:
   /sks-cluster-kubeconfig/{id}:
     post:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -10478,7 +10823,7 @@ paths:
   /dns-domain/{domain-id}/record:
     get:
       tags:
-        - dns
+        - record
       responses:
         "200":
           description: "200"
@@ -10503,7 +10848,7 @@ paths:
       operationId: list-dns-domain-records
     post:
       tags:
-        - dns
+        - record
       responses:
         "200":
           description: "200"
@@ -10660,7 +11005,7 @@ paths:
   /ai/deployment:
     post:
       tags:
-        - dedicated-inference
+        - deployment
       responses:
         "200":
           description: "200"
@@ -10686,7 +11031,7 @@ paths:
       operationId: create-deployment
     get:
       tags:
-        - dedicated-inference
+        - deployment
       responses:
         "200":
           description: "200"
@@ -10751,7 +11096,7 @@ paths:
               type: object
               properties:
                 instance:
-                  $ref: '#/components/schemas/instance-target'
+                  $ref: '#/components/schemas/instance-ref'
                   description: Instance to attach to, this can only be done if the volume is not currently attached
               required:
                 - instance
@@ -11104,7 +11449,7 @@ paths:
   /sks-cluster/{id}/nodepool/{sks-nodepool-id}:
     put:
       tags:
-        - sks
+        - nodepool
       responses:
         "200":
           description: "200"
@@ -11203,7 +11548,7 @@ paths:
       operationId: update-sks-nodepool
     get:
       tags:
-        - sks
+        - nodepool
       responses:
         "200":
           description: "200"
@@ -11229,7 +11574,7 @@ paths:
       operationId: get-sks-nodepool
     delete:
       tags:
-        - sks
+        - nodepool
       responses:
         "200":
           description: "200"
@@ -11787,7 +12132,7 @@ paths:
   /sks-cluster/{id}/authority/{authority}/cert:
     get:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -11841,7 +12186,7 @@ paths:
   /ai/deployment/{id}:
     get:
       tags:
-        - dedicated-inference
+        - deployment
       responses:
         "200":
           description: "200"
@@ -11867,7 +12212,7 @@ paths:
       operationId: get-deployment
     delete:
       tags:
-        - dedicated-inference
+        - deployment
       responses:
         "200":
           description: "200"
@@ -11956,7 +12301,7 @@ paths:
   /sks-cluster-deprecated-resources/{id}:
     get:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -12366,7 +12711,7 @@ paths:
               type: object
               properties:
                 instance-type:
-                  $ref: '#/components/schemas/instance-type'
+                  $ref: '#/components/schemas/instance-type-ref'
                   description: Instance Type
               required:
                 - instance-type
@@ -12374,7 +12719,7 @@ paths:
   /api-key:
     post:
       tags:
-        - iam
+        - api-key
       responses:
         "200":
           description: "200"
@@ -12407,7 +12752,7 @@ paths:
       operationId: create-api-key
     get:
       tags:
-        - iam
+        - api-key
       responses:
         "200":
           description: "200"
@@ -12447,7 +12792,7 @@ paths:
   /dns-domain:
     get:
       tags:
-        - dns
+        - domain
       responses:
         "200":
           description: "200"
@@ -12466,7 +12811,7 @@ paths:
       operationId: list-dns-domains
     post:
       tags:
-        - dns
+        - domain
       responses:
         "200":
           description: "200"
@@ -12513,7 +12858,7 @@ paths:
   /dns-domain/{domain-id}/record/{record-id}:
     get:
       tags:
-        - dns
+        - record
       responses:
         "200":
           description: "200"
@@ -12539,7 +12884,7 @@ paths:
       operationId: get-dns-domain-record
     put:
       tags:
-        - dns
+        - record
       responses:
         "200":
           description: "200"
@@ -12590,7 +12935,7 @@ paths:
       operationId: update-dns-domain-record
     delete:
       tags:
-        - dns
+        - record
       responses:
         "200":
           description: "200"
@@ -12811,7 +13156,7 @@ paths:
   /sks-cluster/{id}/nodepool/{sks-nodepool-id}:scale:
     put:
       tags:
-        - sks
+        - nodepool
       responses:
         "200":
           description: "200"
@@ -12884,7 +13229,7 @@ paths:
   /sks-cluster/{id}/upgrade-service-level:
     put:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -12936,7 +13281,7 @@ paths:
   /api-key/{id}:
     delete:
       tags:
-        - iam
+        - api-key
       responses:
         "200":
           description: "200"
@@ -12955,7 +13300,7 @@ paths:
       operationId: delete-api-key
     get:
       tags:
-        - iam
+        - api-key
       responses:
         "200":
           description: "200"
@@ -13328,7 +13673,7 @@ paths:
   /iam-role/{id}:
     put:
       tags:
-        - iam
+        - role
       responses:
         "200":
           description: "200"
@@ -13369,10 +13714,16 @@ paths:
                 labels:
                   $ref: '#/components/schemas/labels'
                   description: IAM Role labels
+                max-session-ttl:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  exclusiveMinimum: true
+                  description: Maximum TTL requester is allowed to ask for when assuming a role
       operationId: update-iam-role
     get:
       tags:
-        - iam
+        - role
       responses:
         "200":
           description: "200"
@@ -13392,7 +13743,7 @@ paths:
       operationId: get-iam-role
     delete:
       tags:
-        - iam
+        - role
       responses:
         "200":
           description: "200"
@@ -13566,7 +13917,7 @@ paths:
   /dns-domain/{id}/zone:
     get:
       tags:
-        - dns
+        - domain
       responses:
         "200":
           description: "200"
@@ -13674,7 +14025,7 @@ paths:
   /iam-organization-policy:
     get:
       tags:
-        - iam
+        - organization-policy
       responses:
         "200":
           description: "200"
@@ -13688,7 +14039,7 @@ paths:
       operationId: get-iam-organization-policy
     put:
       tags:
-        - iam
+        - organization-policy
       responses:
         "200":
           description: "200"
@@ -13876,6 +14227,33 @@ paths:
             $ref: '#/components/schemas/dbaas-service-name'
       summary: Initiate PostgreSQL maintenance update
       operationId: start-dbaas-pg-maintenance
+  /iam-role/{id}:assume-role-policy:
+    put:
+      tags:
+        - role
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Update IAM Assume role Policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/iam-policy'
+      operationId: update-iam-assume-role-policy
   /dbaas-grafana/{service-name}/user/{username}/password/reveal:
     get:
       tags:
@@ -13904,7 +14282,7 @@ paths:
   /user/{id}:
     put:
       tags:
-        - iam
+        - user
       responses:
         "200":
           description: "200"
@@ -13934,7 +14312,7 @@ paths:
       operationId: update-user-role
     delete:
       tags:
-        - iam
+        - user
       responses:
         "200":
           description: "200"
@@ -14060,7 +14438,7 @@ paths:
   /sks-cluster/{id}/rotate-csi-credentials:
     put:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -14149,7 +14527,7 @@ paths:
   /sks-cluster/{id}/nodepool/{sks-nodepool-id}:evict:
     put:
       tags:
-        - sks
+        - nodepool
       responses:
         "200":
           description: "200"
@@ -14239,7 +14617,7 @@ paths:
   /dns-domain/{id}:
     delete:
       tags:
-        - dns
+        - domain
       responses:
         "200":
           description: "200"
@@ -14259,7 +14637,7 @@ paths:
       operationId: delete-dns-domain
     get:
       tags:
-        - dns
+        - domain
       responses:
         "200":
           description: "200"
@@ -14475,7 +14853,7 @@ paths:
   /ai/model/{id}:
     delete:
       tags:
-        - dedicated-inference
+        - model
       responses:
         "200":
           description: "200"
@@ -14501,7 +14879,7 @@ paths:
       operationId: delete-model
     get:
       tags:
-        - dedicated-inference
+        - model
       responses:
         "200":
           description: "200"
@@ -14573,7 +14951,7 @@ paths:
               type: object
               properties:
                 template:
-                  $ref: '#/components/schemas/template'
+                  $ref: '#/components/schemas/template-ref'
                   description: Template to recreate Instance from
                 disk-size:
                   type: integer
@@ -14736,7 +15114,7 @@ paths:
               type: object
               properties:
                 instance:
-                  $ref: '#/components/schemas/instance-target'
+                  $ref: '#/components/schemas/instance-ref'
                   description: Compute instance
               required:
                 - instance
@@ -15080,7 +15458,7 @@ paths:
   /sks-cluster:
     post:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -15169,7 +15547,7 @@ paths:
       operationId: create-sks-cluster
     get:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -15362,7 +15740,7 @@ paths:
               type: object
               properties:
                 instance:
-                  $ref: '#/components/schemas/instance-target'
+                  $ref: '#/components/schemas/instance-ref'
                   description: Compute instance
               required:
                 - instance
@@ -15370,7 +15748,7 @@ paths:
   /sks-cluster/{id}:
     delete:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -15390,7 +15768,7 @@ paths:
       operationId: delete-sks-cluster
     get:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -15410,7 +15788,7 @@ paths:
       operationId: get-sks-cluster
     put:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -15716,7 +16094,7 @@ paths:
   /sks-cluster/{id}/inspection:
     get:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -16158,7 +16536,7 @@ paths:
   /sks-cluster/{id}/rotate-ccm-credentials:
     put:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -16420,7 +16798,7 @@ paths:
   /iam-role/{id}:policy:
     put:
       tags:
-        - iam
+        - role
       responses:
         "200":
           description: "200"
@@ -16854,7 +17232,7 @@ paths:
   /iam-organization-policy:reset:
     post:
       tags:
-        - iam
+        - organization-policy
       responses:
         "200":
           description: "200"
@@ -17180,7 +17558,7 @@ paths:
   /sks-cluster/{id}/nodepool:
     post:
       tags:
-        - sks
+        - nodepool
       responses:
         "200":
           description: "200"
@@ -18306,7 +18684,7 @@ paths:
   /sks-cluster/{id}/rotate-karpenter-credentials:
     put:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -18419,7 +18797,7 @@ paths:
   /sks-cluster/{id}/rotate-operators-ca:
     put:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -18440,7 +18818,7 @@ paths:
   /ai/deployment/{id}/api-key:
     get:
       tags:
-        - dedicated-inference
+        - deployment
       responses:
         "200":
           description: "200"
@@ -18502,7 +18880,7 @@ paths:
   /sks-cluster-version:
     get:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -18551,7 +18929,7 @@ paths:
                 anti-affinity-groups:
                   type: array
                   items:
-                    $ref: '#/components/schemas/anti-affinity-group'
+                    $ref: '#/components/schemas/anti-affinity-group-ref'
                   uniqueItems: true
                   description: Instance Anti-affinity Groups
                 public-ip-assignment:
@@ -18566,7 +18944,7 @@ paths:
                 security-groups:
                   type: array
                   items:
-                    $ref: '#/components/schemas/security-group'
+                    $ref: '#/components/schemas/security-group-ref'
                   uniqueItems: true
                   description: Instance Security Groups
                 name:
@@ -18575,16 +18953,16 @@ paths:
                   minLength: 1
                   description: Instance name
                 instance-type:
-                  $ref: '#/components/schemas/instance-type'
+                  $ref: '#/components/schemas/instance-type-ref'
                   description: Instance Type
                 template:
-                  $ref: '#/components/schemas/template'
+                  $ref: '#/components/schemas/template-ref'
                   description: Instance Template
                 secureboot-enabled:
                   type: boolean
                   description: Enable secure boot
                 ssh-key:
-                  $ref: '#/components/schemas/ssh-key'
+                  $ref: '#/components/schemas/ssh-key-ref'
                   description: Instance SSH Key
                 user-data:
                   type: string
@@ -18595,7 +18973,7 @@ paths:
                   type: boolean
                   description: Enable Trusted Platform Module (TPM)
                 deploy-target:
-                  $ref: '#/components/schemas/deploy-target'
+                  $ref: '#/components/schemas/deploy-target-ref'
                   description: Instance Deploy Target
                 ipv6-enabled:
                   type: boolean
@@ -18611,7 +18989,7 @@ paths:
                 ssh-keys:
                   type: array
                   items:
-                    $ref: '#/components/schemas/ssh-key'
+                    $ref: '#/components/schemas/ssh-key-ref'
                   uniqueItems: true
                   description: Instance SSH Keys
               required:
@@ -18729,7 +19107,7 @@ paths:
   /iam-role:
     get:
       tags:
-        - iam
+        - role
       responses:
         "200":
           description: "200"
@@ -18748,7 +19126,7 @@ paths:
       operationId: list-iam-roles
     post:
       tags:
-        - iam
+        - role
       responses:
         "200":
           description: "200"
@@ -18794,6 +19172,15 @@ paths:
                 policy:
                   $ref: '#/components/schemas/iam-policy'
                   description: IAM Role policy
+                assume-role-policy:
+                  $ref: '#/components/schemas/iam-policy'
+                  description: IAM Assume role policy
+                max-session-ttl:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  exclusiveMinimum: true
+                  description: Maximum TTL requester is allowed to ask for when assuming a role
               required:
                 - name
       operationId: create-iam-role
@@ -18828,7 +19215,7 @@ paths:
   /user:
     post:
       tags:
-        - iam
+        - user
       responses:
         "200":
           description: "200"
@@ -18857,7 +19244,7 @@ paths:
       operationId: create-user
     get:
       tags:
-        - iam
+        - user
       responses:
         "200":
           description: "200"
@@ -18877,7 +19264,7 @@ paths:
   /ai/deployment/{id}/logs:
     get:
       tags:
-        - dedicated-inference
+        - deployment
       responses:
         "200":
           description: "200"
@@ -18885,12 +19272,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/get-deployment-logs-response'
-        "400":
-          description: "400"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:
@@ -18911,12 +19292,20 @@ paths:
           schema:
             type: string
             format: uuid
+        - in: query
+          required: false
+          name: tail
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+            exclusiveMinimum: false
       summary: '[BETA] Get Deployment Logs'
       operationId: get-deployment-logs
   /sks-cluster/{id}/upgrade:
     put:
       tags:
-        - sks
+        - cluster
       responses:
         "200":
           description: "200"
@@ -19008,7 +19397,7 @@ paths:
                   $ref: '#/components/schemas/labels'
                   description: Resource labels
                 block-storage-snapshot:
-                  $ref: '#/components/schemas/block-storage-snapshot-target'
+                  $ref: '#/components/schemas/block-storage-snapshot-ref'
                   description: Block storage snapshot
       operationId: create-block-storage-volume
   /dbaas-kafka/{name}/topic/acl-config/{acl-id}:
@@ -19137,7 +19526,7 @@ x-topics:
 
       The two blank lines above are due to the absence of a request body and signed headers.
 
-      Example *message* to [create a security group](https://openapi-v2.exoscale.com/operation/operation-create-security-group)
+      Example *message* to [create a security group](https://community.exoscale.com/reference/api/compute/security-group/#create-security-group)
 
       ```
       POST /v2/security-group

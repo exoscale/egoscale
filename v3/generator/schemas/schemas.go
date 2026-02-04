@@ -21,21 +21,6 @@ var ignoredList = map[string]struct{}{
 	"snapshot-export": {},
 }
 
-// backwardsCompatibilityAliases maps new schema names (as in OpenAPI spec) to old ones for backwards compatibility
-var backwardsCompatibilityAliases = map[string]string{
-	"block-storage-volume-ref":   "block-storage-volume",
-	"block-storage-snapshot-ref": "block-storage-snapshot",
-	"anti-affinity-group-ref":    "anti-affinity-group",
-	"security-group-ref":         "security-group",
-	"template-ref":               "template",
-	"elastic-ip-ref":             "elastic-ip",
-	"ssh-key-ref":                "ssh-key",
-	"deploy-target-ref":          "deploy-target",
-	"instance-type-ref":          "instance-type",
-	"sks-cluster-ref":            "sks-cluster",
-	"instance-ref":               "instance",
-}
-
 // Generate go models from OpenAPI spec schemas into a go file.
 func Generate(doc libopenapi.Document, path, packageName string) error {
 	result, errs := doc.BuildV3Model()

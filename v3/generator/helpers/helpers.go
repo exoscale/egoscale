@@ -17,8 +17,116 @@ func ConfigureAcronym(key, val string) {
 	uppercaseAcronym.Store(key, val)
 }
 
+type Overrides struct {
+	Props map[string]string // Property name overrides (e.g., "instance-target" -> "instance")
+	Refs  map[string]string // Reference path overrides (e.g., "#/components/schemas/instance-ref" -> "InstanceTarget")
+}
+
+var SchemaPropertyOverrides = map[string]*Overrides{
+	"CreateInstance": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":      "SecurityGroup",
+			"#/components/schemas/template-ref":            "Template",
+			"#/components/schemas/ssh-key-ref":             "SSHKey",
+			"#/components/schemas/deploy-target-ref":       "DeployTarget",
+			"#/components/schemas/instance-type-ref":       "InstanceType",
+		},
+	},
+	"ScaleInstance": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/instance-type-ref": "InstanceType",
+		},
+	},
+	"ResetInstance": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/template-ref": "Template",
+		},
+	},
+	"AttachInstanceToElasticIPRequest": {
+		Props: map[string]string{
+			"instance-target": "instance",
+		},
+		Refs: map[string]string{
+			"#/components/schemas/instance-ref": "InstanceTarget",
+		},
+	},
+	"DetachInstanceFromElasticIPRequest": {
+		Props: map[string]string{
+			"instance-target": "instance",
+		},
+		Refs: map[string]string{
+			"#/components/schemas/instance-ref": "InstanceTarget",
+		},
+	},
+	"CreateBlockStorageVolumeRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+		},
+	},
+	"AttachBlockStorageVolumeToInstanceRequest": {
+		Props: map[string]string{
+			"block-storage-volume-ref": "block-storage-volume",
+		},
+		Refs: map[string]string{
+			"#/components/schemas/instance-ref": "InstanceTarget",
+		},
+	},
+	"CreateInstanceRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":      "SecurityGroup",
+			"#/components/schemas/template-ref":            "Template",
+			"#/components/schemas/ssh-key-ref":             "SSHKey",
+			"#/components/schemas/deploy-target-ref":       "DeployTarget",
+			"#/components/schemas/instance-type-ref":       "InstanceType",
+		},
+	},
+	"ResetInstanceRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/template-ref": "Template",
+		},
+	},
+	"ScaleInstanceRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/instance-type-ref": "InstanceType",
+		},
+	},
+	"BlockStorageSnapshot": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/block-storage-volume-ref": "BlockStorageVolumeTarget",
+		},
+	},
+	"BlockStorageVolume": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+		},
+	},
+}
+
+var SpecialAliases = []string{
+	"type InstanceTarget = InstanceRef",
+	"type BlockStorageSnapshotTarget = BlockStorageSnapshotRef",
+	"type BlockStorageVolumeTarget = BlockStorageVolumeRef",
+}
+
 // RenderReference renders OpenAPI reference from path to go style.
-func RenderReference(referencePath string) string {
+func RenderReference(referencePath string, schemaName string) string {
+	if overrides := SchemaPropertyOverrides[schemaName]; overrides != nil && overrides.Refs != nil {
+		if override, ok := overrides.Refs[referencePath]; ok {
+			return override
+		}
+	}
 	return ToCamel(filepath.Base(referencePath))
 }
 

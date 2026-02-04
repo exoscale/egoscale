@@ -59,6 +59,13 @@ import (
 		output.WriteString("\n")
 	}
 
+	// Special backwards compatibility aliases
+	output.WriteString("\n")
+	for _, alias := range helpers.SpecialAliases {
+		output.WriteString(alias + "\n")
+	}
+	output.WriteString("\n")
+
 	if os.Getenv("GENERATOR_DEBUG") == "schemas" {
 		fmt.Println(output.String())
 	}
@@ -174,14 +181,14 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 		return nil
 	case "array":
 		output.WriteString(doc)
-		array, err := renderArray(schemaName, s, output, true)
+		array, err := renderArray(schemaName, s, output, true, schemaName)
 		if err != nil {
 			return err
 		}
 		output.WriteString("type " + schemaName + " " + array + "\n")
 		return nil
 	case "object":
-		object, err := renderObject(schemaName, s, output)
+		object, err := renderObject(schemaName, s, output, schemaName)
 		if err != nil {
 			return err
 		}
@@ -191,7 +198,7 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 	// map represents an OpenAPI AdditionalProperties, it will always be map[string]T
 	case "map":
 		output.WriteString(doc)
-		Map, err := renderSimpleMap(schemaName, s, output)
+		Map, err := renderSimpleMap(schemaName, s, output, schemaName)
 		if err != nil {
 			return err
 		}
@@ -232,7 +239,7 @@ func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 	return definition
 }
 
-func renderArray(typeName string, s *base.Schema, output *bytes.Buffer, rootSchema bool) (string, error) {
+func renderArray(typeName string, s *base.Schema, output *bytes.Buffer, rootSchema bool, schemaName string) (string, error) {
 	definition := "[]"
 
 	if s.Items == nil {
@@ -248,11 +255,11 @@ func renderArray(typeName string, s *base.Schema, output *bytes.Buffer, rootSche
 	}
 	isReference := s.Items.A.IsReference()
 	if isReference {
-		return definition + helpers.RenderReference(s.Items.A.GetReference()), nil
+		return definition + helpers.RenderReference(s.Items.A.GetReference(), schemaName), nil
 	}
 
 	if item.AdditionalProperties != nil {
-		Map, err := renderSimpleMap(typeName, item, output)
+		Map, err := renderSimpleMap(typeName, item, output, schemaName)
 		if err != nil {
 			return "", err
 		}
@@ -326,13 +333,19 @@ func renderValidation(s *base.Schema, required bool) string {
 	return fmt.Sprintf(`validate:"%s"`, strings.Join(ops, ","))
 }
 
-func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string, error) {
+func renderObject(typeName string, s *base.Schema, output *bytes.Buffer, schemaName string) (string, error) {
 	definition := "type " + typeName + " struct {\n"
 	for pair := orderedmap.SortAlpha(s.Properties).First(); pair != nil; pair = pair.Next() {
 		propName, properties := pair.Key(), pair.Value()
 		prop := properties.Schema()
 		if prop == nil {
 			continue
+		}
+
+		if overrides := helpers.SchemaPropertyOverrides[schemaName]; overrides != nil && overrides.Props != nil {
+			if override, ok := overrides.Props[propName]; ok {
+				propName = override
+			}
 		}
 
 		InferType(prop)
@@ -378,7 +391,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		camelName := helpers.ToCamel(propName)
 
 		if properties.IsReference() {
-			referenceName := helpers.RenderReference(properties.GetReference())
+			referenceName := helpers.RenderReference(properties.GetReference(), schemaName)
 			if propType == "map" {
 				pointer = ""
 			}
@@ -391,7 +404,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 		}
 
 		if propType == "array" {
-			array, err := renderArray(typeName+camelName, prop, output, false)
+			array, err := renderArray(typeName+camelName, prop, output, false, schemaName)
 			if err != nil {
 				return "", err
 			}
@@ -437,7 +450,7 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer) (string
 
 		// Render additional properties (map).
 		if propType == "map" {
-			Map, err := renderSimpleMap(typeName+camelName, prop, output)
+			Map, err := renderSimpleMap(typeName+camelName, prop, output, schemaName)
 			if err != nil {
 				return "", err
 			}
@@ -465,7 +478,7 @@ func isRequiredField(schemaName string, s *base.Schema) bool {
 }
 
 // renderSimpleMap represents AdditionalProperties, it's always a map[string]Type
-func renderSimpleMap(typeName string, s *base.Schema, output *bytes.Buffer) (string, error) {
+func renderSimpleMap(typeName string, s *base.Schema, output *bytes.Buffer, schemaName string) (string, error) {
 	definition := "map[string]"
 
 	// https://swagger.io/docs/specification/data-models/dictionaries/#free-form
@@ -486,7 +499,7 @@ func renderSimpleMap(typeName string, s *base.Schema, output *bytes.Buffer) (str
 
 	sp := s.AdditionalProperties.A
 	if sp.IsReference() {
-		return definition + helpers.RenderReference(sp.GetReference()), nil
+		return definition + helpers.RenderReference(sp.GetReference(), schemaName), nil
 	}
 
 	addl := sp.Schema()

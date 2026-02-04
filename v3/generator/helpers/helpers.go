@@ -17,52 +17,209 @@ func ConfigureAcronym(key, val string) {
 	uppercaseAcronym.Store(key, val)
 }
 
-var referenceOverrides = map[string]string{
-	"#/components/schemas/ssh-key-ref":                "SSHKey",
-	"#/components/schemas/instance-ref":               "InstanceTarget",
-	"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
-	"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
-	"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
-	"#/components/schemas/security-group-ref":         "SecurityGroup",
-	"#/components/schemas/template-ref":               "Template",
-	"#/components/schemas/elastic-ip-ref":             "ElasticIP",
-	"#/components/schemas/deploy-target-ref":          "DeployTarget",
-	"#/components/schemas/instance-type-ref":          "InstanceType",
-	"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+type Overrides struct {
+	Props map[string]string // Property name overrides (e.g., "instance-target" -> "instance")
+	Refs  map[string]string // Reference path overrides (e.g., "#/components/schemas/instance-ref" -> "InstanceTarget")
 }
 
-var PropertyOverrides = map[string]string{
-	"block-storage-volume-ref": "block-storage-volume",
-	"elastic-ip-ref":           "elastic-ip",
-	"instance-ref":             "instance",
-	"instance-target":          "instance",
-	"block-storage-snapshot":   "block-storage-snapshot-target",
-}
-
-var legacySchemas = map[string]bool{
-	"CreateInstance":                            true,
-	"ScaleInstance":                             true,
-	"ResetInstance":                             true,
-	"AttachInstanceToElasticIPRequest":          true,
-	"DetachInstanceFromElasticIPRequest":        true,
-	"CreateBlockStorageVolumeRequest":           true,
-	"AttachBlockStorageVolumeToInstanceRequest": true,
-	"CreateInstanceRequest":                     true,
-	"ResetInstanceRequest":                      true,
-	"ScaleInstanceRequest":                      true,
-	"BlockStorageSnapshot":                      true,
-	"BlockStorageVolume":                        true,
-}
-
-var SchemaPropertyOverrides = map[string]map[string]string{
+var SchemaPropertyOverrides = map[string]*Overrides{
+	"CreateInstance": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
+	},
+	"ScaleInstance": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
+	},
+	"ResetInstance": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
+	},
 	"AttachInstanceToElasticIPRequest": {
-		"instance-target": "instance",
+		Props: map[string]string{
+			"instance-target": "instance",
+		},
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
 	},
 	"DetachInstanceFromElasticIPRequest": {
-		"instance-target": "instance",
+		Props: map[string]string{
+			"instance-target": "instance",
+		},
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
+	},
+	"CreateBlockStorageVolumeRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
 	},
 	"AttachBlockStorageVolumeToInstanceRequest": {
-		"block-storage-volume-ref": "block-storage-volume",
+		Props: map[string]string{
+			"block-storage-volume-ref": "block-storage-volume",
+		},
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
+	},
+	"CreateInstanceRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
+	},
+	"ResetInstanceRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
+	},
+	"ScaleInstanceRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
+	},
+	"BlockStorageSnapshot": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
+	},
+	"BlockStorageVolume": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/ssh-key-ref":                "SSHKey",
+			"#/components/schemas/instance-ref":               "InstanceTarget",
+			"#/components/schemas/block-storage-volume-ref":   "BlockStorageVolumeTarget",
+			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
+			"#/components/schemas/anti-affinity-group-ref":    "AntiAffinityGroup",
+			"#/components/schemas/security-group-ref":         "SecurityGroup",
+			"#/components/schemas/template-ref":               "Template",
+			"#/components/schemas/elastic-ip-ref":             "ElasticIP",
+			"#/components/schemas/deploy-target-ref":          "DeployTarget",
+			"#/components/schemas/instance-type-ref":          "InstanceType",
+			"#/components/schemas/sks-cluster-ref":            "SKSCluster",
+		},
 	},
 }
 
@@ -74,8 +231,8 @@ var SpecialAliases = []string{
 
 // RenderReference renders OpenAPI reference from path to go style.
 func RenderReference(referencePath string, schemaName string) string {
-	if _, isLegacy := legacySchemas[schemaName]; isLegacy {
-		if override, ok := referenceOverrides[referencePath]; ok {
+	if overrides := SchemaPropertyOverrides[schemaName]; overrides != nil && overrides.Refs != nil {
+		if override, ok := overrides.Refs[referencePath]; ok {
 			return override
 		}
 	}

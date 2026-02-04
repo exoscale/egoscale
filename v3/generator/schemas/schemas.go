@@ -357,8 +357,8 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer, schemaN
 			continue
 		}
 
-		if schemaOverrides, ok := helpers.SchemaPropertyOverrides[schemaName]; ok {
-			if override, ok := schemaOverrides[propName]; ok {
+		if overrides := helpers.SchemaPropertyOverrides[schemaName]; overrides != nil && overrides.Props != nil {
+			if override, ok := overrides.Props[propName]; ok {
 				propName = override
 			}
 		}

@@ -160,46 +160,35 @@ The generator support two types of extension:
 
 The Egoscale v3 generator incorporates an overrides system to preserve backwards compatibility in the Go API when the OpenAPI specification changes, such as renaming schemas or references. This ensures that existing code using the SDK does not break due to type, field name, or JSON tag changes.
 
-The system consists of several components working together during code generation, scoped to a predefined set of legacy schemas to avoid affecting new APIs.
+The system consists of a unified overrides system working during code generation, scoped to schemas with overrides to avoid affecting new APIs.
 
 ### Components
 
-#### Legacy Schemas
-- **Location**: `generator/helpers/helpers.go` (`legacySchemas` map)
-- **Purpose**: Defines the set of schema names (e.g., request or response structs) that receive backwards compatibility overrides. Schemas not in this list use types directly from the OpenAPI spec.
-- **Example**:
-  ```go
-  var legacySchemas = map[string]bool{
-      "CreateInstanceRequest": true,
-      "AttachInstanceToElasticIPRequest": true,
-  }
-  ```
-  - Only schemas like `CreateInstanceRequest` apply overrides; schemas not in this list use updated types.
-
-#### Reference Overrides
-- **Location**: `generator/helpers/helpers.go` (`referenceOverrides` map)
-- **Purpose**: Intercepts OpenAPI `$ref` paths and maps them to custom Go type names, but only for legacy schemas. Otherwise, defaults to camel-case conversion.
-- **Example**:
-  ```go
-  var referenceOverrides = map[string]string{
-      "#/components/schemas/ssh-key-ref": "SSHKey",
-      "#/components/schemas/instance-ref": "InstanceTarget",
-  }
-  ```
-  - In legacy schemas, `"#/components/schemas/ssh-key-ref"` generates `SSHKey`; in new schemas, it generates `SSHKeyRef`.
-
-#### Property Overrides
+#### Schema Property and Reference Overrides
 - **Location**: `generator/helpers/helpers.go` (`SchemaPropertyOverrides` map)
-- **Purpose**: Overrides property names in specific schemas to maintain historical field names and JSON tags, applied only to legacy schemas.
+- **Purpose**: Unified map for property names and reference paths in legacy schemas to preserve backwards compatibility. Schemas with `Refs` are treated as legacy (applying ref overrides); others use spec defaults. Property overrides are applied per-schema as needed.
 - **Example**:
   ```go
-  var SchemaPropertyOverrides = map[string]map[string]string{
+  var SchemaPropertyOverrides = map[string]*Overrides{
       "AttachInstanceToElasticIPRequest": {
-          "instance-target": "instance",
+          Props: map[string]string{
+              "instance-target": "instance",
+          },
+          Refs: map[string]string{
+              "#/components/schemas/ssh-key-ref": "SSHKey",
+              "#/components/schemas/instance-ref": "InstanceTarget",
+          },
+      },
+      "CreateInstance": {
+          Props: nil,
+          Refs: map[string]string{
+              // ... ref overrides map
+          },
       },
   }
   ```
-  - In `AttachInstanceToElasticIPRequest`, a property named `"instance-target"` generates a field `Instance` with JSON `"instance"`.
+  - In `AttachInstanceToElasticIPRequest`, a property `"instance-target"` generates `Instance` with JSON `"instance"`, and refs like `"#/components/schemas/ssh-key-ref"` generate `SSHKey`.
+  - Schemas without entries or with `Refs: nil` use spec defaults.
 
 #### Backwards Compatibility Full Types
 - **Purpose**: Generates full struct definitions for old type names (e.g., `Template`) directly from the OpenAPI spec to maintain backwards compatibility, ensuring old types have complete field sets for operations like listing.
@@ -218,12 +207,12 @@ The system consists of several components working together during code generatio
 
 ### How It Works
 1. **Schema Processing**: Generates all schemas from the OpenAPI spec in alphabetical order, including full types (e.g., `Template`) and ref types (e.g., `TemplateRef`).
-2. **Conditional Application**: In legacy schemas, applies `referenceOverrides` and `SchemaPropertyOverrides`; otherwise, uses spec defaults.
+2. **Conditional Application**: For schemas with overrides in `SchemaPropertyOverrides`, applies `Refs` (if present) and `Props` (if present); otherwise, uses spec defaults.
 3. **Type and Field Generation**: References and properties are resolved with overrides, producing consistent Go structs.
 4. **Special Aliases Addition**: Special aliases are appended globally.
 
 ### Usage in Development
-- Modify `legacySchemas`, `referenceOverrides`, or `SchemaPropertyOverrides` in `generator/helpers/helpers.go` for spec updates.
+- Modify `SchemaPropertyOverrides` in `generator/helpers/helpers.go` for spec updates (add/update `Props` or `Refs` per schema).
 - Regenerate with `make generate`, build with `go build ./...`, and inspect with `GENERATOR_DEBUG=schemas make generate`.
 
 This system enables the SDK to evolve with the OpenAPI spec while preserving API stability for existing users.

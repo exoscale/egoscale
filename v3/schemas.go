@@ -174,16 +174,19 @@ type BlockStorageVolumeRef struct {
 // Deployment an AI model onto a set of GPUs
 type CreateDeploymentRequest struct {
 	// Number of GPUs (1-8)
-	GpuCount int64 `json:"gpu-count" validate:"required,gt=0"`
+	GpuCount int64 `json:"gpu-count" validate:"required,gte=1"`
 	// GPU type family (e.g., gpua5000, gpu3080ti)
 	GpuType string `json:"gpu-type" validate:"required"`
 	// Optional extra inference engine server CLI args
-	InferenceEngineParameters []string  `json:"inference-engine-parameters,omitempty"`
-	Model                     *ModelRef `json:"model,omitempty"`
+	InferenceEngineParameters []string `json:"inference-engine-parameters,omitempty"`
+	// Inference engine version
+	InferenceEngineVersion *InferenceEngineVersion `json:"inference-engine-version,omitempty"`
+	// model-ref
+	Model *ModelRef `json:"model,omitempty"`
 	// Deployment name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
 	// Number of replicas (>=1)
-	Replicas int64 `json:"replicas" validate:"required,gt=0"`
+	Replicas int64 `json:"replicas" validate:"required,gte=1"`
 }
 
 // AI model
@@ -2240,13 +2243,13 @@ type GetDeploymentLogsResponse struct {
 	Logs []GetDeploymentLogsEntry `json:"logs,omitempty"`
 }
 
-type GetDeploymentResponseStatus string
+type GetDeploymentResponseState string
 
 const (
-	GetDeploymentResponseStatusReady     GetDeploymentResponseStatus = "ready"
-	GetDeploymentResponseStatusCreating  GetDeploymentResponseStatus = "creating"
-	GetDeploymentResponseStatusError     GetDeploymentResponseStatus = "error"
-	GetDeploymentResponseStatusDeploying GetDeploymentResponseStatus = "deploying"
+	GetDeploymentResponseStateReady     GetDeploymentResponseState = "ready"
+	GetDeploymentResponseStateCreating  GetDeploymentResponseState = "creating"
+	GetDeploymentResponseStateError     GetDeploymentResponseState = "error"
+	GetDeploymentResponseStateDeploying GetDeploymentResponseState = "deploying"
 )
 
 // AI deployment
@@ -2256,24 +2259,27 @@ type GetDeploymentResponse struct {
 	// Deployment URL (nullable)
 	DeploymentURL string `json:"deployment-url,omitempty"`
 	// Number of GPUs
-	GpuCount int64 `json:"gpu-count,omitempty" validate:"omitempty,gt=0"`
+	GpuCount int64 `json:"gpu-count,omitempty" validate:"omitempty,gte=1"`
 	// GPU type family
 	GpuType string `json:"gpu-type,omitempty" validate:"omitempty,gte=1"`
 	// Deployment ID
 	ID UUID `json:"id,omitempty"`
 	// Optional extra inference engine server CLI args
-	InferenceEngineParameters []string  `json:"inference-engine-parameters,omitempty"`
-	Model                     *ModelRef `json:"model,omitempty"`
+	InferenceEngineParameters []string `json:"inference-engine-parameters,omitempty"`
+	// Inference engine version
+	InferenceEngineVersion *InferenceEngineVersion `json:"inference-engine-version,omitempty"`
+	// model-ref
+	Model *ModelRef `json:"model,omitempty"`
 	// Deployment name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
 	// Number of replicas (>=0)
 	Replicas int64 `json:"replicas,omitempty" validate:"omitempty,gte=0"`
 	// Service level
 	ServiceLevel string `json:"service-level,omitempty" validate:"omitempty,gte=1"`
-	// Deployment status
-	Status GetDeploymentResponseStatus `json:"status,omitempty"`
-	// Deployment status details
-	StatusDetails string `json:"status-details,omitempty"`
+	// Deployment state
+	State GetDeploymentResponseState `json:"state,omitempty"`
+	// Deployment state details
+	StateDetails string `json:"state-details,omitempty"`
 	// Update time
 	UpdatedAT time.Time `json:"updated-at,omitempty"`
 }
@@ -2283,13 +2289,14 @@ type GetInferenceEngineHelpResponse struct {
 	Parameters []InferenceEngineParameterEntry `json:"parameters,omitempty"`
 }
 
-type GetModelResponseStatus string
+type GetModelResponseState string
 
 const (
-	GetModelResponseStatusReady       GetModelResponseStatus = "ready"
-	GetModelResponseStatusCreating    GetModelResponseStatus = "creating"
-	GetModelResponseStatusDownloading GetModelResponseStatus = "downloading"
-	GetModelResponseStatusError       GetModelResponseStatus = "error"
+	GetModelResponseStateReady       GetModelResponseState = "ready"
+	GetModelResponseStateCreating    GetModelResponseState = "creating"
+	GetModelResponseStateDownloading GetModelResponseState = "downloading"
+	GetModelResponseStateError       GetModelResponseState = "error"
+	GetModelResponseStateCreated     GetModelResponseState = "created"
 )
 
 // AI model
@@ -2302,8 +2309,8 @@ type GetModelResponse struct {
 	ModelSize int64 `json:"model-size,omitempty" validate:"omitempty,gte=0"`
 	// Model name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
-	// Model status
-	Status GetModelResponseStatus `json:"status,omitempty"`
+	// Model state
+	State GetModelResponseState `json:"state,omitempty"`
 	// Update time
 	UpdatedAT time.Time `json:"updated-at,omitempty"`
 }
@@ -2416,6 +2423,10 @@ type InferenceEngineParameterEntry struct {
 	Type string `json:"type,omitempty"`
 }
 
+// Inference engine version
+type InferenceEngineVersion struct {
+}
+
 // Private Network
 type InstancePrivateNetworks struct {
 	// Private Network ID
@@ -2496,25 +2507,25 @@ const (
 // Instance Pool
 type InstancePool struct {
 	// Instance Pool Anti-affinity Groups
-	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	AntiAffinityGroups []AntiAffinityGroupRef `json:"anti-affinity-groups,omitempty"`
 	// Enable application consistent snapshots
 	ApplicationConsistentSnapshotEnabled *bool `json:"application-consistent-snapshot-enabled,omitempty"`
-	// Deploy target
-	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
+	// Deploy target reference
+	DeployTarget *DeployTargetRef `json:"deploy-target,omitempty"`
 	// Instance Pool description
 	Description string `json:"description,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Instances disk size in GiB
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=51200"`
 	// Instances Elastic IPs
-	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
+	ElasticIPS []ElasticIPRef `json:"elastic-ips,omitempty"`
 	// Instance Pool ID
 	ID UUID `json:"id,omitempty"`
 	// The instances created by the Instance Pool will be prefixed with this value (default: pool)
 	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
-	// Compute instance type
-	InstanceType *InstanceType `json:"instance-type,omitempty"`
+	// Instance type reference
+	InstanceType *InstanceTypeRef `json:"instance-type,omitempty"`
 	// Instances
-	Instances []Instance `json:"instances,omitempty"`
+	Instances []InstanceRef `json:"instances,omitempty"`
 	// Enable IPv6 for instances
 	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
 	Labels      Labels `json:"labels,omitempty"`
@@ -2525,22 +2536,28 @@ type InstancePool struct {
 	// Instance Pool name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Instance Pool Private Networks
-	PrivateNetworks    []PrivateNetwork   `json:"private-networks,omitempty"`
-	PublicIPAssignment PublicIPAssignment `json:"public-ip-assignment,omitempty"`
+	PrivateNetworks    []PrivateNetworkRef `json:"private-networks,omitempty"`
+	PublicIPAssignment PublicIPAssignment  `json:"public-ip-assignment,omitempty"`
 	// Instance Pool Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	SecurityGroups []SecurityGroupRef `json:"security-groups,omitempty"`
 	// Number of instances
 	Size int64 `json:"size,omitempty" validate:"omitempty,gt=0"`
-	// SSH key
-	SSHKey *SSHKey `json:"ssh-key,omitempty"`
+	// SSH key reference
+	SSHKey *SSHKeyRef `json:"ssh-key,omitempty"`
 	// Instances SSH keys
-	SSHKeys []SSHKey `json:"ssh-keys,omitempty"`
+	SSHKeys []SSHKeyRef `json:"ssh-keys,omitempty"`
 	// Instance Pool state
 	State InstancePoolState `json:"state,omitempty"`
-	// Instance template
-	Template *Template `json:"template,omitempty"`
+	// Template reference
+	Template *TemplateRef `json:"template,omitempty"`
 	// Instances Cloud-init user-data
 	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
+}
+
+// Target Instance Pool
+type InstancePoolRef struct {
+	// Instance Pool ID
+	ID UUID `json:"id,omitempty"`
 }
 
 // Target Instance
@@ -3802,13 +3819,13 @@ type ListDeploymentsResponse struct {
 	Deployments []ListDeploymentsResponseEntry `json:"deployments,omitempty"`
 }
 
-type ListDeploymentsResponseEntryStatus string
+type ListDeploymentsResponseEntryState string
 
 const (
-	ListDeploymentsResponseEntryStatusReady     ListDeploymentsResponseEntryStatus = "ready"
-	ListDeploymentsResponseEntryStatusCreating  ListDeploymentsResponseEntryStatus = "creating"
-	ListDeploymentsResponseEntryStatusError     ListDeploymentsResponseEntryStatus = "error"
-	ListDeploymentsResponseEntryStatusDeploying ListDeploymentsResponseEntryStatus = "deploying"
+	ListDeploymentsResponseEntryStateReady     ListDeploymentsResponseEntryState = "ready"
+	ListDeploymentsResponseEntryStateCreating  ListDeploymentsResponseEntryState = "creating"
+	ListDeploymentsResponseEntryStateError     ListDeploymentsResponseEntryState = "error"
+	ListDeploymentsResponseEntryStateDeploying ListDeploymentsResponseEntryState = "deploying"
 )
 
 // AI deployment
@@ -3818,11 +3835,12 @@ type ListDeploymentsResponseEntry struct {
 	// Deployment URL (nullable)
 	DeploymentURL string `json:"deployment-url,omitempty"`
 	// Number of GPUs
-	GpuCount int64 `json:"gpu-count,omitempty" validate:"omitempty,gt=0"`
+	GpuCount int64 `json:"gpu-count,omitempty" validate:"omitempty,gte=1"`
 	// GPU type family
 	GpuType string `json:"gpu-type,omitempty" validate:"omitempty,gte=1"`
 	// Deployment ID
-	ID    UUID      `json:"id,omitempty"`
+	ID UUID `json:"id,omitempty"`
+	// model-ref
 	Model *ModelRef `json:"model,omitempty"`
 	// Deployment name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
@@ -3830,8 +3848,8 @@ type ListDeploymentsResponseEntry struct {
 	Replicas int64 `json:"replicas,omitempty" validate:"omitempty,gte=0"`
 	// Service level
 	ServiceLevel string `json:"service-level,omitempty" validate:"omitempty,gte=1"`
-	// Deployment status
-	Status ListDeploymentsResponseEntryStatus `json:"status,omitempty"`
+	// Deployment state
+	State ListDeploymentsResponseEntryState `json:"state,omitempty"`
 	// Update time
 	UpdatedAT time.Time `json:"updated-at,omitempty"`
 }
@@ -3841,13 +3859,14 @@ type ListModelsResponse struct {
 	Models []ListModelsResponseEntry `json:"models,omitempty"`
 }
 
-type ListModelsResponseEntryStatus string
+type ListModelsResponseEntryState string
 
 const (
-	ListModelsResponseEntryStatusReady       ListModelsResponseEntryStatus = "ready"
-	ListModelsResponseEntryStatusCreating    ListModelsResponseEntryStatus = "creating"
-	ListModelsResponseEntryStatusDownloading ListModelsResponseEntryStatus = "downloading"
-	ListModelsResponseEntryStatusError       ListModelsResponseEntryStatus = "error"
+	ListModelsResponseEntryStateReady       ListModelsResponseEntryState = "ready"
+	ListModelsResponseEntryStateCreating    ListModelsResponseEntryState = "creating"
+	ListModelsResponseEntryStateDownloading ListModelsResponseEntryState = "downloading"
+	ListModelsResponseEntryStateError       ListModelsResponseEntryState = "error"
+	ListModelsResponseEntryStateCreated     ListModelsResponseEntryState = "created"
 )
 
 // AI model
@@ -3860,8 +3879,8 @@ type ListModelsResponseEntry struct {
 	ModelSize int64 `json:"model-size,omitempty" validate:"omitempty,gte=0"`
 	// Model name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
-	// Model status
-	Status ListModelsResponseEntryStatus `json:"status,omitempty"`
+	// Model state
+	State ListModelsResponseEntryState `json:"state,omitempty"`
 	// Update time
 	UpdatedAT time.Time `json:"updated-at,omitempty"`
 }
@@ -4003,6 +4022,7 @@ type Manager struct {
 	Type ManagerType `json:"type,omitempty"`
 }
 
+// model-ref
 type ModelRef struct {
 	// Associated model ID
 	ID UUID `json:"id,omitempty"`
@@ -4416,43 +4436,43 @@ type SKSNodepool struct {
 	// Nodepool addons
 	Addons []string `json:"addons,omitempty"`
 	// Nodepool Anti-affinity Groups
-	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	AntiAffinityGroups []AntiAffinityGroupRef `json:"anti-affinity-groups,omitempty"`
 	// Nodepool creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Deploy target
-	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
+	// Deploy target reference
+	DeployTarget *DeployTargetRef `json:"deploy-target,omitempty"`
 	// Nodepool description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Nodepool instances disk size in GiB
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=20,lte=51200"`
 	// Nodepool ID
 	ID UUID `json:"id,omitempty"`
-	// Instance Pool
-	InstancePool *InstancePool `json:"instance-pool,omitempty"`
+	// Target Instance Pool
+	InstancePool *InstancePoolRef `json:"instance-pool,omitempty"`
 	// The instances created by the Nodepool will be prefixed with this value (default: pool)
 	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
-	// Compute instance type
-	InstanceType *InstanceType `json:"instance-type,omitempty"`
+	// Instance type reference
+	InstanceType *InstanceTypeRef `json:"instance-type,omitempty"`
 	// Kubelet image GC options
 	KubeletImageGC *KubeletImageGC   `json:"kubelet-image-gc,omitempty"`
 	Labels         SKSNodepoolLabels `json:"labels,omitempty"`
 	// Nodepool name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Nodepool Private Networks
-	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
+	PrivateNetworks []PrivateNetworkRef `json:"private-networks,omitempty"`
 	// Nodepool public IP assignment of the Instances:
 	// * IPv4 and IPv6 (`dual`) addressing.
 	// * IPv4 and IPv6 (`dual`) addressing.
 	PublicIPAssignment SKSNodepoolPublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Nodepool Security Groups
-	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	SecurityGroups []SecurityGroupRef `json:"security-groups,omitempty"`
 	// Number of instances
 	Size int64 `json:"size,omitempty" validate:"omitempty,gte=0"`
 	// Nodepool state
 	State  SKSNodepoolState  `json:"state,omitempty"`
 	Taints SKSNodepoolTaints `json:"taints,omitempty"`
-	// Instance template
-	Template *Template `json:"template,omitempty"`
+	// Template reference
+	Template *TemplateRef `json:"template,omitempty"`
 	// Nodepool version
 	Version string `json:"version,omitempty"`
 }
@@ -4618,6 +4638,16 @@ type Template struct {
 type TemplateRef struct {
 	// Template ID
 	ID UUID `json:"id,omitempty"`
+}
+
+// Update AI deployment
+type UpdateDeploymentRequest struct {
+	// Optional extra inference engine server CLI args
+	InferenceEngineParameters []string `json:"inference-engine-parameters,omitempty"`
+	// Inference engine version
+	InferenceEngineVersion *InferenceEngineVersion `json:"inference-engine-version,omitempty"`
+	// Deployment name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
 }
 
 // User

@@ -545,14 +545,14 @@ components:
       maxLength: 2000
       minLength: 1
     get-deployment-logs-response:
-      type: object
+      description: Deployment logs
       properties:
         logs:
+          description: List of log entries
           type: array
           items:
             $ref: '#/components/schemas/get-deployment-logs-entry'
-          description: List of log entries
-      description: Deployment logs
+      type: object
     json-schema-schema-registry:
       additionalProperties: false
       properties:
@@ -664,16 +664,16 @@ components:
         - datadog
         - elasticsearch
     model-ref:
-      type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          description: Associated model ID
         name:
+          description: Associated model name
           type: string
           minLength: 1
-          description: Associated model name
+        id:
+          description: Associated model ID
+          format: uuid
+          type: string
+      type: object
     dbaas-pg-pool-size:
       type: integer
       format: int64
@@ -789,18 +789,18 @@ components:
         - public
         - privatelink
     get-deployment-logs-entry:
-      type: object
+      description: A single log entry
       properties:
         time:
-          type: string
           description: Timestamp of the log entry
-        message:
           type: string
-          description: Log message content
         node:
-          type: string
           description: Node identifier
-      description: A single log entry
+          type: string
+        message:
+          description: Log message content
+          type: string
+      type: object
     anti-affinity-group-ref:
       type: object
       properties:
@@ -846,13 +846,13 @@ components:
           $ref: '#/components/schemas/dbaas-endpoint-elasticsearch-optional-fields'
           description: External integration ElasticSearch logs configuration
     get-inference-engine-help-response:
-      type: object
+      description: List of allowed inference-engine parameters
       properties:
         parameters:
           type: array
           items:
             $ref: '#/components/schemas/inference-engine-parameter-entry'
-      description: List of allowed inference-engine parameters
+      type: object
     dbaas-user-valkey-secrets:
       type: object
       properties:
@@ -1447,14 +1447,14 @@ components:
           description: Kafka Connect password
       description: Kafka Connect secrets
     delete-model-conflict-response:
-      type: object
+      description: 'Model is in use: deletion forbidden'
       properties:
         deployments:
+          description: Deployments using models
           type: array
           items:
             type: string
-          description: Deployments using models
-      description: 'Model is in use: deletion forbidden'
+      type: object
     dbaas-service-type:
       type: object
       properties:
@@ -1897,16 +1897,23 @@ components:
       maxLength: 253
       minLength: 1
     create-model-request:
-      type: object
+      description: AI model
       properties:
-        huggingface-token:
-          type: string
-          description: Huggingface Token
         name:
+          description: Model name
           type: string
           minLength: 1
-          description: Model name
-      description: AI model
+        huggingface-token:
+          description: Huggingface Token
+          type: string
+      type: object
+    inference-engine-version:
+      description: Inference engine version
+      enum:
+        - 0.12.0
+        - 0.15.1
+      default: 0.12.0
+      type: string
     dbaas-user-opensearch-secrets:
       type: object
       properties:
@@ -1937,11 +1944,11 @@ components:
           description: Resource name
       description: Access key resource
     reveal-deployment-api-key-response:
-      type: object
+      description: AI deployment inference endpoint authentication key
       properties:
         api-key:
           type: string
-      description: AI deployment inference endpoint authentication key
+      type: object
     json-schema-kafka:
       additionalProperties: false
       properties:
@@ -4311,13 +4318,13 @@ components:
           description: The time when the update will be automatically applied
       description: Update waiting to be installed
     error-response:
-      type: object
+      description: Error
       properties:
         error:
+          description: Error description
           type: string
           readOnly: true
-          description: Error description
-      description: Error
+      type: object
     enum-kafka-auth-method:
       type: string
       enum:
@@ -4500,6 +4507,21 @@ components:
           type: boolean
           description: Enable or Disable Kubernetes Audit
       description: Kubernetes Audit parameters
+    update-deployment-request:
+      description: Update AI deployment
+      properties:
+        inference-engine-version:
+          $ref: '#/components/schemas/inference-engine-version'
+        name:
+          description: Deployment name
+          type: string
+          minLength: 1
+        inference-engine-parameters:
+          description: Optional extra inference engine server CLI args
+          type: array
+          items:
+            type: string
+      type: object
     enum-service-state:
       type: string
       enum:
@@ -4518,6 +4540,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/dbaas-kafka-schema-registry-acl-entry'
+    snapshot-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Snapshot ID
+      description: Snapshot reference
     private-network-options:
       type: object
       properties:
@@ -5052,69 +5082,69 @@ components:
           description: IAM API Key Role ID
       description: IAM API Key
     get-deployment-response:
-      type: object
+      description: AI deployment
       properties:
         gpu-count:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: true
           description: Number of GPUs
+          format: int64
+          type: integer
+          minimum: 1
         updated-at:
-          type: string
-          format: date-time
-          readOnly: true
           description: Update time
+          format: date-time
+          type: string
+          readOnly: true
         deployment-url:
-          type: string
           description: Deployment URL (nullable)
+          type: string
         service-level:
-          type: string
-          minLength: 1
           description: Service level
+          type: string
+          minLength: 1
+        inference-engine-version:
+          $ref: '#/components/schemas/inference-engine-version'
         name:
-          type: string
-          minLength: 1
           description: Deployment name
-        status-details:
-          type: string
-          description: Deployment status details
-        gpu-type:
           type: string
           minLength: 1
-          description: GPU type family
-        status:
-          type: string
+        state:
+          description: Deployment state
           enum:
             - ready
             - creating
             - error
             - deploying
-          description: Deployment status
+          type: string
+        gpu-type:
+          description: GPU type family
+          type: string
+          minLength: 1
         id:
-          type: string
-          format: uuid
-          readOnly: true
           description: Deployment ID
-        replicas:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: false
-          description: Number of replicas (>=0)
-        created-at:
+          format: uuid
           type: string
-          format: date-time
           readOnly: true
+        replicas:
+          description: Number of replicas (>=0)
+          format: int64
+          type: integer
+          minimum: 0
+        state-details:
+          description: Deployment state details
+          type: string
+        created-at:
           description: Creation time
+          format: date-time
+          type: string
+          readOnly: true
         inference-engine-parameters:
+          description: Optional extra inference engine server CLI args
           type: array
           items:
             type: string
-          description: Optional extra inference engine server CLI args
         model:
           $ref: '#/components/schemas/model-ref'
-      description: AI deployment
+      type: object
     iam-policy:
       type: object
       properties:
@@ -5452,13 +5482,21 @@ components:
               description: Maximum number of partition contexts to send. Applies only when attached to kafka services.
           description: External integration DataDog configuration
     list-models-response:
-      type: object
+      description: AI model list
       properties:
         models:
           type: array
           items:
             $ref: '#/components/schemas/list-models-response-entry'
-      description: AI model list
+      type: object
+    instance-pool-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Instance Pool ID
+      description: Target Instance Pool
     sos-bucket-usage:
       type: object
       properties:
@@ -5491,7 +5529,7 @@ components:
         anti-affinity-groups:
           type: array
           items:
-            $ref: '#/components/schemas/anti-affinity-group'
+            $ref: '#/components/schemas/anti-affinity-group-ref'
           description: Instance Anti-affinity Groups
         public-ip-assignment:
           $ref: '#/components/schemas/public-ip-assignment'
@@ -5502,12 +5540,12 @@ components:
         security-groups:
           type: array
           items:
-            $ref: '#/components/schemas/security-group'
+            $ref: '#/components/schemas/security-group-ref'
           description: Instance Security Groups
         elastic-ips:
           type: array
           items:
-            $ref: '#/components/schemas/elastic-ip'
+            $ref: '#/components/schemas/elastic-ip-ref'
           description: Instance Elastic IPs
         name:
           type: string
@@ -5560,7 +5598,7 @@ components:
           type: boolean
           description: Indicates if the instance has tpm enabled
         deploy-target:
-          $ref: '#/components/schemas/deploy-target'
+          $ref: '#/components/schemas/deploy-target-ref'
           description: Instance Deploy Target
         ipv6-address:
           type: string
@@ -5574,7 +5612,7 @@ components:
         snapshots:
           type: array
           items:
-            $ref: '#/components/schemas/snapshot'
+            $ref: '#/components/schemas/snapshot-ref'
           description: Instance Snapshots
         disk-size:
           type: integer
@@ -5671,34 +5709,34 @@ components:
       maxLength: 64
       minLength: 1
     inference-engine-parameter-entry:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Parameter name
-        flags:
-          type: array
-          items:
-            type: string
-          description: Flag name
-        type:
-          type: string
-          description: Parameter type
-        default:
-          type: string
-          description: Default value if nothing is specified
-        section:
-          type: string
-          description: Section
-        allowed-values:
-          type: array
-          items:
-            type: string
-          description: Allowed values
-        description:
-          type: string
-          description: Parameter description
       description: inference-engine parameter definition
+      properties:
+        description:
+          description: Parameter description
+          type: string
+        allowed-values:
+          description: Allowed values
+          type: array
+          items:
+            type: string
+        default:
+          description: Default value if nothing is specified
+          type: string
+        name:
+          description: Parameter name
+          type: string
+        section:
+          description: Section
+          type: string
+        type:
+          description: Parameter type
+          type: string
+        flags:
+          description: Flag name
+          type: array
+          items:
+            type: string
+      type: object
     dbaas-user-mysql-secrets:
       type: object
       properties:
@@ -5795,61 +5833,59 @@ components:
       maxLength: 63
       minLength: 0
     list-deployments-response-entry:
-      type: object
+      description: AI deployment
       properties:
         gpu-count:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: true
           description: Number of GPUs
+          format: int64
+          type: integer
+          minimum: 1
         updated-at:
-          type: string
-          format: date-time
-          readOnly: true
           description: Update time
+          format: date-time
+          type: string
+          readOnly: true
         deployment-url:
-          type: string
           description: Deployment URL (nullable)
+          type: string
         service-level:
-          type: string
-          minLength: 1
           description: Service level
+          type: string
+          minLength: 1
         name:
-          type: string
-          minLength: 1
           description: Deployment name
-        gpu-type:
           type: string
           minLength: 1
-          description: GPU type family
-        status:
-          type: string
+        state:
+          description: Deployment state
           enum:
             - ready
             - creating
             - error
             - deploying
-          description: Deployment status
+          type: string
+        gpu-type:
+          description: GPU type family
+          type: string
+          minLength: 1
         id:
-          type: string
-          format: uuid
-          readOnly: true
           description: Deployment ID
-        replicas:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: false
-          description: Number of replicas (>=0)
-        created-at:
+          format: uuid
           type: string
-          format: date-time
           readOnly: true
+        replicas:
+          description: Number of replicas (>=0)
+          format: int64
+          type: integer
+          minimum: 0
+        created-at:
           description: Creation time
+          format: date-time
+          type: string
+          readOnly: true
         model:
           $ref: '#/components/schemas/model-ref'
-      description: AI deployment
+      type: object
     dbaas-endpoint-elasticsearch-secrets:
       type: object
       properties:
@@ -5999,7 +6035,7 @@ components:
         anti-affinity-groups:
           type: array
           items:
-            $ref: '#/components/schemas/anti-affinity-group'
+            $ref: '#/components/schemas/anti-affinity-group-ref'
           description: Instance Pool Anti-affinity Groups
         description:
           type: string
@@ -6015,12 +6051,12 @@ components:
         security-groups:
           type: array
           items:
-            $ref: '#/components/schemas/security-group'
+            $ref: '#/components/schemas/security-group-ref'
           description: Instance Pool Security Groups
         elastic-ips:
           type: array
           items:
-            $ref: '#/components/schemas/elastic-ip'
+            $ref: '#/components/schemas/elastic-ip-ref'
           description: Instances Elastic IPs
         name:
           type: string
@@ -6028,7 +6064,7 @@ components:
           minLength: 1
           description: Instance Pool name
         instance-type:
-          $ref: '#/components/schemas/instance-type'
+          $ref: '#/components/schemas/instance-type-ref'
           description: Instances type
         min-available:
           type: integer
@@ -6039,10 +6075,10 @@ components:
         private-networks:
           type: array
           items:
-            $ref: '#/components/schemas/private-network'
+            $ref: '#/components/schemas/private-network-ref'
           description: Instance Pool Private Networks
         template:
-          $ref: '#/components/schemas/template'
+          $ref: '#/components/schemas/template-ref'
           description: Instances template
         state:
           type: string
@@ -6063,7 +6099,7 @@ components:
           exclusiveMinimum: true
           description: Number of instances
         ssh-key:
-          $ref: '#/components/schemas/ssh-key'
+          $ref: '#/components/schemas/ssh-key-ref'
           description: Instances SSH key
         instance-prefix:
           type: string
@@ -6081,11 +6117,11 @@ components:
         instances:
           type: array
           items:
-            $ref: '#/components/schemas/instance'
+            $ref: '#/components/schemas/instance-ref'
           readOnly: true
           description: Instances
         deploy-target:
-          $ref: '#/components/schemas/deploy-target'
+          $ref: '#/components/schemas/deploy-target-ref'
           description: Instance Pool Deploy Target
         ipv6-enabled:
           type: boolean
@@ -6106,7 +6142,7 @@ components:
         ssh-keys:
           type: array
           items:
-            $ref: '#/components/schemas/ssh-key'
+            $ref: '#/components/schemas/ssh-key-ref'
           description: Instances SSH keys
       description: Instance Pool
     block-storage-volume-ref:
@@ -6118,17 +6154,16 @@ components:
           description: Block storage volume ID
       description: Target block storage volume
     scale-deployment-request:
-      type: object
+      description: Scale AI deployment
       properties:
         replicas:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: false
           description: Number of replicas (>=0)
+          format: int64
+          type: integer
+          minimum: 0
+      type: object
       required:
         - replicas
-      description: Scale AI deployment
     dbaas-integration-type:
       type: object
       properties:
@@ -6212,7 +6247,7 @@ components:
         anti-affinity-groups:
           type: array
           items:
-            $ref: '#/components/schemas/anti-affinity-group'
+            $ref: '#/components/schemas/anti-affinity-group-ref'
           uniqueItems: true
           maxItems: 8
           description: Nodepool Anti-affinity Groups
@@ -6239,7 +6274,7 @@ components:
         security-groups:
           type: array
           items:
-            $ref: '#/components/schemas/security-group'
+            $ref: '#/components/schemas/security-group-ref'
           uniqueItems: true
           maxItems: 16
           description: Nodepool Security Groups
@@ -6249,17 +6284,17 @@ components:
           minLength: 1
           description: Nodepool name
         instance-type:
-          $ref: '#/components/schemas/instance-type'
+          $ref: '#/components/schemas/instance-type-ref'
           description: Nodepool Instances type
         private-networks:
           type: array
           items:
-            $ref: '#/components/schemas/private-network'
+            $ref: '#/components/schemas/private-network-ref'
           uniqueItems: true
           maxItems: 16
           description: Nodepool Private Networks
         template:
-          $ref: '#/components/schemas/template'
+          $ref: '#/components/schemas/template-ref'
           readOnly: true
           description: Nodepool Instance template
         state:
@@ -6284,7 +6319,7 @@ components:
           $ref: '#/components/schemas/kubelet-image-gc'
           description: Kubelet image GC options
         instance-pool:
-          $ref: '#/components/schemas/instance-pool'
+          $ref: '#/components/schemas/instance-pool-ref'
           readOnly: true
           description: Instance Pool managed by the Nodepool
         instance-prefix:
@@ -6293,7 +6328,7 @@ components:
           minLength: 1
           description: 'The instances created by the Nodepool will be prefixed with this value (default: pool)'
         deploy-target:
-          $ref: '#/components/schemas/deploy-target'
+          $ref: '#/components/schemas/deploy-target-ref'
           description: Instance Pool Deploy Target
         addons:
           type: array
@@ -7213,13 +7248,13 @@ components:
           description: SKS cluster ID
       description: SKS cluster reference
     list-deployments-response:
-      type: object
+      description: AI model list
       properties:
         deployments:
           type: array
           items:
             $ref: '#/components/schemas/list-deployments-response-entry'
-      description: AI model list
+      type: object
     anti-affinity-group:
       type: object
       properties:
@@ -7311,42 +7346,42 @@ components:
           $ref: '#/components/schemas/dbaas-endpoint-rsyslog-optional-fields'
           description: External integration RSyslog configuration
     get-model-response:
-      type: object
+      description: AI model
       properties:
-        id:
+        updated-at:
+          description: Update time
+          format: date-time
           type: string
-          format: uuid
           readOnly: true
-          description: Model ID
         name:
+          description: Model name
           type: string
           minLength: 1
-          description: Model name
-        status:
-          type: string
+        state:
+          description: Model state
           enum:
             - ready
             - creating
             - downloading
             - error
-          description: Model status
+            - created
+          type: string
+        id:
+          description: Model ID
+          format: uuid
+          type: string
+          readOnly: true
         model-size:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: false
           description: Model size (nullable)
+          format: int64
+          type: integer
+          minimum: 0
         created-at:
-          type: string
-          format: date-time
-          readOnly: true
           description: Creation time
-        updated-at:
-          type: string
           format: date-time
+          type: string
           readOnly: true
-          description: Update time
-      description: AI model
+      type: object
     dbaas-endpoint-elasticsearch-input-update:
       type: object
       properties:
@@ -7455,42 +7490,42 @@ components:
             - tls
             - format
     list-models-response-entry:
-      type: object
+      description: AI model
       properties:
-        id:
+        updated-at:
+          description: Update time
+          format: date-time
           type: string
-          format: uuid
           readOnly: true
-          description: Model ID
         name:
+          description: Model name
           type: string
           minLength: 1
-          description: Model name
-        status:
-          type: string
+        state:
+          description: Model state
           enum:
             - ready
             - creating
             - downloading
             - error
-          description: Model status
+            - created
+          type: string
+        id:
+          description: Model ID
+          format: uuid
+          type: string
+          readOnly: true
         model-size:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: false
           description: Model size (nullable)
+          format: int64
+          type: integer
+          minimum: 0
         created-at:
-          type: string
-          format: date-time
-          readOnly: true
           description: Creation time
-        updated-at:
-          type: string
           format: date-time
+          type: string
           readOnly: true
-          description: Update time
-      description: AI model
+      type: object
     dbaas-endpoint-opensearch-input-create:
       type: object
       properties:
@@ -7532,16 +7567,15 @@ components:
             - url
             - index-prefix
     get-organization-usage-response:
-      type: object
+      description: GPU usage for an organization
       properties:
         gpu:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: false
-          readOnly: true
           description: Total GPU count
-      description: GPU usage for an organization
+          format: int64
+          type: integer
+          readOnly: true
+          minimum: 0
+      type: object
     dbaas-service-type-name:
       type: string
       maxLength: 64
@@ -8822,39 +8856,39 @@ components:
           description: Volume creation date
       description: Block storage volume
     create-deployment-request:
-      type: object
+      description: Deployment an AI model onto a set of GPUs
       properties:
-        model:
-          $ref: '#/components/schemas/model-ref'
+        gpu-count:
+          description: Number of GPUs (1-8)
+          format: int64
+          type: integer
+          minimum: 1
+        inference-engine-version:
+          $ref: '#/components/schemas/inference-engine-version'
         name:
+          description: Deployment name
           type: string
           minLength: 1
-          description: Deployment name
         gpu-type:
-          type: string
           description: GPU type family (e.g., gpua5000, gpu3080ti)
-        gpu-count:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: true
-          description: Number of GPUs (1-8)
+          type: string
         replicas:
-          type: integer
-          format: int64
-          minimum: 0
-          exclusiveMinimum: true
           description: Number of replicas (>=1)
+          format: int64
+          type: integer
+          minimum: 1
         inference-engine-parameters:
+          description: Optional extra inference engine server CLI args
           type: array
           items:
             type: string
-          description: Optional extra inference engine server CLI args
+        model:
+          $ref: '#/components/schemas/model-ref'
+      type: object
       required:
         - gpu-type
         - gpu-count
         - replicas
-      description: Deployment an AI model onto a set of GPUs
     enum-migration-method:
       type: string
       enum:
@@ -9615,14 +9649,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/get-inference-engine-help-response'
-        "500":
-          description: "500"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-      description: Get list of allowed inference engine parameters with their descriptions, types, allowed values, and defaults
-      parameters: []
+      description: Get list of allowed inference engine parameters with their descriptions and allowed values
+      parameters:
+        - in: query
+          required: false
+          name: version
+          schema:
+            type: string
       summary: '[BETA] Get inference-engine Help'
       operationId: get-inference-engine-help
   /load-balancer:
@@ -10319,7 +10352,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/list-models-response'
-      description: ""
+      description: List Models
       parameters: []
       summary: '[BETA] List Models'
       operationId: list-models
@@ -10389,7 +10422,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Scale Deployment
       parameters:
         - in: path
           required: true
@@ -10666,7 +10699,7 @@ paths:
                 anti-affinity-groups:
                   type: array
                   items:
-                    $ref: '#/components/schemas/anti-affinity-group'
+                    $ref: '#/components/schemas/anti-affinity-group-ref'
                   uniqueItems: true
                   description: Instance Pool Anti-affinity Groups
                 description:
@@ -10686,13 +10719,13 @@ paths:
                 security-groups:
                   type: array
                   items:
-                    $ref: '#/components/schemas/security-group'
+                    $ref: '#/components/schemas/security-group-ref'
                   uniqueItems: true
                   description: Instance Pool Security Groups
                 elastic-ips:
                   type: array
                   items:
-                    $ref: '#/components/schemas/elastic-ip'
+                    $ref: '#/components/schemas/elastic-ip-ref'
                   uniqueItems: true
                   description: Instances Elastic IPs
                 name:
@@ -10701,7 +10734,7 @@ paths:
                   minLength: 1
                   description: Instance Pool name
                 instance-type:
-                  $ref: '#/components/schemas/instance-type'
+                  $ref: '#/components/schemas/instance-type-ref'
                   description: Instances type
                 min-available:
                   type: integer
@@ -10712,11 +10745,11 @@ paths:
                 private-networks:
                   type: array
                   items:
-                    $ref: '#/components/schemas/private-network'
+                    $ref: '#/components/schemas/private-network-ref'
                   uniqueItems: true
                   description: Instance Pool Private Networks
                 template:
-                  $ref: '#/components/schemas/template'
+                  $ref: '#/components/schemas/template-ref'
                   description: Instances template
                 size:
                   type: integer
@@ -10725,7 +10758,7 @@ paths:
                   exclusiveMinimum: true
                   description: Number of Instances
                 ssh-key:
-                  $ref: '#/components/schemas/ssh-key'
+                  $ref: '#/components/schemas/ssh-key-ref'
                   description: Instances SSH key
                 instance-prefix:
                   type: string
@@ -10738,7 +10771,7 @@ paths:
                   minLength: 1
                   description: Instances Cloud-init user-data
                 deploy-target:
-                  $ref: '#/components/schemas/deploy-target'
+                  $ref: '#/components/schemas/deploy-target-ref'
                   description: Deploy Target to deploy Instances on
                 ipv6-enabled:
                   type: boolean
@@ -10754,7 +10787,7 @@ paths:
                 ssh-keys:
                   type: array
                   items:
-                    $ref: '#/components/schemas/ssh-key'
+                    $ref: '#/components/schemas/ssh-key-ref'
                   uniqueItems: true
                   description: Instances SSH Keys
               required:
@@ -11007,6 +11040,12 @@ paths:
       tags:
         - deployment
       responses:
+        "412":
+          description: "412"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
         "200":
           description: "200"
           content:
@@ -11039,7 +11078,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/list-deployments-response'
-      description: ""
+      description: List Deployments
       parameters: []
       summary: '[BETA] List Deployments'
       operationId: list-deployments
@@ -11482,7 +11521,7 @@ paths:
                 anti-affinity-groups:
                   type: array
                   items:
-                    $ref: '#/components/schemas/anti-affinity-group'
+                    $ref: '#/components/schemas/anti-affinity-group-ref'
                   uniqueItems: true
                   maxItems: 8
                   description: Nodepool Anti-affinity Groups
@@ -11509,7 +11548,7 @@ paths:
                 security-groups:
                   type: array
                   items:
-                    $ref: '#/components/schemas/security-group'
+                    $ref: '#/components/schemas/security-group-ref'
                   uniqueItems: true
                   maxItems: 16
                   description: Nodepool Security Groups
@@ -11519,12 +11558,12 @@ paths:
                   minLength: 1
                   description: Nodepool name, lowercase only
                 instance-type:
-                  $ref: '#/components/schemas/instance-type'
+                  $ref: '#/components/schemas/instance-type-ref'
                   description: Nodepool instances type
                 private-networks:
                   type: array
                   items:
-                    $ref: '#/components/schemas/private-network'
+                    $ref: '#/components/schemas/private-network-ref'
                   uniqueItems: true
                   maxItems: 16
                   description: Nodepool Private Networks
@@ -11534,7 +11573,7 @@ paths:
                   minLength: 1
                   description: 'Prefix to apply to managed instances names (default: pool), lowercase only'
                 deploy-target:
-                  $ref: '#/components/schemas/deploy-target'
+                  $ref: '#/components/schemas/deploy-target-ref'
                   nullable: true
                   description: Nodepool Deploy Target
                 disk-size:
@@ -11828,7 +11867,7 @@ paths:
                 anti-affinity-groups:
                   type: array
                   items:
-                    $ref: '#/components/schemas/anti-affinity-group'
+                    $ref: '#/components/schemas/anti-affinity-group-ref'
                   uniqueItems: true
                   nullable: true
                   description: Instance Pool Anti-affinity Groups
@@ -11848,14 +11887,14 @@ paths:
                 security-groups:
                   type: array
                   items:
-                    $ref: '#/components/schemas/security-group'
+                    $ref: '#/components/schemas/security-group-ref'
                   uniqueItems: true
                   nullable: true
                   description: Instance Pool Security Groups
                 elastic-ips:
                   type: array
                   items:
-                    $ref: '#/components/schemas/elastic-ip'
+                    $ref: '#/components/schemas/elastic-ip-ref'
                   nullable: true
                   description: Instances Elastic IPs
                 name:
@@ -11864,7 +11903,7 @@ paths:
                   minLength: 1
                   description: Instance Pool name
                 instance-type:
-                  $ref: '#/components/schemas/instance-type'
+                  $ref: '#/components/schemas/instance-type-ref'
                   description: Instances type
                 min-available:
                   type: integer
@@ -11876,15 +11915,15 @@ paths:
                 private-networks:
                   type: array
                   items:
-                    $ref: '#/components/schemas/private-network'
+                    $ref: '#/components/schemas/private-network-ref'
                   uniqueItems: true
                   nullable: true
                   description: Instance Pool Private Networks
                 template:
-                  $ref: '#/components/schemas/template'
+                  $ref: '#/components/schemas/template-ref'
                   description: Instances template
                 ssh-key:
-                  $ref: '#/components/schemas/ssh-key'
+                  $ref: '#/components/schemas/ssh-key-ref'
                   nullable: true
                   description: Instances SSH key
                 instance-prefix:
@@ -11897,7 +11936,7 @@ paths:
                   nullable: true
                   description: Instances Cloud-init user-data
                 deploy-target:
-                  $ref: '#/components/schemas/deploy-target'
+                  $ref: '#/components/schemas/deploy-target-ref'
                   nullable: true
                   description: Instance Pool Deploy Target
                 ipv6-enabled:
@@ -11914,7 +11953,7 @@ paths:
                 ssh-keys:
                   type: array
                   items:
-                    $ref: '#/components/schemas/ssh-key'
+                    $ref: '#/components/schemas/ssh-key-ref'
                   uniqueItems: true
                   nullable: true
                   description: Instances SSH keys
@@ -12188,19 +12227,19 @@ paths:
       tags:
         - deployment
       responses:
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/get-deployment-response'
         "404":
           description: "404"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: ""
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get-deployment-response'
+      description: Get Deployment details
       parameters:
         - in: path
           required: true
@@ -12210,6 +12249,32 @@ paths:
             format: uuid
       summary: '[BETA] Get Deployment'
       operationId: get-deployment
+    patch:
+      tags:
+        - deployment
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: Update AI deployment
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: ""
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update-deployment-request'
+      operationId: update-deployment
     delete:
       tags:
         - deployment
@@ -12220,7 +12285,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Delete Deployment
       parameters:
         - in: path
           required: true
@@ -14855,19 +14920,19 @@ paths:
       tags:
         - model
       responses:
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/operation'
         "412":
           description: "412"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/delete-model-conflict-response'
-      description: ""
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: Delete Model
       parameters:
         - in: path
           required: true
@@ -14881,19 +14946,19 @@ paths:
       tags:
         - model
       responses:
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/get-model-response'
         "404":
           description: "404"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: ""
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get-model-response'
+      description: Get Model details
       parameters:
         - in: path
           required: true
@@ -17585,7 +17650,7 @@ paths:
                 anti-affinity-groups:
                   type: array
                   items:
-                    $ref: '#/components/schemas/anti-affinity-group'
+                    $ref: '#/components/schemas/anti-affinity-group-ref'
                   uniqueItems: true
                   maxItems: 8
                   description: Nodepool Anti-affinity Groups
@@ -17612,7 +17677,7 @@ paths:
                 security-groups:
                   type: array
                   items:
-                    $ref: '#/components/schemas/security-group'
+                    $ref: '#/components/schemas/security-group-ref'
                   uniqueItems: true
                   maxItems: 16
                   description: Nodepool Security Groups
@@ -17622,12 +17687,12 @@ paths:
                   minLength: 1
                   description: Nodepool name, lowercase only
                 instance-type:
-                  $ref: '#/components/schemas/instance-type'
+                  $ref: '#/components/schemas/instance-type-ref'
                   description: Nodepool instances type
                 private-networks:
                   type: array
                   items:
-                    $ref: '#/components/schemas/private-network'
+                    $ref: '#/components/schemas/private-network-ref'
                   uniqueItems: true
                   maxItems: 16
                   description: Nodepool Private Networks
@@ -17646,7 +17711,7 @@ paths:
                   minLength: 1
                   description: 'Prefix to apply to instances names (default: pool), lowercase only'
                 deploy-target:
-                  $ref: '#/components/schemas/deploy-target'
+                  $ref: '#/components/schemas/deploy-target-ref'
                   description: Nodepool Deploy Target
                 addons:
                   type: array
@@ -18826,7 +18891,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/reveal-deployment-api-key-response'
-      description: ""
+      description: Get Deployment API Key
       parameters:
         - in: path
           required: true
@@ -19266,20 +19331,26 @@ paths:
       tags:
         - deployment
       responses:
-        "200":
-          description: "200"
+        "500":
+          description: "500"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/get-deployment-logs-response'
+                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-        "500":
-          description: "500"
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get-deployment-logs-response'
+        "400":
+          description: "400"
           content:
             application/json:
               schema:
@@ -19294,12 +19365,15 @@ paths:
             format: uuid
         - in: query
           required: false
+          name: stream
+          schema:
+            type: boolean
+        - in: query
+          required: false
           name: tail
           schema:
             type: integer
             format: int64
-            minimum: 0
-            exclusiveMinimum: false
       summary: '[BETA] Get Deployment Logs'
       operationId: get-deployment-logs
   /sks-cluster/{id}/upgrade:

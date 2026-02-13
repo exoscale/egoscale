@@ -124,6 +124,52 @@ var SchemaPropertyOverrides = map[string]*Overrides{
 			"#/components/schemas/dbaas-mysql-user-password": "DBAASUserPassword",
 		},
 	},
+	"CreateInstancePoolRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
+			"#/components/schemas/deploy-target-ref":       "DeployTarget",
+			"#/components/schemas/elastic-ip-ref":          "ElasticIP",
+			"#/components/schemas/instance-type-ref":       "InstanceType",
+			"#/components/schemas/private-network-ref":     "PrivateNetwork",
+			"#/components/schemas/security-group-ref":      "SecurityGroup",
+			"#/components/schemas/template-ref":            "Template",
+			"#/components/schemas/ssh-key-ref":             "SSHKey",
+		},
+	},
+	"UpdateInstancePoolRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
+			"#/components/schemas/deploy-target-ref":       "DeployTarget",
+			"#/components/schemas/elastic-ip-ref":          "ElasticIP",
+			"#/components/schemas/instance-type-ref":       "InstanceType",
+			"#/components/schemas/private-network-ref":     "PrivateNetwork",
+			"#/components/schemas/security-group-ref":      "SecurityGroup",
+			"#/components/schemas/template-ref":            "Template",
+			"#/components/schemas/ssh-key-ref":             "SSHKey",
+		},
+	},
+	"CreateSKSNodepoolRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
+			"#/components/schemas/deploy-target-ref":       "DeployTarget",
+			"#/components/schemas/instance-type-ref":       "InstanceType",
+			"#/components/schemas/private-network-ref":     "PrivateNetwork",
+			"#/components/schemas/security-group-ref":      "SecurityGroup",
+		},
+	},
+	"UpdateSKSNodepoolRequest": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
+			"#/components/schemas/deploy-target-ref":       "DeployTarget",
+			"#/components/schemas/instance-type-ref":       "InstanceType",
+			"#/components/schemas/private-network-ref":     "PrivateNetwork",
+			"#/components/schemas/security-group-ref":      "SecurityGroup",
+		},
+	},
 }
 
 var SpecialAliases = []string{

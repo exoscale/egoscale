@@ -8,6 +8,7 @@ import (
 
 	"github.com/pb33f/libopenapi"
 
+	"github.com/exoscale/egoscale/v3/generator/cli"
 	"github.com/exoscale/egoscale/v3/generator/client"
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/exoscale/egoscale/v3/generator/operations"
@@ -39,19 +40,24 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := schemas.Generate(doc, filepath.Join(genPathDir, "/schemas.go"), packageName); err != nil {
+	if err := schemas.Generate(doc, filepath.Join(genPathDir, "schemas.go"), packageName); err != nil {
 		log.Fatal("schemas: ", err)
 	}
-	if err := client.Generate(doc, filepath.Join(genPathDir, "/client.go"), packageName); err != nil {
+	if err := client.Generate(doc, filepath.Join(genPathDir, "client.go"), packageName); err != nil {
 		log.Fatal("client: ", err)
 	}
-	if err := operations.Generate(doc, filepath.Join(genPathDir, "/operations.go"), packageName); err != nil {
+	if err := operations.Generate(doc, filepath.Join(genPathDir, "operations.go"), packageName); err != nil {
 		log.Fatal("operations: ", err)
 	}
 
-	if err := os.MkdirAll(genPathDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(genPathDir+"/cli", os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
+
+	if err := cli.Generate(doc, filepath.Join(genPathDir, "cli", "cli.go"), packageName); err != nil {
+		log.Fatal("schemas: ", err)
+	}
+
 }
 
 func init() {

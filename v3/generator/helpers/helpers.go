@@ -170,6 +170,42 @@ var SchemaPropertyOverrides = map[string]*Overrides{
 			"#/components/schemas/security-group-ref":      "SecurityGroup",
 		},
 	},
+	"Instance": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
+			"#/components/schemas/deploy-target-ref":       "DeployTarget",
+			"#/components/schemas/elastic-ip-ref":          "ElasticIP",
+			"#/components/schemas/security-group-ref":      "SecurityGroup",
+			"#/components/schemas/snapshot-ref":            "Snapshot",
+		},
+	},
+	"InstancePool": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
+			"#/components/schemas/deploy-target-ref":       "DeployTarget",
+			"#/components/schemas/elastic-ip-ref":          "ElasticIP",
+			"#/components/schemas/instance-type-ref":       "InstanceType",
+			"#/components/schemas/instance-ref":            "Instance",
+			"#/components/schemas/private-network-ref":     "PrivateNetwork",
+			"#/components/schemas/security-group-ref":      "SecurityGroup",
+			"#/components/schemas/ssh-key-ref":             "SSHKey",
+			"#/components/schemas/template-ref":            "Template",
+		},
+	},
+	"SKSNodepool": {
+		Props: nil,
+		Refs: map[string]string{
+			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
+			"#/components/schemas/deploy-target-ref":       "DeployTarget",
+			"#/components/schemas/instance-pool-ref":       "InstancePool",
+			"#/components/schemas/instance-type-ref":       "InstanceType",
+			"#/components/schemas/private-network-ref":     "PrivateNetwork",
+			"#/components/schemas/security-group-ref":      "SecurityGroup",
+			"#/components/schemas/template-ref":            "Template",
+		},
+	},
 }
 
 var SpecialAliases = []string{

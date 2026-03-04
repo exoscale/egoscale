@@ -181,9 +181,9 @@ type CreateDeploymentRequest struct {
 	InferenceEngineParameters []string `json:"inference-engine-parameters,omitempty"`
 	// Inference engine version
 	InferenceEngineVersion InferenceEngineVersion `json:"inference-engine-version,omitempty"`
-	Model                  *ModelRef              `json:"model,omitempty"`
+	Model                  *ModelRef              `json:"model" validate:"required"`
 	// Deployment name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
+	Name string `json:"name" validate:"required,gte=1"`
 	// Number of replicas (>=1)
 	Replicas int64 `json:"replicas" validate:"required,gte=1"`
 }
@@ -193,7 +193,7 @@ type CreateModelRequest struct {
 	// Huggingface Token
 	HuggingfaceToken string `json:"huggingface-token,omitempty"`
 	// Model name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1"`
+	Name string `json:"name" validate:"required,gte=1"`
 }
 
 // DBaaS plan backup config
@@ -2226,6 +2226,11 @@ type Event struct {
 	Zone string `json:"zone,omitempty"`
 }
 
+// GPU usage for all organizations
+type GetConfederatioUsageResponse struct {
+	OrganizationsUsages map[string]OrganizationUsage `json:"organizations_usages" validate:"required"`
+}
+
 // A single log entry
 type GetDeploymentLogsEntry struct {
 	// Log message content
@@ -2634,6 +2639,14 @@ type InstanceType struct {
 	Size InstanceTypeSize `json:"size,omitempty"`
 	// Instance Type available zones
 	Zones []ZoneName `json:"zones,omitempty"`
+}
+
+// Instance type with authorization status
+type InstanceTypeEntry struct {
+	// Whether this instance type is authorized based on server availability
+	Authorized *bool `json:"authorized,omitempty"`
+	// GPU family name
+	Family string `json:"family,omitempty"`
 }
 
 // Instance type reference
@@ -3816,6 +3829,11 @@ type KubeletImageGC struct {
 
 type Labels map[string]string
 
+// List of available instance types with authorization status
+type ListAIInstanceTypesResponse struct {
+	InstanceTypes []InstanceTypeEntry `json:"instance-types,omitempty"`
+}
+
 // AI model list
 type ListDeploymentsResponse struct {
 	Deployments []ListDeploymentsResponseEntry `json:"deployments,omitempty"`
@@ -4111,6 +4129,12 @@ type Organization struct {
 	Name string `json:"name,omitempty"`
 	// Organization postcode
 	Postcode string `json:"postcode,omitempty"`
+}
+
+// Organization GPU usage
+type OrganizationUsage struct {
+	// Total GPU count
+	Gpu int64 `json:"gpu" validate:"required,gte=0"`
 }
 
 // Private Network

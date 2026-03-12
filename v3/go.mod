@@ -1,6 +1,6 @@
 module github.com/exoscale/egoscale/v3
 
-go 1.23.8
+go 1.26
 
 require (
 	github.com/diskfs/go-diskfs v1.4.0

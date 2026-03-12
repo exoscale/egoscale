@@ -1,6 +1,6 @@
 module github.com/exoscale/egoscale/v3/generator
 
-go 1.23.1
+go 1.26
 
 require (
 	github.com/BluntSporks/abbreviation v0.0.0-20150522120346-096cdb48bafa

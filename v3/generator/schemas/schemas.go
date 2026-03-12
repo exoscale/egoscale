@@ -53,7 +53,7 @@ import (
 
 		r, err := RenderSchema(schemaName, v)
 		if err != nil {
-			return err
+			return fmt.Errorf("RenderSchema: %v", err)
 		}
 		output.Write(r)
 		output.WriteString("\n")
@@ -72,7 +72,7 @@ import (
 
 	content, err := format.Source(output.Bytes())
 	if err != nil {
-		return err
+		return fmt.Errorf("format.Source: %v", err)
 	}
 
 	return os.WriteFile(path, content, os.ModePerm)
@@ -116,6 +116,9 @@ func RenderSimpleType(s *base.Schema) string {
 		}
 		if s.Format == "ipv4" {
 			return "net.IP"
+		}
+		if s.Format == "uri-reference" {
+			return "string"
 		}
 
 		return s.Format

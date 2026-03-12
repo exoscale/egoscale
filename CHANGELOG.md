@@ -5,6 +5,7 @@ unreleased
 ----------
 
 - Bump Go to 1.26 (fixes govulncheck report) (#754)
+- v3 generator: implement format: uri-reference (#753)
 
 3.1.32
 ------

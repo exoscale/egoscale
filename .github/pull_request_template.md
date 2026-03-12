@@ -10,4 +10,3 @@
 (For exoscale contributors)
 
 * [ ] Changelog updated (under *Unreleased* block)
-* [ ] For a new resource or new attributes: test added/updated

@@ -38,18 +38,6 @@ body:
       description: What version of egoscale are you using?
     validations:
       required: true
-  - type: dropdown
-    id: egoscale_client_version
-    attributes:
-      label: egoscale client version
-      description: What version of egoscale client are you using?
-    multiple: false
-    validations:
-      required: true
-    options:
-      - v1 (deprecated)
-      - v2
-      - v3 (wip)
   - type: textarea
     id: logs
     attributes:

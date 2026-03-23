@@ -1156,6 +1156,70 @@ func (c Client) GetAPIKey(ctx context.Context, id string) (*IAMAPIKey, error) {
 	return bodyresp, nil
 }
 
+type AssumeRoleResponse struct {
+	Key    string `json:"key,omitempty"`
+	Name   string `json:"name,omitempty"`
+	OrgID  string `json:"org-id,omitempty"`
+	RoleID string `json:"role-id,omitempty"`
+	Secret string `json:"secret,omitempty"`
+}
+
+type AssumeRoleRequest struct {
+	// TTL in seconds for the generated access key (cannot exceed the max TTL defined in the targeted assume role)
+	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gt=0"`
+}
+
+// Request generation of key/secret allowing calls as of target role.
+func (c Client) AssumeRole(ctx context.Context, targetRoleID UUID, req AssumeRoleRequest) (*AssumeRoleResponse, error) {
+	path := fmt.Sprintf("/assume-role/%v", targetRoleID)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("AssumeRole: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("AssumeRole: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AssumeRole: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AssumeRole: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "assume-role")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("AssumeRole: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AssumeRole: http response: %w", err)
+	}
+
+	bodyresp := new(AssumeRoleResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("AssumeRole: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type ListBlockStorageVolumesResponse struct {
 	BlockStorageVolumes []BlockStorageVolume `json:"block-storage-volumes,omitempty"`
 }

@@ -15881,6 +15881,51 @@ paths:
             format: uuid
       summary: '[BETA] Get Model'
       operationId: get-model
+  /assume-role/{target-role-id}:
+    post:
+      tags:
+        - role
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  name:
+                    type: string
+                  org-id:
+                    type: string
+                  role-id:
+                    type: string
+                  secret:
+                    type: string
+      description: Request generation of key/secret allowing calls as of target role.
+      parameters:
+        - in: path
+          required: true
+          name: target-role-id
+          schema:
+            type: string
+            format: uuid
+      summary: Request generation of key/secret allowing calls as of target role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ttl:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  exclusiveMinimum: true
+                  description: TTL in seconds for the generated access key (cannot exceed the max TTL defined in the targeted assume role)
+      operationId: assume-role
   /sos-buckets-usage:
     get:
       tags:

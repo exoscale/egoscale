@@ -11000,17 +11000,17 @@ func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleReq
 }
 
 // Update IAM Assume role Policy
-func (c Client) UpdateIAMAssumeRolePolicy(ctx context.Context, id UUID, req IAMPolicy) (*Operation, error) {
+func (c Client) UpdateIAMRoleAssumePolicy(ctx context.Context, id UUID, req IAMPolicy) (*Operation, error) {
 	path := fmt.Sprintf("/iam-role/%v:assume-role-policy", id)
 
 	body, err := prepareJSONBody(req)
 	if err != nil {
-		return nil, fmt.Errorf("UpdateIAMAssumeRolePolicy: prepare Json body: %w", err)
+		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: prepare Json body: %w", err)
 	}
 
 	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
 	if err != nil {
-		return nil, fmt.Errorf("UpdateIAMAssumeRolePolicy: new request: %w", err)
+		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: new request: %w", err)
 	}
 
 	request.Header.Add("User-Agent", c.getUserAgent())
@@ -11018,20 +11018,20 @@ func (c Client) UpdateIAMAssumeRolePolicy(ctx context.Context, id UUID, req IAMP
 	request.Header.Add("Content-Type", "application/json")
 
 	if err := c.executeRequestInterceptors(ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateIAMAssumeRolePolicy: execute request editors: %w", err)
+		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: execute request editors: %w", err)
 	}
 
 	if err := c.signRequest(request); err != nil {
-		return nil, fmt.Errorf("UpdateIAMAssumeRolePolicy: sign request: %w", err)
+		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: sign request: %w", err)
 	}
 
 	if c.trace {
-		dumpRequest(request, "update-iam-assume-role-policy")
+		dumpRequest(request, "update-iam-role-assume-policy")
 	}
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("UpdateIAMAssumeRolePolicy: http client do: %w", err)
+		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: http client do: %w", err)
 	}
 
 	if c.trace {
@@ -11039,12 +11039,12 @@ func (c Client) UpdateIAMAssumeRolePolicy(ctx context.Context, id UUID, req IAMP
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("UpdateIAMAssumeRolePolicy: http response: %w", err)
+		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
-		return nil, fmt.Errorf("UpdateIAMAssumeRolePolicy: prepare Json response: %w", err)
+		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil
@@ -11096,6 +11096,70 @@ func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy)
 	bodyresp := new(Operation)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type AssumeIAMRoleResponse struct {
+	Key    string `json:"key,omitempty"`
+	Name   string `json:"name,omitempty"`
+	OrgID  string `json:"org-id,omitempty"`
+	RoleID string `json:"role-id,omitempty"`
+	Secret string `json:"secret,omitempty"`
+}
+
+type AssumeIAMRoleRequest struct {
+	// TTL in seconds for the generated access key (cannot exceed the max TTL defined in the targeted assume role)
+	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gt=0"`
+}
+
+// [BETA] Request generation of key/secret that allow caller to assume target role
+func (c Client) AssumeIAMRole(ctx context.Context, targetRoleID UUID, req AssumeIAMRoleRequest) (*AssumeIAMRoleResponse, error) {
+	path := fmt.Sprintf("/iam-role/%v/assume", targetRoleID)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "assume-iam-role")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: http response: %w", err)
+	}
+
+	bodyresp := new(AssumeIAMRoleResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil
@@ -16606,8 +16670,10 @@ type UpdateSKSNodepoolRequest struct {
 	// Prefix to apply to managed instances names (default: pool), lowercase only
 	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
 	// Instance type reference
-	InstanceType *InstanceType     `json:"instance-type,omitempty"`
-	Labels       SKSNodepoolLabels `json:"labels,omitempty"`
+	InstanceType *InstanceType `json:"instance-type,omitempty"`
+	// Kubelet image GC options
+	KubeletImageGC *KubeletImageGC   `json:"kubelet-image-gc,omitempty"`
+	Labels         SKSNodepoolLabels `json:"labels,omitempty"`
 	// Nodepool name, lowercase only
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Nodepool Private Networks

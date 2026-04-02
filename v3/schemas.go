@@ -1921,12 +1921,12 @@ type DBAASValkeyUsers struct {
 }
 
 type DecryptRequest struct {
-	Ciphertext        byte  `json:"ciphertext" validate:"required"`
-	EncryptionContext *byte `json:"encryption-context,omitempty"`
+	Ciphertext        []byte  `json:"ciphertext" validate:"required"`
+	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
 }
 
 type DecryptResponse struct {
-	Plaintext byte `json:"plaintext" validate:"required"`
+	Plaintext []byte `json:"plaintext" validate:"required"`
 }
 
 // Model is in use: deletion forbidden
@@ -2093,12 +2093,12 @@ type EnableKmsKeyRotationResponse struct {
 }
 
 type EncryptRequest struct {
-	EncryptionContext *byte `json:"encryption-context,omitempty"`
-	Plaintext         byte  `json:"plaintext" validate:"required"`
+	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
+	Plaintext         []byte  `json:"plaintext" validate:"required"`
 }
 
 type EncryptResponse struct {
-	Ciphertext byte `json:"ciphertext" validate:"required"`
+	Ciphertext []byte `json:"ciphertext" validate:"required"`
 }
 
 type EnumComponentRoute string
@@ -2343,13 +2343,13 @@ const (
 
 type GenerateDataKeyRequest struct {
 	BytesCount        int                           `json:"bytes-count,omitempty" validate:"omitempty,gte=1,lte=1024"`
-	EncryptionContext *byte                         `json:"encryption-context,omitempty"`
+	EncryptionContext *[]byte                       `json:"encryption-context,omitempty"`
 	KeySpec           GenerateDataKeyRequestKeySpec `json:"key-spec,omitempty"`
 }
 
 type GenerateDataKeyResponse struct {
-	Ciphertext byte `json:"ciphertext" validate:"required"`
-	Plaintext  byte `json:"plaintext" validate:"required"`
+	Ciphertext []byte `json:"ciphertext" validate:"required"`
+	Plaintext  []byte `json:"plaintext" validate:"required"`
 }
 
 // GPU usage for all organizations
@@ -4431,15 +4431,15 @@ type Quota struct {
 
 type ReEncryptRequestDestination struct {
 	// Optional encryption context appended to the AAD.
-	EncryptionContext *byte `json:"encryption-context,omitempty"`
+	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
 	// The ID of the target key.
 	Key UUID `json:"key" validate:"required"`
 }
 
 type ReEncryptRequestSource struct {
-	Ciphertext byte `json:"ciphertext" validate:"required"`
+	Ciphertext []byte `json:"ciphertext" validate:"required"`
 	// Optional encryption context appended to the AAD.
-	EncryptionContext *byte `json:"encryption-context,omitempty"`
+	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
 	// The ID of the source key.
 	Key UUID `json:"key" validate:"required"`
 }
@@ -4450,7 +4450,7 @@ type ReEncryptRequest struct {
 }
 
 type ReEncryptResponse struct {
-	Ciphertext byte `json:"ciphertext" validate:"required"`
+	Ciphertext []byte `json:"ciphertext" validate:"required"`
 }
 
 type ReplicaFailure struct {

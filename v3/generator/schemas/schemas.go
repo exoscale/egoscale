@@ -108,20 +108,20 @@ func RenderSimpleType(s *base.Schema) string {
 	}
 
 	if s.Format != "" {
-		if s.Format == "date-time" {
+		switch s.Format {
+		case "date-time":
 			return "time.Time"
-		}
-		if s.Format == "uuid" {
+		case "uuid":
 			return "UUID"
-		}
-		if s.Format == "ipv4" {
+		case "ipv4":
 			return "net.IP"
-		}
-		if s.Format == "uri-reference" {
+		case "uri-reference":
 			return "string"
+		case "byte":
+			return "[]byte"
+		default:
+			return s.Format
 		}
-
-		return s.Format
 	}
 
 	if len(s.Type) == 0 {

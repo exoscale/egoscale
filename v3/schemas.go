@@ -222,11 +222,9 @@ type CreateKmsKeyResponse struct {
 	MultiZone   *bool                      `json:"multi-zone" validate:"required"`
 	Name        string                     `json:"name" validate:"required"`
 	OriginZone  string                     `json:"origin-zone" validate:"required"`
-	Policy      string                     `json:"policy" validate:"required"`
 	Revision    *RevisionStamp             `json:"revision" validate:"required"`
 	Source      CreateKmsKeyResponseSource `json:"source" validate:"required"`
 	Status      CreateKmsKeyResponseStatus `json:"status" validate:"required"`
-	StatusSince time.Time                  `json:"status-since" validate:"required"`
 	Usage       string                     `json:"usage" validate:"required"`
 }
 
@@ -1960,10 +1958,6 @@ type DeployTargetRef struct {
 	ID UUID `json:"id,omitempty"`
 }
 
-type DisableKmsKeyRotationRequest struct {
-	ID UUID `json:"id" validate:"required"`
-}
-
 type DisableKmsKeyRotationResponse struct {
 	Rotation *KeyRotationConfig `json:"rotation" validate:"required"`
 }
@@ -2084,8 +2078,7 @@ type ElasticIPRef struct {
 }
 
 type EnableKmsKeyRotationRequest struct {
-	ID             UUID `json:"id" validate:"required"`
-	RotationPeriod int  `json:"rotation-period,omitempty" validate:"omitempty,gte=90,lte=2560"`
+	RotationPeriod int `json:"rotation-period,omitempty" validate:"omitempty,gte=90,lte=2560"`
 }
 
 type EnableKmsKeyRotationResponse struct {
@@ -2440,7 +2433,6 @@ type GetKmsKeyResponse struct {
 	MultiZone      *bool                   `json:"multi-zone" validate:"required"`
 	Name           string                  `json:"name" validate:"required"`
 	OriginZone     string                  `json:"origin-zone" validate:"required"`
-	Policy         string                  `json:"policy" validate:"required"`
 	Replicas       []string                `json:"replicas" validate:"required"`
 	ReplicasStatus []ReplicaState          `json:"replicas-status,omitempty"`
 	Revision       *RevisionStamp          `json:"revision" validate:"required"`
@@ -4892,7 +4884,8 @@ type SSHKeyRef struct {
 type SuccessResponseStatus string
 
 const (
-	SuccessResponseStatusSuccess SuccessResponseStatus = "success"
+	SuccessResponseStatusSuccess          SuccessResponseStatus = "success"
+	SuccessResponseStatusTargetRegistered SuccessResponseStatus = "target-registered"
 )
 
 type SuccessResponse struct {

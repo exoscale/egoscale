@@ -977,14 +977,6 @@ components:
               exclusiveMinimum: false
               exclusiveMaximum: false
               description: Rsyslog max message size
-    disable-kms-key-rotation-request:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          type: string
-          format: uuid
     json-schema-grafana:
       properties:
         allow_embedding:
@@ -1961,12 +1953,7 @@ components:
           type: string
     enable-kms-key-rotation-request:
       type: object
-      required:
-        - id
       properties:
-        id:
-          type: string
-          format: uuid
         rotation-period:
           type: integer
           minimum: 90
@@ -4661,6 +4648,7 @@ components:
           type: string
           enum:
             - success
+            - target-registered
           default: success
     elastic-ip-ref:
       type: object
@@ -8012,7 +8000,6 @@ components:
         - description
         - usage
         - source
-        - policy
         - status
         - status-since
         - material
@@ -8037,8 +8024,6 @@ components:
           type: string
           enum:
             - exoscale-kms
-        policy:
-          type: string
         usage:
           type: string
         replicas-status:
@@ -8078,7 +8063,6 @@ components:
         - source
         - status
         - status-since
-        - policy
         - multi-zone
         - origin-zone
         - created-at
@@ -8096,8 +8080,6 @@ components:
           type: string
           enum:
             - exoscale-kms
-        policy:
-          type: string
         usage:
           type: string
         status:
@@ -8106,9 +8088,6 @@ components:
             - enabled
             - disabled
             - pending-deletion
-        status-since:
-          type: string
-          format: date-time
         id:
           type: string
           format: uuid
@@ -10219,12 +10198,6 @@ paths:
             type: string
             format: uuid
       summary: '[BETA] Disable Key Rotation'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/disable-kms-key-rotation-request'
       operationId: disable-kms-key-rotation
   /dbaas-postgres/{service}/upgrade-check:
     post:
@@ -20086,7 +20059,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/operation'
+                $ref: '#/components/schemas/success-response'
         "400":
           description: "400"
           content:
@@ -20607,7 +20580,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[Beta] Cancel KMS Key Deletion'
+      summary: '[BETA] Cancel KMS Key Deletion'
       operationId: cancel-kms-key-deletion
   /kms-key/{id}/generate-data-key:
     post:

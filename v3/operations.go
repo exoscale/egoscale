@@ -13178,22 +13178,15 @@ func (c Client) DisableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, e
 }
 
 // Disable the periodic rotation of a KMS Key.
-func (c Client) DisableKmsKeyRotation(ctx context.Context, id UUID, req DisableKmsKeyRotationRequest) (*DisableKmsKeyRotationResponse, error) {
+func (c Client) DisableKmsKeyRotation(ctx context.Context, id UUID) (*DisableKmsKeyRotationResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/disable-key-rotation", id)
 
-	body, err := prepareJSONBody(req)
-	if err != nil {
-		return nil, fmt.Errorf("DisableKmsKeyRotation: prepare Json body: %w", err)
-	}
-
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("DisableKmsKeyRotation: new request: %w", err)
 	}
 
 	request.Header.Add("User-Agent", c.getUserAgent())
-
-	request.Header.Add("Content-Type", "application/json")
 
 	if err := c.executeRequestInterceptors(ctx, request); err != nil {
 		return nil, fmt.Errorf("DisableKmsKeyRotation: execute request editors: %w", err)
@@ -13521,7 +13514,7 @@ func (c Client) ReEncrypt(ctx context.Context, id UUID, req ReEncryptRequest) (*
 }
 
 // Replicate a KMS key to a target zone.
-func (c Client) ReplicateKmsKey(ctx context.Context, id UUID, req ReplicateKmsKeyRequest) (*Operation, error) {
+func (c Client) ReplicateKmsKey(ctx context.Context, id UUID, req ReplicateKmsKeyRequest) (*SuccessResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/replicate", id)
 
 	body, err := prepareJSONBody(req)
@@ -13563,7 +13556,7 @@ func (c Client) ReplicateKmsKey(ctx context.Context, id UUID, req ReplicateKmsKe
 		return nil, fmt.Errorf("ReplicateKmsKey: http response: %w", err)
 	}
 
-	bodyresp := new(Operation)
+	bodyresp := new(SuccessResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ReplicateKmsKey: prepare Json response: %w", err)
 	}

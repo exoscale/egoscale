@@ -819,6 +819,15 @@ components:
           type: string
           format: byte
           nullable: true
+    recompute-bundle-response:
+      description: Response from bundle recompute operation
+      properties:
+        message:
+          description: Status message describing the result
+          type: string
+      type: object
+      required:
+        - message
     dbaas-endpoint-prometheus-payload:
       type: object
       properties:
@@ -2012,6 +2021,18 @@ components:
       type: object
       required:
         - name
+    ai-api-key-with-value:
+      description: AI API key with plaintext value
+      allOf:
+        - $ref: '#/components/schemas/ai-api-key'
+        - properties:
+            value:
+              description: Plaintext AI API key value (returned only on create/rotate)
+              type: string
+          type: object
+          required:
+            - value
+      type: object
     inference-engine-version:
       description: Inference engine version
       enum:
@@ -2019,7 +2040,10 @@ components:
         - 0.15.1
         - 0.16.0
         - 0.17.0
-      default: 0.17.0
+        - 0.18.0
+        - 0.18.1
+        - 0.19.0
+      default: 0.19.0
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -4246,6 +4270,23 @@ components:
         - username
         - resource
         - permission
+    forbidden-operation-response:
+      description: Forbidden operation response
+      properties:
+        code:
+          description: Machine-readable forbidden error code
+          enum:
+            - forbidden_operation
+          type: string
+          readOnly: true
+        error:
+          description: Forbidden error message
+          type: string
+          readOnly: true
+      type: object
+      required:
+        - error
+        - code
     enum-mysql-authentication-plugin:
       type: string
       enum:
@@ -4450,6 +4491,24 @@ components:
             $ref: '#/components/schemas/access-key-resource'
           description: IAM Access Key Resources
       description: IAM Access Key
+    list-ai-api-keys-response:
+      description: List of AI API keys
+      properties:
+        ai-api-keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/ai-api-key'
+      type: object
+      example:
+        ai-api-keys:
+          - updated-at: "2026-03-25T10:00:00Z"
+            name: default-public-key
+            scope: public
+            id: 11111111-1111-1111-1111-111111111111
+            org-uuid: 22222222-2222-2222-2222-222222222222
+            created-at: "2026-03-25T10:00:00Z"
+      required:
+        - ai-api-keys
     list-ai-instance-types-response:
       description: List of available instance types with authorization status
       properties:
@@ -5493,6 +5552,17 @@ components:
         - transaction
         - statement
         - session
+    update-ai-api-key-request:
+      description: Request to update an AI API key (at least one property required)
+      properties:
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+        scope:
+          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
+          type: string
+      type: object
+      minProperties: 1
     dbaas-service-thanos:
       type: object
       properties:
@@ -6258,6 +6328,12 @@ components:
         enable-operators-ca:
           type: boolean
           description: Indicates whether to add operators certificate authority (CA) as part of trusted CAs for the API server.
+        default-security-group-id:
+          type: string
+          format: uuid
+          nullable: true
+          readOnly: true
+          description: Cluster default Security Group ID
         state:
           type: string
           enum:
@@ -7249,6 +7325,19 @@ components:
               description: Maximum number of partition contexts to send. Applies only when attached to kafka services.
           required:
             - datadog-api-key
+    create-ai-api-key-request:
+      description: Request to create a new AI API key
+      properties:
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+        scope:
+          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
+          type: string
+      type: object
+      required:
+        - name
+        - scope
     zone-name:
       type: string
       enum:
@@ -9515,6 +9604,36 @@ components:
         - endpoint
         - bearer-token
       description: Kubernetes Audit parameters
+    ai-api-key:
+      description: AI API key metadata (without value)
+      properties:
+        updated-at:
+          description: Last update timestamp
+          format: date-time
+          type: string
+          readOnly: true
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+        scope:
+          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
+          type: string
+        id:
+          description: AI API key ID
+          format: uuid
+          type: string
+          readOnly: true
+        org-uuid:
+          description: Organization UUID that owns this key
+          format: uuid
+          type: string
+          readOnly: true
+        created-at:
+          description: Creation timestamp
+          format: date-time
+          type: string
+          readOnly: true
+      type: object
     dbaas-user-thanos-secrets:
       type: object
       properties:
@@ -10038,6 +10157,65 @@ paths:
               required:
                 - name
       operationId: create-anti-affinity-group
+  /ai/ai-api-key:
+    get:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/list-ai-api-keys-response'
+      description: List AI API keys for an organization
+      parameters: []
+      summary: List AI API Keys
+      operationId: list-ai-api-keys
+    post:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ai-api-key-with-value'
+        "400":
+          description: "400"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+      description: Create a new AI API key
+      parameters: []
+      summary: Create AI API Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/create-ai-api-key-request'
+      operationId: create-ai-api-key
   /usage-report:
     get:
       tags:
@@ -10287,7 +10465,7 @@ paths:
           name: version
           schema:
             type: string
-      summary: '[BETA] Get inference-engine Help'
+      summary: Get inference-engine Help
       operationId: get-inference-engine-help
   /load-balancer:
     post:
@@ -11030,6 +11208,12 @@ paths:
       tags:
         - model
       responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
         "200":
           description: "200"
           content:
@@ -11043,7 +11227,7 @@ paths:
 
         If the model is under a license then you must provide a Huggingface access token for an account that signed the license agreement
       parameters: []
-      summary: '[BETA] Create Model'
+      summary: Create Model
       requestBody:
         required: true
         content:
@@ -11062,8 +11246,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/list-models-response'
       description: List Models
-      parameters: []
-      summary: '[BETA] List Models'
+      parameters:
+        - in: query
+          required: false
+          name: visibility
+          schema:
+            type: string
+      summary: List Models
       operationId: list-models
   /dbaas-mysql/{service-name}/user:
     post:
@@ -11125,6 +11314,24 @@ paths:
       tags:
         - deployment
       responses:
+        "412":
+          description: "412"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
         "200":
           description: "200"
           content:
@@ -11139,7 +11346,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Scale Deployment'
+      summary: Scale Deployment
       requestBody:
         required: true
         content:
@@ -11755,6 +11962,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
         "200":
           description: "200"
           content:
@@ -11769,7 +11982,7 @@ paths:
                 $ref: '#/components/schemas/error-response'
       description: Deploy a model on an inference server
       parameters: []
-      summary: '[BETA] Create Deployment'
+      summary: Create Deployment
       requestBody:
         required: true
         content:
@@ -11787,9 +12000,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/list-deployments-response'
+        "400":
+          description: "400"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
       description: List Deployments
-      parameters: []
-      summary: '[BETA] List Deployments'
+      parameters:
+        - in: query
+          required: false
+          name: visibility
+          schema:
+            type: string
+      summary: List Deployments
       operationId: list-deployments
   /dbaas-postgres/{service-name}/database/{database-name}:
     delete:
@@ -13013,18 +13237,36 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Get Deployment'
+      summary: Get Deployment
       operationId: get-deployment
     patch:
       tags:
         - deployment
       responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
         "200":
           description: "200"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
+        "400":
+          description: "400"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
       description: Update AI deployment
       parameters:
         - in: path
@@ -13045,6 +13287,18 @@ paths:
       tags:
         - deployment
       responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
         "200":
           description: "200"
           content:
@@ -13059,7 +13313,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Delete Deployment'
+      summary: Delete Deployment
       operationId: delete-deployment
   /dbaas-kafka/{service-name}/connect/password/reveal:
     get:
@@ -13162,6 +13416,120 @@ paths:
             type: string
       summary: Retrieve Resource Quota
       operationId: get-quota
+  /ai/ai-api-key/{id}:
+    delete:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                properties:
+                  deleted:
+                    type: boolean
+                type: object
+                required:
+                  - deleted
+      description: Delete AI API key
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Delete AI API Key
+      operationId: delete-ai-api-key
+    get:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ai-api-key'
+      description: Get AI API key metadata
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Get AI API Key
+      operationId: get-ai-api-key
+    patch:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ai-api-key'
+        "400":
+          description: "400"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+      description: Update AI API key name and/or scope
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Update AI API Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update-ai-api-key-request'
+      operationId: update-ai-api-key
   /sks-cluster-deprecated-resources/{id}:
     get:
       tags:
@@ -15860,6 +16228,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/delete-model-conflict-response'
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
         "200":
           description: "200"
           content:
@@ -15874,7 +16254,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Delete Model'
+      summary: Delete Model
       operationId: delete-model
     get:
       tags:
@@ -15900,7 +16280,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Get Model'
+      summary: Get Model
       operationId: get-model
   /sos-buckets-usage:
     get:
@@ -16617,6 +16997,39 @@ paths:
             format: uuid
       summary: Detach block storage volume
       operationId: detach-block-storage-volume
+  /ai/ai-api-key/{id}/rotate:
+    post:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ai-api-key-with-value'
+      description: Rotate AI API key value
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Rotate AI API Key
+      operationId: rotate-ai-api-key
   /dbaas-external-endpoint-prometheus/{name}:
     post:
       tags:
@@ -19992,6 +20405,12 @@ paths:
       tags:
         - deployment
       responses:
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
         "200":
           description: "200"
           content:
@@ -20006,7 +20425,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Reveal Deployment API Key'
+      summary: Reveal Deployment API Key
       operationId: reveal-deployment-api-key
   /anti-affinity-group/{id}:
     get:
@@ -20520,7 +20939,7 @@ paths:
           schema:
             type: integer
             format: int64
-      summary: '[BETA] Get Deployment Logs'
+      summary: Get Deployment Logs
       operationId: get-deployment-logs
   /sks-cluster/{id}/upgrade:
     put:
@@ -20778,7 +21197,7 @@ paths:
       operationId: reset-dbaas-postgres-user-password
 x-topics:
   - title: API Request Signature
-    content: |2+
+    content: |+
 
       In order to authenticate legitimate users, the Exoscale API requires incoming requests to be signed using valid Exoscale API account credentials with the following mechanism.
 
@@ -20846,7 +21265,7 @@ x-topics:
       * Python: [requests-exoscale-auth > `ExoscaleV2Auth`](https://github.com/exoscale/requests-exoscale-auth/blob/master/exoscale_auth.py)
 
   - title: Zone local resources
-    content: |2
+    content: |
 
       The API is deployed across all Exoscale zones. When performing a compute call, you should use the relevant zone for your resource.
       For example: https://api-de-fra-1.exoscale.com/v2/instance would return only the instances from `de-fra-1`, https://api-ch-gva-2.exoscale.com/v2/instance from `ch-gva-2`.

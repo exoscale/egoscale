@@ -74,6 +74,26 @@ type AccessKeyResource struct {
 	ResourceType AccessKeyResourceResourceType `json:"resource-type,omitempty"`
 }
 
+// AI API key metadata (without value)
+type AIAPIKey struct {
+	// Creation timestamp
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// AI API key ID
+	ID UUID `json:"id,omitempty"`
+	// Human-readable name for the AI API key
+	Name string `json:"name,omitempty"`
+	// Organization UUID that owns this key
+	OrgUuid UUID `json:"org-uuid,omitempty"`
+	// Key scope: 'public' for all deployments, or a specific deployment UUID
+	Scope string `json:"scope,omitempty"`
+	// Last update timestamp
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
+}
+
+// AI API key with plaintext value
+type AIAPIKeyWithValue struct {
+}
+
 // Anti-affinity Group
 type AntiAffinityGroup struct {
 	// Anti-affinity Group description
@@ -169,6 +189,14 @@ type BlockStorageVolume struct {
 type BlockStorageVolumeRef struct {
 	// Block storage volume ID
 	ID UUID `json:"id,omitempty"`
+}
+
+// Request to create a new AI API key
+type CreateAIAPIKeyRequest struct {
+	// Human-readable name for the AI API key
+	Name string `json:"name" validate:"required"`
+	// Key scope: 'public' for all deployments, or a specific deployment UUID
+	Scope string `json:"scope" validate:"required"`
 }
 
 // Deployment an AI model onto a set of GPUs
@@ -2328,6 +2356,20 @@ type Event struct {
 	Zone string `json:"zone,omitempty"`
 }
 
+type ForbiddenOperationResponseCode string
+
+const (
+	ForbiddenOperationResponseCodeForbiddenOperation ForbiddenOperationResponseCode = "forbidden_operation"
+)
+
+// Forbidden operation response
+type ForbiddenOperationResponse struct {
+	// Machine-readable forbidden error code
+	Code ForbiddenOperationResponseCode `json:"code" validate:"required"`
+	// Forbidden error message
+	Error string `json:"error" validate:"required"`
+}
+
 type GenerateDataKeyRequestKeySpec string
 
 const (
@@ -2585,6 +2627,9 @@ const (
 	InferenceEngineVersion0151 InferenceEngineVersion = "0.15.1"
 	InferenceEngineVersion0160 InferenceEngineVersion = "0.16.0"
 	InferenceEngineVersion0170 InferenceEngineVersion = "0.17.0"
+	InferenceEngineVersion0180 InferenceEngineVersion = "0.18.0"
+	InferenceEngineVersion0181 InferenceEngineVersion = "0.18.1"
+	InferenceEngineVersion0190 InferenceEngineVersion = "0.19.0"
 )
 
 // Private Network
@@ -3995,6 +4040,11 @@ type KubeletImageGC struct {
 
 type Labels map[string]string
 
+// List of AI API keys
+type ListAIAPIKeysResponse struct {
+	AIAPIKeys []AIAPIKey `json:"ai-api-keys" validate:"required"`
+}
+
 // List of available instance types with authorization status
 type ListAIInstanceTypesResponse struct {
 	InstanceTypes []InstanceTypeEntry `json:"instance-types,omitempty"`
@@ -4445,6 +4495,12 @@ type ReEncryptResponse struct {
 	Ciphertext []byte `json:"ciphertext" validate:"required"`
 }
 
+// Response from bundle recompute operation
+type RecomputeBundleResponse struct {
+	// Status message describing the result
+	Message string `json:"message" validate:"required"`
+}
+
 type ReplicaFailure struct {
 	AttemptedWatermark int       `json:"attempted-watermark" validate:"required"`
 	Error              string    `json:"error" validate:"required"`
@@ -4656,6 +4712,8 @@ type SKSCluster struct {
 	Cni SKSClusterCni `json:"cni,omitempty"`
 	// Cluster creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Cluster default Security Group ID
+	DefaultSecurityGroupID *UUID `json:"default-security-group-id,omitempty"`
 	// Cluster description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Indicates whether to deploy the Kubernetes network proxy.
@@ -4950,6 +5008,14 @@ type Template struct {
 type TemplateRef struct {
 	// Template ID
 	ID UUID `json:"id,omitempty"`
+}
+
+// Request to update an AI API key (at least one property required)
+type UpdateAIAPIKeyRequest struct {
+	// Human-readable name for the AI API key
+	Name string `json:"name,omitempty"`
+	// Key scope: 'public' for all deployments, or a specific deployment UUID
+	Scope string `json:"scope,omitempty"`
 }
 
 // Update AI deployment

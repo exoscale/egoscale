@@ -1,7 +1,7 @@
 Changelog
 =========
 
-unreleased
+3.1.35
 ----------
 
 - Bump Go to 1.26 (fixes govulncheck report) (#754)

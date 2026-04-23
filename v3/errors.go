@@ -99,6 +99,8 @@ func handleHTTPErrorResp(resp *http.Response) error {
 		var res struct {
 			Message string `json:"message"`
 			Error   string `json:"error"`
+			Detail  string `json:"detail"`
+			Title   string `json:"title"`
 		}
 
 		data, err := io.ReadAll(resp.Body)
@@ -115,8 +117,14 @@ func handleHTTPErrorResp(resp *http.Response) error {
 		}
 
 		message := res.Message
-		if message == "" && res.Error != "" {
+		if message == "" {
 			message = res.Error
+		}
+		if message == "" {
+			message = res.Detail
+		}
+		if message == "" {
+			message = res.Title
 		}
 
 		err, ok := httpStatusCodeErrors[resp.StatusCode]

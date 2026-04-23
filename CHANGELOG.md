@@ -1,6 +1,11 @@
 Changelog
 =========
 
+unreleased
+----------
+
+- v3: read RFC 9457 detail and title from error responses
+
 3.1.35
 ----------
 

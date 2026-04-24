@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Unreleased
+3.1.36
 ----------
 
 - v3: support for RFC-9457 error format responses

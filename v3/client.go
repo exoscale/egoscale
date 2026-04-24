@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/exoscale/egoscale/v3/credentials"
@@ -40,32 +41,35 @@ var defaultHTTPClient = func() *http.Client {
 	return rc.StandardClient()
 }()
 
-func (c Client) GetZoneName(ctx context.Context, endpoint Endpoint) (ZoneName, error) {
-	resp, err := c.ListZones(ctx)
-	if err != nil {
-		return "", fmt.Errorf("get zone name: list zones: %w", err)
-	}
+const (
+	zoneEndpointPrefix = "https://api-"
+	zoneEndpointSuffix = ".exoscale.com/v2"
+)
 
-	zone, err := resp.FindZone(string(endpoint))
-	if err != nil {
-		return "", fmt.Errorf("get zone name: find zone: %w", err)
+// GetZoneAPIEndpoint returns the API endpoint URL for a given zone name.
+// It derives the URL directly from the zone name without making an API call,
+// which means it works with any IAM role regardless of compute permissions.
+func (c Client) GetZoneAPIEndpoint(_ context.Context, zoneName ZoneName) (Endpoint, error) {
+	if zoneName == "" {
+		return "", fmt.Errorf("get zone api endpoint: zone name is empty")
 	}
-
-	return zone.Name, nil
+	return Endpoint(zoneEndpointPrefix + string(zoneName) + zoneEndpointSuffix), nil
 }
 
-func (c Client) GetZoneAPIEndpoint(ctx context.Context, zoneName ZoneName) (Endpoint, error) {
-	resp, err := c.ListZones(ctx)
-	if err != nil {
-		return "", fmt.Errorf("get zone api endpoint: list zones: %w", err)
+// GetZoneName returns the zone name for a given API endpoint URL.
+// It derives the zone name directly from the endpoint URL without making an API call,
+// which means it works with any IAM role regardless of compute permissions.
+func (c Client) GetZoneName(_ context.Context, endpoint Endpoint) (ZoneName, error) {
+	s := string(endpoint)
+	if !strings.HasPrefix(s, zoneEndpointPrefix) || !strings.HasSuffix(s, zoneEndpointSuffix) {
+		return "", fmt.Errorf("get zone name: %q is not a recognized Exoscale zone endpoint: %w", endpoint, ErrNotFound)
 	}
-
-	zone, err := resp.FindZone(string(zoneName))
-	if err != nil {
-		return "", fmt.Errorf("get zone api endpoint: find zone: %w", err)
+	name := strings.TrimPrefix(s, zoneEndpointPrefix)
+	name = strings.TrimSuffix(name, zoneEndpointSuffix)
+	if name == "" {
+		return "", fmt.Errorf("get zone name: could not parse zone name from endpoint %q: %w", endpoint, ErrNotFound)
 	}
-
-	return zone.APIEndpoint, nil
+	return ZoneName(name), nil
 }
 
 // Client represents an Exoscale API client.

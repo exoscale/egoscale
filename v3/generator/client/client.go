@@ -35,6 +35,7 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 		"net/http"
 		"context"
 		"runtime"
+		"strings"
 		"time"
 
 		"github.com/exoscale/egoscale/v3/credentials"

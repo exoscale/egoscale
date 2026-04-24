@@ -32,6 +32,11 @@ const (
 	HrZag1 Endpoint = "https://api-hr-zag-1.exoscale.com/v2"
 )
 
+const (
+	zoneEndpointPrefix = "https://api-"
+	zoneEndpointSuffix = ".exoscale.com/v2"
+)
+
 // defaultHTTPClient is HTTP client with retry logic.
 // Default retry configuration can be found in go-retryablehttp repo.
 var defaultHTTPClient = func() *http.Client {
@@ -41,24 +46,6 @@ var defaultHTTPClient = func() *http.Client {
 	return rc.StandardClient()
 }()
 
-const (
-	zoneEndpointPrefix = "https://api-"
-	zoneEndpointSuffix = ".exoscale.com/v2"
-)
-
-// GetZoneAPIEndpoint returns the API endpoint URL for a given zone name.
-// It derives the URL directly from the zone name without making an API call,
-// which means it works with any IAM role regardless of compute permissions.
-func (c Client) GetZoneAPIEndpoint(_ context.Context, zoneName ZoneName) (Endpoint, error) {
-	if zoneName == "" {
-		return "", fmt.Errorf("get zone api endpoint: zone name is empty")
-	}
-	return Endpoint(zoneEndpointPrefix + string(zoneName) + zoneEndpointSuffix), nil
-}
-
-// GetZoneName returns the zone name for a given API endpoint URL.
-// It derives the zone name directly from the endpoint URL without making an API call,
-// which means it works with any IAM role regardless of compute permissions.
 func (c Client) GetZoneName(_ context.Context, endpoint Endpoint) (ZoneName, error) {
 	s := string(endpoint)
 	if !strings.HasPrefix(s, zoneEndpointPrefix) || !strings.HasSuffix(s, zoneEndpointSuffix) {
@@ -70,6 +57,16 @@ func (c Client) GetZoneName(_ context.Context, endpoint Endpoint) (ZoneName, err
 		return "", fmt.Errorf("get zone name: could not parse zone name from endpoint %q: %w", endpoint, ErrNotFound)
 	}
 	return ZoneName(name), nil
+}
+
+// GetZoneAPIEndpoint returns the API endpoint URL for a given zone name.
+// It derives the URL directly from the zone name without making an API call,
+// which means it works with any IAM role regardless of compute permissions.
+func (c Client) GetZoneAPIEndpoint(_ context.Context, zoneName ZoneName) (Endpoint, error) {
+	if zoneName == "" {
+		return "", fmt.Errorf("get zone api endpoint: zone name is empty")
+	}
+	return Endpoint(zoneEndpointPrefix + string(zoneName) + zoneEndpointSuffix), nil
 }
 
 // Client represents an Exoscale API client.

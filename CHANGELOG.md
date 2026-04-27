@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v3 generator: fix panic on HTTP 204 and close response body on no-content responses
+
 3.1.36
 ----------
 

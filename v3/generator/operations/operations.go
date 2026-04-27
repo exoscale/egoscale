@@ -451,7 +451,7 @@ func renderBodyReturnSection(bodyRespType, jsonResponseTarget, funcName string) 
 	var b strings.Builder
 	b.WriteString("\tbodyresp := " + bodyRespType + "\n")
 	b.WriteString("\tif err := prepareJSONResponse(response, " + jsonResponseTarget + "); err != nil {\n")
-	b.WriteString("\t\treturn nil, fmt.Errorf(\"" + funcName + ": prepare Json response: %w\", err)\n")
+	b.WriteString("\t\treturn nil, fmt.Errorf(\"" + funcName + ": prepare JSON response: %w\", err)\n")
 	b.WriteString("\t}\n\n")
 	b.WriteString("\treturn bodyresp, nil")
 	return b.String()

@@ -5,7 +5,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	{{ if .BodyRequest }}
 	body, err := prepareJSONBody(req)
 	if err != nil {
-		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: prepare Json body: %w", err)
+		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: prepare JSON body: %w", err)
 	}
 	{{ end }}
 

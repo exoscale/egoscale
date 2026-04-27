@@ -60,6 +60,7 @@ func init() {
 	// helpers package handle stardard Acronyms.
 	helpers.ConfigureAcronym("ssh", "SSH")
 	// Exoscale Specifics
+	helpers.ConfigureAcronym("ai", "AI")
 	helpers.ConfigureAcronym("iam", "IAM")
 	helpers.ConfigureAcronym("sks", "SKS")
 	helpers.ConfigureAcronym("sos", "SOS")

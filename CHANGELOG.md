@@ -7,6 +7,7 @@ Unreleased
 - v3 generator: fix panic on HTTP 204 and close response body on no-content responses
 - v3: add AI API key operations (ListAIAPIKeys, CreateAIAPIKey, GetAIAPIKey, UpdateAIAPIKey, DeleteAIAPIKey, RotateAIAPIKey)
 - v3 generator: align error messages with Go naming conventions (Json => JSON)
+- v3: close response body in handleHTTPErrorResp to avoid connection leaks
 
 3.1.36
 ----------

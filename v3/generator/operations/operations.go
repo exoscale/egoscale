@@ -438,6 +438,9 @@ type RequestTmpl struct {
 	JSONResponseTarget string
 	ContentType        string
 	QueryParams        map[string]string
+	// SkipAuth is true for operations that must be called without credentials
+	// (e.g. list-zones which returns public data and should not trigger IAM enforcement).
+	SkipAuth bool
 }
 
 // serializeRequest serializes the openAPI spec into the request template.
@@ -446,6 +449,7 @@ func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*Req
 		Name:        funcName,
 		OperationID: op.OperationId,
 		HTTPMethod:  strings.ToUpper(httpMethod),
+		SkipAuth:    op.OperationId == "list-zones",
 	}
 	p.Comment = renderDoc(op)
 	params := getParameters(op, funcName)

@@ -18839,10 +18839,6 @@ func (c Client) ListZones(ctx context.Context) (*ListZonesResponse, error) {
 		return nil, fmt.Errorf("ListZones: execute request editors: %w", err)
 	}
 
-	if err := c.signRequest(request); err != nil {
-		return nil, fmt.Errorf("ListZones: sign request: %w", err)
-	}
-
 	if c.trace {
 		dumpRequest(request, "list-zones")
 	}

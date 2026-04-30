@@ -33,7 +33,7 @@ func (l ListAIAPIKeysResponse) FindAIAPIKey(nameOrID string) (AIAPIKey, error) {
 
 // List AI API keys for an organization
 func (c Client) ListAIAPIKeys(ctx context.Context) (*ListAIAPIKeysResponse, error) {
-	path := "/ai/ai-api-key"
+	path := "/ai/api-key"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
@@ -77,7 +77,7 @@ func (c Client) ListAIAPIKeys(ctx context.Context) (*ListAIAPIKeysResponse, erro
 
 // Create a new AI API key
 func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (*AIAPIKeyWithValue, error) {
-	path := "/ai/ai-api-key"
+	path := "/ai/api-key"
 
 	body, err := prepareJSONBody(req)
 	if err != nil {
@@ -132,7 +132,7 @@ type DeleteAIAPIKeyResponse struct {
 
 // Delete AI API key
 func (c Client) DeleteAIAPIKey(ctx context.Context, id UUID) (*DeleteAIAPIKeyResponse, error) {
-	path := fmt.Sprintf("/ai/ai-api-key/%v", id)
+	path := fmt.Sprintf("/ai/api-key/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
@@ -176,7 +176,7 @@ func (c Client) DeleteAIAPIKey(ctx context.Context, id UUID) (*DeleteAIAPIKeyRes
 
 // Get AI API key metadata
 func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*AIAPIKey, error) {
-	path := fmt.Sprintf("/ai/ai-api-key/%v", id)
+	path := fmt.Sprintf("/ai/api-key/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
@@ -220,7 +220,7 @@ func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*AIAPIKey, error) {
 
 // Update AI API key name and/or scope
 func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyRequest) (*AIAPIKey, error) {
-	path := fmt.Sprintf("/ai/ai-api-key/%v", id)
+	path := fmt.Sprintf("/ai/api-key/%v", id)
 
 	body, err := prepareJSONBody(req)
 	if err != nil {
@@ -271,7 +271,7 @@ func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyR
 
 // Rotate AI API key value
 func (c Client) RotateAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyWithValue, error) {
-	path := fmt.Sprintf("/ai/ai-api-key/%v/rotate", id)
+	path := fmt.Sprintf("/ai/api-key/%v/rotate", id)
 
 	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
 	if err != nil {
@@ -308,6 +308,50 @@ func (c Client) RotateAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyWithValue
 	bodyresp := new(AIAPIKeyWithValue)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateAIAPIKey: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Reveal AI API key plaintext value
+func (c Client) RevealAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyWithValue, error) {
+	path := fmt.Sprintf("/ai/api-key/%v/reveal", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reveal-ai-api-key")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: http response: %w", err)
+	}
+
+	bodyresp := new(AIAPIKeyWithValue)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: prepare JSON response: %w", err)
 	}
 
 	return bodyresp, nil

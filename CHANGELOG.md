@@ -8,6 +8,7 @@ Unreleased
 - v3: add AI API key operations (ListAIAPIKeys, CreateAIAPIKey, GetAIAPIKey, UpdateAIAPIKey, DeleteAIAPIKey, RotateAIAPIKey)
 - v3 generator: align error messages with Go naming conventions (Json => JSON)
 - v3: close response body in handleHTTPErrorResp to avoid connection leaks
+- v3: add RevealAIAPIKey operation and update AI API key path (/ai/ai-api-key => /ai/api-key)
 
 3.1.36
 ----------

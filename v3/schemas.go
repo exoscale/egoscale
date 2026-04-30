@@ -90,7 +90,7 @@ type AIAPIKey struct {
 	UpdatedAT time.Time `json:"updated-at,omitempty"`
 }
 
-// AI API key with plaintext value (only returned on create/rotate)
+// AI API key with plaintext value (returned on create, rotate, or reveal)
 type AIAPIKeyWithValue struct {
 	// Creation timestamp
 	CreatedAT time.Time `json:"created-at,omitempty"`
@@ -102,7 +102,7 @@ type AIAPIKeyWithValue struct {
 	Scope string `json:"scope,omitempty"`
 	// Last update timestamp
 	UpdatedAT time.Time `json:"updated-at,omitempty"`
-	// Plaintext API key value (returned once on create/rotate)
+	// Plaintext API key value (returned on create, rotate, or reveal)
 	Value string `json:"value,omitempty"`
 }
 

@@ -90,8 +90,20 @@ type AIAPIKey struct {
 	UpdatedAT time.Time `json:"updated-at,omitempty"`
 }
 
-// AI API key with plaintext value
+// AI API key with plaintext value (only returned on create/rotate)
 type AIAPIKeyWithValue struct {
+	// Creation timestamp
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// AI API key ID
+	ID UUID `json:"id,omitempty"`
+	// Human-readable name for the AI API key
+	Name string `json:"name,omitempty"`
+	// Key scope: 'public' for all deployments, or a specific deployment UUID
+	Scope string `json:"scope,omitempty"`
+	// Last update timestamp
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
+	// Plaintext API key value (returned once on create/rotate)
+	Value string `json:"value,omitempty"`
 }
 
 // Anti-affinity Group

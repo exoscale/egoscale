@@ -2074,6 +2074,94 @@ components:
           type: string
           description: Resource name
       description: Access key resource
+    ai-api-key:
+      description: AI API key metadata
+      type: object
+      properties:
+        id:
+          description: AI API key ID
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+        scope:
+          description: "Key scope: 'public' for all deployments, or a specific deployment UUID"
+          type: string
+        created-at:
+          description: Creation timestamp
+          type: string
+          format: date-time
+          readOnly: true
+        updated-at:
+          description: Last update timestamp
+          type: string
+          format: date-time
+          readOnly: true
+    ai-api-key-with-value:
+      description: AI API key with plaintext value (only returned on create/rotate)
+      type: object
+      properties:
+        id:
+          description: AI API key ID
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+        scope:
+          description: "Key scope: 'public' for all deployments, or a specific deployment UUID"
+          type: string
+        value:
+          description: Plaintext API key value (returned once on create/rotate)
+          type: string
+        created-at:
+          description: Creation timestamp
+          type: string
+          format: date-time
+          readOnly: true
+        updated-at:
+          description: Last update timestamp
+          type: string
+          format: date-time
+          readOnly: true
+    create-ai-api-key-request:
+      description: Create AI API key
+      type: object
+      properties:
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+          minLength: 1
+        scope:
+          description: "Key scope: 'public' for all deployments, or a specific deployment UUID"
+          type: string
+      required:
+        - name
+        - scope
+    list-ai-api-keys-response:
+      description: List of AI API keys
+      type: object
+      required:
+        - ai-api-keys
+      properties:
+        ai-api-keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/ai-api-key'
+    update-ai-api-key-request:
+      description: Update AI API key
+      type: object
+      properties:
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+          minLength: 1
+        scope:
+          description: "Key scope: 'public' for all deployments, or a specific deployment UUID"
+          type: string
     reveal-deployment-api-key-response:
       description: AI deployment inference endpoint authentication key
       properties:

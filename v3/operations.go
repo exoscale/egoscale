@@ -76,7 +76,7 @@ func (c Client) ListAIAPIKeys(ctx context.Context) (*ListAIAPIKeysResponse, erro
 }
 
 // Create a new AI API key
-func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (*AIAPIKeyWithValue, error) {
+func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (*AIAPIKey, error) {
 	path := "/ai/api-key"
 
 	body, err := prepareJSONBody(req)
@@ -118,7 +118,7 @@ func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (
 		return nil, fmt.Errorf("CreateAIAPIKey: http response: %w", err)
 	}
 
-	bodyresp := new(AIAPIKeyWithValue)
+	bodyresp := new(AIAPIKey)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAIAPIKey: prepare JSON response: %w", err)
 	}
@@ -270,7 +270,7 @@ func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyR
 }
 
 // Rotate AI API key value
-func (c Client) RotateAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyWithValue, error) {
+func (c Client) RotateAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyValue, error) {
 	path := fmt.Sprintf("/ai/api-key/%v/rotate", id)
 
 	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
@@ -305,7 +305,7 @@ func (c Client) RotateAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyWithValue
 		return nil, fmt.Errorf("RotateAIAPIKey: http response: %w", err)
 	}
 
-	bodyresp := new(AIAPIKeyWithValue)
+	bodyresp := new(AIAPIKeyValue)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateAIAPIKey: prepare JSON response: %w", err)
 	}
@@ -314,7 +314,7 @@ func (c Client) RotateAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyWithValue
 }
 
 // Reveal AI API key plaintext value
-func (c Client) RevealAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyWithValue, error) {
+func (c Client) RevealAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyValue, error) {
 	path := fmt.Sprintf("/ai/api-key/%v/reveal", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
@@ -349,7 +349,7 @@ func (c Client) RevealAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyWithValue
 		return nil, fmt.Errorf("RevealAIAPIKey: http response: %w", err)
 	}
 
-	bodyresp := new(AIAPIKeyWithValue)
+	bodyresp := new(AIAPIKeyValue)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealAIAPIKey: prepare JSON response: %w", err)
 	}

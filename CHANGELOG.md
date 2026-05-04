@@ -9,6 +9,7 @@ Unreleased
 - v3 generator: align error messages with Go naming conventions (Json => JSON)
 - v3: close response body in handleHTTPErrorResp to avoid connection leaks
 - v3: add RevealAIAPIKey operation and update AI API key path (/ai/ai-api-key => /ai/api-key)
+- v3: update AI API key responses (rotate/reveal return value only, create/update/get return metadata only)
 
 3.1.36
 ----------

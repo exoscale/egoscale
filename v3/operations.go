@@ -12,28 +12,9 @@ import (
 	"time"
 )
 
-// FindAIAPIKey attempts to find an AIAPIKey by nameOrID.
-func (l ListAIAPIKeysResponse) FindAIAPIKey(nameOrID string) (AIAPIKey, error) {
-	var result []AIAPIKey
-	for i, elem := range l.AIAPIKeys {
-		if string(elem.Name) == nameOrID || string(elem.ID) == nameOrID {
-			result = append(result, l.AIAPIKeys[i])
-		}
-	}
-	if len(result) == 1 {
-		return result[0], nil
-	}
-
-	if len(result) > 1 {
-		return AIAPIKey{}, fmt.Errorf("%q too many found in ListAIAPIKeysResponse: %w", nameOrID, ErrConflict)
-	}
-
-	return AIAPIKey{}, fmt.Errorf("%q not found in ListAIAPIKeysResponse: %w", nameOrID, ErrNotFound)
-}
-
 // List AI API keys for an organization
 func (c Client) ListAIAPIKeys(ctx context.Context) (*ListAIAPIKeysResponse, error) {
-	path := "/ai/ai-api-key"
+	path := "/ai/api-key"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
@@ -76,8 +57,8 @@ func (c Client) ListAIAPIKeys(ctx context.Context) (*ListAIAPIKeysResponse, erro
 }
 
 // Create a new AI API key
-func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (*AIAPIKeyWithValue, error) {
-	path := "/ai/ai-api-key"
+func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (*CreateAIAPIKeyResponse, error) {
+	path := "/ai/api-key"
 
 	body, err := prepareJSONBody(req)
 	if err != nil {
@@ -118,7 +99,7 @@ func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (
 		return nil, fmt.Errorf("CreateAIAPIKey: http response: %w", err)
 	}
 
-	bodyresp := new(AIAPIKeyWithValue)
+	bodyresp := new(CreateAIAPIKeyResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAIAPIKey: prepare Json response: %w", err)
 	}
@@ -126,57 +107,9 @@ func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (
 	return bodyresp, nil
 }
 
-type DeleteAIAPIKeyResponse struct {
-	Deleted *bool `json:"deleted" validate:"required"`
-}
-
-// Delete AI API key
-func (c Client) DeleteAIAPIKey(ctx context.Context, id UUID) (*DeleteAIAPIKeyResponse, error) {
-	path := fmt.Sprintf("/ai/ai-api-key/%v", id)
-
-	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
-	if err != nil {
-		return nil, fmt.Errorf("DeleteAIAPIKey: new request: %w", err)
-	}
-
-	request.Header.Add("User-Agent", c.getUserAgent())
-
-	if err := c.executeRequestInterceptors(ctx, request); err != nil {
-		return nil, fmt.Errorf("DeleteAIAPIKey: execute request editors: %w", err)
-	}
-
-	if err := c.signRequest(request); err != nil {
-		return nil, fmt.Errorf("DeleteAIAPIKey: sign request: %w", err)
-	}
-
-	if c.trace {
-		dumpRequest(request, "delete-ai-api-key")
-	}
-
-	response, err := c.httpClient.Do(request)
-	if err != nil {
-		return nil, fmt.Errorf("DeleteAIAPIKey: http client do: %w", err)
-	}
-
-	if c.trace {
-		dumpResponse(response)
-	}
-
-	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("DeleteAIAPIKey: http response: %w", err)
-	}
-
-	bodyresp := new(DeleteAIAPIKeyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
-		return nil, fmt.Errorf("DeleteAIAPIKey: prepare Json response: %w", err)
-	}
-
-	return bodyresp, nil
-}
-
 // Get AI API key metadata
-func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*AIAPIKey, error) {
-	path := fmt.Sprintf("/ai/ai-api-key/%v", id)
+func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*GetAIAPIKeyResponse, error) {
+	path := fmt.Sprintf("/ai/api-key/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
 	if err != nil {
@@ -210,7 +143,7 @@ func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*AIAPIKey, error) {
 		return nil, fmt.Errorf("GetAIAPIKey: http response: %w", err)
 	}
 
-	bodyresp := new(AIAPIKey)
+	bodyresp := new(GetAIAPIKeyResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetAIAPIKey: prepare Json response: %w", err)
 	}
@@ -219,8 +152,8 @@ func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*AIAPIKey, error) {
 }
 
 // Update AI API key name and/or scope
-func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyRequest) (*AIAPIKey, error) {
-	path := fmt.Sprintf("/ai/ai-api-key/%v", id)
+func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyRequest) (*UpdateAIAPIKeyResponse, error) {
+	path := fmt.Sprintf("/ai/api-key/%v", id)
 
 	body, err := prepareJSONBody(req)
 	if err != nil {
@@ -261,7 +194,7 @@ func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyR
 		return nil, fmt.Errorf("UpdateAIAPIKey: http response: %w", err)
 	}
 
-	bodyresp := new(AIAPIKey)
+	bodyresp := new(UpdateAIAPIKeyResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateAIAPIKey: prepare Json response: %w", err)
 	}
@@ -269,9 +202,53 @@ func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyR
 	return bodyresp, nil
 }
 
+// Reveal AI API key plaintext value
+func (c Client) RevealAIAPIKey(ctx context.Context, id UUID) (*RevealAIAPIKeyResponse, error) {
+	path := fmt.Sprintf("/ai/api-key/%v/reveal", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reveal-ai-api-key")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: http response: %w", err)
+	}
+
+	bodyresp := new(RevealAIAPIKeyResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RevealAIAPIKey: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Rotate AI API key value
-func (c Client) RotateAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyWithValue, error) {
-	path := fmt.Sprintf("/ai/ai-api-key/%v/rotate", id)
+func (c Client) RotateAIAPIKey(ctx context.Context, id UUID) (*RotateAIAPIKeyResponse, error) {
+	path := fmt.Sprintf("/ai/api-key/%v/rotate", id)
 
 	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
 	if err != nil {
@@ -305,7 +282,7 @@ func (c Client) RotateAIAPIKey(ctx context.Context, id UUID) (*AIAPIKeyWithValue
 		return nil, fmt.Errorf("RotateAIAPIKey: http response: %w", err)
 	}
 
-	bodyresp := new(AIAPIKeyWithValue)
+	bodyresp := new(RotateAIAPIKeyResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateAIAPIKey: prepare Json response: %w", err)
 	}
@@ -1062,6 +1039,50 @@ func (c Client) GetModel(ctx context.Context, id UUID) (*GetModelResponse, error
 	bodyresp := new(GetModelResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetModel: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Get per-org token consumption quota (tokens/min). Null means unlimited.
+func (c Client) GetUserOrgConsumptionQuota(ctx context.Context) (*OrgConsumptionQuotaResponse, error) {
+	path := "/ai/quota"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-user-org-consumption-quota")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: http response: %w", err)
+	}
+
+	bodyresp := new(OrgConsumptionQuotaResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil
@@ -11444,7 +11465,7 @@ type AssumeIAMRoleResponse struct {
 
 type AssumeIAMRoleRequest struct {
 	// TTL in seconds for the generated access key (cannot exceed the max TTL defined in the targeted assume role)
-	Ttl int64 `json:"ttl,omitempty" validate:"omitempty,gt=0"`
+	Ttl int64 `json:"ttl" validate:"required,gt=0"`
 }
 
 // [BETA] Request generation of key/secret that allow caller to assume target role
@@ -13987,6 +14008,50 @@ func (c Client) ScheduleKmsKeyDeletion(ctx context.Context, id UUID, req Schedul
 	bodyresp := new(SuccessResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Returns the live-balance of the current organization.
+func (c Client) GetLiveBalance(ctx context.Context) (*LiveBalance, error) {
+	path := "/live-balance"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetLiveBalance: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetLiveBalance: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetLiveBalance: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-live-balance")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetLiveBalance: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetLiveBalance: http response: %w", err)
+	}
+
+	bodyresp := new(LiveBalance)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetLiveBalance: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil
@@ -16747,6 +16812,102 @@ func (c Client) GetSKSClusterAuthorityCert(ctx context.Context, id UUID, authori
 	bodyresp := new(GetSKSClusterAuthorityCertResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type GenerateSKSKarpenterExoscaleNodeclassResponse struct {
+	ExoscaleNodeclass string `json:"exoscale-nodeclass,omitempty"`
+}
+
+// Generate a Karpenter ExoscaleNodeClass manifest for an SKS cluster, including its default security group and feature flags if present
+func (c Client) GenerateSKSKarpenterExoscaleNodeclass(ctx context.Context, id UUID) (*GenerateSKSKarpenterExoscaleNodeclassResponse, error) {
+	path := fmt.Sprintf("/sks-cluster/%v/generate-karpenter-exoscale-nodeclass", id)
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterExoscaleNodeclass: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterExoscaleNodeclass: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterExoscaleNodeclass: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "generate-sks-karpenter-exoscale-nodeclass")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterExoscaleNodeclass: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterExoscaleNodeclass: http response: %w", err)
+	}
+
+	bodyresp := new(GenerateSKSKarpenterExoscaleNodeclassResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterExoscaleNodeclass: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type GenerateSKSKarpenterNodepoolResponse struct {
+	Nodepool string `json:"nodepool,omitempty"`
+}
+
+// Generate a Karpenter NodePool manifest with minimal configuration for an SKS cluster
+func (c Client) GenerateSKSKarpenterNodepool(ctx context.Context, id UUID) (*GenerateSKSKarpenterNodepoolResponse, error) {
+	path := fmt.Sprintf("/sks-cluster/%v/generate-karpenter-nodepool", id)
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterNodepool: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterNodepool: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterNodepool: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "generate-sks-karpenter-nodepool")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterNodepool: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterNodepool: http response: %w", err)
+	}
+
+	bodyresp := new(GenerateSKSKarpenterNodepoolResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GenerateSKSKarpenterNodepool: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil

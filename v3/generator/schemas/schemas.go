@@ -108,17 +108,25 @@ func RenderSimpleType(s *base.Schema) string {
 	}
 
 	if s.Format != "" {
-		if s.Format == "date-time" {
+		switch s.Format {
+		case "date-time":
 			return "time.Time"
-		}
-		if s.Format == "uuid" {
+		case "uuid":
 			return "UUID"
-		}
-		if s.Format == "ipv4" {
+		case "ipv4":
 			return "net.IP"
+		case "int32":
+			return "int32"
+		case "int64":
+			return "int64"
+		case "float":
+			return "float32"
+		case "double":
+			return "float64"
 		}
-
-		return s.Format
+		// Any other format (uri-reference, byte, email, ...) is still a
+		// string at the Go level; the format is just a validation hint.
+		return "string"
 	}
 
 	if len(s.Type) == 0 {

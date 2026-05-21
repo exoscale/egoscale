@@ -119,9 +119,18 @@ func RenderSimpleType(s *base.Schema) string {
 			return "string"
 		case "byte":
 			return "[]byte"
-		default:
-			return s.Format
+		case "int32":
+			return "int32"
+		case "int64":
+			return "int64"
+		case "float":
+			return "float32"
+		case "double":
+			return "float64"
 		}
+		// Any other format is still a string at the Go level;
+		// the format is just a validation hint.
+		return "string"
 	}
 
 	if len(s.Type) == 0 {

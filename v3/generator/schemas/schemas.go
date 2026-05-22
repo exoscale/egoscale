@@ -137,17 +137,27 @@ func RenderSimpleType(s *base.Schema) string {
 		)
 		return "any"
 	}
-	if s.Type[0] == "boolean" {
+
+	// OAS 3.1: type can be ["integer", "null"], skip null to get the real type.
+	typ := ""
+	for _, t := range s.Type {
+		if t != "null" {
+			typ = t
+			break
+		}
+	}
+
+	if typ == "boolean" {
 		return "bool"
 	}
-	if s.Type[0] == "integer" {
+	if typ == "integer" {
 		return "int"
 	}
-	if s.Type[0] == "number" {
+	if typ == "number" {
 		return "float64"
 	}
 
-	return s.Type[0]
+	return typ
 }
 
 // renderSchemaInternal render a given libopenapi Schema into a buffer.
@@ -371,6 +381,14 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer, schemaN
 			nullable = *prop.Nullable
 		}
 
+		// OAS 3.1 expresses nullability via "null" in the type array.
+		for _, t := range prop.Type {
+			if t == "null" {
+				nullable = true
+				break
+			}
+		}
+
 		// https://github.com/pb33f/libopenapi/issues/283
 		// Wait for a fix to remove this check func.
 		if isNullableReference(properties.GetReferenceNode()) {
@@ -554,7 +572,14 @@ func IsSimpleSchema(s *base.Schema) bool {
 		return true
 	}
 
-	return s.Type[0] != "object" && s.Type[0] != "map" && s.Type[0] != "array"
+	for _, t := range s.Type {
+		if t == "null" {
+			continue
+		}
+		return t != "object" && t != "map" && t != "array"
+	}
+
+	return true
 }
 
 func renderDoc(s *base.Schema) string {

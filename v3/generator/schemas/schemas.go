@@ -101,9 +101,9 @@ func RenderSchema(schemaName string, s *base.SchemaProxy) ([]byte, error) {
 // Add more simple type here.
 func RenderSimpleType(s *base.Schema) string {
 	if s.Extensions != nil {
-		typ, ok := s.Extensions.Get("x-go-type")
+		goType, ok := s.Extensions.Get("x-go-type")
 		if ok {
-			return typ.Value
+			return goType.Value
 		}
 	}
 
@@ -141,17 +141,27 @@ func RenderSimpleType(s *base.Schema) string {
 		)
 		return "any"
 	}
-	if s.Type[0] == "boolean" {
+
+	// OAS 3.1: type can be ["integer", "null"], skip null to get the real type.
+	kind := ""
+	for _, entry := range s.Type {
+		if entry != "null" {
+			kind = entry
+			break
+		}
+	}
+
+	if kind == "boolean" {
 		return "bool"
 	}
-	if s.Type[0] == "integer" {
+	if kind == "integer" {
 		return "int"
 	}
-	if s.Type[0] == "number" {
+	if kind == "number" {
 		return "float64"
 	}
 
-	return s.Type[0]
+	return kind
 }
 
 // renderSchemaInternal render a given libopenapi Schema into a buffer.
@@ -169,16 +179,16 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 	// In OpenAPI versions 2 and 3.0, this Type is a single value,
 	// so array will only ever have one value in version 3.1,
 	// Type can be multiple values
-	typ := ""
-	for _, t := range s.Type {
+	kind := ""
+	for _, entry := range s.Type {
 		// Find the first non-null type and use that for now.
-		if t != "null" {
-			typ = t
+		if entry != "null" {
+			kind = entry
 			break
 		}
 	}
 
-	switch typ {
+	switch kind {
 	case "boolean", "integer", "number", "string":
 		output.WriteString(doc)
 		var definition string
@@ -217,7 +227,7 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 		output.WriteString("type " + schemaName + " " + Map + "\n")
 		return nil
 	default:
-		slog.Error("type not implemented", slog.String("type", typ))
+		slog.Error("type not implemented", slog.String("type", kind))
 		return nil
 	}
 }
@@ -233,13 +243,13 @@ func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 		}
 	}
 
-	typ := RenderSimpleType(s)
-	definition := "type " + typeName + " " + typ + "\n"
+	goType := RenderSimpleType(s)
+	definition := "type " + typeName + " " + goType + "\n"
 	definition += "const (\n"
 
 	for _, e := range s.Enum {
 		value := e.Value
-		if typ == "string" {
+		if goType == "string" {
 			value = fmt.Sprintf("%q", e.Value)
 		}
 		name := typeName + helpers.ToCamel(e.Value)
@@ -363,9 +373,9 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer, schemaN
 		InferType(prop)
 
 		propType := ""
-		for _, t := range prop.Type {
-			if t != "null" {
-				propType = t
+		for _, entry := range prop.Type {
+			if entry != "null" {
+				propType = entry
 				break
 			}
 		}
@@ -373,6 +383,14 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer, schemaN
 		var nullable = false
 		if prop.Nullable != nil {
 			nullable = *prop.Nullable
+		}
+
+		// OAS 3.1 expresses nullability via "null" in the type array.
+		for _, kind := range prop.Type {
+			if kind == "null" {
+				nullable = true
+				break
+			}
 		}
 
 		// https://github.com/pb33f/libopenapi/issues/283
@@ -558,7 +576,14 @@ func IsSimpleSchema(s *base.Schema) bool {
 		return true
 	}
 
-	return s.Type[0] != "object" && s.Type[0] != "map" && s.Type[0] != "array"
+	for _, kind := range s.Type {
+		if kind == "null" {
+			continue
+		}
+		return kind != "object" && kind != "map" && kind != "array"
+	}
+
+	return true
 }
 
 func renderDoc(s *base.Schema) string {

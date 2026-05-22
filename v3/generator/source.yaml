@@ -317,7 +317,7 @@ tags:
     x-weight: 700
     x-icon: exo-dns
   - description: Deployments are loaded model instances ready for inference.
-    parent: dedicated-inference
+    parent: ai
     externalDocs:
       description: Read more
       url: https://www.exoscale.com/ai-cloud-infrastructure/dedicated-inference/
@@ -394,15 +394,6 @@ tags:
     x-display-name: KMS
     x-weight: 1120
     x-icon: exo-secgrp
-  - description: Dedicated Inference lets you run Large Language Models (LLMs) on Exoscale GPU infrastructure.
-    parent: ai
-    externalDocs:
-      description: Read more
-      url: https://www.exoscale.com/ai-cloud-infrastructure/dedicated-inference/
-    name: dedicated-inference
-    x-display-name: Dedicated Inference
-    x-weight: 910
-    x-icon: exo-ai-prod
   - description: Opensearch, the popular open-source search and analytics database.
     parent: dbaas
     externalDocs:
@@ -460,14 +451,14 @@ tags:
     x-weight: 810
     x-icon: exo-iam
   - description: Lifecycle of AI Models.
-    parent: dedicated-inference
+    parent: ai
     externalDocs:
       description: Read more
       url: https://www.exoscale.com/ai-cloud-infrastructure/dedicated-inference/
     name: model
     x-display-name: AI Model
     x-weight: 920
-    x-icon: exo-gpu
+    x-icon: exo-ai-prod
 components:
   schemas:
     dbaas-node-state:
@@ -587,6 +578,8 @@ components:
           items:
             $ref: '#/components/schemas/get-deployment-logs-entry'
       type: object
+      required:
+        - logs
     json-schema-schema-registry:
       additionalProperties: false
       properties:
@@ -700,14 +693,15 @@ components:
     get-confederatio-usage-response:
       description: GPU usage for all organizations
       properties:
-        organizations_usages:
+        organizations-usages:
           additionalProperties:
             $ref: '#/components/schemas/organization-usage'
           type: object
       type: object
       required:
-        - organizations_usages
+        - organizations-usages
     model-ref:
+      description: Model reference
       properties:
         name:
           description: Associated model name
@@ -717,6 +711,11 @@ components:
           description: Associated model ID
           format: uuid
           type: string
+      anyOf:
+        - required:
+            - id
+        - required:
+            - name
       type: object
     dbaas-pg-pool-size:
       type: integer
@@ -861,6 +860,7 @@ components:
       properties:
         time:
           description: Timestamp of the log entry
+          format: date-time
           type: string
         node:
           description: Node identifier
@@ -869,6 +869,10 @@ components:
           description: Log message content
           type: string
       type: object
+      required:
+        - time
+        - message
+        - node
     anti-affinity-group-ref:
       type: object
       properties:
@@ -877,6 +881,11 @@ components:
           format: uuid
           description: Anti-affinity group ID
       description: Anti-affinity group reference
+    create-ai-api-key-response:
+      description: Create AI API key response
+      allOf:
+        - $ref: '#/components/schemas/ai-api-key'
+      type: object
     sks-audit-bearer-token:
       type: string
       maxLength: 2000
@@ -921,6 +930,8 @@ components:
           items:
             $ref: '#/components/schemas/inference-engine-parameter-entry'
       type: object
+      required:
+        - parameters
     dbaas-user-valkey-secrets:
       type: object
       properties:
@@ -1671,6 +1682,11 @@ components:
           type: integer
       title: Kafka Connect configuration values
       type: object
+    list-ai-api-keys-response-entry:
+      description: AI API key list entry
+      allOf:
+        - $ref: '#/components/schemas/ai-api-key'
+      type: object
     private-network:
       type: object
       properties:
@@ -1825,6 +1841,16 @@ components:
                 type: string
               node:
                 type: string
+    set-org-consumption-quota-request:
+      description: Request to set per-org token consumption quota
+      properties:
+        quota-tokens-per-minute:
+          description: Per-org token consumption quota (tokens/min). Pass null to remove the limit.
+          type:
+            - integer
+            - "null"
+          minimum: 0
+      type: object
     json-schema-thanos:
       properties:
         compactor:
@@ -1960,6 +1986,22 @@ components:
           type: string
         removed-release:
           type: string
+    api-key-usage-entry:
+      description: Usage breakdown for one API key, grouped by model
+      properties:
+        organization-id:
+          description: Organization that owns this API key
+          format: uuid
+          type: string
+        models:
+          description: Map of model-uuid to accumulated counters. Keys are model UUIDs.
+          additionalProperties:
+            $ref: '#/components/schemas/model-usage-counters'
+          type: object
+      type: object
+      required:
+        - organization-id
+        - models
     enable-kms-key-rotation-request:
       type: object
       properties:
@@ -2021,18 +2063,6 @@ components:
       type: object
       required:
         - name
-    ai-api-key-with-value:
-      description: AI API key with plaintext value
-      allOf:
-        - $ref: '#/components/schemas/ai-api-key'
-        - properties:
-            value:
-              description: Plaintext AI API key value (returned only on create/rotate)
-              type: string
-          type: object
-          required:
-            - value
-      type: object
     inference-engine-version:
       description: Inference engine version
       enum:
@@ -2043,7 +2073,10 @@ components:
         - 0.18.0
         - 0.18.1
         - 0.19.0
-      default: 0.19.0
+        - 0.19.1
+        - 0.20.0
+        - 0.20.1
+      default: 0.20.1
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -2078,8 +2111,11 @@ components:
       description: AI deployment inference endpoint authentication key
       properties:
         api-key:
+          description: Inference endpoint authentication key
           type: string
       type: object
+      required:
+        - api-key
     replicate-kms-key-request:
       type: object
       required:
@@ -4384,6 +4420,11 @@ components:
           x-go-findable: "2"
           description: SSH key fingerprint
       description: SSH key
+    reveal-ai-api-key-response:
+      description: Reveal AI API key response
+      allOf:
+        - $ref: '#/components/schemas/ai-api-key-value'
+      type: object
     load-balancer-service:
       type: object
       properties:
@@ -4497,7 +4538,7 @@ components:
         ai-api-keys:
           type: array
           items:
-            $ref: '#/components/schemas/ai-api-key'
+            $ref: '#/components/schemas/list-ai-api-keys-response-entry'
       type: object
       example:
         ai-api-keys:
@@ -4517,6 +4558,8 @@ components:
           items:
             $ref: '#/components/schemas/instance-type-entry'
       type: object
+      required:
+        - instance-types
     dbaas-endpoint-opensearch-secrets:
       type: object
       properties:
@@ -4717,6 +4760,16 @@ components:
           format: uuid
           description: Elastic IP ID
       description: Elastic IP reference
+    org-consumption-quota-response:
+      description: Per-org token consumption quota response
+      properties:
+        quota-tokens-per-minute:
+          description: Per-org token consumption quota (tokens/min). Null means unlimited.
+          type:
+            - integer
+            - "null"
+          minimum: 0
+      type: object
     dbaas-service-maintenance:
       type: object
       properties:
@@ -4813,6 +4866,16 @@ components:
           format: uuid
           description: Snapshot ID
       description: Snapshot reference
+    rate-limited:
+      type: object
+      properties:
+        error:
+          type: string
+          description: The error message
+        retry_after:
+          type: number
+          description: The time in seconds to wait before the next request
+      description: Rate Limit
     key-rotation-config:
       type: object
       required:
@@ -5389,7 +5452,7 @@ components:
           type: string
           readOnly: true
         deployment-url:
-          description: Deployment URL (nullable)
+          description: Deployment inference endpoint URL
           type: string
         service-level:
           description: Service level
@@ -5406,6 +5469,7 @@ components:
           enum:
             - ready
             - creating
+            - preparing
             - error
             - deploying
           type: string
@@ -5439,6 +5503,21 @@ components:
         model:
           $ref: '#/components/schemas/model-ref'
       type: object
+      required:
+        - id
+        - name
+        - state
+        - state-details
+        - gpu-type
+        - gpu-count
+        - replicas
+        - service-level
+        - deployment-url
+        - inference-engine-parameters
+        - inference-engine-version
+        - model
+        - created-at
+        - updated-at
     iam-policy:
       type: object
       properties:
@@ -5457,6 +5536,18 @@ components:
         - default-service-strategy
         - services
       description: Policy
+    live-balance:
+      type: object
+      properties:
+        balance:
+          type: number
+          readOnly: true
+          description: Organization live balance
+        currency:
+          type: string
+          readOnly: true
+          description: Organization currency
+      description: Live balance
     replica-state:
       type: object
       required:
@@ -5843,6 +5934,8 @@ components:
           items:
             $ref: '#/components/schemas/list-models-response-entry'
       type: object
+      required:
+        - models
     instance-pool-ref:
       type: object
       properties:
@@ -5976,6 +6069,10 @@ components:
           exclusiveMinimum: false
           exclusiveMaximum: false
           description: Instance disk size in GiB
+        disk-encrypted:
+          type: boolean
+          readOnly: true
+          description: Indicates if the root volume of the instance is encrypted
         ssh-keys:
           type: array
           items:
@@ -6218,7 +6315,7 @@ components:
           type: string
           readOnly: true
         deployment-url:
-          description: Deployment URL (nullable)
+          description: Deployment inference endpoint URL
           type: string
         service-level:
           description: Service level
@@ -6233,6 +6330,7 @@ components:
           enum:
             - ready
             - creating
+            - preparing
             - error
             - deploying
           type: string
@@ -6258,6 +6356,18 @@ components:
         model:
           $ref: '#/components/schemas/model-ref'
       type: object
+      required:
+        - id
+        - name
+        - state
+        - gpu-type
+        - gpu-count
+        - replicas
+        - service-level
+        - deployment-url
+        - model
+        - created-at
+        - updated-at
     dbaas-endpoint-elasticsearch-secrets:
       type: object
       properties:
@@ -6828,6 +6938,11 @@ components:
           description: Tag value
       required:
         - tag
+    rotate-ai-api-key-response:
+      description: Rotate AI API key response
+      allOf:
+        - $ref: '#/components/schemas/ai-api-key-value'
+      type: object
     sks-cluster-labels:
       type: object
       additionalProperties:
@@ -6842,6 +6957,9 @@ components:
           description: Whether this instance type is authorized based on server availability
           type: boolean
       type: object
+      required:
+        - family
+        - authorized
     enum-integration-types:
       type: string
       enum:
@@ -7325,6 +7443,32 @@ components:
               description: Maximum number of partition contexts to send. Applies only when attached to kafka services.
           required:
             - datadog-api-key
+    ingest-metering-request:
+      description: 'Router flush payload: the router''s full in-memory usage map with flush identity fields'
+      properties:
+        flush-id:
+          description: UUID identifying this flush; used for idempotent deduplication
+          format: uuid
+          type: string
+        usage:
+          description: Map of api-key-uuid to usage entry. Keys are API key UUIDs. Mirrors the router's in-memory accumulator structure directly.
+          additionalProperties:
+            $ref: '#/components/schemas/api-key-usage-entry'
+          type: object
+        router-id:
+          description: Router instance identifier that produced this flush
+          type: string
+          minLength: 1
+        created-at:
+          description: ISO-8601 UTC timestamp when the flush snapshot was created (truncated to minute boundary for bucketing)
+          format: date-time
+          type: string
+      type: object
+      required:
+        - flush-id
+        - router-id
+        - created-at
+        - usage
     create-ai-api-key-request:
       description: Request to create a new AI API key
       properties:
@@ -7338,6 +7482,18 @@ components:
       required:
         - name
         - scope
+    ingest-metering-response:
+      description: Result of a metering ingest operation
+      properties:
+        duplicate:
+          description: True if flush-id was already processed (idempotent retry)
+          type: boolean
+        upserted:
+          description: Number of rows affected (inserted or updated) in usage_minutely; 0 if duplicate flush-id
+          type: integer
+      type: object
+      required:
+        - upserted
     zone-name:
       type: string
       enum:
@@ -7651,6 +7807,11 @@ components:
         - plan
         - type
         - prometheus-uri
+    get-ai-api-key-response:
+      description: Get AI API key response
+      allOf:
+        - $ref: '#/components/schemas/ai-api-key'
+      type: object
     manager:
       type: object
       properties:
@@ -7724,13 +7885,15 @@ components:
           description: SKS cluster ID
       description: SKS cluster reference
     list-deployments-response:
-      description: AI model list
+      description: AI deployment list
       properties:
         deployments:
           type: array
           items:
             $ref: '#/components/schemas/list-deployments-response-entry'
       type: object
+      required:
+        - deployments
     key-material:
       type: object
       required:
@@ -7862,7 +8025,7 @@ components:
           type: string
           readOnly: true
         model-size:
-          description: Model size (nullable)
+          description: Model size in bytes
           format: int64
           type: integer
           minimum: 0
@@ -7872,6 +8035,13 @@ components:
           type: string
           readOnly: true
       type: object
+      required:
+        - id
+        - name
+        - state
+        - model-size
+        - created-at
+        - updated-at
     dbaas-endpoint-elasticsearch-input-update:
       type: object
       properties:
@@ -7919,6 +8089,15 @@ components:
           type: string
           description: Postgres password
       description: Postgres User secrets
+    ai-api-key-value:
+      description: AI API key plaintext value
+      properties:
+        value:
+          description: Plaintext AI API key value
+          type: string
+      type: object
+      required:
+        - value
     list-kms-key-rotations-response-entry:
       type: object
       required:
@@ -8020,7 +8199,7 @@ components:
           type: string
           readOnly: true
         model-size:
-          description: Model size (nullable)
+          description: Model size in bytes
           format: int64
           type: integer
           minimum: 0
@@ -8030,6 +8209,13 @@ components:
           type: string
           readOnly: true
       type: object
+      required:
+        - id
+        - name
+        - state
+        - model-size
+        - created-at
+        - updated-at
     dbaas-endpoint-opensearch-input-create:
       type: object
       properties:
@@ -8080,6 +8266,8 @@ components:
           readOnly: true
           minimum: 0
       type: object
+      required:
+        - gpu
     get-kms-key-response:
       type: object
       required:
@@ -8142,6 +8330,26 @@ components:
         created-at:
           type: string
           format: date-time
+    model-usage-counters:
+      description: Accumulated token counters for one model over a flush window
+      properties:
+        output-tokens:
+          description: Total completion/output tokens across all calls in this flush window
+          type: integer
+          minimum: 0
+        input-tokens:
+          description: Total prompt/input tokens across all calls in this flush window
+          type: integer
+          minimum: 0
+        call-count:
+          description: Number of inference calls in this flush window
+          type: integer
+          minimum: 1
+      type: object
+      required:
+        - input-tokens
+        - output-tokens
+        - call-count
     create-kms-key-response:
       type: object
       required:
@@ -8700,7 +8908,8 @@ components:
         balance:
           type: number
           readOnly: true
-          description: Organization balance
+          deprecated: true
+          description: 'Organization balance. DEPRECATED: use the dedicated `live-balance` endpoint'
         currency:
           type: string
           readOnly: true
@@ -9493,6 +9702,10 @@ components:
           format: uuid
           readOnly: true
           description: Volume ID
+        encrypted:
+          type: boolean
+          readOnly: true
+          description: Indicates if the block-storage volume is encrypted
         created-at:
           type: string
           format: date-time
@@ -9538,7 +9751,7 @@ components:
               description: Optional encryption context appended to the AAD.
               nullable: true
     create-deployment-request:
-      description: Deployment an AI model onto a set of GPUs
+      description: Deploy an AI model onto a set of GPUs
       properties:
         gpu-count:
           description: Number of GPUs (1-8)
@@ -9604,8 +9817,13 @@ components:
         - endpoint
         - bearer-token
       description: Kubernetes Audit parameters
+    update-ai-api-key-response:
+      description: Update AI API key response
+      allOf:
+        - $ref: '#/components/schemas/ai-api-key'
+      type: object
     ai-api-key:
-      description: AI API key metadata (without value)
+      description: AI API key metadata
       properties:
         updated-at:
           description: Last update timestamp
@@ -9634,6 +9852,13 @@ components:
           type: string
           readOnly: true
       type: object
+      required:
+        - id
+        - org-uuid
+        - name
+        - scope
+        - created-at
+        - updated-at
     dbaas-user-thanos-secrets:
       type: object
       properties:
@@ -10157,65 +10382,6 @@ paths:
               required:
                 - name
       operationId: create-anti-affinity-group
-  /ai/ai-api-key:
-    get:
-      tags:
-        - ai-api-key
-      responses:
-        "403":
-          description: "403"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/list-ai-api-keys-response'
-      description: List AI API keys for an organization
-      parameters: []
-      summary: List AI API Keys
-      operationId: list-ai-api-keys
-    post:
-      tags:
-        - ai-api-key
-      responses:
-        "403":
-          description: "403"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
-        "404":
-          description: "404"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ai-api-key-with-value'
-        "400":
-          description: "400"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-      description: Create a new AI API key
-      parameters: []
-      summary: Create AI API Key
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/create-ai-api-key-request'
-      operationId: create-ai-api-key
   /usage-report:
     get:
       tags:
@@ -11040,6 +11206,8 @@ paths:
                   minimum: 0
                   exclusiveMinimum: true
                   description: TTL in seconds for the generated access key (cannot exceed the max TTL defined in the targeted assume role)
+              required:
+                - ttl
       operationId: assume-iam-role
   /private-network/{id}:attach:
     put:
@@ -12015,6 +12183,27 @@ paths:
             type: string
       summary: List Deployments
       operationId: list-deployments
+  /live-balance:
+    get:
+      tags:
+        - organization
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/live-balance'
+        "429":
+          description: "429"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rate-limited'
+      description: '[BETA] Returns the live-balance of the current organization.'
+      parameters: []
+      summary: '[BETA] Retrieve the live-balance'
+      operationId: get-live-balance
   /dbaas-postgres/{service-name}/database/{database-name}:
     delete:
       tags:
@@ -12977,6 +13166,109 @@ paths:
       parameters: []
       summary: ""
       operationId: list-dbaas-external-endpoint-types
+  /ai/api-key/{id}:
+    delete:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+      description: Delete AI API key
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Delete AI API Key
+      operationId: delete-ai-api-key
+    get:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get-ai-api-key-response'
+      description: Get AI API key metadata
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Get AI API Key
+      operationId: get-ai-api-key
+    patch:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/update-ai-api-key-response'
+        "400":
+          description: "400"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+      description: Update AI API key name and/or scope
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Update AI API Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update-ai-api-key-request'
+      operationId: update-ai-api-key
   /private-network:
     get:
       tags:
@@ -13047,6 +13339,39 @@ paths:
               required:
                 - name
       operationId: create-private-network
+  /ai/api-key/{id}/rotate:
+    post:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rotate-ai-api-key-response'
+      description: Rotate AI API key value
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Rotate AI API Key
+      operationId: rotate-ai-api-key
   /instance/{id}:start:
     put:
       tags:
@@ -13275,7 +13600,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: ""
+      summary: Update Deployment
       requestBody:
         required: true
         content:
@@ -13416,120 +13741,6 @@ paths:
             type: string
       summary: Retrieve Resource Quota
       operationId: get-quota
-  /ai/ai-api-key/{id}:
-    delete:
-      tags:
-        - ai-api-key
-      responses:
-        "403":
-          description: "403"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
-        "404":
-          description: "404"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                properties:
-                  deleted:
-                    type: boolean
-                type: object
-                required:
-                  - deleted
-      description: Delete AI API key
-      parameters:
-        - in: path
-          required: true
-          name: id
-          schema:
-            type: string
-            format: uuid
-      summary: Delete AI API Key
-      operationId: delete-ai-api-key
-    get:
-      tags:
-        - ai-api-key
-      responses:
-        "403":
-          description: "403"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
-        "404":
-          description: "404"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ai-api-key'
-      description: Get AI API key metadata
-      parameters:
-        - in: path
-          required: true
-          name: id
-          schema:
-            type: string
-            format: uuid
-      summary: Get AI API Key
-      operationId: get-ai-api-key
-    patch:
-      tags:
-        - ai-api-key
-      responses:
-        "403":
-          description: "403"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
-        "404":
-          description: "404"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ai-api-key'
-        "400":
-          description: "400"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-      description: Update AI API key name and/or scope
-      parameters:
-        - in: path
-          required: true
-          name: id
-          schema:
-            type: string
-            format: uuid
-      summary: Update AI API Key
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/update-ai-api-key-request'
-      operationId: update-ai-api-key
   /sks-cluster-deprecated-resources/{id}:
     get:
       tags:
@@ -16997,39 +17208,6 @@ paths:
             format: uuid
       summary: Detach block storage volume
       operationId: detach-block-storage-volume
-  /ai/ai-api-key/{id}/rotate:
-    post:
-      tags:
-        - ai-api-key
-      responses:
-        "403":
-          description: "403"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
-        "404":
-          description: "404"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ai-api-key-with-value'
-      description: Rotate AI API key value
-      parameters:
-        - in: path
-          required: true
-          name: id
-          schema:
-            type: string
-            format: uuid
-      summary: Rotate AI API Key
-      operationId: rotate-ai-api-key
   /dbaas-external-endpoint-prometheus/{name}:
     post:
       tags:
@@ -18365,6 +18543,30 @@ paths:
             $ref: '#/components/schemas/dbaas-user-username'
       summary: Delete a DBaaS MySQL user
       operationId: delete-dbaas-mysql-user
+  /sks-cluster/{id}/generate-karpenter-nodepool:
+    put:
+      tags:
+        - cluster
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nodepool:
+                    type: string
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Generate a Karpenter NodePool manifest with minimal configuration for an SKS cluster
+      operationId: generate-sks-karpenter-nodepool
   /load-balancer/{id}:
     put:
       tags:
@@ -19086,6 +19288,30 @@ paths:
             format: uuid
       summary: ""
       operationId: get-dbaas-external-endpoint-rsyslog
+  /sks-cluster/{id}/generate-karpenter-exoscale-nodeclass:
+    put:
+      tags:
+        - cluster
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exoscale-nodeclass:
+                    type: string
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Generate a Karpenter ExoscaleNodeClass manifest for an SKS cluster, including its default security group and feature flags if present
+      operationId: generate-sks-karpenter-exoscale-nodeclass
   /sks-cluster/{id}/nodepool:
     post:
       tags:
@@ -19227,6 +19453,33 @@ paths:
             schema:
               $ref: '#/components/schemas/dbaas-endpoint-elasticsearch-input-create'
       operationId: create-dbaas-external-endpoint-elasticsearch
+  /ai/api-key/{id}/reveal:
+    get:
+      tags:
+        - ai-api-key
+      responses:
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reveal-ai-api-key-response'
+      description: Reveal AI API key plaintext value
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Reveal AI API Key
+      operationId: reveal-ai-api-key
   /dbaas-opensearch/{name}/maintenance/start:
     put:
       tags:
@@ -19302,6 +19555,65 @@ paths:
                   $ref: '#/components/schemas/dbaas-user-password'
                   description: New password
       operationId: reset-dbaas-kafka-user-password
+  /ai/api-key:
+    get:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/list-ai-api-keys-response'
+      description: List AI API keys for an organization
+      parameters: []
+      summary: List AI API Keys
+      operationId: list-ai-api-keys
+    post:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: "403"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/forbidden-operation-response'
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/create-ai-api-key-response'
+        "400":
+          description: "400"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+      description: Create a new AI API key
+      parameters: []
+      summary: Create AI API Key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/create-ai-api-key-request'
+      operationId: create-ai-api-key
   /kms-key/{id}/re-encrypt:
     post:
       tags:
@@ -19797,6 +20109,27 @@ paths:
             $ref: '#/components/schemas/dbaas-user-username'
       summary: Reveal the secrets of a DBaaS Valkey user
       operationId: reveal-dbaas-valkey-user-password
+  /ai/quota:
+    get:
+      tags:
+        - ai-api-key
+      responses:
+        "404":
+          description: "404"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/org-consumption-quota-response'
+      description: Get per-org token consumption quota (tokens/min). Null means unlimited.
+      parameters: []
+      summary: Get Organization Consumption Quota
+      operationId: get-user-org-consumption-quota
   /dbaas-postgres/{name}:
     put:
       tags:

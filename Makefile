@@ -74,6 +74,7 @@ pull-oapi-spec:
 
 .PHONY: generate
 generate:
+	@set -e
 	@cd v3/generator/
 	@go generate
 	@go mod tidy

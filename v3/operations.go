@@ -11353,6 +11353,71 @@ func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleReq
 	return bodyresp, nil
 }
 
+type AssumeIAMRoleResponse struct {
+	ExpiresAT string `json:"expires-at,omitempty"`
+	Key       string `json:"key,omitempty"`
+	Name      string `json:"name,omitempty"`
+	OrgID     string `json:"org-id,omitempty"`
+	RoleID    string `json:"role-id,omitempty"`
+	Secret    string `json:"secret,omitempty"`
+}
+
+type AssumeIAMRoleRequest struct {
+	// TTL in seconds for the generated access key (cannot exceed the max TTL defined in the targeted assume role)
+	Ttl int64 `json:"ttl" validate:"required,gt=0"`
+}
+
+// [BETA] Request generation of key/secret that allow caller to assume target role
+func (c Client) AssumeIAMRole(ctx context.Context, id UUID, req AssumeIAMRoleRequest) (*AssumeIAMRoleResponse, error) {
+	path := fmt.Sprintf("/iam-role/%v/assume", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "assume-iam-role")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: http response: %w", err)
+	}
+
+	bodyresp := new(AssumeIAMRoleResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("AssumeIAMRole: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Update IAM Assume role Policy
 func (c Client) UpdateIAMRoleAssumePolicy(ctx context.Context, id UUID, req IAMPolicy) (*Operation, error) {
 	path := fmt.Sprintf("/iam-role/%v:assume-role-policy", id)
@@ -11450,70 +11515,6 @@ func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy)
 	bodyresp := new(Operation)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: prepare Json response: %w", err)
-	}
-
-	return bodyresp, nil
-}
-
-type AssumeIAMRoleResponse struct {
-	Key    string `json:"key,omitempty"`
-	Name   string `json:"name,omitempty"`
-	OrgID  string `json:"org-id,omitempty"`
-	RoleID string `json:"role-id,omitempty"`
-	Secret string `json:"secret,omitempty"`
-}
-
-type AssumeIAMRoleRequest struct {
-	// TTL in seconds for the generated access key (cannot exceed the max TTL defined in the targeted assume role)
-	Ttl int64 `json:"ttl" validate:"required,gt=0"`
-}
-
-// [BETA] Request generation of key/secret that allow caller to assume target role
-func (c Client) AssumeIAMRole(ctx context.Context, targetRoleID UUID, req AssumeIAMRoleRequest) (*AssumeIAMRoleResponse, error) {
-	path := fmt.Sprintf("/iam-role/%v/assume", targetRoleID)
-
-	body, err := prepareJSONBody(req)
-	if err != nil {
-		return nil, fmt.Errorf("AssumeIAMRole: prepare Json body: %w", err)
-	}
-
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
-	if err != nil {
-		return nil, fmt.Errorf("AssumeIAMRole: new request: %w", err)
-	}
-
-	request.Header.Add("User-Agent", c.getUserAgent())
-
-	request.Header.Add("Content-Type", "application/json")
-
-	if err := c.executeRequestInterceptors(ctx, request); err != nil {
-		return nil, fmt.Errorf("AssumeIAMRole: execute request editors: %w", err)
-	}
-
-	if err := c.signRequest(request); err != nil {
-		return nil, fmt.Errorf("AssumeIAMRole: sign request: %w", err)
-	}
-
-	if c.trace {
-		dumpRequest(request, "assume-iam-role")
-	}
-
-	response, err := c.httpClient.Do(request)
-	if err != nil {
-		return nil, fmt.Errorf("AssumeIAMRole: http client do: %w", err)
-	}
-
-	if c.trace {
-		dumpResponse(response)
-	}
-
-	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("AssumeIAMRole: http response: %w", err)
-	}
-
-	bodyresp := new(AssumeIAMRoleResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
-		return nil, fmt.Errorf("AssumeIAMRole: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil

@@ -3,50 +3,174 @@ name: check_and_regenerate_v3
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 7 * * *" # everyday at 7 AM
+    - cron: "0 0 * * *"
+
+concurrency:
+  group: egoscale-auto-release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
 
 jobs:
-  check_changes_and_create_pr:
+  generate_and_test:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
-      pull-requests: write
-      actions: write
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: v3/go.mod
 
     - name: Install yq
       run: |
         sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
         sudo chmod +x /usr/local/bin/yq
 
-    - name: Check for changes
-      id: check_changes
+    - name: Regenerate v3 from API spec
       run: |
         make pull-oapi-spec
         make generate
-        git diff --quiet || echo "changes_detected=true" >> $GITHUB_OUTPUT
 
-    - name: Create PR
-      id: create_pr
-      if: steps.check_changes.outputs.changes_detected
-      uses: peter-evans/create-pull-request@v8
-      with:
-        title: "v3: regenerate from new API spec"
-        body: "New changes have appeared in the API spec and egoscale v3 has been regenerated."
-        branch: generate-v3
-        delete-branch: true
-        base: master
-        author: "Exoscale <operation+build@exoscale.net>"
-        committer: "Exoscale <operation+build@exoscale.net>"
-    - name: Start CI on newly created PR
-      if: steps.check_changes.outputs.changes_detected && steps.create_pr.outputs.pull-request-number
+    - name: Check for changes
+      id: check_changes
       run: |
-        gh workflow run build-public-tooling.yaml --ref generate-v3
-        gh workflow run main.yml --ref generate-v3
-        gh workflow run govulncheck.yml --ref generate-v3
-      env:
-        GH_TOKEN: ${{ github.token }}
+        if ! git diff --quiet -- v3/schemas.go v3/client.go v3/operations.go; then
+          echo "changes_detected=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run egoscale tests
+      if: steps.check_changes.outputs.changes_detected
+      run: |
+        make test-verbose
+        cd v3 && go test -race -mod=readonly -v ./...
+
+    - name: Bump version number
+      if: steps.check_changes.outputs.changes_detected
+      id: bump_version
+      run: |
+        CURRENT=$(awk -F'"' '/Version = /{print $2}' v3/version.go)
+        NUMERIC="${CURRENT#v}"
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$NUMERIC"
+        NEW_PATCH=$((PATCH + 1))
+        NEW_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+        echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+    - name: Test cli compatibility
+      if: steps.check_changes.outputs.changes_detected
+      run: |
+        git clone --depth 1 https://github.com/exoscale/cli.git
+        cd cli
+        go mod edit -replace github.com/exoscale/egoscale/v3=$GITHUB_WORKSPACE/v3
+        go mod tidy
+        make build
+        make test
+
+    - name: Test terraform-provider-exoscale compatibility
+      if: steps.check_changes.outputs.changes_detected
+      run: |
+        git clone --depth 1 https://github.com/exoscale/terraform-provider-exoscale.git
+        cd terraform-provider-exoscale
+        go mod edit -replace github.com/exoscale/egoscale/v3=$GITHUB_WORKSPACE/v3
+        go mod tidy
+        go build ./...
+        go test ./...
+
+    - name: Update version
+      if: steps.check_changes.outputs.changes_detected
+      run: |
+        VERSION="${{ steps.bump_version.outputs.new_version }}"
+        sed -i "s/const Version = \".*\"/const Version = \"${VERSION}\"/" v3/version.go
+
+    - name: Update CHANGELOG
+      if: steps.check_changes.outputs.changes_detected
+      run: |
+        VERSION="${{ steps.bump_version.outputs.new_version }}"
+        VER="${VERSION#v}"
+        {
+           echo "Changelog"
+          echo "========="
+          echo ""
+          echo "${VER}"
+          echo "----------"
+          echo ""
+          echo "- v3: regenerate from new API spec"
+          echo ""
+          sed -n '4,$ p' CHANGELOG.md
+        } > CHANGELOG.md.tmp
+        mv CHANGELOG.md.tmp CHANGELOG.md
+
+    - name: Commit and push to master
+      if: steps.check_changes.outputs.changes_detected
+      run: |
+        VERSION="${{ steps.bump_version.outputs.new_version }}"
+        git config --global user.name "Exoscale Bot"
+        git config --global user.email "operation+build@exoscale.net"
+        git remote set-url origin https://x-access-token:${{ secrets.CROSS_REPO_PAT }}@github.com/exoscale/egoscale.git
+        git add \
+          v3/schemas.go v3/client.go v3/operations.go \
+          v3/version.go v3/generator/source.yaml \
+          CHANGELOG.md
+        git commit -m "v3: regenerate from new API spec (${VERSION})"
+        git push origin master
+
+    - name: Tag release
+      if: steps.check_changes.outputs.changes_detected
+      run: |
+        VERSION="${{ steps.bump_version.outputs.new_version }}"
+        git tag -a "$VERSION" -m "Release ${VERSION}"
+        git push origin "$VERSION"
+
+    - name: Wait for GitHub release to be created
+      if: steps.check_changes.outputs.changes_detected
+      run: |
+        VERSION="${{ steps.bump_version.outputs.new_version }}"
+        for i in $(seq 1 20); do
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://api.github.com/repos/exoscale/egoscale/releases/tags/${VERSION}" \
+            -H "Authorization: Bearer ${{ secrets.CROSS_REPO_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Release $VERSION is ready"
+            exit 0
+          fi
+          echo "Waiting for release ($i/20)..."
+          sleep 30
+        done
+        echo "ERROR: Release $VERSION did not appear after 10 minutes"
+        exit 1
+
+    - name: Update cli dependency
+      if: steps.check_changes.outputs.changes_detected
+      run: |
+        VERSION="${{ steps.bump_version.outputs.new_version }}"
+        git clone https://x-access-token:${{ secrets.CROSS_REPO_PAT }}@github.com/exoscale/cli.git
+        cd cli
+        git config user.name "Exoscale Bot"
+        git config user.email "operation+build@exoscale.net"
+        GOPROXY=direct go get github.com/exoscale/egoscale/v3@${VERSION}
+        go mod tidy
+        git add go.mod go.sum
+        git commit -m "upgrade egoscale to ${VERSION}" || echo "no dependency changes"
+        git push origin master
+
+    - name: Update terraform-provider-exoscale dependency
+      if: steps.check_changes.outputs.changes_detected
+      run: |
+        VERSION="${{ steps.bump_version.outputs.new_version }}"
+        git clone https://x-access-token:${{ secrets.CROSS_REPO_PAT }}@github.com/exoscale/terraform-provider-exoscale.git
+        cd terraform-provider-exoscale
+        git config user.name "Exoscale Bot"
+        git config user.email "operation+build@exoscale.net"
+        GOPROXY=direct go get github.com/exoscale/egoscale/v3@${VERSION}
+        go mod tidy
+        git add go.mod go.sum
+        git commit -m "upgrade egoscale to ${VERSION}" || echo "no dependency changes"
+        git push origin master

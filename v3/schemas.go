@@ -1314,6 +1314,8 @@ type DBAASServiceMysql struct {
 	BackupSchedule *DBAASServiceMysqlBackupSchedule `json:"backup-schedule,omitempty"`
 	// List of backups for the service
 	Backups []DBAASServiceBackup `json:"backups,omitempty"`
+	// The minimum amount of time in seconds to keep binlog entries before deletion. This may be extended for services that require binlog entries for longer than the default for example if using the MySQL Debezium Kafka connector.
+	BinlogRetentionPeriod int64 `json:"binlog-retention-period,omitempty" validate:"omitempty,gt=0"`
 	// Service component information objects
 	Components []DBAASServiceMysqlComponents `json:"components,omitempty"`
 	// MySQL connection information properties
@@ -1616,6 +1618,8 @@ type DBAASServicePG struct {
 	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
 	// postgresql.conf configuration values
 	PGSettings *JSONSchemaPG `json:"pg-settings,omitempty"`
+	// System-wide settings for the pgaudit extension.
+	PgauditSettings *JSONSchemaPgaudit `json:"pgaudit-settings,omitempty"`
 	// System-wide settings for pgbouncer.
 	PgbouncerSettings *JSONSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
 	// System-wide settings for pglookout.
@@ -2843,6 +2847,7 @@ const (
 	InstanceTypeFamilyGpu           InstanceTypeFamily = "gpu"
 	InstanceTypeFamilyMemory        InstanceTypeFamily = "memory"
 	InstanceTypeFamilyGpua5000      InstanceTypeFamily = "gpua5000"
+	InstanceTypeFamilyGpub300       InstanceTypeFamily = "gpub300"
 	InstanceTypeFamilyGpurtx6000pro InstanceTypeFamily = "gpurtx6000pro"
 	InstanceTypeFamilyStorage       InstanceTypeFamily = "storage"
 	InstanceTypeFamilyStandard      InstanceTypeFamily = "standard"
@@ -3921,6 +3926,58 @@ type JSONSchemaPG struct {
 	TrackIoTiming JSONSchemaPGTrackIoTiming `json:"track_io_timing,omitempty"`
 	// Write-ahead log (WAL) settings
 	Wal *JSONSchemaPGWal `json:"wal,omitempty"`
+}
+
+type JSONSchemaPgauditLogLevel string
+
+const (
+	JSONSchemaPgauditLogLevelDebug1  JSONSchemaPgauditLogLevel = "debug1"
+	JSONSchemaPgauditLogLevelDebug2  JSONSchemaPgauditLogLevel = "debug2"
+	JSONSchemaPgauditLogLevelDebug3  JSONSchemaPgauditLogLevel = "debug3"
+	JSONSchemaPgauditLogLevelDebug4  JSONSchemaPgauditLogLevel = "debug4"
+	JSONSchemaPgauditLogLevelDebug5  JSONSchemaPgauditLogLevel = "debug5"
+	JSONSchemaPgauditLogLevelInfo    JSONSchemaPgauditLogLevel = "info"
+	JSONSchemaPgauditLogLevelNotice  JSONSchemaPgauditLogLevel = "notice"
+	JSONSchemaPgauditLogLevelWarning JSONSchemaPgauditLogLevel = "warning"
+	JSONSchemaPgauditLogLevelLog     JSONSchemaPgauditLogLevel = "log"
+)
+
+// System-wide settings for the pgaudit extension.
+type JSONSchemaPgaudit struct {
+	// Enable pgaudit extension. When enabled, pgaudit extension will be automatically installed.Otherwise, extension will be uninstalled but auditing configurations will be preserved.
+	FeatureEnabled *bool `json:"feature_enabled,omitempty"`
+	// Specifies which classes of statements will be logged by session audit logging.
+	Log []string `json:"log,omitempty"`
+	// Specifies that session logging should be enabled in the case where all relations
+	// in a statement are in pg_catalog.
+	LogCatalog *bool `json:"log_catalog,omitempty"`
+	// Specifies whether log messages will be visible to a client process such as psql.
+	LogClient *bool `json:"log_client,omitempty"`
+	// Specifies the log level that will be used for log entries.
+	LogLevel JSONSchemaPgauditLogLevel `json:"log_level,omitempty"`
+	// Crop parameters representation and whole statements if they exceed this threshold.
+	// A (default) value of -1 disable the truncation.
+	LogMaxStringLength int `json:"log_max_string_length,omitempty" validate:"omitempty,gte=-1,lte=102400"`
+	// This GUC allows to turn off logging nested statements, that is, statements that are
+	// executed as part of another ExecutorRun.
+	LogNestedStatements *bool `json:"log_nested_statements,omitempty"`
+	// Specifies that audit logging should include the parameters that were passed with the statement.
+	LogParameter *bool `json:"log_parameter,omitempty"`
+	// Specifies that parameter values longer than this setting (in bytes) should not be logged,
+	// but replaced with <long param suppressed>.
+	LogParameterMaxSize int `json:"log_parameter_max_size,omitempty"`
+	// Specifies whether session audit logging should create a separate log entry
+	// for each relation (TABLE, VIEW, etc.) referenced in a SELECT or DML statement.
+	LogRelation *bool `json:"log_relation,omitempty"`
+	// Log Rows
+	LogRows *bool `json:"log_rows,omitempty"`
+	// Specifies whether logging will include the statement text and parameters (if enabled).
+	LogStatement *bool `json:"log_statement,omitempty"`
+	// Specifies whether logging will include the statement text and parameters with
+	// the first log entry for a statement/substatement combination or with every entry.
+	LogStatementOnce *bool `json:"log_statement_once,omitempty"`
+	// Specifies the master role to use for object audit logging.
+	Role string `json:"role,omitempty" validate:"omitempty,lte=64"`
 }
 
 type JSONSchemaPgbouncerAutodbPoolMode string

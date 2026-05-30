@@ -6885,6 +6885,8 @@ type CreateDBAASServicePGRequest struct {
 	Migration *CreateDBAASServicePGRequestMigration `json:"migration,omitempty"`
 	// postgresql.conf configuration values
 	PGSettings *JSONSchemaPG `json:"pg-settings,omitempty"`
+	// System-wide settings for the pgaudit extension.
+	PgauditSettings *JSONSchemaPgaudit `json:"pgaudit-settings,omitempty"`
 	// System-wide settings for pgbouncer.
 	PgbouncerSettings *JSONSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
 	// System-wide settings for pglookout.
@@ -7013,6 +7015,8 @@ type UpdateDBAASServicePGRequest struct {
 	Migration *UpdateDBAASServicePGRequestMigration `json:"migration,omitempty"`
 	// postgresql.conf configuration values
 	PGSettings *JSONSchemaPG `json:"pg-settings,omitempty"`
+	// System-wide settings for the pgaudit extension.
+	PgauditSettings *JSONSchemaPgaudit `json:"pgaudit-settings,omitempty"`
 	// System-wide settings for pgbouncer.
 	PgbouncerSettings *JSONSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
 	// System-wide settings for pglookout.

@@ -27,6 +27,15 @@ tags:
     x-display-name: DBaaS Mysql
     x-weight: 420
     x-icon: exo-db-mysql
+  - description: API keys for accessing inference deployments.
+    parent: ai
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/ai-cloud-infrastructure/managed-inference/
+    name: ai-api-key
+    x-display-name: AI API Key
+    x-weight: 940
+    x-icon: exo-license
   - description: Elastic IPs are additional public IPv4/6 addresses that can be attached to Compute instances, with optional healthcheck support.
     parent: compute
     externalDocs:
@@ -1798,6 +1807,116 @@ components:
           type: string
         command:
           type: string
+    json-schema-pgaudit:
+      description: System-wide settings for the pgaudit extension.
+      properties:
+        role:
+          description: Specifies the master role to use for object audit logging.
+          maxLength: 64
+          pattern: ^[_A-Za-z0-9][-._A-Za-z0-9]{0,63}$
+          title: Role
+          type: string
+          user_error: Must consist of alpha-numeric characters, dots, underscores or dashes, may not start with dash or dot, max 64 characters
+        log_parameter:
+          default: false
+          description: Specifies that audit logging should include the parameters that were passed with the statement.
+          title: Log Parameter
+          type: boolean
+        log_rows:
+          default: false
+          title: Log Rows
+          type: boolean
+        log_level:
+          default: log
+          description: Specifies the log level that will be used for log entries.
+          enum:
+            - debug1
+            - debug2
+            - debug3
+            - debug4
+            - debug5
+            - info
+            - notice
+            - warning
+            - log
+          title: Log level
+          type: string
+        log_relation:
+          default: false
+          description: |-
+            Specifies whether session audit logging should create a separate log entry
+            for each relation (TABLE, VIEW, etc.) referenced in a SELECT or DML statement.
+          title: Log Relation
+          type: boolean
+        log_statement_once:
+          default: false
+          description: |-
+            Specifies whether logging will include the statement text and parameters with
+            the first log entry for a statement/substatement combination or with every entry.
+          title: Log Statement Once
+          type: boolean
+        log_max_string_length:
+          default: -1
+          description: |-
+            Crop parameters representation and whole statements if they exceed this threshold.
+            A (default) value of -1 disable the truncation.
+          maximum: 102400
+          minimum: -1
+          title: Log Max String Length
+          type: integer
+        log_catalog:
+          default: true
+          description: |-
+            Specifies that session logging should be enabled in the case where all relations
+            in a statement are in pg_catalog.
+          title: Log Catalog
+          type: boolean
+        log_nested_statements:
+          default: true
+          description: |-
+            This GUC allows to turn off logging nested statements, that is, statements that are
+            executed as part of another ExecutorRun.
+          title: Log Nested Statements
+          type: boolean
+        log_statement:
+          default: true
+          description: Specifies whether logging will include the statement text and parameters (if enabled).
+          title: Log Statement
+          type: boolean
+        log_client:
+          default: false
+          description: Specifies whether log messages will be visible to a client process such as psql.
+          title: Log Client
+          type: boolean
+        feature_enabled:
+          default: false
+          description: Enable pgaudit extension. When enabled, pgaudit extension will be automatically installed.Otherwise, extension will be uninstalled but auditing configurations will be preserved.
+          title: Enable pgaudit extension.
+          type: boolean
+        log:
+          description: Specifies which classes of statements will be logged by session audit logging.
+          items:
+            enum:
+              - all
+              - ddl
+              - function
+              - misc
+              - misc_set
+              - read
+              - role
+              - write
+            type: string
+          title: Log
+          type: array
+        log_parameter_max_size:
+          default: 0
+          description: |-
+            Specifies that parameter values longer than this setting (in bytes) should not be logged,
+            but replaced with <long param suppressed>.
+          title: Log Parameter Max Size
+          type: integer
+      title: PGAudit settings
+      type: object
     dbaas-valkey-user-access-control:
       type: object
       properties:
@@ -3190,6 +3309,7 @@ components:
             - gpu
             - memory
             - gpua5000
+            - gpub300
             - gpurtx6000pro
             - storage
             - standard
@@ -3546,6 +3666,12 @@ components:
               authentication:
                 type: string
           description: List of service users
+        binlog-retention-period:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: The minimum amount of time in seconds to keep binlog entries before deletion. This may be extended for services that require binlog entries for longer than the default for example if using the MySQL Debezium Kafka connector.
       required:
         - name
         - plan
@@ -5071,6 +5197,9 @@ components:
         termination-protection:
           type: boolean
           description: Service is protected against termination and powering off
+        pgaudit-settings:
+          $ref: '#/components/schemas/json-schema-pgaudit'
+          description: PGAudit settings
         notifications:
           type: array
           items:
@@ -17450,7 +17579,6 @@ paths:
                   description: Enable auto upgrade of the control plane to the latest patch version available
                 oidc:
                   $ref: '#/components/schemas/sks-oidc'
-                  nullable: true
                   description: Cluster OpenID configmap
                 name:
                   type: string
@@ -20196,6 +20324,9 @@ paths:
                 termination-protection:
                   type: boolean
                   description: Service is protected against termination and powering off
+                pgaudit-settings:
+                  $ref: '#/components/schemas/json-schema-pgaudit'
+                  description: PGAudit settings
                 synchronous-replication:
                   $ref: '#/components/schemas/enum-pg-synchronous-replication'
                   description: Synchronous replication type. Note that the service plan also needs to support synchronous replication.
@@ -20404,6 +20535,9 @@ paths:
                 termination-protection:
                   type: boolean
                   description: Service is protected against termination and powering off
+                pgaudit-settings:
+                  $ref: '#/components/schemas/json-schema-pgaudit'
+                  description: PGAudit settings
                 fork-from-service:
                   $ref: '#/components/schemas/dbaas-service-name'
                   description: Service to fork from

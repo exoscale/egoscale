@@ -6885,6 +6885,8 @@ type CreateDBAASServicePGRequest struct {
 	Migration *CreateDBAASServicePGRequestMigration `json:"migration,omitempty"`
 	// postgresql.conf configuration values
 	PGSettings *JSONSchemaPG `json:"pg-settings,omitempty"`
+	// System-wide settings for the pgaudit extension.
+	PgauditSettings *JSONSchemaPgaudit `json:"pgaudit-settings,omitempty"`
 	// System-wide settings for pgbouncer.
 	PgbouncerSettings *JSONSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
 	// System-wide settings for pglookout.
@@ -7013,6 +7015,8 @@ type UpdateDBAASServicePGRequest struct {
 	Migration *UpdateDBAASServicePGRequestMigration `json:"migration,omitempty"`
 	// postgresql.conf configuration values
 	PGSettings *JSONSchemaPG `json:"pg-settings,omitempty"`
+	// System-wide settings for the pgaudit extension.
+	PgauditSettings *JSONSchemaPgaudit `json:"pgaudit-settings,omitempty"`
 	// System-wide settings for pgbouncer.
 	PgbouncerSettings *JSONSchemaPgbouncer `json:"pgbouncer-settings,omitempty"`
 	// System-wide settings for pglookout.
@@ -16708,7 +16712,7 @@ type UpdateSKSClusterRequest struct {
 	// Cluster name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// SKS Cluster OpenID config map
-	Oidc *SKSOidc `json:"oidc"`
+	Oidc *SKSOidc `json:"oidc,omitempty"`
 }
 
 // Update an SKS cluster

@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
     - name: Install yq
       run: |
@@ -33,7 +33,7 @@ jobs:
     - name: Create PR
       id: create_pr
       if: steps.check_changes.outputs.changes_detected
-      uses: peter-evans/create-pull-request@v8
+      uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
       with:
         title: "v3: regenerate from new API spec"
         body: "New changes have appeared in the API spec and egoscale v3 has been regenerated."

@@ -4511,7 +4511,7 @@ type OperationResourceRef struct {
 // Per-org token consumption quota response
 type OrgConsumptionQuotaResponse struct {
 	// Per-org token consumption quota (tokens/min). Null means unlimited.
-	QuotaTokensPerMinute int `json:"quota-tokens-per-minute,omitempty" validate:"omitempty,gte=0"`
+	QuotaTokensPerMinute *int `json:"quota-tokens-per-minute,omitempty" validate:"omitempty,gte=0"`
 }
 
 // Organization
@@ -4796,7 +4796,7 @@ type SecurityGroupRule struct {
 // Request to set per-org token consumption quota
 type SetOrgConsumptionQuotaRequest struct {
 	// Per-org token consumption quota (tokens/min). Pass null to remove the limit.
-	QuotaTokensPerMinute int `json:"quota-tokens-per-minute,omitempty" validate:"omitempty,gte=0"`
+	QuotaTokensPerMinute *int `json:"quota-tokens-per-minute,omitempty" validate:"omitempty,gte=0"`
 }
 
 // Kubernetes Audit parameters

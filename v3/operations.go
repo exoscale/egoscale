@@ -12,6 +12,25 @@ import (
 	"time"
 )
 
+// FindListAIAPIKeysResponseEntry attempts to find an ListAIAPIKeysResponseEntry by nameOrID.
+func (l ListAIAPIKeysResponse) FindListAIAPIKeysResponseEntry(nameOrID string) (ListAIAPIKeysResponseEntry, error) {
+	var result []ListAIAPIKeysResponseEntry
+	for i, elem := range l.AIAPIKeys {
+		if string(elem.Name) == nameOrID || string(elem.ID) == nameOrID {
+			result = append(result, l.AIAPIKeys[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return ListAIAPIKeysResponseEntry{}, fmt.Errorf("%q too many found in ListAIAPIKeysResponse: %w", nameOrID, ErrConflict)
+	}
+
+	return ListAIAPIKeysResponseEntry{}, fmt.Errorf("%q not found in ListAIAPIKeysResponse: %w", nameOrID, ErrNotFound)
+}
+
 // List AI API keys for an organization
 func (c Client) ListAIAPIKeys(ctx context.Context) (*ListAIAPIKeysResponse, error) {
 	path := "/ai/api-key"
@@ -1044,7 +1063,7 @@ func (c Client) GetModel(ctx context.Context, id UUID) (*GetModelResponse, error
 	return bodyresp, nil
 }
 
-// Get per-org token consumption quota (tokens/min). Null means unlimited.
+// Get per-org Unit Of Measurement (UOM) consumption quota (UOM/min). Null means unlimited. UOM represents weighted units across different AI workloads (e.g., tokens for LLMs, minutes for TTS, pages for OCR).
 func (c Client) GetUserOrgConsumptionQuota(ctx context.Context) (*OrgConsumptionQuotaResponse, error) {
 	path := "/ai/quota"
 
@@ -11140,8 +11159,8 @@ func (c Client) ListIAMRoles(ctx context.Context) (*ListIAMRolesResponse, error)
 }
 
 type CreateIAMRoleRequest struct {
-	// Policy
-	AssumeRolePolicy *IAMPolicy `json:"assume-role-policy,omitempty"`
+	// Assume Role Policy
+	AssumeRolePolicy *IAMAssumeRolePolicy `json:"assume-role-policy,omitempty"`
 	// IAM Role description
 	Description string `json:"description,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Sets if the IAM Role Policy is editable or not (default: true). This setting cannot be changed after creation
@@ -11297,6 +11316,8 @@ func (c Client) GetIAMRole(ctx context.Context, id UUID) (*IAMRole, error) {
 }
 
 type UpdateIAMRoleRequest struct {
+	// Assume Role Policy
+	AssumeRolePolicy *IAMAssumeRolePolicy `json:"assume-role-policy,omitempty"`
 	// IAM Role description
 	Description string `json:"description,omitempty" validate:"omitempty,gte=1,lte=255"`
 	Labels      Labels `json:"labels,omitempty"`
@@ -11417,57 +11438,6 @@ func (c Client) AssumeIAMRole(ctx context.Context, id UUID, req AssumeIAMRoleReq
 	bodyresp := new(AssumeIAMRoleResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AssumeIAMRole: prepare Json response: %w", err)
-	}
-
-	return bodyresp, nil
-}
-
-// Update IAM Assume role Policy
-func (c Client) UpdateIAMRoleAssumePolicy(ctx context.Context, id UUID, req IAMPolicy) (*Operation, error) {
-	path := fmt.Sprintf("/iam-role/%v:assume-role-policy", id)
-
-	body, err := prepareJSONBody(req)
-	if err != nil {
-		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: prepare Json body: %w", err)
-	}
-
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
-	if err != nil {
-		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: new request: %w", err)
-	}
-
-	request.Header.Add("User-Agent", c.getUserAgent())
-
-	request.Header.Add("Content-Type", "application/json")
-
-	if err := c.executeRequestInterceptors(ctx, request); err != nil {
-		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: execute request editors: %w", err)
-	}
-
-	if err := c.signRequest(request); err != nil {
-		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: sign request: %w", err)
-	}
-
-	if c.trace {
-		dumpRequest(request, "update-iam-role-assume-policy")
-	}
-
-	response, err := c.httpClient.Do(request)
-	if err != nil {
-		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: http client do: %w", err)
-	}
-
-	if c.trace {
-		dumpResponse(response)
-	}
-
-	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: http response: %w", err)
-	}
-
-	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
-		return nil, fmt.Errorf("UpdateIAMRoleAssumePolicy: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil
@@ -16712,7 +16682,7 @@ type UpdateSKSClusterRequest struct {
 	// Cluster name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// SKS Cluster OpenID config map
-	Oidc *SKSOidc `json:"oidc,omitempty"`
+	Oidc *SKSOidc `json:"oidc"`
 }
 
 // Update an SKS cluster
@@ -18962,6 +18932,279 @@ func (c Client) UpdateUserRole(ctx context.Context, id UUID, req UpdateUserRoleR
 	bodyresp := new(Operation)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateUserRole: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ListVpcsResponse struct {
+	Vpcs []ListVpcResponseEntry `json:"vpcs,omitempty"`
+}
+
+// FindListVpcResponseEntry attempts to find an ListVpcResponseEntry by nameOrID.
+func (l ListVpcsResponse) FindListVpcResponseEntry(nameOrID string) (ListVpcResponseEntry, error) {
+	var result []ListVpcResponseEntry
+	for i, elem := range l.Vpcs {
+		if string(elem.Name) == nameOrID || string(elem.ID) == nameOrID {
+			result = append(result, l.Vpcs[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return ListVpcResponseEntry{}, fmt.Errorf("%q too many found in ListVpcsResponse: %w", nameOrID, ErrConflict)
+	}
+
+	return ListVpcResponseEntry{}, fmt.Errorf("%q not found in ListVpcsResponse: %w", nameOrID, ErrNotFound)
+}
+
+// [BETA] List VPCs
+func (c Client) ListVpcs(ctx context.Context) (*ListVpcsResponse, error) {
+	path := "/vpc"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListVpcs: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListVpcs: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListVpcs: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-vpcs")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListVpcs: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListVpcs: http response: %w", err)
+	}
+
+	bodyresp := new(ListVpcsResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListVpcs: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateVpcRequest struct {
+	// VPC description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	Labels      Labels `json:"labels,omitempty"`
+	// VPC name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
+}
+
+// [BETA] Create a VPC
+func (c Client) CreateVpc(ctx context.Context, req CreateVpcRequest) (*Operation, error) {
+	path := "/vpc"
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateVpc: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateVpc: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateVpc: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateVpc: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-vpc")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateVpc: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateVpc: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateVpc: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Delete a VPC
+func (c Client) DeleteVpc(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/vpc/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteVpc: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteVpc: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteVpc: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-vpc")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteVpc: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteVpc: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteVpc: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Retrieve VPC details
+func (c Client) GetVpc(ctx context.Context, id UUID) (*Vpc, error) {
+	path := fmt.Sprintf("/vpc/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetVpc: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetVpc: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetVpc: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-vpc")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetVpc: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetVpc: http response: %w", err)
+	}
+
+	bodyresp := new(Vpc)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetVpc: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateVpcRequest struct {
+	// VPC description
+	Description *string `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	Labels      Labels  `json:"labels"`
+	// VPC name
+	Name *string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+}
+
+// [BETA] Update a VPC
+func (c Client) UpdateVpc(ctx context.Context, id UUID, req UpdateVpcRequest) (*Vpc, error) {
+	path := fmt.Sprintf("/vpc/%v", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateVpc: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateVpc: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateVpc: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateVpc: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-vpc")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateVpc: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateVpc: http response: %w", err)
+	}
+
+	bodyresp := new(Vpc)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateVpc: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil

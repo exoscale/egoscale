@@ -299,6 +299,15 @@ tags:
     x-display-name: Deploy Target
     x-weight: 230
     x-icon: exo-gpu
+  - description: '[BETA] Virtual Private Cloud (VPC) provides isolated virtual network environments for your Exoscale resources.'
+    parent: compute
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/compute/
+    name: vpc
+    x-display-name: VPC
+    x-weight: 195
+    x-icon: exo-vpc
   - description: 'Operational management for DBaaS services: logs, metrics, service types and lifecycle.'
     parent: dbaas
     externalDocs:
@@ -326,7 +335,7 @@ tags:
     x-weight: 700
     x-icon: exo-dns
   - description: Deployments are loaded model instances ready for inference.
-    parent: ai
+    parent: dedicated-inference
     externalDocs:
       description: Read more
       url: https://www.exoscale.com/ai-cloud-infrastructure/dedicated-inference/
@@ -403,6 +412,15 @@ tags:
     x-display-name: KMS
     x-weight: 1120
     x-icon: exo-secgrp
+  - description: Deploy and run AI models on dedicated GPUs.
+    parent: ai
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/ai-cloud-infrastructure/dedicated-inference/
+    name: dedicated-inference
+    x-display-name: Dedicated Inference
+    x-weight: 905
+    x-icon: exo-ai-prod
   - description: Opensearch, the popular open-source search and analytics database.
     parent: dbaas
     externalDocs:
@@ -460,7 +478,7 @@ tags:
     x-weight: 810
     x-icon: exo-iam
   - description: Lifecycle of AI Models.
-    parent: ai
+    parent: dedicated-inference
     externalDocs:
       description: Read more
       url: https://www.exoscale.com/ai-cloud-infrastructure/dedicated-inference/
@@ -710,7 +728,7 @@ components:
       required:
         - organizations-usages
     model-ref:
-      description: Model reference
+      description: Model reference. Provide either id or name.
       properties:
         name:
           description: Associated model name
@@ -720,12 +738,8 @@ components:
           description: Associated model ID
           format: uuid
           type: string
-      anyOf:
-        - required:
-            - id
-        - required:
-            - name
       type: object
+      minProperties: 1
     dbaas-pg-pool-size:
       type: integer
       format: int64
@@ -892,9 +906,41 @@ components:
       description: Anti-affinity group reference
     create-ai-api-key-response:
       description: Create AI API key response
-      allOf:
-        - $ref: '#/components/schemas/ai-api-key'
+      properties:
+        updated-at:
+          description: Last update timestamp
+          format: date-time
+          type: string
+          readOnly: true
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+        scope:
+          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
+          type: string
+        id:
+          description: AI API key ID
+          format: uuid
+          type: string
+          readOnly: true
+        org-uuid:
+          description: Organization UUID that owns this key
+          format: uuid
+          type: string
+          readOnly: true
+        created-at:
+          description: Creation timestamp
+          format: date-time
+          type: string
+          readOnly: true
       type: object
+      required:
+        - id
+        - org-uuid
+        - name
+        - scope
+        - created-at
+        - updated-at
     sks-audit-bearer-token:
       type: string
       maxLength: 2000
@@ -1693,9 +1739,41 @@ components:
       type: object
     list-ai-api-keys-response-entry:
       description: AI API key list entry
-      allOf:
-        - $ref: '#/components/schemas/ai-api-key'
+      properties:
+        updated-at:
+          description: Last update timestamp
+          format: date-time
+          type: string
+          readOnly: true
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+        scope:
+          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
+          type: string
+        id:
+          description: AI API key ID
+          format: uuid
+          type: string
+          readOnly: true
+        org-uuid:
+          description: Organization UUID that owns this key
+          format: uuid
+          type: string
+          readOnly: true
+        created-at:
+          description: Creation timestamp
+          format: date-time
+          type: string
+          readOnly: true
       type: object
+      required:
+        - id
+        - org-uuid
+        - name
+        - scope
+        - created-at
+        - updated-at
     private-network:
       type: object
       properties:
@@ -1961,15 +2039,39 @@ components:
               node:
                 type: string
     set-org-consumption-quota-request:
-      description: Request to set per-org token consumption quota
+      description: Request to set per-org Unit Of Measurement (UOM) consumption quota
       properties:
-        quota-tokens-per-minute:
-          description: Per-org token consumption quota (tokens/min). Pass null to remove the limit.
+        quota-uom-per-minute:
+          description: Per-org Unit Of Measurement (UOM) consumption quota (UOM/min). Pass null to remove the limit. UOM represents weighted units across different AI workloads (e.g., tokens for LLMs, minutes for TTS, pages for OCR).
           type:
             - integer
             - "null"
           minimum: 0
       type: object
+    vpc:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: VPC ID
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: VPC name
+        description:
+          type: string
+          maxLength: 4096
+          description: VPC description
+        created-at:
+          type: string
+          format: date-time
+          description: VPC creation date
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: Resource labels
+      description: VPC
     json-schema-thanos:
       properties:
         compactor:
@@ -2195,7 +2297,11 @@ components:
         - 0.19.1
         - 0.20.0
         - 0.20.1
-      default: 0.20.1
+        - 0.20.2
+        - 0.21.0
+        - 0.22.0
+        - 0.22.1
+      default: 0.22.1
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -4548,9 +4654,13 @@ components:
       description: SSH key
     reveal-ai-api-key-response:
       description: Reveal AI API key response
-      allOf:
-        - $ref: '#/components/schemas/ai-api-key-value'
+      properties:
+        value:
+          description: Plaintext AI API key value
+          type: string
       type: object
+      required:
+        - value
     load-balancer-service:
       type: object
       properties:
@@ -4877,7 +4987,32 @@ components:
           enum:
             - success
             - target-registered
+            - already-applied
           default: success
+    list-vpc-response-entry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: VPC ID
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: VPC name
+        description:
+          type: string
+          maxLength: 4096
+          description: VPC description
+        created-at:
+          type: string
+          format: date-time
+          description: VPC creation date
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: Resource labels
+      description: VPC
     elastic-ip-ref:
       type: object
       properties:
@@ -4887,10 +5022,10 @@ components:
           description: Elastic IP ID
       description: Elastic IP reference
     org-consumption-quota-response:
-      description: Per-org token consumption quota response
+      description: Per-org Unit Of Measurement (UOM) consumption quota response
       properties:
-        quota-tokens-per-minute:
-          description: Per-org token consumption quota (tokens/min). Null means unlimited.
+        quota-uom-per-minute:
+          description: Per-org Unit Of Measurement (UOM) consumption quota (UOM/min). Null means unlimited. UOM represents weighted units across different AI workloads (e.g., tokens for LLMs, minutes for TTS, pages for OCR).
           type:
             - integer
             - "null"
@@ -5601,6 +5736,8 @@ components:
             - preparing
             - error
             - deploying
+            - scaling
+            - updating
           type: string
         gpu-type:
           description: GPU type family
@@ -6292,9 +6429,6 @@ components:
       type: object
       required:
         - name
-        - description
-        - usage
-        - multi-zone
       properties:
         name:
           type: string
@@ -6304,8 +6438,10 @@ components:
           type: string
           enum:
             - encrypt-decrypt
+          default: encrypt-decrypt
         multi-zone:
           type: boolean
+          default: false
     inference-engine-parameter-entry:
       description: inference-engine parameter definition
       properties:
@@ -6462,6 +6598,8 @@ components:
             - preparing
             - error
             - deploying
+            - scaling
+            - updating
           type: string
         gpu-type:
           description: GPU type family
@@ -6772,8 +6910,33 @@ components:
     organization-usage:
       description: Organization GPU usage
       properties:
+        gpu3:
+          description: GPU3 count
+          format: int64
+          type: integer
+          minimum: 0
+        gpua30:
+          description: GPUA30 count
+          format: int64
+          type: integer
+          minimum: 0
+        gpu3080ti:
+          description: GPU3080TI count
+          format: int64
+          type: integer
+          minimum: 0
         gpu:
-          description: Total GPU count
+          description: Total GPU count (sum of all GPU types)
+          format: int64
+          type: integer
+          minimum: 0
+        gpua5000:
+          description: GPUA5000 count
+          format: int64
+          type: integer
+          minimum: 0
+        gpurtx6000pro:
+          description: GPURTX6000PRO count
           format: int64
           type: integer
           minimum: 0
@@ -7053,6 +7216,15 @@ components:
           readOnly: true
           description: Nodepool creation date
       description: SKS Nodepool
+    iam-assume-role-policy:
+      type: object
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/iam-service-policy-rule'
+          description: IAM Assume Role Policy rules
+      description: Assume Role Policy
     dbaas-datadog-tag:
       type: object
       properties:
@@ -7069,9 +7241,13 @@ components:
         - tag
     rotate-ai-api-key-response:
       description: Rotate AI API key response
-      allOf:
-        - $ref: '#/components/schemas/ai-api-key-value'
+      properties:
+        value:
+          description: Plaintext AI API key value
+          type: string
       type: object
+      required:
+        - value
     sks-cluster-labels:
       type: object
       additionalProperties:
@@ -7938,9 +8114,41 @@ components:
         - prometheus-uri
     get-ai-api-key-response:
       description: Get AI API key response
-      allOf:
-        - $ref: '#/components/schemas/ai-api-key'
+      properties:
+        updated-at:
+          description: Last update timestamp
+          format: date-time
+          type: string
+          readOnly: true
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+        scope:
+          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
+          type: string
+        id:
+          description: AI API key ID
+          format: uuid
+          type: string
+          readOnly: true
+        org-uuid:
+          description: Organization UUID that owns this key
+          format: uuid
+          type: string
+          readOnly: true
+        created-at:
+          description: Creation timestamp
+          format: date-time
+          type: string
+          readOnly: true
       type: object
+      required:
+        - id
+        - org-uuid
+        - name
+        - scope
+        - created-at
+        - updated-at
     manager:
       type: object
       properties:
@@ -8400,7 +8608,6 @@ components:
     get-kms-key-response:
       type: object
       required:
-        - zone
         - id
         - name
         - description
@@ -8460,14 +8667,14 @@ components:
           type: string
           format: date-time
     model-usage-counters:
-      description: Accumulated token counters for one model over a flush window
+      description: Accumulated Unit Of Measurement (UOM) counters for one model over a flush window
       properties:
-        output-tokens:
-          description: Total completion/output tokens across all calls in this flush window
+        output-uom:
+          description: Total completion/output Unit Of Measurement (UOM) across all calls in this flush window (e.g., tokens for LLMs, minutes for TTS, pages for OCR)
           type: integer
           minimum: 0
-        input-tokens:
-          description: Total prompt/input tokens across all calls in this flush window
+        input-uom:
+          description: Total prompt/input Unit Of Measurement (UOM) across all calls in this flush window (e.g., tokens for LLMs, minutes for TTS, pages for OCR)
           type: integer
           minimum: 0
         call-count:
@@ -8476,8 +8683,8 @@ components:
           minimum: 1
       type: object
       required:
-        - input-tokens
-        - output-tokens
+        - input-uom
+        - output-uom
         - call-count
     create-kms-key-response:
       type: object
@@ -8514,6 +8721,9 @@ components:
             - enabled
             - disabled
             - pending-deletion
+        status-since:
+          type: string
+          format: date-time
         id:
           type: string
           format: uuid
@@ -8561,7 +8771,7 @@ components:
           uniqueItems: true
           description: IAM Role permissions
         assume-role-policy:
-          $ref: '#/components/schemas/iam-policy'
+          $ref: '#/components/schemas/iam-assume-role-policy'
           description: IAM Assume Role Policy
         editable:
           type: boolean
@@ -9948,9 +10158,41 @@ components:
       description: Kubernetes Audit parameters
     update-ai-api-key-response:
       description: Update AI API key response
-      allOf:
-        - $ref: '#/components/schemas/ai-api-key'
+      properties:
+        updated-at:
+          description: Last update timestamp
+          format: date-time
+          type: string
+          readOnly: true
+        name:
+          description: Human-readable name for the AI API key
+          type: string
+        scope:
+          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
+          type: string
+        id:
+          description: AI API key ID
+          format: uuid
+          type: string
+          readOnly: true
+        org-uuid:
+          description: Organization UUID that owns this key
+          format: uuid
+          type: string
+          readOnly: true
+        created-at:
+          description: Creation timestamp
+          format: date-time
+          type: string
+          readOnly: true
       type: object
+      required:
+        - id
+        - org-uuid
+        - name
+        - scope
+        - created-at
+        - updated-at
     ai-api-key:
       description: AI API key metadata
       properties:
@@ -11625,6 +11867,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/forbidden-operation-response'
+        "409":
+          description: "409"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:
@@ -13470,6 +13718,61 @@ paths:
               required:
                 - name
       operationId: create-private-network
+  /vpc:
+    post:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: ""
+      parameters: []
+      summary: '[BETA] Create a VPC'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  minLength: 1
+                  description: VPC name
+                description:
+                  type: string
+                  maxLength: 4096
+                  description: VPC description
+                labels:
+                  $ref: '#/components/schemas/labels'
+                  description: Resource labels
+              required:
+                - name
+      operationId: create-vpc
+    get:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vpcs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/list-vpc-response-entry'
+      description: ""
+      parameters: []
+      summary: '[BETA] List VPCs'
+      operationId: list-vpcs
   /ai/api-key/{id}/rotate:
     post:
       tags:
@@ -13705,6 +14008,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/forbidden-operation-response'
+        "409":
+          description: "409"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:
@@ -13749,6 +14058,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/forbidden-operation-response'
+        "409":
+          description: "409"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:
@@ -15336,6 +15651,9 @@ paths:
                   minimum: 0
                   exclusiveMinimum: true
                   description: Maximum TTL requester is allowed to ask for when assuming a role
+                assume-role-policy:
+                  $ref: '#/components/schemas/iam-assume-role-policy'
+                  description: IAM Assume role policy
       operationId: update-iam-role
     get:
       tags:
@@ -15876,33 +16194,6 @@ paths:
             $ref: '#/components/schemas/dbaas-service-name'
       summary: Initiate PostgreSQL maintenance update
       operationId: start-dbaas-pg-maintenance
-  /iam-role/{id}:assume-role-policy:
-    put:
-      tags:
-        - role
-      responses:
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/operation'
-      description: Update IAM Assume role Policy
-      parameters:
-        - in: path
-          required: true
-          name: id
-          schema:
-            type: string
-            format: uuid
-      summary: Update IAM Assume role Policy
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/iam-policy'
-      operationId: update-iam-role-assume-policy
   /dbaas-grafana/{service-name}/user/{username}/password/reveal:
     get:
       tags:
@@ -17579,6 +17870,7 @@ paths:
                   description: Enable auto upgrade of the control plane to the latest patch version available
                 oidc:
                   $ref: '#/components/schemas/sks-oidc'
+                  nullable: true
                   description: Cluster OpenID configmap
                 name:
                   type: string
@@ -20256,7 +20548,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/org-consumption-quota-response'
-      description: Get per-org token consumption quota (tokens/min). Null means unlimited.
+      description: Get per-org Unit Of Measurement (UOM) consumption quota (UOM/min). Null means unlimited. UOM represents weighted units across different AI workloads (e.g., tokens for LLMs, minutes for TTS, pages for OCR).
       parameters: []
       summary: Get Organization Consumption Quota
       operationId: get-user-org-consumption-quota
@@ -21272,7 +21564,7 @@ paths:
                   $ref: '#/components/schemas/iam-policy'
                   description: IAM Role policy
                 assume-role-policy:
-                  $ref: '#/components/schemas/iam-policy'
+                  $ref: '#/components/schemas/iam-assume-role-policy'
                   description: IAM Assume role policy
                 max-session-ttl:
                   type: integer
@@ -21503,6 +21795,89 @@ paths:
             schema:
               $ref: '#/components/schemas/generate-data-key-request'
       operationId: generate-data-key
+  /vpc/{id}:
+    put:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/vpc'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Update a VPC'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  minLength: 1
+                  nullable: true
+                  description: VPC name
+                description:
+                  type: string
+                  maxLength: 4096
+                  nullable: true
+                  description: VPC description
+                labels:
+                  $ref: '#/components/schemas/labels'
+                  nullable: true
+                  description: Resource labels
+      operationId: update-vpc
+    get:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/vpc'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Retrieve VPC details'
+      operationId: get-vpc
+    delete:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Delete a VPC'
+      operationId: delete-vpc
   /block-storage:
     get:
       tags:

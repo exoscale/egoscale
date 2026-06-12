@@ -17,6 +17,27 @@ import (
 	"github.com/pb33f/libopenapi/orderedmap"
 )
 
+type SDKErrorMap struct {
+	URIType string `yaml:"type" json:"type"`
+	GoType  string `yaml:"go-type" json:"go-type"`
+}
+
+type RequestTmpl struct {
+	Comment            string
+	Name               string
+	OperationID        string
+	Params             string
+	ValueReturn        string
+	URLPathBuilder     string
+	HTTPMethod         string
+	BodyRequest        bool
+	BodyRespType       string
+	JSONResponseTarget string
+	ContentType        string
+	QueryParams        map[string]string
+	XSDKErrors         []SDKErrorMap
+}
+
 // Generate go requests from OpenAPI spec paths operations into a go file.
 func Generate(doc libopenapi.Document, path, packageName string) error {
 	model, errs := doc.BuildV3Model()
@@ -29,20 +50,25 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	output := bytes.NewBuffer(helpers.Header(packageName, "v0.0.1"))
 	output.WriteString(fmt.Sprintf(`package %s
 	
-import (
-	"context"
-	"fmt"
-	"net"
-	"net/http"
-	"net/url"
-	"time"
-)
-`, packageName))
+	import (
+		"bytes"
+		"context"
+		"encoding/json"
+		"fmt"
+		"io"
+		"net"
+		"net/http"
+		"net/url"
+		"time"
+	)
+	`, packageName))
 
 	if orderedmap.Len(model.Model.Paths.PathItems) == 0 {
 		slog.Warn("no path items defined in the spec")
 		return nil
 	}
+
+	uniqueErrors := make(map[string]bool)
 
 	// Iterate over all paths.
 	for pair := orderedmap.SortAlpha(model.Model.Paths.PathItems).First(); pair != nil; pair = pair.Next() {
@@ -83,11 +109,32 @@ import (
 				continue
 			}
 
+			for _, errMeta := range request.XSDKErrors {
+				if errMeta.GoType != "" {
+					uniqueErrors[errMeta.GoType] = true
+				}
+			}
+
 			m, err := renderRequest(request)
 			if err != nil {
 				return err
 			}
 			output.Write(m)
+			output.WriteString("\n\n")
+		}
+	}
+
+	if len(uniqueErrors) > 0 {
+
+		for errType := range uniqueErrors {
+			output.WriteString(fmt.Sprintf("type %s ErrorResponse\n", errType))
+			output.WriteString(fmt.Sprintf(`func (e *%s) Error() string {
+												if e.Detail != "" {
+													return fmt.Sprintf("[%s]: %%s", e.Detail)
+												}
+												return "%s error occurred"
+											}
+											`, errType, errType, errType))
 		}
 	}
 
@@ -101,6 +148,24 @@ import (
 	}
 
 	return os.WriteFile(path, content, os.ModePerm)
+}
+
+func getSDKErrorOverrides(op *v3.Operation) []SDKErrorMap {
+	resp, ok := op.Responses.Codes.Get("400")
+	if !ok || resp.Extensions == nil {
+		return nil
+	}
+
+	ext, ok := resp.Extensions.Get("x-sdk-errors")
+	if !ok || ext == nil {
+		return nil
+	}
+
+	var errors []SDKErrorMap
+	if err := ext.Decode(&errors); err != nil {
+		return nil
+	}
+	return errors
 }
 
 // renderResponseSchema renders all schemas for every HTTP code response.
@@ -129,7 +194,6 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 			if findable != nil {
 				output.Write(findable)
 			}
-
 			continue
 		}
 
@@ -161,18 +225,15 @@ func renderRequestSchema(name string, op *v3.Operation) ([]byte, error) {
 		return nil, nil
 	}
 
-	// TODO support other content type from spec.
 	media, ok := op.RequestBody.Content.Get("application/json")
 	if !ok {
 		return nil, nil
 	}
 
-	// Skip on reference.
 	if media.Schema.IsReference() {
 		return nil, nil
 	}
 
-	// Skip on array referencing a schema.
 	_, ok = isArrayReference(media.Schema)
 	if ok {
 		return nil, nil
@@ -249,16 +310,9 @@ func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error
 			someQueryParam = true
 		}
 
-		// Skip simple types, not needed to be rendered.
 		if schemas.IsSimpleSchema(s) && len(s.Enum) == 0 {
 			continue
 		}
-
-		// As long as an HTTP query param and path param not using objects or arrays in our spec,
-		// this code path is called only for string enum types.
-		// TODO: To support array or object, add a .String() method to those types for marshalling like described here:
-		// https://swagger.io/docs/specification/describing-parameters/#path-parameters
-		// https://swagger.io/docs/specification/describing-parameters/#query-parameters
 
 		if len(s.Enum) == 0 {
 			slog.Warn(
@@ -346,11 +400,7 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 		if len(prop.Type) > 0 && prop.Type[0] != "array" {
 			continue
 		}
-
-		if prop.Items == nil {
-			continue
-		}
-		if !prop.Items.IsA() {
+		if prop.Items == nil || !prop.Items.IsA() {
 			continue
 		}
 
@@ -425,21 +475,6 @@ func renderFindable(funcName string, s *base.SchemaProxy) ([]byte, error) {
 	return nil, nil
 }
 
-type RequestTmpl struct {
-	Comment            string
-	Name               string
-	OperationID        string
-	Params             string
-	ValueReturn        string
-	URLPathBuilder     string
-	HTTPMethod         string
-	BodyRequest        bool
-	BodyRespType       string
-	JSONResponseTarget string
-	ContentType        string
-	QueryParams        map[string]string
-}
-
 // serializeRequest serializes the openAPI spec into the request template.
 func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*RequestTmpl, error) {
 	p := RequestTmpl{
@@ -480,6 +515,7 @@ func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*Req
 	}
 
 	p.QueryParams = getQueryParams(op)
+	p.XSDKErrors = getSDKErrorOverrides(op)
 
 	return &p, nil
 }
@@ -638,16 +674,11 @@ func renderURLPathBuilder(rawPath string, op *v3.Operation) string {
 		}
 
 		path = strings.Replace(path, "{"+p.Name+"}", "%v", 1)
-		sprintfParam = append(
-			sprintfParam,
-			// https://github.com/exoscale/entities/commit/dda7e9f52ded1879e509d465555023b5a16d0155
-			helpers.ToLowerCamel(strings.Trim(p.Name, "*")),
-		)
+		sprintfParam = append(sprintfParam, helpers.ToLowerCamel(strings.Trim(p.Name, "*")))
 	}
 	if path == rawPath {
 		return fmt.Sprintf("%q", rawPath)
 	}
-
 	return `fmt.Sprintf("` + path + `", ` + strings.Join(sprintfParam, ", ") + ")"
 }
 
@@ -677,17 +708,11 @@ func isArrayReference(sp *base.SchemaProxy) (string, bool) {
 	if s == nil {
 		return "", false
 	}
-
 	if s.Type[0] == "array" {
-		if s.Items == nil {
+		if s.Items == nil || !s.Items.IsA() {
 			return "", false
 		}
-		if !s.Items.IsA() {
-			return "", false
-		}
-
-		isReference := s.Items.A.IsReference()
-		if isReference {
+		if s.Items.A.IsReference() {
 			return "[]" + helpers.RenderReference(s.Items.A.GetReference(), ""), true
 		}
 	}

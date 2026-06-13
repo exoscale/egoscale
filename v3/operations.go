@@ -126,6 +126,50 @@ func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (
 	return bodyresp, nil
 }
 
+// Delete AI API key
+func (c Client) DeleteAIAPIKey(ctx context.Context, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/ai/api-key/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteAIAPIKey: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteAIAPIKey: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteAIAPIKey: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-ai-api-key")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteAIAPIKey: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteAIAPIKey: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteAIAPIKey: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Get AI API key metadata
 func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*GetAIAPIKeyResponse, error) {
 	path := fmt.Sprintf("/ai/api-key/%v", id)
@@ -9187,6 +9231,8 @@ type CreateDBAASServiceValkeyRequest struct {
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
 	// Valkey settings
 	ValkeySettings *JSONSchemaValkey `json:"valkey-settings,omitempty"`
+	// Valkey major version
+	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
 }
 
 // Create a DBaaS Valkey service

@@ -215,7 +215,7 @@ func renderSchemaInternal(schemaName string, s *base.Schema, output *bytes.Buffe
 
 func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 	for _, e := range s.Enum {
-		if strings.Contains(e.Value, ",") {
+		if strings.Contains(e.Value, ",") || strings.Contains(e.Value, "+") {
 			return ""
 		}
 

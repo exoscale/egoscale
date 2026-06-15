@@ -16,7 +16,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 
 	request.Header.Add("User-Agent", c.getUserAgent())
 
-	{{ if ne .QueryParams nil }}if len(opts) > 0 {
+	{{ if .QueryParams }}if len(opts) > 0 {
 		q := request.URL.Query()
 		for _, opt := range opts {
 			opt(q)
@@ -49,8 +49,30 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 		dumpResponse(response)
 	}
 
-	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: http response: %w", err)
+	if response.StatusCode >= 400 {
+		{{ if .XSDKErrors }}
+		if response.StatusCode == http.StatusBadRequest {
+			bodyBytes, _ := io.ReadAll(response.Body)
+			response.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+			var peek struct { Type string `json:"type"` }
+			_ = json.Unmarshal(bodyBytes, &peek)
+
+			switch peek.Type {
+			{{ range .XSDKErrors }}
+			case "{{ .URIType }}":
+				var out {{ .GoType }}
+				if err := json.Unmarshal(bodyBytes, &out); err == nil {
+					return nil, &out
+				}
+			{{ end }}
+			}
+		}
+		{{ end }}
+
+		if err := handleHTTPErrorResp(response); err != nil {
+			return nil, fmt.Errorf("{{ .Name }}: http response: %w", err)
+		}
 	}
 
 	bodyresp := {{ .BodyRespType }}

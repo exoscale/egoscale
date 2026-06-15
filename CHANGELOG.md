@@ -1,13 +1,13 @@
 Changelog
 =========
 
-3.1.39
+3.1.40
 ------
 
 - v3: list-zones: skip auth header to avoid IAM enforcement on public endpoint (#767)
 
 3.1.39
-----------
+------
 
 - generator: support '+' symbol as enum separator (#783)
 

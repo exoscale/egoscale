@@ -1,23 +1,28 @@
 Changelog
 =========
 
-3.1.38
+Unreleased
 ----------
+
+- generator: support '+' symbol as enum separator (#783)
+
+3.1.38
+------
 
 - v3: regenerate from new API spec (#779)
 
 3.1.37
-----------
+------
 
 - v3: regenerate from new API spec (#778)
 
 3.1.36
-----------
+------
 
 - v3: support for RFC-9457 error format responses
 
 3.1.35
-----------
+------
 
 - Bump Go to 1.26 (fixes govulncheck report) (#754)
 - v3 generator: implement format: uri-reference (#753)

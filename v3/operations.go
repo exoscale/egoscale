@@ -126,6 +126,46 @@ func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (
 	return bodyresp, nil
 }
 
+// Delete AI API key
+func (c Client) DeleteAIAPIKey(ctx context.Context, id UUID) error {
+	path := fmt.Sprintf("/ai/api-key/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return fmt.Errorf("DeleteAIAPIKey: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return fmt.Errorf("DeleteAIAPIKey: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return fmt.Errorf("DeleteAIAPIKey: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-ai-api-key")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return fmt.Errorf("DeleteAIAPIKey: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return fmt.Errorf("DeleteAIAPIKey: http response: %w", err)
+	}
+
+	_ = response.Body.Close()
+	return nil
+}
+
 // Get AI API key metadata
 func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*GetAIAPIKeyResponse, error) {
 	path := fmt.Sprintf("/ai/api-key/%v", id)

@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+3.1.39
+------
 
 - generator: support '+' symbol as enum separator (#783)
 

@@ -113,6 +113,9 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 
 	for pair := op.Responses.Codes.First(); pair != nil; pair = pair.Next() {
 		response := pair.Value()
+		if response.Content == nil {
+			continue
+		}
 		// TODO support other content type from spec.
 		media, ok := response.Content.Get("application/json")
 		if !ok {
@@ -438,6 +441,20 @@ type RequestTmpl struct {
 	JSONResponseTarget string
 	ContentType        string
 	QueryParams        map[string]string
+	ErrReturn          string // "nil, " for body-returning ops, "" for no-body (error-only) ops
+	ReturnSection      string // pre-rendered final return block injected verbatim into the template
+}
+
+// renderBodyReturnSection returns the final block of a generated operation function
+// that reads and decodes the JSON response body.
+func renderBodyReturnSection(bodyRespType, jsonResponseTarget, funcName string) string {
+	var b strings.Builder
+	b.WriteString("\tbodyresp := " + bodyRespType + "\n")
+	b.WriteString("\tif err := prepareJSONResponse(response, " + jsonResponseTarget + "); err != nil {\n")
+	b.WriteString("\t\treturn nil, fmt.Errorf(\"" + funcName + ": prepare JSON response: %w\", err)\n")
+	b.WriteString("\t}\n\n")
+	b.WriteString("\treturn bodyresp, nil")
+	return b.String()
 }
 
 // serializeRequest serializes the openAPI spec into the request template.
@@ -461,15 +478,14 @@ func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*Req
 		}
 	}
 	p.ValueReturn = fmt.Sprintf("(%s)", strings.Join(valuesReturn, ", "))
-	// This should never happen in our Exoscale API spec.
-	// This is here as a reminder the day we add such a behavior in the OpenAPI spec.
 	if p.ValueReturn == "(error)" {
-		slog.Error(
-			"single error value return not implemented",
-			slog.String("path", path),
-			slog.String("operation", funcName),
-		)
-		return nil, nil
+		p.ErrReturn = ""
+		// response.Body must be closed even for no-content responses (e.g. HTTP 204)
+		// to return the underlying TCP connection to the pool.
+		p.ReturnSection = "\t_ = response.Body.Close()\n\treturn nil"
+	} else {
+		p.ErrReturn = "nil, "
+		p.ReturnSection = renderBodyReturnSection(p.BodyRespType, p.JSONResponseTarget, funcName)
 	}
 	p.URLPathBuilder = renderURLPathBuilder(path, op)
 

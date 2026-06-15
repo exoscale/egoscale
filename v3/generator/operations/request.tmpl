@@ -5,13 +5,13 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	{{ if .BodyRequest }}
 	body, err := prepareJSONBody(req)
 	if err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: prepare Json body: %w", err)
+		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: prepare JSON body: %w", err)
 	}
 	{{ end }}
 
 	request, err := http.NewRequestWithContext(ctx, "{{ .HTTPMethod }}", c.serverEndpoint + path, {{ if .BodyRequest }}body{{else}}nil{{end}})
 	if err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: new request: %w", err)
+		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: new request: %w", err)
 	}
 
 	request.Header.Add("User-Agent", c.getUserAgent())
@@ -29,11 +29,11 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	{{ end }}
 
 	if err := c.executeRequestInterceptors(ctx, request); err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: execute request editors: %w", err)
+		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: execute request editors: %w", err)
 	}
 
 	if err := c.signRequest(request); err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: sign request: %w", err)
+		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: sign request: %w", err)
 	}
 
 	if c.trace {
@@ -42,7 +42,7 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: http client do: %w", err)
+		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: http client do: %w", err)
 	}
 
 	if c.trace {
@@ -50,13 +50,8 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: http response: %w", err)
+		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: http response: %w", err)
 	}
 
-	bodyresp := {{ .BodyRespType }}
-	if err := prepareJSONResponse(response, {{ .JSONResponseTarget }}); err != nil {
-		return nil, fmt.Errorf("{{ .Name }}: prepare Json response: %w", err)
-	}
-
-	return bodyresp, nil
+{{ .ReturnSection }}
 }

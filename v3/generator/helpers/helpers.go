@@ -251,7 +251,7 @@ func toInitialCamel(s string, lower bool) string {
 		return ""
 	}
 
-	pattern := `[-_./\s]`
+	pattern := `[-_./+\s]`
 	s = trimBySeparators(s, pattern)
 	words := splitBySeparators(s, pattern)
 

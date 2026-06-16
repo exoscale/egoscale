@@ -4018,6 +4018,11 @@ components:
           minimum: 0
           title: Counter logarithm factor for volatile-lfu and allkeys-lfu maxmemory-policies
           type: integer
+        frequent_snapshots:
+          default: true
+          description: When enabled, Valkey will create frequent local RDB snapshots. When disabled, Valkey will only take RDB snapshots when a backup is created, based on the backup schedule. This setting is ignored when `valkey_persistence` is set to `off`.
+          title: Frequent RDB snapshots
+          type: boolean
         maxmemory_policy:
           default: noeviction
           enum:
@@ -4051,6 +4056,13 @@ components:
           maximum: 512
           minimum: 32
           title: Pub/sub client output buffer hard limit in MB
+          type: integer
+        active_expire_effort:
+          default: 1
+          description: Valkey reclaims expired keys both when accessed and in the background. The background process scans for expired keys to free memory. Increasing the active-expire-effort setting (default 1, max 10) uses more CPU to reclaim expired keys faster, reducing memory usage but potentially increasing latency.
+          maximum: 10
+          minimum: 1
+          title: Active expire effort
           type: integer
         notify_keyspace_events:
           default: ""
@@ -4538,23 +4550,6 @@ components:
         - username
         - resource
         - permission
-    forbidden-operation-response:
-      description: Forbidden operation response
-      properties:
-        code:
-          description: Machine-readable forbidden error code
-          enum:
-            - forbidden_operation
-          type: string
-          readOnly: true
-        error:
-          description: Forbidden error message
-          type: string
-          readOnly: true
-      type: object
-      required:
-        - error
-        - code
     enum-mysql-authentication-plugin:
       type: string
       enum:
@@ -11754,7 +11749,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "200":
           description: "200"
           content:
@@ -11866,7 +11861,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "409":
           description: "409"
           content:
@@ -12514,7 +12509,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "200":
           description: "200"
           content:
@@ -13555,13 +13550,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
       description: Delete AI API key
       parameters:
         - in: path
@@ -13581,7 +13582,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:
@@ -13613,7 +13614,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:
@@ -13783,7 +13784,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:
@@ -14007,7 +14008,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "409":
           description: "409"
           content:
@@ -14057,7 +14058,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "409":
           description: "409"
           content:
@@ -16866,7 +16867,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:
@@ -18222,6 +18223,20 @@ paths:
             schema:
               type: object
               properties:
+                valkey-settings:
+                  $ref: '#/components/schemas/json-schema-valkey'
+                  description: Valkey.conf settings
+                ip-filter:
+                  type: array
+                  items:
+                    type: string
+                  description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
+                termination-protection:
+                  type: boolean
+                  description: Service is protected against termination and powering off
+                fork-from-service:
+                  $ref: '#/components/schemas/dbaas-service-name'
+                  description: Service to fork from
                 maintenance:
                   type: object
                   properties:
@@ -18246,19 +18261,19 @@ paths:
                     - dow
                     - time
                   description: Automatic maintenance settings
+                version:
+                  type: string
+                  minLength: 1
+                  description: Valkey major version
+                recovery-backup-name:
+                  type: string
+                  minLength: 1
+                  description: Name of a backup to recover from for services that support backup names
                 plan:
                   type: string
                   maxLength: 128
                   minLength: 1
                   description: Subscription plan
-                termination-protection:
-                  type: boolean
-                  description: Service is protected against termination and powering off
-                ip-filter:
-                  type: array
-                  items:
-                    type: string
-                  description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 migration:
                   type: object
                   properties:
@@ -18305,16 +18320,6 @@ paths:
                     - host
                     - port
                   description: Migrate data from existing server
-                valkey-settings:
-                  $ref: '#/components/schemas/json-schema-valkey'
-                  description: Valkey.conf settings
-                fork-from-service:
-                  $ref: '#/components/schemas/dbaas-service-name'
-                  description: Service to fork from
-                recovery-backup-name:
-                  type: string
-                  minLength: 1
-                  description: Name of a backup to recover from for services that support backup names
               required:
                 - plan
       operationId: create-dbaas-service-valkey
@@ -18426,6 +18431,10 @@ paths:
                     - host
                     - port
                   description: Migrate data from existing server
+                version:
+                  type: string
+                  minLength: 1
+                  description: Valkey major version
                 valkey-settings:
                   $ref: '#/components/schemas/json-schema-valkey'
                   description: Valkey.conf settings
@@ -19987,7 +19996,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "200":
           description: "200"
           content:
@@ -20007,7 +20016,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/forbidden-operation-response'
+                $ref: '#/components/schemas/error-response'
         "404":
           description: "404"
           content:

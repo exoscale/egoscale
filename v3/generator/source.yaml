@@ -987,6 +987,44 @@ components:
       type: object
       required:
         - parameters
+    subnet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Subnet ID
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: Subnet name
+        description:
+          type: string
+          maxLength: 4096
+          description: Subnet description
+        created-at:
+          type: string
+          format: date-time
+          description: Subnet creation date
+        addressfamily:
+          type: string
+          enum:
+            - inet4
+            - dual
+          description: Subnet address family
+        address-space:
+          type: string
+          enum:
+            - private
+          description: Subnet address space
+        ipv4-block:
+          type: string
+          description: Subnet ipv4 CIDR
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: Resource labels
+      description: Subnet
     dbaas-user-valkey-secrets:
       type: object
       properties:
@@ -2018,6 +2056,44 @@ components:
           items:
             type: string
           description: 'Patterns use standard glob syntax and must be separated by a single space. Example: cache:* session:*.'
+    list-subnet-entry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Subnet ID
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: Subnet name
+        description:
+          type: string
+          maxLength: 4096
+          description: Subnet description
+        created-at:
+          type: string
+          format: date-time
+          description: Subnet creation date
+        addressfamily:
+          type: string
+          enum:
+            - inet4
+            - dual
+          description: Subnet address family
+        address-space:
+          type: string
+          enum:
+            - private
+          description: Subnet address space
+        ipv4-block:
+          type: string
+          description: Subnet ipv4 CIDR
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: Resource labels
+      description: Subnet
     dbaas-service-logs:
       type: object
       properties:
@@ -2653,6 +2729,16 @@ components:
           type: integer
       title: Kafka broker configuration values
       type: object
+    nvidia-mig-profiles:
+      type: object
+      properties:
+        a30.24gb:
+          $ref: '#/components/schemas/nvidia-mig-profile-a30.24gb'
+          description: Nvidia A30 MIG Profile
+        rtxpro6000.96gb:
+          $ref: '#/components/schemas/nvidia-mig-profile-rtxpro6000.96gb'
+          description: Nvidia RTXPRO6000 MIG Profile
+      description: Nvidia MIG Profiles enabled
     dbaas-external-integration:
       type: object
       properties:
@@ -3367,6 +3453,20 @@ components:
           type: number
       title: mysql.conf configuration values
       type: object
+    nvidia-mig-profile-rtxpro6000.96gb:
+      type: string
+      enum:
+        - 1g.24gb-me
+        - 1g.24gb
+        - 2g.48gb-me
+        - 2g.48gb
+        - 4g.96gb+gfx
+        - 1g.24gb+me
+        - 2g.48gb+me.all
+        - 1g.24gb+gfx
+        - 1g.24gb+me.all
+        - 4g.96gb
+        - 2g.48gb+gfx
     dbaas-pg-database-name:
       type: string
       maxLength: 63
@@ -3994,6 +4094,30 @@ components:
         - plan
         - type
         - prometheus-uri
+    route:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Route ID
+        kind:
+          type: string
+          enum:
+            - Subnet
+            - Vpc
+          description: Route kind
+        description:
+          type: string
+          maxLength: 4096
+          description: Route description
+        destination:
+          type: string
+          description: Route destination CIDR
+        target:
+          type: string
+          description: Route target
+      description: Route
     env-impact-detail:
       type: object
       properties:
@@ -4337,6 +4461,30 @@ components:
           readOnly: true
           description: Indicates whether the snapshot was taken using an application-consistent method
       description: Snapshot
+    list-vpc-entry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: VPC ID
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: VPC name
+        description:
+          type: string
+          maxLength: 4096
+          description: VPC description
+        created-at:
+          type: string
+          format: date-time
+          description: VPC creation date
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: Resource labels
+      description: VPC
     dbaas-endpoint-rsyslog-secrets:
       type: object
       properties:
@@ -4984,30 +5132,6 @@ components:
             - target-registered
             - already-applied
           default: success
-    list-vpc-response-entry:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: VPC ID
-        name:
-          type: string
-          maxLength: 255
-          minLength: 1
-          description: VPC name
-        description:
-          type: string
-          maxLength: 4096
-          description: VPC description
-        created-at:
-          type: string
-          format: date-time
-          description: VPC creation date
-        labels:
-          $ref: '#/components/schemas/labels'
-          description: Resource labels
-      description: VPC
     elastic-ip-ref:
       type: object
       properties:
@@ -5779,6 +5903,30 @@ components:
         - model
         - created-at
         - updated-at
+    list-route-entry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Route ID
+        kind:
+          type: string
+          enum:
+            - Subnet
+            - Vpc
+          description: Route kind
+        description:
+          type: string
+          maxLength: 4096
+          description: Route description
+        destination:
+          type: string
+          description: Route destination CIDR
+        target:
+          type: string
+          description: Route target
+      description: Route
     iam-policy:
       type: object
       properties:
@@ -6648,20 +6796,20 @@ components:
         service-cluster-ip-range:
           type: string
           description: |-
-            CIDR range for service cluster IPs. This must not overlap with any IP ranges assigned to nodes or pods. Max of two, comma-separated, dual-stack CIDRs is allowed.
+            CIDR range for service cluster IPs. This must not overlap with any IP ranges assigned to nodes or pods. Max of two, comma-separated, dual-stack CIDRs is allowed. The IPv6 range must be no larger than a /108 (upstream Kubernetes apiserver limit).
                           If not specified, defaults to 10.96.0.0/12.
         node-cidr-mask-size-ipv4:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: true
-          description: Mask size for node cidr in cluster. It must be larger than the Pod CIDR subnet mask. Defaults to 24
+          description: Mask size for node cidr in cluster. It must be larger than, and at most 16 bits longer than, the Pod CIDR subnet mask. Defaults to 24
         node-cidr-mask-size-ipv6:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: true
-          description: Mask size for node cidr in cluster. It must be larger than the Pod CIDR subnet mask. Defaults to 64
+          description: Mask size for node cidr in cluster. It must be larger than, and at most 16 bits longer than, the Pod CIDR subnet mask. Defaults to 64
       description: Cluster networking configuration.
     dbaas-user-grafana-secrets:
       type: object
@@ -7205,6 +7353,9 @@ components:
           type: string
           readOnly: true
           description: Nodepool version
+        nvidia-mig-profiles:
+          $ref: '#/components/schemas/nvidia-mig-profiles'
+          description: Nvidia MIG Profiles
         created-at:
           type: string
           format: date-time
@@ -8600,6 +8751,14 @@ components:
       type: object
       required:
         - gpu
+    nvidia-mig-profile-a30.24gb:
+      type: string
+      enum:
+        - 2g.12gb
+        - 1g.6gb+me
+        - 1g.6gb
+        - 2g.12gb+me
+        - 4g.24gb
     get-kms-key-response:
       type: object
       required:
@@ -13008,6 +13167,32 @@ paths:
                   required:
                     - id
       operationId: update-private-network-instance-ip
+  /vpc/{vpc-id}/route:
+    get:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  routes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/list-route-entry'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] List VPC routes'
+      operationId: list-vpc-routes
   /sks-cluster/{id}/nodepool/{sks-nodepool-id}:
     put:
       tags:
@@ -13110,6 +13295,10 @@ paths:
                   exclusiveMinimum: false
                   exclusiveMaximum: false
                   description: Nodepool instances disk size in GiB
+                nvidia-mig-profiles:
+                  $ref: '#/components/schemas/nvidia-mig-profiles'
+                  nullable: true
+                  description: Nvidia MIG Profiles
       operationId: update-sks-nodepool
     get:
       tags:
@@ -13769,7 +13958,7 @@ paths:
                   vpcs:
                     type: array
                     items:
-                      $ref: '#/components/schemas/list-vpc-response-entry'
+                      $ref: '#/components/schemas/list-vpc-entry'
       description: ""
       parameters: []
       summary: '[BETA] List VPCs'
@@ -14140,6 +14329,89 @@ paths:
             schema:
               $ref: '#/components/schemas/enable-kms-key-rotation-request'
       operationId: enable-kms-key-rotation
+  /vpc/{vpc-id}/subnet/{subnet-id}/route:
+    get:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  routes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/list-route-entry'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          required: true
+          name: subnet-id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] List Subnet routes'
+      operationId: list-routes
+    post:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/route'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          required: true
+          name: subnet-id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Create a route'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  minLength: 1
+                  description: Route name
+                description:
+                  type: string
+                  maxLength: 4096
+                  description: Route description
+                destination:
+                  type: string
+                  description: Route destination CIDR
+                target:
+                  type: string
+                  description: Route target
+              required:
+                - destination
+                - target
+      operationId: create-route
   /elastic-ip/{id}/{field}:
     delete:
       tags:
@@ -14188,6 +14460,88 @@ paths:
             type: string
       summary: Retrieve Resource Quota
       operationId: get-quota
+  /vpc/{vpc-id}/subnet:
+    get:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subnets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/list-subnet-entry'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] List Subnets'
+      operationId: list-subnets
+    post:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Create a Subnet'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  minLength: 1
+                  description: Subnet name
+                description:
+                  type: string
+                  maxLength: 4096
+                  description: Subnet description
+                labels:
+                  $ref: '#/components/schemas/labels'
+                  description: Resource labels
+                addressfamily:
+                  type: string
+                  enum:
+                    - inet4
+                  description: Subnet address family
+                address-space:
+                  type: string
+                  enum:
+                    - private
+                  description: Subnet address space
+                ipv4-block:
+                  type: string
+                  description: Subnet ipv4 CIDR
+              required:
+                - name
+                - addressfamily
+                - address-space
+      operationId: create-subnet
   /sks-cluster-deprecated-resources/{id}:
     get:
       tags:
@@ -17177,6 +17531,39 @@ paths:
             $ref: '#/components/schemas/dbaas-user-username'
       summary: Reveal the secrets of a DBaaS Kafka user
       operationId: reveal-dbaas-kafka-user-password
+  /vpc/{vpc-id}/subnet/{subnet-id}/route/{id}:
+    delete:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/route'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          required: true
+          name: subnet-id
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Delete a route'
+      operationId: delete-route
   /kms-key/{id}/encrypt:
     post:
       tags:
@@ -18547,6 +18934,111 @@ paths:
             $ref: '#/components/schemas/dbaas-service-name'
       summary: Stop a DBaaS MySQL migration
       operationId: stop-dbaas-mysql-migration
+  /vpc/{vpc-id}/subnet/{id}:
+    delete:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Delete a Subnet'
+      operationId: delete-subnet
+    put:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/subnet'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Update a Subnet'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  minLength: 1
+                  nullable: true
+                  description: Subnet name
+                description:
+                  type: string
+                  maxLength: 4096
+                  nullable: true
+                  description: Subnet description
+                labels:
+                  $ref: '#/components/schemas/labels'
+                  nullable: true
+                  description: Resource labels
+                ipv4-block:
+                  type: string
+                  nullable: true
+                  description: Subnet CIDR
+      operationId: update-subnet
+    get:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/subnet'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Retrieve Subnet details'
+      operationId: get-subnet
   /dbaas-external-endpoints:
     get:
       tags:
@@ -19852,6 +20344,9 @@ paths:
                   exclusiveMinimum: false
                   exclusiveMaximum: false
                   description: Nodepool instances disk size in GiB
+                nvidia-mig-profiles:
+                  $ref: '#/components/schemas/nvidia-mig-profiles'
+                  description: Nvidia MIG Profiles
               required:
                 - name
                 - size

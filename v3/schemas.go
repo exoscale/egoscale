@@ -4317,8 +4317,61 @@ type ListModelsResponseEntry struct {
 	UpdatedAT time.Time `json:"updated-at" validate:"required"`
 }
 
+type ListRouteEntryKind string
+
+const (
+	ListRouteEntryKindSubnet ListRouteEntryKind = "Subnet"
+	ListRouteEntryKindVpc    ListRouteEntryKind = "Vpc"
+)
+
+// Route
+type ListRouteEntry struct {
+	// Route description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	// Route destination CIDR
+	Destination string `json:"destination,omitempty"`
+	// Route ID
+	ID UUID `json:"id,omitempty"`
+	// Route kind
+	Kind ListRouteEntryKind `json:"kind,omitempty"`
+	// Route target
+	Target string `json:"target,omitempty"`
+}
+
+type ListSubnetEntryAddressSpace string
+
+const (
+	ListSubnetEntryAddressSpacePrivate ListSubnetEntryAddressSpace = "private"
+)
+
+type ListSubnetEntryAddressfamily string
+
+const (
+	ListSubnetEntryAddressfamilyInet4 ListSubnetEntryAddressfamily = "inet4"
+	ListSubnetEntryAddressfamilyDual  ListSubnetEntryAddressfamily = "dual"
+)
+
+// Subnet
+type ListSubnetEntry struct {
+	// Subnet address space
+	AddressSpace ListSubnetEntryAddressSpace `json:"address-space,omitempty"`
+	// Subnet address family
+	Addressfamily ListSubnetEntryAddressfamily `json:"addressfamily,omitempty"`
+	// Subnet creation date
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Subnet description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	// Subnet ID
+	ID UUID `json:"id,omitempty"`
+	// Subnet ipv4 CIDR
+	Ipv4Block string `json:"ipv4-block,omitempty"`
+	Labels    Labels `json:"labels,omitempty"`
+	// Subnet name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+}
+
 // VPC
-type ListVpcResponseEntry struct {
+type ListVpcEntry struct {
 	// VPC creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
 	// VPC description
@@ -4498,13 +4551,45 @@ type Networking struct {
 	// CIDR Range for Pods in cluster. This must not overlap with any IP ranges assigned to pods. Max of two, comma-separated, dual-stack CIDRs is allowed.
 	// If not specified, defaults to 192.168.0.0/16.
 	ClusterCidr string `json:"cluster-cidr,omitempty"`
-	// Mask size for node cidr in cluster. It must be larger than the Pod CIDR subnet mask. Defaults to 24
+	// Mask size for node cidr in cluster. It must be larger than, and at most 16 bits longer than, the Pod CIDR subnet mask. Defaults to 24
 	NodeCidrMaskSizeIpv4 int64 `json:"node-cidr-mask-size-ipv4,omitempty" validate:"omitempty,gt=0"`
-	// Mask size for node cidr in cluster. It must be larger than the Pod CIDR subnet mask. Defaults to 64
+	// Mask size for node cidr in cluster. It must be larger than, and at most 16 bits longer than, the Pod CIDR subnet mask. Defaults to 64
 	NodeCidrMaskSizeIpv6 int64 `json:"node-cidr-mask-size-ipv6,omitempty" validate:"omitempty,gt=0"`
-	// CIDR range for service cluster IPs. This must not overlap with any IP ranges assigned to nodes or pods. Max of two, comma-separated, dual-stack CIDRs is allowed.
+	// CIDR range for service cluster IPs. This must not overlap with any IP ranges assigned to nodes or pods. Max of two, comma-separated, dual-stack CIDRs is allowed. The IPv6 range must be no larger than a /108 (upstream Kubernetes apiserver limit).
 	// If not specified, defaults to 10.96.0.0/12.
 	ServiceClusterIPRange string `json:"service-cluster-ip-range,omitempty"`
+}
+
+type NvidiaMigProfileA3024gb string
+
+const (
+	NvidiaMigProfileA3024gb2g12gb   NvidiaMigProfileA3024gb = "2g.12gb"
+	NvidiaMigProfileA3024gb1g6gbMe  NvidiaMigProfileA3024gb = "1g.6gb+me"
+	NvidiaMigProfileA3024gb1g6gb    NvidiaMigProfileA3024gb = "1g.6gb"
+	NvidiaMigProfileA3024gb2g12gbMe NvidiaMigProfileA3024gb = "2g.12gb+me"
+	NvidiaMigProfileA3024gb4g24gb   NvidiaMigProfileA3024gb = "4g.24gb"
+)
+
+type NvidiaMigProfileRtxpro600096gb string
+
+const (
+	NvidiaMigProfileRtxpro600096gb1g24gbMe    NvidiaMigProfileRtxpro600096gb = "1g.24gb-me"
+	NvidiaMigProfileRtxpro600096gb1g24gb      NvidiaMigProfileRtxpro600096gb = "1g.24gb"
+	NvidiaMigProfileRtxpro600096gb2g48gbMe    NvidiaMigProfileRtxpro600096gb = "2g.48gb-me"
+	NvidiaMigProfileRtxpro600096gb2g48gb      NvidiaMigProfileRtxpro600096gb = "2g.48gb"
+	NvidiaMigProfileRtxpro600096gb4g96gbGfx   NvidiaMigProfileRtxpro600096gb = "4g.96gb+gfx"
+	NvidiaMigProfileRtxpro600096gb1g24gbMe    NvidiaMigProfileRtxpro600096gb = "1g.24gb+me"
+	NvidiaMigProfileRtxpro600096gb2g48gbMeAll NvidiaMigProfileRtxpro600096gb = "2g.48gb+me.all"
+	NvidiaMigProfileRtxpro600096gb1g24gbGfx   NvidiaMigProfileRtxpro600096gb = "1g.24gb+gfx"
+	NvidiaMigProfileRtxpro600096gb1g24gbMeAll NvidiaMigProfileRtxpro600096gb = "1g.24gb+me.all"
+	NvidiaMigProfileRtxpro600096gb4g96gb      NvidiaMigProfileRtxpro600096gb = "4g.96gb"
+	NvidiaMigProfileRtxpro600096gb2g48gbGfx   NvidiaMigProfileRtxpro600096gb = "2g.48gb+gfx"
+)
+
+// Nvidia MIG Profiles enabled
+type NvidiaMigProfiles struct {
+	A3024gb        NvidiaMigProfileA3024gb        `json:"a30.24gb,omitempty"`
+	Rtxpro600096gb NvidiaMigProfileRtxpro600096gb `json:"rtxpro6000.96gb,omitempty"`
 }
 
 type OperationReason string
@@ -4762,6 +4847,27 @@ type RotateAIAPIKeyResponse struct {
 
 type RotateKmsKeyResponse struct {
 	Rotation *KeyRotationConfig `json:"rotation" validate:"required"`
+}
+
+type RouteKind string
+
+const (
+	RouteKindSubnet RouteKind = "Subnet"
+	RouteKindVpc    RouteKind = "Vpc"
+)
+
+// Route
+type Route struct {
+	// Route description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	// Route destination CIDR
+	Destination string `json:"destination,omitempty"`
+	// Route ID
+	ID UUID `json:"id,omitempty"`
+	// Route kind
+	Kind RouteKind `json:"kind,omitempty"`
+	// Route target
+	Target string `json:"target,omitempty"`
 }
 
 // Scale AI deployment
@@ -5038,6 +5144,8 @@ type SKSNodepool struct {
 	Labels         SKSNodepoolLabels `json:"labels,omitempty"`
 	// Nodepool name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Nvidia MIG Profiles enabled
+	NvidiaMigProfiles *NvidiaMigProfiles `json:"nvidia-mig-profiles,omitempty"`
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
 	// Nodepool public IP assignment of the Instances:
@@ -5163,6 +5271,38 @@ type SSHKey struct {
 // SSH key reference
 type SSHKeyRef struct {
 	// SSH key name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+}
+
+type SubnetAddressSpace string
+
+const (
+	SubnetAddressSpacePrivate SubnetAddressSpace = "private"
+)
+
+type SubnetAddressfamily string
+
+const (
+	SubnetAddressfamilyInet4 SubnetAddressfamily = "inet4"
+	SubnetAddressfamilyDual  SubnetAddressfamily = "dual"
+)
+
+// Subnet
+type Subnet struct {
+	// Subnet address space
+	AddressSpace SubnetAddressSpace `json:"address-space,omitempty"`
+	// Subnet address family
+	Addressfamily SubnetAddressfamily `json:"addressfamily,omitempty"`
+	// Subnet creation date
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// Subnet description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	// Subnet ID
+	ID UUID `json:"id,omitempty"`
+	// Subnet ipv4 CIDR
+	Ipv4Block string `json:"ipv4-block,omitempty"`
+	Labels    Labels `json:"labels,omitempty"`
+	// Subnet name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 

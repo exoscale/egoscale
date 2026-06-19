@@ -17009,6 +17009,8 @@ type CreateSKSNodepoolRequest struct {
 	Labels         SKSNodepoolLabels `json:"labels,omitempty"`
 	// Nodepool name, lowercase only
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
+	// Nvidia MIG Profiles enabled
+	NvidiaMigProfiles *NvidiaMigProfiles `json:"nvidia-mig-profiles,omitempty"`
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
 	// Configures public IP assignment of the Instances with:
@@ -17186,6 +17188,8 @@ type UpdateSKSNodepoolRequest struct {
 	Labels         SKSNodepoolLabels `json:"labels,omitempty"`
 	// Nodepool name, lowercase only
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Nvidia MIG Profiles enabled
+	NvidiaMigProfiles *NvidiaMigProfiles `json:"nvidia-mig-profiles"`
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
 	// Configures public IP assignment of the Instances with:
@@ -18986,12 +18990,12 @@ func (c Client) UpdateUserRole(ctx context.Context, id UUID, req UpdateUserRoleR
 }
 
 type ListVpcsResponse struct {
-	Vpcs []ListVpcResponseEntry `json:"vpcs,omitempty"`
+	Vpcs []ListVpcEntry `json:"vpcs,omitempty"`
 }
 
-// FindListVpcResponseEntry attempts to find an ListVpcResponseEntry by nameOrID.
-func (l ListVpcsResponse) FindListVpcResponseEntry(nameOrID string) (ListVpcResponseEntry, error) {
-	var result []ListVpcResponseEntry
+// FindListVpcEntry attempts to find an ListVpcEntry by nameOrID.
+func (l ListVpcsResponse) FindListVpcEntry(nameOrID string) (ListVpcEntry, error) {
+	var result []ListVpcEntry
 	for i, elem := range l.Vpcs {
 		if string(elem.Name) == nameOrID || string(elem.ID) == nameOrID {
 			result = append(result, l.Vpcs[i])
@@ -19002,10 +19006,10 @@ func (l ListVpcsResponse) FindListVpcResponseEntry(nameOrID string) (ListVpcResp
 	}
 
 	if len(result) > 1 {
-		return ListVpcResponseEntry{}, fmt.Errorf("%q too many found in ListVpcsResponse: %w", nameOrID, ErrConflict)
+		return ListVpcEntry{}, fmt.Errorf("%q too many found in ListVpcsResponse: %w", nameOrID, ErrConflict)
 	}
 
-	return ListVpcResponseEntry{}, fmt.Errorf("%q not found in ListVpcsResponse: %w", nameOrID, ErrNotFound)
+	return ListVpcEntry{}, fmt.Errorf("%q not found in ListVpcsResponse: %w", nameOrID, ErrNotFound)
 }
 
 // [BETA] List VPCs
@@ -19253,6 +19257,539 @@ func (c Client) UpdateVpc(ctx context.Context, id UUID, req UpdateVpcRequest) (*
 	bodyresp := new(Vpc)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateVpc: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ListVpcRoutesResponse struct {
+	Routes []ListRouteEntry `json:"routes,omitempty"`
+}
+
+// FindListRouteEntry attempts to find an ListRouteEntry by id.
+func (l ListVpcRoutesResponse) FindListRouteEntry(id string) (ListRouteEntry, error) {
+	var result []ListRouteEntry
+	for i, elem := range l.Routes {
+		if string(elem.ID) == id {
+			result = append(result, l.Routes[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return ListRouteEntry{}, fmt.Errorf("%q too many found in ListVpcRoutesResponse: %w", id, ErrConflict)
+	}
+
+	return ListRouteEntry{}, fmt.Errorf("%q not found in ListVpcRoutesResponse: %w", id, ErrNotFound)
+}
+
+// [BETA] List VPC routes
+func (c Client) ListVpcRoutes(ctx context.Context, vpcID UUID) (*ListVpcRoutesResponse, error) {
+	path := fmt.Sprintf("/vpc/%v/route", vpcID)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListVpcRoutes: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListVpcRoutes: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListVpcRoutes: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-vpc-routes")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListVpcRoutes: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListVpcRoutes: http response: %w", err)
+	}
+
+	bodyresp := new(ListVpcRoutesResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListVpcRoutes: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ListSubnetsResponse struct {
+	Subnets []ListSubnetEntry `json:"subnets,omitempty"`
+}
+
+// FindListSubnetEntry attempts to find an ListSubnetEntry by nameOrID.
+func (l ListSubnetsResponse) FindListSubnetEntry(nameOrID string) (ListSubnetEntry, error) {
+	var result []ListSubnetEntry
+	for i, elem := range l.Subnets {
+		if string(elem.Name) == nameOrID || string(elem.ID) == nameOrID {
+			result = append(result, l.Subnets[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return ListSubnetEntry{}, fmt.Errorf("%q too many found in ListSubnetsResponse: %w", nameOrID, ErrConflict)
+	}
+
+	return ListSubnetEntry{}, fmt.Errorf("%q not found in ListSubnetsResponse: %w", nameOrID, ErrNotFound)
+}
+
+// [BETA] List Subnets
+func (c Client) ListSubnets(ctx context.Context, vpcID UUID) (*ListSubnetsResponse, error) {
+	path := fmt.Sprintf("/vpc/%v/subnet", vpcID)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListSubnets: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListSubnets: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListSubnets: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-subnets")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListSubnets: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListSubnets: http response: %w", err)
+	}
+
+	bodyresp := new(ListSubnetsResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListSubnets: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateSubnetRequestAddressSpace string
+
+const (
+	CreateSubnetRequestAddressSpacePrivate CreateSubnetRequestAddressSpace = "private"
+)
+
+type CreateSubnetRequestAddressfamily string
+
+const (
+	CreateSubnetRequestAddressfamilyInet4 CreateSubnetRequestAddressfamily = "inet4"
+)
+
+type CreateSubnetRequest struct {
+	// Subnet address space
+	AddressSpace CreateSubnetRequestAddressSpace `json:"address-space" validate:"required"`
+	// Subnet address family
+	Addressfamily CreateSubnetRequestAddressfamily `json:"addressfamily" validate:"required"`
+	// Subnet description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	// Subnet ipv4 CIDR
+	Ipv4Block string `json:"ipv4-block,omitempty"`
+	Labels    Labels `json:"labels,omitempty"`
+	// Subnet name
+	Name string `json:"name" validate:"required,gte=1,lte=255"`
+}
+
+// [BETA] Create a Subnet
+func (c Client) CreateSubnet(ctx context.Context, vpcID UUID, req CreateSubnetRequest) (*Operation, error) {
+	path := fmt.Sprintf("/vpc/%v/subnet", vpcID)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateSubnet: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateSubnet: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateSubnet: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateSubnet: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-subnet")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateSubnet: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateSubnet: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateSubnet: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Delete a Subnet
+func (c Client) DeleteSubnet(ctx context.Context, vpcID UUID, id UUID) (*Operation, error) {
+	path := fmt.Sprintf("/vpc/%v/subnet/%v", vpcID, id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteSubnet: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteSubnet: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteSubnet: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-subnet")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteSubnet: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteSubnet: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteSubnet: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Retrieve Subnet details
+func (c Client) GetSubnet(ctx context.Context, vpcID UUID, id UUID) (*Subnet, error) {
+	path := fmt.Sprintf("/vpc/%v/subnet/%v", vpcID, id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetSubnet: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetSubnet: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetSubnet: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-subnet")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetSubnet: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetSubnet: http response: %w", err)
+	}
+
+	bodyresp := new(Subnet)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetSubnet: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateSubnetRequest struct {
+	// Subnet description
+	Description *string `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	// Subnet CIDR
+	Ipv4Block *string `json:"ipv4-block,omitempty"`
+	Labels    Labels  `json:"labels"`
+	// Subnet name
+	Name *string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+}
+
+// [BETA] Update a Subnet
+func (c Client) UpdateSubnet(ctx context.Context, vpcID UUID, id UUID, req UpdateSubnetRequest) (*Subnet, error) {
+	path := fmt.Sprintf("/vpc/%v/subnet/%v", vpcID, id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateSubnet: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateSubnet: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateSubnet: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateSubnet: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-subnet")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateSubnet: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateSubnet: http response: %w", err)
+	}
+
+	bodyresp := new(Subnet)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateSubnet: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ListRoutesResponse struct {
+	Routes []ListRouteEntry `json:"routes,omitempty"`
+}
+
+// FindListRouteEntry attempts to find an ListRouteEntry by id.
+func (l ListRoutesResponse) FindListRouteEntry(id string) (ListRouteEntry, error) {
+	var result []ListRouteEntry
+	for i, elem := range l.Routes {
+		if string(elem.ID) == id {
+			result = append(result, l.Routes[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return ListRouteEntry{}, fmt.Errorf("%q too many found in ListRoutesResponse: %w", id, ErrConflict)
+	}
+
+	return ListRouteEntry{}, fmt.Errorf("%q not found in ListRoutesResponse: %w", id, ErrNotFound)
+}
+
+// [BETA] List Subnet routes
+func (c Client) ListRoutes(ctx context.Context, vpcID UUID, subnetID UUID) (*ListRoutesResponse, error) {
+	path := fmt.Sprintf("/vpc/%v/subnet/%v/route", vpcID, subnetID)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListRoutes: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListRoutes: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListRoutes: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-routes")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListRoutes: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListRoutes: http response: %w", err)
+	}
+
+	bodyresp := new(ListRoutesResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListRoutes: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateRouteRequest struct {
+	// Route description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	// Route destination CIDR
+	Destination string `json:"destination" validate:"required"`
+	// Route name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// Route target
+	Target string `json:"target" validate:"required"`
+}
+
+// [BETA] Create a route
+func (c Client) CreateRoute(ctx context.Context, vpcID UUID, subnetID UUID, req CreateRouteRequest) (*Route, error) {
+	path := fmt.Sprintf("/vpc/%v/subnet/%v/route", vpcID, subnetID)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateRoute: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateRoute: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateRoute: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateRoute: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-route")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateRoute: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateRoute: http response: %w", err)
+	}
+
+	bodyresp := new(Route)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateRoute: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// [BETA] Delete a route
+func (c Client) DeleteRoute(ctx context.Context, vpcID UUID, subnetID UUID, id UUID) (*Route, error) {
+	path := fmt.Sprintf("/vpc/%v/subnet/%v/route/%v", vpcID, subnetID, id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteRoute: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteRoute: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteRoute: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-route")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteRoute: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteRoute: http response: %w", err)
+	}
+
+	bodyresp := new(Route)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteRoute: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil

@@ -236,25 +236,33 @@ func Header(packageName, version string) []byte {
 
 // ToLowerCamel converts a string to lowerCamelCase
 func ToLowerCamel(s string) string {
-	return toInitialCamel(s, true)
+	return toInitialCamel(splitWords(s, separatorRe), true)
 }
 
 // ToCamel converts a string to CamelCase
 func ToCamel(s string) string {
-	return toInitialCamel(s, false)
+	return toInitialCamel(splitWords(s, separatorRe), false)
 }
 
-// toInitialCamel got inspiration from https://github.com/iancoleman/strcase
-// with improvement on acronym conversion.
-func toInitialCamel(s string, lower bool) string {
-	if s == "" {
-		return ""
-	}
+// EnumValueName converts an OpenAPI enum value to a CamelCase Go
+// identifier while keeping separator characters distinguishable, so
+// values like "1g.24gb-me" and "1g.24gb+me" do not collide on
+// "1g24gbMe". Separators become words: '-' -> "Minus", '+' -> "Plus",
+// '.' -> "Dot", '/' -> "Slash". '_' and whitespace stay plain
+// word boundaries.
+//
+// Use this only for enum-value identifiers; for operation IDs, query
+// parameters, and property names, prefer ToCamel/ToLowerCamel to avoid
+// renaming the public client API.
+func EnumValueName(s string) string {
+	return toInitialCamel(splitEnumWords(s), false)
+}
 
-	pattern := `[-_./+\s]`
-	s = trimBySeparators(s, pattern)
-	words := splitBySeparators(s, pattern)
+// separatorRe matches characters treated as word boundaries by ToCamel
+// and ToLowerCamel (operation IDs, property names, query params, ...).
+var separatorRe = `[-_./+\s]`
 
+func toInitialCamel(words []string, lower bool) string {
 	for i, w := range words {
 		if w == "" {
 			continue
@@ -289,22 +297,69 @@ func toInitialCamel(s string, lower bool) string {
 	return strings.Join(words, "")
 }
 
-func trimBySeparators(s, separators string) string {
-	trimPattern := fmt.Sprintf("^%s+|%s+$", separators, separators)
-	re := regexp.MustCompile(trimPattern)
-	return re.ReplaceAllString(s, "")
-}
+// splitWords splits s on any character in separators, drops empty
+// fragments, and trims leading/trailing separators.
+func splitWords(s, separators string) []string {
+	if s == "" {
+		return nil
+	}
+	trimRe := regexp.MustCompile(fmt.Sprintf("^%s+|%s+$", separators, separators))
+	s = trimRe.ReplaceAllString(s, "")
 
-func splitBySeparators(s, separators string) []string {
 	re := regexp.MustCompile(separators)
 	parts := re.Split(s, -1)
-	var result []string
-	for _, part := range parts {
-		if part != "" {
-			result = append(result, part)
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p != "" {
+			out = append(out, p)
 		}
 	}
-	return result
+	return out
+}
+
+// enumSeparatorMap maps each distinguishable separator to a wrapped
+// word inside enum values: '-' -> "_Minus_", '+' -> "_Plus_", ... The
+// underscores act as word boundaries so splitEnumWords can hand each
+// fragment to the existing CamelCase pipeline and get a properly
+// capitalised identifier (e.g. "read-replica" -> "ReadMinusReplica").
+var enumSeparatorMap = map[string]string{
+	"-": "_Minus_",
+	"+": "_Plus_",
+	".": "_Dot_",
+	"/": "_Slash_",
+}
+
+// enumSeparatorRe matches any of the separator characters
+// distinguishable inside enum values.
+var enumSeparatorRe = regexp.MustCompile(`[-+./]`)
+
+// enumWordBoundaryRe matches runs of underscores or whitespace, used
+// after enum-separator expansion to recover word boundaries.
+var enumWordBoundaryRe = regexp.MustCompile(`[\s_]+`)
+
+// enumTrimRe matches leading or trailing whitespace/underscores/separator
+// characters so that "---trim---" collapses to "trim" before expansion.
+var enumTrimRe = regexp.MustCompile(`^[\s_\-+./]+|[\s_\-+./]+$`)
+
+func splitEnumWords(s string) []string {
+	if s == "" {
+		return nil
+	}
+
+	s = enumTrimRe.ReplaceAllString(s, "")
+
+	expanded := enumSeparatorRe.ReplaceAllStringFunc(s, func(m string) string {
+		return enumSeparatorMap[m]
+	})
+
+	parts := enumWordBoundaryRe.Split(expanded, -1)
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 // RenderDoc returns proper go doc comment from

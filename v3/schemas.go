@@ -125,14 +125,14 @@ type APIKeyUsageEntry struct {
 type BlockStorageSnapshotState string
 
 const (
-	BlockStorageSnapshotStatePartiallyDestroyed BlockStorageSnapshotState = "partially-destroyed"
-	BlockStorageSnapshotStateDestroying         BlockStorageSnapshotState = "destroying"
-	BlockStorageSnapshotStateCreating           BlockStorageSnapshotState = "creating"
-	BlockStorageSnapshotStateCreated            BlockStorageSnapshotState = "created"
-	BlockStorageSnapshotStatePromoting          BlockStorageSnapshotState = "promoting"
-	BlockStorageSnapshotStateError              BlockStorageSnapshotState = "error"
-	BlockStorageSnapshotStateDestroyed          BlockStorageSnapshotState = "destroyed"
-	BlockStorageSnapshotStateAllocated          BlockStorageSnapshotState = "allocated"
+	BlockStorageSnapshotStatePartiallyMinusDestroyed BlockStorageSnapshotState = "partially-destroyed"
+	BlockStorageSnapshotStateDestroying              BlockStorageSnapshotState = "destroying"
+	BlockStorageSnapshotStateCreating                BlockStorageSnapshotState = "creating"
+	BlockStorageSnapshotStateCreated                 BlockStorageSnapshotState = "created"
+	BlockStorageSnapshotStatePromoting               BlockStorageSnapshotState = "promoting"
+	BlockStorageSnapshotStateError                   BlockStorageSnapshotState = "error"
+	BlockStorageSnapshotStateDestroyed               BlockStorageSnapshotState = "destroyed"
+	BlockStorageSnapshotStateAllocated               BlockStorageSnapshotState = "allocated"
 )
 
 // Block storage snapshot
@@ -248,7 +248,7 @@ type CreateDeploymentRequest struct {
 type CreateKmsKeyRequestUsage string
 
 const (
-	CreateKmsKeyRequestUsageEncryptDecrypt CreateKmsKeyRequestUsage = "encrypt-decrypt"
+	CreateKmsKeyRequestUsageEncryptMinusDecrypt CreateKmsKeyRequestUsage = "encrypt-decrypt"
 )
 
 type CreateKmsKeyRequest struct {
@@ -261,15 +261,15 @@ type CreateKmsKeyRequest struct {
 type CreateKmsKeyResponseSource string
 
 const (
-	CreateKmsKeyResponseSourceExoscaleKms CreateKmsKeyResponseSource = "exoscale-kms"
+	CreateKmsKeyResponseSourceExoscaleMinusKms CreateKmsKeyResponseSource = "exoscale-kms"
 )
 
 type CreateKmsKeyResponseStatus string
 
 const (
-	CreateKmsKeyResponseStatusEnabled         CreateKmsKeyResponseStatus = "enabled"
-	CreateKmsKeyResponseStatusDisabled        CreateKmsKeyResponseStatus = "disabled"
-	CreateKmsKeyResponseStatusPendingDeletion CreateKmsKeyResponseStatus = "pending-deletion"
+	CreateKmsKeyResponseStatusEnabled              CreateKmsKeyResponseStatus = "enabled"
+	CreateKmsKeyResponseStatusDisabled             CreateKmsKeyResponseStatus = "disabled"
+	CreateKmsKeyResponseStatusPendingMinusDeletion CreateKmsKeyResponseStatus = "pending-deletion"
 )
 
 type CreateKmsKeyResponse struct {
@@ -852,9 +852,9 @@ type DBAASMysqlUserPassword string
 type DBAASNodeStateRole string
 
 const (
-	DBAASNodeStateRoleStandby     DBAASNodeStateRole = "standby"
-	DBAASNodeStateRoleMaster      DBAASNodeStateRole = "master"
-	DBAASNodeStateRoleReadReplica DBAASNodeStateRole = "read-replica"
+	DBAASNodeStateRoleStandby          DBAASNodeStateRole = "standby"
+	DBAASNodeStateRoleMaster           DBAASNodeStateRole = "master"
+	DBAASNodeStateRoleReadMinusReplica DBAASNodeStateRole = "read-replica"
 )
 
 type DBAASNodeStateState string
@@ -2175,12 +2175,12 @@ const (
 type EnumDatadogSite string
 
 const (
-	EnumDatadogSiteUs3DatadoghqCom EnumDatadogSite = "us3.datadoghq.com"
-	EnumDatadogSiteDdogGovCom      EnumDatadogSite = "ddog-gov.com"
-	EnumDatadogSiteDatadoghqEU     EnumDatadogSite = "datadoghq.eu"
-	EnumDatadogSiteUs5DatadoghqCom EnumDatadogSite = "us5.datadoghq.com"
-	EnumDatadogSiteAp1DatadoghqCom EnumDatadogSite = "ap1.datadoghq.com"
-	EnumDatadogSiteDatadoghqCom    EnumDatadogSite = "datadoghq.com"
+	EnumDatadogSiteUs3DotDatadoghqDotCom EnumDatadogSite = "us3.datadoghq.com"
+	EnumDatadogSiteDdogMinusGovDotCom    EnumDatadogSite = "ddog-gov.com"
+	EnumDatadogSiteDatadoghqDotEU        EnumDatadogSite = "datadoghq.eu"
+	EnumDatadogSiteUs5DotDatadoghqDotCom EnumDatadogSite = "us5.datadoghq.com"
+	EnumDatadogSiteAp1DotDatadoghqDotCom EnumDatadogSite = "ap1.datadoghq.com"
+	EnumDatadogSiteDatadoghqDotCom       EnumDatadogSite = "datadoghq.com"
 )
 
 type EnumExternalEndpointTypes string
@@ -2393,7 +2393,7 @@ type Event struct {
 type GenerateDataKeyRequestKeySpec string
 
 const (
-	GenerateDataKeyRequestKeySpecAES256 GenerateDataKeyRequestKeySpec = "AES-256"
+	GenerateDataKeyRequestKeySpecAESMinus256 GenerateDataKeyRequestKeySpec = "AES-256"
 )
 
 type GenerateDataKeyRequest struct {
@@ -2496,15 +2496,15 @@ type GetInferenceEngineHelpResponse struct {
 type GetKmsKeyResponseSource string
 
 const (
-	GetKmsKeyResponseSourceExoscaleKms GetKmsKeyResponseSource = "exoscale-kms"
+	GetKmsKeyResponseSourceExoscaleMinusKms GetKmsKeyResponseSource = "exoscale-kms"
 )
 
 type GetKmsKeyResponseStatus string
 
 const (
-	GetKmsKeyResponseStatusEnabled         GetKmsKeyResponseStatus = "enabled"
-	GetKmsKeyResponseStatusDisabled        GetKmsKeyResponseStatus = "disabled"
-	GetKmsKeyResponseStatusPendingDeletion GetKmsKeyResponseStatus = "pending-deletion"
+	GetKmsKeyResponseStatusEnabled              GetKmsKeyResponseStatus = "enabled"
+	GetKmsKeyResponseStatusDisabled             GetKmsKeyResponseStatus = "disabled"
+	GetKmsKeyResponseStatusPendingMinusDeletion GetKmsKeyResponseStatus = "pending-deletion"
 )
 
 type GetKmsKeyResponse struct {
@@ -2669,20 +2669,20 @@ type InferenceEngineParameterEntry struct {
 type InferenceEngineVersion string
 
 const (
-	InferenceEngineVersion0120 InferenceEngineVersion = "0.12.0"
-	InferenceEngineVersion0151 InferenceEngineVersion = "0.15.1"
-	InferenceEngineVersion0160 InferenceEngineVersion = "0.16.0"
-	InferenceEngineVersion0170 InferenceEngineVersion = "0.17.0"
-	InferenceEngineVersion0180 InferenceEngineVersion = "0.18.0"
-	InferenceEngineVersion0181 InferenceEngineVersion = "0.18.1"
-	InferenceEngineVersion0190 InferenceEngineVersion = "0.19.0"
-	InferenceEngineVersion0191 InferenceEngineVersion = "0.19.1"
-	InferenceEngineVersion0200 InferenceEngineVersion = "0.20.0"
-	InferenceEngineVersion0201 InferenceEngineVersion = "0.20.1"
-	InferenceEngineVersion0202 InferenceEngineVersion = "0.20.2"
-	InferenceEngineVersion0210 InferenceEngineVersion = "0.21.0"
-	InferenceEngineVersion0220 InferenceEngineVersion = "0.22.0"
-	InferenceEngineVersion0221 InferenceEngineVersion = "0.22.1"
+	InferenceEngineVersion0Dot12Dot0 InferenceEngineVersion = "0.12.0"
+	InferenceEngineVersion0Dot15Dot1 InferenceEngineVersion = "0.15.1"
+	InferenceEngineVersion0Dot16Dot0 InferenceEngineVersion = "0.16.0"
+	InferenceEngineVersion0Dot17Dot0 InferenceEngineVersion = "0.17.0"
+	InferenceEngineVersion0Dot18Dot0 InferenceEngineVersion = "0.18.0"
+	InferenceEngineVersion0Dot18Dot1 InferenceEngineVersion = "0.18.1"
+	InferenceEngineVersion0Dot19Dot0 InferenceEngineVersion = "0.19.0"
+	InferenceEngineVersion0Dot19Dot1 InferenceEngineVersion = "0.19.1"
+	InferenceEngineVersion0Dot20Dot0 InferenceEngineVersion = "0.20.0"
+	InferenceEngineVersion0Dot20Dot1 InferenceEngineVersion = "0.20.1"
+	InferenceEngineVersion0Dot20Dot2 InferenceEngineVersion = "0.20.2"
+	InferenceEngineVersion0Dot21Dot0 InferenceEngineVersion = "0.21.0"
+	InferenceEngineVersion0Dot22Dot0 InferenceEngineVersion = "0.22.0"
+	InferenceEngineVersion0Dot22Dot1 InferenceEngineVersion = "0.22.1"
 )
 
 // Router flush payload: the router's full in-memory usage map with flush identity fields
@@ -2775,13 +2775,13 @@ type InstancePassword struct {
 type InstancePoolState string
 
 const (
-	InstancePoolStateScalingUP   InstancePoolState = "scaling-up"
-	InstancePoolStateScalingDown InstancePoolState = "scaling-down"
-	InstancePoolStateDestroying  InstancePoolState = "destroying"
-	InstancePoolStateCreating    InstancePoolState = "creating"
-	InstancePoolStateSuspended   InstancePoolState = "suspended"
-	InstancePoolStateRunning     InstancePoolState = "running"
-	InstancePoolStateUpdating    InstancePoolState = "updating"
+	InstancePoolStateScalingMinusUP   InstancePoolState = "scaling-up"
+	InstancePoolStateScalingMinusDown InstancePoolState = "scaling-down"
+	InstancePoolStateDestroying       InstancePoolState = "destroying"
+	InstancePoolStateCreating         InstancePoolState = "creating"
+	InstancePoolStateSuspended        InstancePoolState = "suspended"
+	InstancePoolStateRunning          InstancePoolState = "running"
+	InstancePoolStateUpdating         InstancePoolState = "updating"
 )
 
 // Instance Pool
@@ -2881,18 +2881,18 @@ const (
 type InstanceTypeSize string
 
 const (
-	InstanceTypeSizeLarge      InstanceTypeSize = "large"
-	InstanceTypeSizeHuge       InstanceTypeSize = "huge"
-	InstanceTypeSizeJumbo      InstanceTypeSize = "jumbo"
-	InstanceTypeSizeMedium     InstanceTypeSize = "medium"
-	InstanceTypeSizeMega       InstanceTypeSize = "mega"
-	InstanceTypeSizeSmall      InstanceTypeSize = "small"
-	InstanceTypeSizeExtraLarge InstanceTypeSize = "extra-large"
-	InstanceTypeSizeTitan48c   InstanceTypeSize = "titan48c"
-	InstanceTypeSizeTitan      InstanceTypeSize = "titan"
-	InstanceTypeSizeMicro      InstanceTypeSize = "micro"
-	InstanceTypeSizeColossus   InstanceTypeSize = "colossus"
-	InstanceTypeSizeTiny       InstanceTypeSize = "tiny"
+	InstanceTypeSizeLarge           InstanceTypeSize = "large"
+	InstanceTypeSizeHuge            InstanceTypeSize = "huge"
+	InstanceTypeSizeJumbo           InstanceTypeSize = "jumbo"
+	InstanceTypeSizeMedium          InstanceTypeSize = "medium"
+	InstanceTypeSizeMega            InstanceTypeSize = "mega"
+	InstanceTypeSizeSmall           InstanceTypeSize = "small"
+	InstanceTypeSizeExtraMinusLarge InstanceTypeSize = "extra-large"
+	InstanceTypeSizeTitan48c        InstanceTypeSize = "titan48c"
+	InstanceTypeSizeTitan           InstanceTypeSize = "titan"
+	InstanceTypeSizeMicro           InstanceTypeSize = "micro"
+	InstanceTypeSizeColossus        InstanceTypeSize = "colossus"
+	InstanceTypeSizeTiny            InstanceTypeSize = "tiny"
 )
 
 // Compute instance type
@@ -3819,8 +3819,8 @@ const (
 type JSONSchemaPGPasswordEncryption string
 
 const (
-	JSONSchemaPGPasswordEncryptionMd5         JSONSchemaPGPasswordEncryption = "md5"
-	JSONSchemaPGPasswordEncryptionScramSha256 JSONSchemaPGPasswordEncryption = "scram-sha-256"
+	JSONSchemaPGPasswordEncryptionMd5                   JSONSchemaPGPasswordEncryption = "md5"
+	JSONSchemaPGPasswordEncryptionScramMinusShaMinus256 JSONSchemaPGPasswordEncryption = "scram-sha-256"
 )
 
 type JSONSchemaPGPGStatStatementsTrack string
@@ -4103,14 +4103,14 @@ const (
 type JSONSchemaValkeyMaxmemoryPolicy string
 
 const (
-	JSONSchemaValkeyMaxmemoryPolicyNoeviction     JSONSchemaValkeyMaxmemoryPolicy = "noeviction"
-	JSONSchemaValkeyMaxmemoryPolicyAllkeysLru     JSONSchemaValkeyMaxmemoryPolicy = "allkeys-lru"
-	JSONSchemaValkeyMaxmemoryPolicyVolatileLru    JSONSchemaValkeyMaxmemoryPolicy = "volatile-lru"
-	JSONSchemaValkeyMaxmemoryPolicyAllkeysRandom  JSONSchemaValkeyMaxmemoryPolicy = "allkeys-random"
-	JSONSchemaValkeyMaxmemoryPolicyVolatileRandom JSONSchemaValkeyMaxmemoryPolicy = "volatile-random"
-	JSONSchemaValkeyMaxmemoryPolicyVolatileTtl    JSONSchemaValkeyMaxmemoryPolicy = "volatile-ttl"
-	JSONSchemaValkeyMaxmemoryPolicyVolatileLfu    JSONSchemaValkeyMaxmemoryPolicy = "volatile-lfu"
-	JSONSchemaValkeyMaxmemoryPolicyAllkeysLfu     JSONSchemaValkeyMaxmemoryPolicy = "allkeys-lfu"
+	JSONSchemaValkeyMaxmemoryPolicyNoeviction          JSONSchemaValkeyMaxmemoryPolicy = "noeviction"
+	JSONSchemaValkeyMaxmemoryPolicyAllkeysMinusLru     JSONSchemaValkeyMaxmemoryPolicy = "allkeys-lru"
+	JSONSchemaValkeyMaxmemoryPolicyVolatileMinusLru    JSONSchemaValkeyMaxmemoryPolicy = "volatile-lru"
+	JSONSchemaValkeyMaxmemoryPolicyAllkeysMinusRandom  JSONSchemaValkeyMaxmemoryPolicy = "allkeys-random"
+	JSONSchemaValkeyMaxmemoryPolicyVolatileMinusRandom JSONSchemaValkeyMaxmemoryPolicy = "volatile-random"
+	JSONSchemaValkeyMaxmemoryPolicyVolatileMinusTtl    JSONSchemaValkeyMaxmemoryPolicy = "volatile-ttl"
+	JSONSchemaValkeyMaxmemoryPolicyVolatileMinusLfu    JSONSchemaValkeyMaxmemoryPolicy = "volatile-lfu"
+	JSONSchemaValkeyMaxmemoryPolicyAllkeysMinusLfu     JSONSchemaValkeyMaxmemoryPolicy = "allkeys-lfu"
 )
 
 type JSONSchemaValkeyPersistence string
@@ -4258,15 +4258,15 @@ type ListKmsKeysResponse struct {
 type ListKmsKeysResponseEntrySource string
 
 const (
-	ListKmsKeysResponseEntrySourceExoscaleKms ListKmsKeysResponseEntrySource = "exoscale-kms"
+	ListKmsKeysResponseEntrySourceExoscaleMinusKms ListKmsKeysResponseEntrySource = "exoscale-kms"
 )
 
 type ListKmsKeysResponseEntryStatus string
 
 const (
-	ListKmsKeysResponseEntryStatusEnabled         ListKmsKeysResponseEntryStatus = "enabled"
-	ListKmsKeysResponseEntryStatusDisabled        ListKmsKeysResponseEntryStatus = "disabled"
-	ListKmsKeysResponseEntryStatusPendingDeletion ListKmsKeysResponseEntryStatus = "pending-deletion"
+	ListKmsKeysResponseEntryStatusEnabled              ListKmsKeysResponseEntryStatus = "enabled"
+	ListKmsKeysResponseEntryStatusDisabled             ListKmsKeysResponseEntryStatus = "disabled"
+	ListKmsKeysResponseEntryStatusPendingMinusDeletion ListKmsKeysResponseEntryStatus = "pending-deletion"
 )
 
 type ListKmsKeysResponseEntry struct {
@@ -4456,9 +4456,9 @@ const (
 type LoadBalancerServiceStrategy string
 
 const (
-	LoadBalancerServiceStrategyRoundRobin LoadBalancerServiceStrategy = "round-robin"
-	LoadBalancerServiceStrategyMaglevHash LoadBalancerServiceStrategy = "maglev-hash"
-	LoadBalancerServiceStrategySourceHash LoadBalancerServiceStrategy = "source-hash"
+	LoadBalancerServiceStrategyRoundMinusRobin LoadBalancerServiceStrategy = "round-robin"
+	LoadBalancerServiceStrategyMaglevMinusHash LoadBalancerServiceStrategy = "maglev-hash"
+	LoadBalancerServiceStrategySourceMinusHash LoadBalancerServiceStrategy = "source-hash"
 )
 
 // Load Balancer Service
@@ -4516,8 +4516,8 @@ type LoadBalancerServiceHealthcheck struct {
 type ManagerType string
 
 const (
-	ManagerTypeSKSNodepool  ManagerType = "sks-nodepool"
-	ManagerTypeInstancePool ManagerType = "instance-pool"
+	ManagerTypeSKSMinusNodepool  ManagerType = "sks-nodepool"
+	ManagerTypeInstanceMinusPool ManagerType = "instance-pool"
 )
 
 // Resource manager
@@ -4563,27 +4563,27 @@ type Networking struct {
 type NvidiaMigProfileA3024gb string
 
 const (
-	NvidiaMigProfileA3024gb2g12gb   NvidiaMigProfileA3024gb = "2g.12gb"
-	NvidiaMigProfileA3024gb1g6gbMe  NvidiaMigProfileA3024gb = "1g.6gb+me"
-	NvidiaMigProfileA3024gb1g6gb    NvidiaMigProfileA3024gb = "1g.6gb"
-	NvidiaMigProfileA3024gb2g12gbMe NvidiaMigProfileA3024gb = "2g.12gb+me"
-	NvidiaMigProfileA3024gb4g24gb   NvidiaMigProfileA3024gb = "4g.24gb"
+	NvidiaMigProfileA3024gb2gDot12gb       NvidiaMigProfileA3024gb = "2g.12gb"
+	NvidiaMigProfileA3024gb1gDot6gbPlusMe  NvidiaMigProfileA3024gb = "1g.6gb+me"
+	NvidiaMigProfileA3024gb1gDot6gb        NvidiaMigProfileA3024gb = "1g.6gb"
+	NvidiaMigProfileA3024gb2gDot12gbPlusMe NvidiaMigProfileA3024gb = "2g.12gb+me"
+	NvidiaMigProfileA3024gb4gDot24gb       NvidiaMigProfileA3024gb = "4g.24gb"
 )
 
 type NvidiaMigProfileRtxpro600096gb string
 
 const (
-	NvidiaMigProfileRtxpro600096gb1g24gbMe    NvidiaMigProfileRtxpro600096gb = "1g.24gb-me"
-	NvidiaMigProfileRtxpro600096gb1g24gb      NvidiaMigProfileRtxpro600096gb = "1g.24gb"
-	NvidiaMigProfileRtxpro600096gb2g48gbMe    NvidiaMigProfileRtxpro600096gb = "2g.48gb-me"
-	NvidiaMigProfileRtxpro600096gb2g48gb      NvidiaMigProfileRtxpro600096gb = "2g.48gb"
-	NvidiaMigProfileRtxpro600096gb4g96gbGfx   NvidiaMigProfileRtxpro600096gb = "4g.96gb+gfx"
-	NvidiaMigProfileRtxpro600096gb1g24gbMe    NvidiaMigProfileRtxpro600096gb = "1g.24gb+me"
-	NvidiaMigProfileRtxpro600096gb2g48gbMeAll NvidiaMigProfileRtxpro600096gb = "2g.48gb+me.all"
-	NvidiaMigProfileRtxpro600096gb1g24gbGfx   NvidiaMigProfileRtxpro600096gb = "1g.24gb+gfx"
-	NvidiaMigProfileRtxpro600096gb1g24gbMeAll NvidiaMigProfileRtxpro600096gb = "1g.24gb+me.all"
-	NvidiaMigProfileRtxpro600096gb4g96gb      NvidiaMigProfileRtxpro600096gb = "4g.96gb"
-	NvidiaMigProfileRtxpro600096gb2g48gbGfx   NvidiaMigProfileRtxpro600096gb = "2g.48gb+gfx"
+	NvidiaMigProfileRtxpro600096gb1gDot24gbMinusMe      NvidiaMigProfileRtxpro600096gb = "1g.24gb-me"
+	NvidiaMigProfileRtxpro600096gb1gDot24gb             NvidiaMigProfileRtxpro600096gb = "1g.24gb"
+	NvidiaMigProfileRtxpro600096gb2gDot48gbMinusMe      NvidiaMigProfileRtxpro600096gb = "2g.48gb-me"
+	NvidiaMigProfileRtxpro600096gb2gDot48gb             NvidiaMigProfileRtxpro600096gb = "2g.48gb"
+	NvidiaMigProfileRtxpro600096gb4gDot96gbPlusGfx      NvidiaMigProfileRtxpro600096gb = "4g.96gb+gfx"
+	NvidiaMigProfileRtxpro600096gb1gDot24gbPlusMe       NvidiaMigProfileRtxpro600096gb = "1g.24gb+me"
+	NvidiaMigProfileRtxpro600096gb2gDot48gbPlusMeDotAll NvidiaMigProfileRtxpro600096gb = "2g.48gb+me.all"
+	NvidiaMigProfileRtxpro600096gb1gDot24gbPlusGfx      NvidiaMigProfileRtxpro600096gb = "1g.24gb+gfx"
+	NvidiaMigProfileRtxpro600096gb1gDot24gbPlusMeDotAll NvidiaMigProfileRtxpro600096gb = "1g.24gb+me.all"
+	NvidiaMigProfileRtxpro600096gb4gDot96gb             NvidiaMigProfileRtxpro600096gb = "4g.96gb"
+	NvidiaMigProfileRtxpro600096gb2gDot48gbPlusGfx      NvidiaMigProfileRtxpro600096gb = "2g.48gb+gfx"
 )
 
 // Nvidia MIG Profiles enabled
@@ -4595,17 +4595,17 @@ type NvidiaMigProfiles struct {
 type OperationReason string
 
 const (
-	OperationReasonIncorrect   OperationReason = "incorrect"
-	OperationReasonUnknown     OperationReason = "unknown"
-	OperationReasonUnavailable OperationReason = "unavailable"
-	OperationReasonForbidden   OperationReason = "forbidden"
-	OperationReasonBusy        OperationReason = "busy"
-	OperationReasonFault       OperationReason = "fault"
-	OperationReasonPartial     OperationReason = "partial"
-	OperationReasonNotFound    OperationReason = "not-found"
-	OperationReasonInterrupted OperationReason = "interrupted"
-	OperationReasonUnsupported OperationReason = "unsupported"
-	OperationReasonConflict    OperationReason = "conflict"
+	OperationReasonIncorrect     OperationReason = "incorrect"
+	OperationReasonUnknown       OperationReason = "unknown"
+	OperationReasonUnavailable   OperationReason = "unavailable"
+	OperationReasonForbidden     OperationReason = "forbidden"
+	OperationReasonBusy          OperationReason = "busy"
+	OperationReasonFault         OperationReason = "fault"
+	OperationReasonPartial       OperationReason = "partial"
+	OperationReasonNotMinusFound OperationReason = "not-found"
+	OperationReasonInterrupted   OperationReason = "interrupted"
+	OperationReasonUnsupported   OperationReason = "unsupported"
+	OperationReasonConflict      OperationReason = "conflict"
 )
 
 // Related resource reference
@@ -5020,17 +5020,17 @@ const (
 type SKSClusterState string
 
 const (
-	SKSClusterStateRotatingCsiCredentials       SKSClusterState = "rotating-csi-credentials"
-	SKSClusterStateRotatingCcmCredentials       SKSClusterState = "rotating-ccm-credentials"
-	SKSClusterStateCreating                     SKSClusterState = "creating"
-	SKSClusterStateUpgrading                    SKSClusterState = "upgrading"
-	SKSClusterStateDeleting                     SKSClusterState = "deleting"
-	SKSClusterStateRunning                      SKSClusterState = "running"
-	SKSClusterStateSuspending                   SKSClusterState = "suspending"
-	SKSClusterStateUpdating                     SKSClusterState = "updating"
-	SKSClusterStateError                        SKSClusterState = "error"
-	SKSClusterStateRotatingKarpenterCredentials SKSClusterState = "rotating-karpenter-credentials"
-	SKSClusterStateResuming                     SKSClusterState = "resuming"
+	SKSClusterStateRotatingMinusCsiMinusCredentials       SKSClusterState = "rotating-csi-credentials"
+	SKSClusterStateRotatingMinusCcmMinusCredentials       SKSClusterState = "rotating-ccm-credentials"
+	SKSClusterStateCreating                               SKSClusterState = "creating"
+	SKSClusterStateUpgrading                              SKSClusterState = "upgrading"
+	SKSClusterStateDeleting                               SKSClusterState = "deleting"
+	SKSClusterStateRunning                                SKSClusterState = "running"
+	SKSClusterStateSuspending                             SKSClusterState = "suspending"
+	SKSClusterStateUpdating                               SKSClusterState = "updating"
+	SKSClusterStateError                                  SKSClusterState = "error"
+	SKSClusterStateRotatingMinusKarpenterMinusCredentials SKSClusterState = "rotating-karpenter-credentials"
+	SKSClusterStateResuming                               SKSClusterState = "resuming"
 )
 
 // SKS Cluster
@@ -5108,13 +5108,13 @@ const (
 type SKSNodepoolState string
 
 const (
-	SKSNodepoolStateRenewingToken SKSNodepoolState = "renewing-token"
-	SKSNodepoolStateCreating      SKSNodepoolState = "creating"
-	SKSNodepoolStateDeleting      SKSNodepoolState = "deleting"
-	SKSNodepoolStateRunning       SKSNodepoolState = "running"
-	SKSNodepoolStateScaling       SKSNodepoolState = "scaling"
-	SKSNodepoolStateUpdating      SKSNodepoolState = "updating"
-	SKSNodepoolStateError         SKSNodepoolState = "error"
+	SKSNodepoolStateRenewingMinusToken SKSNodepoolState = "renewing-token"
+	SKSNodepoolStateCreating           SKSNodepoolState = "creating"
+	SKSNodepoolStateDeleting           SKSNodepoolState = "deleting"
+	SKSNodepoolStateRunning            SKSNodepoolState = "running"
+	SKSNodepoolStateScaling            SKSNodepoolState = "scaling"
+	SKSNodepoolStateUpdating           SKSNodepoolState = "updating"
+	SKSNodepoolStateError              SKSNodepoolState = "error"
 )
 
 // SKS Nodepool
@@ -5309,9 +5309,9 @@ type Subnet struct {
 type SuccessResponseStatus string
 
 const (
-	SuccessResponseStatusSuccess          SuccessResponseStatus = "success"
-	SuccessResponseStatusTargetRegistered SuccessResponseStatus = "target-registered"
-	SuccessResponseStatusAlreadyApplied   SuccessResponseStatus = "already-applied"
+	SuccessResponseStatusSuccess               SuccessResponseStatus = "success"
+	SuccessResponseStatusTargetMinusRegistered SuccessResponseStatus = "target-registered"
+	SuccessResponseStatusAlreadyMinusApplied   SuccessResponseStatus = "already-applied"
 )
 
 type SuccessResponse struct {
@@ -5453,14 +5453,14 @@ type Zone struct {
 type ZoneName string
 
 const (
-	ZoneNameCHDk2  ZoneName = "ch-dk-2"
-	ZoneNameDEMuc1 ZoneName = "de-muc-1"
-	ZoneNameCHGva2 ZoneName = "ch-gva-2"
-	ZoneNameATVie1 ZoneName = "at-vie-1"
-	ZoneNameDEFra1 ZoneName = "de-fra-1"
-	ZoneNameBGSof1 ZoneName = "bg-sof-1"
-	ZoneNameATVie2 ZoneName = "at-vie-2"
-	ZoneNameHrZag1 ZoneName = "hr-zag-1"
+	ZoneNameCHMinusDkMinus2  ZoneName = "ch-dk-2"
+	ZoneNameDEMinusMucMinus1 ZoneName = "de-muc-1"
+	ZoneNameCHMinusGvaMinus2 ZoneName = "ch-gva-2"
+	ZoneNameATMinusVieMinus1 ZoneName = "at-vie-1"
+	ZoneNameDEMinusFraMinus1 ZoneName = "de-fra-1"
+	ZoneNameBGMinusSofMinus1 ZoneName = "bg-sof-1"
+	ZoneNameATMinusVieMinus2 ZoneName = "at-vie-2"
+	ZoneNameHrMinusZagMinus1 ZoneName = "hr-zag-1"
 )
 
 type InstanceTarget = InstanceRef

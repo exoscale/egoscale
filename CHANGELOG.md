@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- generator: distinguish enum-value separators ('-', '+', '.', '/') so enum
+  values that differ only by separator character no longer collide on the
+  same Go identifier (e.g. `1g.24gb-me` and `1g.24gb+me` map to
+  `…1gDot24gbMinusMe` and `…1gDot24gbPlusMe`). Regenerated `v3` to apply
+  the rename to every existing enum constant.
+
 3.1.40
 ------
 

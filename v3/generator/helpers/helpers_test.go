@@ -43,3 +43,43 @@ func TestToLowerCamel(t *testing.T) {
 	require.Equal(t, "instancePoolID", ToLowerCamel("instance-pool-id"))
 	require.Equal(t, "id", ToLowerCamel("id"))
 }
+
+func TestEnumValueName(t *testing.T) {
+	require.Equal(t, "", EnumValueName(""))
+
+	require.Equal(t, "Standby", EnumValueName("standby"))
+	require.Equal(t, "Master", EnumValueName("master"))
+
+	require.Equal(t, "ReadMinusReplica", EnumValueName("read-replica"))
+	require.Equal(t, "WritePlusReplica", EnumValueName("write+replica"))
+
+	require.Equal(t, "1gDot24gb", EnumValueName("1g.24gb"))
+	require.Equal(t, "1gDot24gbMinusMe", EnumValueName("1g.24gb-me"))
+	require.Equal(t, "1gDot24gbPlusMe", EnumValueName("1g.24gb+me"))
+	require.Equal(t, "2gDot48gbPlusMeDotAll", EnumValueName("2g.48gb+me.all"))
+	require.Equal(t, "4gDot96gbPlusGfx", EnumValueName("4g.96gb+gfx"))
+	require.Equal(t, "1gDot24gbPlusMeDotAll", EnumValueName("1g.24gb+me.all"))
+
+	seen := map[string]string{
+		EnumValueName("1g.24gb-me"):     "1g.24gb-me",
+		EnumValueName("1g.24gb+me"):     "1g.24gb+me",
+		EnumValueName("2g.48gb-me"):     "2g.48gb-me",
+		EnumValueName("2g.48gb"):        "2g.48gb",
+		EnumValueName("4g.96gb+gfx"):    "4g.96gb+gfx",
+		EnumValueName("1g.24gb"):        "1g.24gb",
+		EnumValueName("2g.48gb+me.all"): "2g.48gb+me.all",
+		EnumValueName("1g.24gb+gfx"):    "1g.24gb+gfx",
+		EnumValueName("1g.24gb+me.all"): "1g.24gb+me.all",
+		EnumValueName("4g.96gb"):        "4g.96gb",
+		EnumValueName("2g.48gb+gfx"):    "2g.48gb+gfx",
+	}
+	require.Len(t, seen, 11, "every enum value must produce a distinct identifier")
+
+	require.Equal(t, "HandleMinusXMLMinusHTTPMinusRequest", EnumValueName("handle-xml-http-request"))
+	require.Equal(t, "ParseJSONAPI", EnumValueName("parse_json_api"))
+	require.Equal(t, "SupportMinusSQLMinusQueries", EnumValueName("support-sql-queries"))
+
+	require.Equal(t, "Trim", EnumValueName(" ---trim--- "))
+	require.Equal(t, "Trim", EnumValueName("---trim---"))
+	require.Equal(t, "", EnumValueName("./"))
+}

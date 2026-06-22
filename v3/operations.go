@@ -11609,7 +11609,7 @@ func (l ListInstancesResponse) FindListInstancesResponseInstances(nameOrID strin
 type ListInstancesManagerType string
 
 const (
-	ListInstancesManagerTypeInstancePool ListInstancesManagerType = "instance-pool"
+	ListInstancesManagerTypeInstanceMinusPool ListInstancesManagerType = "instance-pool"
 )
 
 type ListInstancesOpt func(url.Values)
@@ -12133,16 +12133,16 @@ func (c Client) UpdateInstancePool(ctx context.Context, id UUID, req UpdateInsta
 type ResetInstancePoolFieldField string
 
 const (
-	ResetInstancePoolFieldFieldAntiAffinityGroups ResetInstancePoolFieldField = "anti-affinity-groups"
-	ResetInstancePoolFieldFieldDescription        ResetInstancePoolFieldField = "description"
-	ResetInstancePoolFieldFieldLabels             ResetInstancePoolFieldField = "labels"
-	ResetInstancePoolFieldFieldSecurityGroups     ResetInstancePoolFieldField = "security-groups"
-	ResetInstancePoolFieldFieldElasticIPS         ResetInstancePoolFieldField = "elastic-ips"
-	ResetInstancePoolFieldFieldPrivateNetworks    ResetInstancePoolFieldField = "private-networks"
-	ResetInstancePoolFieldFieldSSHKey             ResetInstancePoolFieldField = "ssh-key"
-	ResetInstancePoolFieldFieldUserData           ResetInstancePoolFieldField = "user-data"
-	ResetInstancePoolFieldFieldDeployTarget       ResetInstancePoolFieldField = "deploy-target"
-	ResetInstancePoolFieldFieldIpv6Enabled        ResetInstancePoolFieldField = "ipv6-enabled"
+	ResetInstancePoolFieldFieldAntiMinusAffinityMinusGroups ResetInstancePoolFieldField = "anti-affinity-groups"
+	ResetInstancePoolFieldFieldDescription                  ResetInstancePoolFieldField = "description"
+	ResetInstancePoolFieldFieldLabels                       ResetInstancePoolFieldField = "labels"
+	ResetInstancePoolFieldFieldSecurityMinusGroups          ResetInstancePoolFieldField = "security-groups"
+	ResetInstancePoolFieldFieldElasticMinusIPS              ResetInstancePoolFieldField = "elastic-ips"
+	ResetInstancePoolFieldFieldPrivateMinusNetworks         ResetInstancePoolFieldField = "private-networks"
+	ResetInstancePoolFieldFieldSSHMinusKey                  ResetInstancePoolFieldField = "ssh-key"
+	ResetInstancePoolFieldFieldUserMinusData                ResetInstancePoolFieldField = "user-data"
+	ResetInstancePoolFieldFieldDeployMinusTarget            ResetInstancePoolFieldField = "deploy-target"
+	ResetInstancePoolFieldFieldIpv6MinusEnabled             ResetInstancePoolFieldField = "ipv6-enabled"
 )
 
 // Reset an Instance Pool field to its default value
@@ -13096,8 +13096,8 @@ func (c Client) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceReq
 type StartInstanceRequestRescueProfile string
 
 const (
-	StartInstanceRequestRescueProfileNetbootEfi StartInstanceRequestRescueProfile = "netboot-efi"
-	StartInstanceRequestRescueProfileNetboot    StartInstanceRequestRescueProfile = "netboot"
+	StartInstanceRequestRescueProfileNetbootMinusEfi StartInstanceRequestRescueProfile = "netboot-efi"
+	StartInstanceRequestRescueProfileNetboot         StartInstanceRequestRescueProfile = "netboot"
 )
 
 type StartInstanceRequest struct {
@@ -14363,9 +14363,9 @@ const (
 type AddServiceToLoadBalancerRequestStrategy string
 
 const (
-	AddServiceToLoadBalancerRequestStrategyRoundRobin AddServiceToLoadBalancerRequestStrategy = "round-robin"
-	AddServiceToLoadBalancerRequestStrategyMaglevHash AddServiceToLoadBalancerRequestStrategy = "maglev-hash"
-	AddServiceToLoadBalancerRequestStrategySourceHash AddServiceToLoadBalancerRequestStrategy = "source-hash"
+	AddServiceToLoadBalancerRequestStrategyRoundMinusRobin AddServiceToLoadBalancerRequestStrategy = "round-robin"
+	AddServiceToLoadBalancerRequestStrategyMaglevMinusHash AddServiceToLoadBalancerRequestStrategy = "maglev-hash"
+	AddServiceToLoadBalancerRequestStrategySourceMinusHash AddServiceToLoadBalancerRequestStrategy = "source-hash"
 )
 
 type AddServiceToLoadBalancerRequest struct {
@@ -14536,9 +14536,9 @@ const (
 type UpdateLoadBalancerServiceRequestStrategy string
 
 const (
-	UpdateLoadBalancerServiceRequestStrategyRoundRobin UpdateLoadBalancerServiceRequestStrategy = "round-robin"
-	UpdateLoadBalancerServiceRequestStrategyMaglevHash UpdateLoadBalancerServiceRequestStrategy = "maglev-hash"
-	UpdateLoadBalancerServiceRequestStrategySourceHash UpdateLoadBalancerServiceRequestStrategy = "source-hash"
+	UpdateLoadBalancerServiceRequestStrategyRoundMinusRobin UpdateLoadBalancerServiceRequestStrategy = "round-robin"
+	UpdateLoadBalancerServiceRequestStrategyMaglevMinusHash UpdateLoadBalancerServiceRequestStrategy = "maglev-hash"
+	UpdateLoadBalancerServiceRequestStrategySourceMinusHash UpdateLoadBalancerServiceRequestStrategy = "source-hash"
 )
 
 type UpdateLoadBalancerServiceRequest struct {
@@ -16791,9 +16791,9 @@ type GetSKSClusterAuthorityCertResponse struct {
 type GetSKSClusterAuthorityCertAuthority string
 
 const (
-	GetSKSClusterAuthorityCertAuthorityControlPlane GetSKSClusterAuthorityCertAuthority = "control-plane"
-	GetSKSClusterAuthorityCertAuthorityAggregation  GetSKSClusterAuthorityCertAuthority = "aggregation"
-	GetSKSClusterAuthorityCertAuthorityKubelet      GetSKSClusterAuthorityCertAuthority = "kubelet"
+	GetSKSClusterAuthorityCertAuthorityControlMinusPlane GetSKSClusterAuthorityCertAuthority = "control-plane"
+	GetSKSClusterAuthorityCertAuthorityAggregation       GetSKSClusterAuthorityCertAuthority = "aggregation"
+	GetSKSClusterAuthorityCertAuthorityKubelet           GetSKSClusterAuthorityCertAuthority = "kubelet"
 )
 
 // This operation returns the certificate for the given SKS cluster authority encoded in base64.

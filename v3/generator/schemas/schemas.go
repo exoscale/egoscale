@@ -233,7 +233,7 @@ func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 		if typ == "string" {
 			value = fmt.Sprintf("%q", e.Value)
 		}
-		name := typeName + helpers.ToCamel(e.Value)
+		name := typeName + helpers.EnumValueName(e.Value)
 
 		definition += fmt.Sprintf("%s %s = %s\n", name, typeName, value)
 	}

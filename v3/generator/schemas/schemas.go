@@ -233,13 +233,27 @@ func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 		if typ == "string" {
 			value = fmt.Sprintf("%q", e.Value)
 		}
-		name := typeName + helpers.ToCamel(e.Value)
+
+		suffix := e.Value
+
+		// Scope "+"/"-" enum sign encoding to NVIDIA MIG profiles.
+		if strings.HasPrefix(typeName, "NvidiaMig") {
+			suffix = encodeNvidiaEnumSigns(suffix)
+		}
+		name := typeName + helpers.ToCamel(suffix)
 
 		definition += fmt.Sprintf("%s %s = %s\n", name, typeName, value)
 	}
 	definition += ")\n"
 
 	return definition
+}
+
+// encodeNvidiaEnumSigns maps "+"/"-" to "With"/"Without" so ToCamel keeps them distinct.
+func encodeNvidiaEnumSigns(s string) string {
+	s = strings.ReplaceAll(s, "+", " With ")
+	s = strings.ReplaceAll(s, "-", " Without ")
+	return s
 }
 
 func renderArray(typeName string, s *base.Schema, output *bytes.Buffer, rootSchema bool, schemaName string) (string, error) {

@@ -4563,27 +4563,27 @@ type Networking struct {
 type NvidiaMigProfileA3024gb string
 
 const (
-	NvidiaMigProfileA3024gb2g12gb   NvidiaMigProfileA3024gb = "2g.12gb"
-	NvidiaMigProfileA3024gb1g6gbMe  NvidiaMigProfileA3024gb = "1g.6gb+me"
-	NvidiaMigProfileA3024gb1g6gb    NvidiaMigProfileA3024gb = "1g.6gb"
-	NvidiaMigProfileA3024gb2g12gbMe NvidiaMigProfileA3024gb = "2g.12gb+me"
-	NvidiaMigProfileA3024gb4g24gb   NvidiaMigProfileA3024gb = "4g.24gb"
+	NvidiaMigProfileA3024gb2g12gb       NvidiaMigProfileA3024gb = "2g.12gb"
+	NvidiaMigProfileA3024gb1g6gbWithMe  NvidiaMigProfileA3024gb = "1g.6gb+me"
+	NvidiaMigProfileA3024gb1g6gb        NvidiaMigProfileA3024gb = "1g.6gb"
+	NvidiaMigProfileA3024gb2g12gbWithMe NvidiaMigProfileA3024gb = "2g.12gb+me"
+	NvidiaMigProfileA3024gb4g24gb       NvidiaMigProfileA3024gb = "4g.24gb"
 )
 
 type NvidiaMigProfileRtxpro600096gb string
 
 const (
-	NvidiaMigProfileRtxpro600096gb1g24gbMe    NvidiaMigProfileRtxpro600096gb = "1g.24gb-me"
-	NvidiaMigProfileRtxpro600096gb1g24gb      NvidiaMigProfileRtxpro600096gb = "1g.24gb"
-	NvidiaMigProfileRtxpro600096gb2g48gbMe    NvidiaMigProfileRtxpro600096gb = "2g.48gb-me"
-	NvidiaMigProfileRtxpro600096gb2g48gb      NvidiaMigProfileRtxpro600096gb = "2g.48gb"
-	NvidiaMigProfileRtxpro600096gb4g96gbGfx   NvidiaMigProfileRtxpro600096gb = "4g.96gb+gfx"
-	NvidiaMigProfileRtxpro600096gb1g24gbMe    NvidiaMigProfileRtxpro600096gb = "1g.24gb+me"
-	NvidiaMigProfileRtxpro600096gb2g48gbMeAll NvidiaMigProfileRtxpro600096gb = "2g.48gb+me.all"
-	NvidiaMigProfileRtxpro600096gb1g24gbGfx   NvidiaMigProfileRtxpro600096gb = "1g.24gb+gfx"
-	NvidiaMigProfileRtxpro600096gb1g24gbMeAll NvidiaMigProfileRtxpro600096gb = "1g.24gb+me.all"
-	NvidiaMigProfileRtxpro600096gb4g96gb      NvidiaMigProfileRtxpro600096gb = "4g.96gb"
-	NvidiaMigProfileRtxpro600096gb2g48gbGfx   NvidiaMigProfileRtxpro600096gb = "2g.48gb+gfx"
+	NvidiaMigProfileRtxpro600096gb1g24gbWithoutMe NvidiaMigProfileRtxpro600096gb = "1g.24gb-me"
+	NvidiaMigProfileRtxpro600096gb1g24gb          NvidiaMigProfileRtxpro600096gb = "1g.24gb"
+	NvidiaMigProfileRtxpro600096gb2g48gbWithoutMe NvidiaMigProfileRtxpro600096gb = "2g.48gb-me"
+	NvidiaMigProfileRtxpro600096gb2g48gb          NvidiaMigProfileRtxpro600096gb = "2g.48gb"
+	NvidiaMigProfileRtxpro600096gb4g96gbWithGfx   NvidiaMigProfileRtxpro600096gb = "4g.96gb+gfx"
+	NvidiaMigProfileRtxpro600096gb1g24gbWithMe    NvidiaMigProfileRtxpro600096gb = "1g.24gb+me"
+	NvidiaMigProfileRtxpro600096gb2g48gbWithMeAll NvidiaMigProfileRtxpro600096gb = "2g.48gb+me.all"
+	NvidiaMigProfileRtxpro600096gb1g24gbWithGfx   NvidiaMigProfileRtxpro600096gb = "1g.24gb+gfx"
+	NvidiaMigProfileRtxpro600096gb1g24gbWithMeAll NvidiaMigProfileRtxpro600096gb = "1g.24gb+me.all"
+	NvidiaMigProfileRtxpro600096gb4g96gb          NvidiaMigProfileRtxpro600096gb = "4g.96gb"
+	NvidiaMigProfileRtxpro600096gb2g48gbWithGfx   NvidiaMigProfileRtxpro600096gb = "2g.48gb+gfx"
 )
 
 // Nvidia MIG Profiles enabled

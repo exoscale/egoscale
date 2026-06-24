@@ -224,16 +224,34 @@ func renderSimpleTypeEnum(typeName string, s *base.Schema) string {
 		}
 	}
 
+	// x-enum-varnames provides explicit suffixes for each enum value
+	// It must be used in the same order as the enum array.
+	// Usefull when: '1g.24gb-me' and '1g.24gb+me' returns the same suffix '1g24gbMe'.
+	var varnames []string
+	if s.Extensions != nil {
+		if node, ok := s.Extensions.Get("x-enum-varnames"); ok {
+			for _, n := range node.Content {
+				varnames = append(varnames, n.Value)
+			}
+		}
+	}
+	useVarnames := len(varnames) == len(s.Enum)
+
 	typ := RenderSimpleType(s)
 	definition := "type " + typeName + " " + typ + "\n"
 	definition += "const (\n"
 
-	for _, e := range s.Enum {
+	for i, e := range s.Enum {
 		value := e.Value
 		if typ == "string" {
 			value = fmt.Sprintf("%q", e.Value)
 		}
-		name := typeName + helpers.ToCamel(e.Value)
+		var name string
+		if useVarnames {
+			name = typeName + varnames[i]
+		} else {
+			name = typeName + helpers.ToCamel(e.Value)
+		}
 
 		definition += fmt.Sprintf("%s %s = %s\n", name, typeName, value)
 	}

@@ -5619,6 +5619,8 @@ type UpdateDBAASServiceMysqlRequest struct {
 	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// MySQL version
+	Version string `json:"version,omitempty"`
 }
 
 // Update a DBaaS MySQL service

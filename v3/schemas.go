@@ -2683,6 +2683,7 @@ const (
 	InferenceEngineVersion0210 InferenceEngineVersion = "0.21.0"
 	InferenceEngineVersion0220 InferenceEngineVersion = "0.22.0"
 	InferenceEngineVersion0221 InferenceEngineVersion = "0.22.1"
+	InferenceEngineVersion0230 InferenceEngineVersion = "0.23.0"
 )
 
 // Router flush payload: the router's full in-memory usage map with flush identity fields
@@ -2772,6 +2773,14 @@ type InstancePassword struct {
 	Password string `json:"password,omitempty"`
 }
 
+// Instance Pool Error Reason
+type InstancePoolErrorReason struct {
+	// Error cause
+	Cause string `json:"cause,omitempty"`
+	// Job ID at the origin of error
+	JobID string `json:"job-id,omitempty"`
+}
+
 type InstancePoolState string
 
 const (
@@ -2782,6 +2791,7 @@ const (
 	InstancePoolStateSuspended   InstancePoolState = "suspended"
 	InstancePoolStateRunning     InstancePoolState = "running"
 	InstancePoolStateUpdating    InstancePoolState = "updating"
+	InstancePoolStateError       InstancePoolState = "error"
 )
 
 // Instance Pool
@@ -2798,6 +2808,8 @@ type InstancePool struct {
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=51200"`
 	// Instances Elastic IPs
 	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
+	// Instance Pool Error Reason
+	ErrorReason *InstancePoolErrorReason `json:"error-reason,omitempty"`
 	// Instance Pool ID
 	ID UUID `json:"id,omitempty"`
 	// The instances created by the Instance Pool will be prefixed with this value (default: pool)

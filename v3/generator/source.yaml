@@ -2377,7 +2377,8 @@ components:
         - 0.21.0
         - 0.22.0
         - 0.22.1
-      default: 0.22.1
+        - 0.23.0
+      default: 0.23.0
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -6995,6 +6996,7 @@ components:
             - suspended
             - running
             - updating
+            - error
           readOnly: true
           description: Instance Pool state
         size:
@@ -7025,6 +7027,16 @@ components:
             $ref: '#/components/schemas/instance-ref'
           readOnly: true
           description: Instances
+        error-reason:
+          type: object
+          properties:
+            cause:
+              type: string
+              description: Error cause
+            job-id:
+              type: string
+              description: Job ID at the origin of error
+          description: Instance Pool Error Reason
         deploy-target:
           $ref: '#/components/schemas/deploy-target-ref'
           description: Instance Pool Deploy Target
@@ -11348,6 +11360,38 @@ paths:
             schema:
               type: object
               properties:
+                backup-schedule:
+                  type: object
+                  properties:
+                    backup-hour:
+                      type: integer
+                      format: int64
+                      minimum: 0
+                      maximum: 23
+                      exclusiveMinimum: false
+                      exclusiveMaximum: false
+                      nullable: true
+                      description: The hour of day (in UTC) when backup for the service is started. New backup is only started if previous backup has already completed.
+                    backup-minute:
+                      type: integer
+                      format: int64
+                      minimum: 0
+                      maximum: 59
+                      exclusiveMinimum: false
+                      exclusiveMaximum: false
+                      nullable: true
+                      description: The minute of an hour when backup for the service is started. New backup is only started if previous backup has already completed.
+                ip-filter:
+                  type: array
+                  items:
+                    type: string
+                  description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
+                termination-protection:
+                  type: boolean
+                  description: Service is protected against termination and powering off
+                mysql-settings:
+                  $ref: '#/components/schemas/json-schema-mysql'
+                  description: MySQL-specific settings
                 maintenance:
                   type: object
                   properties:
@@ -11372,22 +11416,14 @@ paths:
                     - dow
                     - time
                   description: Automatic maintenance settings
+                version:
+                  type: string
+                  description: MySQL version
                 plan:
                   type: string
                   maxLength: 128
                   minLength: 1
                   description: Subscription plan
-                termination-protection:
-                  type: boolean
-                  description: Service is protected against termination and powering off
-                ip-filter:
-                  type: array
-                  items:
-                    type: string
-                  description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
-                mysql-settings:
-                  $ref: '#/components/schemas/json-schema-mysql'
-                  description: MySQL-specific settings
                 migration:
                   type: object
                   properties:
@@ -11442,27 +11478,6 @@ paths:
                   exclusiveMinimum: false
                   exclusiveMaximum: false
                   description: The minimum amount of time in seconds to keep binlog entries before deletion. This may be extended for services that require binlog entries for longer than the default for example if using the MySQL Debezium Kafka connector.
-                backup-schedule:
-                  type: object
-                  properties:
-                    backup-hour:
-                      type: integer
-                      format: int64
-                      minimum: 0
-                      maximum: 23
-                      exclusiveMinimum: false
-                      exclusiveMaximum: false
-                      nullable: true
-                      description: The hour of day (in UTC) when backup for the service is started. New backup is only started if previous backup has already completed.
-                    backup-minute:
-                      type: integer
-                      format: int64
-                      minimum: 0
-                      maximum: 59
-                      exclusiveMinimum: false
-                      exclusiveMaximum: false
-                      nullable: true
-                      description: The minute of an hour when backup for the service is started. New backup is only started if previous backup has already completed.
       operationId: update-dbaas-service-mysql
     get:
       tags:
@@ -13760,7 +13775,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: Delete AI API Key
+      summary: '[BETA] Delete AI API Key'
       operationId: delete-ai-api-key
     get:
       tags:
@@ -13792,7 +13807,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: Get AI API Key
+      summary: '[BETA] Get AI API Key'
       operationId: get-ai-api-key
     patch:
       tags:
@@ -13830,7 +13845,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: Update AI API Key
+      summary: '[BETA] Update AI API Key'
       requestBody:
         required: true
         content:
@@ -13994,7 +14009,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: Rotate AI API Key
+      summary: '[BETA] Rotate AI API Key'
       operationId: rotate-ai-api-key
   /instance/{id}:start:
     put:
@@ -20404,7 +20419,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: Reveal AI API Key
+      summary: '[BETA] Reveal AI API Key'
       operationId: reveal-ai-api-key
   /dbaas-opensearch/{name}/maintenance/start:
     put:
@@ -20500,7 +20515,7 @@ paths:
                 $ref: '#/components/schemas/list-ai-api-keys-response'
       description: List AI API keys for an organization
       parameters: []
-      summary: List AI API Keys
+      summary: '[BETA] List AI API Keys'
       operationId: list-ai-api-keys
     post:
       tags:
@@ -20532,7 +20547,7 @@ paths:
                 $ref: '#/components/schemas/error-response'
       description: Create a new AI API key
       parameters: []
-      summary: Create AI API Key
+      summary: '[BETA] Create AI API Key'
       requestBody:
         required: true
         content:
@@ -21054,7 +21069,7 @@ paths:
                 $ref: '#/components/schemas/org-consumption-quota-response'
       description: Get per-org Unit Of Measurement (UOM) consumption quota (UOM/min). Null means unlimited. UOM represents weighted units across different AI workloads (e.g., tokens for LLMs, minutes for TTS, pages for OCR).
       parameters: []
-      summary: Get Organization Consumption Quota
+      summary: '[BETA] Get Organization Consumption Quota'
       operationId: get-user-org-consumption-quota
   /dbaas-postgres/{name}:
     put:

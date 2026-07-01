@@ -3,10 +3,9 @@ name: build-public-tooling
 on:
   workflow_dispatch:
   push:
-  workflow_run:
-    workflows: ["check_and_regenerate_v3"]
-    types:
-      - completed
+    branches:
+      - master
+  pull_request: {}
 
 jobs:
   build_public_tooling:
@@ -29,6 +28,6 @@ jobs:
       run: |
         git clone https://github.com/exoscale/${{ matrix.case.repo }}
         cd ${{ matrix.case.repo }}
-        go get github.com/exoscale/egoscale/v3@${{ github.sha }}
+        go get github.com/exoscale/egoscale/v3@${{ github.event.pull_request.head.sha || github.sha }}
         go mod vendor
         ${{ matrix.case.build }}

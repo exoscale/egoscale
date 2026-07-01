@@ -252,10 +252,13 @@ const (
 )
 
 type CreateKmsKeyRequest struct {
-	Description string                   `json:"description,omitempty"`
-	MultiZone   *bool                    `json:"multi-zone,omitempty"`
-	Name        string                   `json:"name" validate:"required"`
-	Usage       CreateKmsKeyRequestUsage `json:"usage,omitempty"`
+	// An optional detailed description providing additional context about the key's intended use case.
+	Description string `json:"description,omitempty"`
+	// True if this is a multi-zone key.
+	MultiZone *bool `json:"multi-zone,omitempty"`
+	// A human-readable display name uniquely identifying the KMS key within the tenant space.
+	Name  string                   `json:"name" validate:"required"`
+	Usage CreateKmsKeyRequestUsage `json:"usage,omitempty"`
 }
 
 type CreateKmsKeyResponseSource string
@@ -273,17 +276,25 @@ const (
 )
 
 type CreateKmsKeyResponse struct {
-	CreatedAT   time.Time                  `json:"created-at" validate:"required"`
-	Description string                     `json:"description" validate:"required"`
-	ID          UUID                       `json:"id" validate:"required"`
-	MultiZone   *bool                      `json:"multi-zone" validate:"required"`
-	Name        string                     `json:"name" validate:"required"`
-	OriginZone  string                     `json:"origin-zone" validate:"required"`
-	Revision    *RevisionStamp             `json:"revision" validate:"required"`
-	Source      CreateKmsKeyResponseSource `json:"source" validate:"required"`
-	Status      CreateKmsKeyResponseStatus `json:"status" validate:"required"`
-	StatusSince time.Time                  `json:"status-since" validate:"required"`
-	Usage       string                     `json:"usage" validate:"required"`
+	// The UTC timestamp showing when the KMS key was originally provisioned.
+	CreatedAT time.Time `json:"created-at" validate:"required"`
+	// An optional detailed description providing additional context about the key's intended use case.
+	Description string `json:"description,omitempty"`
+	// The globally unique identifier (UUID) assigned to the newly created KMS key.
+	ID UUID `json:"id" validate:"required"`
+	// True if this is a multi-zone key.
+	MultiZone *bool `json:"multi-zone" validate:"required"`
+	// The display name assigned to the KMS key.
+	Name string `json:"name" validate:"required"`
+	// The creation zone of the KMS key.
+	OriginZone string                     `json:"origin-zone" validate:"required"`
+	Revision   *RevisionStamp             `json:"revision" validate:"required"`
+	Source     CreateKmsKeyResponseSource `json:"source" validate:"required"`
+	Status     CreateKmsKeyResponseStatus `json:"status" validate:"required"`
+	// The timestamp indicating exactly when the current key status was last transitioned.
+	StatusSince time.Time `json:"status-since" validate:"required"`
+	// The cryptographic operation constraints allowed on this key.
+	Usage string `json:"usage" validate:"required"`
 }
 
 // AI model
@@ -1981,11 +1992,14 @@ type DBAASValkeyUsers struct {
 }
 
 type DecryptRequest struct {
-	Ciphertext        []byte  `json:"ciphertext" validate:"required"`
+	// The Base64-encoded ciphertext payload to be decrypted.
+	Ciphertext []byte `json:"ciphertext" validate:"required"`
+	// The exact Base64-encoded Additional Authenticated Data (AAD) used during encryption to verify data integrity.
 	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
 }
 
 type DecryptResponse struct {
+	// The recovered Base64-encoded original plaintext payload.
 	Plaintext []byte `json:"plaintext" validate:"required"`
 }
 
@@ -2139,7 +2153,12 @@ type ElasticIPRef struct {
 	ID UUID `json:"id,omitempty"`
 }
 
+// An empty map response
+type Empty struct {
+}
+
 type EnableKmsKeyRotationRequest struct {
+	// The number of days between each automatic key rotation.
 	RotationPeriod int `json:"rotation-period,omitempty" validate:"omitempty,gte=90,lte=2560"`
 }
 
@@ -2148,11 +2167,14 @@ type EnableKmsKeyRotationResponse struct {
 }
 
 type EncryptRequest struct {
+	// Base64-encoded bytes to be used as the Additional Authenticated Data (AAD) for encryption integrity.
 	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
-	Plaintext         []byte  `json:"plaintext" validate:"required"`
+	// The Base64-encoded plaintext data you wish to encrypt.
+	Plaintext []byte `json:"plaintext" validate:"required"`
 }
 
 type EncryptResponse struct {
+	// The resulting Base64-encoded ciphertext after encryption.
 	Ciphertext []byte `json:"ciphertext" validate:"required"`
 }
 
@@ -2339,21 +2361,15 @@ type EnvProduct struct {
 	Value string `json:"value,omitempty"`
 }
 
-type ErrorResponseErrors struct {
-	Detail   string `json:"detail,omitempty"`
-	Location string `json:"location,omitempty"`
-	Path     string `json:"path,omitempty"`
-	Pointer  string `json:"pointer,omitempty"`
-}
-
 // RFC 9457 Problem Details error response
 type ErrorResponse struct {
-	Detail   string                `json:"detail" validate:"required"`
-	Errors   []ErrorResponseErrors `json:"errors,omitempty"`
-	Instance string                `json:"instance,omitempty"`
-	Status   int                   `json:"status" validate:"required,gte=100,lte=599"`
-	Title    string                `json:"title" validate:"required"`
-	Type     string                `json:"type" validate:"required"`
+	// A highly contextual, readable explanation breaking down explicitly what triggered this error scenario.
+	Detail string `json:"detail" validate:"required"`
+	Status int    `json:"status" validate:"required,gte=100,lte=599"`
+	// A brief summary defining the class of failure, optimal for quick user interface groupings.
+	Title string `json:"title" validate:"required"`
+	// An absolute or relative URI reference pointing to human-readable documentation concerning the specific problem type encountered.
+	Type string `json:"type" validate:"required"`
 }
 
 // A notable Mutation Event which happened on the infrastructure
@@ -2397,14 +2413,17 @@ const (
 )
 
 type GenerateDataKeyRequest struct {
-	BytesCount        int                           `json:"bytes-count,omitempty" validate:"omitempty,gte=1,lte=1024"`
+	BytesCount int `json:"bytes-count,omitempty" validate:"omitempty,gte=1,lte=1024"`
+	// Base64-encoded Additional Authenticated Data binding key generation parameters securely to operational scope.
 	EncryptionContext *[]byte                       `json:"encryption-context,omitempty"`
 	KeySpec           GenerateDataKeyRequestKeySpec `json:"key-spec,omitempty"`
 }
 
 type GenerateDataKeyResponse struct {
+	// The identical symmetric data key, returned safely wrapped/encrypted using the designated root parent KMS key.
 	Ciphertext []byte `json:"ciphertext" validate:"required"`
-	Plaintext  []byte `json:"plaintext" validate:"required"`
+	// The Base64-encoded raw symmetric data key payload. Expose only securely during active application setups.
+	Plaintext []byte `json:"plaintext" validate:"required"`
 }
 
 // Get AI API key response
@@ -2508,21 +2527,32 @@ const (
 )
 
 type GetKmsKeyResponse struct {
-	CreatedAT      time.Time               `json:"created-at" validate:"required"`
-	Description    string                  `json:"description" validate:"required"`
-	ID             UUID                    `json:"id" validate:"required"`
-	Material       *KeyMaterial            `json:"material" validate:"required"`
-	MultiZone      *bool                   `json:"multi-zone" validate:"required"`
-	Name           string                  `json:"name" validate:"required"`
-	OriginZone     string                  `json:"origin-zone" validate:"required"`
-	Replicas       []string                `json:"replicas" validate:"required"`
+	// The UTC timestamp showing when the KMS key was originally provisioned.
+	CreatedAT time.Time `json:"created-at" validate:"required"`
+	DeleteAT  time.Time `json:"delete-at,omitempty"`
+	// An optional detailed description providing additional context about the key's intended use case.
+	Description string `json:"description,omitempty"`
+	// The globally unique identifier (UUID) of the retrieved KMS key.
+	ID       UUID         `json:"id" validate:"required"`
+	Material *KeyMaterial `json:"material" validate:"required"`
+	// True if this is a multi-zone key.
+	MultiZone *bool `json:"multi-zone" validate:"required"`
+	// The display name of the KMS key.
+	Name string `json:"name" validate:"required"`
+	// The creation zone of the KMS key.
+	OriginZone string `json:"origin-zone" validate:"required"`
+	// A list of availability zones where this specific key has active replica mirrors.
+	Replicas []string `json:"replicas,omitempty"`
+	// Detailed synchronization metrics for each regional replica mirror.
 	ReplicasStatus []ReplicaState          `json:"replicas-status,omitempty"`
 	Revision       *RevisionStamp          `json:"revision" validate:"required"`
 	Rotation       *KeyRotationConfig      `json:"rotation" validate:"required"`
 	Source         GetKmsKeyResponseSource `json:"source" validate:"required"`
 	Status         GetKmsKeyResponseStatus `json:"status" validate:"required"`
-	StatusSince    time.Time               `json:"status-since" validate:"required"`
-	Usage          string                  `json:"usage" validate:"required"`
+	// The timestamp indicating exactly when the current key status was last transitioned.
+	StatusSince time.Time `json:"status-since" validate:"required"`
+	// The cryptographic operation constraints allowed on this key.
+	Usage string `json:"usage" validate:"required"`
 }
 
 type GetModelResponseState string
@@ -2683,6 +2713,7 @@ const (
 	InferenceEngineVersion0210 InferenceEngineVersion = "0.21.0"
 	InferenceEngineVersion0220 InferenceEngineVersion = "0.22.0"
 	InferenceEngineVersion0221 InferenceEngineVersion = "0.22.1"
+	InferenceEngineVersion0230 InferenceEngineVersion = "0.23.0"
 )
 
 // Router flush payload: the router's full in-memory usage map with flush identity fields
@@ -2772,6 +2803,14 @@ type InstancePassword struct {
 	Password string `json:"password,omitempty"`
 }
 
+// Instance Pool Error Reason
+type InstancePoolErrorReason struct {
+	// Error cause
+	Cause string `json:"cause,omitempty"`
+	// Job ID at the origin of error
+	JobID string `json:"job-id,omitempty"`
+}
+
 type InstancePoolState string
 
 const (
@@ -2782,6 +2821,7 @@ const (
 	InstancePoolStateSuspended   InstancePoolState = "suspended"
 	InstancePoolStateRunning     InstancePoolState = "running"
 	InstancePoolStateUpdating    InstancePoolState = "updating"
+	InstancePoolStateError       InstancePoolState = "error"
 )
 
 // Instance Pool
@@ -2798,6 +2838,8 @@ type InstancePool struct {
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=51200"`
 	// Instances Elastic IPs
 	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
+	// Instance Pool Error Reason
+	ErrorReason *InstancePoolErrorReason `json:"error-reason,omitempty"`
 	// Instance Pool ID
 	ID UUID `json:"id,omitempty"`
 	// The instances created by the Instance Pool will be prefixed with this value (default: pool)
@@ -4151,16 +4193,23 @@ type JSONSchemaValkey struct {
 }
 
 type KeyMaterial struct {
-	Automatic *bool     `json:"automatic" validate:"required"`
+	// A boolean flag indicating whether this specific material version was created during an automated system rotation window.
+	Automatic *bool `json:"automatic" validate:"required"`
+	// The UTC date-time indicating when this particular generation of physical cryptographic material was seeded.
 	CreatedAT time.Time `json:"created-at" validate:"required"`
-	Version   int       `json:"version" validate:"required"`
+	// The incremental index tracing internal key rotation cycles for the key material.
+	Version int `json:"version" validate:"required"`
 }
 
 type KeyRotationConfig struct {
-	Automatic      *bool     `json:"automatic" validate:"required"`
-	ManualCount    int       `json:"manual-count" validate:"required"`
-	NextAT         time.Time `json:"next-at" validate:"required"`
-	RotationPeriod int       `json:"rotation-period" validate:"required"`
+	// When set to true, dictates that the system automatically rotates material periodically.
+	Automatic *bool `json:"automatic" validate:"required"`
+	// Total running tally of manual key rotation tasks executed by users over this key resource's lifecycle.
+	ManualCount int `json:"manual-count" validate:"required"`
+	// Scheduled deadline calculation pinpointing the next automated rotational iteration target date.
+	NextAT time.Time `json:"next-at" validate:"required"`
+	// The set frequency period (measured in days) for triggers monitoring auto-rotation loops.
+	RotationPeriod int `json:"rotation-period" validate:"required"`
 }
 
 // Kubelet image GC options
@@ -4242,16 +4291,21 @@ type ListDeploymentsResponseEntry struct {
 }
 
 type ListKmsKeyRotationsResponse struct {
+	// A chronologically ordered collection tracking historical rotation lifecycle occurrences for this resource.
 	Rotations []ListKmsKeyRotationsResponseEntry `json:"rotations" validate:"required"`
 }
 
 type ListKmsKeyRotationsResponseEntry struct {
-	Automatic *bool     `json:"automatic" validate:"required"`
+	// Flag stating whether an automation run handled this historic mutation or if manual actor keys initiated it.
+	Automatic *bool `json:"automatic" validate:"required"`
+	// The UTC timestamp tracking precisely when this historical adjustment pass finished processing.
 	RotatedAT time.Time `json:"rotated-at" validate:"required"`
-	Version   int       `json:"version" validate:"required"`
+	// The absolute increment index referencing this specific historical structural material setup.
+	Version int `json:"version" validate:"required"`
 }
 
 type ListKmsKeysResponse struct {
+	// An array containing metadata entries for all available keys for your organization in the requested zone.
 	KmsKeys []ListKmsKeysResponseEntry `json:"kms-keys" validate:"required"`
 }
 
@@ -4270,20 +4324,30 @@ const (
 )
 
 type ListKmsKeysResponseEntry struct {
-	CreatedAT   time.Time                      `json:"created-at" validate:"required"`
-	Description string                         `json:"description" validate:"required"`
-	ID          UUID                           `json:"id" validate:"required"`
-	Material    *KeyMaterial                   `json:"material" validate:"required"`
-	MultiZone   *bool                          `json:"multi-zone" validate:"required"`
-	Name        string                         `json:"name" validate:"required"`
-	OriginZone  string                         `json:"origin-zone" validate:"required"`
-	Replicas    []string                       `json:"replicas" validate:"required"`
-	Revision    *RevisionStamp                 `json:"revision" validate:"required"`
-	Rotation    *KeyRotationConfig             `json:"rotation" validate:"required"`
-	Source      ListKmsKeysResponseEntrySource `json:"source" validate:"required"`
-	Status      ListKmsKeysResponseEntryStatus `json:"status" validate:"required"`
-	StatusSince time.Time                      `json:"status-since" validate:"required"`
-	Usage       string                         `json:"usage" validate:"required"`
+	// The UTC timestamp showing when the KMS key was originally provisioned.
+	CreatedAT time.Time `json:"created-at" validate:"required"`
+	DeleteAT  time.Time `json:"delete-at,omitempty"`
+	// An optional detailed description providing additional context about the key's intended use case.
+	Description string `json:"description,omitempty"`
+	// The globally unique identifier (UUID) tracking this key entity.
+	ID       UUID         `json:"id" validate:"required"`
+	Material *KeyMaterial `json:"material" validate:"required"`
+	// True if this is a multi-zone key.
+	MultiZone *bool `json:"multi-zone" validate:"required"`
+	// The display name of the KMS key.
+	Name string `json:"name" validate:"required"`
+	// The creation zone of the KMS key.
+	OriginZone string `json:"origin-zone" validate:"required"`
+	// Array tracking target zones currently maintaining copies of this item.
+	Replicas []string                       `json:"replicas,omitempty"`
+	Revision *RevisionStamp                 `json:"revision" validate:"required"`
+	Rotation *KeyRotationConfig             `json:"rotation" validate:"required"`
+	Source   ListKmsKeysResponseEntrySource `json:"source" validate:"required"`
+	Status   ListKmsKeysResponseEntryStatus `json:"status" validate:"required"`
+	// The precise time when the key entered its current configuration phase.
+	StatusSince time.Time `json:"status-since" validate:"required"`
+	// The cryptographic operation constraints allowed on this key.
+	Usage string `json:"usage" validate:"required"`
 }
 
 // AI model list
@@ -4641,12 +4705,6 @@ type Operation struct {
 	State OperationState `json:"state,omitempty"`
 }
 
-type OperationResourceRef struct {
-	Command string `json:"command" validate:"required"`
-	ID      UUID   `json:"id" validate:"required"`
-	Link    string `json:"link,omitempty"`
-}
-
 // Per-org Unit Of Measurement (UOM) consumption quota response
 type OrgConsumptionQuotaResponse struct {
 	// Per-org Unit Of Measurement (UOM) consumption quota (UOM/min). Null means unlimited. UOM represents weighted units across different AI workloads (e.g., tokens for LLMs, minutes for TTS, pages for OCR).
@@ -4765,17 +4823,18 @@ type RateLimited struct {
 }
 
 type ReEncryptRequestDestination struct {
-	// Optional encryption context appended to the AAD.
+	// Optional new Base64-encoded encryption context to apply under the target destination envelope.
 	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
-	// The ID of the target key.
+	// The ID of the target key chosen to encapsulate the newly shifted data translation.
 	Key UUID `json:"key" validate:"required"`
 }
 
 type ReEncryptRequestSource struct {
+	// The Base64-encoded encrypted payload package ready to undergo source-side key decryption.
 	Ciphertext []byte `json:"ciphertext" validate:"required"`
-	// Optional encryption context appended to the AAD.
+	// Optional Base64-encoded encryption context originally appended to the AAD to confirm package validation rules.
 	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
-	// The ID of the source key.
+	// The ID of the source key currently protecting the data payload.
 	Key UUID `json:"key" validate:"required"`
 }
 
@@ -4785,6 +4844,7 @@ type ReEncryptRequest struct {
 }
 
 type ReEncryptResponse struct {
+	// The new Base64-encoded ciphertext block safely wrapped by the chosen destination key parameters.
 	Ciphertext []byte `json:"ciphertext" validate:"required"`
 }
 
@@ -4795,18 +4855,24 @@ type RecomputeBundleResponse struct {
 }
 
 type ReplicaFailure struct {
-	AttemptedWatermark int       `json:"attempted-watermark" validate:"required"`
-	Error              string    `json:"error" validate:"required"`
-	FailedAT           time.Time `json:"failed-at" validate:"required"`
+	// The target sync sequence watermark that triggered the replication failure.
+	AttemptedWatermark int `json:"attempted-watermark" validate:"required"`
+	// A descriptive message containing error logs or system details regarding the sync failure.
+	Error string `json:"error" validate:"required"`
+	// The UTC timestamp showing exactly when the replication sync window failed.
+	FailedAT time.Time `json:"failed-at" validate:"required"`
 }
 
 type ReplicaState struct {
+	// The latest logical sequence number or state watermark successfully synced to this regional replica.
 	LastAppliedWatermark int             `json:"last-applied-watermark" validate:"required"`
 	LastFailure          *ReplicaFailure `json:"last-failure,omitempty"`
-	Zone                 string          `json:"zone" validate:"required"`
+	// The destination target zone tracking this specific replica instance.
+	Zone string `json:"zone" validate:"required"`
 }
 
 type ReplicateKmsKeyRequest struct {
+	// The targeted cloud zone where the KMS key should be replicated.
 	Zone string `json:"zone" validate:"required"`
 }
 
@@ -4835,8 +4901,10 @@ type ReverseDNSRecord struct {
 }
 
 type RevisionStamp struct {
-	AT  time.Time `json:"at" validate:"required"`
-	Seq int       `json:"seq" validate:"required,gte=0"`
+	// The timestamp recording exactly when this specific revision iteration occurred.
+	AT time.Time `json:"at" validate:"required"`
+	// Monotonically increasing sequencing value utilized for optimistic concurrency control locks.
+	Seq int `json:"seq" validate:"required,gte=0"`
 }
 
 // Rotate AI API key response
@@ -4879,6 +4947,11 @@ type ScaleDeploymentRequest struct {
 type ScheduleKmsKeyDeletionRequest struct {
 	// Number of days to wait until deletion is final.
 	DelayDays int `json:"delay-days,omitempty" validate:"omitempty,gte=7,lte=30"`
+}
+
+type ScheduleKmsKeyDeletionResponse struct {
+	// Timestamp of the key deletion
+	DeleteAT time.Time `json:"delete-at,omitempty"`
 }
 
 // Security Group

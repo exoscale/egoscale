@@ -584,6 +584,7 @@ components:
         ciphertext:
           type: string
           format: byte
+          description: The resulting Base64-encoded ciphertext after encryption.
     private-network-ref:
       type: object
       properties:
@@ -596,6 +597,13 @@ components:
       type: string
       maxLength: 2000
       minLength: 1
+    schedule-kms-key-deletion-response:
+      type: object
+      properties:
+        delete-at:
+          type: string
+          description: Timestamp of the key deletion
+          format: date-time
     get-deployment-logs-response:
       description: Deployment logs
       properties:
@@ -841,6 +849,7 @@ components:
           type: string
           format: byte
           nullable: true
+          description: Base64-encoded Additional Authenticated Data binding key generation parameters securely to operational scope.
     recompute-bundle-response:
       description: Response from bundle recompute operation
       properties:
@@ -1910,19 +1919,6 @@ components:
       enum:
         - primary
         - replica
-    operation-resource-ref:
-      type: object
-      required:
-        - id
-        - command
-      properties:
-        id:
-          type: string
-          format: uuid
-        link:
-          type: string
-        command:
-          type: string
     json-schema-pgaudit:
       description: System-wide settings for the pgaudit extension.
       properties:
@@ -2307,6 +2303,7 @@ components:
           minimum: 90
           maximum: 2560
           default: 365
+          description: The number of days between each automatic key rotation.
     elastic-ip:
       type: object
       properties:
@@ -2377,7 +2374,8 @@ components:
         - 0.21.0
         - 0.22.0
         - 0.22.1
-      default: 0.22.1
+        - 0.23.0
+      default: 0.23.0
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -2423,6 +2421,7 @@ components:
         - zone
       properties:
         zone:
+          description: The targeted cloud zone where the KMS key should be replicated.
           type: string
     json-schema-kafka:
       additionalProperties: false
@@ -4274,11 +4273,14 @@ components:
       properties:
         attempted-watermark:
           type: integer
+          description: The target sync sequence watermark that triggered the replication failure.
         error:
           type: string
+          description: A descriptive message containing error logs or system details regarding the sync failure.
         failed-at:
           type: string
           format: date-time
+          description: The UTC timestamp showing exactly when the replication sync window failed.
     env-product:
       type: object
       properties:
@@ -4402,9 +4404,11 @@ components:
         at:
           type: string
           format: date-time
+          description: The timestamp recording exactly when this specific revision iteration occurred.
         seq:
           type: integer
           minimum: 0
+          description: Monotonically increasing sequencing value utilized for optimistic concurrency control locks.
     snapshot:
       type: object
       properties:
@@ -4765,9 +4769,11 @@ components:
         plaintext:
           type: string
           format: byte
+          description: The Base64-encoded raw symmetric data key payload. Expose only securely during active application setups.
         ciphertext:
           type: string
           format: byte
+          description: The identical symmetric data key, returned safely wrapped/encrypted using the designated root parent KMS key.
     access-key-operation:
       type: object
       properties:
@@ -4977,30 +4983,17 @@ components:
         type:
           type: string
           format: uri-reference
+          description: An absolute or relative URI reference pointing to human-readable documentation concerning the specific problem type encountered.
         title:
           type: string
+          description: A brief summary defining the class of failure, optimal for quick user interface groupings.
         status:
           type: integer
           minimum: 100
           maximum: 599
         detail:
           type: string
-        instance:
-          type: string
-          format: uri-reference
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              path:
-                type: string
-              detail:
-                type: string
-              pointer:
-                type: string
-              location:
-                type: string
+          description: A highly contextual, readable explanation breaking down explicitly what triggered this error scenario.
     enum-kafka-auth-method:
       type: string
       enum:
@@ -5266,13 +5259,17 @@ components:
       properties:
         manual-count:
           type: integer
+          description: Total running tally of manual key rotation tasks executed by users over this key resource's lifecycle.
         automatic:
           type: boolean
+          description: When set to true, dictates that the system automatically rotates material periodically.
         rotation-period:
           type: integer
+          description: The set frequency period (measured in days) for triggers monitoring auto-rotation loops.
         next-at:
           type: string
           format: date-time
+          description: Scheduled deadline calculation pinpointing the next automated rotational iteration target date.
     private-network-options:
       type: object
       properties:
@@ -5588,9 +5585,11 @@ components:
           type: string
           format: byte
           nullable: true
+          description: Base64-encoded bytes to be used as the Additional Authenticated Data (AAD) for encryption integrity.
         plaintext:
           type: string
           format: byte
+          description: The Base64-encoded plaintext data you wish to encrypt.
     dbaas-integration:
       type: object
       properties:
@@ -5965,8 +5964,10 @@ components:
       properties:
         zone:
           type: string
+          description: The destination target zone tracking this specific replica instance.
         last-applied-watermark:
           type: integer
+          description: The latest logical sequence number or state watermark successfully synced to this regional replica.
         last-failure:
           $ref: '#/components/schemas/replica-failure'
     reverse-dns-record:
@@ -6034,6 +6035,7 @@ components:
         ciphertext:
           type: string
           format: byte
+          description: The new Base64-encoded ciphertext block safely wrapped by the chosen destination key parameters.
     decrypt-request:
       type: object
       required:
@@ -6043,9 +6045,11 @@ components:
           type: string
           format: byte
           nullable: true
+          description: The exact Base64-encoded Additional Authenticated Data (AAD) used during encryption to verify data integrity.
         ciphertext:
           type: string
           format: byte
+          description: The Base64-encoded ciphertext payload to be decrypted.
     enum-pg-pool-mode:
       type: string
       enum:
@@ -6274,6 +6278,7 @@ components:
         plaintext:
           type: string
           format: byte
+          description: The recovered Base64-encoded original plaintext payload.
     schedule-kms-key-deletion-request:
       type: object
       properties:
@@ -6335,6 +6340,9 @@ components:
               exclusiveMaximum: false
               description: Maximum number of partition contexts to send. Applies only when attached to kafka services.
           description: External integration DataDog configuration
+    empty:
+      type: object
+      description: An empty map response
     list-models-response:
       description: AI model list
       properties:
@@ -6575,8 +6583,10 @@ components:
       properties:
         name:
           type: string
+          description: A human-readable display name uniquely identifying the KMS key within the tenant space.
         description:
           type: string
+          description: An optional detailed description providing additional context about the key's intended use case.
         usage:
           type: string
           enum:
@@ -6585,6 +6595,7 @@ components:
         multi-zone:
           type: boolean
           default: false
+          description: True if this is a multi-zone key.
     inference-engine-parameter-entry:
       description: inference-engine parameter definition
       properties:
@@ -6995,6 +7006,7 @@ components:
             - suspended
             - running
             - updating
+            - error
           readOnly: true
           description: Instance Pool state
         size:
@@ -7025,6 +7037,16 @@ components:
             $ref: '#/components/schemas/instance-ref'
           readOnly: true
           description: Instances
+        error-reason:
+          type: object
+          properties:
+            cause:
+              type: string
+              description: Error cause
+            job-id:
+              type: string
+              description: Job ID at the origin of error
+          description: Instance Pool Error Reason
         deploy-target:
           $ref: '#/components/schemas/deploy-target-ref'
           description: Instance Pool Deploy Target
@@ -7187,7 +7209,6 @@ components:
       required:
         - id
         - name
-        - description
         - usage
         - source
         - status
@@ -7196,26 +7217,32 @@ components:
         - rotation
         - multi-zone
         - origin-zone
-        - replicas
         - created-at
         - revision
       properties:
         description:
           type: string
+          description: An optional detailed description providing additional context about the key's intended use case.
         rotation:
           $ref: '#/components/schemas/key-rotation-config'
         revision:
           $ref: '#/components/schemas/revision-stamp'
+        delete-at:
+          type: string
+          format: date-time
         name:
           type: string
+          description: The display name of the KMS key.
         multi-zone:
           type: boolean
+          description: True if this is a multi-zone key.
         source:
           type: string
           enum:
             - exoscale-kms
         usage:
           type: string
+          description: The cryptographic operation constraints allowed on this key.
         status:
           type: string
           enum:
@@ -7225,20 +7252,25 @@ components:
         status-since:
           type: string
           format: date-time
+          description: The precise time when the key entered its current configuration phase.
         id:
           type: string
           format: uuid
+          description: The globally unique identifier (UUID) tracking this key entity.
         replicas:
           type: array
           items:
             type: string
+          description: Array tracking target zones currently maintaining copies of this item.
         material:
           $ref: '#/components/schemas/key-material'
         origin-zone:
           type: string
+          description: The creation zone of the KMS key.
         created-at:
           type: string
           format: date-time
+          description: The UTC timestamp showing when the KMS key was originally provisioned.
     sks-nodepool:
       type: object
       properties:
@@ -8386,11 +8418,14 @@ components:
       properties:
         version:
           type: integer
+          description: The incremental index tracing internal key rotation cycles for the key material.
         created-at:
           type: string
           format: date-time
+          description: The UTC date-time indicating when this particular generation of physical cryptographic material was seeded.
         automatic:
           type: boolean
+          description: A boolean flag indicating whether this specific material version was created during an automated system rotation window.
     anti-affinity-group:
       type: object
       properties:
@@ -8590,11 +8625,14 @@ components:
       properties:
         version:
           type: integer
+          description: The absolute increment index referencing this specific historical structural material setup.
         rotated-at:
           type: string
           format: date-time
+          description: The UTC timestamp tracking precisely when this historical adjustment pass finished processing.
         automatic:
           type: boolean
+          description: Flag stating whether an automation run handled this historic mutation or if manual actor keys initiated it.
     dbaas-endpoint-rsyslog-input-create:
       type: object
       properties:
@@ -8764,7 +8802,6 @@ components:
       required:
         - id
         - name
-        - description
         - usage
         - source
         - status
@@ -8773,30 +8810,37 @@ components:
         - rotation
         - multi-zone
         - origin-zone
-        - replicas
         - created-at
         - revision
       properties:
         description:
           type: string
+          description: An optional detailed description providing additional context about the key's intended use case.
         rotation:
           $ref: '#/components/schemas/key-rotation-config'
         revision:
           $ref: '#/components/schemas/revision-stamp'
+        delete-at:
+          type: string
+          format: date-time
         name:
           type: string
+          description: The display name of the KMS key.
         multi-zone:
           type: boolean
+          description: True if this is a multi-zone key.
         source:
           type: string
           enum:
             - exoscale-kms
         usage:
           type: string
+          description: The cryptographic operation constraints allowed on this key.
         replicas-status:
           type: array
           items:
             $ref: '#/components/schemas/replica-state'
+          description: Detailed synchronization metrics for each regional replica mirror.
         status:
           type: string
           enum:
@@ -8806,20 +8850,25 @@ components:
         status-since:
           type: string
           format: date-time
+          description: The timestamp indicating exactly when the current key status was last transitioned.
         id:
           type: string
           format: uuid
+          description: The globally unique identifier (UUID) of the retrieved KMS key.
         replicas:
           type: array
           items:
             type: string
+          description: A list of availability zones where this specific key has active replica mirrors.
         material:
           $ref: '#/components/schemas/key-material'
         origin-zone:
           type: string
+          description: The creation zone of the KMS key.
         created-at:
           type: string
           format: date-time
+          description: The UTC timestamp showing when the KMS key was originally provisioned.
     model-usage-counters:
       description: Accumulated Unit Of Measurement (UOM) counters for one model over a flush window
       properties:
@@ -8845,7 +8894,6 @@ components:
       required:
         - id
         - name
-        - description
         - usage
         - source
         - status
@@ -8857,18 +8905,22 @@ components:
       properties:
         description:
           type: string
+          description: An optional detailed description providing additional context about the key's intended use case.
         revision:
           $ref: '#/components/schemas/revision-stamp'
         name:
           type: string
+          description: The display name assigned to the KMS key.
         multi-zone:
           type: boolean
+          description: True if this is a multi-zone key.
         source:
           type: string
           enum:
             - exoscale-kms
         usage:
           type: string
+          description: The cryptographic operation constraints allowed on this key.
         status:
           type: string
           enum:
@@ -8878,14 +8930,18 @@ components:
         status-since:
           type: string
           format: date-time
+          description: The timestamp indicating exactly when the current key status was last transitioned.
         id:
           type: string
           format: uuid
+          description: The globally unique identifier (UUID) assigned to the newly created KMS key.
         origin-zone:
           type: string
+          description: The creation zone of the KMS key.
         created-at:
           type: string
           format: date-time
+          description: The UTC timestamp showing when the KMS key was originally provisioned.
     dbaas-service-type-name:
       type: string
       maxLength: 64
@@ -10088,6 +10144,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/list-kms-key-rotations-response-entry'
+          description: A chronologically ordered collection tracking historical rotation lifecycle occurrences for this resource.
     sks-audit:
       type: object
       properties:
@@ -10220,15 +10277,16 @@ components:
             key:
               type: string
               format: uuid
-              description: The ID of the source key.
+              description: The ID of the source key currently protecting the data payload.
             encryption-context:
               type: string
               format: byte
-              description: Optional encryption context appended to the AAD.
+              description: Optional Base64-encoded encryption context originally appended to the AAD to confirm package validation rules.
               nullable: true
             ciphertext:
               type: string
               format: byte
+              description: The Base64-encoded encrypted payload package ready to undergo source-side key decryption.
         destination:
           type: object
           required:
@@ -10237,11 +10295,11 @@ components:
             key:
               type: string
               format: uuid
-              description: The ID of the target key.
+              description: The ID of the target key chosen to encapsulate the newly shifted data translation.
             encryption-context:
               type: string
               format: byte
-              description: Optional encryption context appended to the AAD.
+              description: Optional new Base64-encoded encryption context to apply under the target destination envelope.
               nullable: true
     create-deployment-request:
       description: Deploy an AI model onto a set of GPUs
@@ -10409,6 +10467,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/list-kms-keys-response-entry'
+          description: An array containing metadata entries for all available keys for your organization in the requested zone.
     dbaas-service-backup:
       type: object
       properties:
@@ -11066,7 +11125,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Disable Key Rotation'
+      summary: Disable Key Rotation
       operationId: disable-kms-key-rotation
   /dbaas-postgres/{service}/upgrade-check:
     post:
@@ -11348,6 +11407,38 @@ paths:
             schema:
               type: object
               properties:
+                backup-schedule:
+                  type: object
+                  properties:
+                    backup-hour:
+                      type: integer
+                      format: int64
+                      minimum: 0
+                      maximum: 23
+                      exclusiveMinimum: false
+                      exclusiveMaximum: false
+                      nullable: true
+                      description: The hour of day (in UTC) when backup for the service is started. New backup is only started if previous backup has already completed.
+                    backup-minute:
+                      type: integer
+                      format: int64
+                      minimum: 0
+                      maximum: 59
+                      exclusiveMinimum: false
+                      exclusiveMaximum: false
+                      nullable: true
+                      description: The minute of an hour when backup for the service is started. New backup is only started if previous backup has already completed.
+                ip-filter:
+                  type: array
+                  items:
+                    type: string
+                  description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
+                termination-protection:
+                  type: boolean
+                  description: Service is protected against termination and powering off
+                mysql-settings:
+                  $ref: '#/components/schemas/json-schema-mysql'
+                  description: MySQL-specific settings
                 maintenance:
                   type: object
                   properties:
@@ -11372,22 +11463,14 @@ paths:
                     - dow
                     - time
                   description: Automatic maintenance settings
+                version:
+                  type: string
+                  description: MySQL version
                 plan:
                   type: string
                   maxLength: 128
                   minLength: 1
                   description: Subscription plan
-                termination-protection:
-                  type: boolean
-                  description: Service is protected against termination and powering off
-                ip-filter:
-                  type: array
-                  items:
-                    type: string
-                  description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
-                mysql-settings:
-                  $ref: '#/components/schemas/json-schema-mysql'
-                  description: MySQL-specific settings
                 migration:
                   type: object
                   properties:
@@ -11442,27 +11525,6 @@ paths:
                   exclusiveMinimum: false
                   exclusiveMaximum: false
                   description: The minimum amount of time in seconds to keep binlog entries before deletion. This may be extended for services that require binlog entries for longer than the default for example if using the MySQL Debezium Kafka connector.
-                backup-schedule:
-                  type: object
-                  properties:
-                    backup-hour:
-                      type: integer
-                      format: int64
-                      minimum: 0
-                      maximum: 23
-                      exclusiveMinimum: false
-                      exclusiveMaximum: false
-                      nullable: true
-                      description: The hour of day (in UTC) when backup for the service is started. New backup is only started if previous backup has already completed.
-                    backup-minute:
-                      type: integer
-                      format: int64
-                      minimum: 0
-                      maximum: 59
-                      exclusiveMinimum: false
-                      exclusiveMaximum: false
-                      nullable: true
-                      description: The minute of an hour when backup for the service is started. New backup is only started if previous backup has already completed.
       operationId: update-dbaas-service-mysql
     get:
       tags:
@@ -11778,6 +11840,45 @@ paths:
               required:
                 - ttl
       operationId: assume-iam-role
+  /vpc/{vpc-id}/subnet/{subnet-id}/attach:
+    put:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          required: true
+          name: subnet-id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Attach a Compute instance to a Subnet'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instance:
+                  $ref: '#/components/schemas/instance-ref'
+                  description: Compute instance
+              required:
+                - instance
+      operationId: attach-instance-to-subnet
   /kms-key/{id}:
     get:
       tags:
@@ -11795,12 +11896,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-        "404":
-          description: "404"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
       description: Retrieve KMS Key details.
       parameters:
         - in: path
@@ -11809,7 +11904,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Get KMS Key'
+      summary: Get KMS Key
       operationId: get-kms-key
   /dbaas-thanos/{name}/maintenance/start:
     put:
@@ -12812,7 +12907,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Enable a KMS Key"
+      description: Enables a KMS Key by setting its stated to "enabled". It restores the ability to fully use the KMS key for cryptographic operations and key lifecycle operations.
       parameters:
         - in: path
           required: true
@@ -12820,7 +12915,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Enable KMS Key'
+      summary: Enable KMS Key
       operationId: enable-kms-key
   /dbaas-postgres/{name}/migration/stop:
     post:
@@ -13454,7 +13549,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] List KMS Key Rotations'
+      summary: List KMS Key Rotations
       operationId: list-kms-key-rotations
   /dbaas-postgres/{service-name}/user:
     post:
@@ -13760,7 +13855,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: Delete AI API Key
+      summary: '[BETA] Delete AI API Key'
       operationId: delete-ai-api-key
     get:
       tags:
@@ -13792,7 +13887,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: Get AI API Key
+      summary: '[BETA] Get AI API Key'
       operationId: get-ai-api-key
     patch:
       tags:
@@ -13830,7 +13925,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: Update AI API Key
+      summary: '[BETA] Update AI API Key'
       requestBody:
         required: true
         content:
@@ -13994,7 +14089,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: Rotate AI API Key
+      summary: '[BETA] Rotate AI API Key'
       operationId: rotate-ai-api-key
   /instance/{id}:start:
     put:
@@ -14321,7 +14416,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Enable Key Rotation'
+      summary: Enable Key Rotation
       requestBody:
         required: true
         content:
@@ -14393,11 +14488,6 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  maxLength: 255
-                  minLength: 1
-                  description: Route name
                 description:
                   type: string
                   maxLength: 4096
@@ -15668,7 +15758,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Perform a manual rotation of the key material for a symmetric key.
+      description: Performs an immediate rotation of the key material for a symmetric key.
       parameters:
         - in: path
           required: true
@@ -15676,7 +15766,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Rotate Key'
+      summary: Rotate Key
       operationId: rotate-kms-key
   /dbaas-settings-thanos:
     get:
@@ -16404,7 +16494,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Decrypt a ciphertext.
+      description: Decrypts a ciphertext.
       parameters:
         - in: path
           required: true
@@ -16412,7 +16502,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Decrypt'
+      summary: Decrypt
       requestBody:
         required: true
         content:
@@ -16934,7 +17024,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Disable a KMS Key
+      description: Disables a KMS Key by setting its state to "disabled". This prevents the use of the KMS key for cryptographic and key lifecycle operations.
       parameters:
         - in: path
           required: true
@@ -16942,7 +17032,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Disable KMS Key'
+      summary: Disable KMS Key
       operationId: disable-kms-key
   /dbaas-kafka/{name}/schema-registry/acl-config/{acl-id}:
     delete:
@@ -17541,7 +17631,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/route'
+                $ref: '#/components/schemas/empty'
       description: ""
       parameters:
         - in: path
@@ -17581,7 +17671,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Encrypt a plaintext.
+      description: Encrypts a plaintext.
       parameters:
         - in: path
           required: true
@@ -17589,7 +17679,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Encrypt'
+      summary: Encrypt
       requestBody:
         required: true
         content:
@@ -18944,7 +19034,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/operation'
+                $ref: '#/components/schemas/empty'
       description: ""
       parameters:
         - in: path
@@ -19185,15 +19275,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-        "409":
-          description: "409"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-      description: Create a KMS Key in a given zone with a given name.
+      description: Create a customer-managed unique KMS Key in your organization. A KMS Key is a logical represention of a cryptographic key material. It also includes metadata such as a UUID, a name and its state.
       parameters: []
-      summary: '[BETA] Create KMS Key'
+      summary: Create KMS Key
       requestBody:
         required: true
         content:
@@ -19217,9 +19301,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: List KMS Keys details for an organization in a given zone.
+      description: Lists all KMS Keys in your organization in a given zone.
       parameters: []
-      summary: '[BETA] List KMS Keys'
+      summary: List KMS Keys
       operationId: list-kms-keys
   /dbaas-thanos/{name}:
     get:
@@ -19589,6 +19673,45 @@ paths:
             type: string
       summary: Delete a DBaaS service
       operationId: delete-dbaas-service
+  /vpc/{vpc-id}/subnet/{subnet-id}/detach:
+    put:
+      tags:
+        - vpc
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: vpc-id
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          required: true
+          name: subnet-id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Detach a Compute instance from a Subnet'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instance:
+                  $ref: '#/components/schemas/instance-ref'
+                  description: Compute instance
+              required:
+                - instance
+      operationId: detach-instance-from-subnet
   /dbaas-mysql/{service-name}/database:
     post:
       tags:
@@ -19945,14 +20068,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/success-response'
+                $ref: '#/components/schemas/schedule-kms-key-deletion-response'
         "400":
           description: "400"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Schedule a KMS key for deletion after a delay.
+      description: Schedules a KMS key for deletion after a delay. You can specify a delay of 7-30 days.
       parameters:
         - in: path
           required: true
@@ -19960,7 +20083,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Schedule KMS Key Deletion'
+      summary: Schedule KMS Key Deletion
       requestBody:
         required: true
         content:
@@ -20404,7 +20527,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: Reveal AI API Key
+      summary: '[BETA] Reveal AI API Key'
       operationId: reveal-ai-api-key
   /dbaas-opensearch/{name}/maintenance/start:
     put:
@@ -20500,7 +20623,7 @@ paths:
                 $ref: '#/components/schemas/list-ai-api-keys-response'
       description: List AI API keys for an organization
       parameters: []
-      summary: List AI API Keys
+      summary: '[BETA] List AI API Keys'
       operationId: list-ai-api-keys
     post:
       tags:
@@ -20532,7 +20655,7 @@ paths:
                 $ref: '#/components/schemas/error-response'
       description: Create a new AI API key
       parameters: []
-      summary: Create AI API Key
+      summary: '[BETA] Create AI API Key'
       requestBody:
         required: true
         content:
@@ -20565,7 +20688,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Re-encrypt'
+      summary: Re-encrypt
       requestBody:
         required: true
         content:
@@ -21054,7 +21177,7 @@ paths:
                 $ref: '#/components/schemas/org-consumption-quota-response'
       description: Get per-org Unit Of Measurement (UOM) consumption quota (UOM/min). Null means unlimited. UOM represents weighted units across different AI workloads (e.g., tokens for LLMs, minutes for TTS, pages for OCR).
       parameters: []
-      summary: Get Organization Consumption Quota
+      summary: '[BETA] Get Organization Consumption Quota'
       operationId: get-user-org-consumption-quota
   /dbaas-postgres/{name}:
     put:
@@ -21758,7 +21881,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Replicate KMS Key'
+      summary: Replicate KMS Key
       requestBody:
         required: true
         content:
@@ -22256,7 +22379,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Cancel the scheduled deletion of a KMS Key.
+      description: Cancels the scheduled deletion of a KMS Key.
       parameters:
         - in: path
           required: true
@@ -22264,7 +22387,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Cancel KMS Key Deletion'
+      summary: Cancel KMS Key Deletion
       operationId: cancel-kms-key-deletion
   /kms-key/{id}/generate-data-key:
     post:
@@ -22291,7 +22414,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Generate Data Key'
+      summary: Generate Data Encryption Key
       requestBody:
         required: true
         content:
@@ -22371,7 +22494,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/operation'
+                $ref: '#/components/schemas/empty'
       description: ""
       parameters:
         - in: path

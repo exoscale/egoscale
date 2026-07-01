@@ -5619,6 +5619,8 @@ type UpdateDBAASServiceMysqlRequest struct {
 	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
 	// Service is protected against termination and powering off
 	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// MySQL version
+	Version string `json:"version,omitempty"`
 }
 
 // Update a DBaaS MySQL service
@@ -13276,7 +13278,7 @@ func (l ListKmsKeysResponse) FindListKmsKeysResponseEntry(nameOrID string) (List
 	return ListKmsKeysResponseEntry{}, fmt.Errorf("%q not found in ListKmsKeysResponse: %w", nameOrID, ErrNotFound)
 }
 
-// List KMS Keys details for an organization in a given zone.
+// Lists all KMS Keys in your organization in a given zone.
 func (c Client) ListKmsKeys(ctx context.Context) (*ListKmsKeysResponse, error) {
 	path := "/kms-key"
 
@@ -13320,7 +13322,7 @@ func (c Client) ListKmsKeys(ctx context.Context) (*ListKmsKeysResponse, error) {
 	return bodyresp, nil
 }
 
-// Create a KMS Key in a given zone with a given name.
+// Create a customer-managed unique KMS Key in your organization. A KMS Key is a logical represention of a cryptographic key material. It also includes metadata such as a UUID, a name and its state.
 func (c Client) CreateKmsKey(ctx context.Context, req CreateKmsKeyRequest) (*CreateKmsKeyResponse, error) {
 	path := "/kms-key"
 
@@ -13415,7 +13417,7 @@ func (c Client) GetKmsKey(ctx context.Context, id UUID) (*GetKmsKeyResponse, err
 	return bodyresp, nil
 }
 
-// Cancel the scheduled deletion of a KMS Key.
+// Cancels the scheduled deletion of a KMS Key.
 func (c Client) CancelKmsKeyDeletion(ctx context.Context, id UUID) (*SuccessResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/cancel-deletion", id)
 
@@ -13459,7 +13461,7 @@ func (c Client) CancelKmsKeyDeletion(ctx context.Context, id UUID) (*SuccessResp
 	return bodyresp, nil
 }
 
-// Decrypt a ciphertext.
+// Decrypts a ciphertext.
 func (c Client) Decrypt(ctx context.Context, id UUID, req DecryptRequest) (*DecryptResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/decrypt", id)
 
@@ -13510,7 +13512,7 @@ func (c Client) Decrypt(ctx context.Context, id UUID, req DecryptRequest) (*Decr
 	return bodyresp, nil
 }
 
-// Disable a KMS Key
+// Disables a KMS Key by setting its state to "disabled". This prevents the use of the KMS key for cryptographic and key lifecycle operations.
 func (c Client) DisableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/disable", id)
 
@@ -13598,7 +13600,7 @@ func (c Client) DisableKmsKeyRotation(ctx context.Context, id UUID) (*DisableKms
 	return bodyresp, nil
 }
 
-// Enable a KMS Key"
+// Enables a KMS Key by setting its stated to "enabled". It restores the ability to fully use the KMS key for cryptographic operations and key lifecycle operations.
 func (c Client) EnableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/enable", id)
 
@@ -13693,7 +13695,7 @@ func (c Client) EnableKmsKeyRotation(ctx context.Context, id UUID, req EnableKms
 	return bodyresp, nil
 }
 
-// Encrypt a plaintext.
+// Encrypts a plaintext.
 func (c Client) Encrypt(ctx context.Context, id UUID, req EncryptRequest) (*EncryptResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/encrypt", id)
 
@@ -13941,7 +13943,7 @@ func (c Client) ReplicateKmsKey(ctx context.Context, id UUID, req ReplicateKmsKe
 	return bodyresp, nil
 }
 
-// Perform a manual rotation of the key material for a symmetric key.
+// Performs an immediate rotation of the key material for a symmetric key.
 func (c Client) RotateKmsKey(ctx context.Context, id UUID) (*RotateKmsKeyResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/rotate", id)
 
@@ -13985,8 +13987,8 @@ func (c Client) RotateKmsKey(ctx context.Context, id UUID) (*RotateKmsKeyRespons
 	return bodyresp, nil
 }
 
-// Schedule a KMS key for deletion after a delay.
-func (c Client) ScheduleKmsKeyDeletion(ctx context.Context, id UUID, req ScheduleKmsKeyDeletionRequest) (*SuccessResponse, error) {
+// Schedules a KMS key for deletion after a delay. You can specify a delay of 7-30 days.
+func (c Client) ScheduleKmsKeyDeletion(ctx context.Context, id UUID, req ScheduleKmsKeyDeletionRequest) (*ScheduleKmsKeyDeletionResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/schedule-deletion", id)
 
 	body, err := prepareJSONBody(req)
@@ -14028,7 +14030,7 @@ func (c Client) ScheduleKmsKeyDeletion(ctx context.Context, id UUID, req Schedul
 		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: http response: %w", err)
 	}
 
-	bodyresp := new(SuccessResponse)
+	bodyresp := new(ScheduleKmsKeyDeletionResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: prepare Json response: %w", err)
 	}
@@ -19116,7 +19118,7 @@ func (c Client) CreateVpc(ctx context.Context, req CreateVpcRequest) (*Operation
 }
 
 // [BETA] Delete a VPC
-func (c Client) DeleteVpc(ctx context.Context, id UUID) (*Operation, error) {
+func (c Client) DeleteVpc(ctx context.Context, id UUID) (*Empty, error) {
 	path := fmt.Sprintf("/vpc/%v", id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
@@ -19151,7 +19153,7 @@ func (c Client) DeleteVpc(ctx context.Context, id UUID) (*Operation, error) {
 		return nil, fmt.Errorf("DeleteVpc: http response: %w", err)
 	}
 
-	bodyresp := new(Operation)
+	bodyresp := new(Empty)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteVpc: prepare Json response: %w", err)
 	}
@@ -19474,7 +19476,7 @@ func (c Client) CreateSubnet(ctx context.Context, vpcID UUID, req CreateSubnetRe
 }
 
 // [BETA] Delete a Subnet
-func (c Client) DeleteSubnet(ctx context.Context, vpcID UUID, id UUID) (*Operation, error) {
+func (c Client) DeleteSubnet(ctx context.Context, vpcID UUID, id UUID) (*Empty, error) {
 	path := fmt.Sprintf("/vpc/%v/subnet/%v", vpcID, id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
@@ -19509,7 +19511,7 @@ func (c Client) DeleteSubnet(ctx context.Context, vpcID UUID, id UUID) (*Operati
 		return nil, fmt.Errorf("DeleteSubnet: http response: %w", err)
 	}
 
-	bodyresp := new(Operation)
+	bodyresp := new(Empty)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSubnet: prepare Json response: %w", err)
 	}
@@ -19622,6 +19624,118 @@ func (c Client) UpdateSubnet(ctx context.Context, vpcID UUID, id UUID, req Updat
 	return bodyresp, nil
 }
 
+type AttachInstanceToSubnetRequest struct {
+	// Target Instance
+	Instance *InstanceRef `json:"instance" validate:"required"`
+}
+
+// [BETA] Attach a Compute instance to a Subnet
+func (c Client) AttachInstanceToSubnet(ctx context.Context, vpcID UUID, subnetID UUID, req AttachInstanceToSubnetRequest) (*Operation, error) {
+	path := fmt.Sprintf("/vpc/%v/subnet/%v/attach", vpcID, subnetID)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("AttachInstanceToSubnet: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("AttachInstanceToSubnet: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToSubnet: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToSubnet: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "attach-instance-to-subnet")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("AttachInstanceToSubnet: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToSubnet: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("AttachInstanceToSubnet: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type DetachInstanceFromSubnetRequest struct {
+	// Target Instance
+	Instance *InstanceRef `json:"instance" validate:"required"`
+}
+
+// [BETA] Detach a Compute instance from a Subnet
+func (c Client) DetachInstanceFromSubnet(ctx context.Context, vpcID UUID, subnetID UUID, req DetachInstanceFromSubnetRequest) (*Operation, error) {
+	path := fmt.Sprintf("/vpc/%v/subnet/%v/detach", vpcID, subnetID)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromSubnet: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromSubnet: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromSubnet: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromSubnet: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "detach-instance-from-subnet")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromSubnet: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromSubnet: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DetachInstanceFromSubnet: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type ListRoutesResponse struct {
 	Routes []ListRouteEntry `json:"routes,omitempty"`
 }
@@ -19694,8 +19808,6 @@ type CreateRouteRequest struct {
 	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
 	// Route destination CIDR
 	Destination string `json:"destination" validate:"required"`
-	// Route name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Route target
 	Target string `json:"target" validate:"required"`
 }
@@ -19752,7 +19864,7 @@ func (c Client) CreateRoute(ctx context.Context, vpcID UUID, subnetID UUID, req 
 }
 
 // [BETA] Delete a route
-func (c Client) DeleteRoute(ctx context.Context, vpcID UUID, subnetID UUID, id UUID) (*Route, error) {
+func (c Client) DeleteRoute(ctx context.Context, vpcID UUID, subnetID UUID, id UUID) (*Empty, error) {
 	path := fmt.Sprintf("/vpc/%v/subnet/%v/route/%v", vpcID, subnetID, id)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
@@ -19787,7 +19899,7 @@ func (c Client) DeleteRoute(ctx context.Context, vpcID UUID, subnetID UUID, id U
 		return nil, fmt.Errorf("DeleteRoute: http response: %w", err)
 	}
 
-	bodyresp := new(Route)
+	bodyresp := new(Empty)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteRoute: prepare Json response: %w", err)
 	}

@@ -1,6 +1,13 @@
 Changelog
 =========
 
+3.1.41
+------
+
+- feat: run standard checks in PR (#792)
+- v3: fix: use go extension instead of generic extension (#790)
+- v3: generator: enable x-enum-varnames (#789)
+
 3.1.40
 ------
 

@@ -2386,6 +2386,593 @@ func (c Client) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertifica
 	return bodyresp, nil
 }
 
+func (c Client) DeleteDBAASServiceClickhouse(ctx context.Context, name string) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v", name)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceClickhouse: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceClickhouse: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceClickhouse: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-dbaas-service-clickhouse")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceClickhouse: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceClickhouse: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASServiceClickhouse: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+func (c Client) GetDBAASServiceClickhouse(ctx context.Context, name string) (*DBAASServiceClickhouse, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v", name)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceClickhouse: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceClickhouse: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceClickhouse: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-service-clickhouse")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceClickhouse: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceClickhouse: http response: %w", err)
+	}
+
+	bodyresp := new(DBAASServiceClickhouse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASServiceClickhouse: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateDBAASServiceClickhouseRequestMaintenanceDow string
+
+const (
+	CreateDBAASServiceClickhouseRequestMaintenanceDowSaturday  CreateDBAASServiceClickhouseRequestMaintenanceDow = "saturday"
+	CreateDBAASServiceClickhouseRequestMaintenanceDowTuesday   CreateDBAASServiceClickhouseRequestMaintenanceDow = "tuesday"
+	CreateDBAASServiceClickhouseRequestMaintenanceDowNever     CreateDBAASServiceClickhouseRequestMaintenanceDow = "never"
+	CreateDBAASServiceClickhouseRequestMaintenanceDowWednesday CreateDBAASServiceClickhouseRequestMaintenanceDow = "wednesday"
+	CreateDBAASServiceClickhouseRequestMaintenanceDowSunday    CreateDBAASServiceClickhouseRequestMaintenanceDow = "sunday"
+	CreateDBAASServiceClickhouseRequestMaintenanceDowFriday    CreateDBAASServiceClickhouseRequestMaintenanceDow = "friday"
+	CreateDBAASServiceClickhouseRequestMaintenanceDowMonday    CreateDBAASServiceClickhouseRequestMaintenanceDow = "monday"
+	CreateDBAASServiceClickhouseRequestMaintenanceDowThursday  CreateDBAASServiceClickhouseRequestMaintenanceDow = "thursday"
+)
+
+// Automatic maintenance settings
+type CreateDBAASServiceClickhouseRequestMaintenance struct {
+	// Day of week for installing updates
+	Dow CreateDBAASServiceClickhouseRequestMaintenanceDow `json:"dow" validate:"required"`
+	// Time for installing updates, UTC
+	Time string `json:"time" validate:"required,gte=8,lte=8"`
+}
+
+type CreateDBAASServiceClickhouseRequest struct {
+	// ClickHouse settings
+	ClickhouseSettings *JSONSchemaClickhouse `json:"clickhouse-settings,omitempty"`
+	ForkFromService    DBAASServiceName      `json:"fork-from-service,omitempty" validate:"omitempty,gte=0,lte=63"`
+	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *CreateDBAASServiceClickhouseRequestMaintenance `json:"maintenance,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required,gte=1,lte=128"`
+	// Name of a backup to recover from for services that support backup names
+	RecoveryBackupName string `json:"recovery-backup-name,omitempty" validate:"omitempty,gte=1"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// ClickHouse major version
+	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
+}
+
+func (c Client) CreateDBAASServiceClickhouse(ctx context.Context, name string, req CreateDBAASServiceClickhouseRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v", name)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-dbaas-service-clickhouse")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateDBAASServiceClickhouseRequestMaintenanceDow string
+
+const (
+	UpdateDBAASServiceClickhouseRequestMaintenanceDowSaturday  UpdateDBAASServiceClickhouseRequestMaintenanceDow = "saturday"
+	UpdateDBAASServiceClickhouseRequestMaintenanceDowTuesday   UpdateDBAASServiceClickhouseRequestMaintenanceDow = "tuesday"
+	UpdateDBAASServiceClickhouseRequestMaintenanceDowNever     UpdateDBAASServiceClickhouseRequestMaintenanceDow = "never"
+	UpdateDBAASServiceClickhouseRequestMaintenanceDowWednesday UpdateDBAASServiceClickhouseRequestMaintenanceDow = "wednesday"
+	UpdateDBAASServiceClickhouseRequestMaintenanceDowSunday    UpdateDBAASServiceClickhouseRequestMaintenanceDow = "sunday"
+	UpdateDBAASServiceClickhouseRequestMaintenanceDowFriday    UpdateDBAASServiceClickhouseRequestMaintenanceDow = "friday"
+	UpdateDBAASServiceClickhouseRequestMaintenanceDowMonday    UpdateDBAASServiceClickhouseRequestMaintenanceDow = "monday"
+	UpdateDBAASServiceClickhouseRequestMaintenanceDowThursday  UpdateDBAASServiceClickhouseRequestMaintenanceDow = "thursday"
+)
+
+// Automatic maintenance settings
+type UpdateDBAASServiceClickhouseRequestMaintenance struct {
+	// Day of week for installing updates
+	Dow UpdateDBAASServiceClickhouseRequestMaintenanceDow `json:"dow" validate:"required"`
+	// Time for installing updates, UTC
+	Time string `json:"time" validate:"required,gte=8,lte=8"`
+}
+
+type UpdateDBAASServiceClickhouseRequest struct {
+	// ClickHouse settings
+	ClickhouseSettings *JSONSchemaClickhouse `json:"clickhouse-settings,omitempty"`
+	// Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *UpdateDBAASServiceClickhouseRequestMaintenance `json:"maintenance,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan,omitempty" validate:"omitempty,gte=1,lte=128"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool `json:"termination-protection,omitempty"`
+	// ClickHouse major version
+	Version string `json:"version,omitempty" validate:"omitempty,gte=1"`
+}
+
+func (c Client) UpdateDBAASServiceClickhouse(ctx context.Context, name string, req UpdateDBAASServiceClickhouseRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v", name)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-dbaas-service-clickhouse")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+func (c Client) StartDBAASClickhouseMaintenance(ctx context.Context, name string) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v/maintenance/start", name)
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("StartDBAASClickhouseMaintenance: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("StartDBAASClickhouseMaintenance: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("StartDBAASClickhouseMaintenance: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "start-dbaas-clickhouse-maintenance")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("StartDBAASClickhouseMaintenance: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("StartDBAASClickhouseMaintenance: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("StartDBAASClickhouseMaintenance: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+func (c Client) GetDBAASClickhouseAclConfig(ctx context.Context, serviceName string) (*DBAASClickhouseAclConfig, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v/acl-config", serviceName)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASClickhouseAclConfig: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASClickhouseAclConfig: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASClickhouseAclConfig: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-clickhouse-acl-config")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASClickhouseAclConfig: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASClickhouseAclConfig: http response: %w", err)
+	}
+
+	bodyresp := new(DBAASClickhouseAclConfig)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASClickhouseAclConfig: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+func (c Client) ListDBAASClickhouseUsers(ctx context.Context, serviceName string) (*DBAASClickhouseUsers, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v/user", serviceName)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseUsers: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseUsers: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseUsers: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-dbaas-clickhouse-users")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseUsers: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseUsers: http response: %w", err)
+	}
+
+	bodyresp := new(DBAASClickhouseUsers)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseUsers: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type CreateDBAASClickhouseUserRequest struct {
+	Password DBAASUserPassword `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
+	// ClickHouse roles to grant to the user
+	Roles    []DBAASClickhouseUserRoleInput `json:"roles,omitempty"`
+	Username DBAASUserUsername              `json:"username" validate:"required,gte=1,lte=64"`
+}
+
+func (c Client) CreateDBAASClickhouseUser(ctx context.Context, serviceName string, req CreateDBAASClickhouseUserRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v/user", serviceName)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASClickhouseUser: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASClickhouseUser: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASClickhouseUser: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateDBAASClickhouseUser: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-dbaas-clickhouse-user")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDBAASClickhouseUser: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateDBAASClickhouseUser: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateDBAASClickhouseUser: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+func (c Client) DeleteDBAASClickhouseUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v/user/%v", serviceName, username)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseUser: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseUser: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseUser: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-dbaas-clickhouse-user")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseUser: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseUser: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseUser: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ResetDBAASClickhouseUserPasswordRequest struct {
+	Password DBAASUserPassword `json:"password,omitempty" validate:"omitempty,gte=8,lte=256"`
+}
+
+func (c Client) ResetDBAASClickhouseUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASClickhouseUserPasswordRequest) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v/user/%v/password/reset", serviceName, username)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: prepare Json body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reset-dbaas-clickhouse-user-password")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+func (c Client) RevealDBAASClickhouseUserPassword(ctx context.Context, serviceName string, username string) (*DBAASUserClickhouseSecrets, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v/user/%v/password/reveal", serviceName, username)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASClickhouseUserPassword: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASClickhouseUserPassword: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("RevealDBAASClickhouseUserPassword: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "reveal-dbaas-clickhouse-user-password")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("RevealDBAASClickhouseUserPassword: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("RevealDBAASClickhouseUserPassword: http response: %w", err)
+	}
+
+	bodyresp := new(DBAASUserClickhouseSecrets)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("RevealDBAASClickhouseUserPassword: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // [BETA] Delete DataDog external integration endpoint
 func (c Client) DeleteDBAASExternalEndpointDatadog(ctx context.Context, endpointID UUID) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-datadog/%v", endpointID)
@@ -8152,6 +8739,66 @@ func (c Client) DeleteDBAASService(ctx context.Context, name string) (*Operation
 	bodyresp := new(Operation)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASService: prepare Json response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// ClickHouse configuration values
+type GetDBAASSettingsClickhouseResponseSettingsClickhouse struct {
+	AdditionalProperties *bool          `json:"additionalProperties,omitempty"`
+	Properties           map[string]any `json:"properties,omitempty"`
+	Title                string         `json:"title,omitempty"`
+	Type                 string         `json:"type,omitempty"`
+}
+
+type GetDBAASSettingsClickhouseResponseSettings struct {
+	// ClickHouse configuration values
+	Clickhouse *GetDBAASSettingsClickhouseResponseSettingsClickhouse `json:"clickhouse,omitempty"`
+}
+
+type GetDBAASSettingsClickhouseResponse struct {
+	Settings *GetDBAASSettingsClickhouseResponseSettings `json:"settings,omitempty"`
+}
+
+func (c Client) GetDBAASSettingsClickhouse(ctx context.Context) (*GetDBAASSettingsClickhouseResponse, error) {
+	path := "/dbaas-settings-clickhouse"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsClickhouse: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsClickhouse: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsClickhouse: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-dbaas-settings-clickhouse")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsClickhouse: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsClickhouse: http response: %w", err)
+	}
+
+	bodyresp := new(GetDBAASSettingsClickhouseResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetDBAASSettingsClickhouse: prepare Json response: %w", err)
 	}
 
 	return bodyresp, nil
@@ -16405,7 +17052,7 @@ type CreateSKSClusterRequest struct {
 	Level CreateSKSClusterRequestLevel `json:"level" validate:"required"`
 	// Cluster name
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
-	// Cluster networking configuration.
+	// EXPERIMENTAL: Cluster networking configuration.
 	Networking *Networking `json:"networking,omitempty"`
 	// SKS Cluster OpenID config map
 	Oidc *SKSOidc `json:"oidc,omitempty"`

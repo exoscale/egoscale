@@ -329,6 +329,48 @@ type DBAASBackupConfig struct {
 	RecoveryMode string `json:"recovery-mode,omitempty"`
 }
 
+type DBAASClickhouseAclConfig struct {
+	Users []DBAASClickhouseUserAclConfig `json:"users,omitempty"`
+}
+
+type DBAASClickhouseUser struct {
+	Required *bool             `json:"required,omitempty"`
+	Username DBAASUserUsername `json:"username" validate:"required,gte=1,lte=64"`
+	Uuid     UUID              `json:"uuid,omitempty"`
+}
+
+type DBAASClickhouseUserAclConfig struct {
+	Privileges []DBAASClickhouseUserPrivilege `json:"privileges,omitempty"`
+	Roles      []DBAASClickhouseUserRole      `json:"roles,omitempty"`
+	Username   DBAASUserUsername              `json:"username" validate:"required,gte=1,lte=64"`
+	Uuid       UUID                           `json:"uuid,omitempty"`
+}
+
+type DBAASClickhouseUserPrivilege struct {
+	AccessType    string `json:"access-type,omitempty"`
+	Column        string `json:"column,omitempty"`
+	Database      string `json:"database,omitempty"`
+	GrantOption   *bool  `json:"grant-option,omitempty"`
+	PartialRevoke *bool  `json:"partial-revoke,omitempty"`
+	Table         string `json:"table,omitempty"`
+}
+
+type DBAASClickhouseUserRole struct {
+	Default         *bool  `json:"default,omitempty"`
+	Name            string `json:"name,omitempty"`
+	Uuid            UUID   `json:"uuid,omitempty"`
+	WithAdminOption *bool  `json:"with-admin-option,omitempty"`
+}
+
+type DBAASClickhouseUserRoleInput struct {
+	// Role UUID
+	Uuid UUID `json:"uuid" validate:"required"`
+}
+
+type DBAASClickhouseUsers struct {
+	Users []DBAASClickhouseUser `json:"users,omitempty"`
+}
+
 type DBAASDatabaseName string
 
 type DBAASDatadogTag struct {
@@ -996,6 +1038,86 @@ type DBAASServiceBackup struct {
 	BackupTime time.Time `json:"backup-time" validate:"required"`
 	// Backup's original size before compression
 	DataSize int64 `json:"data-size" validate:"required,gte=0"`
+}
+
+type DBAASServiceClickhouseComponents struct {
+	// Service component name
+	Component string `json:"component" validate:"required"`
+	// DNS name for connecting to the service component
+	Host string `json:"host" validate:"required"`
+	// Port number for connecting to the service component
+	Port  int64              `json:"port" validate:"required,gte=0,lte=65535"`
+	Route EnumComponentRoute `json:"route" validate:"required"`
+	// Whether the endpoint is encrypted or accepts plaintext.
+	// By default endpoints are always encrypted and
+	// this property is only included for service components that may disable encryption.
+	SSL   *bool              `json:"ssl,omitempty"`
+	Usage EnumComponentUsage `json:"usage" validate:"required"`
+}
+
+// ClickHouse connection information properties
+type DBAASServiceClickhouseConnectionInfo struct {
+	ArrowflightURI string   `json:"arrowflight-uri,omitempty"`
+	MysqlURI       string   `json:"mysql-uri,omitempty"`
+	URI            []string `json:"uri,omitempty"`
+}
+
+// Prometheus integration URI
+type DBAASServiceClickhousePrometheusURI struct {
+	Host string `json:"host,omitempty"`
+	Port int64  `json:"port,omitempty" validate:"omitempty,gte=0,lte=65535"`
+}
+
+type DBAASServiceClickhouse struct {
+	// List of backups for the service
+	Backups []DBAASServiceBackup `json:"backups,omitempty"`
+	// ClickHouse settings
+	ClickhouseSettings *JSONSchemaClickhouse `json:"clickhouse-settings,omitempty"`
+	// Service component information objects
+	Components []DBAASServiceClickhouseComponents `json:"components,omitempty"`
+	// ClickHouse connection information properties
+	ConnectionInfo *DBAASServiceClickhouseConnectionInfo `json:"connection-info,omitempty"`
+	// Service creation timestamp (ISO 8601)
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// TODO UNIT disk space for data storage
+	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
+	// Service integrations
+	Integrations []DBAASIntegration `json:"integrations,omitempty"`
+	// Allowed CIDR address blocks for incoming connections
+	IPFilter []string `json:"ip-filter,omitempty"`
+	// Automatic maintenance settings
+	Maintenance *DBAASServiceMaintenance `json:"maintenance,omitempty"`
+	Name        DBAASServiceName         `json:"name" validate:"required,gte=0,lte=63"`
+	// Number of service nodes in the active plan
+	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
+	// Number of CPUs for each node
+	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
+	// TODO UNIT of memory for each node
+	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
+	// State of individual service nodes
+	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
+	// Service notifications
+	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
+	// Subscription plan
+	Plan string `json:"plan" validate:"required"`
+	// Prometheus integration URI
+	PrometheusURI *DBAASServiceClickhousePrometheusURI `json:"prometheus-uri" validate:"required"`
+	State         EnumServiceState                     `json:"state,omitempty"`
+	// Service is protected against termination and powering off
+	TerminationProtection *bool                `json:"termination-protection,omitempty"`
+	Type                  DBAASServiceTypeName `json:"type" validate:"required,gte=0,lte=64"`
+	// Service last update timestamp (ISO 8601)
+	UpdatedAT time.Time `json:"updated-at,omitempty"`
+	// URI for connecting to the service (may be absent)
+	URI string `json:"uri,omitempty"`
+	// service_uri parameterized into key-value pairs
+	URIParams map[string]any `json:"uri-params,omitempty"`
+	// List of ClickHouse users
+	Users []DBAASClickhouseUser `json:"users,omitempty"`
+	// ClickHouse version
+	Version string `json:"version,omitempty"`
+	// The zone where the service is running
+	Zone string `json:"zone,omitempty"`
 }
 
 type DBAASServiceCommon struct {
@@ -1897,6 +2019,14 @@ type DBAASTask struct {
 	TaskType    string                 `json:"task-type,omitempty"`
 }
 
+// ClickHouse User secrets
+type DBAASUserClickhouseSecrets struct {
+	// ClickHouse password
+	Password string `json:"password,omitempty"`
+	// ClickHouse username
+	Username string `json:"username,omitempty"`
+}
+
 // Grafana User secrets
 type DBAASUserGrafanaSecrets struct {
 	// Grafana password
@@ -2714,6 +2844,7 @@ const (
 	InferenceEngineVersion0220 InferenceEngineVersion = "0.22.0"
 	InferenceEngineVersion0221 InferenceEngineVersion = "0.22.1"
 	InferenceEngineVersion0230 InferenceEngineVersion = "0.23.0"
+	InferenceEngineVersion0240 InferenceEngineVersion = "0.24.0"
 )
 
 // Router flush payload: the router's full in-memory usage map with flush identity fields
@@ -2803,14 +2934,6 @@ type InstancePassword struct {
 	Password string `json:"password,omitempty"`
 }
 
-// Instance Pool Error Reason
-type InstancePoolErrorReason struct {
-	// Error cause
-	Cause string `json:"cause,omitempty"`
-	// Job ID at the origin of error
-	JobID string `json:"job-id,omitempty"`
-}
-
 type InstancePoolState string
 
 const (
@@ -2821,7 +2944,6 @@ const (
 	InstancePoolStateSuspended   InstancePoolState = "suspended"
 	InstancePoolStateRunning     InstancePoolState = "running"
 	InstancePoolStateUpdating    InstancePoolState = "updating"
-	InstancePoolStateError       InstancePoolState = "error"
 )
 
 // Instance Pool
@@ -2838,8 +2960,6 @@ type InstancePool struct {
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=51200"`
 	// Instances Elastic IPs
 	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
-	// Instance Pool Error Reason
-	ErrorReason *InstancePoolErrorReason `json:"error-reason,omitempty"`
 	// Instance Pool ID
 	ID UUID `json:"id,omitempty"`
 	// The instances created by the Instance Pool will be prefixed with this value (default: pool)
@@ -2969,6 +3089,18 @@ type InstanceTypeEntry struct {
 type InstanceTypeRef struct {
 	// Instance type ID
 	ID UUID `json:"id,omitempty"`
+}
+
+// ClickHouse server settings, which can be found in the `system.server_settings` table.
+type JSONSchemaClickhouseServerSettings struct {
+	// Fraction of total server memory allocated to the vector similarity index cache. 0 disables the cache. Default is 0.07 (7% of server memory). Only effective on ClickHouse 25.8+.
+	VectorSimilarityIndexCacheSize float64 `json:"vector_similarity_index_cache_size,omitempty" validate:"omitempty,gte=0,lte=0.5"`
+}
+
+// ClickHouse settings
+type JSONSchemaClickhouse struct {
+	// ClickHouse server settings, which can be found in the `system.server_settings` table.
+	ServerSettings *JSONSchemaClickhouseServerSettings `json:"server_settings,omitempty"`
 }
 
 type JSONSchemaGrafanaAlertingErrorORTimeout string
@@ -4610,7 +4742,7 @@ type ModelUsageCounters struct {
 	OutputUom int `json:"output-uom" validate:"required,gte=0"`
 }
 
-// Cluster networking configuration.
+// EXPERIMENTAL: Cluster networking configuration.
 type Networking struct {
 	// CIDR Range for Pods in cluster. This must not overlap with any IP ranges assigned to pods. Max of two, comma-separated, dual-stack CIDRs is allowed.
 	// If not specified, defaults to 192.168.0.0/16.
@@ -4627,27 +4759,27 @@ type Networking struct {
 type NvidiaMigProfileA3024gb string
 
 const (
-	NvidiaMigProfileA3024gb2g12gb   NvidiaMigProfileA3024gb = "2g.12gb"
-	NvidiaMigProfileA3024gb1g6gbMe  NvidiaMigProfileA3024gb = "1g.6gb+me"
-	NvidiaMigProfileA3024gb1g6gb    NvidiaMigProfileA3024gb = "1g.6gb"
-	NvidiaMigProfileA3024gb2g12gbMe NvidiaMigProfileA3024gb = "2g.12gb+me"
-	NvidiaMigProfileA3024gb4g24gb   NvidiaMigProfileA3024gb = "4g.24gb"
+	NvidiaMigProfileA3024gb1G6Gb    NvidiaMigProfileA3024gb = "1g.6gb"
+	NvidiaMigProfileA3024gb1G6GbMe  NvidiaMigProfileA3024gb = "1g.6gb+me"
+	NvidiaMigProfileA3024gb2G12Gb   NvidiaMigProfileA3024gb = "2g.12gb"
+	NvidiaMigProfileA3024gb2G12GbMe NvidiaMigProfileA3024gb = "2g.12gb+me"
+	NvidiaMigProfileA3024gb4G24Gb   NvidiaMigProfileA3024gb = "4g.24gb"
 )
 
 type NvidiaMigProfileRtxpro600096gb string
 
 const (
-	NvidiaMigProfileRtxpro600096gb1g24gbMe    NvidiaMigProfileRtxpro600096gb = "1g.24gb-me"
-	NvidiaMigProfileRtxpro600096gb1g24gb      NvidiaMigProfileRtxpro600096gb = "1g.24gb"
-	NvidiaMigProfileRtxpro600096gb2g48gbMe    NvidiaMigProfileRtxpro600096gb = "2g.48gb-me"
-	NvidiaMigProfileRtxpro600096gb2g48gb      NvidiaMigProfileRtxpro600096gb = "2g.48gb"
-	NvidiaMigProfileRtxpro600096gb4g96gbGfx   NvidiaMigProfileRtxpro600096gb = "4g.96gb+gfx"
-	NvidiaMigProfileRtxpro600096gb1g24gbMe    NvidiaMigProfileRtxpro600096gb = "1g.24gb+me"
-	NvidiaMigProfileRtxpro600096gb2g48gbMeAll NvidiaMigProfileRtxpro600096gb = "2g.48gb+me.all"
-	NvidiaMigProfileRtxpro600096gb1g24gbGfx   NvidiaMigProfileRtxpro600096gb = "1g.24gb+gfx"
-	NvidiaMigProfileRtxpro600096gb1g24gbMeAll NvidiaMigProfileRtxpro600096gb = "1g.24gb+me.all"
-	NvidiaMigProfileRtxpro600096gb4g96gb      NvidiaMigProfileRtxpro600096gb = "4g.96gb"
-	NvidiaMigProfileRtxpro600096gb2g48gbGfx   NvidiaMigProfileRtxpro600096gb = "2g.48gb+gfx"
+	NvidiaMigProfileRtxpro600096gb1G24Gb      NvidiaMigProfileRtxpro600096gb = "1g.24gb"
+	NvidiaMigProfileRtxpro600096gb1G24GbMe    NvidiaMigProfileRtxpro600096gb = "1g.24gb+me"
+	NvidiaMigProfileRtxpro600096gb1G24GbGfx   NvidiaMigProfileRtxpro600096gb = "1g.24gb+gfx"
+	NvidiaMigProfileRtxpro600096gb1G24GbMeAll NvidiaMigProfileRtxpro600096gb = "1g.24gb+me.all"
+	NvidiaMigProfileRtxpro600096gb1G24GbNoMe  NvidiaMigProfileRtxpro600096gb = "1g.24gb-me"
+	NvidiaMigProfileRtxpro600096gb2G48Gb      NvidiaMigProfileRtxpro600096gb = "2g.48gb"
+	NvidiaMigProfileRtxpro600096gb2G48GbGfx   NvidiaMigProfileRtxpro600096gb = "2g.48gb+gfx"
+	NvidiaMigProfileRtxpro600096gb2G48GbMeAll NvidiaMigProfileRtxpro600096gb = "2g.48gb+me.all"
+	NvidiaMigProfileRtxpro600096gb2G48GbNoMe  NvidiaMigProfileRtxpro600096gb = "2g.48gb-me"
+	NvidiaMigProfileRtxpro600096gb4G96Gb      NvidiaMigProfileRtxpro600096gb = "4g.96gb"
+	NvidiaMigProfileRtxpro600096gb4G96GbGfx   NvidiaMigProfileRtxpro600096gb = "4g.96gb+gfx"
 )
 
 // Nvidia MIG Profiles enabled
@@ -5139,6 +5271,8 @@ type SKSCluster struct {
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Cluster Nodepools
 	Nodepools []SKSNodepool `json:"nodepools,omitempty"`
+	// SKS Cluster OpenID config map
+	Oidc *SKSOidc `json:"oidc"`
 	// Cluster state
 	State SKSClusterState `json:"state,omitempty"`
 	// Control plane Kubernetes version

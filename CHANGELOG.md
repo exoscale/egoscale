@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Revert breaking change in errors handling (#798)
+
 3.1.41
 ------
 

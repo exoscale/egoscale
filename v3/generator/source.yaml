@@ -1115,6 +1115,9 @@ components:
         name:
           description: Human-readable name for the AI API key
           type: string
+        value:
+          description: Plaintext AI API key value
+          type: string
         scope:
           description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
           type: string
@@ -1141,6 +1144,7 @@ components:
         - scope
         - created-at
         - updated-at
+        - value
     sks-audit-bearer-token:
       type: string
       maxLength: 2000
@@ -2605,7 +2609,8 @@ components:
         - 0.22.1
         - 0.23.0
         - 0.24.0
-      default: 0.24.0
+        - 0.25.0
+      default: 0.25.0
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -6152,6 +6157,12 @@ components:
           format: date-time
           type: string
           readOnly: true
+        visibility:
+          description: 'Deployment visibility: private for your organization''s deployments, public for Exoscale Managed Inference deployments.'
+          enum:
+            - public
+            - private
+          type: string
         inference-engine-parameters:
           description: Optional extra inference engine server CLI args
           type: array
@@ -6175,6 +6186,7 @@ components:
         - model
         - created-at
         - updated-at
+        - visibility
     list-route-entry:
       type: object
       properties:
@@ -6335,6 +6347,9 @@ components:
         name:
           description: Human-readable name for the AI API key
           type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[A-Za-z0-9](?:[A-Za-z0-9 _'()-]*[A-Za-z0-9])?$
         scope:
           description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
           type: string
@@ -7056,6 +7071,12 @@ components:
           format: date-time
           type: string
           readOnly: true
+        visibility:
+          description: 'Deployment visibility: private for your organization''s deployments, public for Exoscale Managed Inference deployments.'
+          enum:
+            - public
+            - private
+          type: string
         model:
           $ref: '#/components/schemas/model-ref'
       type: object
@@ -7071,6 +7092,7 @@ components:
         - model
         - created-at
         - updated-at
+        - visibility
     dbaas-endpoint-elasticsearch-secrets:
       type: object
       properties:
@@ -8213,19 +8235,19 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/api-key-usage-entry'
           type: object
+        timestamp:
+          description: ISO-8601 UTC timestamp when the flush snapshot was created (truncated to minute boundary for bucketing)
+          format: date-time
+          type: string
         router-id:
           description: Router instance identifier that produced this flush
           type: string
           minLength: 1
-        created-at:
-          description: ISO-8601 UTC timestamp when the flush snapshot was created (truncated to minute boundary for bucketing)
-          format: date-time
-          type: string
       type: object
       required:
         - flush-id
         - router-id
-        - created-at
+        - timestamp
         - usage
     create-ai-api-key-request:
       description: Request to create a new AI API key
@@ -8233,6 +8255,9 @@ components:
         name:
           description: Human-readable name for the AI API key
           type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[A-Za-z0-9](?:[A-Za-z0-9 _'()-]*[A-Za-z0-9])?$
         scope:
           description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
           type: string
@@ -10606,6 +10631,10 @@ components:
         gpu-type:
           description: GPU type family (e.g., gpua5000, gpu3080ti)
           type: string
+        product-name:
+          description: Billing identifier for this deployment. Used by the Router for usage counters and Kafka events.
+          type: string
+          minLength: 1
         replicas:
           description: Number of replicas (>=1)
           format: int64
@@ -17393,7 +17422,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/operation'
+                $ref: '#/components/schemas/dbaas-user-clickhouse-secrets'
       description: null
       parameters:
         - in: path
@@ -17500,7 +17529,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/operation'
+                $ref: '#/components/schemas/dbaas-user-clickhouse-secrets'
       description: null
       parameters:
         - in: path

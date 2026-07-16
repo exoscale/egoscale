@@ -108,7 +108,7 @@ polling:
 	}
 
 	return nil,
-		fmt.Errorf("operation: %q %v, state: %s, reason: %q, message: %q",
+		fmt.Errorf("operation: %v ref: %+v, state: %s, reason: %v, message: %v",
 			operation.ID,
 			ref,
 			operation.State,

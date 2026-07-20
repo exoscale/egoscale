@@ -4,6 +4,9 @@ Changelog
 Unreleased
 ----------
 
+3.1.43
+------
+
 - v3 generator: fix panic on HTTP 204 and close response body on no-content responses (#766)
 - v3 generator: align error messages with Go naming conventions (Json => JSON) (#766)
 - v3: close response body in handleHTTPErrorResp to avoid connection leaks (#766)

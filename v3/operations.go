@@ -906,16 +906,8 @@ func (l ListModelsResponse) FindListModelsResponseEntry(nameOrID string) (ListMo
 	return ListModelsResponseEntry{}, fmt.Errorf("%q not found in ListModelsResponse: %w", nameOrID, ErrNotFound)
 }
 
-type ListModelsOpt func(url.Values)
-
-func ListModelsWithVisibility(visibility string) ListModelsOpt {
-	return func(q url.Values) {
-		q.Add("visibility", fmt.Sprint(visibility))
-	}
-}
-
 // List Models
-func (c Client) ListModels(ctx context.Context, opts ...ListModelsOpt) (*ListModelsResponse, error) {
+func (c Client) ListModels(ctx context.Context) (*ListModelsResponse, error) {
 	path := "/ai/model"
 
 	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
@@ -924,14 +916,6 @@ func (c Client) ListModels(ctx context.Context, opts ...ListModelsOpt) (*ListMod
 	}
 
 	request.Header.Add("User-Agent", c.getUserAgent())
-
-	if len(opts) > 0 {
-		q := request.URL.Query()
-		for _, opt := range opts {
-			opt(q)
-		}
-		request.URL.RawQuery = q.Encode()
-	}
 
 	if err := c.executeRequestInterceptors(ctx, request); err != nil {
 		return nil, fmt.Errorf("ListModels: execute request editors: %w", err)
@@ -13969,7 +13953,7 @@ func (c Client) ListKmsKeys(ctx context.Context) (*ListKmsKeysResponse, error) {
 	return bodyresp, nil
 }
 
-// Create a customer-managed unique KMS Key in your organization. A KMS Key is a logical represention of a cryptographic key material. It also includes metadata such as a UUID, a name and its state.
+// Create a customer-managed unique KMS Key in your organization. A KMS Key is a logical representation of a cryptographic key material. It also includes metadata such as a UUID, a name and its state.
 func (c Client) CreateKmsKey(ctx context.Context, req CreateKmsKeyRequest) (*CreateKmsKeyResponse, error) {
 	path := "/kms-key"
 
@@ -14247,7 +14231,7 @@ func (c Client) DisableKmsKeyRotation(ctx context.Context, id UUID) (*DisableKms
 	return bodyresp, nil
 }
 
-// Enables a KMS Key by setting its stated to "enabled". It restores the ability to fully use the KMS key for cryptographic operations and key lifecycle operations.
+// Enables a KMS Key by setting its state to "enabled". It restores the ability to fully use the KMS key for cryptographic operations and key lifecycle operations.
 func (c Client) EnableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/enable", id)
 
@@ -20274,6 +20258,8 @@ func (c Client) UpdateSubnet(ctx context.Context, vpcID UUID, id UUID, req Updat
 type AttachInstanceToSubnetRequest struct {
 	// Target Instance
 	Instance *InstanceRef `json:"instance" validate:"required"`
+	// Instance IPv4
+	Ipv4 net.IP `json:"ipv4,omitempty"`
 }
 
 // [BETA] Attach a Compute instance to a Subnet

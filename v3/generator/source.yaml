@@ -246,6 +246,15 @@ tags:
     x-display-name: Object Storage
     x-weight: 500
     x-icon: exo-object-storage
+  - description: '[BETA] Create and manipulate routing rules'
+    parent: vpc
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/compute/
+    name: vpc-route
+    x-display-name: VPC
+    x-weight: 195
+    x-icon: exo-vpc
   - description: |-
       Snapshots provide a way to get point-in-time recovery
                          for your Compute instance.
@@ -439,6 +448,15 @@ tags:
     x-display-name: User
     x-weight: 830
     x-icon: exo-iam
+  - description: '[BETA] Create and manipulate VPCs'
+    parent: vpc
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/compute/
+    name: vpc-management
+    x-display-name: VPC
+    x-weight: 195
+    x-icon: exo-vpc
   - description: Nodepool templates are Exoscale-managed instance templates for SKS worker nodes.
     parent: sks
     externalDocs:
@@ -459,6 +477,15 @@ tags:
     x-display-name: SKS
     x-weight: 300
     x-icon: exo-sks
+  - description: '[BETA] Configure VPC subnets and attach instances to them'
+    parent: vpc
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/documentation/compute/
+    name: vpc-subnet
+    x-display-name: VPC
+    x-weight: 195
+    x-icon: exo-vpc
   - description: The Organization Policy is an IAM policy that applies as a first layer across your entire Exoscale organization.
     parent: iam
     externalDocs:
@@ -1194,23 +1221,21 @@ components:
     subnet:
       type: object
       properties:
-        id:
+        description:
           type: string
-          format: uuid
-          description: Subnet ID
+          maxLength: 4096
+          description: Subnet description
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: Resource labels
         name:
           type: string
           maxLength: 255
           minLength: 1
           description: Subnet name
-        description:
+        ipv4-block:
           type: string
-          maxLength: 4096
-          description: Subnet description
-        created-at:
-          type: string
-          format: date-time
-          description: Subnet creation date
+          description: Subnet ipv4 CIDR
         addressfamily:
           type: string
           enum:
@@ -1222,12 +1247,29 @@ components:
           enum:
             - private
           description: Subnet address space
-        ipv4-block:
+        instances:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Instance uuid
+              ipv4:
+                type: string
+                format: ipv4
+                description: Instance Ipv4 address
+            description: Subnet attachements
+          description: Instances attached to the subnet
+        id:
           type: string
-          description: Subnet ipv4 CIDR
-        labels:
-          $ref: '#/components/schemas/labels'
-          description: Resource labels
+          format: uuid
+          description: Subnet ID
+        created-at:
+          type: string
+          format: date-time
+          description: Subnet creation date
       description: Subnet
     dbaas-user-valkey-secrets:
       type: object
@@ -2610,7 +2652,8 @@ components:
         - 0.23.0
         - 0.24.0
         - 0.25.0
-      default: 0.25.0
+        - 0.25.1
+      default: 0.25.1
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -6172,20 +6215,10 @@ components:
           $ref: '#/components/schemas/model-ref'
       type: object
       required:
-        - id
         - name
         - state
-        - state-details
-        - gpu-type
-        - gpu-count
-        - replicas
-        - service-level
         - deployment-url
-        - inference-engine-parameters
-        - inference-engine-version
         - model
-        - created-at
-        - updated-at
         - visibility
     list-route-entry:
       type: object
@@ -7081,17 +7114,10 @@ components:
           $ref: '#/components/schemas/model-ref'
       type: object
       required:
-        - id
         - name
         - state
-        - gpu-type
-        - gpu-count
-        - replicas
-        - service-level
         - deployment-url
         - model
-        - created-at
-        - updated-at
         - visibility
     dbaas-endpoint-elasticsearch-secrets:
       type: object
@@ -11423,13 +11449,30 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: Key rotation disabled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/disable-kms-key-rotation-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Invalid Origin: The request was rejected because automatic key rotation can only be enabled on a KMS key with origin "exoscale-kms".
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Not on Default: The request was rejected because the operation is not allowed on the default key.
+
+            Not on Replica: The request was rejectde because the operation is not allowed on a replica.
+
+            Key is Pending Deletion: The request was rejected because it was performed on a key that is pending deletion.
+
+            Key is Disabled: The request was rejected because the specified KMS key is disabled.
+
+            Invalid Usage: The request was rejected because the operation is only allowed on symmetric keys with usage "encrypt-decrypt".
+
+            Conflict: The request was rejected because the automatic rotation is already enabled for this KMS Key.
           content:
             application/json:
               schema:
@@ -11520,7 +11563,7 @@ paths:
         - deployment
       responses:
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -12160,7 +12203,7 @@ paths:
   /vpc/{vpc-id}/subnet/{subnet-id}/attach:
     put:
       tags:
-        - vpc
+        - vpc-subnet
       responses:
         "200":
           description: "200"
@@ -12193,6 +12236,10 @@ paths:
                 instance:
                   $ref: '#/components/schemas/instance-ref'
                   description: Compute instance
+                ipv4:
+                  type: string
+                  format: ipv4
+                  description: Instance IPv4
               required:
                 - instance
       operationId: attach-instance-to-subnet
@@ -12202,13 +12249,16 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: KMS Key Details
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/get-kms-key-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
           content:
             application/json:
               schema:
@@ -12316,13 +12366,13 @@ paths:
         - model
       responses:
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -12347,18 +12397,13 @@ paths:
         - model
       responses:
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/list-models-response'
       description: List Models
-      parameters:
-        - in: query
-          required: false
-          name: visibility
-          schema:
-            type: string
+      parameters: []
       summary: List Models
       operationId: list-models
   /dbaas-mysql/{service-name}/user:
@@ -12422,31 +12467,31 @@ paths:
         - deployment
       responses:
         "412":
-          description: "412"
+          description: Precondition Failed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "409":
-          description: "409"
+          description: Conflict
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -13258,25 +13303,25 @@ paths:
         - deployment
       responses:
         "412":
-          description: "412"
+          description: 412 (probably insufficient GPUs)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
         "400":
-          description: "400"
+          description: Bad Request
           content:
             application/json:
               schema:
@@ -13296,13 +13341,13 @@ paths:
         - deployment
       responses:
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/list-deployments-response'
         "400":
-          description: "400"
+          description: Bad Request
           content:
             application/json:
               schema:
@@ -13401,18 +13446,23 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: Key enabled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/success-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Key is Pending Deletion: The request was rejected because it was performed on a key that is pending deletion.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Enables a KMS Key by setting its stated to "enabled". It restores the ability to fully use the KMS key for cryptographic operations and key lifecycle operations.
+      description: Enables a KMS Key by setting its state to "enabled". It restores the ability to fully use the KMS key for cryptographic operations and key lifecycle operations.
       parameters:
         - in: path
           required: true
@@ -13770,7 +13820,7 @@ paths:
   /vpc/{vpc-id}/route:
     get:
       tags:
-        - vpc
+        - vpc-route
       responses:
         "200":
           description: "200"
@@ -14035,13 +14085,16 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: The list of all historical rotations for the requested KMS key.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/list-kms-key-rotations-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
           content:
             application/json:
               schema:
@@ -14335,19 +14388,19 @@ paths:
         - ai-api-key
       responses:
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -14367,19 +14420,19 @@ paths:
         - ai-api-key
       responses:
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -14399,25 +14452,25 @@ paths:
         - ai-api-key
       responses:
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/update-ai-api-key-response'
         "400":
-          description: "400"
+          description: Bad Request
           content:
             application/json:
               schema:
@@ -14511,7 +14564,7 @@ paths:
   /vpc:
     post:
       tags:
-        - vpc
+        - vpc-management
       responses:
         "200":
           description: "200"
@@ -14546,7 +14599,7 @@ paths:
       operationId: create-vpc
     get:
       tags:
-        - vpc
+        - vpc-management
       responses:
         "200":
           description: "200"
@@ -14569,19 +14622,19 @@ paths:
         - ai-api-key
       responses:
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -14767,13 +14820,13 @@ paths:
         - deployment
       responses:
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -14793,31 +14846,31 @@ paths:
         - deployment
       responses:
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "409":
-          description: "409"
+          description: Conflict
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
         "400":
-          description: "400"
+          description: Bad Request
           content:
             application/json:
               schema:
@@ -14843,25 +14896,25 @@ paths:
         - deployment
       responses:
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "409":
-          description: "409"
+          description: Conflict
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -14902,13 +14955,32 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: Periodic key rotation enabled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/enable-kms-key-rotation-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Invalid Origin: The request was rejected because automatic key rotation can only be enabled on a KMS key with origin "exoscale-kms".
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Not on Default: The request was rejected because the operation is not allowed on the default key.
+
+            Not on Replica: The request was rejectde because the operation is not allowed on a replica.
+
+            Key is Pending Deletion: The request was rejected because it was performed on a key that is pending deletion.
+
+            Key is Disabled: The request was rejected because the specified KMS key is disabled.
+
+            Invalid Usage: The request was rejected because the operation is only allowed on symmetric keys with usage "encrypt-decrypt".
+
+            Conflict: The request was rejected because the automatic rotation is already enabled for this KMS Key.
+
+            Bad Request: The request was rejected because of an invalid request body or path parameter.
           content:
             application/json:
               schema:
@@ -14932,7 +15004,7 @@ paths:
   /vpc/{vpc-id}/subnet/{subnet-id}/route:
     get:
       tags:
-        - vpc
+        - vpc-route
       responses:
         "200":
           description: "200"
@@ -14963,7 +15035,7 @@ paths:
       operationId: list-routes
     post:
       tags:
-        - vpc
+        - vpc-route
       responses:
         "200":
           description: "200"
@@ -15058,7 +15130,7 @@ paths:
   /vpc/{vpc-id}/subnet:
     get:
       tags:
-        - vpc
+        - vpc-subnet
       responses:
         "200":
           description: "200"
@@ -15083,7 +15155,7 @@ paths:
       operationId: list-subnets
     post:
       tags:
-        - vpc
+        - vpc-subnet
       responses:
         "200":
           description: "200"
@@ -15499,7 +15571,7 @@ paths:
         - deployment
       responses:
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -16252,13 +16324,26 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: Key rotated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/rotate-kms-key-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Key is Pending Deletion: The request was rejected because it was performed on a key that is pending deletion.
+
+            Not on a Replica: The request was rejected because the operation is not allowed on a replica.
+
+            Invalid Usage: The request was rejected because the operation is only allowed on symmetric keys with usage "encrypt-decrypt".
+
+            Key is Disabled: The request was rejected because the specified KMS key is disabled.
+
+            Manual Rotation Limit: The request was rejected because you reached your limit of 10 manual rotations per key for this KMS key.
           content:
             application/json:
               schema:
@@ -17019,13 +17104,20 @@ paths:
         - crypto
       responses:
         "200":
-          description: "200"
+          description: Base64 encoded plaintext.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/decrypt-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Key is Disabled: The request was rejected because the specified KMS key is disabled.
+
+            Invalid Usage: The request was rejected because the operation is only allowed on symmetric keys with usage "encrypt-decrypt".
           content:
             application/json:
               schema:
@@ -17663,13 +17755,20 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: Key disabled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/success-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Key is Pending Deletion: The request was rejected because it was performed on a key that is pending deletion.
+
+            Not on Default: The request was rejected because the operation is not allowed on the default key.
           content:
             application/json:
               schema:
@@ -17951,25 +18050,25 @@ paths:
         - model
       responses:
         "412":
-          description: "412"
+          description: Precondition Failed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/delete-model-conflict-response'
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -17989,13 +18088,13 @@ paths:
         - model
       responses:
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -18274,7 +18373,7 @@ paths:
   /vpc/{vpc-id}/subnet/{subnet-id}/route/{id}:
     delete:
       tags:
-        - vpc
+        - vpc-route
       responses:
         "200":
           description: "200"
@@ -18310,13 +18409,20 @@ paths:
         - crypto
       responses:
         "200":
-          description: "200"
+          description: Base64 encoded ciphertext
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/encrypt-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Key is Disabled: The request was rejected because the specified KMS key is disabled.
+
+            Invalid Usage: The request was rejected because the operation is only allowed on symmetric keys with usage "encrypt-decrypt".
           content:
             application/json:
               schema:
@@ -19727,7 +19833,7 @@ paths:
   /vpc/{vpc-id}/subnet/{id}:
     delete:
       tags:
-        - vpc
+        - vpc-subnet
       responses:
         "200":
           description: "200"
@@ -19753,7 +19859,7 @@ paths:
       operationId: delete-subnet
     put:
       tags:
-        - vpc
+        - vpc-subnet
       responses:
         "200":
           description: "200"
@@ -19805,7 +19911,7 @@ paths:
       operationId: update-subnet
     get:
       tags:
-        - vpc
+        - vpc-subnet
       responses:
         "200":
           description: "200"
@@ -19964,18 +20070,23 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: Created new KMS key
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/create-kms-key-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Name Conflict: The request was rejected because a key with the same name already exists in the target zone.
+
+            Bad Request: The request was rejected because of an invalid request body or path parameter.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Create a customer-managed unique KMS Key in your organization. A KMS Key is a logical represention of a cryptographic key material. It also includes metadata such as a UUID, a name and its state.
+      description: Create a customer-managed unique KMS Key in your organization. A KMS Key is a logical representation of a cryptographic key material. It also includes metadata such as a UUID, a name and its state.
       parameters: []
       summary: Create KMS Key
       requestBody:
@@ -19990,13 +20101,16 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: A list of all KMS keys in the target zone
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/list-kms-keys-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Bad Request: The request was rejected because of an invalid request body or path parameter.
           content:
             application/json:
               schema:
@@ -20376,7 +20490,7 @@ paths:
   /vpc/{vpc-id}/subnet/{subnet-id}/detach:
     put:
       tags:
-        - vpc
+        - vpc-subnet
       responses:
         "200":
           description: "200"
@@ -20764,13 +20878,22 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: Key deletion scheduled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/schedule-kms-key-deletion-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Not on Default: The request was rejected because the operation is not allowed on the default key.
+
+            Not on Replica: The request was rejectde because the operation is not allowed on a replica.
+
+            Bad Request: The request was rejected because of an invalid request body or path parameter.
           content:
             application/json:
               schema:
@@ -21208,13 +21331,13 @@ paths:
         - ai-api-key
       responses:
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -21310,13 +21433,13 @@ paths:
         - ai-api-key
       responses:
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -21330,25 +21453,25 @@ paths:
         - ai-api-key
       responses:
         "403":
-          description: "403"
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/create-ai-api-key-response'
         "400":
-          description: "400"
+          description: Bad Request
           content:
             application/json:
               schema:
@@ -21369,13 +21492,22 @@ paths:
         - crypto
       responses:
         "200":
-          description: "200"
+          description: Base64 encoded ciphertext
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/re-encrypt-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Key is Disabled: The request was rejected because the specified KMS key is disabled.
+
+            Not on Default: The request was rejected because the operation is not allowed on the default key.
+
+            Bad Request: The request was rejected because of an invalid request body or path parameter.
           content:
             application/json:
               schema:
@@ -21864,13 +21996,13 @@ paths:
         - ai-api-key
       responses:
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -22494,13 +22626,13 @@ paths:
         - deployment
       responses:
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
@@ -22562,13 +22694,26 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: Key replication target registered
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/success-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Key is Pending Deletion: The request was rejected because it was performed on a key that is pending deletion.
+
+            Not on Default: The request was rejected because the operation is not allowed on the default key.
+
+            Not Multizone: The request was rejected because the KMS key is not a multi-zone key.
+
+            Conflict: The request was rejected because the key is already replicated in the target zone.
+
+            Invalid Argument: The request was rejected because the target zone is invalid.
           content:
             application/json:
               schema:
@@ -23005,25 +23150,25 @@ paths:
         - deployment
       responses:
         "500":
-          description: "500"
+          description: Internal Server Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "404":
-          description: "404"
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
         "200":
-          description: "200"
+          description: OK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/get-deployment-logs-response'
         "400":
-          description: "400"
+          description: Bad Request
           content:
             application/json:
               schema:
@@ -23088,13 +23233,20 @@ paths:
         - kms-key
       responses:
         "200":
-          description: "200"
+          description: Key deletion cancelled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/success-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Not on Replica: The request was rejectde because the operation is not allowed on a replica.
+
+            Not Pending Deletion: The request was rejected because the key is not pending deletion.
           content:
             application/json:
               schema:
@@ -23115,13 +23267,20 @@ paths:
         - crypto
       responses:
         "200":
-          description: "200"
+          description: Data Encryption Key in the clear and in its base64 encoded encrypted format.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/generate-data-key-response'
         "400":
-          description: "400"
+          description: |
+            ### Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Key is Disabled: The request was rejected because the specified KMS key is disabled.
+
+            Invalid Usage: The request was rejected because the operation is only allowed on symmetric keys with usage "encrypt-decrypt".
           content:
             application/json:
               schema:
@@ -23145,7 +23304,7 @@ paths:
   /vpc/{id}:
     put:
       tags:
-        - vpc
+        - vpc-management
       responses:
         "200":
           description: "200"
@@ -23187,7 +23346,7 @@ paths:
       operationId: update-vpc
     get:
       tags:
-        - vpc
+        - vpc-management
       responses:
         "200":
           description: "200"
@@ -23207,7 +23366,7 @@ paths:
       operationId: get-vpc
     delete:
       tags:
-        - vpc
+        - vpc-management
       responses:
         "200":
           description: "200"

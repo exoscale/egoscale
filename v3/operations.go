@@ -11565,6 +11565,132 @@ func (c Client) GetEnvImpact(ctx context.Context, period string) (*EnvImpactRepo
 	return bodyresp, nil
 }
 
+type GetImpactEstimateResponse struct {
+	Impact map[string]ImpactValueWithUnit `json:"impact" validate:"required"`
+}
+
+type GetImpactEstimateRequest struct {
+	Metadata map[string]any `json:"metadata,omitempty"`
+	Sku      string         `json:"sku" validate:"required"`
+}
+
+// Return an estimate of the impact of a given usage
+func (c Client) GetImpactEstimate(ctx context.Context, req GetImpactEstimateRequest) (*GetImpactEstimateResponse, error) {
+	path := "/environmental-impact/estimate"
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: prepare JSON body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-impact-estimate")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: http response: %w", err)
+	}
+
+	bodyresp := new(GetImpactEstimateResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type GetImpactReportOpt func(url.Values)
+
+func GetImpactReportWithFrom(from string) GetImpactReportOpt {
+	return func(q url.Values) {
+		q.Add("from", fmt.Sprint(from))
+	}
+}
+
+func GetImpactReportWithTo(to string) GetImpactReportOpt {
+	return func(q url.Values) {
+		q.Add("to", fmt.Sprint(to))
+	}
+}
+
+// Return an environmental impact report for the given period
+func (c Client) GetImpactReport(ctx context.Context, opts ...GetImpactReportOpt) (*ImpactBreakdown, error) {
+	path := "/environmental-impact/report"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetImpactReport: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if len(opts) > 0 {
+		q := request.URL.Query()
+		for _, opt := range opts {
+			opt(q)
+		}
+		request.URL.RawQuery = q.Encode()
+	}
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetImpactReport: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetImpactReport: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-impact-report")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetImpactReport: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetImpactReport: http response: %w", err)
+	}
+
+	bodyresp := new(ImpactBreakdown)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetImpactReport: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type ListEventsOpt func(url.Values)
 
 func ListEventsWithFrom(from time.Time) ListEventsOpt {

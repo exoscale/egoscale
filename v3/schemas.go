@@ -2820,6 +2820,30 @@ type IAMServicePolicyRule struct {
 	Resources  []string                   `json:"resources,omitempty"`
 }
 
+type ImpactBreakdown struct {
+	Impact map[string]ImpactValueWithUnit `json:"impact" validate:"required"`
+	Zones  map[string]ZoneImpact          `json:"zones" validate:"required"`
+}
+
+// Error response
+type ImpactErrorResponse struct {
+	Detail string `json:"detail" validate:"required"`
+	Status int    `json:"status" validate:"required,gte=100,lte=599"`
+	Title  string `json:"title" validate:"required"`
+}
+
+// Hierarchical breakdown of impact for a given level in the catalog tree
+type ImpactResourceTreeNode struct {
+	Impact    map[string]ImpactValueWithUnit    `json:"impact" validate:"required"`
+	Resources map[string]ImpactResourceTreeNode `json:"resources" validate:"required"`
+	Usage     *ImpactValueWithUnit              `json:"usage" validate:"required"`
+}
+
+type ImpactValueWithUnit struct {
+	Unit  string `json:"unit" validate:"required"`
+	Value double `json:"value" validate:"required"`
+}
+
 // inference-engine parameter definition
 type InferenceEngineParameterEntry struct {
 	// Allowed values
@@ -5689,6 +5713,12 @@ type Zone struct {
 	Name        ZoneName `json:"name,omitempty"`
 	// Zone SOS endpoint
 	SOSEndpoint Endpoint `json:"sos-endpoint,omitempty"`
+}
+
+// Hierarchical breakdown of impact in a given zone
+type ZoneImpact struct {
+	Impact    map[string]ImpactValueWithUnit    `json:"impact" validate:"required"`
+	Resources map[string]ImpactResourceTreeNode `json:"resources" validate:"required"`
 }
 
 type ZoneName string

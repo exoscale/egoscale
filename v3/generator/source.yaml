@@ -199,11 +199,20 @@ tags:
     x-display-name: DBaaS Valkey
     x-weight: 460
     x-icon: exo-db-valkey
+  - description: View the impact of your past usage, and estimate the impact of future usage.
+    parent: general
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/sustainability/
+    name: environmental-impact
+    x-display-name: Environmental Impact
+    x-weight: 1150
+    x-icon: exo-license
   - description: Operations for KMS Key lifecycle management.
     parent: kms
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/kms/kms-key
+      url: https://community.exoscale.com/documentation/security/kms/overview
     name: kms-key
     x-display-name: KMS Key
     x-weight: 1130
@@ -364,7 +373,7 @@ tags:
     parent: kms
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/kms/crypto
+      url: https://community.exoscale.com/documentation/security/kms/overview
     name: crypto
     x-display-name: Cryptographic Operations
     x-weight: 1140
@@ -416,7 +425,7 @@ tags:
   - description: Exoscale Key Management Service is a managed security service that lets you create, control and manage the lifecycle of cryptographic keys.
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/kms/
+      url: https://community.exoscale.com/documentation/security/kms/
     name: kms
     x-display-name: KMS
     x-weight: 1120
@@ -1271,6 +1280,21 @@ components:
           format: date-time
           description: Subnet creation date
       description: Subnet
+    zone-impact:
+      type: object
+      description: Hierarchical breakdown of impact in a given zone
+      required:
+        - impact
+        - resources
+      properties:
+        impact:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/impact-value-with-unit'
+        resources:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/impact-resource-tree-node'
     dbaas-user-valkey-secrets:
       type: object
       properties:
@@ -2190,7 +2214,6 @@ components:
           pattern: ^[_A-Za-z0-9][-._A-Za-z0-9]{0,63}$
           title: Role
           type: string
-          user_error: Must consist of alpha-numeric characters, dots, underscores or dashes, may not start with dash or dot, max 64 characters
         log_parameter:
           default: false
           description: Specifies that audit logging should include the parameters that were passed with the statement.
@@ -4899,6 +4922,20 @@ components:
         - inet4
         - dual
         - none
+    impact-breakdown:
+      type: object
+      required:
+        - impact
+        - zones
+      properties:
+        impact:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/impact-value-with-unit'
+        zones:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/zone-impact'
     elastic-ip-healthcheck:
       type: object
       properties:
@@ -5076,6 +5113,17 @@ components:
             type: string
           description: Tags associated with the operation
       description: Access key operation
+    impact-value-with-unit:
+      type: object
+      required:
+        - unit
+        - value
+      properties:
+        unit:
+          type: string
+        value:
+          type: number
+          format: double
     ssh-key:
       type: object
       properties:
@@ -5560,6 +5608,24 @@ components:
           format: uuid
           description: Snapshot ID
       description: Snapshot reference
+    impact-resource-tree-node:
+      type: object
+      description: Hierarchical breakdown of impact for a given level in the catalog tree
+      required:
+        - impact
+        - usage
+        - resources
+      properties:
+        impact:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/impact-value-with-unit'
+        usage:
+          $ref: '#/components/schemas/impact-value-with-unit'
+        resources:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/impact-resource-tree-node'
     rate-limited:
       type: object
       properties:
@@ -8966,6 +9032,22 @@ components:
         automatic:
           type: boolean
           description: Flag stating whether an automation run handled this historic mutation or if manual actor keys initiated it.
+    impact-error-response:
+      type: object
+      description: Error response
+      required:
+        - title
+        - status
+        - detail
+      properties:
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 100
+          maximum: 599
+        detail:
+          type: string
     dbaas-endpoint-rsyslog-input-create:
       type: object
       properties:
@@ -12197,6 +12279,10 @@ paths:
                   minimum: 0
                   exclusiveMinimum: true
                   description: TTL in seconds for the generated access key (cannot exceed the max TTL defined in the targeted assume role)
+                org-id:
+                  type: string
+                  format: uuid
+                  description: Organization ID that is the target to be assumed
               required:
                 - ttl
       operationId: assume-iam-role
@@ -13257,6 +13343,52 @@ paths:
       parameters: []
       summary: Get DBaaS Grafana settings
       operationId: get-dbaas-settings-grafana
+  /environmental-impact/estimate:
+    post:
+      tags: []
+      responses:
+        "200":
+          description: Impact estimate
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - impact
+                properties:
+                  impact:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/impact-value-with-unit'
+        "400":
+          description: Invalid request (e.g. product does not exist)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/impact-error-response'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/impact-error-response'
+      description: ""
+      parameters: []
+      summary: Return an estimate of the impact of a given usage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sku
+              properties:
+                sku:
+                  type: string
+                metadata:
+                  type: object
+      operationId: get-impact-estimate
   /deploy-target:
     get:
       tags:
@@ -18734,31 +18866,6 @@ paths:
               required:
                 - name
       operationId: promote-snapshot-to-template
-  /dbaas-clickhouse/{service-name}/user/{username}:
-    delete:
-      tags:
-        - dbaas
-      responses:
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/operation'
-      description: null
-      parameters:
-        - in: path
-          required: true
-          name: service-name
-          schema:
-            $ref: '#/components/schemas/dbaas-service-name'
-        - in: path
-          required: true
-          name: username
-          schema:
-            $ref: '#/components/schemas/dbaas-user-username'
-      summary: '[BETA] Delete a DBaaS ClickHouse user'
-      operationId: delete-dbaas-clickhouse-user
   /dbaas-clickhouse/{service-name}/user/{username}/password/reveal:
     get:
       tags:
@@ -19275,6 +19382,32 @@ paths:
             $ref: '#/components/schemas/dbaas-user-username'
       summary: Reveal the secrets of a DBaaS Thanos user
       operationId: reveal-dbaas-thanos-user-password
+  /dbaas-clickhouse/{service-name}/user/{user-uuid}:
+    delete:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: null
+      parameters:
+        - in: path
+          required: true
+          name: service-name
+          schema:
+            $ref: '#/components/schemas/dbaas-service-name'
+        - in: path
+          required: true
+          name: user-uuid
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Delete a DBaaS ClickHouse user'
+      operationId: delete-dbaas-clickhouse-user
   /dbaas-settings-pg:
     get:
       tags:
@@ -20697,6 +20830,42 @@ paths:
             format: uuid
       summary: Reboot a Compute instance
       operationId: reboot-instance
+  /environmental-impact/report:
+    get:
+      tags: []
+      responses:
+        "200":
+          description: Environmental impact report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/impact-breakdown'
+        "400":
+          description: Invalid request (e.g. to date before from date)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/impact-error-response'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/impact-error-response'
+      description: ""
+      parameters:
+        - in: query
+          required: false
+          name: from
+          schema:
+            type: string
+        - in: query
+          required: false
+          name: to
+          schema:
+            type: string
+      summary: Return an environmental impact report for the given period
+      operationId: get-impact-report
   /dbaas-settings-kafka:
     get:
       tags:

@@ -129,10 +129,8 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 
 		// Skip on reference.
 		if media.Schema.IsReference() {
-			if findable != nil {
-				output.Write(findable)
-			}
-
+			// $ref schemas use the referenced type directly (e.g. DBAASClickhouseRoles),
+			// not funcName+Response.  Skip findable to keep the convention consistent.
 			continue
 		}
 

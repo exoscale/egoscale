@@ -119,6 +119,8 @@ func RenderSimpleType(s *base.Schema) string {
 			return "string"
 		case "byte":
 			return "[]byte"
+		case "double":
+			return "float64"
 		default:
 			return s.Format
 		}

@@ -127,10 +127,20 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 			return nil, err
 		}
 
-		// Skip on reference.
+		// Skip on reference, unless the $ref schema name ends with "-response" —
+		// in that case the generated Go type matches funcName+"Response" and findable
+		// should still be emitted (e.g. list-ai-api-keys-response -> ListAIAPIKeysResponse).
 		if media.Schema.IsReference() {
-			// $ref schemas use the referenced type directly (e.g. DBAASClickhouseRoles),
-			// not funcName+Response.  Skip findable to keep the convention consistent.
+			refName := media.Schema.GetReference()
+			if !strings.HasSuffix(strings.ToLower(refName), "-response") {
+				// $ref to a non-Response schema (e.g. dbaas-clickhouse-roles).
+				// No funcName+Response type exists, so skip findable.
+				continue
+			}
+			// $ref to a *-response schema — findable is valid, fall through.
+			if findable != nil {
+				output.Write(findable)
+			}
 			continue
 		}
 

@@ -199,11 +199,20 @@ tags:
     x-display-name: DBaaS Valkey
     x-weight: 460
     x-icon: exo-db-valkey
+  - description: View the impact of your past usage, and estimate the impact of future usage.
+    parent: general
+    externalDocs:
+      description: Read more
+      url: https://www.exoscale.com/sustainability/
+    name: environmental-impact
+    x-display-name: Environmental Impact
+    x-weight: 1150
+    x-icon: exo-logo
   - description: Operations for KMS Key lifecycle management.
     parent: kms
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/kms/kms-key
+      url: https://community.exoscale.com/documentation/security/kms/overview
     name: kms-key
     x-display-name: KMS Key
     x-weight: 1130
@@ -364,7 +373,7 @@ tags:
     parent: kms
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/kms/crypto
+      url: https://community.exoscale.com/documentation/security/kms/overview
     name: crypto
     x-display-name: Cryptographic Operations
     x-weight: 1140
@@ -416,7 +425,7 @@ tags:
   - description: Exoscale Key Management Service is a managed security service that lets you create, control and manage the lifecycle of cryptographic keys.
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/kms/
+      url: https://community.exoscale.com/documentation/security/kms/
     name: kms
     x-display-name: KMS
     x-weight: 1120
@@ -971,6 +980,14 @@ components:
               type: number
           title: ClickHouse server settings
           type: object
+        tiered_storage_move_factor:
+          default: 0.2
+          description: The percentage of free disk space required on local storage before data is moved to object storage. A value of 0.2 means data is moved when local storage has less than 20% free space.
+          example: 0.2
+          maximum: 1
+          minimum: 0
+          title: Tiered storage move factor
+          type: number
       title: ClickHouse settings
       type: object
     block-storage-snapshot-ref:
@@ -1001,6 +1018,7 @@ components:
           enum:
             - tcp
             - esp
+            - all
             - icmp
             - udp
             - gre
@@ -1271,6 +1289,21 @@ components:
           format: date-time
           description: Subnet creation date
       description: Subnet
+    zone-impact:
+      type: object
+      description: Hierarchical breakdown of impact in a given zone
+      required:
+        - impact
+        - resources
+      properties:
+        impact:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/impact-value-with-unit'
+        resources:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/impact-resource-tree-node'
     dbaas-user-valkey-secrets:
       type: object
       properties:
@@ -2190,7 +2223,6 @@ components:
           pattern: ^[_A-Za-z0-9][-._A-Za-z0-9]{0,63}$
           title: Role
           type: string
-          user_error: Must consist of alpha-numeric characters, dots, underscores or dashes, may not start with dash or dot, max 64 characters
         log_parameter:
           default: false
           description: Specifies that audit logging should include the parameters that were passed with the statement.
@@ -2653,7 +2685,8 @@ components:
         - 0.24.0
         - 0.25.0
         - 0.25.1
-      default: 0.25.1
+        - 0.26.0
+      default: 0.26.0
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -3015,6 +3048,9 @@ components:
         rtxpro6000.96gb:
           $ref: '#/components/schemas/nvidia-mig-profile-rtxpro6000.96gb'
           description: Nvidia RTXPRO6000 MIG Profile
+        b300.269gb:
+          $ref: '#/components/schemas/nvidia-mig-profile-b300.269gb'
+          description: Nvidia B300 MIG Profile
       description: Nvidia MIG Profiles enabled
     dbaas-external-integration:
       type: object
@@ -4554,6 +4590,27 @@ components:
       properties:
         rotation:
           $ref: '#/components/schemas/key-rotation-config'
+    dbaas-clickhouse-role-privilege:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/dbaas-user-username'
+          description: Access type
+        database:
+          type: string
+          description: Database
+        table:
+          type: string
+          description: Table
+        grant-option:
+          type: boolean
+        column:
+          type: string
+          description: Column
+        is-partial-revoke:
+          type: boolean
+      required:
+        - name
     replica-failure:
       type: object
       required:
@@ -4755,6 +4812,13 @@ components:
           readOnly: true
           description: Indicates whether the snapshot was taken using an application-consistent method
       description: Snapshot
+    dbaas-clickhouse-roles:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/dbaas-clickhouse-role'
     list-vpc-entry:
       type: object
       properties:
@@ -4899,6 +4963,20 @@ components:
         - inet4
         - dual
         - none
+    impact-breakdown:
+      type: object
+      required:
+        - impact
+        - zones
+      properties:
+        impact:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/impact-value-with-unit'
+        zones:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/zone-impact'
     elastic-ip-healthcheck:
       type: object
       properties:
@@ -5076,6 +5154,17 @@ components:
             type: string
           description: Tags associated with the operation
       description: Access key operation
+    impact-value-with-unit:
+      type: object
+      required:
+        - unit
+        - value
+      properties:
+        unit:
+          type: string
+        value:
+          type: number
+          format: double
     ssh-key:
       type: object
       properties:
@@ -5560,6 +5649,24 @@ components:
           format: uuid
           description: Snapshot ID
       description: Snapshot reference
+    impact-resource-tree-node:
+      type: object
+      description: Hierarchical breakdown of impact for a given level in the catalog tree
+      required:
+        - impact
+        - usage
+        - resources
+      properties:
+        impact:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/impact-value-with-unit'
+        usage:
+          $ref: '#/components/schemas/impact-value-with-unit'
+        resources:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/impact-resource-tree-node'
     rate-limited:
       type: object
       properties:
@@ -6123,6 +6230,20 @@ components:
           readOnly: true
           description: Operation status
       description: Operation
+    dbaas-clickhouse-granted-role:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Granted role name
+        uuid:
+          type: string
+        is-default:
+          type: boolean
+        with-admin-option:
+          type: boolean
+      required:
+        - name
     iam-api-key-created:
       type: object
       properties:
@@ -7269,6 +7390,24 @@ components:
           readOnly: true
           description: Cluster endpoint
       description: SKS Cluster
+    dbaas-clickhouse-role:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/dbaas-user-username'
+          description: Role name
+        uuid:
+          type: string
+        privileges:
+          type: array
+          items:
+            $ref: '#/components/schemas/dbaas-clickhouse-role-privilege'
+        granted-roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/dbaas-clickhouse-granted-role'
+      required:
+        - name
     dbaas-valkey-users:
       type: object
       properties:
@@ -7439,6 +7578,24 @@ components:
           format: uuid
           description: Block storage volume ID
       description: Target block storage volume
+    nvidia-mig-profile-b300.269gb:
+      type: string
+      enum:
+        - 1g.34gb
+        - 1g.34gb+me
+        - 1g.67gb
+        - 2g.67gb
+        - 3g.135gb
+        - 4g.135gb
+        - 7g.269gb
+      x-go-enum-varnames:
+        - 1G34Gb
+        - 1G34GbMe
+        - 1G67Gb
+        - 2G67Gb
+        - 3G135Gb
+        - 4G135Gb
+        - 7G269Gb
     scale-deployment-request:
       description: Scale AI deployment
       properties:
@@ -7657,6 +7814,7 @@ components:
             - creating
             - deleting
             - running
+            - degraded
             - scaling
             - updating
             - error
@@ -8966,6 +9124,22 @@ components:
         automatic:
           type: boolean
           description: Flag stating whether an automation run handled this historic mutation or if manual actor keys initiated it.
+    impact-error-response:
+      type: object
+      description: Error response
+      required:
+        - title
+        - status
+        - detail
+      properties:
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 100
+          maximum: 599
+        detail:
+          type: string
     dbaas-endpoint-rsyslog-input-create:
       type: object
       properties:
@@ -13257,6 +13431,57 @@ paths:
       parameters: []
       summary: Get DBaaS Grafana settings
       operationId: get-dbaas-settings-grafana
+  /environmental-impact/estimate:
+    post:
+      tags:
+        - environmental-impact
+      responses:
+        "200":
+          description: Impact estimate
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - impact
+                properties:
+                  impact:
+                    type: object
+                    description: Map of SKUs to their different impact indicators
+                    additionalProperties:
+                      type: object
+                      additionalProperties:
+                        $ref: '#/components/schemas/impact-value-with-unit'
+        "400":
+          description: Invalid request (e.g. product does not exist)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/impact-error-response'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/impact-error-response'
+      description: '[BETA] Returns an estimate of the impact of a unit of usage of one or more products, e.g. the impact of using a standard medium instance for one hour in ch-gva-2'
+      parameters: []
+      summary: '[BETA] Get an estimate of the impact of using products'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sku
+              properties:
+                sku:
+                  type: string
+                  description: Product SKU, e.g. compute:ch-gva-2:instance:standard:medium; can also include wildcards, e.g. compute:*:instance:standard:* for all standard instances in all zones
+                metadata:
+                  type: object
+      operationId: get-impact-estimate
   /deploy-target:
     get:
       tags:
@@ -13407,6 +13632,26 @@ paths:
             $ref: '#/components/schemas/dbaas-pg-database-name'
       summary: Delete a DBaaS Postgres database
       operationId: delete-dbaas-pg-database
+  /dbaas-clickhouse/{service-name}/role:
+    get:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dbaas-clickhouse-roles'
+      description: null
+      parameters:
+        - in: path
+          required: true
+          name: service-name
+          schema:
+            $ref: '#/components/schemas/dbaas-service-name'
+      summary: '[BETA] List DBaaS ClickHouse roles'
+      operationId: list-dbaas-clickhouse-roles
   /block-storage/{id}:attach:
     put:
       tags:
@@ -14760,6 +15005,32 @@ paths:
             format: uuid
       summary: Delete a Security Group
       operationId: delete-security-group
+  /dbaas-clickhouse/{service-name}/role/{role-uuid}:
+    delete:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: null
+      parameters:
+        - in: path
+          required: true
+          name: service-name
+          schema:
+            $ref: '#/components/schemas/dbaas-service-name'
+        - in: path
+          required: true
+          name: role-uuid
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Delete a DBaaS ClickHouse role'
+      operationId: delete-dbaas-clickhouse-role
   /sks-cluster/{id}/authority/{authority}/cert:
     get:
       tags:
@@ -16437,6 +16708,7 @@ paths:
                   enum:
                     - tcp
                     - esp
+                    - all
                     - icmp
                     - udp
                     - gre
@@ -18734,31 +19006,6 @@ paths:
               required:
                 - name
       operationId: promote-snapshot-to-template
-  /dbaas-clickhouse/{service-name}/user/{username}:
-    delete:
-      tags:
-        - dbaas
-      responses:
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/operation'
-      description: null
-      parameters:
-        - in: path
-          required: true
-          name: service-name
-          schema:
-            $ref: '#/components/schemas/dbaas-service-name'
-        - in: path
-          required: true
-          name: username
-          schema:
-            $ref: '#/components/schemas/dbaas-user-username'
-      summary: '[BETA] Delete a DBaaS ClickHouse user'
-      operationId: delete-dbaas-clickhouse-user
   /dbaas-clickhouse/{service-name}/user/{username}/password/reveal:
     get:
       tags:
@@ -19275,6 +19522,32 @@ paths:
             $ref: '#/components/schemas/dbaas-user-username'
       summary: Reveal the secrets of a DBaaS Thanos user
       operationId: reveal-dbaas-thanos-user-password
+  /dbaas-clickhouse/{service-name}/user/{user-uuid}:
+    delete:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: null
+      parameters:
+        - in: path
+          required: true
+          name: service-name
+          schema:
+            $ref: '#/components/schemas/dbaas-service-name'
+        - in: path
+          required: true
+          name: user-uuid
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Delete a DBaaS ClickHouse user'
+      operationId: delete-dbaas-clickhouse-user
   /dbaas-settings-pg:
     get:
       tags:
@@ -19904,10 +20177,6 @@ paths:
                   $ref: '#/components/schemas/labels'
                   nullable: true
                   description: Resource labels
-                ipv4-block:
-                  type: string
-                  nullable: true
-                  description: Subnet CIDR
       operationId: update-subnet
     get:
       tags:
@@ -20697,6 +20966,43 @@ paths:
             format: uuid
       summary: Reboot a Compute instance
       operationId: reboot-instance
+  /environmental-impact/report:
+    get:
+      tags:
+        - environmental-impact
+      responses:
+        "200":
+          description: Environmental impact report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/impact-breakdown'
+        "400":
+          description: Invalid request (e.g. to date before from date)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/impact-error-response'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/impact-error-response'
+      description: '[BETA] Returns a breakdown of the impact of your organization''s usage over the given period'
+      parameters:
+        - in: query
+          required: false
+          name: from
+          schema:
+            type: string
+        - in: query
+          required: false
+          name: to
+          schema:
+            type: string
+      summary: '[BETA] Get an environmental impact report'
+      operationId: get-impact-report
   /dbaas-settings-kafka:
     get:
       tags:

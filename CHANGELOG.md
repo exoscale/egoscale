@@ -4,6 +4,8 @@ Changelog
 Unreleased
 ----------
 
+- v3 generator: handle nullable OpenAPI 3.1 type arrays (#776)
+
 3.1.43
 ------
 

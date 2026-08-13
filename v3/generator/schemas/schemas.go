@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/exoscale/egoscale/v3/generator/helpers"
@@ -371,19 +372,25 @@ func renderObject(typeName string, s *base.Schema, output *bytes.Buffer, schemaN
 			}
 		}
 
-		InferType(prop)
+		nullable := prop.Nullable != nil && *prop.Nullable
+		if slices.Contains(prop.Type, "null") {
+			types := slices.DeleteFunc(slices.Clone(prop.Type), func(typ string) bool { return typ == "null" })
+			if len(types) != 1 {
+				return "", fmt.Errorf("property %q: nullable type must contain exactly one non-null type", propName)
+			}
+			propCopy := *prop
+			propCopy.Type = types
+			prop = &propCopy
+			nullable = true
+		}
 
+		InferType(prop)
 		propType := ""
 		for _, t := range prop.Type {
 			if t != "null" {
 				propType = t
 				break
 			}
-		}
-
-		var nullable = false
-		if prop.Nullable != nil {
-			nullable = *prop.Nullable
 		}
 
 		// https://github.com/pb33f/libopenapi/issues/283

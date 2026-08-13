@@ -2717,6 +2717,92 @@ func (c Client) GetDBAASClickhouseAclConfig(ctx context.Context, serviceName str
 	return bodyresp, nil
 }
 
+func (c Client) ListDBAASClickhouseRoles(ctx context.Context, serviceName string) (*DBAASClickhouseRoles, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v/role", serviceName)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseRoles: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseRoles: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseRoles: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-dbaas-clickhouse-roles")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseRoles: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseRoles: http response: %w", err)
+	}
+
+	bodyresp := new(DBAASClickhouseRoles)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListDBAASClickhouseRoles: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+func (c Client) DeleteDBAASClickhouseRole(ctx context.Context, serviceName string, roleUuid UUID) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v/role/%v", serviceName, roleUuid)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseRole: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseRole: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseRole: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-dbaas-clickhouse-role")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseRole: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseRole: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteDBAASClickhouseRole: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 func (c Client) ListDBAASClickhouseUsers(ctx context.Context, serviceName string) (*DBAASClickhouseUsers, error) {
 	path := fmt.Sprintf("/dbaas-clickhouse/%v/user", serviceName)
 
@@ -2817,8 +2903,8 @@ func (c Client) CreateDBAASClickhouseUser(ctx context.Context, serviceName strin
 	return bodyresp, nil
 }
 
-func (c Client) DeleteDBAASClickhouseUser(ctx context.Context, serviceName string, username string) (*Operation, error) {
-	path := fmt.Sprintf("/dbaas-clickhouse/%v/user/%v", serviceName, username)
+func (c Client) DeleteDBAASClickhouseUser(ctx context.Context, serviceName string, userUuid UUID) (*Operation, error) {
+	path := fmt.Sprintf("/dbaas-clickhouse/%v/user/%v", serviceName, userUuid)
 
 	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
 	if err != nil {
@@ -11565,6 +11651,136 @@ func (c Client) GetEnvImpact(ctx context.Context, period string) (*EnvImpactRepo
 	return bodyresp, nil
 }
 
+type GetImpactEstimateResponseImpact map[string]ImpactValueWithUnit
+
+type GetImpactEstimateResponse struct {
+	// Map of SKUs to their different impact indicators
+	Impact map[string]GetImpactEstimateResponseImpact `json:"impact" validate:"required"`
+}
+
+type GetImpactEstimateRequest struct {
+	Metadata map[string]any `json:"metadata,omitempty"`
+	// Product SKU, e.g. compute:ch-gva-2:instance:standard:medium; can also include wildcards, e.g. compute:*:instance:standard:* for all standard instances in all zones
+	Sku string `json:"sku" validate:"required"`
+}
+
+// [BETA] Returns an estimate of the impact of a unit of usage of one or more products, e.g. the impact of using a standard medium instance for one hour in ch-gva-2
+func (c Client) GetImpactEstimate(ctx context.Context, req GetImpactEstimateRequest) (*GetImpactEstimateResponse, error) {
+	path := "/environmental-impact/estimate"
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: prepare JSON body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-impact-estimate")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: http response: %w", err)
+	}
+
+	bodyresp := new(GetImpactEstimateResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetImpactEstimate: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type GetImpactReportOpt func(url.Values)
+
+func GetImpactReportWithFrom(from string) GetImpactReportOpt {
+	return func(q url.Values) {
+		q.Add("from", fmt.Sprint(from))
+	}
+}
+
+func GetImpactReportWithTo(to string) GetImpactReportOpt {
+	return func(q url.Values) {
+		q.Add("to", fmt.Sprint(to))
+	}
+}
+
+// [BETA] Returns a breakdown of the impact of your organization's usage over the given period
+func (c Client) GetImpactReport(ctx context.Context, opts ...GetImpactReportOpt) (*ImpactBreakdown, error) {
+	path := "/environmental-impact/report"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetImpactReport: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if len(opts) > 0 {
+		q := request.URL.Query()
+		for _, opt := range opts {
+			opt(q)
+		}
+		request.URL.RawQuery = q.Encode()
+	}
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetImpactReport: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetImpactReport: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-impact-report")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetImpactReport: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetImpactReport: http response: %w", err)
+	}
+
+	bodyresp := new(ImpactBreakdown)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetImpactReport: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 type ListEventsOpt func(url.Values)
 
 func ListEventsWithFrom(from time.Time) ListEventsOpt {
@@ -16587,6 +16803,7 @@ type AddRuleToSecurityGroupRequestProtocol string
 const (
 	AddRuleToSecurityGroupRequestProtocolTCP    AddRuleToSecurityGroupRequestProtocol = "tcp"
 	AddRuleToSecurityGroupRequestProtocolEsp    AddRuleToSecurityGroupRequestProtocol = "esp"
+	AddRuleToSecurityGroupRequestProtocolAll    AddRuleToSecurityGroupRequestProtocol = "all"
 	AddRuleToSecurityGroupRequestProtocolICMP   AddRuleToSecurityGroupRequestProtocol = "icmp"
 	AddRuleToSecurityGroupRequestProtocolUDP    AddRuleToSecurityGroupRequestProtocol = "udp"
 	AddRuleToSecurityGroupRequestProtocolGre    AddRuleToSecurityGroupRequestProtocol = "gre"
@@ -20197,9 +20414,7 @@ func (c Client) GetSubnet(ctx context.Context, vpcID UUID, id UUID) (*Subnet, er
 type UpdateSubnetRequest struct {
 	// Subnet description
 	Description *string `json:"description,omitempty" validate:"omitempty,lte=4096"`
-	// Subnet CIDR
-	Ipv4Block *string `json:"ipv4-block,omitempty"`
-	Labels    Labels  `json:"labels"`
+	Labels      Labels  `json:"labels"`
 	// Subnet name
 	Name *string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }

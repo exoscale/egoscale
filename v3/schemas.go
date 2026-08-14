@@ -4935,7 +4935,7 @@ type Operation struct {
 // Per-org Unit Of Measurement (UOM) consumption quota response
 type OrgConsumptionQuotaResponse struct {
 	// Per-org Unit Of Measurement (UOM) consumption quota (UOM/min). Null means unlimited. UOM represents weighted units across different AI workloads (e.g., tokens for LLMs, minutes for TTS, pages for OCR).
-	QuotaUomPerMinute int `json:"quota-uom-per-minute,omitempty" validate:"omitempty,gte=0"`
+	QuotaUomPerMinute *int `json:"quota-uom-per-minute,omitempty" validate:"omitempty,gte=0"`
 }
 
 // Organization
@@ -5271,7 +5271,7 @@ type SecurityGroupRule struct {
 // Request to set per-org Unit Of Measurement (UOM) consumption quota
 type SetOrgConsumptionQuotaRequest struct {
 	// Per-org Unit Of Measurement (UOM) consumption quota (UOM/min). Pass null to remove the limit. UOM represents weighted units across different AI workloads (e.g., tokens for LLMs, minutes for TTS, pages for OCR).
-	QuotaUomPerMinute int `json:"quota-uom-per-minute,omitempty" validate:"omitempty,gte=0"`
+	QuotaUomPerMinute *int `json:"quota-uom-per-minute,omitempty" validate:"omitempty,gte=0"`
 }
 
 // Kubernetes Audit parameters

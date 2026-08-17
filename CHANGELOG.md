@@ -4,7 +4,12 @@ Changelog
 Unreleased
 ----------
 
+3.1.44
+------
+
 - v3 generator: handle nullable OpenAPI 3.1 type arrays (#776)
+- v3 generator: fix response suffix and number parsing (#802)
+- v3: regenerate API spec - add DBaaS ClickHouse RBAC and Impact Report/Estimate endpoints (#800)
 
 3.1.43
 ------

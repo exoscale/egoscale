@@ -4,6 +4,11 @@ Changelog
 Unreleased
 ----------
 
+3.1.45
+------
+
+change: delete unused return values vpc delete endpoints
+
 3.1.44
 ------
 

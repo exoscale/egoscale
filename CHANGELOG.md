@@ -4,6 +4,13 @@ Changelog
 Unreleased
 ----------
 
+3.1.46
+------
+
+No functional changes.
+
+- ci: pin Go version
+
 3.1.45
 ------
 

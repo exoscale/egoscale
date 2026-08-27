@@ -1,3 +1,4 @@
+//lint:file-ignore SA4006 egoscale v1 is deprecated
 package egoscale
 
 import (

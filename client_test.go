@@ -1,3 +1,4 @@
+//lint:file-ignore SA4006 egoscale v1 is deprecated
 package egoscale
 
 import (
@@ -549,6 +550,16 @@ func TestClientList(t *testing.T) {
 	}}`
 
 	for _, tt := range lsTests() {
+		end := len(tt.name)
+		switch {
+		case strings.HasSuffix(tt.name, "ses"):
+			end -= 2 // nolint: ineffassign
+		case strings.HasSuffix(tt.name, "jobs"):
+			//lint:ignore SA4011 egoscale v1 is deprecated no need to fix linting issues
+			break
+		default:
+			end-- // nolint: ineffassign
+		}
 		responses := make([]response, len(tt.listables))
 		for i := range tt.listables {
 			responses[i] = response{200, jsonContentType, fmt.Sprintf(body, tt.name, tt.fieldName)}

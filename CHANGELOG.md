@@ -4,6 +4,9 @@ Changelog
 Unreleased
 ----------
 
+0.102.5
+-------
+
 - v2: do not override custom API endpoints for zoned requests #806
 
 3.1.46

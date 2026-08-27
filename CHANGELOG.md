@@ -4,6 +4,8 @@ Changelog
 Unreleased
 ----------
 
+- v2: preserve custom API endpoints on zoned requests
+
 3.1.46
 ------
 

@@ -203,23 +203,33 @@ func TestDefaultClient_Retry(t *testing.T) {
 }
 
 func TestSetEndpointFromContext(t *testing.T) {
-	var (
-		ctx                = context.Background()
-		testReqEndpointEnv = "api"
-		testURL            = "https://www.example.net/test.txt"
-		req, _             = http.NewRequest("GET", testURL, nil)
-	)
+	ctx := context.Background()
+	zonedCtx := api.WithEndpoint(ctx, api.NewReqEndpoint("api", "ch-gva-2"))
+	environmentCtx := api.WithEndpoint(ctx, api.NewReqEndpoint("test", "ch-gva-2"))
 
-	// With empty context
-	err := setEndpointFromContext(ctx, req)
-	require.NoError(t, err)
-	require.Equal(t, testURL, req.URL.String())
-
-	// With augmented context
-	reqEndpoint := api.NewReqEndpoint(testReqEndpointEnv, "")
-	err = setEndpointFromContext(api.WithEndpoint(ctx, reqEndpoint), req)
-	require.NoError(t, err)
-	require.Equal(t, reqEndpoint.Host(), req.URL.Host)
+	for _, tt := range []struct {
+		name     string
+		ctx      context.Context
+		url      string
+		wantHost string
+	}{
+		{name: "without endpoint context", ctx: ctx, url: "https://api.exoscale.com/v2/ssh-key", wantHost: "api.exoscale.com"},
+		{name: "default endpoint", ctx: zonedCtx, url: "https://api.exoscale.com/v2/ssh-key", wantHost: "api-ch-gva-2.exoscale.com"},
+		{name: "default endpoint with environment", ctx: environmentCtx, url: "https://api.exoscale.com/v2/ssh-key", wantHost: "test-ch-gva-2.exoscale.com"},
+		{name: "environment endpoint", ctx: environmentCtx, url: "https://test.exoscale.com/v2/ssh-key", wantHost: "test-ch-gva-2.exoscale.com"},
+		{name: "custom hostname", ctx: zonedCtx, url: "https://gateway.internal:8443/v2/ssh-key", wantHost: "gateway.internal:8443"},
+		{name: "custom IPv4", ctx: zonedCtx, url: "http://127.0.0.1:8080/v2/ssh-key", wantHost: "127.0.0.1:8080"},
+		{name: "custom IPv6", ctx: zonedCtx, url: "http://[::1]/v2/ssh-key", wantHost: "[::1]"},
+		{name: "custom scheme", ctx: zonedCtx, url: "http://api.exoscale.com/v2/ssh-key", wantHost: "api.exoscale.com"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, tt.url, nil)
+			require.NoError(t, err)
+			require.NoError(t, setEndpointFromContext(tt.ctx, req))
+			require.Equal(t, tt.wantHost, req.URL.Host)
+			require.Equal(t, tt.wantHost, req.Host)
+		})
+	}
 }
 
 func TestNewClient(t *testing.T) {

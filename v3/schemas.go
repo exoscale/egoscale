@@ -3003,6 +3003,16 @@ type InstancePassword struct {
 	Password string `json:"password,omitempty"`
 }
 
+// Error reason (if any) explaining why the Instance Pool is in an error state
+type InstancePoolErrorReason struct {
+	// Error cause
+	Cause string `json:"cause,omitempty"`
+	// Job ID at the origin of error
+	JobID string `json:"job-id,omitempty"`
+	// Error type
+	Type string `json:"type,omitempty"`
+}
+
 type InstancePoolState string
 
 const (
@@ -3066,16 +3076,6 @@ type InstancePool struct {
 	Template *Template `json:"template,omitempty"`
 	// Instances Cloud-init user-data
 	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
-}
-
-// Error reason explaining why an Instance Pool is in an error state
-type InstancePoolErrorReason struct {
-	// Error cause
-	Cause string `json:"cause,omitempty"`
-	// Job ID at the origin of error
-	JobID string `json:"job-id,omitempty"`
-	// Error type
-	Type string `json:"type,omitempty"`
 }
 
 // Target Instance Pool

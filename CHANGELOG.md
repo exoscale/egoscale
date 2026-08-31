@@ -4,6 +4,8 @@ Changelog
 Unreleased
 ----------
 
+- v3: add `error_reason` field and `degraded` state to Instance Pool schema
+
 0.102.5
 -------
 

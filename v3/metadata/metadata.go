@@ -105,6 +105,10 @@ func httpGet(ctx context.Context, url string) (string, error) {
 		return "", err
 	}
 
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("bad http status, got: %d with body: %s", resp.StatusCode, string(body))
+	}
+
 	return string(body), nil
 }
 

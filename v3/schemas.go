@@ -3028,6 +3028,16 @@ type InstancePassword struct {
 	Password string `json:"password,omitempty"`
 }
 
+// Error reason (if any) explaining why the Instance Pool is in an error state
+type InstancePoolErrorReason struct {
+	// Error cause
+	Cause string `json:"cause,omitempty"`
+	// Job ID at the origin of error
+	JobID string `json:"job-id,omitempty"`
+	// Error type
+	Type string `json:"type,omitempty"`
+}
+
 type InstancePoolState string
 
 const (
@@ -3038,6 +3048,7 @@ const (
 	InstancePoolStateSuspended   InstancePoolState = "suspended"
 	InstancePoolStateRunning     InstancePoolState = "running"
 	InstancePoolStateUpdating    InstancePoolState = "updating"
+	InstancePoolStateDegraded    InstancePoolState = "degraded"
 )
 
 // Instance Pool
@@ -3054,6 +3065,8 @@ type InstancePool struct {
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=10,lte=51200"`
 	// Instances Elastic IPs
 	ElasticIPS []ElasticIP `json:"elastic-ips,omitempty"`
+	// Error reason (if any) explaining why the Instance Pool is in an error state
+	ErrorReason *InstancePoolErrorReason `json:"error_reason,omitempty"`
 	// Instance Pool ID
 	ID UUID `json:"id,omitempty"`
 	// The instances created by the Instance Pool will be prefixed with this value (default: pool)

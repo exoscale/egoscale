@@ -1,10 +1,11 @@
 Changelog
 =========
 
-Unreleased
+3.1.47
 ----------
 
 - v3: add `error_reason` field and `degraded` state to Instance Pool schema
+- v3: add `max-kubelet-pods` field to SKS InstancePool schema
 
 0.102.5
 -------

@@ -7462,20 +7462,6 @@ components:
           items:
             $ref: '#/components/schemas/elastic-ip-ref'
           description: Instances Elastic IPs
-        error_reason:
-          type: object
-          readOnly: true
-          description: Error reason (if any) explaining why the Instance Pool is in an error state
-          properties:
-            cause:
-              type: string
-              description: Error cause
-            type:
-              type: string
-              description: Error type
-            job-id:
-              type: string
-              description: Job ID at the origin of error
         name:
           type: string
           maxLength: 255
@@ -7508,7 +7494,6 @@ components:
             - suspended
             - running
             - updating
-            - degraded
           readOnly: true
           description: Instance Pool state
         size:
@@ -7871,6 +7856,15 @@ components:
         deploy-target:
           $ref: '#/components/schemas/deploy-target-ref'
           description: Instance Pool Deploy Target
+        kubelet-max-pods:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 65535
+          exclusiveMinimum: false
+          exclusiveMaximum: false
+          nullable: true
+          description: Maximum number of pods per node. Set to use a value other than the kubelet default.
         addons:
           type: array
           items:
@@ -14176,6 +14170,15 @@ paths:
                   $ref: '#/components/schemas/deploy-target-ref'
                   nullable: true
                   description: Nodepool Deploy Target
+                kubelet-max-pods:
+                  type: integer
+                  format: int64
+                  minimum: 1
+                  maximum: 65535
+                  exclusiveMinimum: false
+                  exclusiveMaximum: false
+                  nullable: true
+                  description: Maximum number of pods per node (kubelet setting)
                 disk-size:
                   type: integer
                   format: int64
@@ -21489,6 +21492,15 @@ paths:
                 deploy-target:
                   $ref: '#/components/schemas/deploy-target-ref'
                   description: Nodepool Deploy Target
+                kubelet-max-pods:
+                  type: integer
+                  format: int64
+                  minimum: 1
+                  maximum: 65535
+                  exclusiveMinimum: false
+                  exclusiveMaximum: false
+                  nullable: true
+                  description: Maximum number of pods per node (kubelet setting)
                 addons:
                   type: array
                   items:

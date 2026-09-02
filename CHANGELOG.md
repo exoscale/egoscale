@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Unreleased
+----------
+- v3: fix: check http error for metadata package - #812
+
 3.1.47
 ----------
 

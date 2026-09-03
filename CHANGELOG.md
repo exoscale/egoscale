@@ -1,12 +1,17 @@
 Changelog
 =========
 
+3.1.49
+------
+
+- Fix error handling compatibility (#813)
+
 3.1.48
-----------
+------
 - v3: fix: check http error for metadata package - #812
 
 3.1.47
-----------
+------
 
 - v3: add `error_reason` field and `degraded` state to Instance Pool schema
 - v3: add `max-kubelet-pods` field to SKS InstancePool schema
@@ -34,8 +39,6 @@ change: delete unused return values vpc delete endpoints
 - v3 generator: handle nullable OpenAPI 3.1 type arrays (#776)
 - v3 generator: fix response suffix and number parsing (#802)
 - v3: regenerate API spec - add DBaaS ClickHouse RBAC and Impact Report/Estimate endpoints (#800)
-
-- Fix error handling compatibility (#813)
 
 3.1.43
 ------

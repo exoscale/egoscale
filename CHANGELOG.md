@@ -35,6 +35,8 @@ change: delete unused return values vpc delete endpoints
 - v3 generator: fix response suffix and number parsing (#802)
 - v3: regenerate API spec - add DBaaS ClickHouse RBAC and Impact Report/Estimate endpoints (#800)
 
+- Fix error handling compatibility (#813)
+
 3.1.43
 ------
 

@@ -36,6 +36,14 @@ tags:
     x-display-name: AI API Key
     x-weight: 940
     x-icon: exo-license
+  - description: ""
+    externalDocs:
+      description: Read more
+      url: https://community.exoscale.com/product/networking/
+    name: networking
+    x-display-name: Networking
+    x-weight: 150
+    x-icon: exo-network
   - description: Elastic IPs are additional public IPv4/6 addresses that can be attached to Compute instances, with optional healthcheck support.
     parent: compute
     externalDocs:
@@ -259,7 +267,7 @@ tags:
     parent: vpc
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/
+      url: https://community.exoscale.com/product/networking/vpc
     name: vpc-route
     x-display-name: VPC Routes
     x-weight: 198
@@ -318,10 +326,10 @@ tags:
     x-weight: 230
     x-icon: exo-gpu
   - description: '[BETA] Virtual Private Cloud (VPC) provides isolated virtual network environments for your Exoscale resources.'
-    parent: compute
+    parent: networking
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/
+      url: https://community.exoscale.com/product/networking/vpc
     name: vpc
     x-display-name: VPC
     x-weight: 195
@@ -461,7 +469,7 @@ tags:
     parent: vpc
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/
+      url: https://community.exoscale.com/product/networking/vpc
     name: vpc-management
     x-display-name: VPC
     x-weight: 196
@@ -490,7 +498,7 @@ tags:
     parent: vpc
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/
+      url: https://community.exoscale.com/product/networking/vpc
     name: vpc-subnet
     x-display-name: VPC Subnets
     x-weight: 197
@@ -2522,15 +2530,18 @@ components:
     load-balancer:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-          description: Load Balancer ID
         description:
           type: string
           maxLength: 255
           description: Load Balancer description
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: Load Balancer Labels
+        ip:
+          type: string
+          format: ip
+          readOnly: true
+          description: Load Balancer public IP
         name:
           type: string
           maxLength: 255
@@ -2547,24 +2558,28 @@ components:
             - error
           readOnly: true
           description: Load Balancer state
+        addressfamily:
+          type: string
+          enum:
+            - inet4
+            - inet6
+          readOnly: true
+          description: Load Balancer address family
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Load Balancer ID
         created-at:
           type: string
           format: date-time
           readOnly: true
           description: Load Balancer creation date
-        ip:
-          type: string
-          format: ipv4
-          readOnly: true
-          description: Load Balancer public IP
         services:
           type: array
           items:
             $ref: '#/components/schemas/load-balancer-service'
           description: Load Balancer Services
-        labels:
-          $ref: '#/components/schemas/labels'
-          description: Load Balancer Labels
       description: Load Balancer
     sks-cluster-deprecated-resource:
       type: object
@@ -3973,7 +3988,7 @@ components:
       properties:
         public-ip:
           type: string
-          format: ipv4
+          format: ip
           description: Backend server public IP
         status:
           type: string
@@ -6952,6 +6967,9 @@ components:
           exclusiveMinimum: false
           exclusiveMaximum: false
           description: Instance disk size in GiB
+        ip-forwarding:
+          type: boolean
+          description: VPC ip forwarding
         disk-encrypted:
           type: boolean
           readOnly: true
@@ -11760,6 +11778,12 @@ paths:
                   type: string
                   maxLength: 255
                   description: Load Balancer description
+                addressfamily:
+                  type: string
+                  enum:
+                    - inet4
+                    - inet6
+                  description: 'Load Balancer address family (default: :inet4)'
                 name:
                   type: string
                   maxLength: 255
@@ -13466,9 +13490,10 @@ paths:
               properties:
                 sku:
                   type: string
-                  description: Product SKU, e.g. compute:ch-gva-2:instance:standard:medium; can also include wildcards, e.g. compute:*:instance:standard:* for all standard instances in all zones
+                  description: Product SKU, e.g. compute:ch-gva-2:instance:standard:medium; can also include wildcards, e.g. compute:\*:instance:standard:\* for all standard instances in all zones
                 metadata:
                   type: object
+                  description: Product-specific configuration details
       operationId: get-impact-estimate
   /deploy-target:
     get:
@@ -16770,14 +16795,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/env-impact-report'
-      description: '[BETA] Returns environmental impact reports for an organization'
+      description: '[DEPRECATED] use get-impact-report endpoint'
       parameters:
         - in: path
           required: true
           name: period
           schema:
             type: string
-      summary: '[BETA] Retrieve organization environmental impact reports'
+      summary: '[DEPRECATED] use get-impact-report endpoint'
       operationId: get-env-impact
   /dbaas-postgres/{service-name}/user/{username}:
     delete:
@@ -23044,6 +23069,9 @@ paths:
                   exclusiveMinimum: false
                   exclusiveMaximum: false
                   description: Instance disk size in GiB
+                ip-forwarding:
+                  type: boolean
+                  description: VPC ip forwarding
                 ssh-keys:
                   type: array
                   items:

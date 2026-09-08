@@ -1,6 +1,13 @@
 Changelog
 =========
 
+3.1.50
+------
+
+- v3: Add support for IPv6 to NLB
+- v3: Add support for configuring IP forwarding for VPC
+- v3: deprecate legacy env-impact endpoint
+
 3.1.49
 ------
 

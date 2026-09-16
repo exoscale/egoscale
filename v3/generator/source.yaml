@@ -211,7 +211,7 @@ tags:
     parent: general
     externalDocs:
       description: Read more
-      url: https://www.exoscale.com/sustainability/
+      url: https://community.exoscale.com/platform/environmental-impact/
     name: environmental-impact
     x-display-name: Environmental Impact
     x-weight: 1150
@@ -1179,11 +1179,6 @@ components:
           format: uuid
           type: string
           readOnly: true
-        org-uuid:
-          description: Organization UUID that owns this key
-          format: uuid
-          type: string
-          readOnly: true
         created-at:
           description: Creation timestamp
           format: date-time
@@ -1192,7 +1187,6 @@ components:
       type: object
       required:
         - id
-        - org-uuid
         - name
         - scope
         - created-at
@@ -2094,11 +2088,6 @@ components:
           format: uuid
           type: string
           readOnly: true
-        org-uuid:
-          description: Organization UUID that owns this key
-          format: uuid
-          type: string
-          readOnly: true
         created-at:
           description: Creation timestamp
           format: date-time
@@ -2107,7 +2096,6 @@ components:
       type: object
       required:
         - id
-        - org-uuid
         - name
         - scope
         - created-at
@@ -2451,6 +2439,9 @@ components:
         labels:
           $ref: '#/components/schemas/labels'
           description: Resource labels
+        dhcp-options:
+          $ref: '#/components/schemas/vpc-dhcp-options'
+          description: DHCP options
       description: VPC
     json-schema-thanos:
       properties:
@@ -2710,7 +2701,8 @@ components:
         - 0.27.0
         - 0.27.1
         - 0.28.0
-      default: 0.28.0
+        - 0.29.0
+      default: 0.29.0
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -4869,6 +4861,9 @@ components:
         labels:
           $ref: '#/components/schemas/labels'
           description: Resource labels
+        dhcp-options:
+          $ref: '#/components/schemas/vpc-dhcp-options'
+          description: DHCP options
       description: VPC
     dbaas-endpoint-rsyslog-secrets:
       type: object
@@ -4983,6 +4978,10 @@ components:
           type: string
           format: uuid
           description: IAM API Key Role ID
+        created-at:
+          type: string
+          format: date-time
+          description: IAM API Key creation timestamp
       description: IAM API Key
     public-ip-assignment:
       type: string
@@ -5340,7 +5339,6 @@ components:
             name: default-public-key
             scope: public
             id: 11111111-1111-1111-1111-111111111111
-            org-uuid: 22222222-2222-2222-2222-222222222222
             created-at: "2026-03-25T10:00:00Z"
       required:
         - ai-api-keys
@@ -6279,6 +6277,10 @@ components:
           type: string
           format: uuid
           description: IAM API Key Role ID
+        created-at:
+          type: string
+          format: date-time
+          description: IAM API Key creation timestamp
       description: IAM API Key
     get-deployment-response:
       description: AI deployment
@@ -6339,12 +6341,6 @@ components:
           format: date-time
           type: string
           readOnly: true
-        visibility:
-          description: 'Deployment visibility: private for your organization''s deployments, public for Exoscale Managed Inference deployments.'
-          enum:
-            - public
-            - private
-          type: string
         inference-engine-parameters:
           description: Optional extra inference engine server CLI args
           type: array
@@ -6358,7 +6354,6 @@ components:
         - state
         - deployment-url
         - model
-        - visibility
     list-route-entry:
       type: object
       properties:
@@ -7258,12 +7253,6 @@ components:
           format: date-time
           type: string
           readOnly: true
-        visibility:
-          description: 'Deployment visibility: private for your organization''s deployments, public for Exoscale Managed Inference deployments.'
-          enum:
-            - public
-            - private
-          type: string
         model:
           $ref: '#/components/schemas/model-ref'
       type: object
@@ -7272,7 +7261,6 @@ components:
         - state
         - deployment-url
         - model
-        - visibility
     dbaas-endpoint-elasticsearch-secrets:
       type: object
       properties:
@@ -7512,6 +7500,7 @@ components:
             - suspended
             - running
             - updating
+            - error
           readOnly: true
           description: Instance Pool state
         size:
@@ -7542,6 +7531,19 @@ components:
             $ref: '#/components/schemas/instance-ref'
           readOnly: true
           description: Instances
+        error-reason:
+          type: object
+          properties:
+            cause:
+              type: string
+              description: Error cause
+            type:
+              type: string
+              description: Error type
+            job-id:
+              type: string
+              description: Job ID at the origin of error
+          description: Instance Pool Error Reason
         deploy-target:
           $ref: '#/components/schemas/deploy-target-ref'
           description: Instance Pool Deploy Target
@@ -7944,6 +7946,27 @@ components:
       type: object
       additionalProperties:
         type: string
+    vpc-dhcp-options:
+      type: object
+      properties:
+        dns-servers:
+          type: array
+          items:
+            type: string
+            format: ipv4
+          description: DNS Servers
+        ntp-servers:
+          type: array
+          items:
+            type: string
+            format: ipv4
+          description: NTP Servers
+        domain-search:
+          type: array
+          items:
+            type: string
+          description: Domain search list, limited to 255 octets post RFC3397 compression
+      description: VPC DHCP options
     instance-type-entry:
       description: Instance type with authorization status
       properties:
@@ -8030,11 +8053,6 @@ components:
           format: uuid
           readOnly: true
           description: Template ID
-        zones:
-          type: array
-          items:
-            $ref: '#/components/schemas/zone-name'
-          description: Zones availability
         url:
           type: string
           description: Template source URL
@@ -8826,11 +8844,6 @@ components:
           format: uuid
           type: string
           readOnly: true
-        org-uuid:
-          description: Organization UUID that owns this key
-          format: uuid
-          type: string
-          readOnly: true
         created-at:
           description: Creation timestamp
           format: date-time
@@ -8839,7 +8852,6 @@ components:
       type: object
       required:
         - id
-        - org-uuid
         - name
         - scope
         - created-at
@@ -9045,6 +9057,17 @@ components:
           description: Model name
           type: string
           minLength: 1
+        lifecycle-status:
+          description: Model lifecycle state
+          enum:
+            - preview
+            - active
+            - deprecated
+            - eol
+            - null
+          type:
+            - string
+            - "null"
         state:
           description: Model state
           enum:
@@ -9059,6 +9082,13 @@ components:
           format: uuid
           type: string
           readOnly: true
+        deprecation-date:
+          description: Model deprecation date
+          format: date-time
+          type:
+            - string
+            - "null"
+          readOnly: true
         model-size:
           description: Model size in bytes
           format: int64
@@ -9069,6 +9099,12 @@ components:
           format: date-time
           type: string
           readOnly: true
+        visibility:
+          description: Model visibility
+          enum:
+            - private
+            - public
+          type: string
       type: object
       required:
         - id
@@ -9245,6 +9281,17 @@ components:
           description: Model name
           type: string
           minLength: 1
+        lifecycle-status:
+          description: Model lifecycle state
+          enum:
+            - preview
+            - active
+            - deprecated
+            - eol
+            - null
+          type:
+            - string
+            - "null"
         state:
           description: Model state
           enum:
@@ -9269,6 +9316,12 @@ components:
           format: date-time
           type: string
           readOnly: true
+        visibility:
+          description: Model visibility
+          enum:
+            - private
+            - public
+          type: string
       type: object
       required:
         - id
@@ -10937,11 +10990,6 @@ components:
           format: uuid
           type: string
           readOnly: true
-        org-uuid:
-          description: Organization UUID that owns this key
-          format: uuid
-          type: string
-          readOnly: true
         created-at:
           description: Creation timestamp
           format: date-time
@@ -10950,7 +10998,6 @@ components:
       type: object
       required:
         - id
-        - org-uuid
         - name
         - scope
         - created-at
@@ -11753,6 +11800,45 @@ paths:
             type: string
       summary: Get inference-engine Help
       operationId: get-inference-engine-help
+  /ai/api-key/{id}/revoke:
+    post:
+      tags:
+        - ai-api-key
+      responses:
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: Revoke an AI API key. Key will be deleted after 30 days of retention
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Revoke AI API Key'
+      operationId: revoke-ai-api-key
   /load-balancer:
     post:
       tags:
@@ -12589,7 +12675,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/list-models-response'
       description: List Models
-      parameters: []
+      parameters:
+        - in: query
+          required: false
+          name: visibility
+          schema:
+            type: string
       summary: List Models
       operationId: list-models
   /dbaas-mysql/{service-name}/user:
@@ -13591,12 +13682,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/error-response'
       description: List Deployments
-      parameters:
-        - in: query
-          required: false
-          name: visibility
-          schema:
-            type: string
+      parameters: []
       summary: List Deployments
       operationId: list-deployments
   /live-balance:
@@ -14650,38 +14736,6 @@ paths:
       summary: ""
       operationId: list-dbaas-external-endpoint-types
   /ai/api-key/{id}:
-    delete:
-      tags:
-        - ai-api-key
-      responses:
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-        "404":
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/operation'
-      description: Delete AI API key
-      parameters:
-        - in: path
-          required: true
-          name: id
-          schema:
-            type: string
-            format: uuid
-      summary: '[BETA] Delete AI API Key'
-      operationId: delete-ai-api-key
     get:
       tags:
         - ai-api-key
@@ -14817,6 +14871,9 @@ paths:
                 labels:
                   $ref: '#/components/schemas/labels'
                   description: Resource labels
+                dhcp-options:
+                  $ref: '#/components/schemas/vpc-dhcp-options'
+                  description: DHCP options
               required:
                 - name
       operationId: create-vpc
@@ -23571,6 +23628,9 @@ paths:
                   $ref: '#/components/schemas/labels'
                   nullable: true
                   description: Resource labels
+                dhcp-options:
+                  $ref: '#/components/schemas/vpc-dhcp-options'
+                  description: DHCP options (only allowed if VPC has no instances attached)
       operationId: update-vpc
     get:
       tags:

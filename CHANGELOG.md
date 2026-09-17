@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.1.51
+------
+
+- v3: regenerate from new API spec (#816)
+
 3.1.50
 ------
 

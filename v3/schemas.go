@@ -74,25 +74,19 @@ type AccessKeyResource struct {
 	ResourceType AccessKeyResourceResourceType `json:"resource-type,omitempty"`
 }
 
-// AI API key metadata
-type AIAPIKey struct {
-	// Creation timestamp
-	CreatedAT time.Time `json:"created-at" validate:"required"`
-	// AI API key ID
+type AIAPIKeyDeploymentRef struct {
+	// Deployment ID
 	ID UUID `json:"id" validate:"required"`
-	// Human-readable name for the AI API key
-	Name string `json:"name" validate:"required"`
-	// Key scope: 'public' for all deployments, or a specific deployment UUID
-	Scope string `json:"scope" validate:"required"`
-	// Last update timestamp
-	UpdatedAT time.Time `json:"updated-at" validate:"required"`
 }
 
-// AI API key plaintext value
-type AIAPIKeyValue struct {
-	// Plaintext AI API key value
-	Value string `json:"value" validate:"required"`
-}
+// Deployment IDs accepted as input.
+type AIAPIKeyDeployments []string
+
+// Private deployment access. ["all"] means access to all deployments, otherwise deployments are returned as objects.
+type AIAPIKeyDeploymentsResponse []any
+
+// Public model access. An empty array denies access to all public models, ["all"] grants access to all public models, otherwise the array is an allowlist of model names.
+type AIAPIKeyModels []string
 
 // Anti-affinity Group
 type AntiAffinityGroup struct {
@@ -112,12 +106,12 @@ type AntiAffinityGroupRef struct {
 	ID UUID `json:"id,omitempty"`
 }
 
-// Usage breakdown for one API key, grouped by model
+// Usage breakdown for one API key, grouped by product-name
 type APIKeyUsageEntry struct {
-	// Map of model-uuid to accumulated counters. Keys are model UUIDs.
-	Models map[string]ModelUsageCounters `json:"models" validate:"required"`
 	// Organization that owns this API key
 	OrganizationID UUID `json:"organization-id" validate:"required"`
+	// Map of product-name to accumulated counters. Keys are product names.
+	ProductNames map[string]ModelUsageCounters `json:"product-names" validate:"required"`
 }
 
 type BlockStorageSnapshotState string
@@ -201,26 +195,28 @@ type BlockStorageVolumeRef struct {
 	ID UUID `json:"id,omitempty"`
 }
 
-// Request to create a new AI API key
+// Request to create a new AI API key. Missing models or deployments default to an empty array.
 type CreateAIAPIKeyRequest struct {
+	// Deployment IDs accepted as input.
+	Deployments *AIAPIKeyDeployments `json:"deployments,omitempty"`
+	// Public model access. An empty array denies access to all public models, ["all"] grants access to all public models, otherwise the array is an allowlist of model names.
+	Models *AIAPIKeyModels `json:"models,omitempty"`
 	// Human-readable name for the AI API key
 	Name string `json:"name" validate:"required,gte=1,lte=50"`
-	// Key scope: 'public' for all deployments, or a specific deployment UUID
-	Scope string `json:"scope" validate:"required"`
 }
 
 // Create AI API key response
 type CreateAIAPIKeyResponse struct {
-	// Creation timestamp
 	CreatedAT time.Time `json:"created-at" validate:"required"`
-	// AI API key ID
-	ID UUID `json:"id" validate:"required"`
-	// Human-readable name for the AI API key
-	Name string `json:"name" validate:"required"`
-	// Key scope: 'public' for all deployments, or a specific deployment UUID
-	Scope string `json:"scope" validate:"required"`
+	// Private deployment access. ["all"] means access to all deployments, otherwise deployments are returned as objects.
+	Deployments *AIAPIKeyDeploymentsResponse `json:"deployments" validate:"required"`
+	ID          UUID                         `json:"id" validate:"required"`
+	// Public model access. An empty array denies access to all public models, ["all"] grants access to all public models, otherwise the array is an allowlist of model names.
+	Models *AIAPIKeyModels `json:"models" validate:"required"`
+	Name   string          `json:"name" validate:"required"`
 	// Last update timestamp
-	UpdatedAT time.Time `json:"updated-at" validate:"required"`
+	RevokedAT *time.Time `json:"revoked-at,omitempty"`
+	UpdatedAT time.Time  `json:"updated-at" validate:"required"`
 	// Plaintext AI API key value
 	Value string `json:"value" validate:"required"`
 }
@@ -2589,13 +2585,15 @@ type GenerateDataKeyResponse struct {
 type GetAIAPIKeyResponse struct {
 	// Creation timestamp
 	CreatedAT time.Time `json:"created-at" validate:"required"`
+	// Private deployment access. ["all"] means access to all deployments, otherwise deployments are returned as objects.
+	Deployments *AIAPIKeyDeploymentsResponse `json:"deployments" validate:"required"`
 	// AI API key ID
 	ID UUID `json:"id" validate:"required"`
+	// Public model access. An empty array denies access to all public models, ["all"] grants access to all public models, otherwise the array is an allowlist of model names.
+	Models *AIAPIKeyModels `json:"models" validate:"required"`
 	// Human-readable name for the AI API key
 	Name string `json:"name" validate:"required"`
-	// Key scope: 'public' for all deployments, or a specific deployment UUID
-	Scope string `json:"scope" validate:"required"`
-	// Last update timestamp
+	// Revocation timestamp. Null when the API key is active.
 	UpdatedAT time.Time `json:"updated-at" validate:"required"`
 }
 
@@ -2859,6 +2857,27 @@ type IAMServicePolicyRule struct {
 	Action     IAMServicePolicyRuleAction `json:"action,omitempty"`
 	Expression string                     `json:"expression,omitempty"`
 	Resources  []string                   `json:"resources,omitempty"`
+}
+
+// IAM System Role
+type IAMSystemRole struct {
+	// Assume Role Policy
+	AssumeRolePolicy *IAMAssumeRolePolicy `json:"assume-role-policy,omitempty"`
+	// IAM System Role description
+	Description string `json:"description,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// IAM System Role mutability
+	Editable *bool `json:"editable,omitempty"`
+	// IAM System Role ID
+	ID     UUID   `json:"id,omitempty"`
+	Labels Labels `json:"labels,omitempty"`
+	// Maximum TTL requester is allowed to ask for when assuming a system role
+	MaxSessionTtl int64 `json:"max-session-ttl,omitempty" validate:"omitempty,gt=0"`
+	// IAM System Role name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	// IAM System Role permissions
+	Permissions []string `json:"permissions,omitempty"`
+	// Policy
+	Policy *IAMPolicy `json:"policy,omitempty"`
 }
 
 type ImpactBreakdown struct {
@@ -4484,16 +4503,16 @@ type ListAIAPIKeysResponse struct {
 
 // AI API key list entry
 type ListAIAPIKeysResponseEntry struct {
-	// Creation timestamp
 	CreatedAT time.Time `json:"created-at" validate:"required"`
-	// AI API key ID
-	ID UUID `json:"id" validate:"required"`
-	// Human-readable name for the AI API key
-	Name string `json:"name" validate:"required"`
-	// Key scope: 'public' for all deployments, or a specific deployment UUID
-	Scope string `json:"scope" validate:"required"`
-	// Last update timestamp
-	UpdatedAT time.Time `json:"updated-at" validate:"required"`
+	// Private deployment access. ["all"] means access to all deployments, otherwise deployments are returned as objects.
+	Deployments *AIAPIKeyDeploymentsResponse `json:"deployments" validate:"required"`
+	ID          UUID                         `json:"id" validate:"required"`
+	// Public model access. An empty array denies access to all public models, ["all"] grants access to all public models, otherwise the array is an allowlist of model names.
+	Models *AIAPIKeyModels `json:"models" validate:"required"`
+	Name   string          `json:"name" validate:"required"`
+	// Revocation timestamp. Null when the API key is active.
+	RevokedAT *time.Time `json:"revoked-at" validate:"required"`
+	UpdatedAT time.Time  `json:"updated-at" validate:"required"`
 }
 
 // List of available instance types with authorization status
@@ -5754,6 +5773,25 @@ type Template struct {
 type TemplateRef struct {
 	// Template ID
 	ID UUID `json:"id,omitempty"`
+}
+
+// Update the models and/or deployments accessible by an AI API key. Omitted properties are left unchanged.
+type UpdateAIAPIKeyRequest struct {
+	// Deployment IDs accepted as input.
+	Deployments *AIAPIKeyDeployments `json:"deployments,omitempty"`
+	// Public model access. An empty array denies access to all public models, ["all"] grants access to all public models, otherwise the array is an allowlist of model names.
+	Models *AIAPIKeyModels `json:"models,omitempty"`
+}
+
+type UpdateAIAPIKeyResponse struct {
+	CreatedAT time.Time `json:"created-at" validate:"required"`
+	// Private deployment access. ["all"] means access to all deployments, otherwise deployments are returned as objects.
+	Deployments *AIAPIKeyDeploymentsResponse `json:"deployments" validate:"required"`
+	ID          UUID                         `json:"id" validate:"required"`
+	// Public model access. An empty array denies access to all public models, ["all"] grants access to all public models, otherwise the array is an allowlist of model names.
+	Models    *AIAPIKeyModels `json:"models" validate:"required"`
+	Name      string          `json:"name" validate:"required"`
+	UpdatedAT time.Time       `json:"updated-at" validate:"required"`
 }
 
 // Update AI deployment

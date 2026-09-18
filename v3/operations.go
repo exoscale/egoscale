@@ -170,6 +170,57 @@ func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*GetAIAPIKeyResponse,
 	return bodyresp, nil
 }
 
+// Update the models and deployments accessible by an AI API key.
+func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyRequest) (*UpdateAIAPIKeyResponse, error) {
+	path := fmt.Sprintf("/ai/api-key/%v", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateAIAPIKey: prepare JSON body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PATCH", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateAIAPIKey: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateAIAPIKey: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateAIAPIKey: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-ai-api-key")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateAIAPIKey: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateAIAPIKey: http response: %w", err)
+	}
+
+	bodyresp := new(UpdateAIAPIKeyResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateAIAPIKey: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Revoke an AI API key. Key will be deleted after 30 days of retention
 func (c Client) RevokeAIAPIKey(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/ai/api-key/%v/revoke", id)
@@ -12250,6 +12301,73 @@ func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy)
 	bodyresp := new(Operation)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type ListIAMSystemRolesResponse struct {
+	IAMSystemRoles []IAMSystemRole `json:"iam-system-roles,omitempty"`
+}
+
+// FindIAMSystemRole attempts to find an IAMSystemRole by nameOrID.
+func (l ListIAMSystemRolesResponse) FindIAMSystemRole(nameOrID string) (IAMSystemRole, error) {
+	var result []IAMSystemRole
+	for i, elem := range l.IAMSystemRoles {
+		if string(elem.Name) == nameOrID || string(elem.ID) == nameOrID {
+			result = append(result, l.IAMSystemRoles[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return IAMSystemRole{}, fmt.Errorf("%q too many found in ListIAMSystemRolesResponse: %w", nameOrID, ErrConflict)
+	}
+
+	return IAMSystemRole{}, fmt.Errorf("%q not found in ListIAMSystemRolesResponse: %w", nameOrID, ErrNotFound)
+}
+
+// List IAM System Roles
+func (c Client) ListIAMSystemRoles(ctx context.Context) (*ListIAMSystemRolesResponse, error) {
+	path := "/iam-system-role"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListIAMSystemRoles: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListIAMSystemRoles: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListIAMSystemRoles: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-iam-system-roles")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListIAMSystemRoles: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListIAMSystemRoles: http response: %w", err)
+	}
+
+	bodyresp := new(ListIAMSystemRolesResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListIAMSystemRoles: prepare JSON response: %w", err)
 	}
 
 	return bodyresp, nil

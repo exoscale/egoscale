@@ -1161,26 +1161,30 @@ components:
       description: Create AI API key response
       properties:
         updated-at:
-          description: Last update timestamp
           format: date-time
           type: string
           readOnly: true
         name:
-          description: Human-readable name for the AI API key
           type: string
         value:
           description: Plaintext AI API key value
           type: string
-        scope:
-          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
-          type: string
+        deployments:
+          $ref: '#/components/schemas/ai-api-key-deployments-response'
+        models:
+          $ref: '#/components/schemas/ai-api-key-models'
         id:
-          description: AI API key ID
           format: uuid
           type: string
           readOnly: true
+        revoked-at:
+          description: Last update timestamp
+          format: date-time
+          type:
+            - string
+            - "null"
+          readOnly: true
         created-at:
-          description: Creation timestamp
           format: date-time
           type: string
           readOnly: true
@@ -1188,7 +1192,8 @@ components:
       required:
         - id
         - name
-        - scope
+        - models
+        - deployments
         - created-at
         - updated-at
         - value
@@ -2073,23 +2078,27 @@ components:
       description: AI API key list entry
       properties:
         updated-at:
-          description: Last update timestamp
           format: date-time
           type: string
           readOnly: true
         name:
-          description: Human-readable name for the AI API key
           type: string
-        scope:
-          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
-          type: string
+        deployments:
+          $ref: '#/components/schemas/ai-api-key-deployments-response'
+        models:
+          $ref: '#/components/schemas/ai-api-key-models'
         id:
-          description: AI API key ID
           format: uuid
           type: string
           readOnly: true
+        revoked-at:
+          description: Revocation timestamp. Null when the API key is active.
+          format: date-time
+          type:
+            - string
+            - "null"
+          readOnly: true
         created-at:
-          description: Creation timestamp
           format: date-time
           type: string
           readOnly: true
@@ -2097,9 +2106,11 @@ components:
       required:
         - id
         - name
-        - scope
+        - models
+        - deployments
         - created-at
         - updated-at
+        - revoked-at
     private-network:
       type: object
       properties:
@@ -2599,21 +2610,21 @@ components:
       required:
         - username
     api-key-usage-entry:
-      description: Usage breakdown for one API key, grouped by model
+      description: Usage breakdown for one API key, grouped by product-name
       properties:
+        product-names:
+          description: Map of product-name to accumulated counters. Keys are product names.
+          additionalProperties:
+            $ref: '#/components/schemas/model-usage-counters'
+          type: object
         organization-id:
           description: Organization that owns this API key
           format: uuid
           type: string
-        models:
-          description: Map of model-uuid to accumulated counters. Keys are model UUIDs.
-          additionalProperties:
-            $ref: '#/components/schemas/model-usage-counters'
-          type: object
       type: object
       required:
         - organization-id
-        - models
+        - product-names
     enable-kms-key-rotation-request:
       type: object
       properties:
@@ -5337,8 +5348,22 @@ components:
         ai-api-keys:
           - updated-at: "2026-03-25T10:00:00Z"
             name: default-public-key
-            scope: public
+            deployments: []
+            models:
+              - all
             id: 11111111-1111-1111-1111-111111111111
+            revoked-at: "2026-03-25T10:00:00Z"
+            created-at: "2026-03-25T10:00:00Z"
+          - updated-at: "2026-03-25T10:00:00Z"
+            name: restricted-key
+            deployments:
+              - id: 33333333-3333-3333-3333-333333333333
+              - id: 44444444-4444-4444-4444-444444444444
+            models:
+              - GLM 5.2
+              - Kimi 2.7
+            id: 22222222-2222-2222-2222-222222222222
+            revoked-at: ""
             created-at: "2026-03-25T10:00:00Z"
       required:
         - ai-api-keys
@@ -6020,6 +6045,15 @@ components:
         - plan
         - type
         - prometheus-uri
+    ai-api-key-deployments-response:
+      description: Private deployment access. ["all"] means access to all deployments, otherwise deployments are returned as objects.
+      type: array
+      items:
+        oneOf:
+          - enum:
+              - all
+            type: string
+          - $ref: '#/components/schemas/ai-api-key-deployment-ref'
     encrypt-request:
       type: object
       required:
@@ -6065,6 +6099,52 @@ components:
         dest:
           type: string
           description: Destination service name
+    iam-system-role:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: IAM System Role description
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: IAM System Role Labels
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+              - bypass-governance-retention
+              - reset-iam-organization-policy
+          uniqueItems: true
+          description: IAM System Role permissions
+        assume-role-policy:
+          $ref: '#/components/schemas/iam-assume-role-policy'
+          description: IAM Assume System Role Policy
+        editable:
+          type: boolean
+          description: IAM System Role mutability
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: IAM System Role name
+        max-session-ttl:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: Maximum TTL requester is allowed to ask for when assuming a system role
+        policy:
+          $ref: '#/components/schemas/iam-policy'
+          description: IAM System Role Policy
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: IAM System Role ID
+      description: IAM System Role
     env-impact-report:
       type: object
       properties:
@@ -6508,6 +6588,16 @@ components:
         - transaction
         - statement
         - session
+    update-ai-api-key-request:
+      description: Update the models and/or deployments accessible by an AI API key. Omitted properties are left unchanged.
+      properties:
+        deployments:
+          $ref: '#/components/schemas/ai-api-key-deployments'
+        models:
+          $ref: '#/components/schemas/ai-api-key-models'
+      additionalProperties: false
+      type: object
+      minProperties: 1
     dbaas-service-thanos:
       type: object
       properties:
@@ -8351,6 +8441,16 @@ components:
         extended-acl-enabled:
           type: boolean
           description: Enable to enforce index rules in a limited fashion for requests that use the _mget, _msearch, and _bulk APIs
+    ai-api-key-deployment-ref:
+      properties:
+        id:
+          description: Deployment ID
+          format: uuid
+          type: string
+      additionalProperties: false
+      type: object
+      required:
+        - id
     dbaas-backup-config:
       type: object
       properties:
@@ -8485,7 +8585,7 @@ components:
         - timestamp
         - usage
     create-ai-api-key-request:
-      description: Request to create a new AI API key
+      description: Request to create a new AI API key. Missing models or deployments default to an empty array.
       properties:
         name:
           description: Human-readable name for the AI API key
@@ -8493,13 +8593,13 @@ components:
           minLength: 1
           maxLength: 50
           pattern: ^[A-Za-z0-9](?:[A-Za-z0-9 _'()-]*[A-Za-z0-9])?$
-        scope:
-          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
-          type: string
+        deployments:
+          $ref: '#/components/schemas/ai-api-key-deployments'
+        models:
+          $ref: '#/components/schemas/ai-api-key-models'
       type: object
       required:
         - name
-        - scope
     ingest-metering-response:
       description: Result of a metering ingest operation
       properties:
@@ -8829,16 +8929,17 @@ components:
       description: Get AI API key response
       properties:
         updated-at:
-          description: Last update timestamp
+          description: Revocation timestamp. Null when the API key is active.
           format: date-time
           type: string
           readOnly: true
         name:
           description: Human-readable name for the AI API key
           type: string
-        scope:
-          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
-          type: string
+        deployments:
+          $ref: '#/components/schemas/ai-api-key-deployments-response'
+        models:
+          $ref: '#/components/schemas/ai-api-key-models'
         id:
           description: AI API key ID
           format: uuid
@@ -8853,9 +8954,11 @@ components:
       required:
         - id
         - name
-        - scope
+        - models
+        - deployments
         - created-at
         - updated-at
+        - revoked-at
     manager:
       type: object
       properties:
@@ -9160,6 +9263,13 @@ components:
           type: string
           description: Postgres password
       description: Postgres User secrets
+    ai-api-key-models:
+      description: Public model access. An empty array denies access to all public models, ["all"] grants access to all public models, otherwise the array is an allowlist of model names.
+      uniqueItems: true
+      type: array
+      items:
+        type: string
+        minLength: 1
     dbaas-clickhouse-acl-config:
       type: object
       properties:
@@ -9167,15 +9277,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/dbaas-clickhouse-user-acl-config'
-    ai-api-key-value:
-      description: AI API key plaintext value
-      properties:
-        value:
-          description: Plaintext AI API key value
-          type: string
-      type: object
-      required:
-        - value
     list-kms-key-rotations-response-entry:
       type: object
       required:
@@ -10971,35 +11072,29 @@ components:
         - endpoint
         - bearer-token
       description: Kubernetes Audit parameters
-    ai-api-key:
-      description: AI API key metadata
+    update-ai-api-key-response:
       properties:
         updated-at:
-          description: Last update timestamp
           format: date-time
           type: string
-          readOnly: true
         name:
-          description: Human-readable name for the AI API key
           type: string
-        scope:
-          description: 'Key scope: ''public'' for all deployments, or a specific deployment UUID'
-          type: string
+        deployments:
+          $ref: '#/components/schemas/ai-api-key-deployments-response'
+        models:
+          $ref: '#/components/schemas/ai-api-key-models'
         id:
-          description: AI API key ID
           format: uuid
           type: string
-          readOnly: true
         created-at:
-          description: Creation timestamp
           format: date-time
           type: string
-          readOnly: true
       type: object
       required:
         - id
         - name
-        - scope
+        - models
+        - deployments
         - created-at
         - updated-at
     dbaas-user-thanos-secrets:
@@ -11077,6 +11172,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/iam-service-policy-rule'
+    ai-api-key-deployments:
+      description: Deployment IDs accepted as input.
+      uniqueItems: true
+      type: array
+      items:
+        type: string
 servers:
   - url: https://api-{zone}.exoscale.com/v2
     variables:
@@ -14768,6 +14869,50 @@ paths:
             format: uuid
       summary: '[BETA] Get AI API Key'
       operationId: get-ai-api-key
+    patch:
+      tags:
+        - ai-api-key
+      responses:
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/update-ai-api-key-response'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+      description: Update the models and deployments accessible by an AI API key.
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: '[BETA] Update AI API Key access'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update-ai-api-key-request'
+      operationId: update-ai-api-key
   /private-network:
     get:
       tags:
@@ -22247,6 +22392,26 @@ paths:
               required:
                 - integration-id
       operationId: detach-dbaas-service-from-endpoint
+  /iam-system-role:
+    get:
+      tags:
+        - role
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  iam-system-roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/iam-system-role'
+      description: ""
+      parameters: []
+      summary: List IAM System Roles
+      operationId: list-iam-system-roles
   /dbaas-valkey/{service-name}/user/{username}/password/reveal:
     get:
       tags:

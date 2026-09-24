@@ -12,7 +12,8 @@ acronyms:
   ppapi: PPAPI
 
 # Component schemas not rendered.
-# TODO fix the OpenAPI spec (duplicated resources).
+# TODO fix the OpenAPI spec: snapshot-export duplicates the inline export
+# property of snapshot, both rendered as SnapshotExport.
 ignored-schemas:
   - snapshot-export
 

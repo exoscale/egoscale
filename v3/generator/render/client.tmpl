@@ -2,7 +2,8 @@
 type Endpoint string
 
 const (
-  {{ .Enum }}
+  {{ range .Endpoints }}{{ .Name }} Endpoint = {{ printf "%q" .URL }}
+{{ end }}
 )
 
 // defaultHTTPClient is HTTP client with retry logic.

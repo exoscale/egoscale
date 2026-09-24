@@ -18,6 +18,9 @@ type TagChanges struct {
 
 // GetAllChanges returns a slice of all changes made between Tag objects
 func (t *TagChanges) GetAllChanges() []*Change {
+	if t == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, t.Changes...)
 	if t.ExternalDocs != nil {
@@ -31,6 +34,9 @@ func (t *TagChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns a count of everything that changed within tags.
 func (t *TagChanges) TotalChanges() int {
+	if t == nil {
+		return 0
+	}
 	c := t.PropertyChanges.TotalChanges()
 	if t.ExternalDocs != nil {
 		c += t.ExternalDocs.TotalChanges()
@@ -50,7 +56,6 @@ func (t *TagChanges) TotalBreakingChanges() int {
 // any changes between them. If there are changes, a pointer to TagChanges is returned, if not then
 // nil is returned instead.
 func CompareTags(l, r []low.ValueReference[*base.Tag]) []*TagChanges {
-
 	var tagResults []*TagChanges
 
 	// look at the original and then look through the new.
@@ -65,41 +70,38 @@ func CompareTags(l, r []low.ValueReference[*base.Tag]) []*TagChanges {
 		seenRight[r[i].Value.Name.Value] = &h
 	}
 
-	//var changes []*Change
+	// var changes []*Change
 
 	// check for removals, modifications and moves
 	for i := range seenLeft {
 		tc := new(TagChanges)
 		var changes []*Change
 
-		CheckForObjectAdditionOrRemoval[*base.Tag](seenLeft, seenRight, i, &changes, false, true)
+		CheckForObjectAdditionOrRemoval[*base.Tag](seenLeft, seenRight, i, &changes, BreakingAdded(CompTags, ""), BreakingRemoved(CompTags, ""))
 
 		// if the existing tag exists, let's check it.
 		if seenRight[i] != nil {
+			lTag := seenLeft[i].Value
+			rTag := seenRight[i].Value
+			props := make([]*PropertyCheck, 0, 5)
 
-			var props []*PropertyCheck
-
-			// Name
-			props = append(props, &PropertyCheck{
-				LeftNode:  seenLeft[i].Value.Name.ValueNode,
-				RightNode: seenRight[i].Value.Name.ValueNode,
-				Label:     v3.NameLabel,
-				Changes:   &changes,
-				Breaking:  true,
-				Original:  seenLeft[i].Value,
-				New:       seenRight[i].Value,
-			})
-
-			// Description
-			props = append(props, &PropertyCheck{
-				LeftNode:  seenLeft[i].Value.Description.ValueNode,
-				RightNode: seenRight[i].Value.Description.ValueNode,
-				Label:     v3.DescriptionLabel,
-				Changes:   &changes,
-				Breaking:  false,
-				Original:  seenLeft[i].Value,
-				New:       seenRight[i].Value,
-			})
+			props = append(props,
+				NewPropertyCheck(CompTag, PropName,
+					lTag.Name.ValueNode, rTag.Name.ValueNode,
+					v3.NameLabel, &changes, lTag, rTag),
+				NewPropertyCheck(CompTag, PropSummary,
+					lTag.Summary.ValueNode, rTag.Summary.ValueNode,
+					v3.SummaryLabel, &changes, lTag, rTag),
+				NewPropertyCheck(CompTag, PropDescription,
+					lTag.Description.ValueNode, rTag.Description.ValueNode,
+					v3.DescriptionLabel, &changes, lTag, rTag),
+				NewPropertyCheck(CompTag, PropParent,
+					lTag.Parent.ValueNode, rTag.Parent.ValueNode,
+					v3.ParentLabel, &changes, lTag, rTag),
+				NewPropertyCheck(CompTag, PropKind,
+					lTag.Kind.ValueNode, rTag.Kind.ValueNode,
+					v3.KindLabel, &changes, lTag, rTag),
+			)
 
 			// check properties
 			CheckProperties(props)
@@ -111,11 +113,11 @@ func CompareTags(l, r []low.ValueReference[*base.Tag]) []*TagChanges {
 			}
 			if seenLeft[i].Value.ExternalDocs.IsEmpty() && !seenRight[i].Value.ExternalDocs.IsEmpty() {
 				CreateChange(&changes, ObjectAdded, v3.ExternalDocsLabel, nil, seenRight[i].GetValueNode(),
-					false, nil, seenRight[i].Value.ExternalDocs.Value)
+					BreakingAdded(CompTag, PropExternalDocs), nil, seenRight[i].Value.ExternalDocs.Value)
 			}
 			if !seenLeft[i].Value.ExternalDocs.IsEmpty() && seenRight[i].Value.ExternalDocs.IsEmpty() {
 				CreateChange(&changes, ObjectRemoved, v3.ExternalDocsLabel, seenLeft[i].GetValueNode(), nil,
-					false, seenLeft[i].Value.ExternalDocs.Value, nil)
+					BreakingRemoved(CompTag, PropExternalDocs), seenLeft[i].Value.ExternalDocs.Value, nil)
 			}
 
 			// check extensions
@@ -139,7 +141,7 @@ func CompareTags(l, r []low.ValueReference[*base.Tag]) []*TagChanges {
 			var changes []*Change
 
 			CreateChange(&changes, ObjectAdded, i, nil, seenRight[i].GetValueNode(),
-				false, nil, seenRight[i].GetValue())
+				BreakingAdded(CompTags, ""), nil, seenRight[i].GetValue())
 
 			tc.PropertyChanges = NewPropertyChanges(changes)
 			tagResults = append(tagResults, tc)

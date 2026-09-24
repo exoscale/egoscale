@@ -1,18 +1,18 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package base
 
 import (
 	"context"
-	"crypto/sha256"
-	"strings"
+	"hash/maphash"
+	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // ExternalDoc represents a low-level External Documentation object as defined by OpenAPI 2 and 3
@@ -29,6 +29,8 @@ type ExternalDoc struct {
 	RootNode    *yaml.Node
 	index       *index.SpecIndex
 	context     context.Context
+	nodeStore   sync.Map
+	reference   low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -51,14 +53,26 @@ func (ex *ExternalDoc) GetKeyNode() *yaml.Node {
 // Build will extract extensions from the ExternalDoc instance.
 func (ex *ExternalDoc) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	ex.KeyNode = keyNode
+	ex.reference = low.Reference{}
+	ex.Reference = &ex.reference
+	ex.nodeStore = sync.Map{}
+	ex.Nodes = &ex.nodeStore
+	ex.context = ctx
+	ex.index = idx
+	if root == nil {
+		ex.RootNode = nil
+		ex.Extensions = nil
+		return nil
+	}
 	root = utils.NodeAlias(root)
 	ex.RootNode = root
 	utils.CheckForMergeNodes(root)
-	ex.Reference = new(low.Reference)
-	ex.Nodes = low.ExtractNodes(ctx, root)
+	if len(root.Content) > 0 {
+		ex.NodeMap.ExtractNodes(root, false)
+	} else {
+		ex.AddNode(root.Line, root)
+	}
 	ex.Extensions = low.ExtractExtensions(root)
-	ex.context = ctx
-	ex.index = idx
 	return nil
 }
 
@@ -67,14 +81,22 @@ func (ex *ExternalDoc) GetExtensions() *orderedmap.Map[low.KeyReference[string],
 	return ex.Extensions
 }
 
-func (ex *ExternalDoc) Hash() [32]byte {
-	// calculate a hash from every property.
-	f := []string{
-		ex.Description.Value,
-		ex.URL.Value,
-	}
-	f = append(f, low.HashExtensions(ex.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+func (ex *ExternalDoc) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if ex.Description.Value != "" {
+			h.WriteString(ex.Description.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if ex.URL.Value != "" {
+			h.WriteString(ex.URL.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(ex.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }
 
 // GetIndex returns the index.SpecIndex instance attached to the ExternalDoc object

@@ -122,3 +122,34 @@ func TestSchemaObject(t *testing.T) {
 		},
 	}, decl(t, f, "ZoneState"))
 }
+
+func TestSchemaReferenceSiblings(t *testing.T) {
+	b := newTestBuilder(t, schemasSpec(`    cluster:
+      type: object
+      properties:
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: Resource labels
+        oidc:
+          $ref: '#/components/schemas/oidc'
+          nullable: true
+    labels:
+      type: object
+      additionalProperties:
+        type: string
+    oidc:
+      type: object
+      properties:
+        client-id:
+          type: string
+`))
+	f, err := b.Schemas("v3")
+	require.NoError(t, err)
+
+	require.Equal(t, []ir.Field{
+		// A description next to a $ref keeps the reference (OpenAPI 3.0).
+		{Name: "Labels", Type: ir.Named("Labels"), JSON: "labels", OmitEmpty: true},
+		// A nullable reference is sent as null, to unset it.
+		{Name: "Oidc", Type: ir.Pointer{Elem: ir.Named("Oidc")}, JSON: "oidc"},
+	}, decl(t, f, "Cluster").(ir.Struct).Fields)
+}

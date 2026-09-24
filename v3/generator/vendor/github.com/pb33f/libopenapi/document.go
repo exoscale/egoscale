@@ -17,6 +17,8 @@ import (
 	"errors"
 	"fmt"
 
+	lowbase "github.com/pb33f/libopenapi/datamodel/low/base"
+
 	"github.com/pb33f/libopenapi/index"
 
 	"github.com/pb33f/libopenapi/datamodel"
@@ -27,7 +29,7 @@ import (
 	"github.com/pb33f/libopenapi/utils"
 	what_changed "github.com/pb33f/libopenapi/what-changed"
 	"github.com/pb33f/libopenapi/what-changed/model"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Document Represents an OpenAPI specification that can then be rendered into a model or serialized back into
@@ -54,13 +56,13 @@ type Document interface {
 	// If there are any issues, then no model will be returned, instead a slice of errors will explain all the
 	// problems that occurred. This method will only support version 2 specifications and will throw an error for
 	// any other types.
-	BuildV2Model() (*DocumentModel[v2high.Swagger], []error)
+	BuildV2Model() (*DocumentModel[v2high.Swagger], error)
 
 	// BuildV3Model will build out an OpenAPI (version 3+) model from the specification used to create the document
 	// If there are any issues, then no model will be returned, instead a slice of errors will explain all the
 	// problems that occurred. This method will only support version 3 specifications and will throw an error for
 	// any other types.
-	BuildV3Model() (*DocumentModel[v3high.Document], []error)
+	BuildV3Model() (*DocumentModel[v3high.Document], error)
 
 	// RenderAndReload will render the high level model as it currently exists (including any mutations, additions
 	// and removals to and from any object in the tree). It will then reload the low level model with the new bytes
@@ -76,7 +78,7 @@ type Document interface {
 	// **IMPORTANT** This method only supports OpenAPI Documents. The Swagger model will not support mutations correctly
 	// and will not update when called. This choice has been made because we don't want to continue supporting Swagger,
 	// it's too old, so it should be motivation to upgrade to OpenAPI 3.
-	RenderAndReload() ([]byte, Document, *DocumentModel[v3high.Document], []error)
+	RenderAndReload() ([]byte, Document, *DocumentModel[v3high.Document], error)
 
 	// Render will render the high level model as it currently exists (including any mutations, additions
 	// and removals to and from any object in the tree). Unlike RenderAndReload, Render will simply print the state
@@ -102,6 +104,11 @@ type Document interface {
 	// Deprecated: This method is deprecated and will be removed in a future release. Use RenderAndReload() instead.
 	// This method does not support mutations correctly.
 	Serialize() ([]byte, error)
+
+	// Release nils all internal state so that the YAML tree, SpecIndex, Rolodex,
+	// and model objects can be garbage-collected even if something still holds
+	// a reference to the Document interface value.
+	Release()
 }
 
 type document struct {
@@ -130,7 +137,7 @@ type DocumentModel[T v2high.Swagger | v3high.Document] struct {
 // This function will NOT automatically follow (meaning load) any file or remote references that are found.
 //
 // If this isn't the behavior you want, then you can use the NewDocumentWithConfiguration() function instead, which allows you to set a configuration that
-// will allow you to control if file or remote references are allowed. In particular the `AllowFileReferences` and `FollowRemoteReferences`
+// will allow you to control if file or remote references are allowed. In particular the `AllowFileReferences` and `AllowRemoteReferences`
 // properties.
 func NewDocument(specByteArray []byte) (Document, error) {
 	return NewDocumentWithTypeCheck(specByteArray, false)
@@ -150,18 +157,43 @@ func NewDocumentWithTypeCheck(specByteArray []byte, bypassCheck bool) (Document,
 // NewDocumentWithConfiguration is the same as NewDocument, except it's a convenience function that calls NewDocument
 // under the hood and then calls SetConfiguration() on the returned Document.
 func NewDocumentWithConfiguration(specByteArray []byte, configuration *datamodel.DocumentConfiguration) (Document, error) {
-	var d Document
+	var info *datamodel.SpecInfo
 	var err error
-	if configuration != nil && configuration.BypassDocumentCheck {
-		d, err = NewDocumentWithTypeCheck(specByteArray, true)
+
+	if configuration != nil {
+		info, err = datamodel.ExtractSpecInfoWithConfig(specByteArray, configuration)
 	} else {
-		d, err = NewDocument(specByteArray)
+		info, err = datamodel.ExtractSpecInfoWithDocumentCheck(specByteArray, false)
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	if d != nil {
-		d.SetConfiguration(configuration)
+	d := new(document)
+	d.version = info.Version
+	d.info = info
+	d.config = configuration
+	return d, nil
+}
+
+func (d *document) Release() {
+	if d == nil {
+		return
 	}
-	return d, err
+	if d.info != nil {
+		d.info.Release()
+		d.info = nil
+	}
+	// This method intentionally does not call SpecIndex.Release(). Low-level
+	// model objects (Schema, PathItem, etc.) retain their own references to the
+	// SpecIndex and require its config and root node for hashing and comparison
+	// operations that may run after a Document is released. Callers that own the
+	// full lifecycle should call SpecIndex.Release() separately once all model
+	// consumers are finished.
+	d.rolodex = nil
+	d.config = nil
+	d.highOpenAPI3Model = nil
+	d.highSwaggerModel = nil
 }
 
 func (d *document) GetRolodex() *index.Rolodex {
@@ -196,20 +228,20 @@ func (d *document) Serialize() ([]byte, error) {
 	}
 }
 
-func (d *document) RenderAndReload() ([]byte, Document, *DocumentModel[v3high.Document], []error) {
+func (d *document) RenderAndReload() ([]byte, Document, *DocumentModel[v3high.Document], error) {
 	newBytes, rerr := d.Render()
 	if rerr != nil {
-		return nil, nil, nil, []error{rerr}
+		return nil, nil, nil, rerr
 	}
 
 	newDoc, err := NewDocumentWithConfiguration(newBytes, d.config)
 	if err != nil {
-		return nil, nil, nil, []error{err}
+		return nil, nil, nil, err
 	}
 
 	// build the model.
 	m, buildErrs := newDoc.BuildV3Model()
-	if len(buildErrs) > 0 {
+	if buildErrs != nil {
 		return newBytes, newDoc, m, buildErrs
 	}
 	// this document is now dead, long live the new document!
@@ -246,19 +278,17 @@ func (d *document) Render() ([]byte, error) {
 	return newBytes, jsonErr
 }
 
-func (d *document) BuildV2Model() (*DocumentModel[v2high.Swagger], []error) {
+func (d *document) BuildV2Model() (*DocumentModel[v2high.Swagger], error) {
 	if d.highSwaggerModel != nil {
 		return d.highSwaggerModel, nil
 	}
 	var errs []error
 	if d.info == nil {
-		errs = append(errs, fmt.Errorf("unable to build swagger document, no specification has been loaded"))
-		return nil, errs
+		return nil, fmt.Errorf("unable to build swagger document, no specification has been loaded")
 	}
 	if d.info.SpecFormat != datamodel.OAS2 {
-		errs = append(errs, fmt.Errorf("unable to build swagger document, "+
-			"supplied spec is a different version (%v). Try 'BuildV3Model()'", d.info.SpecFormat))
-		return nil, errs
+		return nil, fmt.Errorf("unable to build swagger document, "+
+			"supplied spec is a different version (%v). Try 'BuildV3Model()'", d.info.SpecFormat)
 	}
 
 	var lowDoc *v2low.Swagger
@@ -280,7 +310,7 @@ func (d *document) BuildV2Model() (*DocumentModel[v2high.Swagger], []error) {
 		var refErr *index.ResolvingError
 		if errors.As(err, &refErr) {
 			if refErr.CircularReference == nil {
-				return nil, errs
+				return nil, errors.Join(errs...)
 			}
 		}
 	}
@@ -290,36 +320,34 @@ func (d *document) BuildV2Model() (*DocumentModel[v2high.Swagger], []error) {
 		Model: *highDoc,
 		Index: lowDoc.Index,
 	}
-	return d.highSwaggerModel, errs
+	lowbase.SchemaQuickHashMap.Clear()
+	return d.highSwaggerModel, errors.Join(errs...)
 }
 
-func (d *document) BuildV3Model() (*DocumentModel[v3high.Document], []error) {
+func (d *document) BuildV3Model() (*DocumentModel[v3high.Document], error) {
 	if d.highOpenAPI3Model != nil {
 		return d.highOpenAPI3Model, nil
 	}
 	var errs []error
 	if d.info == nil {
-		errs = append(errs, fmt.Errorf("unable to build document, no specification has been loaded"))
-		return nil, errs
+		return nil, fmt.Errorf("unable to build document, no specification has been loaded")
 	}
-	if d.info.SpecFormat != datamodel.OAS3 && d.info.SpecFormat != datamodel.OAS31 {
-		errs = append(errs, fmt.Errorf("unable to build openapi document, "+
-			"supplied spec is a different version (%v). Try 'BuildV2Model()'", d.info.SpecFormat))
-		return nil, errs
+	if d.info.SpecFormat != datamodel.OAS3 && d.info.SpecFormat != datamodel.OAS31 && d.info.SpecFormat != datamodel.OAS32 {
+		return nil, fmt.Errorf("unable to build openapi document, "+
+			"supplied spec is a different version (%v). Try 'BuildV2Model()'", d.info.SpecFormat)
 	}
 
 	var lowDoc *v3low.Document
 	if d.config == nil {
-		d.config = &datamodel.DocumentConfiguration{
-			AllowFileReferences:   false,
-			BasePath:              "",
-			AllowRemoteReferences: false,
-			BaseURL:               nil,
-		}
+		d.config = datamodel.NewDocumentConfiguration()
 	}
 
 	var docErr error
 	lowDoc, docErr = v3low.CreateDocumentFromConfig(d.info, d.config)
+	if lowDoc == nil {
+		// no openapi version tag was found, so there is nothing to extract.
+		return nil, docErr
+	}
 	d.rolodex = lowDoc.Rolodex
 
 	if docErr != nil {
@@ -332,7 +360,7 @@ func (d *document) BuildV3Model() (*DocumentModel[v3high.Document], []error) {
 		var refErr *index.ResolvingError
 		if errors.As(err, &refErr) {
 			if refErr.CircularReference == nil {
-				return nil, errs
+				return nil, errors.Join(errs...)
 			}
 		}
 	}
@@ -344,8 +372,8 @@ func (d *document) BuildV3Model() (*DocumentModel[v3high.Document], []error) {
 		Model: *highDoc,
 		Index: lowDoc.Index,
 	}
-
-	return d.highOpenAPI3Model, errs
+	lowbase.SchemaQuickHashMap.Clear()
+	return d.highOpenAPI3Model, errors.Join(errs...)
 }
 
 // CompareDocuments will accept a left and right Document implementing struct, build a model for the correct
@@ -354,33 +382,35 @@ func (d *document) BuildV3Model() (*DocumentModel[v3high.Document], []error) {
 // If there are any errors when building the models, those errors are returned with a nil pointer for the
 // model.DocumentChanges. If there are any changes found however between either Document, then a pointer to
 // model.DocumentChanges is returned containing every single change, broken down, model by model.
-func CompareDocuments(original, updated Document) (*model.DocumentChanges, []error) {
+func CompareDocuments(original, updated Document) (*model.DocumentChanges, error) {
 	var errs []error
 	if original.GetSpecInfo().SpecType == utils.OpenApi3 && updated.GetSpecInfo().SpecType == utils.OpenApi3 {
 		v3ModelLeft, oErrs := original.BuildV3Model()
-		if len(oErrs) > 0 {
-			errs = oErrs
+		if oErrs != nil {
+			errs = append(errs, oErrs)
 		}
 		v3ModelRight, uErrs := updated.BuildV3Model()
-		if len(uErrs) > 0 {
-			errs = append(errs, uErrs...)
+		if uErrs != nil {
+			errs = append(errs, uErrs)
 		}
 		if v3ModelLeft != nil && v3ModelRight != nil {
-			return what_changed.CompareOpenAPIDocuments(v3ModelLeft.Model.GoLow(), v3ModelRight.Model.GoLow()), errs
+			return what_changed.CompareOpenAPIDocuments(v3ModelLeft.Model.GoLow(), v3ModelRight.Model.GoLow()),
+				errors.Join(errs...)
 		} else {
-			return nil, errs
+			return nil, errors.Join(errs...)
 		}
 	}
 	if original.GetSpecInfo().SpecType == utils.OpenApi2 && updated.GetSpecInfo().SpecType == utils.OpenApi2 {
 		v2ModelLeft, oErrs := original.BuildV2Model()
-		if len(oErrs) > 0 {
-			errs = oErrs
+		if oErrs != nil {
+			errs = append(errs, oErrs)
 		}
 		v2ModelRight, uErrs := updated.BuildV2Model()
-		if len(uErrs) > 0 {
-			errs = append(errs, uErrs...)
+		if uErrs != nil {
+			errs = append(errs, uErrs)
 		}
-		return what_changed.CompareSwaggerDocuments(v2ModelLeft.Model.GoLow(), v2ModelRight.Model.GoLow()), errs
+		return what_changed.CompareSwaggerDocuments(v2ModelLeft.Model.GoLow(), v2ModelRight.Model.GoLow()),
+			errors.Join(errs...)
 	}
-	return nil, []error{fmt.Errorf("unable to compare documents, one or both documents are not of the same version")}
+	return nil, fmt.Errorf("unable to compare documents, one or both documents are not of the same version")
 }

@@ -64,7 +64,9 @@ func (c Client) ListAIAPIKeys(ctx context.Context) (*ListAIAPIKeysResponse, erro
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("ListAIAPIKeys: http response: %w", err)
+		return nil, fmt.Errorf("ListAIAPIKeys: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			403: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(ListAIAPIKeysResponse)
@@ -115,7 +117,11 @@ func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("CreateAIAPIKey: http response: %w", err)
+		return nil, fmt.Errorf("CreateAIAPIKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+			403: func() any { return new(ErrorResponse) },
+			404: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(CreateAIAPIKeyResponse)
@@ -159,7 +165,10 @@ func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*GetAIAPIKeyResponse,
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("GetAIAPIKey: http response: %w", err)
+		return nil, fmt.Errorf("GetAIAPIKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			403: func() any { return new(ErrorResponse) },
+			404: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(GetAIAPIKeyResponse)
@@ -210,7 +219,11 @@ func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyR
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("UpdateAIAPIKey: http response: %w", err)
+		return nil, fmt.Errorf("UpdateAIAPIKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+			403: func() any { return new(ErrorResponse) },
+			404: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(UpdateAIAPIKeyResponse)
@@ -254,7 +267,11 @@ func (c Client) RevokeAIAPIKey(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("RevokeAIAPIKey: http response: %w", err)
+		return nil, fmt.Errorf("RevokeAIAPIKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			403: func() any { return new(ErrorResponse) },
+			404: func() any { return new(ErrorResponse) },
+			500: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(Operation)
@@ -317,7 +334,9 @@ func (c Client) ListDeployments(ctx context.Context) (*ListDeploymentsResponse, 
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("ListDeployments: http response: %w", err)
+		return nil, fmt.Errorf("ListDeployments: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(ListDeploymentsResponse)
@@ -368,7 +387,11 @@ func (c Client) CreateDeployment(ctx context.Context, req CreateDeploymentReques
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("CreateDeployment: http response: %w", err)
+		return nil, fmt.Errorf("CreateDeployment: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+			403: func() any { return new(ErrorResponse) },
+			412: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(Operation)
@@ -412,7 +435,11 @@ func (c Client) DeleteDeployment(ctx context.Context, id UUID) (*Operation, erro
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("DeleteDeployment: http response: %w", err)
+		return nil, fmt.Errorf("DeleteDeployment: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			403: func() any { return new(ErrorResponse) },
+			404: func() any { return new(ErrorResponse) },
+			409: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(Operation)
@@ -456,7 +483,9 @@ func (c Client) GetDeployment(ctx context.Context, id UUID) (*GetDeploymentRespo
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("GetDeployment: http response: %w", err)
+		return nil, fmt.Errorf("GetDeployment: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			404: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(GetDeploymentResponse)
@@ -507,7 +536,12 @@ func (c Client) UpdateDeployment(ctx context.Context, id UUID, req UpdateDeploym
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("UpdateDeployment: http response: %w", err)
+		return nil, fmt.Errorf("UpdateDeployment: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+			403: func() any { return new(ErrorResponse) },
+			404: func() any { return new(ErrorResponse) },
+			409: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(Operation)
@@ -551,7 +585,9 @@ func (c Client) RevealDeploymentAPIKey(ctx context.Context, id UUID) (*RevealDep
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("RevealDeploymentAPIKey: http response: %w", err)
+		return nil, fmt.Errorf("RevealDeploymentAPIKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			404: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(RevealDeploymentAPIKeyResponse)
@@ -617,7 +653,11 @@ func (c Client) GetDeploymentLogs(ctx context.Context, id UUID, opts ...GetDeplo
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("GetDeploymentLogs: http response: %w", err)
+		return nil, fmt.Errorf("GetDeploymentLogs: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+			404: func() any { return new(ErrorResponse) },
+			500: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(GetDeploymentLogsResponse)
@@ -668,7 +708,12 @@ func (c Client) ScaleDeployment(ctx context.Context, id UUID, req ScaleDeploymen
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("ScaleDeployment: http response: %w", err)
+		return nil, fmt.Errorf("ScaleDeployment: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			403: func() any { return new(ErrorResponse) },
+			404: func() any { return new(ErrorResponse) },
+			409: func() any { return new(ErrorResponse) },
+			412: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(Operation)
@@ -904,7 +949,9 @@ func (c Client) CreateModel(ctx context.Context, req CreateModelRequest) (*Opera
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("CreateModel: http response: %w", err)
+		return nil, fmt.Errorf("CreateModel: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			403: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(Operation)
@@ -948,7 +995,11 @@ func (c Client) DeleteModel(ctx context.Context, id UUID) (*Operation, error) {
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("DeleteModel: http response: %w", err)
+		return nil, fmt.Errorf("DeleteModel: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			403: func() any { return new(ErrorResponse) },
+			404: func() any { return new(ErrorResponse) },
+			412: func() any { return new(DeleteModelConflictResponse) },
+		}))
 	}
 
 	bodyresp := new(Operation)
@@ -992,7 +1043,9 @@ func (c Client) GetModel(ctx context.Context, id UUID) (*GetModelResponse, error
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("GetModel: http response: %w", err)
+		return nil, fmt.Errorf("GetModel: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			404: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(GetModelResponse)
@@ -1036,7 +1089,9 @@ func (c Client) GetUserOrgConsumptionQuota(ctx context.Context) (*OrgConsumption
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: http response: %w", err)
+		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			404: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(OrgConsumptionQuotaResponse)
@@ -11617,7 +11672,10 @@ func (c Client) GetImpactEstimate(ctx context.Context, req GetImpactEstimateRequ
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("GetImpactEstimate: http response: %w", err)
+		return nil, fmt.Errorf("GetImpactEstimate: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ImpactErrorResponse) },
+			500: func() any { return new(ImpactErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(GetImpactEstimateResponse)
@@ -11683,7 +11741,10 @@ func (c Client) GetImpactReport(ctx context.Context, opts ...GetImpactReportOpt)
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("GetImpactReport: http response: %w", err)
+		return nil, fmt.Errorf("GetImpactReport: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ImpactErrorResponse) },
+			500: func() any { return new(ImpactErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(ImpactBreakdown)
@@ -14142,7 +14203,9 @@ func (c Client) ListKmsKeys(ctx context.Context) (*ListKmsKeysResponse, error) {
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("ListKmsKeys: http response: %w", err)
+		return nil, fmt.Errorf("ListKmsKeys: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(ListKmsKeysResponse)
@@ -14193,7 +14256,9 @@ func (c Client) CreateKmsKey(ctx context.Context, req CreateKmsKeyRequest) (*Cre
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("CreateKmsKey: http response: %w", err)
+		return nil, fmt.Errorf("CreateKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(CreateKmsKeyResponse)
@@ -14237,7 +14302,9 @@ func (c Client) GetKmsKey(ctx context.Context, id UUID) (*GetKmsKeyResponse, err
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("GetKmsKey: http response: %w", err)
+		return nil, fmt.Errorf("GetKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(GetKmsKeyResponse)
@@ -14281,7 +14348,9 @@ func (c Client) CancelKmsKeyDeletion(ctx context.Context, id UUID) (*SuccessResp
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("CancelKmsKeyDeletion: http response: %w", err)
+		return nil, fmt.Errorf("CancelKmsKeyDeletion: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(SuccessResponse)
@@ -14332,7 +14401,9 @@ func (c Client) Decrypt(ctx context.Context, id UUID, req DecryptRequest) (*Decr
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("Decrypt: http response: %w", err)
+		return nil, fmt.Errorf("Decrypt: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(DecryptResponse)
@@ -14376,7 +14447,9 @@ func (c Client) DisableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, e
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("DisableKmsKey: http response: %w", err)
+		return nil, fmt.Errorf("DisableKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(SuccessResponse)
@@ -14420,7 +14493,9 @@ func (c Client) DisableKmsKeyRotation(ctx context.Context, id UUID) (*DisableKms
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("DisableKmsKeyRotation: http response: %w", err)
+		return nil, fmt.Errorf("DisableKmsKeyRotation: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(DisableKmsKeyRotationResponse)
@@ -14464,7 +14539,9 @@ func (c Client) EnableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, er
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("EnableKmsKey: http response: %w", err)
+		return nil, fmt.Errorf("EnableKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(SuccessResponse)
@@ -14515,7 +14592,9 @@ func (c Client) EnableKmsKeyRotation(ctx context.Context, id UUID, req EnableKms
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("EnableKmsKeyRotation: http response: %w", err)
+		return nil, fmt.Errorf("EnableKmsKeyRotation: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(EnableKmsKeyRotationResponse)
@@ -14566,7 +14645,9 @@ func (c Client) Encrypt(ctx context.Context, id UUID, req EncryptRequest) (*Encr
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("Encrypt: http response: %w", err)
+		return nil, fmt.Errorf("Encrypt: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(EncryptResponse)
@@ -14617,7 +14698,9 @@ func (c Client) GenerateDataKey(ctx context.Context, id UUID, req GenerateDataKe
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("GenerateDataKey: http response: %w", err)
+		return nil, fmt.Errorf("GenerateDataKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(GenerateDataKeyResponse)
@@ -14661,7 +14744,9 @@ func (c Client) ListKmsKeyRotations(ctx context.Context, id UUID) (*ListKmsKeyRo
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("ListKmsKeyRotations: http response: %w", err)
+		return nil, fmt.Errorf("ListKmsKeyRotations: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(ListKmsKeyRotationsResponse)
@@ -14712,7 +14797,9 @@ func (c Client) ReEncrypt(ctx context.Context, id UUID, req ReEncryptRequest) (*
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("ReEncrypt: http response: %w", err)
+		return nil, fmt.Errorf("ReEncrypt: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(ReEncryptResponse)
@@ -14763,7 +14850,9 @@ func (c Client) ReplicateKmsKey(ctx context.Context, id UUID, req ReplicateKmsKe
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("ReplicateKmsKey: http response: %w", err)
+		return nil, fmt.Errorf("ReplicateKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(SuccessResponse)
@@ -14807,7 +14896,9 @@ func (c Client) RotateKmsKey(ctx context.Context, id UUID) (*RotateKmsKeyRespons
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("RotateKmsKey: http response: %w", err)
+		return nil, fmt.Errorf("RotateKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(RotateKmsKeyResponse)
@@ -14858,7 +14949,9 @@ func (c Client) ScheduleKmsKeyDeletion(ctx context.Context, id UUID, req Schedul
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: http response: %w", err)
+		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
 	}
 
 	bodyresp := new(ScheduleKmsKeyDeletionResponse)
@@ -14902,7 +14995,9 @@ func (c Client) GetLiveBalance(ctx context.Context) (*LiveBalance, error) {
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return nil, fmt.Errorf("GetLiveBalance: http response: %w", err)
+		return nil, fmt.Errorf("GetLiveBalance: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			429: func() any { return new(RateLimited) },
+		}))
 	}
 
 	bodyresp := new(LiveBalance)

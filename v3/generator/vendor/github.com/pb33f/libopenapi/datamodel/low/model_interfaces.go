@@ -5,12 +5,12 @@ package low
 
 import (
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 type SharedParameters interface {
 	HasDescription
-	Hash() [32]byte
+	Hash() uint64
 	GetName() *NodeReference[string]
 	GetIn() *NodeReference[string]
 	GetAllowEmptyValue() *NodeReference[bool]
@@ -52,7 +52,7 @@ type SwaggerParameter interface {
 
 type SwaggerHeader interface {
 	HasDescription
-	Hash() [32]byte
+	Hash() uint64
 	GetType() *NodeReference[string]
 	GetFormat() *NodeReference[string]
 	GetCollectionFormat() *NodeReference[string]
@@ -74,7 +74,7 @@ type SwaggerHeader interface {
 
 type OpenAPIHeader interface {
 	HasDescription
-	Hash() [32]byte
+	Hash() uint64
 	GetDeprecated() *NodeReference[bool]
 	GetStyle() *NodeReference[string]
 	GetAllowReserved() *NodeReference[bool]

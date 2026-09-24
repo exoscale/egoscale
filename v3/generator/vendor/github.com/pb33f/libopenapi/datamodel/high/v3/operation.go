@@ -9,7 +9,7 @@ import (
 	"github.com/pb33f/libopenapi/datamodel/low"
 	lowv3 "github.com/pb33f/libopenapi/datamodel/low/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Operation is a high-level representation of an OpenAPI 3+ Operation object, backed by a low-level one.
@@ -120,4 +120,9 @@ func (o *Operation) MarshalYAMLInline() (interface{}, error) {
 	nb := high.NewNodeBuilder(o, o.low)
 	nb.Resolve = true
 	return nb.Render(), nil
+}
+
+// MarshalYAMLInlineWithContext renders the operation with a shared inline render context.
+func (o *Operation) MarshalYAMLInlineWithContext(ctx any) (interface{}, error) {
+	return high.RenderInlineWithContext(o, o.low, ctx)
 }

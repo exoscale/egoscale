@@ -5,14 +5,18 @@ package base
 
 import (
 	"context"
-	"crypto/sha256"
+	"errors"
+	"fmt"
+	"hash/maphash"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 
+	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // SchemaProxy exists as a stub that will create a Schema once (and only once) the Schema() method is called.
@@ -47,30 +51,159 @@ import (
 // Schemas are where things can get messy, mainly because the Schema standard changes between versions, and
 // it's not actually JSONSchema until 3.1, so lots of times a bad schema will break parsing. Errors are only found
 // when a schema is needed, so the rest of the document is parsed and ready to use.
+//
+// [ There is a good amount of async code in here, many different ways to slam into the same schema being built/read/ ]
+// [ hashed or cached at the same time. So just a warning, if you're thinking of working on this - async safety       ]
+// [ should be your main concern, cheers - quobix.                                                                    ]
 type SchemaProxy struct {
 	low.Reference
-	kn         *yaml.Node
-	vn         *yaml.Node
-	idx        *index.SpecIndex
-	rendered   *Schema
-	buildError error
-	ctx        context.Context
+	kn             *yaml.Node
+	vn             *yaml.Node
+	idx            *index.SpecIndex
+	schemaOnce     sync.Once              // guards lazy Schema() build
+	rendered       atomic.Pointer[Schema] // atomic for safe reads from any goroutine
+	buildError     error                  // protected by schemaOnce (write-once)
+	ctx            context.Context
+	hashMu         sync.Mutex // protects cachedHash + hashGen
+	cachedHash     *uint64    // protected by hashMu
+	hashGen        uint64     // generation counter for invalidation
+	nodeStore      sync.Map
+	nodeMap        low.NodeMap
+	TransformedRef *yaml.Node // Original node that contained the ref before transformation
+	transformedRef *transformedSiblingRef
 	*low.NodeMap
 }
 
 // Build will prepare the SchemaProxy for rendering, it does not build the Schema, only sets up internal state.
 // Key maybe nil if absent.
+//
+// Lifecycle: Build() must be called exactly once per SchemaProxy, before Schema() is called.
+// Calling Build() after Schema() has already been invoked will update internal state (kn, vn, idx, ctx)
+// but will NOT re-trigger schema building due to sync.Once semantics.
 func (sp *SchemaProxy) Build(ctx context.Context, key, value *yaml.Node, idx *index.SpecIndex) error {
 	sp.kn = key
-	sp.vn = value
 	sp.idx = idx
-	sp.ctx = ctx
-	if rf, _, r := utils.IsNodeRefValue(value); rf {
-		sp.SetReference(r, value)
+
+	// transform sibling refs to allOf structure if enabled and applicable
+	// this ensures sp.vn contains the pre-transformed YAML as the source of truth
+	transformedValue, transformedRef, wasTransformed := transformSiblingRefNode(value, idx)
+	if wasTransformed {
+		sp.setTransformedRef(transformedRef)
 	}
-	var m sync.Map
-	sp.NodeMap = &low.NodeMap{Nodes: &m}
+
+	sp.vn = transformedValue
+	sp.ctx = applySchemaIdScope(ctx, value, idx)
+
+	// handle reference detection
+	if !wasTransformed {
+		// for non-transformed schemas, handle reference normally
+		if rf, _, r := utils.IsNodeRefValue(transformedValue); rf {
+			sp.SetReference(r, transformedValue)
+		}
+	}
+	// for transformed schemas, don't set reference since it's now an allOf structure
+	// the reference is embedded within the allOf, but the schema itself is not a pure reference
+	sp.nodeStore = sync.Map{}
+	sp.nodeMap = low.NodeMap{Nodes: &sp.nodeStore}
+	sp.NodeMap = &sp.nodeMap
 	return nil
+}
+
+func transformSiblingRefNode(value *yaml.Node, idx *index.SpecIndex) (*yaml.Node, *transformedSiblingRef, bool) {
+	if idx == nil || idx.GetConfig() == nil || !idx.GetConfig().TransformSiblingRefs {
+		return value, nil, false
+	}
+	transformer := NewSiblingRefTransformer(idx)
+	transformed := transformer.transformSiblingRefWithMetadata(value)
+	if transformed == nil {
+		return value, nil, false
+	}
+	return transformed.allOfNode, transformed, true
+}
+
+// prepareForResolvedBuild initializes proxy state when the caller has already resolved any reference metadata.
+// This avoids re-running the full Build ref-detection path for child-schema helpers that already did that work.
+func (sp *SchemaProxy) prepareForResolvedBuild(ctx context.Context, key, value, scopeNode *yaml.Node, idx *index.SpecIndex, refLocation string, refNode *yaml.Node, transformed *transformedSiblingRef) {
+	sp.kn = key
+	sp.idx = idx
+	sp.vn = value
+	sp.ctx = applySchemaIdScope(ctx, scopeNode, idx)
+	sp.Reference = low.Reference{}
+	sp.setTransformedRef(transformed)
+	if refLocation != "" {
+		sp.SetReference(refLocation, refNode)
+	}
+	sp.nodeStore = sync.Map{}
+	sp.nodeMap = low.NodeMap{Nodes: &sp.nodeStore}
+	sp.NodeMap = &sp.nodeMap
+}
+
+func (sp *SchemaProxy) setTransformedRef(transformed *transformedSiblingRef) {
+	sp.transformedRef = transformed
+	sp.TransformedRef = nil
+	if transformed != nil {
+		sp.TransformedRef = transformed.referenceNode
+	}
+}
+
+// IsTransformedRefWithSiblings reports whether this proxy was authored as a
+// schema-level $ref with sibling keywords and internally normalized to allOf.
+func (sp *SchemaProxy) IsTransformedRefWithSiblings() bool {
+	return sp != nil && sp.transformedRef != nil && sp.transformedRef.reference != ""
+}
+
+// GetTransformedRefSiblingSchema returns the sibling-only schema for an
+// internally transformed $ref-with-siblings node.
+func (sp *SchemaProxy) GetTransformedRefSiblingSchema() *yaml.Node {
+	if !sp.IsTransformedRefWithSiblings() {
+		return nil
+	}
+	return sp.transformedRef.siblingNode
+}
+
+// GetTransformedRefReference returns the original reference value for an
+// internally transformed $ref-with-siblings node.
+func (sp *SchemaProxy) GetTransformedRefReference() string {
+	if !sp.IsTransformedRefWithSiblings() {
+		return ""
+	}
+	return sp.transformedRef.reference
+}
+
+// GetTransformedRefAllOfSchema returns the internal allOf schema for an
+// authored $ref-with-siblings node.
+func (sp *SchemaProxy) GetTransformedRefAllOfSchema() *yaml.Node {
+	if !sp.IsTransformedRefWithSiblings() {
+		return nil
+	}
+	return sp.transformedRef.allOfNode
+}
+
+func applySchemaIdScope(ctx context.Context, node *yaml.Node, idx *index.SpecIndex) context.Context {
+	if node == nil {
+		return ctx
+	}
+	scope := index.GetSchemaIdScope(ctx)
+	idValue := index.FindSchemaIdInNode(node)
+	if idValue == "" {
+		return ctx
+	}
+	if scope == nil {
+		base := ""
+		if idx != nil {
+			base = idx.GetSpecAbsolutePath()
+		}
+		scope = index.NewSchemaIdScope(base)
+		ctx = index.WithSchemaIdScope(ctx, scope)
+	}
+	parentBase := scope.BaseUri
+	resolved, err := index.ResolveSchemaId(idValue, parentBase)
+	if err != nil || resolved == "" {
+		resolved = idValue
+	}
+	updated := scope.Copy()
+	updated.PushId(resolved)
+	return index.WithSchemaIdScope(ctx, updated)
 }
 
 // Schema will first check if this SchemaProxy has already rendered the schema, and return the pre-rendered version
@@ -85,31 +218,55 @@ func (sp *SchemaProxy) Build(ctx context.Context, key, value *yaml.Node, idx *in
 // If anything goes wrong during the build, then nothing is returned and the error that occurred can
 // be retrieved by using GetBuildError()
 func (sp *SchemaProxy) Schema() *Schema {
-	if sp.rendered != nil {
-		return sp.rendered
-	}
-	schema := new(Schema)
-	utils.CheckForMergeNodes(sp.vn)
-	err := schema.Build(sp.ctx, sp.vn, sp.idx)
-	if err != nil {
-		sp.buildError = err
-		return nil
-	}
-	schema.ParentProxy = sp // https://github.com/pb33f/libopenapi/issues/29
-	sp.rendered = schema
+	sp.schemaOnce.Do(func() {
+		cfg := sp.getSpecConfig()
 
-	// for all the nodes added, copy them over to the schema
-	if sp.NodeMap != nil {
-		sp.NodeMap.Nodes.Range(func(key, value any) bool {
-			schema.AddNode(key.(int), value.(*yaml.Node))
-			return true
-		})
-	}
-	return schema
+		// if this proxy represents an unresolved external ref, return nil without error
+		if sp.IsReference() && cfg != nil &&
+			cfg.SkipExternalRefResolution && utils.IsExternalRef(sp.GetReference()) {
+			return
+		}
+
+		// handle property merging for references with sibling properties
+		buildNode := sp.vn
+		if cfg != nil {
+			if docConfig := sp.getDocumentConfig(); docConfig != nil && docConfig.MergeReferencedProperties {
+				if mergedNode := sp.attemptPropertyMerging(buildNode, docConfig); mergedNode != nil {
+					buildNode = mergedNode
+				}
+			}
+		}
+
+		schema := new(Schema)
+		utils.CheckForMergeNodes(buildNode)
+		err := schema.Build(sp.ctx, buildNode, sp.idx)
+		if err != nil {
+			sp.buildError = err
+			return
+		}
+		schema.ParentProxy = sp // https://github.com/pb33f/libopenapi/issues/29
+
+		// Store rendered FIRST — must happen before NodeMap copy.
+		// If AddNode() runs during the Range window, it sees rendered != nil
+		// and writes directly to the schema instead of NodeMap (where it would be missed).
+		sp.rendered.Store(schema)
+
+		// Copy accumulated nodes to the built schema
+		if sp.NodeMap != nil {
+			sp.NodeMap.Nodes.Range(func(key, value any) bool {
+				schema.AddNode(key.(int), value.(*yaml.Node))
+				return true
+			})
+		}
+	})
+	return sp.rendered.Load()
 }
 
 // GetBuildError returns the build error that was set when Schema() was called. If Schema() has not been run, or
 // there were no errors during build, then nil will be returned.
+//
+// Thread safety: GetBuildError() is safe to call concurrently only after Schema() has been called at least once
+// on this proxy (from any goroutine). All standard code paths (Hash(), high-level Schema()) call Schema() first.
 func (sp *SchemaProxy) GetBuildError() error {
 	return sp.buildError
 }
@@ -143,44 +300,181 @@ func (sp *SchemaProxy) GetValueNode() *yaml.Node {
 	return sp.vn
 }
 
-// Hash will return a consistent SHA256 Hash of the SchemaProxy object (it will resolve it)
-func (sp *SchemaProxy) Hash() [32]byte {
-	if sp.rendered != nil {
+// Hash will return a consistent Hash of the SchemaProxy object (it will resolve it)
+func (sp *SchemaProxy) Hash() uint64 {
+	sp.hashMu.Lock()
+	if sp.cachedHash != nil {
+		h := *sp.cachedHash
+		sp.hashMu.Unlock()
+		return h
+	}
+	gen := sp.hashGen
+	sp.hashMu.Unlock()
+
+	hash := sp.computeHash()
+
+	// store only if not invalidated during computation
+	sp.hashMu.Lock()
+	if sp.hashGen == gen {
+		sp.cachedHash = &hash
+	}
+	sp.hashMu.Unlock()
+	return hash
+}
+
+// computeHash contains the actual hash computation logic, called outside the hash lock.
+func (sp *SchemaProxy) computeHash() uint64 {
+	// for unresolved references, hash the ref string without resolving the target schema
+	sch := sp.rendered.Load()
+
+	if sch != nil {
 		if !sp.IsReference() {
-			return sp.rendered.Hash()
+			return sch.Hash()
 		}
-	} else {
-		if !sp.IsReference() {
-			// only resolve this proxy if it's not a ref.
-			sch := sp.Schema()
-			sp.rendered = sch
-			if sch != nil {
+		return sp.hashReference()
+	}
+
+	if !sp.IsReference() {
+		sch = sp.Schema()
+		if sch != nil {
+			useQuickHash := sp.getSpecConfig() != nil && sp.getSpecConfig().UseSchemaQuickHash
+			if !useQuickHash || !CheckSchemaProxyForCircularRefs(sp) {
 				return sch.Hash()
 			}
+		} else {
+			// build failed — log warning
 			var logger *slog.Logger
-			if sp.idx != nil {
+			if sp.idx != nil && sp.idx.GetLogger() != nil {
 				logger = sp.idx.GetLogger()
 			}
 			if logger != nil {
-				logger.Warn("SchemaProxy.Hash() failed to resolve schema, returning empty hash", "error", sp.GetBuildError().Error())
+				hashError := fmt.Errorf("circular reference detected: %s", sp.GetReference())
+				bErr := errors.Join(sp.GetBuildError(), hashError)
+				if bErr != nil {
+					logger.Warn("SchemaProxy.Hash() unable to complete hash: ", "error", bErr.Error())
+				}
 			}
-			return [32]byte{}
+		}
+		return 0
+	}
+
+	// unresolved reference
+	cfg := sp.getSpecConfig()
+	if cfg != nil && cfg.UseSchemaQuickHash {
+		if !CheckSchemaProxyForCircularRefs(sp) {
+			sch = sp.Schema()
+			if sch != nil {
+				return sch.QuickHash()
+			}
+		} else {
+			return sp.hashReference()
 		}
 	}
-	// hash reference value only, do not resolve!
-	return sha256.Sum256([]byte(sp.GetReference()))
+	return sp.hashReference()
+}
+
+// hashReference hashes the $ref string value without resolving the target.
+func (sp *SchemaProxy) hashReference() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		h.WriteString(sp.GetReference())
+		return h.Sum64()
+	})
+}
+
+// getSpecConfig returns the SpecIndexConfig if available, or nil.
+func (sp *SchemaProxy) getSpecConfig() *index.SpecIndexConfig {
+	if sp.idx != nil && sp.idx.GetConfig() != nil {
+		return sp.idx.GetConfig()
+	}
+	return nil
 }
 
 // AddNode stores nodes in the underlying schema if rendered, otherwise holds in the proxy until build.
 func (sp *SchemaProxy) AddNode(key int, node *yaml.Node) {
-	if sp.rendered != nil {
-		sp.rendered.AddNode(key, node)
+	sp.hashMu.Lock()
+	sp.cachedHash = nil
+	sp.hashGen++
+	sp.hashMu.Unlock()
+
+	if sch := sp.rendered.Load(); sch != nil {
+		sch.AddNode(key, node)
 	} else {
 		sp.Nodes.Store(key, node)
 	}
 }
 
 // GetIndex will return the index.SpecIndex pointer that was passed to the SchemaProxy during build.
+// This is the index owning the proxy's own nodes (the key node and the value node).
+//
+// For a child proxy (a property, an allOf member, and so on) the reference is resolved before the
+// proxy is built, so this is already the referenced file. For a component level proxy holding an
+// unresolved $ref node it is the file the $ref was written in, not the file it points at, and
+// Schema().GetIndex() is the one that names the file the content came from.
 func (sp *SchemaProxy) GetIndex() *index.SpecIndex {
 	return sp.idx
+}
+
+type HasIndex interface {
+	GetIndex() *index.SpecIndex
+}
+
+// getDocumentConfig retrieves the document configuration from the index
+func (sp *SchemaProxy) getDocumentConfig() *datamodel.DocumentConfiguration {
+	if sp.idx == nil || sp.idx.GetRolodex() == nil {
+		return nil
+	}
+	rolodex := sp.idx.GetRolodex()
+	if config := rolodex.GetConfig(); config != nil {
+		return config.ToDocumentConfiguration()
+	}
+	return nil
+}
+
+// attemptPropertyMerging attempts to merge properties for references with siblings
+func (sp *SchemaProxy) attemptPropertyMerging(node *yaml.Node, config *datamodel.DocumentConfiguration) *yaml.Node {
+	if !config.MergeReferencedProperties || !utils.IsNodeMap(node) {
+		return nil
+	}
+
+	// extract ref value and sibling properties
+	var refValue string
+	siblings := make(map[string]*yaml.Node)
+
+	for i := 0; i < len(node.Content); i += 2 {
+		if i+1 < len(node.Content) {
+			if node.Content[i].Value == "$ref" {
+				refValue = node.Content[i+1].Value
+			} else {
+				siblings[node.Content[i].Value] = node.Content[i+1]
+			}
+		}
+	}
+
+	if refValue == "" || len(siblings) == 0 {
+		return nil // no merging needed
+	}
+
+	referencedComponent := sp.idx.FindComponentInRoot(sp.ctx, refValue)
+	if referencedComponent == nil || referencedComponent.Node == nil {
+		return nil // cannot resolve reference
+	}
+
+	// create property merger and merge
+	merger := NewPropertyMerger(config.PropertyMergeStrategy)
+
+	// create a local node with just the sibling properties
+	localNode := &yaml.Node{Kind: yaml.MappingNode}
+	for key, value := range siblings {
+		keyNode := &yaml.Node{Kind: yaml.ScalarNode, Value: key}
+		localNode.Content = append(localNode.Content, keyNode, value)
+	}
+
+	// merge local properties with referenced schema
+	merged, err := merger.MergeProperties(localNode, referencedComponent.Node)
+	if err != nil {
+		// if merging fails, return original node to preserve existing behavior
+		return nil
+	}
+
+	return merged
 }

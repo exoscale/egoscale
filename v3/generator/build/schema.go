@@ -11,7 +11,7 @@ import (
 
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/exoscale/egoscale/v3/generator/ir"
 	"github.com/exoscale/egoscale/v3/generator/naming"
@@ -225,8 +225,9 @@ func (b *Builder) object(typeName string, s *base.Schema, origin string) (ir.Str
 			}
 			nullable = true
 		}
-		// https://github.com/pb33f/libopenapi/issues/283
-		// Wait for a fix to remove this check func.
+
+		// libopenapi ignores nullable next to a $ref (https://github.com/pb33f/libopenapi/issues/283):
+		// a nullable reference is required to be sent as null, to unset it.
 		if isNullableReference(proxy.GetReferenceNode()) {
 			nullable = true
 		}
@@ -498,17 +499,15 @@ func schemaDoc(s *base.Schema) string {
 	return naming.Doc(doc)
 }
 
-// https://github.com/pb33f/libopenapi/issues/283
+// isNullableReference returns true if a $ref node has a nullable: true sibling.
 func isNullableReference(node *yaml.Node) bool {
-	if node == nil || node.Content == nil {
+	if node == nil {
 		return false
 	}
 
-	for i, c := range node.Content {
-		if c.Value == "nullable" {
-			if i+1 < len(node.Content) && node.Content[i+1].Value == "true" {
-				return true
-			}
+	for i := 0; i+1 < len(node.Content); i += 2 {
+		if node.Content[i].Value == "nullable" && node.Content[i+1].Value == "true" {
+			return true
 		}
 	}
 

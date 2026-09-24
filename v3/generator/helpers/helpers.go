@@ -143,11 +143,9 @@ func RenderDoc(doc string) string {
 		return ""
 	}
 
-	docs := strings.Split(doc, "\n")
 	r := []string{}
-	for i, d := range docs {
+	for _, d := range strings.Split(doc, "\n") {
 		if d == "" {
-			docs = append(docs[:i], docs[i+1:]...)
 			continue
 		}
 		r = append(r, "// "+strings.TrimSpace(d))

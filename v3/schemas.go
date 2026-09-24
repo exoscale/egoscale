@@ -5536,7 +5536,7 @@ type SKSNodepool struct {
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
 	// Nodepool public IP assignment of the Instances:
-	// * IPv4 and IPv6 (`dual`) addressing.
+	// * IPv4 (`inet4`) addressing only;
 	// * IPv4 and IPv6 (`dual`) addressing.
 	PublicIPAssignment SKSNodepoolPublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Nodepool Security Groups

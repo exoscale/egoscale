@@ -25,33 +25,37 @@ func main() {
 	genPathDir := os.Args[2]
 	packageName := os.Args[3]
 
+	if err := run(openAPISpec, genPathDir, packageName); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run(openAPISpec, genPathDir, packageName string) error {
 	buf, err := os.ReadFile(openAPISpec)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	doc, err := libopenapi.NewDocument(buf)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := os.MkdirAll(genPathDir, os.ModePerm); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := schemas.Generate(doc, filepath.Join(genPathDir, "/schemas.go"), packageName); err != nil {
-		log.Fatal("schemas: ", err)
+		return fmt.Errorf("schemas: %w", err)
 	}
 	if err := client.Generate(doc, filepath.Join(genPathDir, "/client.go"), packageName); err != nil {
-		log.Fatal("client: ", err)
+		return fmt.Errorf("client: %w", err)
 	}
 	if err := operations.Generate(doc, filepath.Join(genPathDir, "/operations.go"), packageName); err != nil {
-		log.Fatal("operations: ", err)
+		return fmt.Errorf("operations: %w", err)
 	}
 
-	if err := os.MkdirAll(genPathDir, os.ModePerm); err != nil {
-		log.Fatal(err)
-	}
+	return nil
 }
 
 func init() {

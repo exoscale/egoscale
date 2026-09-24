@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"log"
 	"os"
@@ -9,12 +10,16 @@ import (
 	"github.com/pb33f/libopenapi"
 
 	"github.com/exoscale/egoscale/v3/generator/client"
+	"github.com/exoscale/egoscale/v3/generator/config"
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/exoscale/egoscale/v3/generator/operations"
 	"github.com/exoscale/egoscale/v3/generator/schemas"
 )
 
-//go:generate go run main.go ./source.yaml ../ v3
+//go:generate go run . ./source.yaml ../ v3
+
+//go:embed config.yaml
+var configYAML []byte
 
 func main() {
 	if len(os.Args) <= 3 {
@@ -31,6 +36,12 @@ func main() {
 }
 
 func run(openAPISpec, genPathDir, packageName string) error {
+	cfg, err := config.Parse(configYAML)
+	if err != nil {
+		return err
+	}
+	helpers.Configure(cfg)
+
 	buf, err := os.ReadFile(openAPISpec)
 	if err != nil {
 		return err
@@ -56,18 +67,4 @@ func run(openAPISpec, genPathDir, packageName string) error {
 	}
 
 	return nil
-}
-
-func init() {
-	// Additional that are not found here
-	// https://github.com/BluntSporks/abbreviation/blob/master/acronyms.go
-	// helpers package handle stardard Acronyms.
-	helpers.ConfigureAcronym("ssh", "SSH")
-	// Exoscale Specifics
-	helpers.ConfigureAcronym("ai", "AI")
-	helpers.ConfigureAcronym("iam", "IAM")
-	helpers.ConfigureAcronym("sks", "SKS")
-	helpers.ConfigureAcronym("sos", "SOS")
-	helpers.ConfigureAcronym("dbaas", "DBAAS")
-	helpers.ConfigureAcronym("ppapi", "PPAPI")
 }

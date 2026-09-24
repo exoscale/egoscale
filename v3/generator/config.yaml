@@ -1,0 +1,156 @@
+# Generator settings that are not part of the OpenAPI spec (source.yaml).
+
+# Exoscale specific acronyms (lowercase word: Go spelling). They take precedence
+# over the generic list of github.com/BluntSporks/abbreviation.
+acronyms:
+  ssh: SSH
+  ai: AI
+  iam: IAM
+  sks: SKS
+  sos: SOS
+  dbaas: DBAAS
+  ppapi: PPAPI
+
+# Component schemas not rendered.
+# TODO fix the OpenAPI spec (duplicated resources).
+ignored-schemas:
+  - snapshot-export
+
+# Operations called without credentials: list-zones returns public data
+# and must not trigger IAM enforcement.
+skip-auth-operations:
+  - list-zones
+
+# Per Go type name overrides:
+# - props renames a property (spec name: rendered name),
+# - refs replaces the Go type of a referenced schema.
+schema-overrides:
+  CreateInstance:
+    refs:
+      "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+      "#/components/schemas/security-group-ref": SecurityGroup
+      "#/components/schemas/template-ref": Template
+      "#/components/schemas/ssh-key-ref": SSHKey
+      "#/components/schemas/deploy-target-ref": DeployTarget
+      "#/components/schemas/instance-type-ref": InstanceType
+  ScaleInstance:
+    refs:
+      "#/components/schemas/instance-type-ref": InstanceType
+  ResetInstance:
+    refs:
+      "#/components/schemas/template-ref": Template
+  AttachInstanceToElasticIPRequest:
+    props:
+      "instance-target": instance
+    refs:
+      "#/components/schemas/instance-ref": InstanceTarget
+  DetachInstanceFromElasticIPRequest:
+    props:
+      "instance-target": instance
+    refs:
+      "#/components/schemas/instance-ref": InstanceTarget
+  CreateBlockStorageVolumeRequest:
+    refs:
+      "#/components/schemas/block-storage-snapshot-ref": BlockStorageSnapshotTarget
+  AttachBlockStorageVolumeToInstanceRequest:
+    props:
+      "block-storage-volume-ref": block-storage-volume
+    refs:
+      "#/components/schemas/instance-ref": InstanceTarget
+  CreateInstanceRequest:
+    refs:
+      "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+      "#/components/schemas/security-group-ref": SecurityGroup
+      "#/components/schemas/template-ref": Template
+      "#/components/schemas/ssh-key-ref": SSHKey
+      "#/components/schemas/deploy-target-ref": DeployTarget
+      "#/components/schemas/instance-type-ref": InstanceType
+  ResetInstanceRequest:
+    refs:
+      "#/components/schemas/template-ref": Template
+  ScaleInstanceRequest:
+    refs:
+      "#/components/schemas/instance-type-ref": InstanceType
+  BlockStorageSnapshot:
+    refs:
+      "#/components/schemas/block-storage-volume-ref": BlockStorageVolumeTarget
+  BlockStorageVolume:
+    refs:
+      "#/components/schemas/instance-ref": InstanceTarget
+      "#/components/schemas/block-storage-snapshot-ref": BlockStorageSnapshotTarget
+  CreateDBAASServiceMysqlRequest:
+    refs:
+      "#/components/schemas/dbaas-mysql-user-password": string
+  ResetDBAASMysqlUserPasswordRequest:
+    refs:
+      "#/components/schemas/dbaas-mysql-user-password": DBAASUserPassword
+  CreateInstancePoolRequest:
+    refs:
+      "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+      "#/components/schemas/deploy-target-ref": DeployTarget
+      "#/components/schemas/elastic-ip-ref": ElasticIP
+      "#/components/schemas/instance-type-ref": InstanceType
+      "#/components/schemas/private-network-ref": PrivateNetwork
+      "#/components/schemas/security-group-ref": SecurityGroup
+      "#/components/schemas/template-ref": Template
+      "#/components/schemas/ssh-key-ref": SSHKey
+  UpdateInstancePoolRequest:
+    refs:
+      "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+      "#/components/schemas/deploy-target-ref": DeployTarget
+      "#/components/schemas/elastic-ip-ref": ElasticIP
+      "#/components/schemas/instance-type-ref": InstanceType
+      "#/components/schemas/private-network-ref": PrivateNetwork
+      "#/components/schemas/security-group-ref": SecurityGroup
+      "#/components/schemas/template-ref": Template
+      "#/components/schemas/ssh-key-ref": SSHKey
+  CreateSKSNodepoolRequest:
+    refs:
+      "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+      "#/components/schemas/deploy-target-ref": DeployTarget
+      "#/components/schemas/instance-type-ref": InstanceType
+      "#/components/schemas/private-network-ref": PrivateNetwork
+      "#/components/schemas/security-group-ref": SecurityGroup
+  UpdateSKSNodepoolRequest:
+    refs:
+      "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+      "#/components/schemas/deploy-target-ref": DeployTarget
+      "#/components/schemas/instance-type-ref": InstanceType
+      "#/components/schemas/private-network-ref": PrivateNetwork
+      "#/components/schemas/security-group-ref": SecurityGroup
+  Instance:
+    refs:
+      "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+      "#/components/schemas/deploy-target-ref": DeployTarget
+      "#/components/schemas/elastic-ip-ref": ElasticIP
+      "#/components/schemas/security-group-ref": SecurityGroup
+      "#/components/schemas/snapshot-ref": Snapshot
+  InstancePool:
+    refs:
+      "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+      "#/components/schemas/deploy-target-ref": DeployTarget
+      "#/components/schemas/elastic-ip-ref": ElasticIP
+      "#/components/schemas/instance-type-ref": InstanceType
+      "#/components/schemas/instance-ref": Instance
+      "#/components/schemas/private-network-ref": PrivateNetwork
+      "#/components/schemas/security-group-ref": SecurityGroup
+      "#/components/schemas/ssh-key-ref": SSHKey
+      "#/components/schemas/template-ref": Template
+  SKSNodepool:
+    refs:
+      "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+      "#/components/schemas/deploy-target-ref": DeployTarget
+      "#/components/schemas/instance-pool-ref": InstancePool
+      "#/components/schemas/instance-type-ref": InstanceType
+      "#/components/schemas/private-network-ref": PrivateNetwork
+      "#/components/schemas/security-group-ref": SecurityGroup
+      "#/components/schemas/template-ref": Template
+
+# Type aliases kept for backward compatibility.
+aliases:
+  - name: InstanceTarget
+    target: InstanceRef
+  - name: BlockStorageSnapshotTarget
+    target: BlockStorageSnapshotRef
+  - name: BlockStorageVolumeTarget
+    target: BlockStorageVolumeRef

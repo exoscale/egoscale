@@ -8,6 +8,8 @@ import (
 	"sync"
 
 	abbr "github.com/BluntSporks/abbreviation"
+
+	"github.com/exoscale/egoscale/v3/generator/config"
 )
 
 var uppercaseAcronym = sync.Map{}
@@ -22,196 +24,23 @@ type Overrides struct {
 	Refs  map[string]string // Reference path overrides (e.g., "#/components/schemas/instance-ref" -> "InstanceTarget")
 }
 
-var SchemaPropertyOverrides = map[string]*Overrides{
-	"CreateInstance": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
-			"#/components/schemas/security-group-ref":      "SecurityGroup",
-			"#/components/schemas/template-ref":            "Template",
-			"#/components/schemas/ssh-key-ref":             "SSHKey",
-			"#/components/schemas/deploy-target-ref":       "DeployTarget",
-			"#/components/schemas/instance-type-ref":       "InstanceType",
-		},
-	},
-	"ScaleInstance": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/instance-type-ref": "InstanceType",
-		},
-	},
-	"ResetInstance": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/template-ref": "Template",
-		},
-	},
-	"AttachInstanceToElasticIPRequest": {
-		Props: map[string]string{
-			"instance-target": "instance",
-		},
-		Refs: map[string]string{
-			"#/components/schemas/instance-ref": "InstanceTarget",
-		},
-	},
-	"DetachInstanceFromElasticIPRequest": {
-		Props: map[string]string{
-			"instance-target": "instance",
-		},
-		Refs: map[string]string{
-			"#/components/schemas/instance-ref": "InstanceTarget",
-		},
-	},
-	"CreateBlockStorageVolumeRequest": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
-		},
-	},
-	"AttachBlockStorageVolumeToInstanceRequest": {
-		Props: map[string]string{
-			"block-storage-volume-ref": "block-storage-volume",
-		},
-		Refs: map[string]string{
-			"#/components/schemas/instance-ref": "InstanceTarget",
-		},
-	},
-	"CreateInstanceRequest": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
-			"#/components/schemas/security-group-ref":      "SecurityGroup",
-			"#/components/schemas/template-ref":            "Template",
-			"#/components/schemas/ssh-key-ref":             "SSHKey",
-			"#/components/schemas/deploy-target-ref":       "DeployTarget",
-			"#/components/schemas/instance-type-ref":       "InstanceType",
-		},
-	},
-	"ResetInstanceRequest": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/template-ref": "Template",
-		},
-	},
-	"ScaleInstanceRequest": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/instance-type-ref": "InstanceType",
-		},
-	},
-	"BlockStorageSnapshot": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/block-storage-volume-ref": "BlockStorageVolumeTarget",
-		},
-	},
-	"BlockStorageVolume": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/instance-ref":               "InstanceTarget",
-			"#/components/schemas/block-storage-snapshot-ref": "BlockStorageSnapshotTarget",
-		},
-	},
-	"CreateDBAASServiceMysqlRequest": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/dbaas-mysql-user-password": "string",
-		},
-	},
-	"ResetDBAASMysqlUserPasswordRequest": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/dbaas-mysql-user-password": "DBAASUserPassword",
-		},
-	},
-	"CreateInstancePoolRequest": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
-			"#/components/schemas/deploy-target-ref":       "DeployTarget",
-			"#/components/schemas/elastic-ip-ref":          "ElasticIP",
-			"#/components/schemas/instance-type-ref":       "InstanceType",
-			"#/components/schemas/private-network-ref":     "PrivateNetwork",
-			"#/components/schemas/security-group-ref":      "SecurityGroup",
-			"#/components/schemas/template-ref":            "Template",
-			"#/components/schemas/ssh-key-ref":             "SSHKey",
-		},
-	},
-	"UpdateInstancePoolRequest": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
-			"#/components/schemas/deploy-target-ref":       "DeployTarget",
-			"#/components/schemas/elastic-ip-ref":          "ElasticIP",
-			"#/components/schemas/instance-type-ref":       "InstanceType",
-			"#/components/schemas/private-network-ref":     "PrivateNetwork",
-			"#/components/schemas/security-group-ref":      "SecurityGroup",
-			"#/components/schemas/template-ref":            "Template",
-			"#/components/schemas/ssh-key-ref":             "SSHKey",
-		},
-	},
-	"CreateSKSNodepoolRequest": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
-			"#/components/schemas/deploy-target-ref":       "DeployTarget",
-			"#/components/schemas/instance-type-ref":       "InstanceType",
-			"#/components/schemas/private-network-ref":     "PrivateNetwork",
-			"#/components/schemas/security-group-ref":      "SecurityGroup",
-		},
-	},
-	"UpdateSKSNodepoolRequest": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
-			"#/components/schemas/deploy-target-ref":       "DeployTarget",
-			"#/components/schemas/instance-type-ref":       "InstanceType",
-			"#/components/schemas/private-network-ref":     "PrivateNetwork",
-			"#/components/schemas/security-group-ref":      "SecurityGroup",
-		},
-	},
-	"Instance": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
-			"#/components/schemas/deploy-target-ref":       "DeployTarget",
-			"#/components/schemas/elastic-ip-ref":          "ElasticIP",
-			"#/components/schemas/security-group-ref":      "SecurityGroup",
-			"#/components/schemas/snapshot-ref":            "Snapshot",
-		},
-	},
-	"InstancePool": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
-			"#/components/schemas/deploy-target-ref":       "DeployTarget",
-			"#/components/schemas/elastic-ip-ref":          "ElasticIP",
-			"#/components/schemas/instance-type-ref":       "InstanceType",
-			"#/components/schemas/instance-ref":            "Instance",
-			"#/components/schemas/private-network-ref":     "PrivateNetwork",
-			"#/components/schemas/security-group-ref":      "SecurityGroup",
-			"#/components/schemas/ssh-key-ref":             "SSHKey",
-			"#/components/schemas/template-ref":            "Template",
-		},
-	},
-	"SKSNodepool": {
-		Props: nil,
-		Refs: map[string]string{
-			"#/components/schemas/anti-affinity-group-ref": "AntiAffinityGroup",
-			"#/components/schemas/deploy-target-ref":       "DeployTarget",
-			"#/components/schemas/instance-pool-ref":       "InstancePool",
-			"#/components/schemas/instance-type-ref":       "InstanceType",
-			"#/components/schemas/private-network-ref":     "PrivateNetwork",
-			"#/components/schemas/security-group-ref":      "SecurityGroup",
-			"#/components/schemas/template-ref":            "Template",
-		},
-	},
-}
+// SchemaPropertyOverrides are set by Configure from the generator config.
+var SchemaPropertyOverrides = map[string]*Overrides{}
 
-var SpecialAliases = []string{
-	"type InstanceTarget = InstanceRef",
-	"type BlockStorageSnapshotTarget = BlockStorageSnapshotRef",
-	"type BlockStorageVolumeTarget = BlockStorageVolumeRef",
+// SpecialAliases are set by Configure from the generator config.
+var SpecialAliases []string
+
+// Configure sets the acronyms, schema overrides and aliases from the generator config.
+func Configure(c config.Config) {
+	for k, v := range c.Acronyms {
+		ConfigureAcronym(k, v)
+	}
+	for name, o := range c.SchemaOverrides {
+		SchemaPropertyOverrides[name] = &Overrides{Props: o.Props, Refs: o.Refs}
+	}
+	for _, a := range c.Aliases {
+		SpecialAliases = append(SpecialAliases, "type "+a.Name+" = "+a.Target)
+	}
 }
 
 // RenderReference renders OpenAPI reference from path to go style.

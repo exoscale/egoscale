@@ -1,13 +1,14 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2025 Princess Beef Heavy Industries, LLC / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package model
 
 import (
+	"reflect"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/v2"
 	"github.com/pb33f/libopenapi/datamodel/low/v3"
-	"reflect"
 )
 
 // ResponsesChanges represents changes made between two Swagger or OpenAPI Responses objects.
@@ -20,6 +21,9 @@ type ResponsesChanges struct {
 
 // GetAllChanges returns a slice of all changes made between Responses objects
 func (r *ResponsesChanges) GetAllChanges() []*Change {
+	if r == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, r.Changes...)
 	for k := range r.ResponseChanges {
@@ -36,6 +40,9 @@ func (r *ResponsesChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns the total number of changes found between two Swagger or OpenAPI Responses objects
 func (r *ResponsesChanges) TotalChanges() int {
+	if r == nil {
+		return 0
+	}
 	c := r.PropertyChanges.TotalChanges()
 	for k := range r.ResponseChanges {
 		c += r.ResponseChanges[k].TotalChanges()
@@ -59,13 +66,15 @@ func (r *ResponsesChanges) TotalBreakingChanges() int {
 	if r.DefaultChanges != nil {
 		c += r.DefaultChanges.TotalBreakingChanges()
 	}
+	if r.ExtensionChanges != nil {
+		c += r.ExtensionChanges.TotalBreakingChanges()
+	}
 	return c
 }
 
 // CompareResponses compares a left and right Swagger or OpenAPI Responses object for any changes. If found
 // returns a pointer to ResponsesChanges, or returns nil.
 func CompareResponses(l, r any) *ResponsesChanges {
-
 	var changes []*Change
 
 	rc := new(ResponsesChanges)
@@ -87,17 +96,17 @@ func CompareResponses(l, r any) *ResponsesChanges {
 		}
 		if !lResponses.Default.IsEmpty() && rResponses.Default.IsEmpty() {
 			CreateChange(&changes, ObjectRemoved, v3.DefaultLabel,
-				lResponses.Default.ValueNode, nil, true,
+				lResponses.Default.ValueNode, nil, BreakingRemoved(CompResponses, PropDefault),
 				lResponses.Default.Value, nil)
 		}
 		if lResponses.Default.IsEmpty() && !rResponses.Default.IsEmpty() {
 			CreateChange(&changes, ObjectAdded, v3.DefaultLabel,
-				nil, rResponses.Default.ValueNode, false,
+				nil, rResponses.Default.ValueNode, BreakingAdded(CompResponses, PropDefault),
 				nil, lResponses.Default.Value)
 		}
 
-		rc.ResponseChanges = CheckMapForChanges(lResponses.Codes, rResponses.Codes,
-			&changes, v3.CodesLabel, CompareResponseV2)
+		rc.ResponseChanges = CheckMapForChangesWithRules(lResponses.Codes, rResponses.Codes,
+			&changes, v3.CodesLabel, CompareResponseV2, CompResponses, PropCodes)
 
 		rc.ExtensionChanges = CompareExtensions(lResponses.Extensions, rResponses.Extensions)
 	}
@@ -109,7 +118,7 @@ func CompareResponses(l, r any) *ResponsesChanges {
 		lResponses := l.(*v3.Responses)
 		rResponses := r.(*v3.Responses)
 
-		//perform hash check to avoid further processing
+		// perform hash check to avoid further processing
 		if low.AreEqual(lResponses, rResponses) {
 			return nil
 		}
@@ -119,17 +128,17 @@ func CompareResponses(l, r any) *ResponsesChanges {
 		}
 		if !lResponses.Default.IsEmpty() && rResponses.Default.IsEmpty() {
 			CreateChange(&changes, ObjectRemoved, v3.DefaultLabel,
-				lResponses.Default.ValueNode, nil, true,
+				lResponses.Default.ValueNode, nil, BreakingRemoved(CompResponses, PropDefault),
 				lResponses.Default.Value, nil)
 		}
 		if lResponses.Default.IsEmpty() && !rResponses.Default.IsEmpty() {
 			CreateChange(&changes, ObjectAdded, v3.DefaultLabel,
-				nil, rResponses.Default.ValueNode, false,
+				nil, rResponses.Default.ValueNode, BreakingAdded(CompResponses, PropDefault),
 				nil, lResponses.Default.Value)
 		}
 
-		rc.ResponseChanges = CheckMapForChanges(lResponses.Codes, rResponses.Codes,
-			&changes, v3.CodesLabel, CompareResponseV3)
+		rc.ResponseChanges = CheckMapForChangesWithRules(lResponses.Codes, rResponses.Codes,
+			&changes, v3.CodesLabel, CompareResponseV3, CompResponses, PropCodes)
 
 		rc.ExtensionChanges = CompareExtensions(lResponses.Extensions, rResponses.Extensions)
 

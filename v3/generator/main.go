@@ -2,14 +2,11 @@ package main
 
 import (
 	_ "embed"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/pb33f/libopenapi"
 
 	"github.com/exoscale/egoscale/v3/generator/build"
 	"github.com/exoscale/egoscale/v3/generator/config"
@@ -46,7 +43,7 @@ func run(openAPISpec, genPathDir, packageName string) error {
 		return err
 	}
 
-	doc, err := libopenapi.NewDocument(buf)
+	model, err := build.Load(buf)
 	if err != nil {
 		return err
 	}
@@ -55,13 +52,8 @@ func run(openAPISpec, genPathDir, packageName string) error {
 		return err
 	}
 
-	model, errs := doc.BuildV3Model()
-	if err := errors.Join(errs...); err != nil {
-		return fmt.Errorf("build model: %w", err)
-	}
-
 	// Build every file before writing any, not to leave a partially generated package.
-	b := build.New(&model.Model, cfg)
+	b := build.New(model, cfg)
 	files := []struct {
 		name    string
 		build   func(string) (ir.File, error)

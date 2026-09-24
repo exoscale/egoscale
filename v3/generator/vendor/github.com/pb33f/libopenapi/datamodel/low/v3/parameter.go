@@ -1,21 +1,21 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package v3
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
+	"hash/maphash"
 	"slices"
-	"strings"
+	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/base"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Parameter represents a high-level OpenAPI 3+ Parameter object, that is backed by a low-level one.
@@ -41,6 +41,8 @@ type Parameter struct {
 	Extensions      *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 	index           *index.SpecIndex
 	context         context.Context
+	nodeStore       sync.Map
+	reference       low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -87,7 +89,8 @@ func (p *Parameter) GetExtensions() *orderedmap.Map[low.KeyReference[string], lo
 
 // Build will extract examples, extensions and content/media types.
 func (p *Parameter) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
-	p.Reference = new(low.Reference)
+	p.reference = low.Reference{}
+	p.Reference = &p.reference
 	if ok, _, ref := utils.IsNodeRefValue(root); ok {
 		p.SetReference(ref, root)
 	}
@@ -95,7 +98,13 @@ func (p *Parameter) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 	p.KeyNode = keyNode
 	p.RootNode = root
 	utils.CheckForMergeNodes(root)
-	p.Nodes = low.ExtractNodes(ctx, root)
+	p.nodeStore = sync.Map{}
+	p.Nodes = &p.nodeStore
+	if len(root.Content) > 0 {
+		p.NodeMap.ExtractNodes(root, false)
+	} else {
+		p.AddNode(root.Line, root)
+	}
 	p.Extensions = low.ExtractExtensions(root)
 	p.index = idx
 	p.context = ctx
@@ -155,40 +164,57 @@ func (p *Parameter) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the Parameter object
-func (p *Parameter) Hash() [32]byte {
-	var f []string
-	if p.Name.Value != "" {
-		f = append(f, p.Name.Value)
-	}
-	if p.In.Value != "" {
-		f = append(f, p.In.Value)
-	}
-	if p.Description.Value != "" {
-		f = append(f, p.Description.Value)
-	}
-	f = append(f, fmt.Sprint(p.Required.Value))
-	f = append(f, fmt.Sprint(p.Deprecated.Value))
-	f = append(f, fmt.Sprint(p.AllowEmptyValue.Value))
-	if p.Style.Value != "" {
-		f = append(f, fmt.Sprint(p.Style.Value))
-	}
-	f = append(f, fmt.Sprint(p.Explode.Value))
-	f = append(f, fmt.Sprint(p.AllowReserved.Value))
-	if p.Schema.Value != nil && p.Schema.Value.Schema() != nil {
-		f = append(f, fmt.Sprintf("%x", p.Schema.Value.Schema().Hash()))
-	}
-	if p.Example.Value != nil && !p.Example.Value.IsZero() {
-		f = append(f, low.GenerateHashString(p.Example.Value))
-	}
-	for v := range orderedmap.SortAlpha(p.Examples.Value).ValuesFromOldest() {
-		f = append(f, low.GenerateHashString(v.Value))
-	}
-	for v := range orderedmap.SortAlpha(p.Content.Value).ValuesFromOldest() {
-		f = append(f, low.GenerateHashString(v.Value))
-	}
-	f = append(f, low.HashExtensions(p.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the Parameter object
+func (p *Parameter) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if p.Name.Value != "" {
+			h.WriteString(p.Name.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if p.In.Value != "" {
+			h.WriteString(p.In.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if p.Description.Value != "" {
+			h.WriteString(p.Description.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		low.HashBool(h, p.Required.Value)
+		h.WriteByte(low.HASH_PIPE)
+		low.HashBool(h, p.Deprecated.Value)
+		h.WriteByte(low.HASH_PIPE)
+		low.HashBool(h, p.AllowEmptyValue.Value)
+		h.WriteByte(low.HASH_PIPE)
+		if p.Style.Value != "" {
+			h.WriteString(p.Style.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		low.HashBool(h, p.Explode.Value)
+		h.WriteByte(low.HASH_PIPE)
+		low.HashBool(h, p.AllowReserved.Value)
+		h.WriteByte(low.HASH_PIPE)
+		if p.Schema.Value != nil && p.Schema.Value.Schema() != nil {
+			h.WriteString(fmt.Sprintf("%x", p.Schema.Value.Schema().Hash()))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if p.Example.Value != nil && !p.Example.Value.IsZero() {
+			h.WriteString(low.GenerateHashString(p.Example.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for v := range orderedmap.SortAlpha(p.Examples.Value).ValuesFromOldest() {
+			h.WriteString(low.GenerateHashString(v.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for v := range orderedmap.SortAlpha(p.Content.Value).ValuesFromOldest() {
+			h.WriteString(low.GenerateHashString(v.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(p.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }
 
 // IsParameter compliance methods.

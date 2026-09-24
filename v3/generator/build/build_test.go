@@ -3,7 +3,6 @@ package build
 import (
 	"testing"
 
-	"github.com/pb33f/libopenapi"
 	"github.com/stretchr/testify/require"
 
 	"github.com/exoscale/egoscale/v3/generator/config"
@@ -13,12 +12,10 @@ import (
 func newTestBuilder(t *testing.T, spec string) *Builder {
 	t.Helper()
 
-	doc, err := libopenapi.NewDocument([]byte(spec))
+	model, err := Load([]byte(spec))
 	require.NoError(t, err)
-	model, errs := doc.BuildV3Model()
-	require.Empty(t, errs)
 
-	return New(&model.Model, config.Config{})
+	return New(model, config.Config{})
 }
 
 // decl returns the declaration named name.

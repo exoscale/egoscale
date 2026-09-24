@@ -1,20 +1,23 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/pb33f/libopenapi"
-
-	"github.com/exoscale/egoscale/v3/generator/client"
-	"github.com/exoscale/egoscale/v3/generator/helpers"
-	"github.com/exoscale/egoscale/v3/generator/operations"
-	"github.com/exoscale/egoscale/v3/generator/schemas"
+	"github.com/exoscale/egoscale/v3/generator/build"
+	"github.com/exoscale/egoscale/v3/generator/config"
+	"github.com/exoscale/egoscale/v3/generator/ir"
+	"github.com/exoscale/egoscale/v3/generator/render"
 )
 
-//go:generate go run main.go ./source.yaml ../ v3
+//go:generate go run . ./source.yaml ../ v3
+
+//go:embed config.yaml
+var configYAML []byte
 
 func main() {
 	if len(os.Args) <= 3 {
@@ -25,45 +28,70 @@ func main() {
 	genPathDir := os.Args[2]
 	packageName := os.Args[3]
 
-	buf, err := os.ReadFile(openAPISpec)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	doc, err := libopenapi.NewDocument(buf)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := os.MkdirAll(genPathDir, os.ModePerm); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := schemas.Generate(doc, filepath.Join(genPathDir, "/schemas.go"), packageName); err != nil {
-		log.Fatal("schemas: ", err)
-	}
-	if err := client.Generate(doc, filepath.Join(genPathDir, "/client.go"), packageName); err != nil {
-		log.Fatal("client: ", err)
-	}
-	if err := operations.Generate(doc, filepath.Join(genPathDir, "/operations.go"), packageName); err != nil {
-		log.Fatal("operations: ", err)
-	}
-
-	if err := os.MkdirAll(genPathDir, os.ModePerm); err != nil {
+	if err := run(openAPISpec, genPathDir, packageName); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func init() {
-	// Additional that are not found here
-	// https://github.com/BluntSporks/abbreviation/blob/master/acronyms.go
-	// helpers package handle stardard Acronyms.
-	helpers.ConfigureAcronym("ssh", "SSH")
-	// Exoscale Specifics
-	helpers.ConfigureAcronym("ai", "AI")
-	helpers.ConfigureAcronym("iam", "IAM")
-	helpers.ConfigureAcronym("sks", "SKS")
-	helpers.ConfigureAcronym("sos", "SOS")
-	helpers.ConfigureAcronym("dbaas", "DBAAS")
-	helpers.ConfigureAcronym("ppapi", "PPAPI")
+func run(openAPISpec, genPathDir, packageName string) error {
+	cfg, err := config.Parse(configYAML)
+	if err != nil {
+		return err
+	}
+	buf, err := os.ReadFile(openAPISpec)
+	if err != nil {
+		return err
+	}
+
+	model, err := build.Load(buf)
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(genPathDir, os.ModePerm); err != nil {
+		return err
+	}
+
+	// Build every file before writing any, not to leave a partially generated package.
+	b := build.New(model, cfg)
+	files := []struct {
+		name    string
+		build   func(string) (ir.File, error)
+		content []byte
+	}{
+		{name: "schemas.go", build: b.Schemas},
+		{name: "client.go", build: b.Client},
+		{name: "operations.go", build: b.Operations},
+	}
+	for i, f := range files {
+		file, err := f.build(packageName)
+		if err != nil {
+			return fmt.Errorf("%s: %w", f.name, err)
+		}
+		if files[i].content, err = source(f.name, file); err != nil {
+			return fmt.Errorf("%s: %w", f.name, err)
+		}
+	}
+
+	for _, f := range files {
+		if err := os.WriteFile(filepath.Join(genPathDir, f.name), f.content, 0o644); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// source renders a file, printing it unformatted when GENERATOR_DEBUG
+// is its name without extension (e.g. GENERATOR_DEBUG=schemas).
+func source(name string, f ir.File) ([]byte, error) {
+	if os.Getenv("GENERATOR_DEBUG") == strings.TrimSuffix(name, ".go") {
+		src, err := render.Source(f)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(string(src))
+	}
+
+	return render.File(f)
 }

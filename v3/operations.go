@@ -908,7 +908,7 @@ func (c Client) ListModels(ctx context.Context, opts ...ListModelsOpt) (*ListMod
 }
 
 // Model files will be downloaded from Huggingface.
-// If the model is under a license then you must provide a Huggingface access token for an account that signed the license agreement
+// Name must be the exact name of the model on huggingface (ex: openai/gpt-oss-120b or ggml-org/gpt-oss-120b-GGUF).
 // If the model is under a license then you must provide a Huggingface access token for an account that signed the license agreement
 func (c Client) CreateModel(ctx context.Context, req CreateModelRequest) (*Operation, error) {
 	path := "/ai/model"
@@ -13640,7 +13640,7 @@ func (c Client) EnableTpm(ctx context.Context, id UUID) (*Operation, error) {
 // Reveal the password used during instance creation or the latest password reset.
 // This is only available for VMs created against templates having the `password-enabled`
 // property set to `true`.
-// creation or resets.
+// Passwords are transiently stored for at most 24 hours and intended to be retrieved shortly after
 // creation or resets.
 func (c Client) RevealInstancePassword(ctx context.Context, id UUID) (*InstancePassword, error) {
 	path := fmt.Sprintf("/instance/%v:password", id)
@@ -17954,7 +17954,7 @@ type CreateSKSNodepoolRequest struct {
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
 	// Configures public IP assignment of the Instances with:
-	// * both IPv4 and IPv6 (`dual`) addressing.
+	// * IPv4 (`inet4`) addressing only (default);
 	// * both IPv4 and IPv6 (`dual`) addressing.
 	PublicIPAssignment CreateSKSNodepoolRequestPublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Nodepool Security Groups
@@ -18135,7 +18135,7 @@ type UpdateSKSNodepoolRequest struct {
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
 	// Configures public IP assignment of the Instances with:
-	// * both IPv4 and IPv6 (`dual`) addressing.
+	// * IPv4 (`inet4`) addressing only;
 	// * both IPv4 and IPv6 (`dual`) addressing.
 	PublicIPAssignment UpdateSKSNodepoolRequestPublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Nodepool Security Groups

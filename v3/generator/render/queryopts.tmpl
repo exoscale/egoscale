@@ -1,0 +1,8 @@
+type {{ .Type }} func(url.Values)
+{{ range .Funcs }}
+func {{ .Func }}({{ .Arg }} {{ .ArgType }}) {{ $.Type }} {
+	return func(q url.Values) {
+		q.Add("{{ .Param }}", {{ formatQuery . }})
+	}
+}
+{{ end -}}

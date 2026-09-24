@@ -4,9 +4,9 @@
 package index
 
 import (
-	"crypto/sha256"
+	"context"
 	"fmt"
-	"hash"
+	"hash/maphash"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -15,7 +15,7 @@ import (
 	"sync"
 
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 func (index *SpecIndex) extractDefinitionsAndSchemas(schemasNode *yaml.Node, pathPrefix string) {
@@ -39,7 +39,7 @@ func (index *SpecIndex) extractDefinitionsAndSchemas(schemasNode *yaml.Node, pat
 			Node:                  schema,
 			Path:                  fmt.Sprintf("$.components.schemas['%s']", name),
 			ParentNode:            schemasNode,
-			RequiredRefProperties: extractDefinitionRequiredRefProperties(schemasNode, map[string][]string{}, fullDef, index),
+			RequiredRefProperties: extractDefinitionRequiredRefProperties(schema, map[string][]string{}, fullDef, index),
 		}
 		index.allComponentSchemaDefinitions.Store(def, ref)
 	}
@@ -67,7 +67,7 @@ func extractDefinitionRequiredRefProperties(schemaNode *yaml.Node, reqRefProps m
 
 	_, propertiesMapNode := utils.FindKeyNodeTop("properties", schemaNode.Content)
 	if propertiesMapNode == nil {
-		// TODO: Log a warning on the resolver, because if you have required properties, but no actual properties, something is wrong
+		// A schema with required properties but no properties map contributes no required ref edges.
 		return reqRefProps
 	}
 
@@ -383,7 +383,7 @@ func (index *SpecIndex) extractComponentSecuritySchemes(securitySchemesNode *yam
 			KeyNode:               keyNode,
 			Path:                  fmt.Sprintf("$.components.securitySchemes.%s", name),
 			ParentNode:            securitySchemesNode,
-			RequiredRefProperties: extractDefinitionRequiredRefProperties(securitySchemesNode, map[string][]string{}, fullDef, index),
+			RequiredRefProperties: extractDefinitionRequiredRefProperties(schema, map[string][]string{}, fullDef, index),
 		}
 		index.allSecuritySchemes.Store(def, ref)
 	}
@@ -403,14 +403,22 @@ func (index *SpecIndex) countUniqueInlineDuplicates() int {
 	return unique
 }
 
-func seekRefEnd(index *SpecIndex, refName string) *Reference {
-	ref, _ := index.SearchIndexForReference(refName)
+func seekRefEnd(ctx context.Context, index *SpecIndex, refName string) *Reference {
+	ref, _, nCtx := index.SearchIndexForReferenceWithContext(ctx, refName)
 	if ref != nil {
 		if ok, _, v := utils.IsNodeRefValue(ref.Node); ok {
-			return seekRefEnd(ref.Index, v)
+			return seekRefEnd(nCtx, ref.Index, v)
 		}
 	}
 	return ref
+}
+
+// formatParameterPath creates a consistent JSON path for parameter error messages
+func formatParameterPath(pathValue, method string, index int) string {
+	if method == "top" {
+		return fmt.Sprintf("$.paths['%s'].parameters[%d]", pathValue, index)
+	}
+	return fmt.Sprintf("$.paths['%s'].%s.parameters[%d]", pathValue, method, index)
 }
 
 func (index *SpecIndex) scanOperationParams(params []*yaml.Node, keyNode, pathItemNode *yaml.Node, method string) {
@@ -423,7 +431,9 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, keyNode, pathIt
 			if paramRef == nil {
 				// could be in the rolodex
 				searchInIndex := findIndex(index, param.Content[1])
-				ref := seekRefEnd(searchInIndex, paramRefName)
+				ctx := context.WithValue(context.Background(), CurrentPathKey, searchInIndex.specAbsolutePath)
+				ctx = context.WithValue(ctx, RootIndexKey, searchInIndex)
+				ref := seekRefEnd(ctx, searchInIndex, paramRefName)
 				if ref != nil {
 					paramRef = ref
 					if strings.Contains(paramRefName, "%") {
@@ -444,10 +454,7 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, keyNode, pathIt
 
 			// if this is a duplicate, add an error and ignore it
 			if index.paramOpRefs[pathItemNode.Value][method][paramRefName] != nil {
-				path := fmt.Sprintf("$.paths['%s'].%s.parameters[%d]", pathItemNode.Value, method, i)
-				if method == "top" {
-					path = fmt.Sprintf("$.paths['%s'].parameters[%d]", pathItemNode.Value, i)
-				}
+				path := formatParameterPath(pathItemNode.Value, method, i)
 
 				index.operationParamErrors = append(index.operationParamErrors, &IndexingError{
 					Err: fmt.Errorf("the `%s` operation parameter at path `%s`, "+
@@ -468,10 +475,7 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, keyNode, pathIt
 			// param is inline.
 			_, vn := utils.FindKeyNode("name", param.Content)
 
-			path := fmt.Sprintf("$.paths['%s'].%s.parameters[%d]", pathItemNode.Value, method, i)
-			if method == "top" {
-				path = fmt.Sprintf("$.paths['%s'].parameters[%d]", pathItemNode.Value, i)
-			}
+			path := formatParameterPath(pathItemNode.Value, method, i)
 
 			if vn == nil {
 				index.operationParamErrors = append(index.operationParamErrors, &IndexingError{
@@ -490,6 +494,12 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, keyNode, pathIt
 				KeyNode:    keyNode,
 				Path:       path,
 			}
+
+			// cache the 'in' value for performance optimization (fix for issue #379)
+			_, inNode := utils.FindKeyNodeTop("in", param.Content)
+			if inNode != nil {
+				ref.In = inNode.Value
+			}
 			if index.paramOpRefs[pathItemNode.Value] == nil {
 				index.paramOpRefs[pathItemNode.Value] = make(map[string]map[string][]*Reference)
 				index.paramOpRefs[pathItemNode.Value][method] = make(map[string][]*Reference)
@@ -500,23 +510,20 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, keyNode, pathIt
 				index.paramOpRefs[pathItemNode.Value][method] = make(map[string][]*Reference)
 			}
 
-			// if this is a duplicate name, check if the `in` type is also the same, if so, it's a duplicate.
+			// Fix for issue #379: Ensure consistent parameter counting regardless of ordering
+			// https://github.com/pb33f/libopenapi/issues/379
+			// check if this parameter name already exists, and detect duplicates in the same location
 			if len(index.paramOpRefs[pathItemNode.Value][method][ref.Name]) > 0 {
 
-				currentNode := ref.Node
 				checkNodes := index.paramOpRefs[pathItemNode.Value][method][ref.Name]
-				_, currentIn := utils.FindKeyNodeTop("in", currentNode.Content)
 
+				// check if there's a duplicate with the same 'in' type (query, path, header, cookie)
+				hasDuplicateInSameLocation := false
 				for _, checkNode := range checkNodes {
-
-					_, checkIn := utils.FindKeyNodeTop("in", checkNode.Node.Content)
-
-					if currentIn != nil && checkIn != nil && currentIn.Value == checkIn.Value {
-
-						path := fmt.Sprintf("$.paths['%s'].%s.parameters[%d]", pathItemNode.Value, method, i)
-						if method == "top" {
-							path = fmt.Sprintf("$.paths['%s'].parameters[%d]", pathItemNode.Value, i)
-						}
+					// both must have 'in' values and they must match to be a duplicate
+					if ref.In != "" && checkNode.In != "" && checkNode.In == ref.In {
+						// found a duplicate parameter with same name and location
+						hasDuplicateInSameLocation = true
 
 						index.operationParamErrors = append(index.operationParamErrors, &IndexingError{
 							Err: fmt.Errorf("the `%s` operation parameter at path `%s`, "+
@@ -524,11 +531,16 @@ func (index *SpecIndex) scanOperationParams(params []*yaml.Node, keyNode, pathIt
 							Node: param,
 							Path: path,
 						})
-					} else {
-						index.paramOpRefs[pathItemNode.Value][method][ref.Name] = append(index.paramOpRefs[pathItemNode.Value][method][ref.Name], ref)
+						break // no need to check further once duplicate found
 					}
 				}
+
+				// only add the parameter if it's not a duplicate in the same location
+				if !hasDuplicateInSameLocation {
+					index.paramOpRefs[pathItemNode.Value][method][ref.Name] = append(index.paramOpRefs[pathItemNode.Value][method][ref.Name], ref)
+				}
 			} else {
+				// First parameter with this name, add it
 				index.paramOpRefs[pathItemNode.Value][method][ref.Name] = append(index.paramOpRefs[pathItemNode.Value][method][ref.Name], ref)
 			}
 			continue
@@ -543,16 +555,7 @@ func findIndex(index *SpecIndex, i *yaml.Node) *SpecIndex {
 	}
 	allIndexes := rolodex.GetIndexes()
 	for _, searchIndex := range allIndexes {
-		nodeMap := searchIndex.GetNodeMap()
-		line, ok := nodeMap[i.Line]
-		if !ok {
-			continue
-		}
-		node, ok := line[i.Column]
-		if !ok {
-			continue
-		}
-		if node == i {
+		if node, ok := searchIndex.GetNode(i.Line, i.Column); ok && node == i {
 			return searchIndex
 		}
 	}
@@ -568,6 +571,8 @@ func runIndexFunction(funcs []func() int, wg *sync.WaitGroup) {
 	}
 }
 
+// GenerateCleanSpecConfigBaseURL builds a cleaned base URL by merging the baseURL path with dir,
+// removing duplicate segments. If includeFile is true, the last path segment is preserved.
 func GenerateCleanSpecConfigBaseURL(baseURL *url.URL, dir string, includeFile bool) string {
 	cleanedPath := baseURL.Path // not cleaned yet!
 
@@ -631,42 +636,164 @@ func syncMapToMap[K comparable, V any](sm *sync.Map) map[K]V {
 	return m
 }
 
-// HashNode returns a consistent SHA256 hash string of the node and its children.
-// it runs as fast as possible, but it's recursive, with a hard limit of 1000 levels deep.
-func HashNode(n *yaml.Node) string {
-	h := sha256.New()
-	hashNode(n, h, 0)
-	sum := h.Sum(nil)
-	return fmt.Sprintf("%x", sum)
+// ClearHashCache clears the hash cache - useful for testing and memory management
+func ClearHashCache() {
+	nodeHashCache.Clear()
 }
 
-func hashNode(n *yaml.Node, h hash.Hash, depth int) {
+// ClearNodePools replaces the sync.Pool instances that hold *yaml.Node pointers
+// with fresh pools. After a document lifecycle ends, pooled slices and maps
+// still reference the parsed YAML tree, preventing GC from collecting it.
+// Call this (via libopenapi.ClearAllCaches) to release those references.
+func ClearNodePools() {
+	stackPool = sync.Pool{
+		New: func() interface{} {
+			s := make([]*yaml.Node, 0, 128)
+			return &s
+		},
+	}
+	visitedPool = sync.Pool{
+		New: func() interface{} {
+			return make(map[*yaml.Node]struct{}, 64)
+		},
+	}
+}
+
+// hasherPool pools maphash.Hash instances to avoid allocations.
+// maphash is ~15x faster than SHA256 and has native WriteString support.
+var hasherPool = sync.Pool{
+	New: func() interface{} {
+		h := &maphash.Hash{}
+		h.SetSeed(globalHashSeed) // ensure consistent hashes across pooled instances
+		return h
+	},
+}
+
+// stackPool pools node pointer slices for HashNode traversal.
+// avoids allocating ~1KB per HashNode call.
+var stackPool = sync.Pool{
+	New: func() interface{} {
+		s := make([]*yaml.Node, 0, 128)
+		return &s
+	},
+}
+
+// visitedPool pools visited maps for circular reference detection.
+// avoids allocating ~2KB per HashNode call.
+var visitedPool = sync.Pool{
+	New: func() interface{} {
+		return make(map[*yaml.Node]struct{}, 64)
+	},
+}
+
+// nodeHashCache caches hash results by node pointer for repeated lookups.
+// yaml.Node pointers are stable for the document lifetime.
+var nodeHashCache = sync.Map{} // *yaml.Node -> string
+
+// hashCacheThreshold determines when to cache hash results.
+// lowered from 200 to 20 for more aggressive caching of repeated patterns.
+const hashCacheThreshold = 20
+
+// globalHashSeed ensures all maphash instances produce consistent results.
+// maphash uses random seeds by default; we need deterministic hashes for caching.
+var globalHashSeed maphash.Seed
+
+// emptyNodeHash is the hash of a nil node (computed once at init).
+var emptyNodeHash string
+
+func init() {
+	globalHashSeed = maphash.MakeSeed()
+	var h maphash.Hash
+	h.SetSeed(globalHashSeed)
+	emptyNodeHash = strconv.FormatUint(h.Sum64(), 16)
+}
+
+// writeIntToHash writes a non-negative integer to the hash without heap allocations.
+// Uses a stack-allocated buffer. Line/Column values are always non-negative.
+func writeIntToHash(h *maphash.Hash, n int) {
+	if n == 0 {
+		h.WriteByte('0')
+		return
+	}
+	// max int64 is 19 digits, 20 is safe
+	var buf [20]byte
+	i := len(buf)
+	for n > 0 {
+		i--
+		buf[i] = byte('0' + n%10)
+		n /= 10
+	}
+	h.Write(buf[i:])
+}
+
+// HashNode returns a fast hash string of the node and its children.
+// Uses maphash (same algorithm as Go maps) with WriteString for zero allocations.
+// Iterative traversal avoids recursion overhead.
+func HashNode(n *yaml.Node) string {
 	if n == nil {
-		return
-	}
-	if depth > 1000 {
-		// Prevent extremely deep recursion from using too much stack.
-		return
+		return emptyNodeHash
 	}
 
-	// Write Tag
-	h.Write([]byte(n.Tag))
-
-	// Write Line
-	buf := make([]byte, 0, 32) // small buffer for integer conversion
-	buf = strconv.AppendInt(buf, int64(n.Line), 10)
-	h.Write(buf)
-
-	// Reuse buffer for Column
-	buf = buf[:0]
-	buf = strconv.AppendInt(buf, int64(n.Column), 10)
-	h.Write(buf)
-
-	// Write Value
-	h.Write([]byte(n.Value))
-
-	// Recurse over Content
-	for _, c := range n.Content {
-		hashNode(c, h, depth+1)
+	// check cache first (by pointer - yaml.Node pointers are stable)
+	if cached, ok := nodeHashCache.Load(n); ok {
+		return cached.(string)
 	}
+
+	// get hasher from pool
+	h := hasherPool.Get().(*maphash.Hash)
+	h.Reset()
+	defer hasherPool.Put(h)
+
+	// get stack from pool, reset length but keep capacity
+	stackPtr := stackPool.Get().(*[]*yaml.Node)
+	stack := (*stackPtr)[:0]
+	stack = append(stack, n)
+	defer func() {
+		*stackPtr = stack[:0]
+		stackPool.Put(stackPtr)
+	}()
+
+	// get visited map from pool, clear entries
+	visited := visitedPool.Get().(map[*yaml.Node]struct{})
+	clear(visited)
+	defer func() {
+		clear(visited)
+		visitedPool.Put(visited)
+	}()
+
+	for len(stack) > 0 {
+		// pop from stack
+		node := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		if node == nil {
+			continue
+		}
+
+		// skip already visited nodes (handles circular references)
+		if _, seen := visited[node]; seen {
+			continue
+		}
+		visited[node] = struct{}{}
+
+		// hash node content - WriteString for strings, writeIntToHash for ints (zero allocations)
+		h.WriteString(node.Tag)
+		writeIntToHash(h, node.Line)
+		writeIntToHash(h, node.Column)
+		h.WriteString(node.Value)
+
+		// push children in reverse order for correct traversal order
+		for i := len(node.Content) - 1; i >= 0; i-- {
+			stack = append(stack, node.Content[i])
+		}
+	}
+
+	result := strconv.FormatUint(h.Sum64(), 16)
+
+	// cache result for nodes with children (likely to be looked up again)
+	if len(n.Content) >= hashCacheThreshold {
+		nodeHashCache.Store(n, result)
+	}
+
+	return result
 }

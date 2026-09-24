@@ -4,13 +4,14 @@
 package base
 
 import (
-	"crypto/sha256"
-	"strings"
+	"fmt"
+	"hash/maphash"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/orderedmap"
+	"github.com/pb33f/libopenapi/utils"
 )
 
 // Discriminator is only used by OpenAPI 3+ documents, it represents a polymorphic discriminator used for schemas
@@ -23,12 +24,75 @@ import (
 //
 //	v3 - https://spec.openapis.org/oas/v3.1.0#discriminator-object
 type Discriminator struct {
-	PropertyName low.NodeReference[string]
-	Mapping      low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[string]]]
-	KeyNode      *yaml.Node
-	RootNode     *yaml.Node
+	PropertyName   low.NodeReference[string]
+	Mapping        low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[string]]]
+	DefaultMapping low.NodeReference[string] // OpenAPI 3.2+ defaultMapping for fallback schema
+	KeyNode        *yaml.Node
+	RootNode       *yaml.Node
 	low.Reference
 	low.NodeMap
+}
+
+// ValidateDiscriminatorMappingValueNodes checks that discriminator mapping values are scalar strings.
+func ValidateDiscriminatorMappingValueNodes(discriminatorNode *yaml.Node) error {
+	discriminatorNode = utils.NodeAlias(discriminatorNode)
+	if discriminatorNode == nil || discriminatorNode.Kind != yaml.MappingNode {
+		return nil
+	}
+	utils.CheckForMergeNodes(discriminatorNode)
+
+	for i := 0; i < len(discriminatorNode.Content); i += 2 {
+		keyNode := utils.NodeAlias(discriminatorNode.Content[i])
+		if keyNode == nil {
+			continue
+		}
+		if keyNode.Value != "mapping" {
+			continue
+		}
+
+		mappingNode := utils.NodeAlias(discriminatorNode.Content[i+1])
+		if mappingNode == nil || mappingNode.Kind != yaml.MappingNode {
+			return fmt.Errorf("discriminator.mapping must be an object")
+		}
+		utils.CheckForMergeNodes(mappingNode)
+
+		for j := 0; j < len(mappingNode.Content); j += 2 {
+			keyNode := utils.NodeAlias(mappingNode.Content[j])
+			if keyNode == nil {
+				continue
+			}
+			mappingName := keyNode.Value
+			valueNode := utils.NodeAlias(mappingNode.Content[j+1])
+			if valueNode == nil || valueNode.Kind != yaml.ScalarNode || valueNode.Tag != "!!str" {
+				return fmt.Errorf("discriminator.mapping.%s must be a string, found %s", mappingName, describeDiscriminatorMappingNode(valueNode))
+			}
+		}
+		return nil
+	}
+
+	return nil
+}
+
+func describeDiscriminatorMappingNode(node *yaml.Node) string {
+	if node == nil {
+		return "nil"
+	}
+	if node.Kind == yaml.ScalarNode {
+		return node.Tag
+	}
+
+	switch node.Kind {
+	case yaml.MappingNode:
+		return "object"
+	case yaml.SequenceNode:
+		return "array"
+	case yaml.DocumentNode:
+		return "document"
+	case yaml.AliasNode:
+		return "alias"
+	default:
+		return fmt.Sprintf("kind %d", node.Kind)
+	}
 }
 
 // GetRootNode will return the root yaml node of the Discriminator object
@@ -51,17 +115,21 @@ func (d *Discriminator) FindMappingValue(key string) *low.ValueReference[string]
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the Discriminator object
-func (d *Discriminator) Hash() [32]byte {
-	// calculate a hash from every property.
-	var f []string
-	if d.PropertyName.Value != "" {
-		f = append(f, d.PropertyName.Value)
-	}
-
-	for v := range orderedmap.SortAlpha(d.Mapping.Value).ValuesFromOldest() {
-		f = append(f, v.Value)
-	}
-
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent hash of the Discriminator object
+func (d *Discriminator) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if d.PropertyName.Value != "" {
+			h.WriteString(d.PropertyName.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for v := range orderedmap.SortAlpha(d.Mapping.Value).ValuesFromOldest() {
+			h.WriteString(v.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if d.DefaultMapping.Value != "" {
+			h.WriteString(d.DefaultMapping.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

@@ -5,15 +5,15 @@ package v2
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
+	"hash/maphash"
 	"strings"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Scopes is a low-level representation of a Swagger / OpenAPI 2 OAuth2 Scopes object.
@@ -64,12 +64,17 @@ func (s *Scopes) Build(_ context.Context, _, root *yaml.Node, _ *index.SpecIndex
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the Scopes object
-func (s *Scopes) Hash() [32]byte {
-	var f []string
-	for k, v := range orderedmap.SortAlpha(s.Values).FromOldest() {
-		f = append(f, fmt.Sprintf("%s-%s", k.Value, v.Value))
-	}
-	f = append(f, low.HashExtensions(s.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the Scopes object
+func (s *Scopes) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		for k, v := range orderedmap.SortAlpha(s.Values).FromOldest() {
+			h.WriteString(fmt.Sprintf("%s-%s", k.Value, v.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(s.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

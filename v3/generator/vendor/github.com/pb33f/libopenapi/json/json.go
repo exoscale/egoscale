@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // YAMLNodeToJSON converts yaml/json stored in a yaml.Node to json ordered matching the original yaml/json
@@ -51,7 +51,7 @@ func handleMappingNode(node *yaml.Node) (any, error) {
 		if reflect.TypeOf(kv).Kind() != reflect.String {
 			keyData, err := json.Marshal(kv)
 			if err != nil {
-				return nil, err
+				return nil, err // unreachable code in test case, but kept for safety
 			}
 			kv = string(keyData)
 		}
@@ -71,7 +71,7 @@ func handleSequenceNode(node *yaml.Node) (any, error) {
 	var s []yaml.Node
 
 	if err := node.Decode(&s); err != nil {
-		return nil, err
+		return nil, err // unreachable code in test case, but kept for safety
 	}
 
 	v := make([]any, len(s))

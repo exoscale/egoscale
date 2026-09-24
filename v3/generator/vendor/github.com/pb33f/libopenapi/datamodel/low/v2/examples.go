@@ -5,14 +5,13 @@ package v2
 
 import (
 	"context"
-	"crypto/sha256"
-	"strings"
+	"hash/maphash"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Examples represents a low-level Swagger / OpenAPI 2 Example object.
@@ -54,11 +53,13 @@ func (e *Examples) Build(_ context.Context, _, root *yaml.Node, _ *index.SpecInd
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the Examples object
-func (e *Examples) Hash() [32]byte {
-	var f []string
-	for v := range orderedmap.SortAlpha(e.Values).ValuesFromOldest() {
-		f = append(f, low.GenerateHashString(v.Value))
-	}
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the Examples object
+func (e *Examples) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		for v := range orderedmap.SortAlpha(e.Values).ValuesFromOldest() {
+			h.WriteString(low.GenerateHashString(v.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

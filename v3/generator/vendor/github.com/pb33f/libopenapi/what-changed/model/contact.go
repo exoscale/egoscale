@@ -15,61 +15,47 @@ type ContactChanges struct {
 
 // GetAllChanges returns a slice of all changes made between Callback objects
 func (c *ContactChanges) GetAllChanges() []*Change {
+	if c == nil {
+		return nil
+	}
 	return c.Changes
 }
 
 // TotalChanges represents the total number of changes that have occurred to a Contact object
 func (c *ContactChanges) TotalChanges() int {
+	if c == nil {
+		return 0
+	}
 	return c.PropertyChanges.TotalChanges()
 }
 
-// TotalBreakingChanges always returns 0 for Contact objects, they are non-binding.
+// TotalBreakingChanges returns the total number of breaking changes in Contact objects.
 func (c *ContactChanges) TotalBreakingChanges() int {
-	return 0
+	if c == nil {
+		return 0
+	}
+	return c.PropertyChanges.TotalBreakingChanges()
 }
 
 // CompareContact will check a left (original) and right (new) Contact object for any changes. If there
 // were any, a pointer to a ContactChanges object is returned, otherwise if nothing changed - the function
 // returns nil.
 func CompareContact(l, r *base.Contact) *ContactChanges {
-
 	var changes []*Change
-	var props []*PropertyCheck
+	props := make([]*PropertyCheck, 0, 3)
 
-	// check URL
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.URL.ValueNode,
-		RightNode: r.URL.ValueNode,
-		Label:     v3.URLLabel,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
+	props = append(props,
+		NewPropertyCheck(CompContact, PropURL,
+			l.URL.ValueNode, r.URL.ValueNode,
+			v3.URLLabel, &changes, l, r),
+		NewPropertyCheck(CompContact, PropName,
+			l.Name.ValueNode, r.Name.ValueNode,
+			v3.NameLabel, &changes, l, r),
+		NewPropertyCheck(CompContact, PropEmail,
+			l.Email.ValueNode, r.Email.ValueNode,
+			v3.EmailLabel, &changes, l, r),
+	)
 
-	// check name
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.Name.ValueNode,
-		RightNode: r.Name.ValueNode,
-		Label:     v3.NameLabel,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
-
-	// check email
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.Email.ValueNode,
-		RightNode: r.Email.ValueNode,
-		Label:     v3.EmailLabel,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
-
-	// check everything.
 	CheckProperties(props)
 
 	dc := new(ContactChanges)

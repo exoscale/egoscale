@@ -1,12 +1,12 @@
-// Copyright 2022-2023 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package v3
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
+	"hash/maphash"
 	"sort"
 	"strings"
 	"sync"
@@ -16,7 +16,7 @@ import (
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // PathItem represents a low-level OpenAPI 3+ PathItem object.
@@ -26,23 +26,27 @@ import (
 // are available.
 //   - https://spec.openapis.org/oas/v3.1.0#path-item-object
 type PathItem struct {
-	Description low.NodeReference[string]
-	Summary     low.NodeReference[string]
-	Get         low.NodeReference[*Operation]
-	Put         low.NodeReference[*Operation]
-	Post        low.NodeReference[*Operation]
-	Delete      low.NodeReference[*Operation]
-	Options     low.NodeReference[*Operation]
-	Head        low.NodeReference[*Operation]
-	Patch       low.NodeReference[*Operation]
-	Trace       low.NodeReference[*Operation]
-	Servers     low.NodeReference[[]low.ValueReference[*Server]]
-	Parameters  low.NodeReference[[]low.ValueReference[*Parameter]]
-	Extensions  *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
-	KeyNode     *yaml.Node
-	RootNode    *yaml.Node
-	index       *index.SpecIndex
-	context     context.Context
+	Description          low.NodeReference[string]
+	Summary              low.NodeReference[string]
+	Get                  low.NodeReference[*Operation]
+	Put                  low.NodeReference[*Operation]
+	Post                 low.NodeReference[*Operation]
+	Delete               low.NodeReference[*Operation]
+	Options              low.NodeReference[*Operation]
+	Head                 low.NodeReference[*Operation]
+	Patch                low.NodeReference[*Operation]
+	Trace                low.NodeReference[*Operation]
+	Query                low.NodeReference[*Operation]
+	AdditionalOperations low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.NodeReference[*Operation]]] // OpenAPI 3.2+ additional operations
+	Servers              low.NodeReference[[]low.ValueReference[*Server]]
+	Parameters           low.NodeReference[[]low.ValueReference[*Parameter]]
+	Extensions           *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
+	KeyNode              *yaml.Node
+	RootNode             *yaml.Node
+	index                *index.SpecIndex
+	context              context.Context
+	nodeStore            sync.Map
+	reference            low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -57,53 +61,117 @@ func (p *PathItem) GetContext() context.Context {
 	return p.context
 }
 
-// Hash will return a consistent SHA256 Hash of the PathItem object
-func (p *PathItem) Hash() [32]byte {
-	var f []string
-	if !p.Description.IsEmpty() {
-		f = append(f, p.Description.Value)
-	}
-	if !p.Summary.IsEmpty() {
-		f = append(f, p.Summary.Value)
-	}
-	if !p.Get.IsEmpty() {
-		f = append(f, fmt.Sprintf("%s-%s", GetLabel, low.GenerateHashString(p.Get.Value)))
-	}
-	if !p.Put.IsEmpty() {
-		f = append(f, fmt.Sprintf("%s-%s", PutLabel, low.GenerateHashString(p.Put.Value)))
-	}
-	if !p.Post.IsEmpty() {
-		f = append(f, fmt.Sprintf("%s-%s", PutLabel, low.GenerateHashString(p.Post.Value)))
-	}
-	if !p.Delete.IsEmpty() {
-		f = append(f, fmt.Sprintf("%s-%s", DeleteLabel, low.GenerateHashString(p.Delete.Value)))
-	}
-	if !p.Options.IsEmpty() {
-		f = append(f, fmt.Sprintf("%s-%s", OptionsLabel, low.GenerateHashString(p.Options.Value)))
-	}
-	if !p.Head.IsEmpty() {
-		f = append(f, fmt.Sprintf("%s-%s", HeadLabel, low.GenerateHashString(p.Head.Value)))
-	}
-	if !p.Patch.IsEmpty() {
-		f = append(f, fmt.Sprintf("%s-%s", PatchLabel, low.GenerateHashString(p.Patch.Value)))
-	}
-	if !p.Trace.IsEmpty() {
-		f = append(f, fmt.Sprintf("%s-%s", TraceLabel, low.GenerateHashString(p.Trace.Value)))
-	}
-	keys := make([]string, len(p.Parameters.Value))
-	for k := range p.Parameters.Value {
-		keys[k] = low.GenerateHashString(p.Parameters.Value[k].Value)
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
-	keys = make([]string, len(p.Servers.Value))
-	for k := range p.Servers.Value {
-		keys[k] = low.GenerateHashString(p.Servers.Value[k].Value)
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
-	f = append(f, low.HashExtensions(p.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the PathItem object
+func (p *PathItem) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if !p.Description.IsEmpty() {
+			h.WriteString(p.Description.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !p.Summary.IsEmpty() {
+			h.WriteString(p.Summary.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !p.Get.IsEmpty() {
+			h.WriteString(GetLabel)
+			h.WriteByte('-')
+			h.WriteString(low.GenerateHashString(p.Get.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !p.Put.IsEmpty() {
+			h.WriteString(PutLabel)
+			h.WriteByte('-')
+			h.WriteString(low.GenerateHashString(p.Put.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !p.Post.IsEmpty() {
+			h.WriteString(PostLabel)
+			h.WriteByte('-')
+			h.WriteString(low.GenerateHashString(p.Post.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !p.Delete.IsEmpty() {
+			h.WriteString(DeleteLabel)
+			h.WriteByte('-')
+			h.WriteString(low.GenerateHashString(p.Delete.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !p.Options.IsEmpty() {
+			h.WriteString(OptionsLabel)
+			h.WriteByte('-')
+			h.WriteString(low.GenerateHashString(p.Options.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !p.Head.IsEmpty() {
+			h.WriteString(HeadLabel)
+			h.WriteByte('-')
+			h.WriteString(low.GenerateHashString(p.Head.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !p.Patch.IsEmpty() {
+			h.WriteString(PatchLabel)
+			h.WriteByte('-')
+			h.WriteString(low.GenerateHashString(p.Patch.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !p.Trace.IsEmpty() {
+			h.WriteString(TraceLabel)
+			h.WriteByte('-')
+			h.WriteString(low.GenerateHashString(p.Trace.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !p.Query.IsEmpty() {
+			h.WriteString(QueryLabel)
+			h.WriteByte('-')
+			h.WriteString(low.GenerateHashString(p.Query.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+
+		// Process AdditionalOperations with pre-allocation and sorting
+		if p.AdditionalOperations.Value != nil && p.AdditionalOperations.Value.Len() > 0 {
+			keys := make([]string, 0, p.AdditionalOperations.Value.Len())
+			for k, v := range p.AdditionalOperations.Value.FromOldest() {
+				keys = append(keys, k.Value+"-"+low.GenerateHashString(v.Value))
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				h.WriteString(key)
+				h.WriteByte(low.HASH_PIPE)
+			}
+		}
+
+		// Process Parameters with pre-allocation and sorting
+		if len(p.Parameters.Value) > 0 {
+			keys := make([]string, len(p.Parameters.Value))
+			for k := range p.Parameters.Value {
+				keys[k] = low.GenerateHashString(p.Parameters.Value[k].Value)
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				h.WriteString(key)
+				h.WriteByte(low.HASH_PIPE)
+			}
+		}
+
+		// Process Servers with pre-allocation and sorting
+		if len(p.Servers.Value) > 0 {
+			keys := make([]string, len(p.Servers.Value))
+			for k := range p.Servers.Value {
+				keys[k] = low.GenerateHashString(p.Servers.Value[k].Value)
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				h.WriteString(key)
+				h.WriteByte(low.HASH_PIPE)
+			}
+		}
+
+		for _, ext := range low.HashExtensions(p.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }
 
 // GetRootNode returns the root yaml node of the PathItem object
@@ -129,7 +197,8 @@ func (p *PathItem) GetExtensions() *orderedmap.Map[low.KeyReference[string], low
 // Build extracts extensions, parameters, servers and each http method defined.
 // everything is extracted asynchronously for speed.
 func (p *PathItem) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
-	p.Reference = new(low.Reference)
+	p.reference = low.Reference{}
+	p.Reference = &p.reference
 	if ok, _, ref := utils.IsNodeRefValue(root); ok {
 		p.SetReference(ref, root)
 	}
@@ -137,7 +206,13 @@ func (p *PathItem) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 	p.KeyNode = keyNode
 	p.RootNode = root
 	utils.CheckForMergeNodes(root)
-	p.Nodes = low.ExtractNodes(ctx, root)
+	p.nodeStore = sync.Map{}
+	p.Nodes = &p.nodeStore
+	if len(root.Content) > 0 {
+		p.NodeMap.ExtractNodes(root, false)
+	} else {
+		p.AddNode(root.Line, root)
+	}
 	p.Extensions = low.ExtractExtensions(root)
 	p.index = idx
 	p.context = ctx
@@ -146,9 +221,9 @@ func (p *PathItem) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 	skip := false
 	var currentNode *yaml.Node
 
-	var wg sync.WaitGroup
-	var errors []error
-	var ops []low.NodeReference[*Operation]
+	ops := make([]low.NodeReference[*Operation], 0, len(root.Content)/2)
+	var additionalOps *orderedmap.Map[low.KeyReference[string], low.NodeReference[*Operation]]
+	var additionalOpsKeyNode, additionalOpsValueNode *yaml.Node
 
 	// extract parameters
 	params, ln, vn, pErr := low.ExtractArray[*Parameter](ctx, ParametersLabel, root, idx)
@@ -167,7 +242,7 @@ func (p *PathItem) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 	_, ln, vn = utils.FindKeyNodeFullTop(ServersLabel, root.Content)
 	if vn != nil {
 		if utils.IsNodeArray(vn) {
-			var servers []low.ValueReference[*Server]
+			servers := make([]low.ValueReference[*Server], 0, len(vn.Content))
 			for _, srvN := range vn.Content {
 				if utils.IsNodeMap(srvN) {
 					srvr := new(Server)
@@ -187,15 +262,23 @@ func (p *PathItem) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 			p.Nodes.Store(ln.Line, ln)
 		}
 	}
-
+	prevExt := false
 	for i, pathNode := range root.Content {
-		if strings.HasPrefix(strings.ToLower(pathNode.Value), "x-") {
+		if len(pathNode.Value) >= 2 && (pathNode.Value[0] == 'x' || pathNode.Value[0] == 'X') && pathNode.Value[1] == '-' {
 			skip = true
+			prevExt = true
 			continue
 		}
-		if strings.HasPrefix(strings.ToLower(pathNode.Value), "parameters") {
-			skip = true
-			continue
+		// https://github.com/pb33f/libopenapi/issues/388
+		// in the case where a user has an extension with the value 'parameters', make sure we handle
+		// it correctly, by not skipping.
+		if strings.EqualFold(pathNode.Value, "parameters") {
+			if !prevExt { // this
+				skip = true
+				continue
+			} else {
+				prevExt = false
+			}
 		}
 		if skip {
 			skip = false
@@ -206,66 +289,36 @@ func (p *PathItem) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 			continue
 		}
 
-		// the only thing we now care about is handling operations, filter out anything that's not a verb.
+		// check if this is an operation (either standard or additional)
+		isStandardOp := false
+		isAdditionalOp := false
+
 		switch currentNode.Value {
-		case GetLabel:
-		case PostLabel:
-		case PutLabel:
-		case PatchLabel:
-		case DeleteLabel:
-		case HeadLabel:
-		case OptionsLabel:
-		case TraceLabel:
+		case GetLabel, PostLabel, PutLabel, PatchLabel, DeleteLabel, HeadLabel, OptionsLabel, TraceLabel, QueryLabel:
+			isStandardOp = true
 		default:
-			continue // ignore everything else.
-		}
-
-		foundContext := ctx
-		var op Operation
-		opIsRef := false
-		var opRefVal string
-		var opRefNode *yaml.Node
-		if ok, _, ref := utils.IsNodeRefValue(pathNode); ok {
-			// According to OpenAPI spec the only valid $ref for paths is
-			// reference for the whole pathItem. Unfortunately, internet is full of invalid specs
-			// even from trusted companies like DigitalOcean where they tend to
-			// use file $ref for each respective operation:
-			// /endpoint/call/name:
-			//   post:
-			//     $ref: 'file.yaml'
-			// Check if that is the case and resolve such thing properly too.
-
-			opIsRef = true
-			opRefVal = ref
-			opRefNode = pathNode
-			r, newIdx, err, nCtx := low.LocateRefNodeWithContext(ctx, pathNode, idx)
-			if r != nil {
-				if r.Kind == yaml.DocumentNode {
-					r = r.Content[0]
+			// check if this looks like an HTTP method (and isn't a known non-operation field)
+			switch currentNode.Value {
+			case ParametersLabel, ServersLabel, SummaryLabel, DescriptionLabel:
+				continue // ignore known non-operation fields
+			default:
+				// assume it's an additional operation if it contains a mapping to an operation object
+				if utils.IsNodeMap(pathNode) {
+					isAdditionalOp = true
+				} else {
+					continue // ignore if not a map
 				}
-				pathNode = r
-				foundContext = nCtx
-				foundContext = context.WithValue(foundContext, index.FoundIndexKey, newIdx)
-
-				if r.Tag == "" {
-					// If it's a node from file, tag is empty
-					pathNode = r.Content[0]
-				}
-
-				if err != nil {
-					if !idx.AllowCircularReferenceResolving() {
-						return fmt.Errorf("build schema failed: %s", err.Error())
-					}
-				}
-			} else {
-				return fmt.Errorf("path item build failed: cannot find reference: %s at line %d, col %d",
-					pathNode.Content[1].Value, pathNode.Content[1].Line, pathNode.Content[1].Column)
 			}
-		} else {
-			foundContext = context.WithValue(foundContext, index.FoundIndexKey, idx)
 		}
-		wg.Add(1)
-		low.BuildModelAsync(pathNode, &op, &wg, &errors)
+
+		foundContext, pathNode, opIsRef, opRefVal, opRefNode, err := resolveOperationReference(ctx, pathNode, idx)
+		if err != nil {
+			return err
+		}
+		var op Operation
+		if err := low.BuildModel(pathNode, &op); err != nil {
+			return err
+		}
 
 		opRef := low.NodeReference[*Operation]{
 			Value:     &op,
@@ -279,23 +332,79 @@ func (p *PathItem) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 
 		ops = append(ops, opRef)
 
-		switch currentNode.Value {
-		case GetLabel:
-			p.Get = opRef
-		case PostLabel:
-			p.Post = opRef
-		case PutLabel:
-			p.Put = opRef
-		case PatchLabel:
-			p.Patch = opRef
-		case DeleteLabel:
-			p.Delete = opRef
-		case HeadLabel:
-			p.Head = opRef
-		case OptionsLabel:
-			p.Options = opRef
-		case TraceLabel:
-			p.Trace = opRef
+		if isStandardOp {
+			switch currentNode.Value {
+			case GetLabel:
+				p.Get = opRef
+			case PostLabel:
+				p.Post = opRef
+			case PutLabel:
+				p.Put = opRef
+			case PatchLabel:
+				p.Patch = opRef
+			case DeleteLabel:
+				p.Delete = opRef
+			case HeadLabel:
+				p.Head = opRef
+			case OptionsLabel:
+				p.Options = opRef
+			case TraceLabel:
+				p.Trace = opRef
+			case QueryLabel:
+				p.Query = opRef
+			}
+		} else if isAdditionalOp {
+			// initialize additionalOps map if this is the first additional operation
+			if additionalOps == nil {
+				additionalOps = orderedmap.New[low.KeyReference[string], low.NodeReference[*Operation]]()
+				additionalOpsKeyNode, additionalOpsValueNode = currentNode, pathNode
+			}
+
+			// now we need to determine if these are inline additional operations, or just plonked into the root.
+			if currentNode.Value == AdditionalOperationsLabel {
+
+				for j := 0; j < len(pathNode.Content); j += 2 {
+					opKeyNode := pathNode.Content[j]
+					opValueNode := pathNode.Content[j+1]
+
+					// resolve operation reference for each additional operation
+					foundContext, opValueNode, opIsRef, opRefVal, opRefNode, err = resolveOperationReference(ctx, opValueNode, idx)
+					if err != nil {
+						return err
+					}
+					var addOp Operation
+					if err := low.BuildModel(opValueNode, &addOp); err != nil {
+						return err
+					}
+
+					addOpRef := low.NodeReference[*Operation]{
+						Value:     &addOp,
+						KeyNode:   opKeyNode,
+						ValueNode: opValueNode,
+						Context:   foundContext,
+					}
+					if opIsRef {
+						addOpRef.SetReference(opRefVal, opRefNode)
+					}
+
+					additionalOps.Set(low.KeyReference[string]{
+						KeyNode: opKeyNode,
+						Value:   opKeyNode.Value,
+					}, addOpRef)
+				}
+			} else {
+
+				kv := pathNode.Value
+				if kv == "" {
+					kv = currentNode.Value
+				}
+
+				additionalOps.Set(low.KeyReference[string]{
+					KeyNode: currentNode,
+					Value:   kv,
+				}, opRef)
+
+			}
 		}
 	}
 
@@ -322,5 +431,75 @@ func (p *PathItem) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 	if err != nil {
 		return err
 	}
+
+	// assign additionalOperations if any were found
+	if additionalOps != nil && additionalOps.Len() > 0 {
+		extrOps := make([]low.NodeReference[*Operation], 0, additionalOps.Len())
+		// build out each additional operation
+		for _, appVal := range additionalOps.FromOldest() {
+			extrOps = append(extrOps, appVal)
+		}
+
+		err = datamodel.TranslateSliceParallel[low.NodeReference[*Operation], any](extrOps, translateFunc, nil)
+
+		p.AdditionalOperations = low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.NodeReference[*Operation]]]{
+			Value:     additionalOps,
+			KeyNode:   additionalOpsKeyNode,
+			ValueNode: additionalOpsValueNode,
+		}
+	}
 	return nil
+}
+
+// resolveOperationReference handles the resolution of operation references ($ref)
+// Returns: foundContext, resolvedPathNode, isRef, refValue, refNode, error
+func resolveOperationReference(ctx context.Context, pathNode *yaml.Node, idx *index.SpecIndex) (
+	context.Context, *yaml.Node, bool, string, *yaml.Node, error) {
+
+	foundContext := ctx
+	opIsRef := false
+	var opRefVal string
+	var opRefNode *yaml.Node
+
+	if ok, _, ref := utils.IsNodeRefValue(pathNode); ok {
+		// According to OpenAPI spec the only valid $ref for paths is
+		// reference for the whole pathItem. Unfortunately, the internet is full of invalid specs
+		// even from trusted companies like DigitalOcean where they tend to
+		// use file $ref for each respective operation:
+		// /endpoint/call/name:
+		//   post:
+		//     $ref: 'file.yaml'
+		// Check if that is the case and resolve such thing properly too.
+
+		opIsRef = true
+		opRefVal = ref
+		opRefNode = pathNode
+		r, newIdx, err, nCtx := low.LocateRefNodeWithContext(ctx, pathNode, idx)
+		if r != nil {
+			if r.Kind == yaml.DocumentNode {
+				r = r.Content[0]
+			}
+			pathNode = r
+			foundContext = nCtx
+			foundContext = context.WithValue(foundContext, index.FoundIndexKey, newIdx)
+
+			if r.Tag == "" {
+				// If it's a node from file, tag is empty
+				pathNode = r.Content[0]
+			}
+
+			if err != nil {
+				if !idx.AllowCircularReferenceResolving() {
+					return nil, nil, false, "", nil, fmt.Errorf("build schema failed: %s", err.Error())
+				}
+			}
+		} else {
+			return nil, nil, false, "", nil, fmt.Errorf("path item build failed: cannot find reference: %s at line %d, col %d",
+				pathNode.Content[1].Value, pathNode.Content[1].Line, pathNode.Content[1].Column)
+		}
+	} else {
+		foundContext = context.WithValue(foundContext, index.FoundIndexKey, idx)
+	}
+
+	return foundContext, pathNode, opIsRef, opRefVal, opRefNode, nil
 }

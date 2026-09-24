@@ -15,6 +15,9 @@ type ServerVariableChanges struct {
 
 // GetAllChanges returns a slice of all changes made between SecurityRequirement objects
 func (s *ServerVariableChanges) GetAllChanges() []*Change {
+	if s == nil {
+		return nil
+	}
 	return s.Changes
 }
 
@@ -25,7 +28,6 @@ func CompareServerVariables(l, r *v3.ServerVariable) *ServerVariableChanges {
 		return nil
 	}
 
-	var props []*PropertyCheck
 	var changes []*Change
 
 	lValues := make(map[string]low.NodeReference[string])
@@ -39,7 +41,7 @@ func CompareServerVariables(l, r *v3.ServerVariable) *ServerVariableChanges {
 	for k := range lValues {
 		if _, ok := rValues[k]; !ok {
 			CreateChange(&changes, ObjectRemoved, v3.EnumLabel,
-				lValues[k].ValueNode, nil, true,
+				lValues[k].ValueNode, nil, BreakingRemoved(CompServerVariable, PropEnum),
 				lValues[k].Value, nil)
 			continue
 		}
@@ -47,34 +49,21 @@ func CompareServerVariables(l, r *v3.ServerVariable) *ServerVariableChanges {
 	for k := range rValues {
 		if _, ok := lValues[k]; !ok {
 			CreateChange(&changes, ObjectAdded, v3.EnumLabel,
-				lValues[k].ValueNode, rValues[k].ValueNode, false,
+				lValues[k].ValueNode, rValues[k].ValueNode, BreakingAdded(CompServerVariable, PropEnum),
 				lValues[k].Value, rValues[k].Value)
 		}
 	}
 
-	// default
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.Default.ValueNode,
-		RightNode: r.Default.ValueNode,
-		Label:     v3.DefaultLabel,
-		Changes:   &changes,
-		Breaking:  true,
-		Original:  l,
-		New:       r,
-	})
+	props := make([]*PropertyCheck, 0, 2)
+	props = append(props,
+		NewPropertyCheck(CompServerVariable, PropDefault,
+			l.Default.ValueNode, r.Default.ValueNode,
+			v3.DefaultLabel, &changes, l, r),
+		NewPropertyCheck(CompServerVariable, PropDescription,
+			l.Description.ValueNode, r.Description.ValueNode,
+			v3.DescriptionLabel, &changes, l, r),
+	)
 
-	// description
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.Description.ValueNode,
-		RightNode: r.Description.ValueNode,
-		Label:     v3.DescriptionLabel,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
-
-	// check everything.
 	CheckProperties(props)
 	sc := new(ServerVariableChanges)
 	sc.PropertyChanges = NewPropertyChanges(changes)

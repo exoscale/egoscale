@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/pb33f/libopenapi"
+	"github.com/pb33f/libopenapi/datamodel"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 
 	"github.com/exoscale/egoscale/v3/generator/config"
@@ -25,6 +27,26 @@ type Builder struct {
 	declared map[string]string
 	// decls are the declarations of the file being built.
 	decls []ir.Decl
+}
+
+// Load parses an OpenAPI spec into a v3 model. The spec is OpenAPI 3.0,
+// where properties next to a $ref are ignored: they are neither turned into
+// allOf schemas (OpenAPI 3.1 behavior) nor merged into the referenced schema.
+func Load(spec []byte) (*v3.Document, error) {
+	c := datamodel.NewDocumentConfiguration()
+	c.TransformSiblingRefs = false
+	c.MergeReferencedProperties = false
+
+	doc, err := libopenapi.NewDocumentWithConfiguration(spec, c)
+	if err != nil {
+		return nil, fmt.Errorf("load spec: %w", err)
+	}
+	model, err := doc.BuildV3Model()
+	if err != nil {
+		return nil, fmt.Errorf("build model: %w", err)
+	}
+
+	return &model.Model, nil
 }
 
 // New returns a Builder of the model.

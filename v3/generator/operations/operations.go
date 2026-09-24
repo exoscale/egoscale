@@ -6,6 +6,8 @@ import (
 	"go/format"
 	"log/slog"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -104,6 +106,8 @@ import (
 }
 
 // renderResponseSchema renders all schemas for every HTTP code response.
+// The HTTP 200 response schema is named <name>Response, other HTTP codes
+// response schemas are named <name>Response<code> (see responseTypeName).
 func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 	output := bytes.NewBuffer([]byte{})
 
@@ -112,19 +116,29 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 	}
 
 	for pair := op.Responses.Codes.First(); pair != nil; pair = pair.Next() {
-		response := pair.Value()
-		if response.Content == nil {
+		code, response := pair.Key(), pair.Value()
+		if _, err := strconv.Atoi(code); err != nil {
+			slog.Warn(
+				"non numeric HTTP response code not implemented",
+				slog.String("operation", name),
+				slog.String("code", code),
+			)
 			continue
 		}
-		// TODO support other content type from spec.
-		media, ok := response.Content.Get("application/json")
+
+		media, ok := getJSONMedia(response)
 		if !ok {
 			continue
 		}
 
-		findable, err := renderFindable(name, media.Schema)
-		if err != nil {
-			return nil, err
+		// Findable is only rendered on the HTTP 200 list response.
+		var findable []byte
+		if code == "200" {
+			var err error
+			findable, err = renderFindable(name, media.Schema)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		// Skip on reference, unless the $ref schema name ends with "-response" —
@@ -150,7 +164,7 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 			continue
 		}
 
-		schemaResp, err := schemas.RenderSchema(name+"Response", media.Schema)
+		schemaResp, err := schemas.RenderSchema(responseTypeName(name, code), media.Schema)
 		if err != nil {
 			return nil, err
 		}
@@ -161,6 +175,46 @@ func renderResponseSchema(name string, op *v3.Operation) ([]byte, error) {
 	}
 
 	return output.Bytes(), nil
+}
+
+// responseTypeName returns the go type name of an inline response schema for an HTTP code.
+// HTTP 200 keeps the <funcName>Response name, other codes are suffixed with the code
+// (e.g. <funcName>Response400).
+func responseTypeName(funcName, code string) string {
+	if code == "200" {
+		return funcName + "Response"
+	}
+
+	return funcName + "Response" + code
+}
+
+// getJSONMedia returns the application/json media type of a response if any.
+func getJSONMedia(response *v3.Response) (*v3.MediaType, bool) {
+	if response == nil || response.Content == nil {
+		return nil, false
+	}
+	// TODO support other content type from spec.
+	media, ok := response.Content.Get("application/json")
+	if !ok || media == nil || media.Schema == nil {
+		return nil, false
+	}
+
+	return media, true
+}
+
+// renderResponseType returns the go type of a response schema for an HTTP code:
+// the referenced type for a $ref, a slice for an array of $ref,
+// or the inline response schema type (see responseTypeName).
+func renderResponseType(funcName, code string, media *v3.MediaType) string {
+	if media.Schema.IsReference() {
+		return "*" + helpers.RenderReference(media.Schema.GetReference(), "")
+	}
+
+	if a, ok := isArrayReference(media.Schema); ok {
+		return a
+	}
+
+	return "*" + responseTypeName(funcName, code)
 }
 
 // renderRequestSchema renders request body schemas, mostly for HTTP POST and PUT.
@@ -287,7 +341,7 @@ func renderRequestParametersSchema(name string, op *v3.Operation) ([]byte, error
 	}
 
 	if someQueryParam {
-		q := append([]byte(fmt.Sprintf("type %sOpt func(url.Values)\n", name)), query.Bytes()...)
+		q := append(fmt.Appendf(nil, "type %sOpt func(url.Values)\n", name), query.Bytes()...)
 		output.Write(q)
 	}
 
@@ -454,15 +508,17 @@ type RequestTmpl struct {
 	SkipAuth      bool
 	ErrReturn     string // "nil, " for body-returning ops, "" for no-body (error-only) ops
 	ReturnSection string // pre-rendered final return block injected verbatim into the template
+	// ErrorResponses are the typed bodies of 4xx/5xx HTTP responses, decoded into APIError.Response.
+	ErrorResponses []ErrorResponseTmpl
 }
 
 // renderBodyReturnSection returns the final block of a generated operation function
 // that reads and decodes the JSON response body.
 func renderBodyReturnSection(bodyRespType, jsonResponseTarget, funcName string) string {
 	var b strings.Builder
-	b.WriteString("\tbodyresp := " + bodyRespType + "\n")
-	b.WriteString("\tif err := prepareJSONResponse(response, " + jsonResponseTarget + "); err != nil {\n")
-	b.WriteString("\t\treturn nil, fmt.Errorf(\"" + funcName + ": prepare JSON response: %w\", err)\n")
+	fmt.Fprintf(&b, "\tbodyresp := %s\n", bodyRespType)
+	fmt.Fprintf(&b, "\tif err := prepareJSONResponse(response, %s); err != nil {\n", jsonResponseTarget)
+	fmt.Fprintf(&b, "\t\treturn nil, fmt.Errorf(\"%s: prepare JSON response: %%w\", err)\n", funcName)
 	b.WriteString("\t}\n\n")
 	b.WriteString("\treturn bodyresp, nil")
 	return b.String()
@@ -508,6 +564,7 @@ func serializeRequest(path, httpMethod, funcName string, op *v3.Operation) (*Req
 	}
 
 	p.QueryParams = getQueryParams(op)
+	p.ErrorResponses = getErrorResponses(op, funcName)
 
 	return &p, nil
 }
@@ -614,34 +671,76 @@ func getValuesReturn(op *v3.Operation, funcName string) (values []string) {
 		return values
 	}
 
+	// The HTTP 200 response is the body reply if present,
+	// otherwise the lowest other 2xx HTTP code with a body.
+	successCode := 0
+	var successMedia *v3.MediaType
 	for pair := op.Responses.Codes.First(); pair != nil; pair = pair.Next() {
-		k, v := pair.Key(), pair.Value()
-		// We support only 200 return as body reply in our OpenAPI spec.
-		// Skip other HTTP response code.
-		if k != "200" {
+		code, err := strconv.Atoi(pair.Key())
+		if err != nil || code < 200 || code > 299 {
 			continue
 		}
 
-		media, ok := v.Content.Get("application/json")
+		media, ok := getJSONMedia(pair.Value())
 		if !ok {
 			continue
 		}
-		if media.Schema.IsReference() {
-			values = append(values, "*"+helpers.RenderReference(media.Schema.GetReference(), ""))
-			return values
+
+		if successMedia != nil {
+			slog.Warn(
+				"multiple 2xx HTTP response bodies, only one is returned",
+				slog.String("operation", funcName),
+				slog.Int("code", code),
+			)
 		}
 
-		a, ok := isArrayReference(media.Schema)
-		if ok {
-			values = append(values, a)
-			return values
+		if successMedia == nil || code == 200 || (successCode != 200 && code < successCode) {
+			successCode, successMedia = code, media
 		}
+	}
 
-		values = append(values, "*"+funcName+"Response")
+	if successMedia == nil {
 		return values
 	}
 
-	return
+	values = append(values, renderResponseType(funcName, strconv.Itoa(successCode), successMedia))
+	return values
+}
+
+type ErrorResponseTmpl struct {
+	Code        int
+	Constructor string
+}
+
+// getErrorResponses returns the body type constructors of the 4xx and 5xx HTTP responses,
+// used to decode the typed body of an APIError. Sorted by HTTP code.
+func getErrorResponses(op *v3.Operation, funcName string) []ErrorResponseTmpl {
+	if orderedmap.Len(op.Responses.Codes) == 0 {
+		return nil
+	}
+
+	var result []ErrorResponseTmpl
+	for pair := op.Responses.Codes.First(); pair != nil; pair = pair.Next() {
+		code, err := strconv.Atoi(pair.Key())
+		if err != nil || code < 400 || code > 599 {
+			continue
+		}
+
+		media, ok := getJSONMedia(pair.Value())
+		if !ok {
+			continue
+		}
+
+		typ := strings.TrimPrefix(renderResponseType(funcName, pair.Key(), media), "*")
+		result = append(result, ErrorResponseTmpl{
+			Code:        code,
+			Constructor: fmt.Sprintf("new(%s)", typ),
+		})
+	}
+
+	sort.Slice(result, func(i, j int) bool { return result[i].Code < result[j].Code })
+
+	return result
 }
 
 func renderDoc(op *v3.Operation) string {

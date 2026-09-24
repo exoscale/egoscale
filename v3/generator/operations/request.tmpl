@@ -52,7 +52,9 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
-		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: http response: %w", err)
+		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: http response: %w", {{ if .ErrorResponses }}decodeAPIErrorResponse(err, map[int]func() any{
+			{{ range .ErrorResponses }}{{ .Code }}: func() any { return {{ .Constructor }} },
+			{{ end }}}){{ else }}err{{ end }})
 	}
 
 {{ .ReturnSection }}

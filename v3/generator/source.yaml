@@ -620,6 +620,21 @@ components:
           required:
             - url
             - index-prefix
+    reserved-resources:
+      type: object
+      properties:
+        cpu:
+          type: string
+          description: 'CPU reservation, e.g., "200m" '
+        memory:
+          type: string
+          description: 'Memory reservation, e.g., "512Mi" '
+        ephemeral-storage:
+          type: string
+          description: 'Ephemeral storage reservation, e.g., "1Gi" '
+      required:
+        - cpu
+      description: Resources reserved for kube or system components.
     dbaas-service-clickhouse:
       type: object
       properties:
@@ -935,6 +950,38 @@ components:
         - rsyslog
         - datadog
         - elasticsearch
+    cpu-manager-config:
+      type: object
+      properties:
+        cpu-manager-policy:
+          type: string
+          enum:
+            - static
+            - none
+          description: CPU management policy used by the kubelet. The "static" policy grants exclusive CPUs to Guaranteed pods requesting integer CPU limits. When set to "static", a CPU reservation must be provided via kube-reserved or system-reserved
+        cpu-manager-policy-options:
+          type: array
+          items:
+            type: string
+            enum:
+              - distribute-cpus-across-numa
+              - full-pcpus-only
+              - strict-cpu-reservation
+              - align-by-socket
+              - prefer-align-cpus-by-uncorecache
+              - distribute-cpus-across-cores
+          uniqueItems: true
+          description: CPU manager policy options used by the kubelet. They refine the behavior of the "static" cpu-manager-policy and are only valid when the policy is "static"
+        kube-reserved:
+          $ref: '#/components/schemas/reserved-resources'
+          description: Resources reserved for node components
+        system-reserved:
+          $ref: '#/components/schemas/reserved-resources'
+          description: Resources reserved for system components
+        cpu-manager-reconcile-period:
+          type: string
+          description: CPU manager reconcile period used by the kubelet, as a duration string (for example "10s").
+      description: CPU manager config
     get-confederatio-usage-response:
       description: GPU usage for all organizations
       properties:
@@ -2674,6 +2721,19 @@ components:
       type: string
       maxLength: 253
       minLength: 1
+    focus-report:
+      type: object
+      properties:
+        presigned_url:
+          type: string
+          description: Focus report presigned URL
+        expires_in:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: URL expiration in seconds
+      description: Focus report download URL
     create-model-request:
       description: AI model
       properties:
@@ -7988,6 +8048,9 @@ components:
           format: uuid
           readOnly: true
           description: Nodepool ID
+        cpu-manager-config:
+          $ref: '#/components/schemas/cpu-manager-config'
+          description: CPU manager config
         disk-size:
           type: integer
           format: int64
@@ -14221,6 +14284,26 @@ paths:
             schema:
               $ref: '#/components/schemas/dbaas-kafka-schema-registry-acl-entry'
       operationId: create-dbaas-kafka-schema-registry-acl-config
+  /focus-report/{period}:
+    get:
+      tags:
+        - organization
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/focus-report'
+      description: '[BETA] Returns a presigned URL for the organization''s focus report for the period'
+      parameters:
+        - in: path
+          required: true
+          name: period
+          schema:
+            type: string
+      summary: '[BETA] Retrieve organization focus report download URL'
+      operationId: get-focus-report
   /private-network/{id}:update-ip:
     put:
       tags:
@@ -14391,6 +14474,10 @@ paths:
                   exclusiveMaximum: false
                   nullable: true
                   description: Maximum number of pods per node (kubelet setting)
+                cpu-manager-config:
+                  $ref: '#/components/schemas/cpu-manager-config'
+                  nullable: true
+                  description: CPU manager config
                 disk-size:
                   type: integer
                   format: int64
@@ -21736,6 +21823,10 @@ paths:
                       - storage-lvm
                   uniqueItems: true
                   description: Nodepool addons
+                cpu-manager-config:
+                  $ref: '#/components/schemas/cpu-manager-config'
+                  nullable: true
+                  description: CPU manager config
                 disk-size:
                   type: integer
                   format: int64

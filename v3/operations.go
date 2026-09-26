@@ -11762,6 +11762,50 @@ func (c Client) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event,
 	return bodyresp, nil
 }
 
+// [BETA] Returns a presigned URL for the organization's focus report for the period
+func (c Client) GetFocusReport(ctx context.Context, period string) (*FocusReport, error) {
+	path := fmt.Sprintf("/focus-report/%v", period)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetFocusReport: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetFocusReport: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetFocusReport: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-focus-report")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetFocusReport: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetFocusReport: http response: %w", err)
+	}
+
+	bodyresp := new(FocusReport)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetFocusReport: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Retrieve IAM Organization Policy
 func (c Client) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error) {
 	path := "/iam-organization-policy"
@@ -17837,6 +17881,8 @@ type CreateSKSNodepoolRequest struct {
 	Addons []string `json:"addons,omitempty"`
 	// Nodepool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	// CPU manager config
+	CPUManagerConfig *CPUManagerConfig `json:"cpu-manager-config"`
 	// Deploy target reference
 	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
 	// Nodepool description
@@ -18018,6 +18064,8 @@ const (
 type UpdateSKSNodepoolRequest struct {
 	// Nodepool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	// CPU manager config
+	CPUManagerConfig *CPUManagerConfig `json:"cpu-manager-config"`
 	// Deploy target reference
 	DeployTarget *DeployTarget `json:"deploy-target"`
 	// Nodepool description

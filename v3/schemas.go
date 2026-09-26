@@ -195,6 +195,27 @@ type BlockStorageVolumeRef struct {
 	ID UUID `json:"id,omitempty"`
 }
 
+type CPUManagerConfigCPUManagerPolicy string
+
+const (
+	CPUManagerConfigCPUManagerPolicyStatic CPUManagerConfigCPUManagerPolicy = "static"
+	CPUManagerConfigCPUManagerPolicyNone   CPUManagerConfigCPUManagerPolicy = "none"
+)
+
+// CPU manager config
+type CPUManagerConfig struct {
+	// CPU management policy used by the kubelet. The "static" policy grants exclusive CPUs to Guaranteed pods requesting integer CPU limits. When set to "static", a CPU reservation must be provided via kube-reserved or system-reserved
+	CPUManagerPolicy CPUManagerConfigCPUManagerPolicy `json:"cpu-manager-policy,omitempty"`
+	// CPU manager policy options used by the kubelet. They refine the behavior of the "static" cpu-manager-policy and are only valid when the policy is "static"
+	CPUManagerPolicyOptions []string `json:"cpu-manager-policy-options,omitempty"`
+	// CPU manager reconcile period used by the kubelet, as a duration string (for example "10s").
+	CPUManagerReconcilePeriod string `json:"cpu-manager-reconcile-period,omitempty"`
+	// Resources reserved for kube or system components.
+	KubeReserved *ReservedResources `json:"kube-reserved,omitempty"`
+	// Resources reserved for kube or system components.
+	SystemReserved *ReservedResources `json:"system-reserved,omitempty"`
+}
+
 // Request to create a new AI API key. Missing models or deployments default to an empty array.
 type CreateAIAPIKeyRequest struct {
 	// Deployment IDs accepted as input.
@@ -2559,6 +2580,14 @@ type Event struct {
 	URI string `json:"uri,omitempty"`
 	// Operation targeted zone
 	Zone string `json:"zone,omitempty"`
+}
+
+// Focus report download URL
+type FocusReport struct {
+	// URL expiration in seconds
+	ExpiresIn int64 `json:"expires_in,omitempty" validate:"omitempty,gt=0"`
+	// Focus report presigned URL
+	PresignedURL string `json:"presigned_url,omitempty"`
 }
 
 type GenerateDataKeyRequestKeySpec string
@@ -5196,6 +5225,16 @@ type ReplicateKmsKeyRequest struct {
 	Zone string `json:"zone" validate:"required"`
 }
 
+// Resources reserved for kube or system components.
+type ReservedResources struct {
+	// CPU reservation, e.g., "200m"
+	CPU string `json:"cpu" validate:"required"`
+	// Ephemeral storage reservation, e.g., "1Gi"
+	EphemeralStorage string `json:"ephemeral-storage,omitempty"`
+	// Memory reservation, e.g., "512Mi"
+	Memory string `json:"memory,omitempty"`
+}
+
 // Resource
 type Resource struct {
 	// Resource ID
@@ -5508,6 +5547,8 @@ type SKSNodepool struct {
 	Addons []string `json:"addons,omitempty"`
 	// Nodepool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
+	// CPU manager config
+	CPUManagerConfig *CPUManagerConfig `json:"cpu-manager-config,omitempty"`
 	// Nodepool creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
 	// Deploy target reference

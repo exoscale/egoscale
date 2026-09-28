@@ -620,6 +620,21 @@ components:
           required:
             - url
             - index-prefix
+    reserved-resources:
+      type: object
+      properties:
+        cpu:
+          type: string
+          description: 'CPU reservation, e.g., "200m" '
+        memory:
+          type: string
+          description: 'Memory reservation, e.g., "512Mi" '
+        ephemeral-storage:
+          type: string
+          description: 'Ephemeral storage reservation, e.g., "1Gi" '
+      required:
+        - cpu
+      description: Resources reserved for kube or system components.
     dbaas-service-clickhouse:
       type: object
       properties:
@@ -935,6 +950,38 @@ components:
         - rsyslog
         - datadog
         - elasticsearch
+    cpu-manager-config:
+      type: object
+      properties:
+        cpu-manager-policy:
+          type: string
+          enum:
+            - static
+            - none
+          description: CPU management policy used by the kubelet. The "static" policy grants exclusive CPUs to Guaranteed pods requesting integer CPU limits. When set to "static", a CPU reservation must be provided via kube-reserved or system-reserved
+        cpu-manager-policy-options:
+          type: array
+          items:
+            type: string
+            enum:
+              - distribute-cpus-across-numa
+              - full-pcpus-only
+              - strict-cpu-reservation
+              - align-by-socket
+              - prefer-align-cpus-by-uncorecache
+              - distribute-cpus-across-cores
+          uniqueItems: true
+          description: CPU manager policy options used by the kubelet. They refine the behavior of the "static" cpu-manager-policy and are only valid when the policy is "static"
+        kube-reserved:
+          $ref: '#/components/schemas/reserved-resources'
+          description: Resources reserved for node components
+        system-reserved:
+          $ref: '#/components/schemas/reserved-resources'
+          description: Resources reserved for system components
+        cpu-manager-reconcile-period:
+          type: string
+          description: CPU manager reconcile period used by the kubelet, as a duration string (for example "10s").
+      description: CPU manager config
     get-confederatio-usage-response:
       description: GPU usage for all organizations
       properties:
@@ -1164,13 +1211,19 @@ components:
           format: date-time
           type: string
           readOnly: true
+        all-models:
+          description: True when the key has access to all public models.
+          type: boolean
         name:
           type: string
         value:
           description: Plaintext AI API key value
           type: string
+        all-deployments:
+          description: True when the key has access to all deployments of the organization.
+          type: boolean
         deployments:
-          $ref: '#/components/schemas/ai-api-key-deployments-response'
+          $ref: '#/components/schemas/ai-api-key-deployments'
         models:
           $ref: '#/components/schemas/ai-api-key-models'
         id:
@@ -1193,7 +1246,9 @@ components:
         - id
         - name
         - models
+        - all-models
         - deployments
+        - all-deployments
         - created-at
         - updated-at
         - value
@@ -2081,10 +2136,18 @@ components:
           format: date-time
           type: string
           readOnly: true
+        all-models:
+          description: True when the key has access to all public models.
+          type: boolean
+          readOnly: true
         name:
           type: string
+        all-deployments:
+          description: True when the key has access to all deployments of the organization.
+          type: boolean
+          readOnly: true
         deployments:
-          $ref: '#/components/schemas/ai-api-key-deployments-response'
+          $ref: '#/components/schemas/ai-api-key-deployments'
         models:
           $ref: '#/components/schemas/ai-api-key-models'
         id:
@@ -2107,7 +2170,9 @@ components:
         - id
         - name
         - models
+        - all-models
         - deployments
+        - all-deployments
         - created-at
         - updated-at
         - revoked-at
@@ -2674,6 +2739,19 @@ components:
       type: string
       maxLength: 253
       minLength: 1
+    focus-report:
+      type: object
+      properties:
+        presigned_url:
+          type: string
+          description: Focus report presigned URL
+        expires_in:
+          type: integer
+          format: int64
+          minimum: 0
+          exclusiveMinimum: true
+          description: URL expiration in seconds
+      description: Focus report download URL
     create-model-request:
       description: AI model
       properties:
@@ -2713,7 +2791,8 @@ components:
         - 0.27.1
         - 0.28.0
         - 0.29.0
-      default: 0.29.0
+        - 0.30.0
+      default: 0.30.0
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -5347,15 +5426,18 @@ components:
       example:
         ai-api-keys:
           - updated-at: "2026-03-25T10:00:00Z"
+            all-models: true
             name: default-public-key
+            all-deployments: false
             deployments: []
-            models:
-              - all
+            models: []
             id: 11111111-1111-1111-1111-111111111111
             revoked-at: "2026-03-25T10:00:00Z"
             created-at: "2026-03-25T10:00:00Z"
           - updated-at: "2026-03-25T10:00:00Z"
+            all-models: false
             name: restricted-key
+            all-deployments: false
             deployments:
               - id: 33333333-3333-3333-3333-333333333333
               - id: 44444444-4444-4444-4444-444444444444
@@ -6045,15 +6127,6 @@ components:
         - plan
         - type
         - prometheus-uri
-    ai-api-key-deployments-response:
-      description: Private deployment access. ["all"] means access to all deployments, otherwise deployments are returned as objects.
-      type: array
-      items:
-        oneOf:
-          - enum:
-              - all
-            type: string
-          - $ref: '#/components/schemas/ai-api-key-deployment-ref'
     encrypt-request:
       type: object
       required:
@@ -6591,6 +6664,12 @@ components:
     update-ai-api-key-request:
       description: Update the models and/or deployments accessible by an AI API key. Omitted properties are left unchanged.
       properties:
+        all-models:
+          description: Grant or remove access to all public models. Takes precedence over the models array, which is ignored when set.
+          type: boolean
+        all-deployments:
+          description: Grant or remove access to all deployments of the organization. Takes precedence over the deployments array, which is ignored when set.
+          type: boolean
         deployments:
           $ref: '#/components/schemas/ai-api-key-deployments'
         models:
@@ -7404,6 +7483,11 @@ components:
         labels:
           $ref: '#/components/schemas/sks-cluster-labels'
           description: Cluster labels
+        karpenter-feature-gates:
+          type: array
+          items:
+            type: string
+          description: A list of Karpenter controller feature gates to enable for the Karpenter controller binary
         cni:
           type: string
           enum:
@@ -7500,6 +7584,9 @@ components:
           type: string
           readOnly: true
           description: Cluster endpoint
+        allowed-networks:
+          $ref: '#/components/schemas/sks-cluster-allowed-networks'
+          description: 'EXPERIMENTAL: List of ranges of allowed IPs using CIDR notation.'
       description: SKS Cluster
     dbaas-clickhouse-role:
       type: object
@@ -7988,6 +8075,9 @@ components:
           format: uuid
           readOnly: true
           description: Nodepool ID
+        cpu-manager-config:
+          $ref: '#/components/schemas/cpu-manager-config'
+          description: CPU manager config
         disk-size:
           type: integer
           format: int64
@@ -8585,14 +8675,22 @@ components:
         - timestamp
         - usage
     create-ai-api-key-request:
-      description: Request to create a new AI API key. Missing models or deployments default to an empty array.
+      description: Request to create a new AI API key.
       properties:
+        all-models:
+          description: Grant access to all public models. Takes precedence over the models array, which is ignored when set.
+          default: false
+          type: boolean
         name:
           description: Human-readable name for the AI API key
           type: string
           minLength: 1
           maxLength: 50
           pattern: ^[A-Za-z0-9](?:[A-Za-z0-9 _'()-]*[A-Za-z0-9])?$
+        all-deployments:
+          description: Grant access to all deployments of the organization. Takes precedence over the deployments array, which is ignored when set.
+          default: false
+          type: boolean
         deployments:
           $ref: '#/components/schemas/ai-api-key-deployments'
         models:
@@ -8929,21 +9027,36 @@ components:
       description: Get AI API key response
       properties:
         updated-at:
-          description: Revocation timestamp. Null when the API key is active.
+          description: Last update timestamp
           format: date-time
           type: string
+          readOnly: true
+        all-models:
+          description: True when the key has access to all public models.
+          type: boolean
           readOnly: true
         name:
           description: Human-readable name for the AI API key
           type: string
+        all-deployments:
+          description: True when the key has access to all deployments of the organization.
+          type: boolean
+          readOnly: true
         deployments:
-          $ref: '#/components/schemas/ai-api-key-deployments-response'
+          $ref: '#/components/schemas/ai-api-key-deployments'
         models:
           $ref: '#/components/schemas/ai-api-key-models'
         id:
           description: AI API key ID
           format: uuid
           type: string
+          readOnly: true
+        revoked-at:
+          description: Revocation timestamp. Null when the API key is active.
+          format: date-time
+          type:
+            - string
+            - "null"
           readOnly: true
         created-at:
           description: Creation timestamp
@@ -8955,7 +9068,9 @@ components:
         - id
         - name
         - models
+        - all-models
         - deployments
+        - all-deployments
         - created-at
         - updated-at
         - revoked-at
@@ -9041,6 +9156,13 @@ components:
       type: object
       required:
         - deployments
+    sks-cluster-allowed-networks:
+      type: array
+      items:
+        type: string
+      uniqueItems: true
+      minItems: 0
+      maxItems: 16
     key-material:
       type: object
       required:
@@ -9264,7 +9386,7 @@ components:
           description: Postgres password
       description: Postgres User secrets
     ai-api-key-models:
-      description: Public model access. An empty array denies access to all public models, ["all"] grants access to all public models, otherwise the array is an allowlist of model names.
+      description: Allowlist of public model names. An empty array denies access to all public models. Grant access to all public models with all-models instead.
       uniqueItems: true
       type: array
       items:
@@ -10243,6 +10365,67 @@ components:
           minimum: 1
           title: analyze thread pool size
           type: integer
+        search.insights.top_queries:
+          additionalProperties: false
+          properties:
+            cpu:
+              additionalProperties: false
+              properties:
+                enabled:
+                  default: false
+                  description: Enable or disable top N query monitoring by the metric
+                  title: Enable or disable top N query monitoring by the metric
+                  type: boolean
+                top_n_size:
+                  minimum: 1
+                  title: Specify the value of N for the top N queries by the metric
+                  type: integer
+                window_size:
+                  description: Configure the window size of the top N queries. The value should be a time value with unit, e.g. 1m, 5s, 1h.
+                  pattern: ^\d+\s*(?:[dhms]|ms|micros|nanos)$
+                  title: The window size of the top N queries by the metric
+                  type: string
+              title: Top N queries monitoring by CPU
+              type: object
+            latency:
+              additionalProperties: false
+              properties:
+                enabled:
+                  default: false
+                  description: Enable or disable top N query monitoring by the metric
+                  title: Enable or disable top N query monitoring by the metric
+                  type: boolean
+                top_n_size:
+                  minimum: 1
+                  title: Specify the value of N for the top N queries by the metric
+                  type: integer
+                window_size:
+                  description: Configure the window size of the top N queries. The value should be a time value with unit, e.g. 1m, 5s, 1h.
+                  pattern: ^\d+\s*(?:[dhms]|ms|micros|nanos)$
+                  title: The window size of the top N queries by the metric
+                  type: string
+              title: Top N queries monitoring by latency
+              type: object
+            memory:
+              additionalProperties: false
+              properties:
+                enabled:
+                  default: false
+                  description: Enable or disable top N query monitoring by the metric
+                  title: Enable or disable top N query monitoring by the metric
+                  type: boolean
+                top_n_size:
+                  minimum: 1
+                  title: Specify the value of N for the top N queries by the metric
+                  type: integer
+                window_size:
+                  description: Configure the window size of the top N queries. The value should be a time value with unit, e.g. 1m, 5s, 1h.
+                  pattern: ^\d+\s*(?:[dhms]|ms|micros|nanos)$
+                  title: The window size of the top N queries by the metric
+                  type: string
+              title: Top N queries monitoring by memory
+              type: object
+          type: object
         thread_pool_get_size:
           description: Size for the thread pool. See documentation for exact details. Do note this may have maximum value depending on CPU count - value is automatically lowered if set to higher than maximum value.
           maximum: 128
@@ -10255,6 +10438,34 @@ components:
           minimum: 10
           title: get thread pool queue size
           type: integer
+        remote_store:
+          additionalProperties: false
+          properties:
+            segment.pressure.bytes_lag.variance_factor:
+              description: The variance factor that is used together with the moving average to calculate the dynamic bytes lag threshold for activating remote segment backpressure. Defaults to 10.
+              example: 10
+              minimum: 1
+              title: The variance factor that is used to calculate the dynamic bytes lag threshold
+              type: number
+            segment.pressure.consecutive_failures.limit:
+              description: The minimum consecutive failure count for activating remote segment backpressure. Defaults to 5.
+              example: 5
+              maximum: 2147483647
+              minimum: 1
+              title: The minimum consecutive failure count for activating remote segment backpressure
+              type: integer
+            segment.pressure.enabled:
+              description: Enables remote segment backpressure. Default is `true`
+              example: true
+              title: Enables remote segment backpressure
+              type: boolean
+            segment.pressure.time_lag.variance_factor:
+              description: The variance factor that is used together with the moving average to calculate the dynamic time lag threshold for activating remote segment backpressure. Defaults to 10.
+              example: 10
+              minimum: 1
+              title: The variance factor that is used to calculate the dynamic bytes lag threshold
+              type: number
+          type: object
         indices_memory_max_index_buffer_size:
           description: Absolute value. Default is unbound. Doesn't work without indices.memory.index_buffer_size. Maximum amount of heap used for query cache, an absolute indices.memory.index_buffer_size maximum hard limit.
           maximum: 2048
@@ -10475,6 +10686,90 @@ components:
           example: true
           title: knn.memory.circuit_breaker.enabled
           type: boolean
+        enable_remote_backed_storage:
+          example: true
+          title: Enable remote-backed storage
+          type: boolean
+        cluster:
+          additionalProperties: false
+          properties:
+            cluster.filecache.remote_data_ratio:
+              description: Defines a limit of how much total remote data can be referenced as a ratio of the size of the disk reserved for the file cache. This is designed to be a safeguard to prevent oversubscribing a cluster. Defaults to 0.
+              example: 5
+              maximum: 100
+              minimum: 0
+              nullable: true
+              title: The limit of how much total remote data can be referenced
+              type: number
+            cluster.remote_store:
+              additionalProperties: false
+              properties:
+                state.global_metadata.upload_timeout:
+                  description: The amount of time to wait for the cluster state upload to complete. Defaults to 20s.
+                  example: 20s
+                  pattern: ^\d+\s*(?:[dhms]|ms|micros|nanos)$
+                  title: The amount of time to wait for the cluster state upload to complete
+                  type: string
+                state.metadata_manifest.upload_timeout:
+                  description: The amount of time to wait for the manifest file upload to complete. The manifest file contains the details of each of the files uploaded for a single cluster state, both index metadata files and global metadata files. Defaults to 20s.
+                  example: 20s
+                  pattern: ^\d+\s*(?:[dhms]|ms|micros|nanos)$
+                  title: The amount of time to wait for the manifest file upload to complete
+                  type: string
+                translog.buffer_interval:
+                  description: The default value of the translog buffer interval used when performing periodic translog updates. This setting is only effective when the index setting `index.remote_store.translog.buffer_interval` is not present. Defaults to 650ms.
+                  example: 650ms
+                  pattern: ^\d+\s*(?:[dhms]|ms|micros|nanos)$
+                  title: The default value of the translog buffer interval
+                  type: string
+                translog.max_readers:
+                  description: Sets the maximum number of open translog files for remote-backed indexes. This limits the total number of translog files per shard. After reaching this limit, the remote store flushes the translog files. Default is 1000. The minimum required is 100.
+                  example: 1000
+                  maximum: 2147483647
+                  minimum: 100
+                  title: The maximum number of open translog files for remote-backed indexes
+                  type: integer
+              type: object
+            cluster.routing.allocation.balance.prefer_primary:
+              description: When set to true, OpenSearch attempts to evenly distribute the primary shards between the cluster nodes. Enabling this setting does not always guarantee an equal number of primary shards on each node, especially in the event of a failover. Changing this setting to false after it was set to true does not invoke redistribution of primary shards. Default is false.
+              example: false
+              title: cluster.routing.allocation.balance.prefer_primary
+              type: boolean
+            cluster.search.request.slowlog:
+              additionalProperties: false
+              properties:
+                level:
+                  default: trace
+                  enum:
+                    - debug
+                    - info
+                    - trace
+                    - warn
+                  title: Log level
+                  type: string
+                threshold:
+                  additionalProperties: false
+                  properties:
+                    debug:
+                      pattern: ^[^\r\n]*$
+                      title: Debug threshold for total request took time. The value should be in the form count and unit, where unit one of (s,m,h,d,nanos,ms,micros) or -1. Default is -1
+                      type: string
+                    info:
+                      pattern: ^[^\r\n]*$
+                      title: Info threshold for total request took time. The value should be in the form count and unit, where unit one of (s,m,h,d,nanos,ms,micros) or -1. Default is -1
+                      type: string
+                    trace:
+                      pattern: ^[^\r\n]*$
+                      title: Trace threshold for total request took time. The value should be in the form count and unit, where unit one of (s,m,h,d,nanos,ms,micros) or -1. Default is -1
+                      type: string
+                    warn:
+                      pattern: ^[^\r\n]*$
+                      title: Warning threshold for total request took time. The value should be in the form count and unit, where unit one of (s,m,h,d,nanos,ms,micros) or -1. Default is -1
+                      type: string
+                  type: object
+              type: object
+          title: Cluster settings
+          type: object
         thread_pool_search_size:
           description: Size for the thread pool. See documentation for exact details. Do note this may have maximum value depending on CPU count - value is automatically lowered if set to higher than maximum value.
           maximum: 128
@@ -10511,6 +10806,44 @@ components:
           minimum: 10
           title: write thread pool queue size
           type: integer
+        enable_snapshot_api:
+          description: Enable/Disable snapshot API for custom repositories, this requires security management to be enabled
+          example: false
+          title: Enable/Disable snapshot API
+          type: boolean
+        segrep:
+          additionalProperties: false
+          properties:
+            pressure.checkpoint.limit:
+              default: 4
+              description: The maximum number of indexing checkpoints that a replica shard can fall behind when copying from primary. Once `segrep.pressure.checkpoint.limit` is breached along with `segrep.pressure.time.limit`, the segment replication backpressure mechanism is initiated. Default is 4 checkpoints.
+              example: 4
+              minimum: 0
+              title: segrep.pressure.checkpoint.limit
+              type: integer
+            pressure.enabled:
+              default: false
+              description: Enables the segment replication backpressure mechanism. Default is false.
+              example: false
+              title: segrep.pressure.enabled
+              type: boolean
+            pressure.replica.stale.limit:
+              default: 0.5
+              description: The maximum number of stale replica shards that can exist in a replication group. Once `segrep.pressure.replica.stale.limit` is breached, the segment replication backpressure mechanism is initiated. Default is .5, which is 50% of a replication group.
+              example: 0.5
+              maximum: 1
+              minimum: 0
+              title: segrep.pressure.replica.stale.limit
+              type: number
+            pressure.time.limit:
+              default: 5m
+              description: The maximum amount of time that a replica shard can take to copy from the primary shard. Once segrep.pressure.time.limit is breached along with segrep.pressure.checkpoint.limit, the segment replication backpressure mechanism is initiated. Default is 5 minutes.
+              example: 5m
+              pattern: ^\d+\s*(?:[dhms]|ms|micros|nanos)$
+              title: segrep.pressure.time.limit
+              type: string
+          title: Segment Replication Backpressure Settings
+          type: object
         script_max_compilations_rate:
           description: Script compilation circuit breaker limits the number of inline script compilations within a period of time. Default is use-context
           example: 75/5m
@@ -10549,6 +10882,13 @@ components:
           minimum: 1024
           title: http.max_header_size
           type: integer
+        node.search.cache.size:
+          description: Defines a limit of how much total remote data can be referenced as a ratio of the size of the disk reserved for the file cache. This is designed to be a safeguard to prevent oversubscribing a cluster. Defaults to 5gb. Requires restarting all OpenSearch nodes.
+          example: 5gb
+          pattern: \d+(?:b|kb|mb|gb|tb)
+          nullable: true
+          title: The limit of how much total remote data can be referenced
+          type: string
         email-sender:
           properties:
             email_sender_name:
@@ -10594,6 +10934,34 @@ components:
           description: Enable or disable filtering of alerting by backend roles. Requires Security plugin. Defaults to false
           example: false
           title: plugins.alerting.filter_by_backend_roles
+          type: boolean
+        disk_watermarks:
+          additionalProperties: false
+          properties:
+            flood_stage:
+              description: The flood stage watermark for disk usage.
+              example: 95
+              title: Flood stage watermark (percentage)
+              type: integer
+            high:
+              description: The high watermark for disk usage.
+              example: 90
+              title: High watermark (percentage)
+              type: integer
+            low:
+              description: The low watermark for disk usage.
+              example: 85
+              title: Low watermark (percentage)
+              type: integer
+          required:
+            - low
+            - high
+            - flood_stage
+          title: Watermark settings
+          type: object
+        enable_searchable_snapshots:
+          example: true
+          title: Enable searchable snapshots
           type: boolean
         indices_memory_index_buffer_size:
           description: Percentage value. Default is 10%. Total amount of heap used for indexing buffer, before writing segments to disk. This is an expert setting. Too low value will slow down indexing; too high value will increase indexing performance but causes performance issues for query performance.
@@ -10808,6 +11176,28 @@ components:
           minimum: 64
           title: indices.query.bool.max_clause_count
           type: integer
+        ml-commons:
+          additionalProperties: false
+          properties:
+            ml_commons_model_access_control_enabled:
+              description: Enable or disable model access control for ML Commons. When enabled, access to ML models is controlled by security permissions. Defaults to false.
+              example: false
+              title: plugins.ml_commons.model_access_control.enabled
+              type: boolean
+            ml_commons_native_memory_threshold:
+              description: Native memory threshold percentage for ML Commons. Controls the maximum percentage of native memory that can be used by ML Commons operations. Defaults to 90%.
+              example: 90
+              maximum: 100
+              minimum: 1
+              title: plugins.ml_commons.native_memory_threshold
+              type: integer
+            ml_commons_only_run_on_ml_node:
+              description: Enable or disable running ML Commons tasks only on ML nodes. When enabled, ML tasks will only execute on nodes designated as ML nodes. Defaults to true.
+              example: false
+              title: plugins.ml_commons.only_run_on_ml_node
+              type: boolean
+          title: ML Commons settings
+          type: object
         thread_pool_search_throttled_queue_size:
           description: Size for the thread pool queue. See documentation for exact details.
           maximum: 2000
@@ -11077,10 +11467,16 @@ components:
         updated-at:
           format: date-time
           type: string
+        all-models:
+          description: True when the key has access to all public models.
+          type: boolean
         name:
           type: string
+        all-deployments:
+          description: True when the key has access to all deployments of the organization.
+          type: boolean
         deployments:
-          $ref: '#/components/schemas/ai-api-key-deployments-response'
+          $ref: '#/components/schemas/ai-api-key-deployments'
         models:
           $ref: '#/components/schemas/ai-api-key-models'
         id:
@@ -11094,7 +11490,9 @@ components:
         - id
         - name
         - models
+        - all-models
         - deployments
+        - all-deployments
         - created-at
         - updated-at
     dbaas-user-thanos-secrets:
@@ -11173,11 +11571,11 @@ components:
           items:
             $ref: '#/components/schemas/iam-service-policy-rule'
     ai-api-key-deployments:
-      description: Deployment IDs accepted as input.
+      description: Allowlist of deployments. An empty array denies access to all deployments. Grant access to all deployments with all-deployments instead.
       uniqueItems: true
       type: array
       items:
-        type: string
+        $ref: '#/components/schemas/ai-api-key-deployment-ref'
 servers:
   - url: https://api-{zone}.exoscale.com/v2
     variables:
@@ -14221,6 +14619,26 @@ paths:
             schema:
               $ref: '#/components/schemas/dbaas-kafka-schema-registry-acl-entry'
       operationId: create-dbaas-kafka-schema-registry-acl-config
+  /focus-report/{period}:
+    get:
+      tags:
+        - organization
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/focus-report'
+      description: '[BETA] Returns a presigned URL for the organization''s focus report for the period'
+      parameters:
+        - in: path
+          required: true
+          name: period
+          schema:
+            type: string
+      summary: '[BETA] Retrieve organization focus report download URL'
+      operationId: get-focus-report
   /private-network/{id}:update-ip:
     put:
       tags:
@@ -14391,6 +14809,10 @@ paths:
                   exclusiveMaximum: false
                   nullable: true
                   description: Maximum number of pods per node (kubelet setting)
+                cpu-manager-config:
+                  $ref: '#/components/schemas/cpu-manager-config'
+                  nullable: true
+                  description: CPU manager config
                 disk-size:
                   type: integer
                   format: int64
@@ -14869,7 +15291,7 @@ paths:
             format: uuid
       summary: '[BETA] Get AI API Key'
       operationId: get-ai-api-key
-    patch:
+    put:
       tags:
         - ai-api-key
       responses:
@@ -19203,6 +19625,12 @@ paths:
                 labels:
                   $ref: '#/components/schemas/sks-cluster-labels'
                   description: Cluster Labels
+                karpenter-feature-gates:
+                  type: array
+                  items:
+                    type: string
+                  uniqueItems: true
+                  description: A list of Karpenter controller feature gates to enable for the Karpenter controller binary
                 cni:
                   type: string
                   enum:
@@ -19259,6 +19687,9 @@ paths:
                 version:
                   type: string
                   description: Control plane Kubernetes version
+                allowed-networks:
+                  $ref: '#/components/schemas/sks-cluster-allowed-networks'
+                  description: 'EXPERIMENTAL: List of ranges of allowed IPs using CIDR notation. Defaults to `["0.0.0.0/0"]`, allowing access to all IPs. (default: ["0.0.0.0/0"])'
               required:
                 - name
                 - level
@@ -19539,6 +19970,13 @@ paths:
                 labels:
                   $ref: '#/components/schemas/sks-cluster-labels'
                   description: Cluster labels
+                karpenter-feature-gates:
+                  type: array
+                  items:
+                    type: string
+                  uniqueItems: true
+                  nullable: true
+                  description: A list of Karpenter controller feature gates to enable for the Karpenter controller binary
                 auto-upgrade:
                   type: boolean
                   description: Enable auto upgrade of the control plane to the latest patch version available
@@ -19575,6 +20013,9 @@ paths:
                 audit:
                   $ref: '#/components/schemas/sks-audit-update'
                   description: Kubernetes Audit Log Configuration
+                allowed-networks:
+                  $ref: '#/components/schemas/sks-cluster-allowed-networks'
+                  description: 'EXPERIMENTAL: List of ranges of allowed IPs using CIDR notation. Defaults to `["0.0.0.0/0"]`, allowing access to all IPs. (default: ["0.0.0.0/0"])'
       operationId: update-sks-cluster
   /quota:
     get:
@@ -21736,6 +22177,10 @@ paths:
                       - storage-lvm
                   uniqueItems: true
                   description: Nodepool addons
+                cpu-manager-config:
+                  $ref: '#/components/schemas/cpu-manager-config'
+                  nullable: true
+                  description: CPU manager config
                 disk-size:
                   type: integer
                   format: int64

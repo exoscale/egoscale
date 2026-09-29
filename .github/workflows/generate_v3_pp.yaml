@@ -1,0 +1,34 @@
+name: regenerate_v3_preprod
+
+on:
+  workflow_dispatch:
+
+jobs:
+  regenerate_and_push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Install yq
+      run: |
+        sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        sudo chmod +x /usr/local/bin/yq
+
+    - name: Regenerate from preprod API spec
+      run: |
+        make pull-oapi-spec-pp
+        make generate
+
+    - name: Push to pp branch
+      run: |
+        git config user.name "Exoscale"
+        git config user.email "operation+build@exoscale.net"
+        git checkout -B pp
+        git add -A
+        git commit --allow-empty -m "v3: regenerate from preprod API spec"
+        git push --force origin pp:pp

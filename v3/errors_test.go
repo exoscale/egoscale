@@ -196,3 +196,69 @@ func TestHandleHTTPErrorRespSentinelWrapping(t *testing.T) {
 		}
 	}
 }
+
+// TestDecodeAPIErrorResponse verifies that the typed body declared in the spec
+// for a status code is decoded into APIError.Response.
+func TestDecodeAPIErrorResponse(t *testing.T) {
+	responses := map[int]func() any{
+		429: func() any { return new(RateLimited) },
+	}
+
+	t.Run("declared status code", func(t *testing.T) {
+		err := decodeAPIErrorResponse(
+			handleHTTPErrorResp(makeResp(429, `{"error":"slow down","retry_after":12}`)),
+			responses,
+		)
+		wrapped := fmt.Errorf("get live balance: %w", err)
+		if !errors.Is(wrapped, ErrTooManyRequests) {
+			t.Fatalf("errors.Is(wrapped, ErrTooManyRequests) = false")
+		}
+
+		var apiErr *APIError
+		if !errors.As(wrapped, &apiErr) {
+			t.Fatalf("expected *APIError, got %T", err)
+		}
+		if apiErr.StatusCode != 429 {
+			t.Errorf("StatusCode = %d, want 429", apiErr.StatusCode)
+		}
+		rl, ok := apiErr.Response.(*RateLimited)
+		if !ok {
+			t.Fatalf("Response = %T, want *RateLimited", apiErr.Response)
+		}
+		if rl.RetryAfter != 12 || rl.Error != "slow down" {
+			t.Errorf("Response = %+v", rl)
+		}
+		if apiErr.Message != "slow down" {
+			t.Errorf("Message = %q, want %q", apiErr.Message, "slow down")
+		}
+	})
+
+	t.Run("undeclared status code", func(t *testing.T) {
+		err := decodeAPIErrorResponse(handleHTTPErrorResp(makeResp(404, `{"message":"nope"}`)), responses)
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Fatalf("expected *APIError, got %T", err)
+		}
+		if apiErr.Response != nil {
+			t.Errorf("Response = %#v, want nil", apiErr.Response)
+		}
+	})
+
+	t.Run("non JSON body", func(t *testing.T) {
+		err := decodeAPIErrorResponse(handleHTTPErrorResp(makeResp(429, `Too Many Requests`)), responses)
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Fatalf("expected *APIError, got %T", err)
+		}
+		if apiErr.Response != nil {
+			t.Errorf("Response = %#v, want nil", apiErr.Response)
+		}
+	})
+
+	t.Run("non APIError", func(t *testing.T) {
+		in := errors.New("boom")
+		if err := decodeAPIErrorResponse(in, responses); err != in {
+			t.Errorf("err = %v, want %v", err, in)
+		}
+	})
+}

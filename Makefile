@@ -72,6 +72,10 @@ oapigen: install-oapi-codegen
 pull-oapi-spec:
 	@wget -q --show-progress --progress=dot https://api-ch-gva-2.exoscale.com/v2/openapi.json -O- | yq eval -P - > v3/generator/source.yaml
 
+.PHONY: pull-oapi-spec-pp
+pull-oapi-spec-pp:
+	@wget -q --show-progress --progress=dot https://ppapi-ch-gva-2.exoscale.com/v2/openapi.json -O- | yq eval -P - > v3/generator/source.yaml
+
 .PHONY: generate
 generate:
 	@set -e

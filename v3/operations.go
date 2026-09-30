@@ -12626,6 +12626,22 @@ func (c Client) ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*L
 	return bodyresp, nil
 }
 
+// VPC Subnet attachment
+type CreateInstanceRequestVpcSubnets struct {
+	// Subnet ID
+	ID UUID `json:"id" validate:"required"`
+	// Instance IPv4. Random one if unset
+	Ipv4 net.IP `json:"ipv4,omitempty"`
+}
+
+// Attach the Instance to VPC Subnets
+type CreateInstanceRequestVpc struct {
+	// VPC ID
+	ID UUID `json:"id" validate:"required"`
+	// VPC Subnets to attach the Instance to
+	Subnets []CreateInstanceRequestVpcSubnets `json:"subnets" validate:"required"`
+}
+
 type CreateInstanceRequest struct {
 	// Instance Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
@@ -12661,6 +12677,8 @@ type CreateInstanceRequest struct {
 	TpmEnabled *bool `json:"tpm-enabled,omitempty"`
 	// Instance Cloud-init user-data (base64 encoded)
 	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1,lte=32768"`
+	// Attach the Instance to VPC Subnets
+	Vpc *CreateInstanceRequestVpc `json:"vpc,omitempty"`
 }
 
 // Create a Compute instance

@@ -23728,6 +23728,34 @@ paths:
                 ipv6-enabled:
                   type: boolean
                   description: 'Enable IPv6. DEPRECATED: use `public-ip-assignments`.'
+                vpc:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: VPC ID
+                    subnets:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            description: Subnet ID
+                          ipv4:
+                            type: string
+                            format: ipv4
+                            description: Instance IPv4. Random one if unset
+                        required:
+                          - id
+                        description: VPC Subnet attachment
+                      description: VPC Subnets to attach the Instance to
+                  required:
+                    - id
+                    - subnets
+                  description: Attach the Instance to VPC Subnets
                 disk-size:
                   type: integer
                   format: int64

@@ -2,6 +2,15 @@ Changelog
 =========
 
 
+3.1.54
+------
+
+- v3: regenerate from new API spec (#822, #823)
+- v3: **breaking**: `UpdateLoadBalancerRequest` and `UpdateLoadBalancerServiceRequest` fields are now nullable: `Description`, `Name`, `Port` and `TargetPort` are pointers, and a pointer to `""` empties a description
+- v3: **breaking**: remove `GetOrganizationUsageResponse` and `OrganizationUsage.Gpu`
+- v3: generator: support non-200 HTTP response codes (#819)
+- v3: add manual workflow to regenerate from preprod API spec (#821)
+
 3.1.53
 ------
 

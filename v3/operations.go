@@ -14213,6 +14213,361 @@ func (c Client) RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, r
 	return bodyresp, nil
 }
 
+// FindListKeyStoresResponseEntry attempts to find an ListKeyStoresResponseEntry by nameOrID.
+func (l ListKeyStoresResponse) FindListKeyStoresResponseEntry(nameOrID string) (ListKeyStoresResponseEntry, error) {
+	var result []ListKeyStoresResponseEntry
+	for i, elem := range l.KeyStores {
+		if string(elem.Name) == nameOrID || string(elem.ID) == nameOrID {
+			result = append(result, l.KeyStores[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return ListKeyStoresResponseEntry{}, fmt.Errorf("%q too many found in ListKeyStoresResponse: %w", nameOrID, ErrConflict)
+	}
+
+	return ListKeyStoresResponseEntry{}, fmt.Errorf("%q not found in ListKeyStoresResponse: %w", nameOrID, ErrNotFound)
+}
+
+// Lists all key stores configured for an organization.
+func (c Client) ListKeyStores(ctx context.Context) (*ListKeyStoresResponse, error) {
+	path := "/key-store"
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ListKeyStores: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ListKeyStores: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ListKeyStores: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "list-key-stores")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ListKeyStores: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ListKeyStores: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(ListKeyStoresResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ListKeyStores: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Create an External Key Store after validating the configured customer-managed XKS proxy.
+func (c Client) CreateKeyStore(ctx context.Context, req CreateKeyStoreRequest) (*ListKeyStoresResponseEntry, error) {
+	path := "/key-store"
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("CreateKeyStore: prepare JSON body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("CreateKeyStore: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("CreateKeyStore: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("CreateKeyStore: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "create-key-store")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("CreateKeyStore: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("CreateKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(ListKeyStoresResponseEntry)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("CreateKeyStore: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Deletes an External Key Store when no KMS keys reference it.
+func (c Client) DeleteKeyStore(ctx context.Context, id UUID) (*SuccessResponse, error) {
+	path := fmt.Sprintf("/key-store/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "DELETE", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteKeyStore: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DeleteKeyStore: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DeleteKeyStore: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "delete-key-store")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteKeyStore: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DeleteKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(SuccessResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DeleteKeyStore: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Fetch an External Key Store including its latest XKS health observation when available.
+func (c Client) GetKeyStore(ctx context.Context, id UUID) (*GetKeyStoreResponse, error) {
+	path := fmt.Sprintf("/key-store/%v", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetKeyStore: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetKeyStore: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetKeyStore: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-key-store")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetKeyStore: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(GetKeyStoreResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetKeyStore: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Connects an External Key Store after validating the configured customer-managed XKS proxy, and resumes periodic proxy health checks.
+func (c Client) ConnectKeyStore(ctx context.Context, id UUID) (*SuccessResponse, error) {
+	path := fmt.Sprintf("/key-store/%v/connect", id)
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ConnectKeyStore: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("ConnectKeyStore: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("ConnectKeyStore: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "connect-key-store")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("ConnectKeyStore: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("ConnectKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(SuccessResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("ConnectKeyStore: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Disconnects an External Key Store and suspends periodic proxy health checks.
+func (c Client) DisconnectKeyStore(ctx context.Context, id UUID) (*SuccessResponse, error) {
+	path := fmt.Sprintf("/key-store/%v/disconnect", id)
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("DisconnectKeyStore: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("DisconnectKeyStore: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("DisconnectKeyStore: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "disconnect-key-store")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("DisconnectKeyStore: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("DisconnectKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(SuccessResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("DisconnectKeyStore: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Updates an External Key Store with a new description, endpoint, or credentials.
+func (c Client) UpdateKeyStore(ctx context.Context, id UUID, req UpdateKeyStoreRequest) (*GetKeyStoreResponse, error) {
+	path := fmt.Sprintf("/key-store/%v/update", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateKeyStore: prepare JSON body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateKeyStore: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateKeyStore: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateKeyStore: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "update-key-store")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateKeyStore: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(GetKeyStoreResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateKeyStore: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // FindListKmsKeysResponseEntry attempts to find an ListKmsKeysResponseEntry by nameOrID.
 func (l ListKmsKeysResponse) FindListKmsKeysResponseEntry(nameOrID string) (ListKmsKeysResponseEntry, error) {
 	var result []ListKmsKeysResponseEntry
@@ -15295,10 +15650,10 @@ func (c Client) GetLoadBalancer(ctx context.Context, id UUID) (*LoadBalancer, er
 
 type UpdateLoadBalancerRequest struct {
 	// Load Balancer description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
-	Labels      Labels `json:"labels,omitempty"`
+	Description *string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	Labels      Labels  `json:"labels"`
 	// Load Balancer name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	Name *string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 // Update a Load Balancer
@@ -15542,19 +15897,19 @@ const (
 
 type UpdateLoadBalancerServiceRequest struct {
 	// Load Balancer Service description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	Description *string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Load Balancer Service healthcheck
 	Healthcheck *LoadBalancerServiceHealthcheck `json:"healthcheck,omitempty"`
 	// Load Balancer Service name
-	Name string `json:"name,omitempty" validate:"omitempty,lte=255"`
+	Name *string `json:"name,omitempty" validate:"omitempty,lte=255"`
 	// Port exposed on the Load Balancer's public IP
-	Port int64 `json:"port,omitempty" validate:"omitempty,gte=1,lte=65535"`
+	Port *int64 `json:"port,omitempty" validate:"omitempty,gte=1,lte=65535"`
 	// Network traffic protocol
 	Protocol UpdateLoadBalancerServiceRequestProtocol `json:"protocol,omitempty"`
 	// Load balancing strategy
 	Strategy UpdateLoadBalancerServiceRequestStrategy `json:"strategy,omitempty"`
 	// Port on which the network traffic will be forwarded to on the receiving instance
-	TargetPort int64 `json:"target-port,omitempty" validate:"omitempty,gte=1,lte=65535"`
+	TargetPort *int64 `json:"target-port,omitempty" validate:"omitempty,gte=1,lte=65535"`
 }
 
 // Update a Load Balancer Service

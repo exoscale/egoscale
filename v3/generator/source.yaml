@@ -8822,6 +8822,7 @@ components:
         - de-fra-1
         - bg-sof-1
         - at-vie-2
+        - es-mad-1
         - hr-zag-1
     dbaas-endpoint-datadog-settings:
       type: object
@@ -11737,6 +11738,7 @@ servers:
           - at-vie-2
           - bg-sof-1
           - hr-zag-1
+          - es-mad-1
 paths:
   /load-balancer/{id}/service/{service-id}:
     delete:

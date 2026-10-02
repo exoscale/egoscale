@@ -3,7 +3,7 @@ Changelog
 
 ## Unreleased
 
-- Fix zone lookup for zones only enabled for some organizations: retry the zone list with an authenticated request when the zone is missing from the public one (patch to vendored egoscale v3)
+- v3: allow zone lookup for zones only enabled for some organizations with fallback authenticated request when the zone is missing from the public one
 
 3.1.55
 ------

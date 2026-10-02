@@ -29,12 +29,14 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	output := bytes.NewBuffer(helpers.Header(packageName, "v0.0.1"))
 	output.WriteString(fmt.Sprintf(`package %s
 	import (
+		"errors"
 		"fmt"
 		"io"
 		"log"
 		"net/http"
 		"context"
 		"runtime"
+		"slices"
 		"time"
 
 		"github.com/exoscale/egoscale/v3/credentials"

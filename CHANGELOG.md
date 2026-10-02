@@ -1,7 +1,8 @@
 Changelog
 =========
 
-## Unreleased
+3.1.56
+------
 
 - v3: allow zone lookup for zones only enabled for some organizations with fallback authenticated request when the zone is missing from the public one
 

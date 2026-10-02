@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.1.55
+------
+
+- v3: support new zone
 
 3.1.54
 ------

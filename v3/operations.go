@@ -14423,7 +14423,7 @@ func (c Client) GetKeyStore(ctx context.Context, id UUID) (*GetKeyStoreResponse,
 	return bodyresp, nil
 }
 
-// Connects an External Key Store after validating the configured customer-managed XKS proxy, and resumes periodic proxy health checks.
+// Connects an External Key Store once its customer-managed XKS proxy passes a health check, then resumes periodic proxy health checks and lets keys backed by this store be used for cryptographic operations.
 func (c Client) ConnectKeyStore(ctx context.Context, id UUID) (*SuccessResponse, error) {
 	path := fmt.Sprintf("/key-store/%v/connect", id)
 
@@ -14469,7 +14469,7 @@ func (c Client) ConnectKeyStore(ctx context.Context, id UUID) (*SuccessResponse,
 	return bodyresp, nil
 }
 
-// Disconnects an External Key Store and suspends periodic proxy health checks.
+// Disconnects an External Key Store and suspends periodic proxy health checks; keys backed by this store remain intact but cannot be used for cryptographic operations until it is reconnected.
 func (c Client) DisconnectKeyStore(ctx context.Context, id UUID) (*SuccessResponse, error) {
 	path := fmt.Sprintf("/key-store/%v/disconnect", id)
 
@@ -15128,6 +15128,52 @@ func (c Client) GenerateDataKey(ctx context.Context, id UUID, req GenerateDataKe
 	return bodyresp, nil
 }
 
+// Retrieve the public key material of an asymmetric KMS key.
+func (c Client) GetPublicKey(ctx context.Context, id UUID) (*GetPublicKeyResponse, error) {
+	path := fmt.Sprintf("/kms-key/%v/get-public-key", id)
+
+	request, err := http.NewRequestWithContext(ctx, "GET", c.serverEndpoint+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("GetPublicKey: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("GetPublicKey: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("GetPublicKey: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "get-public-key")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("GetPublicKey: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("GetPublicKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(GetPublicKeyResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("GetPublicKey: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // List all the key material versions of a KMS Key.
 func (c Client) ListKmsKeyRotations(ctx context.Context, id UUID) (*ListKmsKeyRotationsResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/list-key-rotations", id)
@@ -15374,6 +15420,112 @@ func (c Client) ScheduleKmsKeyDeletion(ctx context.Context, id UUID, req Schedul
 	bodyresp := new(ScheduleKmsKeyDeletionResponse)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Signs a message or digest using a KMS key with usage `sign-verify`.
+func (c Client) Sign(ctx context.Context, id UUID, req SignRequest) (*SignResponse, error) {
+	path := fmt.Sprintf("/kms-key/%v/sign", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("Sign: prepare JSON body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("Sign: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("Sign: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("Sign: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "sign")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("Sign: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("Sign: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(SignResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("Sign: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+// Verifies a signature against the public key of a KMS key with usage `sign-verify`.
+func (c Client) Verify(ctx context.Context, id UUID, req VerifyRequest) (*VerifyResponse, error) {
+	path := fmt.Sprintf("/kms-key/%v/verify", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("Verify: prepare JSON body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("Verify: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("Verify: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("Verify: sign request: %w", err)
+	}
+
+	if c.trace {
+		dumpRequest(request, "verify")
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("Verify: http client do: %w", err)
+	}
+
+	if c.trace {
+		dumpResponse(response)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("Verify: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(VerifyResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("Verify: prepare JSON response: %w", err)
 	}
 
 	return bodyresp, nil

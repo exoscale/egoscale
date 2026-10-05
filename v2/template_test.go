@@ -10,6 +10,8 @@ import (
 	"github.com/exoscale/egoscale/v2/oapi"
 )
 
+var testTemplateApplicationConsistentSnapshotEnabled = true
+
 var (
 	testTemplateBootMode              = "uefi"
 	testTemplateBuild                 = "2020-04-22-ed8fea"
@@ -370,6 +372,8 @@ func (ts *testSuite) TestClient_RegisterTemplate() {
 		Run(func(args mock.Arguments) {
 			ts.Require().Equal(
 				oapi.RegisterTemplateJSONRequestBody{
+					ApplicationConsistentSnapshotEnabled: &testTemplateApplicationConsistentSnapshotEnabled,
+
 					BootMode:        (*oapi.RegisterTemplateJSONBodyBootMode)(&testTemplateBootMode),
 					Build:           &testTemplateBuild,
 					Checksum:        testTemplateChecksum,
@@ -412,6 +416,8 @@ func (ts *testSuite) TestClient_RegisterTemplate() {
 		Return(&oapi.GetTemplateResponse{
 			HTTPResponse: &http.Response{StatusCode: http.StatusOK},
 			JSON200: &oapi.Template{
+				ApplicationConsistentSnapshotEnabled: &testTemplateApplicationConsistentSnapshotEnabled,
+
 				BootMode:        (*oapi.TemplateBootMode)(&testTemplateBootMode),
 				Build:           &testTemplateBuild,
 				Checksum:        &testTemplateChecksum,
@@ -431,6 +437,8 @@ func (ts *testSuite) TestClient_RegisterTemplate() {
 		}, nil)
 
 	expected := &Template{
+		ApplicationConsistentSnapshotEnabled: &testTemplateApplicationConsistentSnapshotEnabled,
+
 		BootMode:        &testTemplateBootMode,
 		Build:           &testTemplateBuild,
 		Checksum:        &testTemplateChecksum,
@@ -450,6 +458,8 @@ func (ts *testSuite) TestClient_RegisterTemplate() {
 	}
 
 	actual, err := ts.client.RegisterTemplate(context.Background(), testZone, &Template{
+		ApplicationConsistentSnapshotEnabled: &testTemplateApplicationConsistentSnapshotEnabled,
+
 		BootMode:        &testTemplateBootMode,
 		Build:           &testTemplateBuild,
 		Checksum:        &testTemplateChecksum,

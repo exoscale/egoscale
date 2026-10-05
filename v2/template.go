@@ -12,6 +12,8 @@ import (
 
 // Template represents a Compute instance template.
 type Template struct {
+	ApplicationConsistentSnapshotEnabled *bool
+
 	BootMode        *string
 	Build           *string
 	Checksum        *string `req-for:"create"`
@@ -70,6 +72,8 @@ func ListTemplatesWithVisibility(v string) ListTemplatesOpt {
 
 func templateFromAPI(t *oapi.Template, zone string) *Template {
 	return &Template{
+		ApplicationConsistentSnapshotEnabled: t.ApplicationConsistentSnapshotEnabled,
+
 		BootMode:        (*string)(t.BootMode),
 		Build:           t.Build,
 		Checksum:        t.Checksum,
@@ -224,6 +228,8 @@ func (c *Client) RegisterTemplate(ctx context.Context, zone string, template *Te
 	resp, err := c.RegisterTemplateWithResponse(
 		apiv2.WithZone(ctx, zone),
 		oapi.RegisterTemplateJSONRequestBody{
+			ApplicationConsistentSnapshotEnabled: template.ApplicationConsistentSnapshotEnabled,
+
 			BootMode:        (*oapi.RegisterTemplateJSONBodyBootMode)(template.BootMode),
 			Build:           template.Build,
 			Checksum:        *template.Checksum,

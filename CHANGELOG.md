@@ -1,6 +1,12 @@
 Changelog
 =========
 
+3.1.57
+------
+
+- v3: regenerate from new API spec (#829)
+- v3: generator: map uri type to string type (#828)
+
 3.1.56
 ------
 

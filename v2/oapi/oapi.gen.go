@@ -2910,6 +2910,9 @@ type SshKey struct {
 
 // Instance template
 type Template struct {
+	// Template with Qemu Guest Agent installed for application consistent snapshot
+	ApplicationConsistentSnapshotEnabled *bool `json:"application-consistent-snapshot-enabled,omitempty"`
+
 	// Boot mode (default: legacy)
 	BootMode *TemplateBootMode `json:"boot-mode,omitempty"`
 
@@ -4732,6 +4735,9 @@ type ListTemplatesParamsVisibility string
 
 // RegisterTemplateJSONBody defines parameters for RegisterTemplate.
 type RegisterTemplateJSONBody struct {
+	// Template with support for Application Consistent Snapshots
+	ApplicationConsistentSnapshotEnabled *bool `json:"application-consistent-snapshot-enabled,omitempty"`
+
 	// Boot mode (default: legacy)
 	BootMode *RegisterTemplateJSONBodyBootMode `json:"boot-mode,omitempty"`
 

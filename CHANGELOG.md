@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v2: support application-consistent snapshots on registered templates
+
 3.1.56
 ------
 

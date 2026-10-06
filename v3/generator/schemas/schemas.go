@@ -116,7 +116,7 @@ func RenderSimpleType(s *base.Schema) string {
 			return "UUID"
 		case "ipv4", "ip":
 			return "net.IP"
-		case "uri-reference":
+		case "uri-reference", "uri":
 			return "string"
 		case "byte":
 			return "[]byte"

@@ -283,26 +283,52 @@ type CreateKeyStoreRequest struct {
 	Type CreateKeyStoreRequestType `json:"type,omitempty"`
 }
 
+type CreateKmsKeyRequestKeySpec string
+
+const (
+	CreateKmsKeyRequestKeySpecAES256          CreateKmsKeyRequestKeySpec = "AES_256"
+	CreateKmsKeyRequestKeySpecECCNISTP256     CreateKmsKeyRequestKeySpec = "ECC_NIST_P256"
+	CreateKmsKeyRequestKeySpecECCNISTP384     CreateKmsKeyRequestKeySpec = "ECC_NIST_P384"
+	CreateKmsKeyRequestKeySpecECCNISTP521     CreateKmsKeyRequestKeySpec = "ECC_NIST_P521"
+	CreateKmsKeyRequestKeySpecECCEDWARDS25519 CreateKmsKeyRequestKeySpec = "ECC_EDWARDS25519"
+	CreateKmsKeyRequestKeySpecRSA3072         CreateKmsKeyRequestKeySpec = "RSA_3072"
+	CreateKmsKeyRequestKeySpecRSA4096         CreateKmsKeyRequestKeySpec = "RSA_4096"
+)
+
+type CreateKmsKeyRequestSource string
+
+const (
+	CreateKmsKeyRequestSourceExoscaleKms      CreateKmsKeyRequestSource = "exoscale-kms"
+	CreateKmsKeyRequestSourceExternalKeyStore CreateKmsKeyRequestSource = "external-key-store"
+)
+
 type CreateKmsKeyRequestUsage string
 
 const (
 	CreateKmsKeyRequestUsageEncryptDecrypt CreateKmsKeyRequestUsage = "encrypt-decrypt"
+	CreateKmsKeyRequestUsageSignVerify     CreateKmsKeyRequestUsage = "sign-verify"
 )
 
 type CreateKmsKeyRequest struct {
 	// An optional detailed description providing additional context about the key's intended use case.
 	Description string `json:"description,omitempty"`
+	// The cryptographic key specification defining the key's algorithm and, for asymmetric keys, its curve or modulus size.
+	KeySpec CreateKmsKeyRequestKeySpec `json:"key-spec,omitempty"`
 	// True if this is a multi-zone key.
 	MultiZone *bool `json:"multi-zone,omitempty"`
 	// A human-readable display name uniquely identifying the KMS key within the tenant space.
-	Name  string                   `json:"name" validate:"required"`
-	Usage CreateKmsKeyRequestUsage `json:"usage,omitempty"`
+	Name string `json:"name" validate:"required"`
+	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+	Source CreateKmsKeyRequestSource `json:"source,omitempty"`
+	Usage  CreateKmsKeyRequestUsage  `json:"usage,omitempty"`
+	Xks    *XksKey                   `json:"xks,omitempty"`
 }
 
 type CreateKmsKeyResponseSource string
 
 const (
-	CreateKmsKeyResponseSourceExoscaleKms CreateKmsKeyResponseSource = "exoscale-kms"
+	CreateKmsKeyResponseSourceExoscaleKms      CreateKmsKeyResponseSource = "exoscale-kms"
+	CreateKmsKeyResponseSourceExternalKeyStore CreateKmsKeyResponseSource = "external-key-store"
 )
 
 type CreateKmsKeyResponseStatus string
@@ -320,19 +346,24 @@ type CreateKmsKeyResponse struct {
 	Description string `json:"description,omitempty"`
 	// The globally unique identifier (UUID) assigned to the newly created KMS key.
 	ID UUID `json:"id" validate:"required"`
+	// The cryptographic key specification used to generate the key, defining its algorithm and, for asymmetric keys, its curve or modulus size.
+	KeySpec string `json:"key-spec" validate:"required"`
 	// True if this is a multi-zone key.
 	MultiZone *bool `json:"multi-zone" validate:"required"`
 	// The display name assigned to the KMS key.
 	Name string `json:"name" validate:"required"`
 	// The creation zone of the KMS key.
-	OriginZone string                     `json:"origin-zone" validate:"required"`
-	Revision   *RevisionStamp             `json:"revision" validate:"required"`
-	Source     CreateKmsKeyResponseSource `json:"source" validate:"required"`
-	Status     CreateKmsKeyResponseStatus `json:"status" validate:"required"`
+	OriginZone string             `json:"origin-zone" validate:"required"`
+	Revision   *RevisionStamp     `json:"revision" validate:"required"`
+	Rotation   *KeyRotationConfig `json:"rotation,omitempty"`
+	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+	Source CreateKmsKeyResponseSource `json:"source" validate:"required"`
+	Status CreateKmsKeyResponseStatus `json:"status" validate:"required"`
 	// The timestamp indicating exactly when the current key status was last transitioned.
 	StatusSince time.Time `json:"status-since" validate:"required"`
 	// The cryptographic operation constraints allowed on this key.
-	Usage string `json:"usage" validate:"required"`
+	Usage string  `json:"usage" validate:"required"`
+	Xks   *XksKey `json:"xks,omitempty"`
 }
 
 // AI model
@@ -2566,7 +2597,8 @@ type ErrorResponse struct {
 	// A brief summary defining the class of failure, optimal for quick user interface groupings.
 	Title string `json:"title" validate:"required"`
 	// An absolute or relative URI reference pointing to human-readable documentation concerning the specific problem type encountered.
-	Type string `json:"type" validate:"required"`
+	Type          string               `json:"type" validate:"required"`
+	XksProxyError *XksProxyErrorDetail `json:"xks-proxy-error,omitempty"`
 }
 
 // A notable Mutation Event which happened on the infrastructure
@@ -2729,7 +2761,8 @@ type GetKeyStoreResponse struct {
 type GetKmsKeyResponseSource string
 
 const (
-	GetKmsKeyResponseSourceExoscaleKms GetKmsKeyResponseSource = "exoscale-kms"
+	GetKmsKeyResponseSourceExoscaleKms      GetKmsKeyResponseSource = "exoscale-kms"
+	GetKmsKeyResponseSourceExternalKeyStore GetKmsKeyResponseSource = "external-key-store"
 )
 
 type GetKmsKeyResponseStatus string
@@ -2747,7 +2780,9 @@ type GetKmsKeyResponse struct {
 	// An optional detailed description providing additional context about the key's intended use case.
 	Description string `json:"description,omitempty"`
 	// The globally unique identifier (UUID) of the retrieved KMS key.
-	ID       UUID         `json:"id" validate:"required"`
+	ID UUID `json:"id" validate:"required"`
+	// The cryptographic key specification used to generate the key, defining its algorithm and, for asymmetric keys, its curve or modulus size.
+	KeySpec  string       `json:"key-spec" validate:"required"`
 	Material *KeyMaterial `json:"material" validate:"required"`
 	// True if this is a multi-zone key.
 	MultiZone *bool `json:"multi-zone" validate:"required"`
@@ -2758,15 +2793,17 @@ type GetKmsKeyResponse struct {
 	// A list of availability zones where this specific key has active replica mirrors.
 	Replicas []string `json:"replicas,omitempty"`
 	// Detailed synchronization metrics for each regional replica mirror.
-	ReplicasStatus []ReplicaState          `json:"replicas-status,omitempty"`
-	Revision       *RevisionStamp          `json:"revision" validate:"required"`
-	Rotation       *KeyRotationConfig      `json:"rotation" validate:"required"`
-	Source         GetKmsKeyResponseSource `json:"source" validate:"required"`
-	Status         GetKmsKeyResponseStatus `json:"status" validate:"required"`
+	ReplicasStatus []ReplicaState     `json:"replicas-status,omitempty"`
+	Revision       *RevisionStamp     `json:"revision" validate:"required"`
+	Rotation       *KeyRotationConfig `json:"rotation" validate:"required"`
+	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+	Source GetKmsKeyResponseSource `json:"source" validate:"required"`
+	Status GetKmsKeyResponseStatus `json:"status" validate:"required"`
 	// The timestamp indicating exactly when the current key status was last transitioned.
 	StatusSince time.Time `json:"status-since" validate:"required"`
 	// The cryptographic operation constraints allowed on this key.
-	Usage string `json:"usage" validate:"required"`
+	Usage string  `json:"usage" validate:"required"`
+	Xks   *XksKey `json:"xks,omitempty"`
 }
 
 type GetModelResponseLifecycleStatus string
@@ -2816,6 +2853,17 @@ type GetModelResponse struct {
 	UpdatedAT time.Time `json:"updated-at" validate:"required"`
 	// Model visibility
 	Visibility GetModelResponseVisibility `json:"visibility,omitempty"`
+}
+
+type GetPublicKeyResponse struct {
+	// The UUID of the KMS key the public key material belongs to.
+	KeyID UUID `json:"key-id,omitempty"`
+	// The cryptographic key specification of the key pair, defining its algorithm and curve.
+	KeySpec string `json:"key-spec,omitempty"`
+	// The Base64-encoded X.509 SubjectPublicKeyInfo (SPKI) DER encoding of the key's public key.
+	PublicKey []byte `json:"public-key,omitempty"`
+	// The usage of the key pair, either `encrypt-decrypt` or `sign-verify`.
+	Usage string `json:"usage,omitempty"`
 }
 
 // IAM API Key
@@ -4871,7 +4919,8 @@ type ListKmsKeysResponse struct {
 type ListKmsKeysResponseEntrySource string
 
 const (
-	ListKmsKeysResponseEntrySourceExoscaleKms ListKmsKeysResponseEntrySource = "exoscale-kms"
+	ListKmsKeysResponseEntrySourceExoscaleKms      ListKmsKeysResponseEntrySource = "exoscale-kms"
+	ListKmsKeysResponseEntrySourceExternalKeyStore ListKmsKeysResponseEntrySource = "external-key-store"
 )
 
 type ListKmsKeysResponseEntryStatus string
@@ -4889,7 +4938,9 @@ type ListKmsKeysResponseEntry struct {
 	// An optional detailed description providing additional context about the key's intended use case.
 	Description string `json:"description,omitempty"`
 	// The globally unique identifier (UUID) tracking this key entity.
-	ID       UUID         `json:"id" validate:"required"`
+	ID UUID `json:"id" validate:"required"`
+	// The cryptographic key specification used to generate the key, defining its algorithm and, for asymmetric keys, its curve or modulus size.
+	KeySpec  string       `json:"key-spec" validate:"required"`
 	Material *KeyMaterial `json:"material" validate:"required"`
 	// True if this is a multi-zone key.
 	MultiZone *bool `json:"multi-zone" validate:"required"`
@@ -4898,15 +4949,17 @@ type ListKmsKeysResponseEntry struct {
 	// The creation zone of the KMS key.
 	OriginZone string `json:"origin-zone" validate:"required"`
 	// Array tracking target zones currently maintaining copies of this item.
-	Replicas []string                       `json:"replicas,omitempty"`
-	Revision *RevisionStamp                 `json:"revision" validate:"required"`
-	Rotation *KeyRotationConfig             `json:"rotation" validate:"required"`
-	Source   ListKmsKeysResponseEntrySource `json:"source" validate:"required"`
-	Status   ListKmsKeysResponseEntryStatus `json:"status" validate:"required"`
+	Replicas []string           `json:"replicas,omitempty"`
+	Revision *RevisionStamp     `json:"revision" validate:"required"`
+	Rotation *KeyRotationConfig `json:"rotation" validate:"required"`
+	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+	Source ListKmsKeysResponseEntrySource `json:"source" validate:"required"`
+	Status ListKmsKeysResponseEntryStatus `json:"status" validate:"required"`
 	// The precise time when the key entered its current configuration phase.
 	StatusSince time.Time `json:"status-since" validate:"required"`
 	// The cryptographic operation constraints allowed on this key.
-	Usage string `json:"usage" validate:"required"`
+	Usage string  `json:"usage" validate:"required"`
+	Xks   *XksKey `json:"xks,omitempty"`
 }
 
 // AI model list
@@ -5651,6 +5704,44 @@ type SetOrgConsumptionQuotaRequest struct {
 	QuotaUomPerMinute *int `json:"quota-uom-per-minute,omitempty" validate:"omitempty,gte=0"`
 }
 
+type SignRequestMessageType string
+
+const (
+	SignRequestMessageTypeRaw    SignRequestMessageType = "raw"
+	SignRequestMessageTypeDigest SignRequestMessageType = "digest"
+)
+
+type SignRequestSigningAlgorithm string
+
+const (
+	SignRequestSigningAlgorithmRSASSAPSSSHA256 SignRequestSigningAlgorithm = "RSASSA_PSS_SHA_256"
+	SignRequestSigningAlgorithmRSASSAPSSSHA384 SignRequestSigningAlgorithm = "RSASSA_PSS_SHA_384"
+	SignRequestSigningAlgorithmRSASSAPSSSHA512 SignRequestSigningAlgorithm = "RSASSA_PSS_SHA_512"
+	SignRequestSigningAlgorithmECDSASHA256     SignRequestSigningAlgorithm = "ECDSA_SHA_256"
+	SignRequestSigningAlgorithmECDSASHA384     SignRequestSigningAlgorithm = "ECDSA_SHA_384"
+	SignRequestSigningAlgorithmECDSASHA512     SignRequestSigningAlgorithm = "ECDSA_SHA_512"
+	SignRequestSigningAlgorithmEDDSAED25519    SignRequestSigningAlgorithm = "EDDSA_ED25519"
+	SignRequestSigningAlgorithmED25519PHSHA512 SignRequestSigningAlgorithm = "ED25519_PH_SHA_512"
+)
+
+type SignRequest struct {
+	// The Base64-encoded message to sign (1-4096 decoded bytes). Its meaning depends on `message-type`, either the raw plaintext message or an already-hashed digest.
+	Message []byte `json:"message" validate:"required,gte=1,lte=5464"`
+	// How `message` should be interpreted.
+	MessageType SignRequestMessageType `json:"message-type,omitempty"`
+	// The signing algorithm to use. Must match the family implied by the key's `key-spec`.
+	SigningAlgorithm SignRequestSigningAlgorithm `json:"signing-algorithm" validate:"required"`
+}
+
+type SignResponse struct {
+	// The cryptographic key specification used to produce the signature.
+	KeySpec string `json:"key-spec" validate:"required"`
+	// The resulting Base64-encoded signature.
+	Signature []byte `json:"signature" validate:"required"`
+	// The signing algorithm used to produce the signature, echoing the request's `signing-algorithm`.
+	SigningAlgorithm string `json:"signing-algorithm" validate:"required"`
+}
+
 // Kubernetes Audit parameters
 type SKSAudit struct {
 	// Enabled
@@ -6145,6 +6236,46 @@ type User struct {
 	TwoFactorAuthentication *bool `json:"two-factor-authentication,omitempty"`
 }
 
+type VerifyRequestMessageType string
+
+const (
+	VerifyRequestMessageTypeRaw    VerifyRequestMessageType = "raw"
+	VerifyRequestMessageTypeDigest VerifyRequestMessageType = "digest"
+)
+
+type VerifyRequestSigningAlgorithm string
+
+const (
+	VerifyRequestSigningAlgorithmRSASSAPSSSHA256 VerifyRequestSigningAlgorithm = "RSASSA_PSS_SHA_256"
+	VerifyRequestSigningAlgorithmRSASSAPSSSHA384 VerifyRequestSigningAlgorithm = "RSASSA_PSS_SHA_384"
+	VerifyRequestSigningAlgorithmRSASSAPSSSHA512 VerifyRequestSigningAlgorithm = "RSASSA_PSS_SHA_512"
+	VerifyRequestSigningAlgorithmECDSASHA256     VerifyRequestSigningAlgorithm = "ECDSA_SHA_256"
+	VerifyRequestSigningAlgorithmECDSASHA384     VerifyRequestSigningAlgorithm = "ECDSA_SHA_384"
+	VerifyRequestSigningAlgorithmECDSASHA512     VerifyRequestSigningAlgorithm = "ECDSA_SHA_512"
+	VerifyRequestSigningAlgorithmEDDSAED25519    VerifyRequestSigningAlgorithm = "EDDSA_ED25519"
+	VerifyRequestSigningAlgorithmED25519PHSHA512 VerifyRequestSigningAlgorithm = "ED25519_PH_SHA_512"
+)
+
+type VerifyRequest struct {
+	// The Base64-encoded message to verify (1-4096 decoded bytes), with the same semantics as `sign`'s `message` field.
+	Message []byte `json:"message" validate:"required,gte=1,lte=5464"`
+	// How `message` should be interpreted, with the same semantics as `sign`'s `message-type` field.
+	MessageType VerifyRequestMessageType `json:"message-type,omitempty"`
+	// The Base64-encoded signature to verify against `message` (1-6144 decoded bytes).
+	Signature []byte `json:"signature" validate:"required,gte=1,lte=8192"`
+	// The signing algorithm `signature` was produced with. Must match the family implied by the key's `key-spec`, with the same semantics as `sign`'s `signing-algorithm` field.
+	SigningAlgorithm VerifyRequestSigningAlgorithm `json:"signing-algorithm" validate:"required"`
+}
+
+type VerifyResponse struct {
+	// The UUID of the KMS key used to verify the signature.
+	KeyID UUID `json:"key-id" validate:"required"`
+	// The cryptographic key specification used to verify the signature.
+	KeySpec string `json:"key-spec" validate:"required"`
+	// Whether `signature` is a valid signature over `message` produced by this KMS key.
+	SignatureValid *bool `json:"signature-valid" validate:"required"`
+}
+
 // VPC
 type Vpc struct {
 	// VPC creation date
@@ -6170,6 +6301,20 @@ type VpcDHCPOptions struct {
 	DomainSearch []string `json:"domain-search,omitempty"`
 	// NTP Servers
 	NtpServers []net.IP `json:"ntp-servers,omitempty"`
+}
+
+type XksKey struct {
+	// The identifier of the key as known to the external key store, used to reference the key material outside of Exoscale.
+	ExternalKeyID string `json:"external-key-id" validate:"required,gte=1,lte=128"`
+	// The Exoscale-generated id of the external key store resource that this key is associated with.
+	XksID UUID `json:"xks-id" validate:"required"`
+}
+
+type XksProxyErrorDetail struct {
+	// Optional bounded XKS proxy `errorMessage`.
+	ErrorMessage string `json:"error-message,omitempty"`
+	// XKS proxy `errorName` from a valid proxy error envelope.
+	ErrorName string `json:"error-name" validate:"required"`
 }
 
 // Zone

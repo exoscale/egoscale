@@ -118,6 +118,8 @@ func RenderSimpleType(s *base.Schema) string {
 			return "net.IP"
 		case "uri-reference":
 			return "string"
+		case "uri":
+			return "url.URL"
 		case "byte":
 			return "[]byte"
 		case "double":

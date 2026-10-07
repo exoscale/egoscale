@@ -15224,7 +15224,7 @@ func (c Client) ListKmsKeyRotations(ctx context.Context, id UUID) (*ListKmsKeyRo
 	return bodyresp, nil
 }
 
-// Decrypts an existing ciphertext using its original key material and re-encrypts the underlying plaintext using a specified KMS key or the latest key material of the same KMS Key.
+// Decrypts an existing ciphertext using its original key material and re-encrypts the underlying plaintext using a specified KMS key or the latest key material of the same KMS Key. Source and destination keys must belong to the same key family.
 func (c Client) ReEncrypt(ctx context.Context, id UUID, req ReEncryptRequest) (*ReEncryptResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/re-encrypt", id)
 

@@ -293,6 +293,8 @@ const (
 	CreateKmsKeyRequestKeySpecECCEDWARDS25519 CreateKmsKeyRequestKeySpec = "ECC_EDWARDS25519"
 	CreateKmsKeyRequestKeySpecRSA3072         CreateKmsKeyRequestKeySpec = "RSA_3072"
 	CreateKmsKeyRequestKeySpecRSA4096         CreateKmsKeyRequestKeySpec = "RSA_4096"
+	CreateKmsKeyRequestKeySpecMLDSA65         CreateKmsKeyRequestKeySpec = "ML_DSA_65"
+	CreateKmsKeyRequestKeySpecMLDSA87         CreateKmsKeyRequestKeySpec = "ML_DSA_87"
 )
 
 type CreateKmsKeyRequestSource string
@@ -2223,14 +2225,32 @@ type DBAASValkeyUsers struct {
 	Users []DBAASValkeyUser `json:"users,omitempty"`
 }
 
+type DecryptRequestEncryptionAlgorithm string
+
+const (
+	DecryptRequestEncryptionAlgorithmAES256          DecryptRequestEncryptionAlgorithm = "AES_256"
+	DecryptRequestEncryptionAlgorithmRSAESOAEPSHA256 DecryptRequestEncryptionAlgorithm = "RSAES_OAEP_SHA_256"
+)
+
 type DecryptRequest struct {
 	// The Base64-encoded ciphertext payload to be decrypted.
 	Ciphertext []byte `json:"ciphertext" validate:"required"`
+	// The encryption algorithm this key must use. Validated against the key's actual cryptographic profile. Required for asymmetric keys. Symmetric keys use AES_256 when it is omitted.
+	EncryptionAlgorithm DecryptRequestEncryptionAlgorithm `json:"encryption-algorithm,omitempty"`
 	// The exact Base64-encoded Additional Authenticated Data (AAD) used during encryption to verify data integrity.
 	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
 }
 
+type DecryptResponseEncryptionAlgorithm string
+
+const (
+	DecryptResponseEncryptionAlgorithmAES256          DecryptResponseEncryptionAlgorithm = "AES_256"
+	DecryptResponseEncryptionAlgorithmRSAESOAEPSHA256 DecryptResponseEncryptionAlgorithm = "RSAES_OAEP_SHA_256"
+)
+
 type DecryptResponse struct {
+	// The encryption algorithm that was used to decrypt this ciphertext.
+	EncryptionAlgorithm DecryptResponseEncryptionAlgorithm `json:"encryption-algorithm" validate:"required"`
 	// The recovered Base64-encoded original plaintext payload.
 	Plaintext []byte `json:"plaintext" validate:"required"`
 }
@@ -2394,16 +2414,34 @@ type EnableKmsKeyRotationResponse struct {
 	Rotation *KeyRotationConfig `json:"rotation" validate:"required"`
 }
 
+type EncryptRequestEncryptionAlgorithm string
+
+const (
+	EncryptRequestEncryptionAlgorithmAES256          EncryptRequestEncryptionAlgorithm = "AES_256"
+	EncryptRequestEncryptionAlgorithmRSAESOAEPSHA256 EncryptRequestEncryptionAlgorithm = "RSAES_OAEP_SHA_256"
+)
+
 type EncryptRequest struct {
+	// The encryption algorithm this key must use. Validated against the key's actual cryptographic profile. Required for asymmetric keys. Symmetric keys use AES_256 when it is omitted.
+	EncryptionAlgorithm EncryptRequestEncryptionAlgorithm `json:"encryption-algorithm,omitempty"`
 	// Base64-encoded bytes to be used as the Additional Authenticated Data (AAD) for encryption integrity.
 	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
 	// The Base64-encoded plaintext data you wish to encrypt.
 	Plaintext []byte `json:"plaintext" validate:"required"`
 }
 
+type EncryptResponseEncryptionAlgorithm string
+
+const (
+	EncryptResponseEncryptionAlgorithmAES256          EncryptResponseEncryptionAlgorithm = "AES_256"
+	EncryptResponseEncryptionAlgorithmRSAESOAEPSHA256 EncryptResponseEncryptionAlgorithm = "RSAES_OAEP_SHA_256"
+)
+
 type EncryptResponse struct {
 	// The resulting Base64-encoded ciphertext after encryption.
 	Ciphertext []byte `json:"ciphertext" validate:"required"`
+	// The encryption algorithm that was used to encrypt this plaintext.
+	EncryptionAlgorithm EncryptResponseEncryptionAlgorithm `json:"encryption-algorithm" validate:"required"`
 }
 
 type EnumComponentRoute string
@@ -2755,7 +2793,36 @@ type GetInferenceEngineHelpResponse struct {
 	Parameters []InferenceEngineParameterEntry `json:"parameters" validate:"required"`
 }
 
+type GetKeyStoreResponseStatus string
+
+const (
+	GetKeyStoreResponseStatusConnected    GetKeyStoreResponseStatus = "connected"
+	GetKeyStoreResponseStatusDisconnected GetKeyStoreResponseStatus = "disconnected"
+)
+
+type GetKeyStoreResponseType string
+
+const (
+	GetKeyStoreResponseTypeExternalKeyStore GetKeyStoreResponseType = "external-key-store"
+)
+
 type GetKeyStoreResponse struct {
+	// The creation timestamp.
+	CreatedAT time.Time `json:"created-at,omitempty"`
+	// An optional detailed description providing additional context about the key store's intended use case.
+	Description string          `json:"description,omitempty"`
+	Health      *KeyStoreHealth `json:"health,omitempty"`
+	// The globally unique identifier assigned to the key store.
+	ID UUID `json:"id,omitempty"`
+	// The display name assigned to the key store.
+	Name  string                 `json:"name,omitempty"`
+	Proxy *KeyStoreProxyResponse `json:"proxy,omitempty"`
+	// The current connection status of the key store.
+	Status GetKeyStoreResponseStatus `json:"status,omitempty"`
+	// The timestamp indicating when the current key store status last transitioned.
+	StatusSince time.Time `json:"status-since,omitempty"`
+	// The key store type.
+	Type GetKeyStoreResponseType `json:"type,omitempty"`
 }
 
 type GetKmsKeyResponseSource string
@@ -3051,6 +3118,7 @@ const (
 	InferenceEngineVersion0280 InferenceEngineVersion = "0.28.0"
 	InferenceEngineVersion0290 InferenceEngineVersion = "0.29.0"
 	InferenceEngineVersion0300 InferenceEngineVersion = "0.30.0"
+	InferenceEngineVersion0310 InferenceEngineVersion = "0.31.0"
 )
 
 // Router flush payload: the router's full in-memory usage map with flush identity fields
@@ -5481,16 +5549,34 @@ type RateLimited struct {
 	RetryAfter float64 `json:"retry_after,omitempty"`
 }
 
+type ReEncryptRequestDestinationEncryptionAlgorithm string
+
+const (
+	ReEncryptRequestDestinationEncryptionAlgorithmAES256          ReEncryptRequestDestinationEncryptionAlgorithm = "AES_256"
+	ReEncryptRequestDestinationEncryptionAlgorithmRSAESOAEPSHA256 ReEncryptRequestDestinationEncryptionAlgorithm = "RSAES_OAEP_SHA_256"
+)
+
 type ReEncryptRequestDestination struct {
+	// The encryption algorithm the destination key must use. Validated against the key's actual cryptographic profile. Required for asymmetric keys. Symmetric keys use AES_256 when it is omitted.
+	EncryptionAlgorithm ReEncryptRequestDestinationEncryptionAlgorithm `json:"encryption-algorithm,omitempty"`
 	// Optional new Base64-encoded encryption context to apply under the target destination envelope.
 	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
 	// The ID of the target key chosen to encapsulate the newly shifted data translation.
 	Key UUID `json:"key" validate:"required"`
 }
 
+type ReEncryptRequestSourceEncryptionAlgorithm string
+
+const (
+	ReEncryptRequestSourceEncryptionAlgorithmAES256          ReEncryptRequestSourceEncryptionAlgorithm = "AES_256"
+	ReEncryptRequestSourceEncryptionAlgorithmRSAESOAEPSHA256 ReEncryptRequestSourceEncryptionAlgorithm = "RSAES_OAEP_SHA_256"
+)
+
 type ReEncryptRequestSource struct {
 	// The Base64-encoded encrypted payload package ready to undergo source-side key decryption.
 	Ciphertext []byte `json:"ciphertext" validate:"required"`
+	// The encryption algorithm the source key must use. Validated against the key's actual cryptographic profile. Required for asymmetric keys. Symmetric keys use AES_256 when it is omitted.
+	EncryptionAlgorithm ReEncryptRequestSourceEncryptionAlgorithm `json:"encryption-algorithm,omitempty"`
 	// Optional Base64-encoded encryption context originally appended to the AAD to confirm package validation rules.
 	EncryptionContext *[]byte `json:"encryption-context,omitempty"`
 	// The ID of the source key currently protecting the data payload.
@@ -5502,9 +5588,27 @@ type ReEncryptRequest struct {
 	Source      *ReEncryptRequestSource      `json:"source" validate:"required"`
 }
 
+type ReEncryptResponseDestinationEncryptionAlgorithm string
+
+const (
+	ReEncryptResponseDestinationEncryptionAlgorithmAES256          ReEncryptResponseDestinationEncryptionAlgorithm = "AES_256"
+	ReEncryptResponseDestinationEncryptionAlgorithmRSAESOAEPSHA256 ReEncryptResponseDestinationEncryptionAlgorithm = "RSAES_OAEP_SHA_256"
+)
+
+type ReEncryptResponseSourceEncryptionAlgorithm string
+
+const (
+	ReEncryptResponseSourceEncryptionAlgorithmAES256          ReEncryptResponseSourceEncryptionAlgorithm = "AES_256"
+	ReEncryptResponseSourceEncryptionAlgorithmRSAESOAEPSHA256 ReEncryptResponseSourceEncryptionAlgorithm = "RSAES_OAEP_SHA_256"
+)
+
 type ReEncryptResponse struct {
 	// The new Base64-encoded ciphertext block safely wrapped by the chosen destination key parameters.
 	Ciphertext []byte `json:"ciphertext" validate:"required"`
+	// The encryption algorithm that was used to encrypt the destination ciphertext.
+	DestinationEncryptionAlgorithm ReEncryptResponseDestinationEncryptionAlgorithm `json:"destination-encryption-algorithm" validate:"required"`
+	// The encryption algorithm that was used to decrypt the source ciphertext.
+	SourceEncryptionAlgorithm ReEncryptResponseSourceEncryptionAlgorithm `json:"source-encryption-algorithm" validate:"required"`
 }
 
 // Response from bundle recompute operation
@@ -5722,6 +5826,7 @@ const (
 	SignRequestSigningAlgorithmECDSASHA512     SignRequestSigningAlgorithm = "ECDSA_SHA_512"
 	SignRequestSigningAlgorithmEDDSAED25519    SignRequestSigningAlgorithm = "EDDSA_ED25519"
 	SignRequestSigningAlgorithmED25519PHSHA512 SignRequestSigningAlgorithm = "ED25519_PH_SHA_512"
+	SignRequestSigningAlgorithmMLDSASHAKE256   SignRequestSigningAlgorithm = "ML_DSA_SHAKE_256"
 )
 
 type SignRequest struct {
@@ -6254,6 +6359,7 @@ const (
 	VerifyRequestSigningAlgorithmECDSASHA512     VerifyRequestSigningAlgorithm = "ECDSA_SHA_512"
 	VerifyRequestSigningAlgorithmEDDSAED25519    VerifyRequestSigningAlgorithm = "EDDSA_ED25519"
 	VerifyRequestSigningAlgorithmED25519PHSHA512 VerifyRequestSigningAlgorithm = "ED25519_PH_SHA_512"
+	VerifyRequestSigningAlgorithmMLDSASHAKE256   VerifyRequestSigningAlgorithm = "ML_DSA_SHAKE_256"
 )
 
 type VerifyRequest struct {

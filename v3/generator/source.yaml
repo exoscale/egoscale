@@ -810,11 +810,18 @@ components:
       type: object
       required:
         - ciphertext
+        - encryption-algorithm
       properties:
         ciphertext:
           type: string
           format: byte
           description: The resulting Base64-encoded ciphertext after encryption.
+        encryption-algorithm:
+          type: string
+          enum:
+            - AES_256
+            - RSAES_OAEP_SHA_256
+          description: The encryption algorithm that was used to encrypt this plaintext.
     private-network-ref:
       type: object
       properties:
@@ -984,6 +991,7 @@ components:
             - ECDSA_SHA_512
             - EDDSA_ED25519
             - ED25519_PH_SHA_512
+            - ML_DSA_SHAKE_256
           description: The signing algorithm `signature` was produced with. Must match the family implied by the key's `key-spec`, with the same semantics as `sign`'s `signing-algorithm` field.
     enum-external-endpoint-types:
       type: string
@@ -2859,7 +2867,8 @@ components:
         - 0.28.0
         - 0.29.0
         - 0.30.0
-      default: 0.30.0
+        - 0.31.0
+      default: 0.31.0
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -4806,6 +4815,7 @@ components:
             - ECDSA_SHA_512
             - EDDSA_ED25519
             - ED25519_PH_SHA_512
+            - ML_DSA_SHAKE_256
           description: The signing algorithm to use. Must match the family implied by the key's `key-spec`.
     instance-ref:
       type: object
@@ -6313,6 +6323,12 @@ components:
           format: byte
           nullable: true
           description: Base64-encoded bytes to be used as the Additional Authenticated Data (AAD) for encryption integrity.
+        encryption-algorithm:
+          type: string
+          enum:
+            - AES_256
+            - RSAES_OAEP_SHA_256
+          description: The encryption algorithm this key must use. Validated against the key's actual cryptographic profile. Required for asymmetric keys. Symmetric keys use AES_256 when it is omitted.
         plaintext:
           type: string
           format: byte
@@ -6809,22 +6825,64 @@ components:
                 description: Migration status
           description: Migration status per database
     get-key-store-response:
-      allOf:
-        - $ref: '#/components/schemas/list-key-stores-response-entry'
-        - type: object
-          properties:
-            health:
-              $ref: '#/components/schemas/key-store-health'
       type: object
+      properties:
+        description:
+          type: string
+          description: An optional detailed description providing additional context about the key store's intended use case.
+        name:
+          type: string
+          description: The display name assigned to the key store.
+        type:
+          type: string
+          enum:
+            - external-key-store
+          description: The key store type.
+        proxy:
+          $ref: '#/components/schemas/key-store-proxy-response'
+        status:
+          type: string
+          enum:
+            - connected
+            - disconnected
+          description: The current connection status of the key store.
+        status-since:
+          type: string
+          format: date-time
+          description: The timestamp indicating when the current key store status last transitioned.
+        id:
+          type: string
+          format: uuid
+          description: The globally unique identifier assigned to the key store.
+        health:
+          $ref: '#/components/schemas/key-store-health'
+        created-at:
+          type: string
+          format: date-time
+          description: The creation timestamp.
     re-encrypt-response:
       type: object
       required:
         - ciphertext
+        - source-encryption-algorithm
+        - destination-encryption-algorithm
       properties:
         ciphertext:
           type: string
           format: byte
           description: The new Base64-encoded ciphertext block safely wrapped by the chosen destination key parameters.
+        source-encryption-algorithm:
+          type: string
+          enum:
+            - AES_256
+            - RSAES_OAEP_SHA_256
+          description: The encryption algorithm that was used to decrypt the source ciphertext.
+        destination-encryption-algorithm:
+          type: string
+          enum:
+            - AES_256
+            - RSAES_OAEP_SHA_256
+          description: The encryption algorithm that was used to encrypt the destination ciphertext.
     decrypt-request:
       type: object
       required:
@@ -6835,6 +6893,12 @@ components:
           format: byte
           nullable: true
           description: The exact Base64-encoded Additional Authenticated Data (AAD) used during encryption to verify data integrity.
+        encryption-algorithm:
+          type: string
+          enum:
+            - AES_256
+            - RSAES_OAEP_SHA_256
+          description: The encryption algorithm this key must use. Validated against the key's actual cryptographic profile. Required for asymmetric keys. Symmetric keys use AES_256 when it is omitted.
         ciphertext:
           type: string
           format: byte
@@ -7077,11 +7141,18 @@ components:
       type: object
       required:
         - plaintext
+        - encryption-algorithm
       properties:
         plaintext:
           type: string
           format: byte
           description: The recovered Base64-encoded original plaintext payload.
+        encryption-algorithm:
+          type: string
+          enum:
+            - AES_256
+            - RSAES_OAEP_SHA_256
+          description: The encryption algorithm that was used to decrypt this ciphertext.
     schedule-kms-key-deletion-request:
       type: object
       properties:
@@ -7435,6 +7506,8 @@ components:
             - ECC_EDWARDS25519
             - RSA_3072
             - RSA_4096
+            - ML_DSA_65
+            - ML_DSA_87
           default: AES_256
           description: The cryptographic key specification defining the key's algorithm and, for asymmetric keys, its curve or modulus size.
         multi-zone:
@@ -11706,6 +11779,12 @@ components:
               format: byte
               description: Optional Base64-encoded encryption context originally appended to the AAD to confirm package validation rules.
               nullable: true
+            encryption-algorithm:
+              type: string
+              enum:
+                - AES_256
+                - RSAES_OAEP_SHA_256
+              description: The encryption algorithm the source key must use. Validated against the key's actual cryptographic profile. Required for asymmetric keys. Symmetric keys use AES_256 when it is omitted.
             ciphertext:
               type: string
               format: byte
@@ -11724,6 +11803,12 @@ components:
               format: byte
               description: Optional new Base64-encoded encryption context to apply under the target destination envelope.
               nullable: true
+            encryption-algorithm:
+              type: string
+              enum:
+                - AES_256
+                - RSAES_OAEP_SHA_256
+              description: The encryption algorithm the destination key must use. Validated against the key's actual cryptographic profile. Required for asymmetric keys. Symmetric keys use AES_256 when it is omitted.
     create-deployment-request:
       description: Deploy an AI model onto a set of GPUs
       properties:
@@ -18615,7 +18700,9 @@ paths:
 
             Key is Disabled: The request was rejected because the specified KMS key is disabled.
 
-            Invalid Usage: The request was rejected because the operation is only allowed on symmetric keys with usage "encrypt-decrypt".
+            Invalid Usage: The request was rejected because the operation is not allowed for this key's usage.
+
+            Invalid Algorithm: The request was rejected because the specified encryption algorithm does not match the key's cryptographic profile.
           content:
             application/json:
               schema:
@@ -19916,7 +20003,9 @@ paths:
 
             Key is Disabled: The request was rejected because the specified KMS key is disabled.
 
-            Invalid Usage: The request was rejected because the operation is only allowed on symmetric keys with usage "encrypt-decrypt".
+            Invalid Usage: The request was rejected because the operation is not allowed for this key's usage.
+
+            Invalid Algorithm: The request was rejected because the specified encryption algorithm does not match the key's cryptographic profile.
           content:
             application/json:
               schema:
@@ -23039,12 +23128,18 @@ paths:
 
             Not on Default: The request was rejected because the operation is not allowed on the default key.
 
+            Invalid Usage: The request was rejected because the operation is not allowed for this key's usage.
+
+            Invalid Algorithm: The request was rejected because the specified encryption algorithm does not match the key's cryptographic profile.
+
+            Key Family Mismatch: The request was rejected because the source and destination keys do not belong to the same key family.
+
             Bad Request: The request was rejected because of an invalid request body or path parameter.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Decrypts an existing ciphertext using its original key material and re-encrypts the underlying plaintext using a specified KMS key or the latest key material of the same KMS Key.
+      description: Decrypts an existing ciphertext using its original key material and re-encrypts the underlying plaintext using a specified KMS key or the latest key material of the same KMS Key. Source and destination keys must belong to the same key family.
       parameters:
         - in: path
           required: true

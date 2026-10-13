@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v3: add `ZoneEndpoints`, mapping each zone name to its API endpoint
+
 3.1.59
 ------
 

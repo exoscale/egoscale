@@ -5,6 +5,11 @@ const (
   {{ .Enum }}
 )
 
+// ZoneEndpoints maps each zone name to its API endpoint.
+var ZoneEndpoints = map[ZoneName]Endpoint{
+  {{ .ZoneEndpoints }}
+}
+
 // defaultHTTPClient is HTTP client with retry logic.
 // Default retry configuration can be found in go-retryablehttp repo.
 var defaultHTTPClient = func() *http.Client {

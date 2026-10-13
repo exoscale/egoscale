@@ -76,6 +76,7 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 // Template use client.tmpl file
 type Template struct {
 	Enum           string
+	ZoneEndpoints  string
 	ServerEndpoint string
 }
 
@@ -96,14 +97,17 @@ func renderClient(s *v3.Server) ([]byte, error) {
 		}
 
 		enum := ""
+		zoneEndpoints := ""
 		for _, z := range v.Enum {
 			url := strings.Replace(s.URL, "{zone}", z, 1)
 			enum += fmt.Sprintf("%s Endpoint = %q\n", helpers.ToCamel(z), url)
+			zoneEndpoints += fmt.Sprintf("ZoneName(%q): %s,\n", z, helpers.ToCamel(z))
 		}
 
 		client = Template{
 			ServerEndpoint: helpers.ToCamel(v.Default),
 			Enum:           enum,
+			ZoneEndpoints:  zoneEndpoints,
 		}
 	}
 

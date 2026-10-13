@@ -1,0 +1,11 @@
+// Endpoint represents a zone endpoint.
+type Endpoint string
+
+const (
+  {{ .Enum }}
+)
+
+// ZoneEndpoints maps each zone name to its API endpoint.
+var ZoneEndpoints = map[ZoneName]Endpoint{
+  {{ .ZoneEndpoints }}
+}

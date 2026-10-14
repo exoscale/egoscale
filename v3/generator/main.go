@@ -8,7 +8,7 @@ import (
 
 	"github.com/pb33f/libopenapi"
 
-	"github.com/exoscale/egoscale/v3/generator/client"
+	"github.com/exoscale/egoscale/v3/generator/constants"
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/exoscale/egoscale/v3/generator/operations"
 	"github.com/exoscale/egoscale/v3/generator/schemas"
@@ -42,8 +42,8 @@ func main() {
 	if err := schemas.Generate(doc, filepath.Join(genPathDir, "/schemas.go"), packageName); err != nil {
 		log.Fatal("schemas: ", err)
 	}
-	if err := client.Generate(doc, filepath.Join(genPathDir, "/client.go"), packageName); err != nil {
-		log.Fatal("client: ", err)
+	if err := constants.Generate(doc, filepath.Join(genPathDir, "/constants.go"), packageName); err != nil {
+		log.Fatal("constants: ", err)
 	}
 	if err := operations.Generate(doc, filepath.Join(genPathDir, "/operations.go"), packageName); err != nil {
 		log.Fatal("operations: ", err)

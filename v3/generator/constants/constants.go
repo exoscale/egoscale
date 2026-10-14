@@ -1,4 +1,4 @@
-package client
+package constants
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 )
 
-// Generate go client from OpenAPI spec servers into a go file.
+// Generate constants from OpenAPI spec servers into a go file.
 func Generate(doc libopenapi.Document, path, packageName string) error {
 	r, errs := doc.BuildV3Model()
 	for _, err := range errs {
@@ -27,26 +27,10 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	}
 
 	output := bytes.NewBuffer(helpers.Header(packageName, "v0.0.1"))
-	output.WriteString(fmt.Sprintf(`package %s
-	import (
-		"errors"
-		"fmt"
-		"io"
-		"log"
-		"net/http"
-		"context"
-		"runtime"
-		"slices"
-		"time"
-
-		"github.com/exoscale/egoscale/v3/credentials"
-		"github.com/go-playground/validator/v10"
-		"github.com/hashicorp/go-retryablehttp"
-	)
-	`, packageName))
+	fmt.Fprintf(output, "package %s\n", packageName)
 
 	if len(r.Model.Servers) == 0 {
-		slog.Error("skip client generation", slog.Int("servers_len", len(r.Model.Servers)))
+		slog.Error("skip constants generation", slog.Int("servers_len", len(r.Model.Servers)))
 		return nil
 	}
 
@@ -55,13 +39,13 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 		slog.Error("more than one server found", slog.Int("servers_len", len(r.Model.Servers)))
 	}
 
-	srv, err := renderClient(r.Model.Servers[0])
+	srv, err := renderConstants(r.Model.Servers[0])
 	if err != nil {
 		return err
 	}
 	output.Write(srv)
 
-	if os.Getenv("GENERATOR_DEBUG") == "client" {
+	if os.Getenv("GENERATOR_DEBUG") == "constants" {
 		fmt.Println(output.String())
 	}
 
@@ -73,16 +57,15 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	return os.WriteFile(path, content, os.ModePerm)
 }
 
-// Template use client.tmpl file
+// Template use constants.tmpl file
 type Template struct {
-	Enum           string
-	ZoneEndpoints  string
-	ServerEndpoint string
+	Enum          string
+	ZoneEndpoints string
 }
 
-// renderClient using the client.tmpl template.
-func renderClient(s *v3.Server) ([]byte, error) {
-	var client Template
+// renderConstants using the constants.tmpl template.
+func renderConstants(s *v3.Server) ([]byte, error) {
+	var tmpl Template
 
 	if orderedmap.Len(s.Variables) == 0 {
 		return nil, fmt.Errorf("no server variables defined")
@@ -96,28 +79,27 @@ func renderClient(s *v3.Server) ([]byte, error) {
 			continue
 		}
 
-		enum := ""
-		zoneEndpoints := ""
+		enum := make([]string, 0, len(v.Enum))
+		endpoints := make([]string, 0, len(v.Enum))
 		for _, z := range v.Enum {
 			url := strings.Replace(s.URL, "{zone}", z, 1)
-			enum += fmt.Sprintf("%s Endpoint = %q\n", helpers.ToCamel(z), url)
-			zoneEndpoints += fmt.Sprintf("ZoneName(%q): %s,\n", z, helpers.ToCamel(z))
+			enum = append(enum, fmt.Sprintf("%s Endpoint = %q", helpers.ToCamel(z), url))
+			endpoints = append(endpoints, fmt.Sprintf("ZoneName(%q): %s,", z, helpers.ToCamel(z)))
 		}
 
-		client = Template{
-			ServerEndpoint: helpers.ToCamel(v.Default),
-			Enum:           enum,
-			ZoneEndpoints:  zoneEndpoints,
+		tmpl = Template{
+			Enum:          strings.Join(enum, "\n"),
+			ZoneEndpoints: strings.Join(endpoints, "\n"),
 		}
 	}
 
-	t, err := template.New("client.tmpl").ParseFiles("./client/client.tmpl")
+	t, err := template.New("constants.tmpl").ParseFiles("./constants/constants.tmpl")
 	if err != nil {
 		return nil, err
 	}
 
 	output := bytes.NewBuffer([]byte{})
-	if err := t.Execute(output, client); err != nil {
+	if err := t.Execute(output, tmpl); err != nil {
 		log.Fatal(err)
 	}
 	return output.Bytes(), nil

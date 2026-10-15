@@ -1183,7 +1183,7 @@ type DBAASServiceClickhouse struct {
 	ConnectionInfo *DBAASServiceClickhouseConnectionInfo `json:"connection-info,omitempty"`
 	// Service creation timestamp (ISO 8601)
 	CreatedAT time.Time `json:"created-at,omitempty"`
-	// TODO UNIT disk space for data storage
+	// Disk space for data storage, in bytes
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// Service integrations
 	Integrations []DBAASIntegration `json:"integrations,omitempty"`
@@ -1196,7 +1196,7 @@ type DBAASServiceClickhouse struct {
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
 	// Number of CPUs for each node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// TODO UNIT of memory for each node
+	// Memory of each node, in bytes
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
 	// State of individual service nodes
 	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
@@ -1227,7 +1227,7 @@ type DBAASServiceClickhouse struct {
 type DBAASServiceCommon struct {
 	// Service creation timestamp (ISO 8601)
 	CreatedAT time.Time `json:"created-at,omitempty"`
-	// TODO UNIT disk space for data storage
+	// Disk space for data storage, in bytes
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// Service integrations
 	Integrations []DBAASIntegration `json:"integrations,omitempty"`
@@ -1236,7 +1236,7 @@ type DBAASServiceCommon struct {
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
 	// Number of CPUs for each node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// TODO UNIT of memory for each node
+	// Memory of each node, in bytes
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
 	// Service notifications
 	Notifications []DBAASServiceNotification `json:"notifications,omitempty"`
@@ -1330,7 +1330,7 @@ type DBAASServiceGrafana struct {
 	CreatedAT time.Time `json:"created-at,omitempty"`
 	// DbaaS service description
 	Description string `json:"description,omitempty"`
-	// TODO UNIT disk space for data storage
+	// Disk space for data storage, in bytes
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// Grafana settings
 	GrafanaSettings *JSONSchemaGrafana `json:"grafana-settings,omitempty"`
@@ -1345,7 +1345,7 @@ type DBAASServiceGrafana struct {
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
 	// Number of CPUs for each node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// TODO UNIT of memory for each node
+	// Memory of each node, in bytes
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
 	// State of individual service nodes
 	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
@@ -1429,7 +1429,7 @@ type DBAASServiceKafka struct {
 	ConnectionInfo *DBAASServiceKafkaConnectionInfo `json:"connection-info,omitempty"`
 	// Service creation timestamp (ISO 8601)
 	CreatedAT time.Time `json:"created-at,omitempty"`
-	// TODO UNIT disk space for data storage
+	// Disk space for data storage, in bytes
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// Service integrations
 	Integrations []DBAASIntegration `json:"integrations,omitempty"`
@@ -1452,7 +1452,7 @@ type DBAASServiceKafka struct {
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
 	// Number of CPUs for each node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// TODO UNIT of memory for each node
+	// Memory of each node, in bytes
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
 	// State of individual service nodes
 	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
@@ -1574,7 +1574,7 @@ type DBAASServiceMysql struct {
 	CreatedAT time.Time `json:"created-at,omitempty"`
 	// List of MySQL databases
 	Databases []DBAASMysqlDatabaseName `json:"databases,omitempty"`
-	// TODO UNIT disk space for data storage
+	// Disk space for data storage, in bytes
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// Service integrations
 	Integrations []DBAASIntegration `json:"integrations,omitempty"`
@@ -1589,7 +1589,7 @@ type DBAASServiceMysql struct {
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
 	// Number of CPUs for each node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// TODO UNIT of memory for each node
+	// Memory of each node, in bytes
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
 	// State of individual service nodes
 	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
@@ -1723,7 +1723,7 @@ type DBAASServiceOpensearch struct {
 	CreatedAT time.Time `json:"created-at,omitempty"`
 	// DbaaS service description
 	Description string `json:"description,omitempty"`
-	// TODO UNIT disk space for data storage
+	// Disk space for data storage, in bytes
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// Allows you to create glob style patterns and set a max number of indexes matching this pattern you want to keep. Creating indexes exceeding this value will cause the oldest one to get deleted. You could for example create a pattern looking like 'logs.?' and then create index logs.1, logs.2 etc, it will delete logs.1 once you create logs.6. Do note 'logs.?' does not apply to logs.10. Note: Setting max_index_count to 0 will do nothing and the pattern gets ignored.
 	IndexPatterns []DBAASServiceOpensearchIndexPatterns `json:"index-patterns,omitempty"`
@@ -1744,7 +1744,7 @@ type DBAASServiceOpensearch struct {
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
 	// Number of CPUs for each node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// TODO UNIT of memory for each node
+	// Memory of each node, in bytes
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
 	// State of individual service nodes
 	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
@@ -1845,7 +1845,7 @@ type DBAASServicePG struct {
 	CreatedAT time.Time `json:"created-at,omitempty"`
 	// List of PostgreSQL databases
 	Databases []DBAASDatabaseName `json:"databases,omitempty"`
-	// TODO UNIT disk space for data storage
+	// Disk space for data storage, in bytes
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// Service integrations
 	Integrations []DBAASIntegration `json:"integrations,omitempty"`
@@ -1860,7 +1860,7 @@ type DBAASServicePG struct {
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
 	// Number of CPUs for each node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// TODO UNIT of memory for each node
+	// Memory of each node, in bytes
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
 	// State of individual service nodes
 	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
@@ -1947,7 +1947,7 @@ type DBAASServiceThanos struct {
 	ConnectionInfo *DBAASServiceThanosConnectionInfo `json:"connection-info,omitempty"`
 	// Service creation timestamp (ISO 8601)
 	CreatedAT time.Time `json:"created-at,omitempty"`
-	// TODO UNIT disk space for data storage
+	// Disk space for data storage, in bytes
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// Service integrations
 	Integrations []DBAASIntegration `json:"integrations,omitempty"`
@@ -1960,7 +1960,7 @@ type DBAASServiceThanos struct {
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
 	// Number of CPUs for each node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// TODO UNIT of memory for each node
+	// Memory of each node, in bytes
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
 	// State of individual service nodes
 	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
@@ -2066,7 +2066,7 @@ type DBAASServiceValkey struct {
 	ConnectionInfo *DBAASServiceValkeyConnectionInfo `json:"connection-info,omitempty"`
 	// Service creation timestamp (ISO 8601)
 	CreatedAT time.Time `json:"created-at,omitempty"`
-	// TODO UNIT disk space for data storage
+	// Disk space for data storage, in bytes
 	DiskSize int64 `json:"disk-size,omitempty" validate:"omitempty,gte=0"`
 	// Service integrations
 	Integrations []DBAASIntegration `json:"integrations,omitempty"`
@@ -2079,7 +2079,7 @@ type DBAASServiceValkey struct {
 	NodeCount int64 `json:"node-count,omitempty" validate:"omitempty,gte=0"`
 	// Number of CPUs for each node
 	NodeCPUCount int64 `json:"node-cpu-count,omitempty" validate:"omitempty,gte=0"`
-	// TODO UNIT of memory for each node
+	// Memory of each node, in bytes
 	NodeMemory int64 `json:"node-memory,omitempty" validate:"omitempty,gte=0"`
 	// State of individual service nodes
 	NodeStates []DBAASNodeState `json:"node-states,omitempty"`
@@ -6173,7 +6173,7 @@ const (
 	SubnetAddressfamilyDual  SubnetAddressfamily = "dual"
 )
 
-// Subnet attachements
+// Subnet attachments
 type SubnetInstances struct {
 	// Instance uuid
 	ID UUID `json:"id,omitempty"`

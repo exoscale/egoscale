@@ -5,9 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"log"
+	"log/slog"
 	"net/http"
+	"net/http/httputil"
+	"os"
 	"runtime"
 	"slices"
 	"time"
@@ -22,7 +23,7 @@ import (
 var defaultHTTPClient = func() *http.Client {
 	rc := retryablehttp.NewClient()
 	// silence client by default
-	rc.Logger = log.New(io.Discard, "", 0)
+	rc.Logger = slog.New(slog.DiscardHandler)
 	return rc.StandardClient()
 }()
 
@@ -89,7 +90,8 @@ type Client struct {
 	httpClient     *http.Client
 	waitTimeout    time.Duration
 	validate       *validator.Validate
-	trace          bool
+
+	logger *slog.Logger
 
 	// A list of callbacks for modifying requests which are generated before sending over
 	// the network.
@@ -105,10 +107,24 @@ var UserAgent = getDefaultUserAgent()
 // ClientOpt represents a function setting Exoscale API client option.
 type ClientOpt func(*Client) error
 
-// ClientOptWithTrace returns a ClientOpt enabling HTTP request/response tracing.
+// Deprecated: use ClientOptWithLogHandler instead.
 func ClientOptWithTrace() ClientOpt {
 	return func(c *Client) error {
-		c.trace = true
+		logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+		rc := retryablehttp.NewClient()
+		rc.Logger = logger
+
+		c.httpClient = rc.StandardClient()
+		c.logger = logger
+
+		return nil
+	}
+}
+
+// ClientOptWithLogHandler sets provided log handler.
+func ClientOptWithLogHandler(h slog.Handler) ClientOpt {
+	return func(c *Client) error {
+		c.logger = slog.New(h)
 		return nil
 	}
 }
@@ -190,6 +206,7 @@ func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client
 		httpClient:     defaultHTTPClient,
 		validate:       validator.New(),
 		userAgent:      getDefaultUserAgent(),
+		logger:         slog.New(slog.DiscardHandler),
 	}
 
 	for _, opt := range opts {
@@ -243,11 +260,25 @@ func (c *Client) WithUserAgent(ua string) *Client {
 	return clone
 }
 
-// WithTrace returns a copy of Client with tracing enabled.
+// Deprecated: use ClientOptWithLogHandler instead.
 func (c *Client) WithTrace() *Client {
 	clone := cloneClient(c)
 
-	clone.trace = true
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	rc := retryablehttp.NewClient()
+	rc.Logger = logger
+
+	clone.httpClient = rc.StandardClient()
+	clone.logger = logger
+
+	return clone
+}
+
+// WithLogHandler returns a copy of Client with new log handler set.
+func (c *Client) WithLogHandler(h slog.Handler) *Client {
+	clone := cloneClient(c)
+
+	clone.logger = slog.New(h)
 
 	return clone
 }
@@ -290,6 +321,42 @@ func (c *Client) executeRequestInterceptors(ctx context.Context, req *http.Reque
 	return nil
 }
 
+func (c *Client) dumpRequest(
+	ctx context.Context,
+	req *http.Request,
+	operationID string,
+) {
+	if req == nil {
+		return
+	}
+
+	if dump, err := httputil.DumpRequest(req, true); err == nil {
+		c.logger.DebugContext(
+			ctx,
+			fmt.Sprintf("operation %s request", operationID),
+			"payload", dump,
+		)
+	}
+}
+
+func (c *Client) dumpResponse(
+	ctx context.Context,
+	resp *http.Response,
+	operationID string,
+) {
+	if resp == nil {
+		return
+	}
+
+	if dump, err := httputil.DumpResponse(resp, true); err == nil {
+		c.logger.DebugContext(
+			ctx,
+			fmt.Sprintf("operation %s response", operationID),
+			"payload", dump,
+		)
+	}
+}
+
 func cloneClient(c *Client) *Client {
 	return &Client{
 		apiKey:              c.apiKey,
@@ -299,7 +366,7 @@ func cloneClient(c *Client) *Client {
 		httpClient:          c.httpClient,
 		requestInterceptors: c.requestInterceptors,
 		waitTimeout:         c.waitTimeout,
-		trace:               c.trace,
 		validate:            c.validate,
+		logger:              slog.New(slog.DiscardHandler), // no logs by default
 	}
 }

@@ -38,18 +38,14 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	}
 	{{ end }}
 
-        if c.trace {
-                dumpRequest(request, "{{ .OperationID }}")
-        }
+    c.dumpRequest(ctx, request, "{{ .OperationID }}")
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: http client do: %w", err)
 	}
 
-	if c.trace {
-		dumpResponse(response)
-	}
+    c.dumpResponse(ctx, response, "{{ .OperationID }}")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: http response: %w", {{ if .ErrorResponses }}decodeAPIErrorResponse(err, map[int]func() any{

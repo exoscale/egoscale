@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"math"
 	"net/http"
 	"net/http/httputil"
@@ -183,16 +184,7 @@ func pollInterval(runTime time.Duration) time.Duration {
 	return time.Duration(interval) * time.Second
 }
 
-func prepareJSONBody(body any) (*bytes.Reader, error) {
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(buf), nil
-}
-
-func prepareJSONResponse(resp *http.Response, v any) error {
+func (c *Client) prepareJSONResponse(ctx context.Context, resp *http.Response, v any) error {
 	defer resp.Body.Close()
 
 	buf, err := io.ReadAll(resp.Body)
@@ -201,6 +193,10 @@ func prepareJSONResponse(resp *http.Response, v any) error {
 	}
 	if err := json.Unmarshal(buf, v); err != nil {
 		return err
+	}
+
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		resp.Body = io.NopCloser(bytes.NewReader(buf))
 	}
 
 	return nil

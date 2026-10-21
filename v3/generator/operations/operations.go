@@ -32,8 +32,12 @@ func Generate(doc libopenapi.Document, path, packageName string) error {
 	output.WriteString(fmt.Sprintf(`package %s
 	
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -517,7 +521,7 @@ type RequestTmpl struct {
 func renderBodyReturnSection(bodyRespType, jsonResponseTarget, funcName string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "\tbodyresp := %s\n", bodyRespType)
-	fmt.Fprintf(&b, "\tif err := prepareJSONResponse(response, %s); err != nil {\n", jsonResponseTarget)
+	fmt.Fprintf(&b, "\tif err := c.prepareJSONResponse(ctx, response, %s); err != nil {\n", jsonResponseTarget)
 	fmt.Fprintf(&b, "\t\treturn nil, fmt.Errorf(\"%s: prepare JSON response: %%w\", err)\n", funcName)
 	b.WriteString("\t}\n\n")
 	b.WriteString("\treturn bodyresp, nil")

@@ -216,8 +216,6 @@ func (b *Builder) object(typeName string, s *base.Schema, origin string) (ir.Str
 			continue
 		}
 
-		propName = b.cfg.PropName(typeName, propName)
-
 		nullable := prop.Nullable != nil && *prop.Nullable
 		if slices.Contains(prop.Type, "null") {
 			if len(nonNullTypes(prop.Type)) != 1 {
@@ -358,6 +356,7 @@ func (b *Builder) simpleMap(typeName string, s *base.Schema, scope, origin strin
 // ref returns the type of a schema reference, overridden in the config for the scope type name.
 func (b *Builder) ref(reference, scope string) ir.Type {
 	if typ, ok := b.cfg.RefType(scope, reference); ok {
+		b.appliedRefOverrides[refOverride{scope, reference}] = true
 		return ir.Named(typ)
 	}
 

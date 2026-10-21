@@ -318,14 +318,6 @@ func (c *Client) executeRequestInterceptors(ctx context.Context, req *http.Reque
 	return nil
 }
 
-func OnelineHeaders(h http.Header) string {
-	out := make([]string, 0, len(h)*2)
-	for k, v := range h {
-		out = append(out, fmt.Sprintf("%s:%s", strings.TrimSpace(k), strings.Join(v, ",")))
-	}
-	return strings.Join(out, " ")
-}
-
 func (c *Client) logCall(
 	ctx context.Context,
 	req *http.Request,
@@ -336,7 +328,7 @@ func (c *Client) logCall(
 		return
 	}
 
-	var meta []any
+	meta := []any{"operation", operationID}
 	var body []byte
 
 	if req.Body != nil {
@@ -366,10 +358,9 @@ func (c *Client) logCall(
 
 	c.logger.DebugContext(
 		ctx,
-		fmt.Sprintf("operation %s log", operationID),
+		"api call trace",
 		meta...,
 	)
-	c.logger.Enabled(ctx, slog.LevelDebug)
 }
 
 func cloneClient(c *Client) *Client {
@@ -384,4 +375,12 @@ func cloneClient(c *Client) *Client {
 		validate:            c.validate,
 		logger:              c.logger,
 	}
+}
+
+func OnelineHeaders(h http.Header) string {
+	out := make([]string, 0, len(h)*2)
+	for k, v := range h {
+		out = append(out, fmt.Sprintf("%s:%s", k, strings.Join(v, ",")))
+	}
+	return strings.Join(out, " ")
 }

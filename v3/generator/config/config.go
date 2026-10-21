@@ -22,6 +22,8 @@ type Config struct {
 	RefOverrides map[string]map[string]string `yaml:"ref-overrides"`
 	// Aliases are type aliases kept for backward compatibility.
 	Aliases []Alias `yaml:"aliases"`
+	// ExternalTypes are the types the generated code uses from the hand-written files of the package.
+	ExternalTypes []string `yaml:"external-types"`
 }
 
 // Alias is a Go type alias: type Name = Target.

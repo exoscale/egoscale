@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel"
@@ -19,7 +20,7 @@ import (
 
 // Builder builds the generated files declarations from an OpenAPI model.
 // The same Builder must build all the files of a Go package,
-// to detect type names declared twice.
+// to detect type names declared twice or never declared.
 type Builder struct {
 	model *v3.Document
 	cfg   config.Config
@@ -27,6 +28,8 @@ type Builder struct {
 
 	// declared maps declared type names to where they come from in the spec.
 	declared map[string]string
+	// used maps the type names used by declarations to where the first use comes from.
+	used map[string]string
 	// appliedRefOverrides are the config ref overrides used while building.
 	appliedRefOverrides map[refOverride]bool
 	// decls are the declarations of the file being built.
@@ -60,6 +63,7 @@ func New(model *v3.Document, cfg config.Config) *Builder {
 		cfg:      cfg,
 		names:    naming.New(cfg.Acronyms),
 		declared: map[string]string{},
+		used:     map[string]string{},
 
 		appliedRefOverrides: map[refOverride]bool{},
 	}
@@ -70,10 +74,22 @@ type refOverride struct {
 	typeName, ref string
 }
 
-// Check returns an error for every config ref override that didn't apply,
-// to keep the config in sync with the spec. Call it once every file is built.
+// predeclared are the Go predeclared types used by the generated code.
+var predeclared = []string{"any", "bool", "byte", "float32", "float64", "int", "int32", "int64", "string"}
+
+// Check returns an error for every type used but never declared, which would
+// not compile, and for every config ref override that didn't apply, to keep
+// the config in sync with the spec. Call it once every file is built.
 func (b *Builder) Check() error {
 	var errs []error
+	for _, name := range slices.Sorted(maps.Keys(b.used)) {
+		_, declared := b.declared[name]
+		if declared || strings.Contains(name, ".") ||
+			slices.Contains(predeclared, name) || slices.Contains(b.cfg.ExternalTypes, name) {
+			continue
+		}
+		errs = append(errs, fmt.Errorf("type %s used by %s is not declared", name, b.used[name]))
+	}
 	for _, typeName := range slices.Sorted(maps.Keys(b.cfg.RefOverrides)) {
 		for _, ref := range slices.Sorted(maps.Keys(b.cfg.RefOverrides[typeName])) {
 			if !b.appliedRefOverrides[refOverride{typeName, ref}] {
@@ -93,6 +109,11 @@ func (b *Builder) emit(d ir.Decl, origin string) error {
 			return fmt.Errorf("type %s from %s is already declared from %s", name, origin, prev)
 		}
 		b.declared[name] = origin
+	}
+	for _, name := range usedTypes(d) {
+		if _, ok := b.used[name]; !ok {
+			b.used[name] = origin
+		}
 	}
 	b.decls = append(b.decls, d)
 
@@ -119,6 +140,65 @@ func typeNames(d ir.Decl) []string {
 			names = append(names, a.Name)
 		}
 		return names
+	}
+
+	return nil
+}
+
+// usedTypes returns the names of the types a declaration uses.
+func usedTypes(d ir.Decl) []string {
+	var types []ir.Type
+	switch d := d.(type) {
+	case ir.TypeDef:
+		types = append(types, d.Type)
+	case ir.Enum:
+		types = append(types, d.Base)
+	case ir.Struct:
+		for _, f := range d.Fields {
+			types = append(types, f.Type)
+		}
+	case ir.Aliases:
+		for _, a := range d.Aliases {
+			types = append(types, ir.Named(a.Target))
+		}
+	case ir.QueryOpts:
+		for _, f := range d.Funcs {
+			types = append(types, f.ArgType)
+		}
+	case ir.Findable:
+		types = append(types, ir.Named(d.ListType), ir.Named(d.ItemType))
+	case ir.Operation:
+		for _, p := range d.Params {
+			types = append(types, p.Type)
+		}
+		types = append(types, d.Body, d.Return)
+		for _, r := range d.ErrorResponses {
+			types = append(types, r.Type)
+		}
+	case ir.Constants:
+		// Used by the constants template.
+		types = append(types, ir.Named("ZoneName"))
+	}
+
+	var names []string
+	for _, t := range types {
+		names = append(names, namedTypes(t)...)
+	}
+
+	return names
+}
+
+// namedTypes returns the named types of a type expression.
+func namedTypes(t ir.Type) []string {
+	switch t := t.(type) {
+	case ir.Named:
+		return []string{string(t)}
+	case ir.Pointer:
+		return namedTypes(t.Elem)
+	case ir.Slice:
+		return namedTypes(t.Elem)
+	case ir.Map:
+		return namedTypes(t.Elem)
 	}
 
 	return nil

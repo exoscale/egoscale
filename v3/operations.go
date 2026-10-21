@@ -4,8 +4,12 @@
 package v3
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -50,14 +54,12 @@ func (c Client) ListAIAPIKeys(ctx context.Context) (*ListAIAPIKeysResponse, erro
 		return nil, fmt.Errorf("ListAIAPIKeys: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-ai-api-keys")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListAIAPIKeys: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-ai-api-keys")
+	defer c.logCall(ctx, request, response, "list-ai-api-keys")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListAIAPIKeys: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -66,7 +68,7 @@ func (c Client) ListAIAPIKeys(ctx context.Context) (*ListAIAPIKeysResponse, erro
 	}
 
 	bodyresp := new(ListAIAPIKeysResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAIAPIKeys: prepare JSON response: %w", err)
 	}
 
@@ -77,12 +79,12 @@ func (c Client) ListAIAPIKeys(ctx context.Context) (*ListAIAPIKeysResponse, erro
 func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (*CreateAIAPIKeyResponse, error) {
 	path := "/ai/api-key"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAIAPIKey: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateAIAPIKey: new request: %w", err)
 	}
@@ -99,14 +101,16 @@ func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (
 		return nil, fmt.Errorf("CreateAIAPIKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-ai-api-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAIAPIKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-ai-api-key")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-ai-api-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateAIAPIKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -117,7 +121,7 @@ func (c Client) CreateAIAPIKey(ctx context.Context, req CreateAIAPIKeyRequest) (
 	}
 
 	bodyresp := new(CreateAIAPIKeyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAIAPIKey: prepare JSON response: %w", err)
 	}
 
@@ -143,14 +147,12 @@ func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*GetAIAPIKeyResponse,
 		return nil, fmt.Errorf("GetAIAPIKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-ai-api-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetAIAPIKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-ai-api-key")
+	defer c.logCall(ctx, request, response, "get-ai-api-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetAIAPIKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -160,7 +162,7 @@ func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*GetAIAPIKeyResponse,
 	}
 
 	bodyresp := new(GetAIAPIKeyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetAIAPIKey: prepare JSON response: %w", err)
 	}
 
@@ -171,12 +173,12 @@ func (c Client) GetAIAPIKey(ctx context.Context, id UUID) (*GetAIAPIKeyResponse,
 func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyRequest) (*UpdateAIAPIKeyResponse, error) {
 	path := fmt.Sprintf("/ai/api-key/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateAIAPIKey: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateAIAPIKey: new request: %w", err)
 	}
@@ -193,14 +195,16 @@ func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyR
 		return nil, fmt.Errorf("UpdateAIAPIKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-ai-api-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateAIAPIKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-ai-api-key")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-ai-api-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateAIAPIKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -211,7 +215,7 @@ func (c Client) UpdateAIAPIKey(ctx context.Context, id UUID, req UpdateAIAPIKeyR
 	}
 
 	bodyresp := new(UpdateAIAPIKeyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateAIAPIKey: prepare JSON response: %w", err)
 	}
 
@@ -237,14 +241,12 @@ func (c Client) RevokeAIAPIKey(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("RevokeAIAPIKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "revoke-ai-api-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevokeAIAPIKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "revoke-ai-api-key")
+	defer c.logCall(ctx, request, response, "revoke-ai-api-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevokeAIAPIKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -255,7 +257,7 @@ func (c Client) RevokeAIAPIKey(ctx context.Context, id UUID) (*Operation, error)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevokeAIAPIKey: prepare JSON response: %w", err)
 	}
 
@@ -300,14 +302,12 @@ func (c Client) ListDeployments(ctx context.Context) (*ListDeploymentsResponse, 
 		return nil, fmt.Errorf("ListDeployments: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-deployments")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDeployments: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-deployments")
+	defer c.logCall(ctx, request, response, "list-deployments")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDeployments: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -316,7 +316,7 @@ func (c Client) ListDeployments(ctx context.Context) (*ListDeploymentsResponse, 
 	}
 
 	bodyresp := new(ListDeploymentsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDeployments: prepare JSON response: %w", err)
 	}
 
@@ -327,12 +327,12 @@ func (c Client) ListDeployments(ctx context.Context) (*ListDeploymentsResponse, 
 func (c Client) CreateDeployment(ctx context.Context, req CreateDeploymentRequest) (*Operation, error) {
 	path := "/ai/deployment"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDeployment: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDeployment: new request: %w", err)
 	}
@@ -349,14 +349,16 @@ func (c Client) CreateDeployment(ctx context.Context, req CreateDeploymentReques
 		return nil, fmt.Errorf("CreateDeployment: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-deployment")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDeployment: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-deployment")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-deployment")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDeployment: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -367,7 +369,7 @@ func (c Client) CreateDeployment(ctx context.Context, req CreateDeploymentReques
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDeployment: prepare JSON response: %w", err)
 	}
 
@@ -393,14 +395,12 @@ func (c Client) DeleteDeployment(ctx context.Context, id UUID) (*Operation, erro
 		return nil, fmt.Errorf("DeleteDeployment: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-deployment")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDeployment: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-deployment")
+	defer c.logCall(ctx, request, response, "delete-deployment")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDeployment: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -411,7 +411,7 @@ func (c Client) DeleteDeployment(ctx context.Context, id UUID) (*Operation, erro
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDeployment: prepare JSON response: %w", err)
 	}
 
@@ -437,14 +437,12 @@ func (c Client) GetDeployment(ctx context.Context, id UUID) (*GetDeploymentRespo
 		return nil, fmt.Errorf("GetDeployment: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-deployment")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDeployment: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-deployment")
+	defer c.logCall(ctx, request, response, "get-deployment")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDeployment: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -453,7 +451,7 @@ func (c Client) GetDeployment(ctx context.Context, id UUID) (*GetDeploymentRespo
 	}
 
 	bodyresp := new(GetDeploymentResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDeployment: prepare JSON response: %w", err)
 	}
 
@@ -464,12 +462,12 @@ func (c Client) GetDeployment(ctx context.Context, id UUID) (*GetDeploymentRespo
 func (c Client) UpdateDeployment(ctx context.Context, id UUID, req UpdateDeploymentRequest) (*Operation, error) {
 	path := fmt.Sprintf("/ai/deployment/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDeployment: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PATCH", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PATCH", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDeployment: new request: %w", err)
 	}
@@ -486,14 +484,16 @@ func (c Client) UpdateDeployment(ctx context.Context, id UUID, req UpdateDeploym
 		return nil, fmt.Errorf("UpdateDeployment: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-deployment")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDeployment: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-deployment")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-deployment")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDeployment: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -505,7 +505,7 @@ func (c Client) UpdateDeployment(ctx context.Context, id UUID, req UpdateDeploym
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDeployment: prepare JSON response: %w", err)
 	}
 
@@ -553,14 +553,12 @@ func (c Client) GetDeploymentLogs(ctx context.Context, id UUID, opts ...GetDeplo
 		return nil, fmt.Errorf("GetDeploymentLogs: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-deployment-logs")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDeploymentLogs: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-deployment-logs")
+	defer c.logCall(ctx, request, response, "get-deployment-logs")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDeploymentLogs: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -571,7 +569,7 @@ func (c Client) GetDeploymentLogs(ctx context.Context, id UUID, opts ...GetDeplo
 	}
 
 	bodyresp := new(GetDeploymentLogsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDeploymentLogs: prepare JSON response: %w", err)
 	}
 
@@ -582,12 +580,12 @@ func (c Client) GetDeploymentLogs(ctx context.Context, id UUID, opts ...GetDeplo
 func (c Client) ScaleDeployment(ctx context.Context, id UUID, req ScaleDeploymentRequest) (*Operation, error) {
 	path := fmt.Sprintf("/ai/deployment/%v/scale", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleDeployment: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ScaleDeployment: new request: %w", err)
 	}
@@ -604,14 +602,16 @@ func (c Client) ScaleDeployment(ctx context.Context, id UUID, req ScaleDeploymen
 		return nil, fmt.Errorf("ScaleDeployment: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "scale-deployment")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleDeployment: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "scale-deployment")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "scale-deployment")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ScaleDeployment: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -623,7 +623,7 @@ func (c Client) ScaleDeployment(ctx context.Context, id UUID, req ScaleDeploymen
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScaleDeployment: prepare JSON response: %w", err)
 	}
 
@@ -665,21 +665,19 @@ func (c Client) GetInferenceEngineHelp(ctx context.Context, opts ...GetInference
 		return nil, fmt.Errorf("GetInferenceEngineHelp: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-inference-engine-help")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetInferenceEngineHelp: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-inference-engine-help")
+	defer c.logCall(ctx, request, response, "get-inference-engine-help")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetInferenceEngineHelp: http response: %w", err)
 	}
 
 	bodyresp := new(GetInferenceEngineHelpResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetInferenceEngineHelp: prepare JSON response: %w", err)
 	}
 
@@ -705,21 +703,19 @@ func (c Client) ListAIInstanceTypes(ctx context.Context) (*ListAIInstanceTypesRe
 		return nil, fmt.Errorf("ListAIInstanceTypes: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-ai-instance-types")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListAIInstanceTypes: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-ai-instance-types")
+	defer c.logCall(ctx, request, response, "list-ai-instance-types")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListAIInstanceTypes: http response: %w", err)
 	}
 
 	bodyresp := new(ListAIInstanceTypesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAIInstanceTypes: prepare JSON response: %w", err)
 	}
 
@@ -780,21 +776,19 @@ func (c Client) ListModels(ctx context.Context, opts ...ListModelsOpt) (*ListMod
 		return nil, fmt.Errorf("ListModels: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-models")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListModels: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-models")
+	defer c.logCall(ctx, request, response, "list-models")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListModels: http response: %w", err)
 	}
 
 	bodyresp := new(ListModelsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListModels: prepare JSON response: %w", err)
 	}
 
@@ -807,12 +801,12 @@ func (c Client) ListModels(ctx context.Context, opts ...ListModelsOpt) (*ListMod
 func (c Client) CreateModel(ctx context.Context, req CreateModelRequest) (*Operation, error) {
 	path := "/ai/model"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateModel: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateModel: new request: %w", err)
 	}
@@ -829,14 +823,16 @@ func (c Client) CreateModel(ctx context.Context, req CreateModelRequest) (*Opera
 		return nil, fmt.Errorf("CreateModel: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-model")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateModel: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-model")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-model")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateModel: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -845,7 +841,7 @@ func (c Client) CreateModel(ctx context.Context, req CreateModelRequest) (*Opera
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateModel: prepare JSON response: %w", err)
 	}
 
@@ -871,14 +867,12 @@ func (c Client) DeleteModel(ctx context.Context, id UUID) (*Operation, error) {
 		return nil, fmt.Errorf("DeleteModel: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-model")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteModel: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-model")
+	defer c.logCall(ctx, request, response, "delete-model")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteModel: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -889,7 +883,7 @@ func (c Client) DeleteModel(ctx context.Context, id UUID) (*Operation, error) {
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteModel: prepare JSON response: %w", err)
 	}
 
@@ -915,14 +909,12 @@ func (c Client) GetModel(ctx context.Context, id UUID) (*GetModelResponse, error
 		return nil, fmt.Errorf("GetModel: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-model")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetModel: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-model")
+	defer c.logCall(ctx, request, response, "get-model")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetModel: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -931,7 +923,7 @@ func (c Client) GetModel(ctx context.Context, id UUID) (*GetModelResponse, error
 	}
 
 	bodyresp := new(GetModelResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetModel: prepare JSON response: %w", err)
 	}
 
@@ -957,14 +949,12 @@ func (c Client) GetUserOrgConsumptionQuota(ctx context.Context) (*OrgConsumption
 		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-user-org-consumption-quota")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-user-org-consumption-quota")
+	defer c.logCall(ctx, request, response, "get-user-org-consumption-quota")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -973,7 +963,7 @@ func (c Client) GetUserOrgConsumptionQuota(ctx context.Context) (*OrgConsumption
 	}
 
 	bodyresp := new(OrgConsumptionQuotaResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetUserOrgConsumptionQuota: prepare JSON response: %w", err)
 	}
 
@@ -1022,21 +1012,19 @@ func (c Client) ListAntiAffinityGroups(ctx context.Context) (*ListAntiAffinityGr
 		return nil, fmt.Errorf("ListAntiAffinityGroups: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-anti-affinity-groups")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListAntiAffinityGroups: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-anti-affinity-groups")
+	defer c.logCall(ctx, request, response, "list-anti-affinity-groups")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListAntiAffinityGroups: http response: %w", err)
 	}
 
 	bodyresp := new(ListAntiAffinityGroupsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAntiAffinityGroups: prepare JSON response: %w", err)
 	}
 
@@ -1054,12 +1042,12 @@ type CreateAntiAffinityGroupRequest struct {
 func (c Client) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffinityGroupRequest) (*Operation, error) {
 	path := "/anti-affinity-group"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: new request: %w", err)
 	}
@@ -1076,21 +1064,23 @@ func (c Client) CreateAntiAffinityGroup(ctx context.Context, req CreateAntiAffin
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-anti-affinity-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-anti-affinity-group")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-anti-affinity-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAntiAffinityGroup: prepare JSON response: %w", err)
 	}
 
@@ -1116,21 +1106,19 @@ func (c Client) DeleteAntiAffinityGroup(ctx context.Context, id UUID) (*Operatio
 		return nil, fmt.Errorf("DeleteAntiAffinityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-anti-affinity-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteAntiAffinityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-anti-affinity-group")
+	defer c.logCall(ctx, request, response, "delete-anti-affinity-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteAntiAffinityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteAntiAffinityGroup: prepare JSON response: %w", err)
 	}
 
@@ -1156,21 +1144,19 @@ func (c Client) GetAntiAffinityGroup(ctx context.Context, id UUID) (*AntiAffinit
 		return nil, fmt.Errorf("GetAntiAffinityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-anti-affinity-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetAntiAffinityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-anti-affinity-group")
+	defer c.logCall(ctx, request, response, "get-anti-affinity-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetAntiAffinityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(AntiAffinityGroup)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetAntiAffinityGroup: prepare JSON response: %w", err)
 	}
 
@@ -1218,21 +1204,19 @@ func (c Client) ListAPIKeys(ctx context.Context) (*ListAPIKeysResponse, error) {
 		return nil, fmt.Errorf("ListAPIKeys: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-api-keys")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListAPIKeys: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-api-keys")
+	defer c.logCall(ctx, request, response, "list-api-keys")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListAPIKeys: http response: %w", err)
 	}
 
 	bodyresp := new(ListAPIKeysResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListAPIKeys: prepare JSON response: %w", err)
 	}
 
@@ -1249,12 +1233,12 @@ type CreateAPIKeyRequest struct {
 func (c Client) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAMAPIKeyCreated, error) {
 	path := "/api-key"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAPIKey: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateAPIKey: new request: %w", err)
 	}
@@ -1271,21 +1255,23 @@ func (c Client) CreateAPIKey(ctx context.Context, req CreateAPIKeyRequest) (*IAM
 		return nil, fmt.Errorf("CreateAPIKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-api-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateAPIKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-api-key")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-api-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateAPIKey: http response: %w", err)
 	}
 
 	bodyresp := new(IAMAPIKeyCreated)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateAPIKey: prepare JSON response: %w", err)
 	}
 
@@ -1310,21 +1296,19 @@ func (c Client) DeleteAPIKey(ctx context.Context, id string) (*Operation, error)
 		return nil, fmt.Errorf("DeleteAPIKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-api-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteAPIKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-api-key")
+	defer c.logCall(ctx, request, response, "delete-api-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteAPIKey: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteAPIKey: prepare JSON response: %w", err)
 	}
 
@@ -1349,21 +1333,19 @@ func (c Client) GetAPIKey(ctx context.Context, id string) (*IAMAPIKey, error) {
 		return nil, fmt.Errorf("GetAPIKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-api-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetAPIKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-api-key")
+	defer c.logCall(ctx, request, response, "get-api-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetAPIKey: http response: %w", err)
 	}
 
 	bodyresp := new(IAMAPIKey)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetAPIKey: prepare JSON response: %w", err)
 	}
 
@@ -1428,21 +1410,19 @@ func (c Client) ListBlockStorageVolumes(ctx context.Context, opts ...ListBlockSt
 		return nil, fmt.Errorf("ListBlockStorageVolumes: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-block-storage-volumes")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListBlockStorageVolumes: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-block-storage-volumes")
+	defer c.logCall(ctx, request, response, "list-block-storage-volumes")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListBlockStorageVolumes: http response: %w", err)
 	}
 
 	bodyresp := new(ListBlockStorageVolumesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListBlockStorageVolumes: prepare JSON response: %w", err)
 	}
 
@@ -1464,12 +1444,12 @@ type CreateBlockStorageVolumeRequest struct {
 func (c Client) CreateBlockStorageVolume(ctx context.Context, req CreateBlockStorageVolumeRequest) (*Operation, error) {
 	path := "/block-storage"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageVolume: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageVolume: new request: %w", err)
 	}
@@ -1486,21 +1466,23 @@ func (c Client) CreateBlockStorageVolume(ctx context.Context, req CreateBlockSto
 		return nil, fmt.Errorf("CreateBlockStorageVolume: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-block-storage-volume")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageVolume: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-block-storage-volume")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-block-storage-volume")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageVolume: prepare JSON response: %w", err)
 	}
 
@@ -1549,21 +1531,19 @@ func (c Client) ListBlockStorageSnapshots(ctx context.Context) (*ListBlockStorag
 		return nil, fmt.Errorf("ListBlockStorageSnapshots: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-block-storage-snapshots")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListBlockStorageSnapshots: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-block-storage-snapshots")
+	defer c.logCall(ctx, request, response, "list-block-storage-snapshots")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListBlockStorageSnapshots: http response: %w", err)
 	}
 
 	bodyresp := new(ListBlockStorageSnapshotsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListBlockStorageSnapshots: prepare JSON response: %w", err)
 	}
 
@@ -1589,21 +1569,19 @@ func (c Client) DeleteBlockStorageSnapshot(ctx context.Context, id UUID) (*Opera
 		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-block-storage-snapshot")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-block-storage-snapshot")
+	defer c.logCall(ctx, request, response, "delete-block-storage-snapshot")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageSnapshot: prepare JSON response: %w", err)
 	}
 
@@ -1629,21 +1607,19 @@ func (c Client) GetBlockStorageSnapshot(ctx context.Context, id UUID) (*BlockSto
 		return nil, fmt.Errorf("GetBlockStorageSnapshot: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-block-storage-snapshot")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetBlockStorageSnapshot: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-block-storage-snapshot")
+	defer c.logCall(ctx, request, response, "get-block-storage-snapshot")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetBlockStorageSnapshot: http response: %w", err)
 	}
 
 	bodyresp := new(BlockStorageSnapshot)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetBlockStorageSnapshot: prepare JSON response: %w", err)
 	}
 
@@ -1660,12 +1636,12 @@ type UpdateBlockStorageSnapshotRequest struct {
 func (c Client) UpdateBlockStorageSnapshot(ctx context.Context, id UUID, req UpdateBlockStorageSnapshotRequest) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage-snapshot/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: new request: %w", err)
 	}
@@ -1682,21 +1658,23 @@ func (c Client) UpdateBlockStorageSnapshot(ctx context.Context, id UUID, req Upd
 		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-block-storage-snapshot")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-block-storage-snapshot")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-block-storage-snapshot")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageSnapshot: prepare JSON response: %w", err)
 	}
 
@@ -1722,21 +1700,19 @@ func (c Client) DeleteBlockStorageVolume(ctx context.Context, id UUID) (*Operati
 		return nil, fmt.Errorf("DeleteBlockStorageVolume: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-block-storage-volume")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageVolume: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-block-storage-volume")
+	defer c.logCall(ctx, request, response, "delete-block-storage-volume")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteBlockStorageVolume: prepare JSON response: %w", err)
 	}
 
@@ -1762,21 +1738,19 @@ func (c Client) GetBlockStorageVolume(ctx context.Context, id UUID) (*BlockStora
 		return nil, fmt.Errorf("GetBlockStorageVolume: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-block-storage-volume")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetBlockStorageVolume: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-block-storage-volume")
+	defer c.logCall(ctx, request, response, "get-block-storage-volume")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := new(BlockStorageVolume)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetBlockStorageVolume: prepare JSON response: %w", err)
 	}
 
@@ -1793,12 +1767,12 @@ type UpdateBlockStorageVolumeRequest struct {
 func (c Client) UpdateBlockStorageVolume(ctx context.Context, id UUID, req UpdateBlockStorageVolumeRequest) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageVolume: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageVolume: new request: %w", err)
 	}
@@ -1815,21 +1789,23 @@ func (c Client) UpdateBlockStorageVolume(ctx context.Context, id UUID, req Updat
 		return nil, fmt.Errorf("UpdateBlockStorageVolume: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-block-storage-volume")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageVolume: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-block-storage-volume")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-block-storage-volume")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateBlockStorageVolume: prepare JSON response: %w", err)
 	}
 
@@ -1845,12 +1821,12 @@ type AttachBlockStorageVolumeToInstanceRequest struct {
 func (c Client) AttachBlockStorageVolumeToInstance(ctx context.Context, id UUID, req AttachBlockStorageVolumeToInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage/%v:attach", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: new request: %w", err)
 	}
@@ -1867,21 +1843,23 @@ func (c Client) AttachBlockStorageVolumeToInstance(ctx context.Context, id UUID,
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "attach-block-storage-volume-to-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "attach-block-storage-volume-to-instance")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "attach-block-storage-volume-to-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachBlockStorageVolumeToInstance: prepare JSON response: %w", err)
 	}
 
@@ -1898,12 +1876,12 @@ type CreateBlockStorageSnapshotRequest struct {
 func (c Client) CreateBlockStorageSnapshot(ctx context.Context, id UUID, req CreateBlockStorageSnapshotRequest) (*Operation, error) {
 	path := fmt.Sprintf("/block-storage/%v:create-snapshot", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: new request: %w", err)
 	}
@@ -1920,21 +1898,23 @@ func (c Client) CreateBlockStorageSnapshot(ctx context.Context, id UUID, req Cre
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-block-storage-snapshot")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-block-storage-snapshot")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-block-storage-snapshot")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateBlockStorageSnapshot: prepare JSON response: %w", err)
 	}
 
@@ -1960,21 +1940,19 @@ func (c Client) DetachBlockStorageVolume(ctx context.Context, id UUID) (*Operati
 		return nil, fmt.Errorf("DetachBlockStorageVolume: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "detach-block-storage-volume")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DetachBlockStorageVolume: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "detach-block-storage-volume")
+	defer c.logCall(ctx, request, response, "detach-block-storage-volume")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DetachBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachBlockStorageVolume: prepare JSON response: %w", err)
 	}
 
@@ -1990,12 +1968,12 @@ type ResizeBlockStorageVolumeRequest struct {
 func (c Client) ResizeBlockStorageVolume(ctx context.Context, id UUID, req ResizeBlockStorageVolumeRequest) (*BlockStorageVolume, error) {
 	path := fmt.Sprintf("/block-storage/%v:resize-volume", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: new request: %w", err)
 	}
@@ -2012,21 +1990,23 @@ func (c Client) ResizeBlockStorageVolume(ctx context.Context, id UUID, req Resiz
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "resize-block-storage-volume")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "resize-block-storage-volume")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "resize-block-storage-volume")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: http response: %w", err)
 	}
 
 	bodyresp := new(BlockStorageVolume)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResizeBlockStorageVolume: prepare JSON response: %w", err)
 	}
 
@@ -2058,21 +2038,19 @@ func (c Client) GetConsoleProxyURL(ctx context.Context, id UUID) (*GetConsolePro
 		return nil, fmt.Errorf("GetConsoleProxyURL: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-console-proxy-url")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetConsoleProxyURL: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-console-proxy-url")
+	defer c.logCall(ctx, request, response, "get-console-proxy-url")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetConsoleProxyURL: http response: %w", err)
 	}
 
 	bodyresp := new(GetConsoleProxyURLResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetConsoleProxyURL: prepare JSON response: %w", err)
 	}
 
@@ -2102,21 +2080,19 @@ func (c Client) GetDBAASCACertificate(ctx context.Context) (*GetDBAASCACertifica
 		return nil, fmt.Errorf("GetDBAASCACertificate: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-ca-certificate")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASCACertificate: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-ca-certificate")
+	defer c.logCall(ctx, request, response, "get-dbaas-ca-certificate")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASCACertificate: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASCACertificateResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASCACertificate: prepare JSON response: %w", err)
 	}
 
@@ -2141,21 +2117,19 @@ func (c Client) DeleteDBAASServiceClickhouse(ctx context.Context, name string) (
 		return nil, fmt.Errorf("DeleteDBAASServiceClickhouse: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-service-clickhouse")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceClickhouse: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-service-clickhouse")
+	defer c.logCall(ctx, request, response, "delete-dbaas-service-clickhouse")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceClickhouse: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceClickhouse: prepare JSON response: %w", err)
 	}
 
@@ -2180,21 +2154,19 @@ func (c Client) GetDBAASServiceClickhouse(ctx context.Context, name string) (*DB
 		return nil, fmt.Errorf("GetDBAASServiceClickhouse: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-clickhouse")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceClickhouse: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-clickhouse")
+	defer c.logCall(ctx, request, response, "get-dbaas-service-clickhouse")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceClickhouse: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASServiceClickhouse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceClickhouse: prepare JSON response: %w", err)
 	}
 
@@ -2243,12 +2215,12 @@ type CreateDBAASServiceClickhouseRequest struct {
 func (c Client) CreateDBAASServiceClickhouse(ctx context.Context, name string, req CreateDBAASServiceClickhouseRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-clickhouse/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: new request: %w", err)
 	}
@@ -2265,21 +2237,23 @@ func (c Client) CreateDBAASServiceClickhouse(ctx context.Context, name string, r
 		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-service-clickhouse")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-service-clickhouse")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-service-clickhouse")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceClickhouse: prepare JSON response: %w", err)
 	}
 
@@ -2325,12 +2299,12 @@ type UpdateDBAASServiceClickhouseRequest struct {
 func (c Client) UpdateDBAASServiceClickhouse(ctx context.Context, name string, req UpdateDBAASServiceClickhouseRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-clickhouse/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: new request: %w", err)
 	}
@@ -2347,21 +2321,23 @@ func (c Client) UpdateDBAASServiceClickhouse(ctx context.Context, name string, r
 		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-service-clickhouse")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-service-clickhouse")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-service-clickhouse")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceClickhouse: prepare JSON response: %w", err)
 	}
 
@@ -2386,21 +2362,19 @@ func (c Client) StartDBAASClickhouseMaintenance(ctx context.Context, name string
 		return nil, fmt.Errorf("StartDBAASClickhouseMaintenance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "start-dbaas-clickhouse-maintenance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASClickhouseMaintenance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "start-dbaas-clickhouse-maintenance")
+	defer c.logCall(ctx, request, response, "start-dbaas-clickhouse-maintenance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StartDBAASClickhouseMaintenance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASClickhouseMaintenance: prepare JSON response: %w", err)
 	}
 
@@ -2425,21 +2399,19 @@ func (c Client) GetDBAASClickhouseAclConfig(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("GetDBAASClickhouseAclConfig: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-clickhouse-acl-config")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASClickhouseAclConfig: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-clickhouse-acl-config")
+	defer c.logCall(ctx, request, response, "get-dbaas-clickhouse-acl-config")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASClickhouseAclConfig: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASClickhouseAclConfig)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASClickhouseAclConfig: prepare JSON response: %w", err)
 	}
 
@@ -2464,21 +2436,19 @@ func (c Client) ListDBAASClickhouseRoles(ctx context.Context, serviceName string
 		return nil, fmt.Errorf("ListDBAASClickhouseRoles: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dbaas-clickhouse-roles")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASClickhouseRoles: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dbaas-clickhouse-roles")
+	defer c.logCall(ctx, request, response, "list-dbaas-clickhouse-roles")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDBAASClickhouseRoles: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASClickhouseRoles)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASClickhouseRoles: prepare JSON response: %w", err)
 	}
 
@@ -2503,21 +2473,19 @@ func (c Client) DeleteDBAASClickhouseRole(ctx context.Context, serviceName strin
 		return nil, fmt.Errorf("DeleteDBAASClickhouseRole: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-clickhouse-role")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASClickhouseRole: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-clickhouse-role")
+	defer c.logCall(ctx, request, response, "delete-dbaas-clickhouse-role")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASClickhouseRole: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASClickhouseRole: prepare JSON response: %w", err)
 	}
 
@@ -2542,21 +2510,19 @@ func (c Client) ListDBAASClickhouseUsers(ctx context.Context, serviceName string
 		return nil, fmt.Errorf("ListDBAASClickhouseUsers: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dbaas-clickhouse-users")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASClickhouseUsers: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dbaas-clickhouse-users")
+	defer c.logCall(ctx, request, response, "list-dbaas-clickhouse-users")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDBAASClickhouseUsers: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASClickhouseUsers)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASClickhouseUsers: prepare JSON response: %w", err)
 	}
 
@@ -2573,12 +2539,12 @@ type CreateDBAASClickhouseUserRequest struct {
 func (c Client) CreateDBAASClickhouseUser(ctx context.Context, serviceName string, req CreateDBAASClickhouseUserRequest) (*DBAASUserClickhouseSecrets, error) {
 	path := fmt.Sprintf("/dbaas-clickhouse/%v/user", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASClickhouseUser: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASClickhouseUser: new request: %w", err)
 	}
@@ -2595,21 +2561,23 @@ func (c Client) CreateDBAASClickhouseUser(ctx context.Context, serviceName strin
 		return nil, fmt.Errorf("CreateDBAASClickhouseUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-clickhouse-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASClickhouseUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-clickhouse-user")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-clickhouse-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASClickhouseUser: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserClickhouseSecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASClickhouseUser: prepare JSON response: %w", err)
 	}
 
@@ -2634,21 +2602,19 @@ func (c Client) DeleteDBAASClickhouseUser(ctx context.Context, serviceName strin
 		return nil, fmt.Errorf("DeleteDBAASClickhouseUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-clickhouse-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASClickhouseUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-clickhouse-user")
+	defer c.logCall(ctx, request, response, "delete-dbaas-clickhouse-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASClickhouseUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASClickhouseUser: prepare JSON response: %w", err)
 	}
 
@@ -2662,12 +2628,12 @@ type ResetDBAASClickhouseUserPasswordRequest struct {
 func (c Client) ResetDBAASClickhouseUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASClickhouseUserPasswordRequest) (*DBAASUserClickhouseSecrets, error) {
 	path := fmt.Sprintf("/dbaas-clickhouse/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: new request: %w", err)
 	}
@@ -2684,21 +2650,23 @@ func (c Client) ResetDBAASClickhouseUserPassword(ctx context.Context, serviceNam
 		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-dbaas-clickhouse-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-dbaas-clickhouse-user-password")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "reset-dbaas-clickhouse-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserClickhouseSecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASClickhouseUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -2723,21 +2691,19 @@ func (c Client) RevealDBAASClickhouseUserPassword(ctx context.Context, serviceNa
 		return nil, fmt.Errorf("RevealDBAASClickhouseUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reveal-dbaas-clickhouse-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealDBAASClickhouseUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reveal-dbaas-clickhouse-user-password")
+	defer c.logCall(ctx, request, response, "reveal-dbaas-clickhouse-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevealDBAASClickhouseUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserClickhouseSecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealDBAASClickhouseUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -2763,21 +2729,19 @@ func (c Client) DeleteDBAASExternalEndpointDatadog(ctx context.Context, endpoint
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointDatadog: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-external-endpoint-datadog")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointDatadog: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-external-endpoint-datadog")
+	defer c.logCall(ctx, request, response, "delete-dbaas-external-endpoint-datadog")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointDatadog: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointDatadog: prepare JSON response: %w", err)
 	}
 
@@ -2803,21 +2767,19 @@ func (c Client) GetDBAASExternalEndpointDatadog(ctx context.Context, endpointID 
 		return nil, fmt.Errorf("GetDBAASExternalEndpointDatadog: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-external-endpoint-datadog")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointDatadog: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-external-endpoint-datadog")
+	defer c.logCall(ctx, request, response, "get-dbaas-external-endpoint-datadog")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointDatadog: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASExternalEndpointDatadogOutput)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointDatadog: prepare JSON response: %w", err)
 	}
 
@@ -2828,12 +2790,12 @@ func (c Client) GetDBAASExternalEndpointDatadog(ctx context.Context, endpointID 
 func (c Client) UpdateDBAASExternalEndpointDatadog(ctx context.Context, endpointID UUID, req DBAASEndpointDatadogInputUpdate) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-datadog/%v", endpointID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: new request: %w", err)
 	}
@@ -2850,21 +2812,23 @@ func (c Client) UpdateDBAASExternalEndpointDatadog(ctx context.Context, endpoint
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-external-endpoint-datadog")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-external-endpoint-datadog")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-external-endpoint-datadog")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointDatadog: prepare JSON response: %w", err)
 	}
 
@@ -2875,12 +2839,12 @@ func (c Client) UpdateDBAASExternalEndpointDatadog(ctx context.Context, endpoint
 func (c Client) CreateDBAASExternalEndpointDatadog(ctx context.Context, name string, req DBAASEndpointDatadogInputCreate) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-datadog/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: new request: %w", err)
 	}
@@ -2897,21 +2861,23 @@ func (c Client) CreateDBAASExternalEndpointDatadog(ctx context.Context, name str
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-external-endpoint-datadog")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-external-endpoint-datadog")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-external-endpoint-datadog")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointDatadog: prepare JSON response: %w", err)
 	}
 
@@ -2937,21 +2903,19 @@ func (c Client) DeleteDBAASExternalEndpointElasticsearch(ctx context.Context, en
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointElasticsearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-external-endpoint-elasticsearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointElasticsearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-external-endpoint-elasticsearch")
+	defer c.logCall(ctx, request, response, "delete-dbaas-external-endpoint-elasticsearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointElasticsearch: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointElasticsearch: prepare JSON response: %w", err)
 	}
 
@@ -2977,21 +2941,19 @@ func (c Client) GetDBAASExternalEndpointElasticsearch(ctx context.Context, endpo
 		return nil, fmt.Errorf("GetDBAASExternalEndpointElasticsearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-external-endpoint-elasticsearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointElasticsearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-external-endpoint-elasticsearch")
+	defer c.logCall(ctx, request, response, "get-dbaas-external-endpoint-elasticsearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointElasticsearch: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASEndpointElasticsearchOutput)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointElasticsearch: prepare JSON response: %w", err)
 	}
 
@@ -3002,12 +2964,12 @@ func (c Client) GetDBAASExternalEndpointElasticsearch(ctx context.Context, endpo
 func (c Client) UpdateDBAASExternalEndpointElasticsearch(ctx context.Context, endpointID UUID, req DBAASEndpointElasticsearchInputUpdate) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-elasticsearch/%v", endpointID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: new request: %w", err)
 	}
@@ -3024,21 +2986,23 @@ func (c Client) UpdateDBAASExternalEndpointElasticsearch(ctx context.Context, en
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-external-endpoint-elasticsearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-external-endpoint-elasticsearch")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-external-endpoint-elasticsearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointElasticsearch: prepare JSON response: %w", err)
 	}
 
@@ -3049,12 +3013,12 @@ func (c Client) UpdateDBAASExternalEndpointElasticsearch(ctx context.Context, en
 func (c Client) CreateDBAASExternalEndpointElasticsearch(ctx context.Context, name string, req DBAASEndpointElasticsearchInputCreate) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-elasticsearch/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: new request: %w", err)
 	}
@@ -3071,21 +3035,23 @@ func (c Client) CreateDBAASExternalEndpointElasticsearch(ctx context.Context, na
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-external-endpoint-elasticsearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-external-endpoint-elasticsearch")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-external-endpoint-elasticsearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointElasticsearch: prepare JSON response: %w", err)
 	}
 
@@ -3111,21 +3077,19 @@ func (c Client) DeleteDBAASExternalEndpointOpensearch(ctx context.Context, endpo
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointOpensearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-external-endpoint-opensearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointOpensearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-external-endpoint-opensearch")
+	defer c.logCall(ctx, request, response, "delete-dbaas-external-endpoint-opensearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointOpensearch: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointOpensearch: prepare JSON response: %w", err)
 	}
 
@@ -3151,21 +3115,19 @@ func (c Client) GetDBAASExternalEndpointOpensearch(ctx context.Context, endpoint
 		return nil, fmt.Errorf("GetDBAASExternalEndpointOpensearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-external-endpoint-opensearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointOpensearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-external-endpoint-opensearch")
+	defer c.logCall(ctx, request, response, "get-dbaas-external-endpoint-opensearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointOpensearch: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASEndpointOpensearchOutput)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointOpensearch: prepare JSON response: %w", err)
 	}
 
@@ -3176,12 +3138,12 @@ func (c Client) GetDBAASExternalEndpointOpensearch(ctx context.Context, endpoint
 func (c Client) UpdateDBAASExternalEndpointOpensearch(ctx context.Context, endpointID UUID, req DBAASEndpointOpensearchInputUpdate) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-opensearch/%v", endpointID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: new request: %w", err)
 	}
@@ -3198,21 +3160,23 @@ func (c Client) UpdateDBAASExternalEndpointOpensearch(ctx context.Context, endpo
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-external-endpoint-opensearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-external-endpoint-opensearch")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-external-endpoint-opensearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointOpensearch: prepare JSON response: %w", err)
 	}
 
@@ -3223,12 +3187,12 @@ func (c Client) UpdateDBAASExternalEndpointOpensearch(ctx context.Context, endpo
 func (c Client) CreateDBAASExternalEndpointOpensearch(ctx context.Context, name string, req DBAASEndpointOpensearchInputCreate) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-opensearch/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: new request: %w", err)
 	}
@@ -3245,21 +3209,23 @@ func (c Client) CreateDBAASExternalEndpointOpensearch(ctx context.Context, name 
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-external-endpoint-opensearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-external-endpoint-opensearch")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-external-endpoint-opensearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointOpensearch: prepare JSON response: %w", err)
 	}
 
@@ -3285,21 +3251,19 @@ func (c Client) DeleteDBAASExternalEndpointPrometheus(ctx context.Context, endpo
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointPrometheus: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-external-endpoint-prometheus")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointPrometheus: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-external-endpoint-prometheus")
+	defer c.logCall(ctx, request, response, "delete-dbaas-external-endpoint-prometheus")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointPrometheus: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointPrometheus: prepare JSON response: %w", err)
 	}
 
@@ -3325,21 +3289,19 @@ func (c Client) GetDBAASExternalEndpointPrometheus(ctx context.Context, endpoint
 		return nil, fmt.Errorf("GetDBAASExternalEndpointPrometheus: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-external-endpoint-prometheus")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointPrometheus: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-external-endpoint-prometheus")
+	defer c.logCall(ctx, request, response, "get-dbaas-external-endpoint-prometheus")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointPrometheus: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASEndpointExternalPrometheusOutput)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointPrometheus: prepare JSON response: %w", err)
 	}
 
@@ -3350,12 +3312,12 @@ func (c Client) GetDBAASExternalEndpointPrometheus(ctx context.Context, endpoint
 func (c Client) UpdateDBAASExternalEndpointPrometheus(ctx context.Context, endpointID UUID, req DBAASEndpointPrometheusPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-prometheus/%v", endpointID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: new request: %w", err)
 	}
@@ -3372,21 +3334,23 @@ func (c Client) UpdateDBAASExternalEndpointPrometheus(ctx context.Context, endpo
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-external-endpoint-prometheus")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-external-endpoint-prometheus")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-external-endpoint-prometheus")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointPrometheus: prepare JSON response: %w", err)
 	}
 
@@ -3397,12 +3361,12 @@ func (c Client) UpdateDBAASExternalEndpointPrometheus(ctx context.Context, endpo
 func (c Client) CreateDBAASExternalEndpointPrometheus(ctx context.Context, name string, req DBAASEndpointPrometheusPayload) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-prometheus/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: new request: %w", err)
 	}
@@ -3419,21 +3383,23 @@ func (c Client) CreateDBAASExternalEndpointPrometheus(ctx context.Context, name 
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-external-endpoint-prometheus")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-external-endpoint-prometheus")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-external-endpoint-prometheus")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointPrometheus: prepare JSON response: %w", err)
 	}
 
@@ -3459,21 +3425,19 @@ func (c Client) DeleteDBAASExternalEndpointRsyslog(ctx context.Context, endpoint
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointRsyslog: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-external-endpoint-rsyslog")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointRsyslog: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-external-endpoint-rsyslog")
+	defer c.logCall(ctx, request, response, "delete-dbaas-external-endpoint-rsyslog")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointRsyslog: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASExternalEndpointRsyslog: prepare JSON response: %w", err)
 	}
 
@@ -3499,21 +3463,19 @@ func (c Client) GetDBAASExternalEndpointRsyslog(ctx context.Context, endpointID 
 		return nil, fmt.Errorf("GetDBAASExternalEndpointRsyslog: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-external-endpoint-rsyslog")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointRsyslog: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-external-endpoint-rsyslog")
+	defer c.logCall(ctx, request, response, "get-dbaas-external-endpoint-rsyslog")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointRsyslog: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASExternalEndpointRsyslogOutput)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalEndpointRsyslog: prepare JSON response: %w", err)
 	}
 
@@ -3524,12 +3486,12 @@ func (c Client) GetDBAASExternalEndpointRsyslog(ctx context.Context, endpointID 
 func (c Client) UpdateDBAASExternalEndpointRsyslog(ctx context.Context, endpointID UUID, req DBAASEndpointRsyslogInputUpdate) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-rsyslog/%v", endpointID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: new request: %w", err)
 	}
@@ -3546,21 +3508,23 @@ func (c Client) UpdateDBAASExternalEndpointRsyslog(ctx context.Context, endpoint
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-external-endpoint-rsyslog")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-external-endpoint-rsyslog")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-external-endpoint-rsyslog")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalEndpointRsyslog: prepare JSON response: %w", err)
 	}
 
@@ -3571,12 +3535,12 @@ func (c Client) UpdateDBAASExternalEndpointRsyslog(ctx context.Context, endpoint
 func (c Client) CreateDBAASExternalEndpointRsyslog(ctx context.Context, name string, req DBAASEndpointRsyslogInputCreate) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint-rsyslog/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: new request: %w", err)
 	}
@@ -3593,21 +3557,23 @@ func (c Client) CreateDBAASExternalEndpointRsyslog(ctx context.Context, name str
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-external-endpoint-rsyslog")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-external-endpoint-rsyslog")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-external-endpoint-rsyslog")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASExternalEndpointRsyslog: prepare JSON response: %w", err)
 	}
 
@@ -3643,21 +3609,19 @@ func (c Client) ListDBAASExternalEndpointTypes(ctx context.Context) (*ListDBAASE
 		return nil, fmt.Errorf("ListDBAASExternalEndpointTypes: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dbaas-external-endpoint-types")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASExternalEndpointTypes: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dbaas-external-endpoint-types")
+	defer c.logCall(ctx, request, response, "list-dbaas-external-endpoint-types")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDBAASExternalEndpointTypes: http response: %w", err)
 	}
 
 	bodyresp := new(ListDBAASExternalEndpointTypesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASExternalEndpointTypes: prepare JSON response: %w", err)
 	}
 
@@ -3674,12 +3638,12 @@ type AttachDBAASServiceToEndpointRequest struct {
 func (c Client) AttachDBAASServiceToEndpoint(ctx context.Context, sourceServiceName string, req AttachDBAASServiceToEndpointRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint/%v/attach", sourceServiceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: new request: %w", err)
 	}
@@ -3696,21 +3660,23 @@ func (c Client) AttachDBAASServiceToEndpoint(ctx context.Context, sourceServiceN
 		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "attach-dbaas-service-to-endpoint")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "attach-dbaas-service-to-endpoint")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "attach-dbaas-service-to-endpoint")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachDBAASServiceToEndpoint: prepare JSON response: %w", err)
 	}
 
@@ -3726,12 +3692,12 @@ type DetachDBAASServiceFromEndpointRequest struct {
 func (c Client) DetachDBAASServiceFromEndpoint(ctx context.Context, sourceServiceName string, req DetachDBAASServiceFromEndpointRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-endpoint/%v/detach", sourceServiceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: new request: %w", err)
 	}
@@ -3748,21 +3714,23 @@ func (c Client) DetachDBAASServiceFromEndpoint(ctx context.Context, sourceServic
 		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "detach-dbaas-service-from-endpoint")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "detach-dbaas-service-from-endpoint")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "detach-dbaas-service-from-endpoint")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachDBAASServiceFromEndpoint: prepare JSON response: %w", err)
 	}
 
@@ -3811,21 +3779,19 @@ func (c Client) ListDBAASExternalEndpoints(ctx context.Context) (*ListDBAASExter
 		return nil, fmt.Errorf("ListDBAASExternalEndpoints: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dbaas-external-endpoints")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASExternalEndpoints: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dbaas-external-endpoints")
+	defer c.logCall(ctx, request, response, "list-dbaas-external-endpoints")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDBAASExternalEndpoints: http response: %w", err)
 	}
 
 	bodyresp := new(ListDBAASExternalEndpointsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASExternalEndpoints: prepare JSON response: %w", err)
 	}
 
@@ -3855,21 +3821,19 @@ func (c Client) GetDBAASExternalIntegrationSettingsDatadog(ctx context.Context, 
 		return nil, fmt.Errorf("GetDBAASExternalIntegrationSettingsDatadog: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-external-integration-settings-datadog")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalIntegrationSettingsDatadog: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-external-integration-settings-datadog")
+	defer c.logCall(ctx, request, response, "get-dbaas-external-integration-settings-datadog")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalIntegrationSettingsDatadog: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASExternalIntegrationSettingsDatadogResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalIntegrationSettingsDatadog: prepare JSON response: %w", err)
 	}
 
@@ -3884,12 +3848,12 @@ type UpdateDBAASExternalIntegrationSettingsDatadogRequest struct {
 func (c Client) UpdateDBAASExternalIntegrationSettingsDatadog(ctx context.Context, integrationID UUID, req UpdateDBAASExternalIntegrationSettingsDatadogRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-external-integration-settings-datadog/%v", integrationID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: new request: %w", err)
 	}
@@ -3906,21 +3870,23 @@ func (c Client) UpdateDBAASExternalIntegrationSettingsDatadog(ctx context.Contex
 		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-external-integration-settings-datadog")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-external-integration-settings-datadog")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-external-integration-settings-datadog")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASExternalIntegrationSettingsDatadog: prepare JSON response: %w", err)
 	}
 
@@ -3946,21 +3912,19 @@ func (c Client) GetDBAASExternalIntegration(ctx context.Context, integrationID U
 		return nil, fmt.Errorf("GetDBAASExternalIntegration: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-external-integration")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalIntegration: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-external-integration")
+	defer c.logCall(ctx, request, response, "get-dbaas-external-integration")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalIntegration: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASExternalIntegration)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASExternalIntegration: prepare JSON response: %w", err)
 	}
 
@@ -3990,21 +3954,19 @@ func (c Client) ListDBAASExternalIntegrations(ctx context.Context, serviceName s
 		return nil, fmt.Errorf("ListDBAASExternalIntegrations: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dbaas-external-integrations")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASExternalIntegrations: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dbaas-external-integrations")
+	defer c.logCall(ctx, request, response, "list-dbaas-external-integrations")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDBAASExternalIntegrations: http response: %w", err)
 	}
 
 	bodyresp := new(ListDBAASExternalIntegrationsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASExternalIntegrations: prepare JSON response: %w", err)
 	}
 
@@ -4029,21 +3991,19 @@ func (c Client) DeleteDBAASServiceGrafana(ctx context.Context, name string) (*Op
 		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-service-grafana")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-service-grafana")
+	defer c.logCall(ctx, request, response, "delete-dbaas-service-grafana")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceGrafana: prepare JSON response: %w", err)
 	}
 
@@ -4068,21 +4028,19 @@ func (c Client) GetDBAASServiceGrafana(ctx context.Context, name string) (*DBAAS
 		return nil, fmt.Errorf("GetDBAASServiceGrafana: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-grafana")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceGrafana: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-grafana")
+	defer c.logCall(ctx, request, response, "get-dbaas-service-grafana")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceGrafana: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASServiceGrafana)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceGrafana: prepare JSON response: %w", err)
 	}
 
@@ -4128,12 +4086,12 @@ type CreateDBAASServiceGrafanaRequest struct {
 func (c Client) CreateDBAASServiceGrafana(ctx context.Context, name string, req CreateDBAASServiceGrafanaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: new request: %w", err)
 	}
@@ -4150,21 +4108,23 @@ func (c Client) CreateDBAASServiceGrafana(ctx context.Context, name string, req 
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-service-grafana")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-service-grafana")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-service-grafana")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceGrafana: prepare JSON response: %w", err)
 	}
 
@@ -4208,12 +4168,12 @@ type UpdateDBAASServiceGrafanaRequest struct {
 func (c Client) UpdateDBAASServiceGrafana(ctx context.Context, name string, req UpdateDBAASServiceGrafanaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: new request: %w", err)
 	}
@@ -4230,21 +4190,23 @@ func (c Client) UpdateDBAASServiceGrafana(ctx context.Context, name string, req 
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-service-grafana")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-service-grafana")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-service-grafana")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceGrafana: prepare JSON response: %w", err)
 	}
 
@@ -4269,21 +4231,19 @@ func (c Client) StartDBAASGrafanaMaintenance(ctx context.Context, name string) (
 		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "start-dbaas-grafana-maintenance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "start-dbaas-grafana-maintenance")
+	defer c.logCall(ctx, request, response, "start-dbaas-grafana-maintenance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASGrafanaMaintenance: prepare JSON response: %w", err)
 	}
 
@@ -4298,12 +4258,12 @@ type ResetDBAASGrafanaUserPasswordRequest struct {
 func (c Client) ResetDBAASGrafanaUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASGrafanaUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-grafana/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASGrafanaUserPassword: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASGrafanaUserPassword: new request: %w", err)
 	}
@@ -4320,21 +4280,23 @@ func (c Client) ResetDBAASGrafanaUserPassword(ctx context.Context, serviceName s
 		return nil, fmt.Errorf("ResetDBAASGrafanaUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-dbaas-grafana-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASGrafanaUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-dbaas-grafana-user-password")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "reset-dbaas-grafana-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetDBAASGrafanaUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASGrafanaUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -4359,21 +4321,19 @@ func (c Client) RevealDBAASGrafanaUserPassword(ctx context.Context, serviceName 
 		return nil, fmt.Errorf("RevealDBAASGrafanaUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reveal-dbaas-grafana-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealDBAASGrafanaUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reveal-dbaas-grafana-user-password")
+	defer c.logCall(ctx, request, response, "reveal-dbaas-grafana-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevealDBAASGrafanaUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserGrafanaSecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealDBAASGrafanaUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -4392,12 +4352,12 @@ type CreateDBAASIntegrationRequest struct {
 func (c Client) CreateDBAASIntegration(ctx context.Context, req CreateDBAASIntegrationRequest) (*Operation, error) {
 	path := "/dbaas-integration"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASIntegration: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASIntegration: new request: %w", err)
 	}
@@ -4414,21 +4374,23 @@ func (c Client) CreateDBAASIntegration(ctx context.Context, req CreateDBAASInteg
 		return nil, fmt.Errorf("CreateDBAASIntegration: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-integration")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASIntegration: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-integration")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-integration")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASIntegration: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASIntegration: prepare JSON response: %w", err)
 	}
 
@@ -4467,21 +4429,19 @@ func (c Client) ListDBAASIntegrationSettings(ctx context.Context, integrationTyp
 		return nil, fmt.Errorf("ListDBAASIntegrationSettings: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dbaas-integration-settings")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationSettings: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dbaas-integration-settings")
+	defer c.logCall(ctx, request, response, "list-dbaas-integration-settings")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationSettings: http response: %w", err)
 	}
 
 	bodyresp := new(ListDBAASIntegrationSettingsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationSettings: prepare JSON response: %w", err)
 	}
 
@@ -4511,21 +4471,19 @@ func (c Client) ListDBAASIntegrationTypes(ctx context.Context) (*ListDBAASIntegr
 		return nil, fmt.Errorf("ListDBAASIntegrationTypes: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dbaas-integration-types")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationTypes: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dbaas-integration-types")
+	defer c.logCall(ctx, request, response, "list-dbaas-integration-types")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationTypes: http response: %w", err)
 	}
 
 	bodyresp := new(ListDBAASIntegrationTypesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASIntegrationTypes: prepare JSON response: %w", err)
 	}
 
@@ -4551,21 +4509,19 @@ func (c Client) DeleteDBAASIntegration(ctx context.Context, id UUID) (*Operation
 		return nil, fmt.Errorf("DeleteDBAASIntegration: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-integration")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASIntegration: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-integration")
+	defer c.logCall(ctx, request, response, "delete-dbaas-integration")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASIntegration: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASIntegration: prepare JSON response: %w", err)
 	}
 
@@ -4591,21 +4547,19 @@ func (c Client) GetDBAASIntegration(ctx context.Context, id UUID) (*DBAASIntegra
 		return nil, fmt.Errorf("GetDBAASIntegration: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-integration")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASIntegration: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-integration")
+	defer c.logCall(ctx, request, response, "get-dbaas-integration")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASIntegration: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASIntegration)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASIntegration: prepare JSON response: %w", err)
 	}
 
@@ -4621,12 +4575,12 @@ type UpdateDBAASIntegrationRequest struct {
 func (c Client) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateDBAASIntegrationRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-integration/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASIntegration: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASIntegration: new request: %w", err)
 	}
@@ -4643,21 +4597,23 @@ func (c Client) UpdateDBAASIntegration(ctx context.Context, id UUID, req UpdateD
 		return nil, fmt.Errorf("UpdateDBAASIntegration: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-integration")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASIntegration: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-integration")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-integration")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASIntegration: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASIntegration: prepare JSON response: %w", err)
 	}
 
@@ -4682,21 +4638,19 @@ func (c Client) DeleteDBAASServiceKafka(ctx context.Context, name string) (*Oper
 		return nil, fmt.Errorf("DeleteDBAASServiceKafka: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-service-kafka")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceKafka: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-service-kafka")
+	defer c.logCall(ctx, request, response, "delete-dbaas-service-kafka")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceKafka: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceKafka: prepare JSON response: %w", err)
 	}
 
@@ -4721,21 +4675,19 @@ func (c Client) GetDBAASServiceKafka(ctx context.Context, name string) (*DBAASSe
 		return nil, fmt.Errorf("GetDBAASServiceKafka: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-kafka")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceKafka: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-kafka")
+	defer c.logCall(ctx, request, response, "get-dbaas-service-kafka")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceKafka: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASServiceKafka)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceKafka: prepare JSON response: %w", err)
 	}
 
@@ -4804,12 +4756,12 @@ type CreateDBAASServiceKafkaRequest struct {
 func (c Client) CreateDBAASServiceKafka(ctx context.Context, name string, req CreateDBAASServiceKafkaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: new request: %w", err)
 	}
@@ -4826,21 +4778,23 @@ func (c Client) CreateDBAASServiceKafka(ctx context.Context, name string, req Cr
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-service-kafka")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-service-kafka")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-service-kafka")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceKafka: prepare JSON response: %w", err)
 	}
 
@@ -4909,12 +4863,12 @@ type UpdateDBAASServiceKafkaRequest struct {
 func (c Client) UpdateDBAASServiceKafka(ctx context.Context, name string, req UpdateDBAASServiceKafkaRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: new request: %w", err)
 	}
@@ -4931,21 +4885,23 @@ func (c Client) UpdateDBAASServiceKafka(ctx context.Context, name string, req Up
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-service-kafka")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-service-kafka")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-service-kafka")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceKafka: prepare JSON response: %w", err)
 	}
 
@@ -4970,21 +4926,19 @@ func (c Client) GetDBAASKafkaAclConfig(ctx context.Context, name string) (*DBAAS
 		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-kafka-acl-config")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-kafka-acl-config")
+	defer c.logCall(ctx, request, response, "get-dbaas-kafka-acl-config")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASKafkaAcls)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASKafkaAclConfig: prepare JSON response: %w", err)
 	}
 
@@ -5009,21 +4963,19 @@ func (c Client) StartDBAASKafkaMaintenance(ctx context.Context, name string) (*O
 		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "start-dbaas-kafka-maintenance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "start-dbaas-kafka-maintenance")
+	defer c.logCall(ctx, request, response, "start-dbaas-kafka-maintenance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASKafkaMaintenance: prepare JSON response: %w", err)
 	}
 
@@ -5033,12 +4985,12 @@ func (c Client) StartDBAASKafkaMaintenance(ctx context.Context, name string) (*O
 func (c Client) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, name string, req DBAASKafkaSchemaRegistryAclEntry) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/schema-registry/acl-config", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: new request: %w", err)
 	}
@@ -5055,21 +5007,23 @@ func (c Client) CreateDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-kafka-schema-registry-acl-config")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-kafka-schema-registry-acl-config")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-kafka-schema-registry-acl-config")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaSchemaRegistryAclConfig: prepare JSON response: %w", err)
 	}
 
@@ -5094,21 +5048,19 @@ func (c Client) DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-kafka-schema-registry-acl-config")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-kafka-schema-registry-acl-config")
+	defer c.logCall(ctx, request, response, "delete-dbaas-kafka-schema-registry-acl-config")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaSchemaRegistryAclConfig: prepare JSON response: %w", err)
 	}
 
@@ -5118,12 +5070,12 @@ func (c Client) DeleteDBAASKafkaSchemaRegistryAclConfig(ctx context.Context, nam
 func (c Client) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string, req DBAASKafkaTopicAclEntry) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/topic/acl-config", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: new request: %w", err)
 	}
@@ -5140,21 +5092,23 @@ func (c Client) CreateDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-kafka-topic-acl-config")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-kafka-topic-acl-config")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-kafka-topic-acl-config")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaTopicAclConfig: prepare JSON response: %w", err)
 	}
 
@@ -5179,21 +5133,19 @@ func (c Client) DeleteDBAASKafkaTopicAclConfig(ctx context.Context, name string,
 		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-kafka-topic-acl-config")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-kafka-topic-acl-config")
+	defer c.logCall(ctx, request, response, "delete-dbaas-kafka-topic-acl-config")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaTopicAclConfig: prepare JSON response: %w", err)
 	}
 
@@ -5218,21 +5170,19 @@ func (c Client) RevealDBAASKafkaConnectPassword(ctx context.Context, serviceName
 		return nil, fmt.Errorf("RevealDBAASKafkaConnectPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reveal-dbaas-kafka-connect-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealDBAASKafkaConnectPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reveal-dbaas-kafka-connect-password")
+	defer c.logCall(ctx, request, response, "reveal-dbaas-kafka-connect-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevealDBAASKafkaConnectPassword: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserKafkaConnectSecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealDBAASKafkaConnectPassword: prepare JSON response: %w", err)
 	}
 
@@ -5246,12 +5196,12 @@ type CreateDBAASKafkaUserRequest struct {
 func (c Client) CreateDBAASKafkaUser(ctx context.Context, serviceName string, req CreateDBAASKafkaUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/user", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: new request: %w", err)
 	}
@@ -5268,21 +5218,23 @@ func (c Client) CreateDBAASKafkaUser(ctx context.Context, serviceName string, re
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-kafka-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-kafka-user")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-kafka-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASKafkaUser: prepare JSON response: %w", err)
 	}
 
@@ -5307,21 +5259,19 @@ func (c Client) DeleteDBAASKafkaUser(ctx context.Context, serviceName string, us
 		return nil, fmt.Errorf("DeleteDBAASKafkaUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-kafka-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-kafka-user")
+	defer c.logCall(ctx, request, response, "delete-dbaas-kafka-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASKafkaUser: prepare JSON response: %w", err)
 	}
 
@@ -5336,12 +5286,12 @@ type ResetDBAASKafkaUserPasswordRequest struct {
 func (c Client) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASKafkaUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-kafka/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: new request: %w", err)
 	}
@@ -5358,21 +5308,23 @@ func (c Client) ResetDBAASKafkaUserPassword(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-dbaas-kafka-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-dbaas-kafka-user-password")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "reset-dbaas-kafka-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASKafkaUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -5397,21 +5349,19 @@ func (c Client) RevealDBAASKafkaUserPassword(ctx context.Context, serviceName st
 		return nil, fmt.Errorf("RevealDBAASKafkaUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reveal-dbaas-kafka-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealDBAASKafkaUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reveal-dbaas-kafka-user-password")
+	defer c.logCall(ctx, request, response, "reveal-dbaas-kafka-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevealDBAASKafkaUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserKafkaSecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealDBAASKafkaUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -5437,21 +5387,19 @@ func (c Client) GetDBAASMigrationStatus(ctx context.Context, name string) (*DBAA
 		return nil, fmt.Errorf("GetDBAASMigrationStatus: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-migration-status")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASMigrationStatus: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-migration-status")
+	defer c.logCall(ctx, request, response, "get-dbaas-migration-status")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASMigrationStatus: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASMigrationStatus)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASMigrationStatus: prepare JSON response: %w", err)
 	}
 
@@ -5476,21 +5424,19 @@ func (c Client) DeleteDBAASServiceMysql(ctx context.Context, name string) (*Oper
 		return nil, fmt.Errorf("DeleteDBAASServiceMysql: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-service-mysql")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceMysql: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-service-mysql")
+	defer c.logCall(ctx, request, response, "delete-dbaas-service-mysql")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceMysql: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceMysql: prepare JSON response: %w", err)
 	}
 
@@ -5516,21 +5462,19 @@ func (c Client) GetDBAASServiceMysql(ctx context.Context, name string) (*DBAASSe
 		return nil, fmt.Errorf("GetDBAASServiceMysql: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-mysql")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMysql: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-mysql")
+	defer c.logCall(ctx, request, response, "get-dbaas-service-mysql")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMysql: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASServiceMysql)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMysql: prepare JSON response: %w", err)
 	}
 
@@ -5631,12 +5575,12 @@ type CreateDBAASServiceMysqlRequest struct {
 func (c Client) CreateDBAASServiceMysql(ctx context.Context, name string, req CreateDBAASServiceMysqlRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: new request: %w", err)
 	}
@@ -5653,21 +5597,23 @@ func (c Client) CreateDBAASServiceMysql(ctx context.Context, name string, req Cr
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-service-mysql")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-service-mysql")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-service-mysql")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceMysql: prepare JSON response: %w", err)
 	}
 
@@ -5745,12 +5691,12 @@ type UpdateDBAASServiceMysqlRequest struct {
 func (c Client) UpdateDBAASServiceMysql(ctx context.Context, name string, req UpdateDBAASServiceMysqlRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: new request: %w", err)
 	}
@@ -5767,21 +5713,23 @@ func (c Client) UpdateDBAASServiceMysql(ctx context.Context, name string, req Up
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-service-mysql")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-service-mysql")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-service-mysql")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceMysql: prepare JSON response: %w", err)
 	}
 
@@ -5806,21 +5754,19 @@ func (c Client) EnableDBAASMysqlWrites(ctx context.Context, name string) (*Opera
 		return nil, fmt.Errorf("EnableDBAASMysqlWrites: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "enable-dbaas-mysql-writes")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("EnableDBAASMysqlWrites: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "enable-dbaas-mysql-writes")
+	defer c.logCall(ctx, request, response, "enable-dbaas-mysql-writes")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("EnableDBAASMysqlWrites: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("EnableDBAASMysqlWrites: prepare JSON response: %w", err)
 	}
 
@@ -5845,21 +5791,19 @@ func (c Client) StartDBAASMysqlMaintenance(ctx context.Context, name string) (*O
 		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "start-dbaas-mysql-maintenance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "start-dbaas-mysql-maintenance")
+	defer c.logCall(ctx, request, response, "start-dbaas-mysql-maintenance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASMysqlMaintenance: prepare JSON response: %w", err)
 	}
 
@@ -5884,21 +5828,19 @@ func (c Client) StopDBAASMysqlMigration(ctx context.Context, name string) (*Oper
 		return nil, fmt.Errorf("StopDBAASMysqlMigration: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "stop-dbaas-mysql-migration")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StopDBAASMysqlMigration: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "stop-dbaas-mysql-migration")
+	defer c.logCall(ctx, request, response, "stop-dbaas-mysql-migration")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StopDBAASMysqlMigration: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopDBAASMysqlMigration: prepare JSON response: %w", err)
 	}
 
@@ -5912,12 +5854,12 @@ type CreateDBAASMysqlDatabaseRequest struct {
 func (c Client) CreateDBAASMysqlDatabase(ctx context.Context, serviceName string, req CreateDBAASMysqlDatabaseRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/database", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: new request: %w", err)
 	}
@@ -5934,21 +5876,23 @@ func (c Client) CreateDBAASMysqlDatabase(ctx context.Context, serviceName string
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-mysql-database")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-mysql-database")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-mysql-database")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlDatabase: prepare JSON response: %w", err)
 	}
 
@@ -5973,21 +5917,19 @@ func (c Client) DeleteDBAASMysqlDatabase(ctx context.Context, serviceName string
 		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-mysql-database")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-mysql-database")
+	defer c.logCall(ctx, request, response, "delete-dbaas-mysql-database")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlDatabase: prepare JSON response: %w", err)
 	}
 
@@ -6002,12 +5944,12 @@ type CreateDBAASMysqlUserRequest struct {
 func (c Client) CreateDBAASMysqlUser(ctx context.Context, serviceName string, req CreateDBAASMysqlUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/user", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: new request: %w", err)
 	}
@@ -6024,21 +5966,23 @@ func (c Client) CreateDBAASMysqlUser(ctx context.Context, serviceName string, re
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-mysql-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-mysql-user")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-mysql-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUser: prepare JSON response: %w", err)
 	}
 
@@ -6063,21 +6007,19 @@ func (c Client) DeleteDBAASMysqlUser(ctx context.Context, serviceName string, us
 		return nil, fmt.Errorf("DeleteDBAASMysqlUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-mysql-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-mysql-user")
+	defer c.logCall(ctx, request, response, "delete-dbaas-mysql-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASMysqlUser: prepare JSON response: %w", err)
 	}
 
@@ -6093,12 +6035,12 @@ type ResetDBAASMysqlUserPasswordRequest struct {
 func (c Client) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASMysqlUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-mysql/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: new request: %w", err)
 	}
@@ -6115,21 +6057,23 @@ func (c Client) ResetDBAASMysqlUserPassword(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-dbaas-mysql-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-dbaas-mysql-user-password")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "reset-dbaas-mysql-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASMysqlUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -6154,21 +6098,19 @@ func (c Client) RevealDBAASMysqlUserPassword(ctx context.Context, serviceName st
 		return nil, fmt.Errorf("RevealDBAASMysqlUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reveal-dbaas-mysql-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealDBAASMysqlUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reveal-dbaas-mysql-user-password")
+	defer c.logCall(ctx, request, response, "reveal-dbaas-mysql-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevealDBAASMysqlUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserMysqlSecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealDBAASMysqlUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -6193,21 +6135,19 @@ func (c Client) DeleteDBAASServiceOpensearch(ctx context.Context, name string) (
 		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-service-opensearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-service-opensearch")
+	defer c.logCall(ctx, request, response, "delete-dbaas-service-opensearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceOpensearch: prepare JSON response: %w", err)
 	}
 
@@ -6233,21 +6173,19 @@ func (c Client) GetDBAASServiceOpensearch(ctx context.Context, name string) (*DB
 		return nil, fmt.Errorf("GetDBAASServiceOpensearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-opensearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceOpensearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-opensearch")
+	defer c.logCall(ctx, request, response, "get-dbaas-service-opensearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceOpensearch: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASServiceOpensearch)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceOpensearch: prepare JSON response: %w", err)
 	}
 
@@ -6343,12 +6281,12 @@ type CreateDBAASServiceOpensearchRequest struct {
 func (c Client) CreateDBAASServiceOpensearch(ctx context.Context, name string, req CreateDBAASServiceOpensearchRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: new request: %w", err)
 	}
@@ -6365,21 +6303,23 @@ func (c Client) CreateDBAASServiceOpensearch(ctx context.Context, name string, r
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-service-opensearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-service-opensearch")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-service-opensearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceOpensearch: prepare JSON response: %w", err)
 	}
 
@@ -6472,12 +6412,12 @@ type UpdateDBAASServiceOpensearchRequest struct {
 func (c Client) UpdateDBAASServiceOpensearch(ctx context.Context, name string, req UpdateDBAASServiceOpensearchRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: new request: %w", err)
 	}
@@ -6494,21 +6434,23 @@ func (c Client) UpdateDBAASServiceOpensearch(ctx context.Context, name string, r
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-service-opensearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-service-opensearch")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-service-opensearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceOpensearch: prepare JSON response: %w", err)
 	}
 
@@ -6533,21 +6475,19 @@ func (c Client) GetDBAASOpensearchAclConfig(ctx context.Context, name string) (*
 		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-opensearch-acl-config")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-opensearch-acl-config")
+	defer c.logCall(ctx, request, response, "get-dbaas-opensearch-acl-config")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASOpensearchAclConfig)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASOpensearchAclConfig: prepare JSON response: %w", err)
 	}
 
@@ -6557,12 +6497,12 @@ func (c Client) GetDBAASOpensearchAclConfig(ctx context.Context, name string) (*
 func (c Client) UpdateDBAASOpensearchAclConfig(ctx context.Context, name string, req DBAASOpensearchAclConfig) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/acl-config", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: new request: %w", err)
 	}
@@ -6579,21 +6519,23 @@ func (c Client) UpdateDBAASOpensearchAclConfig(ctx context.Context, name string,
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-opensearch-acl-config")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-opensearch-acl-config")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-opensearch-acl-config")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASOpensearchAclConfig: prepare JSON response: %w", err)
 	}
 
@@ -6618,21 +6560,19 @@ func (c Client) StartDBAASOpensearchMaintenance(ctx context.Context, name string
 		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "start-dbaas-opensearch-maintenance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "start-dbaas-opensearch-maintenance")
+	defer c.logCall(ctx, request, response, "start-dbaas-opensearch-maintenance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASOpensearchMaintenance: prepare JSON response: %w", err)
 	}
 
@@ -6646,12 +6586,12 @@ type CreateDBAASOpensearchUserRequest struct {
 func (c Client) CreateDBAASOpensearchUser(ctx context.Context, serviceName string, req CreateDBAASOpensearchUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/user", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: new request: %w", err)
 	}
@@ -6668,21 +6608,23 @@ func (c Client) CreateDBAASOpensearchUser(ctx context.Context, serviceName strin
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-opensearch-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-opensearch-user")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-opensearch-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASOpensearchUser: prepare JSON response: %w", err)
 	}
 
@@ -6707,21 +6649,19 @@ func (c Client) DeleteDBAASOpensearchUser(ctx context.Context, serviceName strin
 		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-opensearch-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-opensearch-user")
+	defer c.logCall(ctx, request, response, "delete-dbaas-opensearch-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASOpensearchUser: prepare JSON response: %w", err)
 	}
 
@@ -6736,12 +6676,12 @@ type ResetDBAASOpensearchUserPasswordRequest struct {
 func (c Client) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASOpensearchUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-opensearch/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: new request: %w", err)
 	}
@@ -6758,21 +6698,23 @@ func (c Client) ResetDBAASOpensearchUserPassword(ctx context.Context, serviceNam
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-dbaas-opensearch-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-dbaas-opensearch-user-password")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "reset-dbaas-opensearch-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASOpensearchUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -6797,21 +6739,19 @@ func (c Client) RevealDBAASOpensearchUserPassword(ctx context.Context, serviceNa
 		return nil, fmt.Errorf("RevealDBAASOpensearchUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reveal-dbaas-opensearch-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealDBAASOpensearchUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reveal-dbaas-opensearch-user-password")
+	defer c.logCall(ctx, request, response, "reveal-dbaas-opensearch-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevealDBAASOpensearchUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserOpensearchSecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealDBAASOpensearchUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -6836,21 +6776,19 @@ func (c Client) DeleteDBAASServicePG(ctx context.Context, name string) (*Operati
 		return nil, fmt.Errorf("DeleteDBAASServicePG: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-service-pg")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServicePG: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-service-pg")
+	defer c.logCall(ctx, request, response, "delete-dbaas-service-pg")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServicePG: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServicePG: prepare JSON response: %w", err)
 	}
 
@@ -6876,21 +6814,19 @@ func (c Client) GetDBAASServicePG(ctx context.Context, name string) (*DBAASServi
 		return nil, fmt.Errorf("GetDBAASServicePG: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-pg")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServicePG: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-pg")
+	defer c.logCall(ctx, request, response, "get-dbaas-service-pg")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServicePG: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASServicePG)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServicePG: prepare JSON response: %w", err)
 	}
 
@@ -7002,12 +6938,12 @@ type CreateDBAASServicePGRequest struct {
 func (c Client) CreateDBAASServicePG(ctx context.Context, name string, req CreateDBAASServicePGRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServicePG: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServicePG: new request: %w", err)
 	}
@@ -7024,21 +6960,23 @@ func (c Client) CreateDBAASServicePG(ctx context.Context, name string, req Creat
 		return nil, fmt.Errorf("CreateDBAASServicePG: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-service-pg")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServicePG: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-service-pg")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-service-pg")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServicePG: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServicePG: prepare JSON response: %w", err)
 	}
 
@@ -7128,12 +7066,12 @@ type UpdateDBAASServicePGRequest struct {
 func (c Client) UpdateDBAASServicePG(ctx context.Context, name string, req UpdateDBAASServicePGRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServicePG: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServicePG: new request: %w", err)
 	}
@@ -7150,21 +7088,23 @@ func (c Client) UpdateDBAASServicePG(ctx context.Context, name string, req Updat
 		return nil, fmt.Errorf("UpdateDBAASServicePG: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-service-pg")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServicePG: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-service-pg")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-service-pg")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServicePG: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServicePG: prepare JSON response: %w", err)
 	}
 
@@ -7189,21 +7129,19 @@ func (c Client) StartDBAASPGMaintenance(ctx context.Context, name string) (*Oper
 		return nil, fmt.Errorf("StartDBAASPGMaintenance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "start-dbaas-pg-maintenance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASPGMaintenance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "start-dbaas-pg-maintenance")
+	defer c.logCall(ctx, request, response, "start-dbaas-pg-maintenance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StartDBAASPGMaintenance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASPGMaintenance: prepare JSON response: %w", err)
 	}
 
@@ -7228,21 +7166,19 @@ func (c Client) StopDBAASPGMigration(ctx context.Context, name string) (*Operati
 		return nil, fmt.Errorf("StopDBAASPGMigration: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "stop-dbaas-pg-migration")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StopDBAASPGMigration: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "stop-dbaas-pg-migration")
+	defer c.logCall(ctx, request, response, "stop-dbaas-pg-migration")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StopDBAASPGMigration: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopDBAASPGMigration: prepare JSON response: %w", err)
 	}
 
@@ -7261,12 +7197,12 @@ type CreateDBAASPGConnectionPoolRequest struct {
 func (c Client) CreateDBAASPGConnectionPool(ctx context.Context, serviceName string, req CreateDBAASPGConnectionPoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/connection-pool", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: new request: %w", err)
 	}
@@ -7283,21 +7219,23 @@ func (c Client) CreateDBAASPGConnectionPool(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-pg-connection-pool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-pg-connection-pool")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-pg-connection-pool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGConnectionPool: prepare JSON response: %w", err)
 	}
 
@@ -7323,21 +7261,19 @@ func (c Client) DeleteDBAASPGConnectionPool(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-pg-connection-pool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-pg-connection-pool")
+	defer c.logCall(ctx, request, response, "delete-dbaas-pg-connection-pool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGConnectionPool: prepare JSON response: %w", err)
 	}
 
@@ -7355,12 +7291,12 @@ type UpdateDBAASPGConnectionPoolRequest struct {
 func (c Client) UpdateDBAASPGConnectionPool(ctx context.Context, serviceName string, connectionPoolName string, req UpdateDBAASPGConnectionPoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/connection-pool/%v", serviceName, connectionPoolName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: new request: %w", err)
 	}
@@ -7377,21 +7313,23 @@ func (c Client) UpdateDBAASPGConnectionPool(ctx context.Context, serviceName str
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-pg-connection-pool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-pg-connection-pool")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-pg-connection-pool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPGConnectionPool: prepare JSON response: %w", err)
 	}
 
@@ -7409,12 +7347,12 @@ type CreateDBAASPGDatabaseRequest struct {
 func (c Client) CreateDBAASPGDatabase(ctx context.Context, serviceName string, req CreateDBAASPGDatabaseRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/database", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: new request: %w", err)
 	}
@@ -7431,21 +7369,23 @@ func (c Client) CreateDBAASPGDatabase(ctx context.Context, serviceName string, r
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-pg-database")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-pg-database")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-pg-database")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGDatabase: prepare JSON response: %w", err)
 	}
 
@@ -7470,21 +7410,19 @@ func (c Client) DeleteDBAASPGDatabase(ctx context.Context, serviceName string, d
 		return nil, fmt.Errorf("DeleteDBAASPGDatabase: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-pg-database")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGDatabase: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-pg-database")
+	defer c.logCall(ctx, request, response, "delete-dbaas-pg-database")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGDatabase: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPGDatabase: prepare JSON response: %w", err)
 	}
 
@@ -7499,12 +7437,12 @@ type CreateDBAASPostgresUserRequest struct {
 func (c Client) CreateDBAASPostgresUser(ctx context.Context, serviceName string, req CreateDBAASPostgresUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: new request: %w", err)
 	}
@@ -7521,21 +7459,23 @@ func (c Client) CreateDBAASPostgresUser(ctx context.Context, serviceName string,
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-postgres-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-postgres-user")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-postgres-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPostgresUser: prepare JSON response: %w", err)
 	}
 
@@ -7560,21 +7500,19 @@ func (c Client) DeleteDBAASPostgresUser(ctx context.Context, serviceName string,
 		return nil, fmt.Errorf("DeleteDBAASPostgresUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-postgres-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPostgresUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-postgres-user")
+	defer c.logCall(ctx, request, response, "delete-dbaas-postgres-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPostgresUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASPostgresUser: prepare JSON response: %w", err)
 	}
 
@@ -7588,12 +7526,12 @@ type UpdateDBAASPostgresAllowReplicationRequest struct {
 func (c Client) UpdateDBAASPostgresAllowReplication(ctx context.Context, serviceName string, username string, req UpdateDBAASPostgresAllowReplicationRequest) (*DBAASPostgresUsers, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user/%v/allow-replication", serviceName, username)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: new request: %w", err)
 	}
@@ -7610,21 +7548,23 @@ func (c Client) UpdateDBAASPostgresAllowReplication(ctx context.Context, service
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-postgres-allow-replication")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-postgres-allow-replication")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-postgres-allow-replication")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASPostgresUsers)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASPostgresAllowReplication: prepare JSON response: %w", err)
 	}
 
@@ -7639,12 +7579,12 @@ type ResetDBAASPostgresUserPasswordRequest struct {
 func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASPostgresUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: new request: %w", err)
 	}
@@ -7661,21 +7601,23 @@ func (c Client) ResetDBAASPostgresUserPassword(ctx context.Context, serviceName 
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-dbaas-postgres-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-dbaas-postgres-user-password")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "reset-dbaas-postgres-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASPostgresUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -7700,21 +7642,19 @@ func (c Client) RevealDBAASPostgresUserPassword(ctx context.Context, serviceName
 		return nil, fmt.Errorf("RevealDBAASPostgresUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reveal-dbaas-postgres-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealDBAASPostgresUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reveal-dbaas-postgres-user-password")
+	defer c.logCall(ctx, request, response, "reveal-dbaas-postgres-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevealDBAASPostgresUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserPostgresSecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealDBAASPostgresUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -7729,12 +7669,12 @@ type CreateDBAASPGUpgradeCheckRequest struct {
 func (c Client) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, req CreateDBAASPGUpgradeCheckRequest) (*DBAASTask, error) {
 	path := fmt.Sprintf("/dbaas-postgres/%v/upgrade-check", service)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: new request: %w", err)
 	}
@@ -7751,21 +7691,23 @@ func (c Client) CreateDBAASPGUpgradeCheck(ctx context.Context, service string, r
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-pg-upgrade-check")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-pg-upgrade-check")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-pg-upgrade-check")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASTask)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASPGUpgradeCheck: prepare JSON response: %w", err)
 	}
 
@@ -7814,21 +7756,19 @@ func (c Client) ListDBAASServices(ctx context.Context) (*ListDBAASServicesRespon
 		return nil, fmt.Errorf("ListDBAASServices: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dbaas-services")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASServices: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dbaas-services")
+	defer c.logCall(ctx, request, response, "list-dbaas-services")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDBAASServices: http response: %w", err)
 	}
 
 	bodyresp := new(ListDBAASServicesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASServices: prepare JSON response: %w", err)
 	}
 
@@ -7847,12 +7787,12 @@ type GetDBAASServiceLogsRequest struct {
 func (c Client) GetDBAASServiceLogs(ctx context.Context, serviceName string, req GetDBAASServiceLogsRequest) (*DBAASServiceLogs, error) {
 	path := fmt.Sprintf("/dbaas-service-logs/%v", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceLogs: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceLogs: new request: %w", err)
 	}
@@ -7869,21 +7809,23 @@ func (c Client) GetDBAASServiceLogs(ctx context.Context, serviceName string, req
 		return nil, fmt.Errorf("GetDBAASServiceLogs: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-logs")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceLogs: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-logs")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "get-dbaas-service-logs")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceLogs: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASServiceLogs)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceLogs: prepare JSON response: %w", err)
 	}
 
@@ -7913,12 +7855,12 @@ type GetDBAASServiceMetricsRequest struct {
 func (c Client) GetDBAASServiceMetrics(ctx context.Context, serviceName string, req GetDBAASServiceMetricsRequest) (*GetDBAASServiceMetricsResponse, error) {
 	path := fmt.Sprintf("/dbaas-service-metrics/%v", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: new request: %w", err)
 	}
@@ -7935,21 +7877,23 @@ func (c Client) GetDBAASServiceMetrics(ctx context.Context, serviceName string, 
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-metrics")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-metrics")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "get-dbaas-service-metrics")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASServiceMetricsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceMetrics: prepare JSON response: %w", err)
 	}
 
@@ -7998,21 +7942,19 @@ func (c Client) ListDBAASServiceTypes(ctx context.Context) (*ListDBAASServiceTyp
 		return nil, fmt.Errorf("ListDBAASServiceTypes: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dbaas-service-types")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASServiceTypes: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dbaas-service-types")
+	defer c.logCall(ctx, request, response, "list-dbaas-service-types")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDBAASServiceTypes: http response: %w", err)
 	}
 
 	bodyresp := new(ListDBAASServiceTypesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASServiceTypes: prepare JSON response: %w", err)
 	}
 
@@ -8038,21 +7980,19 @@ func (c Client) GetDBAASServiceType(ctx context.Context, serviceTypeName string)
 		return nil, fmt.Errorf("GetDBAASServiceType: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-type")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceType: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-type")
+	defer c.logCall(ctx, request, response, "get-dbaas-service-type")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceType: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASServiceType)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceType: prepare JSON response: %w", err)
 	}
 
@@ -8078,21 +8018,19 @@ func (c Client) DeleteDBAASService(ctx context.Context, name string) (*Operation
 		return nil, fmt.Errorf("DeleteDBAASService: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-service")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASService: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-service")
+	defer c.logCall(ctx, request, response, "delete-dbaas-service")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASService: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASService: prepare JSON response: %w", err)
 	}
 
@@ -8134,21 +8072,19 @@ func (c Client) GetDBAASSettingsClickhouse(ctx context.Context) (*GetDBAASSettin
 		return nil, fmt.Errorf("GetDBAASSettingsClickhouse: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-settings-clickhouse")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsClickhouse: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-settings-clickhouse")
+	defer c.logCall(ctx, request, response, "get-dbaas-settings-clickhouse")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsClickhouse: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASSettingsClickhouseResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsClickhouse: prepare JSON response: %w", err)
 	}
 
@@ -8191,21 +8127,19 @@ func (c Client) GetDBAASSettingsGrafana(ctx context.Context) (*GetDBAASSettingsG
 		return nil, fmt.Errorf("GetDBAASSettingsGrafana: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-settings-grafana")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsGrafana: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-settings-grafana")
+	defer c.logCall(ctx, request, response, "get-dbaas-settings-grafana")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsGrafana: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASSettingsGrafanaResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsGrafana: prepare JSON response: %w", err)
 	}
 
@@ -8278,21 +8212,19 @@ func (c Client) GetDBAASSettingsKafka(ctx context.Context) (*GetDBAASSettingsKaf
 		return nil, fmt.Errorf("GetDBAASSettingsKafka: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-settings-kafka")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsKafka: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-settings-kafka")
+	defer c.logCall(ctx, request, response, "get-dbaas-settings-kafka")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsKafka: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASSettingsKafkaResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsKafka: prepare JSON response: %w", err)
 	}
 
@@ -8335,21 +8267,19 @@ func (c Client) GetDBAASSettingsMysql(ctx context.Context) (*GetDBAASSettingsMys
 		return nil, fmt.Errorf("GetDBAASSettingsMysql: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-settings-mysql")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsMysql: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-settings-mysql")
+	defer c.logCall(ctx, request, response, "get-dbaas-settings-mysql")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsMysql: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASSettingsMysqlResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsMysql: prepare JSON response: %w", err)
 	}
 
@@ -8392,21 +8322,19 @@ func (c Client) GetDBAASSettingsOpensearch(ctx context.Context) (*GetDBAASSettin
 		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-settings-opensearch")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-settings-opensearch")
+	defer c.logCall(ctx, request, response, "get-dbaas-settings-opensearch")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASSettingsOpensearchResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsOpensearch: prepare JSON response: %w", err)
 	}
 
@@ -8479,21 +8407,19 @@ func (c Client) GetDBAASSettingsPG(ctx context.Context) (*GetDBAASSettingsPGResp
 		return nil, fmt.Errorf("GetDBAASSettingsPG: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-settings-pg")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsPG: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-settings-pg")
+	defer c.logCall(ctx, request, response, "get-dbaas-settings-pg")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsPG: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASSettingsPGResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsPG: prepare JSON response: %w", err)
 	}
 
@@ -8536,21 +8462,19 @@ func (c Client) GetDBAASSettingsThanos(ctx context.Context) (*GetDBAASSettingsTh
 		return nil, fmt.Errorf("GetDBAASSettingsThanos: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-settings-thanos")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsThanos: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-settings-thanos")
+	defer c.logCall(ctx, request, response, "get-dbaas-settings-thanos")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsThanos: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASSettingsThanosResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsThanos: prepare JSON response: %w", err)
 	}
 
@@ -8593,21 +8517,19 @@ func (c Client) GetDBAASSettingsValkey(ctx context.Context) (*GetDBAASSettingsVa
 		return nil, fmt.Errorf("GetDBAASSettingsValkey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-settings-valkey")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsValkey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-settings-valkey")
+	defer c.logCall(ctx, request, response, "get-dbaas-settings-valkey")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsValkey: http response: %w", err)
 	}
 
 	bodyresp := new(GetDBAASSettingsValkeyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASSettingsValkey: prepare JSON response: %w", err)
 	}
 
@@ -8626,12 +8548,12 @@ type CreateDBAASTaskMigrationCheckRequest struct {
 func (c Client) CreateDBAASTaskMigrationCheck(ctx context.Context, service string, req CreateDBAASTaskMigrationCheckRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-task-migration-check/%v", service)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: new request: %w", err)
 	}
@@ -8648,21 +8570,23 @@ func (c Client) CreateDBAASTaskMigrationCheck(ctx context.Context, service strin
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-task-migration-check")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-task-migration-check")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-task-migration-check")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASTaskMigrationCheck: prepare JSON response: %w", err)
 	}
 
@@ -8688,21 +8612,19 @@ func (c Client) GetDBAASTask(ctx context.Context, service string, id UUID) (*DBA
 		return nil, fmt.Errorf("GetDBAASTask: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-task")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASTask: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-task")
+	defer c.logCall(ctx, request, response, "get-dbaas-task")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASTask: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASTask)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASTask: prepare JSON response: %w", err)
 	}
 
@@ -8727,21 +8649,19 @@ func (c Client) DeleteDBAASServiceThanos(ctx context.Context, name string) (*Ope
 		return nil, fmt.Errorf("DeleteDBAASServiceThanos: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-service-thanos")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceThanos: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-service-thanos")
+	defer c.logCall(ctx, request, response, "delete-dbaas-service-thanos")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceThanos: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceThanos: prepare JSON response: %w", err)
 	}
 
@@ -8767,21 +8687,19 @@ func (c Client) GetDBAASServiceThanos(ctx context.Context, name string) (*DBAASS
 		return nil, fmt.Errorf("GetDBAASServiceThanos: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-thanos")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceThanos: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-thanos")
+	defer c.logCall(ctx, request, response, "get-dbaas-service-thanos")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceThanos: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASServiceThanos)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceThanos: prepare JSON response: %w", err)
 	}
 
@@ -8826,12 +8744,12 @@ type CreateDBAASServiceThanosRequest struct {
 func (c Client) CreateDBAASServiceThanos(ctx context.Context, name string, req CreateDBAASServiceThanosRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-thanos/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceThanos: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceThanos: new request: %w", err)
 	}
@@ -8848,21 +8766,23 @@ func (c Client) CreateDBAASServiceThanos(ctx context.Context, name string, req C
 		return nil, fmt.Errorf("CreateDBAASServiceThanos: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-service-thanos")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceThanos: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-service-thanos")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-service-thanos")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceThanos: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceThanos: prepare JSON response: %w", err)
 	}
 
@@ -8907,12 +8827,12 @@ type UpdateDBAASServiceThanosRequest struct {
 func (c Client) UpdateDBAASServiceThanos(ctx context.Context, name string, req UpdateDBAASServiceThanosRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-thanos/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceThanos: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceThanos: new request: %w", err)
 	}
@@ -8929,21 +8849,23 @@ func (c Client) UpdateDBAASServiceThanos(ctx context.Context, name string, req U
 		return nil, fmt.Errorf("UpdateDBAASServiceThanos: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-service-thanos")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceThanos: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-service-thanos")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-service-thanos")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceThanos: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceThanos: prepare JSON response: %w", err)
 	}
 
@@ -8968,21 +8890,19 @@ func (c Client) StartDBAASThanosMaintenance(ctx context.Context, name string) (*
 		return nil, fmt.Errorf("StartDBAASThanosMaintenance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "start-dbaas-thanos-maintenance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASThanosMaintenance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "start-dbaas-thanos-maintenance")
+	defer c.logCall(ctx, request, response, "start-dbaas-thanos-maintenance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StartDBAASThanosMaintenance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASThanosMaintenance: prepare JSON response: %w", err)
 	}
 
@@ -9007,21 +8927,19 @@ func (c Client) RevealDBAASThanosUserPassword(ctx context.Context, serviceName s
 		return nil, fmt.Errorf("RevealDBAASThanosUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reveal-dbaas-thanos-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealDBAASThanosUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reveal-dbaas-thanos-user-password")
+	defer c.logCall(ctx, request, response, "reveal-dbaas-thanos-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevealDBAASThanosUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserThanosSecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealDBAASThanosUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -9046,21 +8964,19 @@ func (c Client) DeleteDBAASServiceValkey(ctx context.Context, name string) (*Ope
 		return nil, fmt.Errorf("DeleteDBAASServiceValkey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-service-valkey")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceValkey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-service-valkey")
+	defer c.logCall(ctx, request, response, "delete-dbaas-service-valkey")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceValkey: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASServiceValkey: prepare JSON response: %w", err)
 	}
 
@@ -9086,21 +9002,19 @@ func (c Client) GetDBAASServiceValkey(ctx context.Context, name string) (*DBAASS
 		return nil, fmt.Errorf("GetDBAASServiceValkey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dbaas-service-valkey")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceValkey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dbaas-service-valkey")
+	defer c.logCall(ctx, request, response, "get-dbaas-service-valkey")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceValkey: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASServiceValkey)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDBAASServiceValkey: prepare JSON response: %w", err)
 	}
 
@@ -9171,12 +9085,12 @@ type CreateDBAASServiceValkeyRequest struct {
 func (c Client) CreateDBAASServiceValkey(ctx context.Context, name string, req CreateDBAASServiceValkeyRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-valkey/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceValkey: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceValkey: new request: %w", err)
 	}
@@ -9193,21 +9107,23 @@ func (c Client) CreateDBAASServiceValkey(ctx context.Context, name string, req C
 		return nil, fmt.Errorf("CreateDBAASServiceValkey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-service-valkey")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceValkey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-service-valkey")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-service-valkey")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceValkey: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASServiceValkey: prepare JSON response: %w", err)
 	}
 
@@ -9275,12 +9191,12 @@ type UpdateDBAASServiceValkeyRequest struct {
 func (c Client) UpdateDBAASServiceValkey(ctx context.Context, name string, req UpdateDBAASServiceValkeyRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-valkey/%v", name)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceValkey: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceValkey: new request: %w", err)
 	}
@@ -9297,21 +9213,23 @@ func (c Client) UpdateDBAASServiceValkey(ctx context.Context, name string, req U
 		return nil, fmt.Errorf("UpdateDBAASServiceValkey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-service-valkey")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceValkey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-service-valkey")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-service-valkey")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceValkey: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASServiceValkey: prepare JSON response: %w", err)
 	}
 
@@ -9336,21 +9254,19 @@ func (c Client) StartDBAASValkeyMaintenance(ctx context.Context, name string) (*
 		return nil, fmt.Errorf("StartDBAASValkeyMaintenance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "start-dbaas-valkey-maintenance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartDBAASValkeyMaintenance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "start-dbaas-valkey-maintenance")
+	defer c.logCall(ctx, request, response, "start-dbaas-valkey-maintenance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StartDBAASValkeyMaintenance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartDBAASValkeyMaintenance: prepare JSON response: %w", err)
 	}
 
@@ -9375,21 +9291,19 @@ func (c Client) StopDBAASValkeyMigration(ctx context.Context, name string) (*Ope
 		return nil, fmt.Errorf("StopDBAASValkeyMigration: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "stop-dbaas-valkey-migration")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StopDBAASValkeyMigration: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "stop-dbaas-valkey-migration")
+	defer c.logCall(ctx, request, response, "stop-dbaas-valkey-migration")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StopDBAASValkeyMigration: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopDBAASValkeyMigration: prepare JSON response: %w", err)
 	}
 
@@ -9414,21 +9328,19 @@ func (c Client) ListDBAASValkeyUsers(ctx context.Context, serviceName string) (*
 		return nil, fmt.Errorf("ListDBAASValkeyUsers: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dbaas-valkey-users")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDBAASValkeyUsers: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dbaas-valkey-users")
+	defer c.logCall(ctx, request, response, "list-dbaas-valkey-users")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDBAASValkeyUsers: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASValkeyUsers)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDBAASValkeyUsers: prepare JSON response: %w", err)
 	}
 
@@ -9443,12 +9355,12 @@ type CreateDBAASValkeyUserRequest struct {
 func (c Client) CreateDBAASValkeyUser(ctx context.Context, serviceName string, req CreateDBAASValkeyUserRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-valkey/%v/user", serviceName)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASValkeyUser: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASValkeyUser: new request: %w", err)
 	}
@@ -9465,21 +9377,23 @@ func (c Client) CreateDBAASValkeyUser(ctx context.Context, serviceName string, r
 		return nil, fmt.Errorf("CreateDBAASValkeyUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dbaas-valkey-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASValkeyUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dbaas-valkey-user")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dbaas-valkey-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDBAASValkeyUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDBAASValkeyUser: prepare JSON response: %w", err)
 	}
 
@@ -9504,21 +9418,19 @@ func (c Client) DeleteDBAASValkeyUser(ctx context.Context, serviceName string, u
 		return nil, fmt.Errorf("DeleteDBAASValkeyUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dbaas-valkey-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDBAASValkeyUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dbaas-valkey-user")
+	defer c.logCall(ctx, request, response, "delete-dbaas-valkey-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASValkeyUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDBAASValkeyUser: prepare JSON response: %w", err)
 	}
 
@@ -9532,12 +9444,12 @@ type UpdateDBAASValkeyUserAccessControlRequest struct {
 func (c Client) UpdateDBAASValkeyUserAccessControl(ctx context.Context, serviceName string, username string, req UpdateDBAASValkeyUserAccessControlRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-valkey/%v/user/%v", serviceName, username)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASValkeyUserAccessControl: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASValkeyUserAccessControl: new request: %w", err)
 	}
@@ -9554,21 +9466,23 @@ func (c Client) UpdateDBAASValkeyUserAccessControl(ctx context.Context, serviceN
 		return nil, fmt.Errorf("UpdateDBAASValkeyUserAccessControl: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dbaas-valkey-user-access-control")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDBAASValkeyUserAccessControl: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dbaas-valkey-user-access-control")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dbaas-valkey-user-access-control")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASValkeyUserAccessControl: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDBAASValkeyUserAccessControl: prepare JSON response: %w", err)
 	}
 
@@ -9583,12 +9497,12 @@ type ResetDBAASValkeyUserPasswordRequest struct {
 func (c Client) ResetDBAASValkeyUserPassword(ctx context.Context, serviceName string, username string, req ResetDBAASValkeyUserPasswordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dbaas-valkey/%v/user/%v/password/reset", serviceName, username)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASValkeyUserPassword: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASValkeyUserPassword: new request: %w", err)
 	}
@@ -9605,21 +9519,23 @@ func (c Client) ResetDBAASValkeyUserPassword(ctx context.Context, serviceName st
 		return nil, fmt.Errorf("ResetDBAASValkeyUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-dbaas-valkey-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetDBAASValkeyUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-dbaas-valkey-user-password")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "reset-dbaas-valkey-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetDBAASValkeyUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetDBAASValkeyUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -9644,21 +9560,19 @@ func (c Client) RevealDBAASValkeyUserPassword(ctx context.Context, serviceName s
 		return nil, fmt.Errorf("RevealDBAASValkeyUserPassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reveal-dbaas-valkey-user-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealDBAASValkeyUserPassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reveal-dbaas-valkey-user-password")
+	defer c.logCall(ctx, request, response, "reveal-dbaas-valkey-user-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevealDBAASValkeyUserPassword: http response: %w", err)
 	}
 
 	bodyresp := new(DBAASUserValkeySecrets)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealDBAASValkeyUserPassword: prepare JSON response: %w", err)
 	}
 
@@ -9707,21 +9621,19 @@ func (c Client) ListDeployTargets(ctx context.Context) (*ListDeployTargetsRespon
 		return nil, fmt.Errorf("ListDeployTargets: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-deploy-targets")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDeployTargets: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-deploy-targets")
+	defer c.logCall(ctx, request, response, "list-deploy-targets")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDeployTargets: http response: %w", err)
 	}
 
 	bodyresp := new(ListDeployTargetsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDeployTargets: prepare JSON response: %w", err)
 	}
 
@@ -9747,21 +9659,19 @@ func (c Client) GetDeployTarget(ctx context.Context, id UUID) (*DeployTarget, er
 		return nil, fmt.Errorf("GetDeployTarget: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-deploy-target")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDeployTarget: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-deploy-target")
+	defer c.logCall(ctx, request, response, "get-deploy-target")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDeployTarget: http response: %w", err)
 	}
 
 	bodyresp := new(DeployTarget)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDeployTarget: prepare JSON response: %w", err)
 	}
 
@@ -9810,21 +9720,19 @@ func (c Client) ListDNSDomains(ctx context.Context) (*ListDNSDomainsResponse, er
 		return nil, fmt.Errorf("ListDNSDomains: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dns-domains")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDNSDomains: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dns-domains")
+	defer c.logCall(ctx, request, response, "list-dns-domains")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDNSDomains: http response: %w", err)
 	}
 
 	bodyresp := new(ListDNSDomainsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDNSDomains: prepare JSON response: %w", err)
 	}
 
@@ -9841,12 +9749,12 @@ type CreateDNSDomainRequest struct {
 func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest) (*Operation, error) {
 	path := "/dns-domain"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: new request: %w", err)
 	}
@@ -9863,21 +9771,23 @@ func (c Client) CreateDNSDomain(ctx context.Context, req CreateDNSDomainRequest)
 		return nil, fmt.Errorf("CreateDNSDomain: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dns-domain")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dns-domain")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dns-domain")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDNSDomain: prepare JSON response: %w", err)
 	}
 
@@ -9926,21 +9836,19 @@ func (c Client) ListDNSDomainRecords(ctx context.Context, domainID UUID) (*ListD
 		return nil, fmt.Errorf("ListDNSDomainRecords: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-dns-domain-records")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListDNSDomainRecords: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-dns-domain-records")
+	defer c.logCall(ctx, request, response, "list-dns-domain-records")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListDNSDomainRecords: http response: %w", err)
 	}
 
 	bodyresp := new(ListDNSDomainRecordsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListDNSDomainRecords: prepare JSON response: %w", err)
 	}
 
@@ -9983,12 +9891,12 @@ type CreateDNSDomainRecordRequest struct {
 func (c Client) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req CreateDNSDomainRecordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record", domainID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomainRecord: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomainRecord: new request: %w", err)
 	}
@@ -10005,21 +9913,23 @@ func (c Client) CreateDNSDomainRecord(ctx context.Context, domainID UUID, req Cr
 		return nil, fmt.Errorf("CreateDNSDomainRecord: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-dns-domain-record")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDNSDomainRecord: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-dns-domain-record")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-dns-domain-record")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateDNSDomainRecord: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateDNSDomainRecord: prepare JSON response: %w", err)
 	}
 
@@ -10045,21 +9955,19 @@ func (c Client) DeleteDNSDomainRecord(ctx context.Context, domainID UUID, record
 		return nil, fmt.Errorf("DeleteDNSDomainRecord: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dns-domain-record")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomainRecord: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dns-domain-record")
+	defer c.logCall(ctx, request, response, "delete-dns-domain-record")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomainRecord: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomainRecord: prepare JSON response: %w", err)
 	}
 
@@ -10085,21 +9993,19 @@ func (c Client) GetDNSDomainRecord(ctx context.Context, domainID UUID, recordID 
 		return nil, fmt.Errorf("GetDNSDomainRecord: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dns-domain-record")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDNSDomainRecord: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dns-domain-record")
+	defer c.logCall(ctx, request, response, "get-dns-domain-record")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDNSDomainRecord: http response: %w", err)
 	}
 
 	bodyresp := new(DNSDomainRecord)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDNSDomainRecord: prepare JSON response: %w", err)
 	}
 
@@ -10121,12 +10027,12 @@ type UpdateDNSDomainRecordRequest struct {
 func (c Client) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, recordID UUID, req UpdateDNSDomainRecordRequest) (*Operation, error) {
 	path := fmt.Sprintf("/dns-domain/%v/record/%v", domainID, recordID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: new request: %w", err)
 	}
@@ -10143,21 +10049,23 @@ func (c Client) UpdateDNSDomainRecord(ctx context.Context, domainID UUID, record
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-dns-domain-record")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-dns-domain-record")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-dns-domain-record")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateDNSDomainRecord: prepare JSON response: %w", err)
 	}
 
@@ -10183,21 +10091,19 @@ func (c Client) DeleteDNSDomain(ctx context.Context, id UUID) (*Operation, error
 		return nil, fmt.Errorf("DeleteDNSDomain: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-dns-domain")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomain: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-dns-domain")
+	defer c.logCall(ctx, request, response, "delete-dns-domain")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomain: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteDNSDomain: prepare JSON response: %w", err)
 	}
 
@@ -10223,21 +10129,19 @@ func (c Client) GetDNSDomain(ctx context.Context, id UUID) (*DNSDomain, error) {
 		return nil, fmt.Errorf("GetDNSDomain: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dns-domain")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDNSDomain: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dns-domain")
+	defer c.logCall(ctx, request, response, "get-dns-domain")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDNSDomain: http response: %w", err)
 	}
 
 	bodyresp := new(DNSDomain)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDNSDomain: prepare JSON response: %w", err)
 	}
 
@@ -10267,21 +10171,19 @@ func (c Client) GetDNSDomainZoneFile(ctx context.Context, id UUID) (*GetDNSDomai
 		return nil, fmt.Errorf("GetDNSDomainZoneFile: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-dns-domain-zone-file")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetDNSDomainZoneFile: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-dns-domain-zone-file")
+	defer c.logCall(ctx, request, response, "get-dns-domain-zone-file")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetDNSDomainZoneFile: http response: %w", err)
 	}
 
 	bodyresp := new(GetDNSDomainZoneFileResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetDNSDomainZoneFile: prepare JSON response: %w", err)
 	}
 
@@ -10330,21 +10232,19 @@ func (c Client) ListElasticIPS(ctx context.Context) (*ListElasticIPSResponse, er
 		return nil, fmt.Errorf("ListElasticIPS: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-elastic-ips")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListElasticIPS: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-elastic-ips")
+	defer c.logCall(ctx, request, response, "list-elastic-ips")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListElasticIPS: http response: %w", err)
 	}
 
 	bodyresp := new(ListElasticIPSResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListElasticIPS: prepare JSON response: %w", err)
 	}
 
@@ -10372,12 +10272,12 @@ type CreateElasticIPRequest struct {
 func (c Client) CreateElasticIP(ctx context.Context, req CreateElasticIPRequest) (*Operation, error) {
 	path := "/elastic-ip"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateElasticIP: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateElasticIP: new request: %w", err)
 	}
@@ -10394,21 +10294,23 @@ func (c Client) CreateElasticIP(ctx context.Context, req CreateElasticIPRequest)
 		return nil, fmt.Errorf("CreateElasticIP: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-elastic-ip")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateElasticIP: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-elastic-ip")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-elastic-ip")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateElasticIP: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateElasticIP: prepare JSON response: %w", err)
 	}
 
@@ -10434,21 +10336,19 @@ func (c Client) DeleteElasticIP(ctx context.Context, id UUID) (*Operation, error
 		return nil, fmt.Errorf("DeleteElasticIP: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-elastic-ip")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteElasticIP: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-elastic-ip")
+	defer c.logCall(ctx, request, response, "delete-elastic-ip")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteElasticIP: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteElasticIP: prepare JSON response: %w", err)
 	}
 
@@ -10474,21 +10374,19 @@ func (c Client) GetElasticIP(ctx context.Context, id UUID) (*ElasticIP, error) {
 		return nil, fmt.Errorf("GetElasticIP: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-elastic-ip")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetElasticIP: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-elastic-ip")
+	defer c.logCall(ctx, request, response, "get-elastic-ip")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetElasticIP: http response: %w", err)
 	}
 
 	bodyresp := new(ElasticIP)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetElasticIP: prepare JSON response: %w", err)
 	}
 
@@ -10507,12 +10405,12 @@ type UpdateElasticIPRequest struct {
 func (c Client) UpdateElasticIP(ctx context.Context, id UUID, req UpdateElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateElasticIP: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateElasticIP: new request: %w", err)
 	}
@@ -10529,21 +10427,23 @@ func (c Client) UpdateElasticIP(ctx context.Context, id UUID, req UpdateElasticI
 		return nil, fmt.Errorf("UpdateElasticIP: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-elastic-ip")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateElasticIP: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-elastic-ip")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-elastic-ip")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateElasticIP: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateElasticIP: prepare JSON response: %w", err)
 	}
 
@@ -10575,21 +10475,19 @@ func (c Client) ResetElasticIPField(ctx context.Context, id UUID, field ResetEla
 		return nil, fmt.Errorf("ResetElasticIPField: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-elastic-ip-field")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetElasticIPField: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-elastic-ip-field")
+	defer c.logCall(ctx, request, response, "reset-elastic-ip-field")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetElasticIPField: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetElasticIPField: prepare JSON response: %w", err)
 	}
 
@@ -10605,12 +10503,12 @@ type AttachInstanceToElasticIPRequest struct {
 func (c Client) AttachInstanceToElasticIP(ctx context.Context, id UUID, req AttachInstanceToElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v:attach", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: new request: %w", err)
 	}
@@ -10627,21 +10525,23 @@ func (c Client) AttachInstanceToElasticIP(ctx context.Context, id UUID, req Atta
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "attach-instance-to-elastic-ip")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "attach-instance-to-elastic-ip")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "attach-instance-to-elastic-ip")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToElasticIP: prepare JSON response: %w", err)
 	}
 
@@ -10657,12 +10557,12 @@ type DetachInstanceFromElasticIPRequest struct {
 func (c Client) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req DetachInstanceFromElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/elastic-ip/%v:detach", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: new request: %w", err)
 	}
@@ -10679,21 +10579,23 @@ func (c Client) DetachInstanceFromElasticIP(ctx context.Context, id UUID, req De
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "detach-instance-from-elastic-ip")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "detach-instance-from-elastic-ip")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "detach-instance-from-elastic-ip")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromElasticIP: prepare JSON response: %w", err)
 	}
 
@@ -10725,14 +10627,12 @@ func (c Client) GetEnvImpact(ctx context.Context, period string) error {
 		return fmt.Errorf("GetEnvImpact: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-env-impact")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return fmt.Errorf("GetEnvImpact: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-env-impact")
+	defer c.logCall(ctx, request, response, "get-env-impact")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return fmt.Errorf("GetEnvImpact: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -10762,12 +10662,12 @@ type GetImpactEstimateRequest struct {
 func (c Client) GetImpactEstimate(ctx context.Context, req GetImpactEstimateRequest) (*GetImpactEstimateResponse, error) {
 	path := "/environmental-impact/estimate"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("GetImpactEstimate: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("GetImpactEstimate: new request: %w", err)
 	}
@@ -10784,14 +10684,16 @@ func (c Client) GetImpactEstimate(ctx context.Context, req GetImpactEstimateRequ
 		return nil, fmt.Errorf("GetImpactEstimate: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-impact-estimate")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetImpactEstimate: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-impact-estimate")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "get-impact-estimate")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetImpactEstimate: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -10801,7 +10703,7 @@ func (c Client) GetImpactEstimate(ctx context.Context, req GetImpactEstimateRequ
 	}
 
 	bodyresp := new(GetImpactEstimateResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetImpactEstimate: prepare JSON response: %w", err)
 	}
 
@@ -10849,14 +10751,12 @@ func (c Client) GetImpactReport(ctx context.Context, opts ...GetImpactReportOpt)
 		return nil, fmt.Errorf("GetImpactReport: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-impact-report")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetImpactReport: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-impact-report")
+	defer c.logCall(ctx, request, response, "get-impact-report")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetImpactReport: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -10866,7 +10766,7 @@ func (c Client) GetImpactReport(ctx context.Context, opts ...GetImpactReportOpt)
 	}
 
 	bodyresp := new(ImpactBreakdown)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetImpactReport: prepare JSON response: %w", err)
 	}
 
@@ -10916,21 +10816,19 @@ func (c Client) ListEvents(ctx context.Context, opts ...ListEventsOpt) ([]Event,
 		return nil, fmt.Errorf("ListEvents: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-events")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListEvents: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-events")
+	defer c.logCall(ctx, request, response, "list-events")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListEvents: http response: %w", err)
 	}
 
 	bodyresp := []Event{}
-	if err := prepareJSONResponse(response, &bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, &bodyresp); err != nil {
 		return nil, fmt.Errorf("ListEvents: prepare JSON response: %w", err)
 	}
 
@@ -10956,21 +10854,19 @@ func (c Client) GetFocusReport(ctx context.Context, period string) (*FocusReport
 		return nil, fmt.Errorf("GetFocusReport: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-focus-report")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetFocusReport: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-focus-report")
+	defer c.logCall(ctx, request, response, "get-focus-report")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetFocusReport: http response: %w", err)
 	}
 
 	bodyresp := new(FocusReport)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetFocusReport: prepare JSON response: %w", err)
 	}
 
@@ -10996,21 +10892,19 @@ func (c Client) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error
 		return nil, fmt.Errorf("GetIAMOrganizationPolicy: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-iam-organization-policy")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetIAMOrganizationPolicy: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-iam-organization-policy")
+	defer c.logCall(ctx, request, response, "get-iam-organization-policy")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetIAMOrganizationPolicy: http response: %w", err)
 	}
 
 	bodyresp := new(IAMPolicy)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetIAMOrganizationPolicy: prepare JSON response: %w", err)
 	}
 
@@ -11021,12 +10915,12 @@ func (c Client) GetIAMOrganizationPolicy(ctx context.Context) (*IAMPolicy, error
 func (c Client) UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) (*Operation, error) {
 	path := "/iam-organization-policy"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: new request: %w", err)
 	}
@@ -11043,21 +10937,23 @@ func (c Client) UpdateIAMOrganizationPolicy(ctx context.Context, req IAMPolicy) 
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-iam-organization-policy")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-iam-organization-policy")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-iam-organization-policy")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMOrganizationPolicy: prepare JSON response: %w", err)
 	}
 
@@ -11083,21 +10979,19 @@ func (c Client) ResetIAMOrganizationPolicy(ctx context.Context) (*Operation, err
 		return nil, fmt.Errorf("ResetIAMOrganizationPolicy: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-iam-organization-policy")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetIAMOrganizationPolicy: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-iam-organization-policy")
+	defer c.logCall(ctx, request, response, "reset-iam-organization-policy")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetIAMOrganizationPolicy: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetIAMOrganizationPolicy: prepare JSON response: %w", err)
 	}
 
@@ -11146,21 +11040,19 @@ func (c Client) ListIAMRoles(ctx context.Context) (*ListIAMRolesResponse, error)
 		return nil, fmt.Errorf("ListIAMRoles: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-iam-roles")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListIAMRoles: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-iam-roles")
+	defer c.logCall(ctx, request, response, "list-iam-roles")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListIAMRoles: http response: %w", err)
 	}
 
 	bodyresp := new(ListIAMRolesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListIAMRoles: prepare JSON response: %w", err)
 	}
 
@@ -11189,12 +11081,12 @@ type CreateIAMRoleRequest struct {
 func (c Client) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*Operation, error) {
 	path := "/iam-role"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateIAMRole: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateIAMRole: new request: %w", err)
 	}
@@ -11211,21 +11103,23 @@ func (c Client) CreateIAMRole(ctx context.Context, req CreateIAMRoleRequest) (*O
 		return nil, fmt.Errorf("CreateIAMRole: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-iam-role")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateIAMRole: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-iam-role")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-iam-role")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateIAMRole: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateIAMRole: prepare JSON response: %w", err)
 	}
 
@@ -11251,21 +11145,19 @@ func (c Client) DeleteIAMRole(ctx context.Context, id UUID) (*Operation, error) 
 		return nil, fmt.Errorf("DeleteIAMRole: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-iam-role")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteIAMRole: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-iam-role")
+	defer c.logCall(ctx, request, response, "delete-iam-role")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteIAMRole: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteIAMRole: prepare JSON response: %w", err)
 	}
 
@@ -11291,21 +11183,19 @@ func (c Client) GetIAMRole(ctx context.Context, id UUID) (*IAMRole, error) {
 		return nil, fmt.Errorf("GetIAMRole: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-iam-role")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetIAMRole: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-iam-role")
+	defer c.logCall(ctx, request, response, "get-iam-role")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetIAMRole: http response: %w", err)
 	}
 
 	bodyresp := new(IAMRole)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetIAMRole: prepare JSON response: %w", err)
 	}
 
@@ -11328,12 +11218,12 @@ type UpdateIAMRoleRequest struct {
 func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleRequest) (*Operation, error) {
 	path := fmt.Sprintf("/iam-role/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRole: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRole: new request: %w", err)
 	}
@@ -11350,21 +11240,23 @@ func (c Client) UpdateIAMRole(ctx context.Context, id UUID, req UpdateIAMRoleReq
 		return nil, fmt.Errorf("UpdateIAMRole: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-iam-role")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRole: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-iam-role")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-iam-role")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRole: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRole: prepare JSON response: %w", err)
 	}
 
@@ -11391,12 +11283,12 @@ type AssumeIAMRoleRequest struct {
 func (c Client) AssumeIAMRole(ctx context.Context, id UUID, req AssumeIAMRoleRequest) (*AssumeIAMRoleResponse, error) {
 	path := fmt.Sprintf("/iam-role/%v/assume", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("AssumeIAMRole: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("AssumeIAMRole: new request: %w", err)
 	}
@@ -11413,21 +11305,23 @@ func (c Client) AssumeIAMRole(ctx context.Context, id UUID, req AssumeIAMRoleReq
 		return nil, fmt.Errorf("AssumeIAMRole: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "assume-iam-role")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AssumeIAMRole: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "assume-iam-role")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "assume-iam-role")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AssumeIAMRole: http response: %w", err)
 	}
 
 	bodyresp := new(AssumeIAMRoleResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AssumeIAMRole: prepare JSON response: %w", err)
 	}
 
@@ -11438,12 +11332,12 @@ func (c Client) AssumeIAMRole(ctx context.Context, id UUID, req AssumeIAMRoleReq
 func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy) (*Operation, error) {
 	path := fmt.Sprintf("/iam-role/%v:policy", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: new request: %w", err)
 	}
@@ -11460,21 +11354,23 @@ func (c Client) UpdateIAMRolePolicy(ctx context.Context, id UUID, req IAMPolicy)
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-iam-role-policy")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-iam-role-policy")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-iam-role-policy")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateIAMRolePolicy: prepare JSON response: %w", err)
 	}
 
@@ -11523,21 +11419,19 @@ func (c Client) ListIAMSystemRoles(ctx context.Context) (*ListIAMSystemRolesResp
 		return nil, fmt.Errorf("ListIAMSystemRoles: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-iam-system-roles")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListIAMSystemRoles: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-iam-system-roles")
+	defer c.logCall(ctx, request, response, "list-iam-system-roles")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListIAMSystemRoles: http response: %w", err)
 	}
 
 	bodyresp := new(ListIAMSystemRolesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListIAMSystemRoles: prepare JSON response: %w", err)
 	}
 
@@ -11667,21 +11561,19 @@ func (c Client) ListInstances(ctx context.Context, opts ...ListInstancesOpt) (*L
 		return nil, fmt.Errorf("ListInstances: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-instances")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListInstances: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-instances")
+	defer c.logCall(ctx, request, response, "list-instances")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListInstances: http response: %w", err)
 	}
 
 	bodyresp := new(ListInstancesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListInstances: prepare JSON response: %w", err)
 	}
 
@@ -11747,12 +11639,12 @@ type CreateInstanceRequest struct {
 func (c Client) CreateInstance(ctx context.Context, req CreateInstanceRequest) (*Operation, error) {
 	path := "/instance"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstance: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstance: new request: %w", err)
 	}
@@ -11769,21 +11661,23 @@ func (c Client) CreateInstance(ctx context.Context, req CreateInstanceRequest) (
 		return nil, fmt.Errorf("CreateInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-instance")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateInstance: prepare JSON response: %w", err)
 	}
 
@@ -11832,21 +11726,19 @@ func (c Client) ListInstancePools(ctx context.Context) (*ListInstancePoolsRespon
 		return nil, fmt.Errorf("ListInstancePools: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-instance-pools")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListInstancePools: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-instance-pools")
+	defer c.logCall(ctx, request, response, "list-instance-pools")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListInstancePools: http response: %w", err)
 	}
 
 	bodyresp := new(ListInstancePoolsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListInstancePools: prepare JSON response: %w", err)
 	}
 
@@ -11907,12 +11799,12 @@ type CreateInstancePoolRequest struct {
 func (c Client) CreateInstancePool(ctx context.Context, req CreateInstancePoolRequest) (*Operation, error) {
 	path := "/instance-pool"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstancePool: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstancePool: new request: %w", err)
 	}
@@ -11929,21 +11821,23 @@ func (c Client) CreateInstancePool(ctx context.Context, req CreateInstancePoolRe
 		return nil, fmt.Errorf("CreateInstancePool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-instance-pool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateInstancePool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-instance-pool")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-instance-pool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateInstancePool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateInstancePool: prepare JSON response: %w", err)
 	}
 
@@ -11969,21 +11863,19 @@ func (c Client) DeleteInstancePool(ctx context.Context, id UUID) (*Operation, er
 		return nil, fmt.Errorf("DeleteInstancePool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-instance-pool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteInstancePool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-instance-pool")
+	defer c.logCall(ctx, request, response, "delete-instance-pool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteInstancePool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteInstancePool: prepare JSON response: %w", err)
 	}
 
@@ -12009,21 +11901,19 @@ func (c Client) GetInstancePool(ctx context.Context, id UUID) (*InstancePool, er
 		return nil, fmt.Errorf("GetInstancePool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-instance-pool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetInstancePool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-instance-pool")
+	defer c.logCall(ctx, request, response, "get-instance-pool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetInstancePool: http response: %w", err)
 	}
 
 	bodyresp := new(InstancePool)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetInstancePool: prepare JSON response: %w", err)
 	}
 
@@ -12081,12 +11971,12 @@ type UpdateInstancePoolRequest struct {
 func (c Client) UpdateInstancePool(ctx context.Context, id UUID, req UpdateInstancePoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstancePool: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstancePool: new request: %w", err)
 	}
@@ -12103,21 +11993,23 @@ func (c Client) UpdateInstancePool(ctx context.Context, id UUID, req UpdateInsta
 		return nil, fmt.Errorf("UpdateInstancePool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-instance-pool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstancePool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-instance-pool")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-instance-pool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateInstancePool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateInstancePool: prepare JSON response: %w", err)
 	}
 
@@ -12158,21 +12050,19 @@ func (c Client) ResetInstancePoolField(ctx context.Context, id UUID, field Reset
 		return nil, fmt.Errorf("ResetInstancePoolField: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-instance-pool-field")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstancePoolField: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-instance-pool-field")
+	defer c.logCall(ctx, request, response, "reset-instance-pool-field")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetInstancePoolField: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstancePoolField: prepare JSON response: %w", err)
 	}
 
@@ -12187,12 +12077,12 @@ type EvictInstancePoolMembersRequest struct {
 func (c Client) EvictInstancePoolMembers(ctx context.Context, id UUID, req EvictInstancePoolMembersRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v:evict", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("EvictInstancePoolMembers: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("EvictInstancePoolMembers: new request: %w", err)
 	}
@@ -12209,21 +12099,23 @@ func (c Client) EvictInstancePoolMembers(ctx context.Context, id UUID, req Evict
 		return nil, fmt.Errorf("EvictInstancePoolMembers: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "evict-instance-pool-members")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("EvictInstancePoolMembers: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "evict-instance-pool-members")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "evict-instance-pool-members")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("EvictInstancePoolMembers: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("EvictInstancePoolMembers: prepare JSON response: %w", err)
 	}
 
@@ -12239,12 +12131,12 @@ type ScaleInstancePoolRequest struct {
 func (c Client) ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstancePoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance-pool/%v:scale", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstancePool: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstancePool: new request: %w", err)
 	}
@@ -12261,21 +12153,23 @@ func (c Client) ScaleInstancePool(ctx context.Context, id UUID, req ScaleInstanc
 		return nil, fmt.Errorf("ScaleInstancePool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "scale-instance-pool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstancePool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "scale-instance-pool")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "scale-instance-pool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ScaleInstancePool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScaleInstancePool: prepare JSON response: %w", err)
 	}
 
@@ -12324,21 +12218,19 @@ func (c Client) ListInstanceTypes(ctx context.Context) (*ListInstanceTypesRespon
 		return nil, fmt.Errorf("ListInstanceTypes: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-instance-types")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListInstanceTypes: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-instance-types")
+	defer c.logCall(ctx, request, response, "list-instance-types")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListInstanceTypes: http response: %w", err)
 	}
 
 	bodyresp := new(ListInstanceTypesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListInstanceTypes: prepare JSON response: %w", err)
 	}
 
@@ -12364,21 +12256,19 @@ func (c Client) GetInstanceType(ctx context.Context, id UUID) (*InstanceType, er
 		return nil, fmt.Errorf("GetInstanceType: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-instance-type")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetInstanceType: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-instance-type")
+	defer c.logCall(ctx, request, response, "get-instance-type")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetInstanceType: http response: %w", err)
 	}
 
 	bodyresp := new(InstanceType)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetInstanceType: prepare JSON response: %w", err)
 	}
 
@@ -12404,21 +12294,19 @@ func (c Client) DeleteInstance(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("DeleteInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-instance")
+	defer c.logCall(ctx, request, response, "delete-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteInstance: prepare JSON response: %w", err)
 	}
 
@@ -12444,21 +12332,19 @@ func (c Client) GetInstance(ctx context.Context, id UUID) (*Instance, error) {
 		return nil, fmt.Errorf("GetInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-instance")
+	defer c.logCall(ctx, request, response, "get-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Instance)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetInstance: prepare JSON response: %w", err)
 	}
 
@@ -12480,12 +12366,12 @@ type UpdateInstanceRequest struct {
 func (c Client) UpdateInstance(ctx context.Context, id UUID, req UpdateInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstance: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstance: new request: %w", err)
 	}
@@ -12502,21 +12388,23 @@ func (c Client) UpdateInstance(ctx context.Context, id UUID, req UpdateInstanceR
 		return nil, fmt.Errorf("UpdateInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-instance")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateInstance: prepare JSON response: %w", err)
 	}
 
@@ -12548,21 +12436,19 @@ func (c Client) ResetInstanceField(ctx context.Context, id UUID, field ResetInst
 		return nil, fmt.Errorf("ResetInstanceField: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-instance-field")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstanceField: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-instance-field")
+	defer c.logCall(ctx, request, response, "reset-instance-field")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetInstanceField: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstanceField: prepare JSON response: %w", err)
 	}
 
@@ -12588,21 +12474,19 @@ func (c Client) AddInstanceProtection(ctx context.Context, id UUID) (*Operation,
 		return nil, fmt.Errorf("AddInstanceProtection: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "add-instance-protection")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AddInstanceProtection: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "add-instance-protection")
+	defer c.logCall(ctx, request, response, "add-instance-protection")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AddInstanceProtection: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddInstanceProtection: prepare JSON response: %w", err)
 	}
 
@@ -12628,21 +12512,19 @@ func (c Client) CreateSnapshot(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("CreateSnapshot: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-snapshot")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSnapshot: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-snapshot")
+	defer c.logCall(ctx, request, response, "create-snapshot")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateSnapshot: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSnapshot: prepare JSON response: %w", err)
 	}
 
@@ -12668,21 +12550,19 @@ func (c Client) EnableTpm(ctx context.Context, id UUID) (*Operation, error) {
 		return nil, fmt.Errorf("EnableTpm: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "enable-tpm")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("EnableTpm: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "enable-tpm")
+	defer c.logCall(ctx, request, response, "enable-tpm")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("EnableTpm: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("EnableTpm: prepare JSON response: %w", err)
 	}
 
@@ -12712,21 +12592,19 @@ func (c Client) RevealInstancePassword(ctx context.Context, id UUID) (*InstanceP
 		return nil, fmt.Errorf("RevealInstancePassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reveal-instance-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevealInstancePassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reveal-instance-password")
+	defer c.logCall(ctx, request, response, "reveal-instance-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevealInstancePassword: http response: %w", err)
 	}
 
 	bodyresp := new(InstancePassword)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevealInstancePassword: prepare JSON response: %w", err)
 	}
 
@@ -12752,21 +12630,19 @@ func (c Client) RebootInstance(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("RebootInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reboot-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RebootInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reboot-instance")
+	defer c.logCall(ctx, request, response, "reboot-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RebootInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RebootInstance: prepare JSON response: %w", err)
 	}
 
@@ -12792,21 +12668,19 @@ func (c Client) RemoveInstanceProtection(ctx context.Context, id UUID) (*Operati
 		return nil, fmt.Errorf("RemoveInstanceProtection: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "remove-instance-protection")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RemoveInstanceProtection: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "remove-instance-protection")
+	defer c.logCall(ctx, request, response, "remove-instance-protection")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RemoveInstanceProtection: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RemoveInstanceProtection: prepare JSON response: %w", err)
 	}
 
@@ -12824,12 +12698,12 @@ type ResetInstanceRequest struct {
 func (c Client) ResetInstance(ctx context.Context, id UUID, req ResetInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:reset", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstance: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstance: new request: %w", err)
 	}
@@ -12846,21 +12720,23 @@ func (c Client) ResetInstance(ctx context.Context, id UUID, req ResetInstanceReq
 		return nil, fmt.Errorf("ResetInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-instance")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "reset-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstance: prepare JSON response: %w", err)
 	}
 
@@ -12886,21 +12762,19 @@ func (c Client) ResetInstancePassword(ctx context.Context, id UUID) (*Operation,
 		return nil, fmt.Errorf("ResetInstancePassword: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-instance-password")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetInstancePassword: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-instance-password")
+	defer c.logCall(ctx, request, response, "reset-instance-password")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetInstancePassword: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetInstancePassword: prepare JSON response: %w", err)
 	}
 
@@ -12916,12 +12790,12 @@ type ResizeInstanceDiskRequest struct {
 func (c Client) ResizeInstanceDisk(ctx context.Context, id UUID, req ResizeInstanceDiskRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:resize-disk", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ResizeInstanceDisk: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ResizeInstanceDisk: new request: %w", err)
 	}
@@ -12938,21 +12812,23 @@ func (c Client) ResizeInstanceDisk(ctx context.Context, id UUID, req ResizeInsta
 		return nil, fmt.Errorf("ResizeInstanceDisk: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "resize-instance-disk")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResizeInstanceDisk: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "resize-instance-disk")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "resize-instance-disk")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResizeInstanceDisk: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResizeInstanceDisk: prepare JSON response: %w", err)
 	}
 
@@ -12968,12 +12844,12 @@ type ScaleInstanceRequest struct {
 func (c Client) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:scale", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstance: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstance: new request: %w", err)
 	}
@@ -12990,21 +12866,23 @@ func (c Client) ScaleInstance(ctx context.Context, id UUID, req ScaleInstanceReq
 		return nil, fmt.Errorf("ScaleInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "scale-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "scale-instance")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "scale-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ScaleInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScaleInstance: prepare JSON response: %w", err)
 	}
 
@@ -13027,12 +12905,12 @@ type StartInstanceRequest struct {
 func (c Client) StartInstance(ctx context.Context, id UUID, req StartInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:start", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("StartInstance: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("StartInstance: new request: %w", err)
 	}
@@ -13049,21 +12927,23 @@ func (c Client) StartInstance(ctx context.Context, id UUID, req StartInstanceReq
 		return nil, fmt.Errorf("StartInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "start-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StartInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "start-instance")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "start-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StartInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StartInstance: prepare JSON response: %w", err)
 	}
 
@@ -13089,21 +12969,19 @@ func (c Client) StopInstance(ctx context.Context, id UUID) (*Operation, error) {
 		return nil, fmt.Errorf("StopInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "stop-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("StopInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "stop-instance")
+	defer c.logCall(ctx, request, response, "stop-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("StopInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("StopInstance: prepare JSON response: %w", err)
 	}
 
@@ -13120,12 +12998,12 @@ type RevertInstanceToSnapshotRequest struct {
 func (c Client) RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, req RevertInstanceToSnapshotRequest) (*Operation, error) {
 	path := fmt.Sprintf("/instance/%v:revert-snapshot", instanceID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: new request: %w", err)
 	}
@@ -13142,21 +13020,23 @@ func (c Client) RevertInstanceToSnapshot(ctx context.Context, instanceID UUID, r
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "revert-instance-to-snapshot")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "revert-instance-to-snapshot")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "revert-instance-to-snapshot")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RevertInstanceToSnapshot: prepare JSON response: %w", err)
 	}
 
@@ -13201,14 +13081,12 @@ func (c Client) ListKeyStores(ctx context.Context) (*ListKeyStoresResponse, erro
 		return nil, fmt.Errorf("ListKeyStores: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-key-stores")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListKeyStores: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-key-stores")
+	defer c.logCall(ctx, request, response, "list-key-stores")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListKeyStores: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13217,7 +13095,7 @@ func (c Client) ListKeyStores(ctx context.Context) (*ListKeyStoresResponse, erro
 	}
 
 	bodyresp := new(ListKeyStoresResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListKeyStores: prepare JSON response: %w", err)
 	}
 
@@ -13228,12 +13106,12 @@ func (c Client) ListKeyStores(ctx context.Context) (*ListKeyStoresResponse, erro
 func (c Client) CreateKeyStore(ctx context.Context, req CreateKeyStoreRequest) (*ListKeyStoresResponseEntry, error) {
 	path := "/key-store"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateKeyStore: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateKeyStore: new request: %w", err)
 	}
@@ -13250,14 +13128,16 @@ func (c Client) CreateKeyStore(ctx context.Context, req CreateKeyStoreRequest) (
 		return nil, fmt.Errorf("CreateKeyStore: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-key-store")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateKeyStore: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-key-store")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-key-store")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13266,7 +13146,7 @@ func (c Client) CreateKeyStore(ctx context.Context, req CreateKeyStoreRequest) (
 	}
 
 	bodyresp := new(ListKeyStoresResponseEntry)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateKeyStore: prepare JSON response: %w", err)
 	}
 
@@ -13292,14 +13172,12 @@ func (c Client) DeleteKeyStore(ctx context.Context, id UUID) (*SuccessResponse, 
 		return nil, fmt.Errorf("DeleteKeyStore: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-key-store")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteKeyStore: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-key-store")
+	defer c.logCall(ctx, request, response, "delete-key-store")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13308,7 +13186,7 @@ func (c Client) DeleteKeyStore(ctx context.Context, id UUID) (*SuccessResponse, 
 	}
 
 	bodyresp := new(SuccessResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteKeyStore: prepare JSON response: %w", err)
 	}
 
@@ -13334,14 +13212,12 @@ func (c Client) GetKeyStore(ctx context.Context, id UUID) (*GetKeyStoreResponse,
 		return nil, fmt.Errorf("GetKeyStore: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-key-store")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetKeyStore: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-key-store")
+	defer c.logCall(ctx, request, response, "get-key-store")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13350,7 +13226,7 @@ func (c Client) GetKeyStore(ctx context.Context, id UUID) (*GetKeyStoreResponse,
 	}
 
 	bodyresp := new(GetKeyStoreResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetKeyStore: prepare JSON response: %w", err)
 	}
 
@@ -13376,14 +13252,12 @@ func (c Client) ConnectKeyStore(ctx context.Context, id UUID) (*SuccessResponse,
 		return nil, fmt.Errorf("ConnectKeyStore: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "connect-key-store")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ConnectKeyStore: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "connect-key-store")
+	defer c.logCall(ctx, request, response, "connect-key-store")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ConnectKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13392,7 +13266,7 @@ func (c Client) ConnectKeyStore(ctx context.Context, id UUID) (*SuccessResponse,
 	}
 
 	bodyresp := new(SuccessResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ConnectKeyStore: prepare JSON response: %w", err)
 	}
 
@@ -13418,14 +13292,12 @@ func (c Client) DisconnectKeyStore(ctx context.Context, id UUID) (*SuccessRespon
 		return nil, fmt.Errorf("DisconnectKeyStore: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "disconnect-key-store")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DisconnectKeyStore: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "disconnect-key-store")
+	defer c.logCall(ctx, request, response, "disconnect-key-store")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DisconnectKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13434,7 +13306,7 @@ func (c Client) DisconnectKeyStore(ctx context.Context, id UUID) (*SuccessRespon
 	}
 
 	bodyresp := new(SuccessResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DisconnectKeyStore: prepare JSON response: %w", err)
 	}
 
@@ -13445,12 +13317,12 @@ func (c Client) DisconnectKeyStore(ctx context.Context, id UUID) (*SuccessRespon
 func (c Client) UpdateKeyStore(ctx context.Context, id UUID, req UpdateKeyStoreRequest) (*GetKeyStoreResponse, error) {
 	path := fmt.Sprintf("/key-store/%v/update", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateKeyStore: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateKeyStore: new request: %w", err)
 	}
@@ -13467,14 +13339,16 @@ func (c Client) UpdateKeyStore(ctx context.Context, id UUID, req UpdateKeyStoreR
 		return nil, fmt.Errorf("UpdateKeyStore: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-key-store")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateKeyStore: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-key-store")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-key-store")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateKeyStore: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13483,7 +13357,7 @@ func (c Client) UpdateKeyStore(ctx context.Context, id UUID, req UpdateKeyStoreR
 	}
 
 	bodyresp := new(GetKeyStoreResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateKeyStore: prepare JSON response: %w", err)
 	}
 
@@ -13528,14 +13402,12 @@ func (c Client) ListKmsKeys(ctx context.Context) (*ListKmsKeysResponse, error) {
 		return nil, fmt.Errorf("ListKmsKeys: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-kms-keys")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListKmsKeys: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-kms-keys")
+	defer c.logCall(ctx, request, response, "list-kms-keys")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListKmsKeys: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13544,7 +13416,7 @@ func (c Client) ListKmsKeys(ctx context.Context) (*ListKmsKeysResponse, error) {
 	}
 
 	bodyresp := new(ListKmsKeysResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListKmsKeys: prepare JSON response: %w", err)
 	}
 
@@ -13555,12 +13427,12 @@ func (c Client) ListKmsKeys(ctx context.Context) (*ListKmsKeysResponse, error) {
 func (c Client) CreateKmsKey(ctx context.Context, req CreateKmsKeyRequest) (*CreateKmsKeyResponse, error) {
 	path := "/kms-key"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateKmsKey: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateKmsKey: new request: %w", err)
 	}
@@ -13577,14 +13449,16 @@ func (c Client) CreateKmsKey(ctx context.Context, req CreateKmsKeyRequest) (*Cre
 		return nil, fmt.Errorf("CreateKmsKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-kms-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateKmsKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-kms-key")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-kms-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13593,7 +13467,7 @@ func (c Client) CreateKmsKey(ctx context.Context, req CreateKmsKeyRequest) (*Cre
 	}
 
 	bodyresp := new(CreateKmsKeyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateKmsKey: prepare JSON response: %w", err)
 	}
 
@@ -13619,14 +13493,12 @@ func (c Client) GetKmsKey(ctx context.Context, id UUID) (*GetKmsKeyResponse, err
 		return nil, fmt.Errorf("GetKmsKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-kms-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetKmsKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-kms-key")
+	defer c.logCall(ctx, request, response, "get-kms-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13635,7 +13507,7 @@ func (c Client) GetKmsKey(ctx context.Context, id UUID) (*GetKmsKeyResponse, err
 	}
 
 	bodyresp := new(GetKmsKeyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetKmsKey: prepare JSON response: %w", err)
 	}
 
@@ -13661,14 +13533,12 @@ func (c Client) CancelKmsKeyDeletion(ctx context.Context, id UUID) (*SuccessResp
 		return nil, fmt.Errorf("CancelKmsKeyDeletion: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "cancel-kms-key-deletion")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CancelKmsKeyDeletion: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "cancel-kms-key-deletion")
+	defer c.logCall(ctx, request, response, "cancel-kms-key-deletion")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CancelKmsKeyDeletion: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13677,7 +13547,7 @@ func (c Client) CancelKmsKeyDeletion(ctx context.Context, id UUID) (*SuccessResp
 	}
 
 	bodyresp := new(SuccessResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CancelKmsKeyDeletion: prepare JSON response: %w", err)
 	}
 
@@ -13688,12 +13558,12 @@ func (c Client) CancelKmsKeyDeletion(ctx context.Context, id UUID) (*SuccessResp
 func (c Client) Decrypt(ctx context.Context, id UUID, req DecryptRequest) (*DecryptResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/decrypt", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("Decrypt: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("Decrypt: new request: %w", err)
 	}
@@ -13710,14 +13580,16 @@ func (c Client) Decrypt(ctx context.Context, id UUID, req DecryptRequest) (*Decr
 		return nil, fmt.Errorf("Decrypt: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "decrypt")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("Decrypt: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "decrypt")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "decrypt")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("Decrypt: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13726,7 +13598,7 @@ func (c Client) Decrypt(ctx context.Context, id UUID, req DecryptRequest) (*Decr
 	}
 
 	bodyresp := new(DecryptResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("Decrypt: prepare JSON response: %w", err)
 	}
 
@@ -13752,14 +13624,12 @@ func (c Client) DisableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, e
 		return nil, fmt.Errorf("DisableKmsKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "disable-kms-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DisableKmsKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "disable-kms-key")
+	defer c.logCall(ctx, request, response, "disable-kms-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DisableKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13768,7 +13638,7 @@ func (c Client) DisableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, e
 	}
 
 	bodyresp := new(SuccessResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DisableKmsKey: prepare JSON response: %w", err)
 	}
 
@@ -13794,14 +13664,12 @@ func (c Client) DisableKmsKeyRotation(ctx context.Context, id UUID) (*DisableKms
 		return nil, fmt.Errorf("DisableKmsKeyRotation: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "disable-kms-key-rotation")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DisableKmsKeyRotation: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "disable-kms-key-rotation")
+	defer c.logCall(ctx, request, response, "disable-kms-key-rotation")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DisableKmsKeyRotation: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13810,7 +13678,7 @@ func (c Client) DisableKmsKeyRotation(ctx context.Context, id UUID) (*DisableKms
 	}
 
 	bodyresp := new(DisableKmsKeyRotationResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DisableKmsKeyRotation: prepare JSON response: %w", err)
 	}
 
@@ -13836,14 +13704,12 @@ func (c Client) EnableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, er
 		return nil, fmt.Errorf("EnableKmsKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "enable-kms-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("EnableKmsKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "enable-kms-key")
+	defer c.logCall(ctx, request, response, "enable-kms-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("EnableKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13852,7 +13718,7 @@ func (c Client) EnableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, er
 	}
 
 	bodyresp := new(SuccessResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("EnableKmsKey: prepare JSON response: %w", err)
 	}
 
@@ -13863,12 +13729,12 @@ func (c Client) EnableKmsKey(ctx context.Context, id UUID) (*SuccessResponse, er
 func (c Client) EnableKmsKeyRotation(ctx context.Context, id UUID, req EnableKmsKeyRotationRequest) (*EnableKmsKeyRotationResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/enable-key-rotation", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("EnableKmsKeyRotation: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("EnableKmsKeyRotation: new request: %w", err)
 	}
@@ -13885,14 +13751,16 @@ func (c Client) EnableKmsKeyRotation(ctx context.Context, id UUID, req EnableKms
 		return nil, fmt.Errorf("EnableKmsKeyRotation: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "enable-kms-key-rotation")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("EnableKmsKeyRotation: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "enable-kms-key-rotation")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "enable-kms-key-rotation")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("EnableKmsKeyRotation: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13901,7 +13769,7 @@ func (c Client) EnableKmsKeyRotation(ctx context.Context, id UUID, req EnableKms
 	}
 
 	bodyresp := new(EnableKmsKeyRotationResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("EnableKmsKeyRotation: prepare JSON response: %w", err)
 	}
 
@@ -13912,12 +13780,12 @@ func (c Client) EnableKmsKeyRotation(ctx context.Context, id UUID, req EnableKms
 func (c Client) Encrypt(ctx context.Context, id UUID, req EncryptRequest) (*EncryptResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/encrypt", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("Encrypt: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("Encrypt: new request: %w", err)
 	}
@@ -13934,14 +13802,16 @@ func (c Client) Encrypt(ctx context.Context, id UUID, req EncryptRequest) (*Encr
 		return nil, fmt.Errorf("Encrypt: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "encrypt")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("Encrypt: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "encrypt")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "encrypt")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("Encrypt: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13950,7 +13820,7 @@ func (c Client) Encrypt(ctx context.Context, id UUID, req EncryptRequest) (*Encr
 	}
 
 	bodyresp := new(EncryptResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("Encrypt: prepare JSON response: %w", err)
 	}
 
@@ -13961,12 +13831,12 @@ func (c Client) Encrypt(ctx context.Context, id UUID, req EncryptRequest) (*Encr
 func (c Client) GenerateDataKey(ctx context.Context, id UUID, req GenerateDataKeyRequest) (*GenerateDataKeyResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/generate-data-key", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("GenerateDataKey: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("GenerateDataKey: new request: %w", err)
 	}
@@ -13983,14 +13853,16 @@ func (c Client) GenerateDataKey(ctx context.Context, id UUID, req GenerateDataKe
 		return nil, fmt.Errorf("GenerateDataKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "generate-data-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GenerateDataKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "generate-data-key")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "generate-data-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GenerateDataKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -13999,7 +13871,7 @@ func (c Client) GenerateDataKey(ctx context.Context, id UUID, req GenerateDataKe
 	}
 
 	bodyresp := new(GenerateDataKeyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GenerateDataKey: prepare JSON response: %w", err)
 	}
 
@@ -14025,14 +13897,12 @@ func (c Client) GetPublicKey(ctx context.Context, id UUID) (*GetPublicKeyRespons
 		return nil, fmt.Errorf("GetPublicKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-public-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetPublicKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-public-key")
+	defer c.logCall(ctx, request, response, "get-public-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetPublicKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -14041,7 +13911,7 @@ func (c Client) GetPublicKey(ctx context.Context, id UUID) (*GetPublicKeyRespons
 	}
 
 	bodyresp := new(GetPublicKeyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetPublicKey: prepare JSON response: %w", err)
 	}
 
@@ -14067,14 +13937,12 @@ func (c Client) ListKmsKeyRotations(ctx context.Context, id UUID) (*ListKmsKeyRo
 		return nil, fmt.Errorf("ListKmsKeyRotations: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-kms-key-rotations")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListKmsKeyRotations: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-kms-key-rotations")
+	defer c.logCall(ctx, request, response, "list-kms-key-rotations")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListKmsKeyRotations: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -14083,7 +13951,7 @@ func (c Client) ListKmsKeyRotations(ctx context.Context, id UUID) (*ListKmsKeyRo
 	}
 
 	bodyresp := new(ListKmsKeyRotationsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListKmsKeyRotations: prepare JSON response: %w", err)
 	}
 
@@ -14094,12 +13962,12 @@ func (c Client) ListKmsKeyRotations(ctx context.Context, id UUID) (*ListKmsKeyRo
 func (c Client) ReEncrypt(ctx context.Context, id UUID, req ReEncryptRequest) (*ReEncryptResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/re-encrypt", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ReEncrypt: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ReEncrypt: new request: %w", err)
 	}
@@ -14116,14 +13984,16 @@ func (c Client) ReEncrypt(ctx context.Context, id UUID, req ReEncryptRequest) (*
 		return nil, fmt.Errorf("ReEncrypt: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "re-encrypt")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ReEncrypt: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "re-encrypt")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "re-encrypt")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ReEncrypt: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -14132,7 +14002,7 @@ func (c Client) ReEncrypt(ctx context.Context, id UUID, req ReEncryptRequest) (*
 	}
 
 	bodyresp := new(ReEncryptResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ReEncrypt: prepare JSON response: %w", err)
 	}
 
@@ -14143,12 +14013,12 @@ func (c Client) ReEncrypt(ctx context.Context, id UUID, req ReEncryptRequest) (*
 func (c Client) ReplicateKmsKey(ctx context.Context, id UUID, req ReplicateKmsKeyRequest) (*SuccessResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/replicate", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ReplicateKmsKey: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ReplicateKmsKey: new request: %w", err)
 	}
@@ -14165,14 +14035,16 @@ func (c Client) ReplicateKmsKey(ctx context.Context, id UUID, req ReplicateKmsKe
 		return nil, fmt.Errorf("ReplicateKmsKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "replicate-kms-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ReplicateKmsKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "replicate-kms-key")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "replicate-kms-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ReplicateKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -14181,7 +14053,7 @@ func (c Client) ReplicateKmsKey(ctx context.Context, id UUID, req ReplicateKmsKe
 	}
 
 	bodyresp := new(SuccessResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ReplicateKmsKey: prepare JSON response: %w", err)
 	}
 
@@ -14207,14 +14079,12 @@ func (c Client) RotateKmsKey(ctx context.Context, id UUID) (*RotateKmsKeyRespons
 		return nil, fmt.Errorf("RotateKmsKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "rotate-kms-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RotateKmsKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "rotate-kms-key")
+	defer c.logCall(ctx, request, response, "rotate-kms-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RotateKmsKey: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -14223,7 +14093,7 @@ func (c Client) RotateKmsKey(ctx context.Context, id UUID) (*RotateKmsKeyRespons
 	}
 
 	bodyresp := new(RotateKmsKeyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateKmsKey: prepare JSON response: %w", err)
 	}
 
@@ -14234,12 +14104,12 @@ func (c Client) RotateKmsKey(ctx context.Context, id UUID) (*RotateKmsKeyRespons
 func (c Client) ScheduleKmsKeyDeletion(ctx context.Context, id UUID, req ScheduleKmsKeyDeletionRequest) (*ScheduleKmsKeyDeletionResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/schedule-deletion", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: new request: %w", err)
 	}
@@ -14256,14 +14126,16 @@ func (c Client) ScheduleKmsKeyDeletion(ctx context.Context, id UUID, req Schedul
 		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "schedule-kms-key-deletion")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "schedule-kms-key-deletion")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "schedule-kms-key-deletion")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -14272,7 +14144,7 @@ func (c Client) ScheduleKmsKeyDeletion(ctx context.Context, id UUID, req Schedul
 	}
 
 	bodyresp := new(ScheduleKmsKeyDeletionResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScheduleKmsKeyDeletion: prepare JSON response: %w", err)
 	}
 
@@ -14283,12 +14155,12 @@ func (c Client) ScheduleKmsKeyDeletion(ctx context.Context, id UUID, req Schedul
 func (c Client) Sign(ctx context.Context, id UUID, req SignRequest) (*SignResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/sign", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("Sign: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("Sign: new request: %w", err)
 	}
@@ -14305,14 +14177,16 @@ func (c Client) Sign(ctx context.Context, id UUID, req SignRequest) (*SignRespon
 		return nil, fmt.Errorf("Sign: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "sign")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("Sign: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "sign")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "sign")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("Sign: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -14321,7 +14195,7 @@ func (c Client) Sign(ctx context.Context, id UUID, req SignRequest) (*SignRespon
 	}
 
 	bodyresp := new(SignResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("Sign: prepare JSON response: %w", err)
 	}
 
@@ -14332,12 +14206,12 @@ func (c Client) Sign(ctx context.Context, id UUID, req SignRequest) (*SignRespon
 func (c Client) Verify(ctx context.Context, id UUID, req VerifyRequest) (*VerifyResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/verify", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("Verify: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("Verify: new request: %w", err)
 	}
@@ -14354,14 +14228,16 @@ func (c Client) Verify(ctx context.Context, id UUID, req VerifyRequest) (*Verify
 		return nil, fmt.Errorf("Verify: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "verify")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("Verify: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "verify")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "verify")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("Verify: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -14370,7 +14246,7 @@ func (c Client) Verify(ctx context.Context, id UUID, req VerifyRequest) (*Verify
 	}
 
 	bodyresp := new(VerifyResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("Verify: prepare JSON response: %w", err)
 	}
 
@@ -14396,14 +14272,12 @@ func (c Client) GetLiveBalance(ctx context.Context) (*LiveBalance, error) {
 		return nil, fmt.Errorf("GetLiveBalance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-live-balance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetLiveBalance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-live-balance")
+	defer c.logCall(ctx, request, response, "get-live-balance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetLiveBalance: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
@@ -14412,7 +14286,7 @@ func (c Client) GetLiveBalance(ctx context.Context) (*LiveBalance, error) {
 	}
 
 	bodyresp := new(LiveBalance)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetLiveBalance: prepare JSON response: %w", err)
 	}
 
@@ -14461,21 +14335,19 @@ func (c Client) ListLoadBalancers(ctx context.Context) (*ListLoadBalancersRespon
 		return nil, fmt.Errorf("ListLoadBalancers: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-load-balancers")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListLoadBalancers: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-load-balancers")
+	defer c.logCall(ctx, request, response, "list-load-balancers")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListLoadBalancers: http response: %w", err)
 	}
 
 	bodyresp := new(ListLoadBalancersResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListLoadBalancers: prepare JSON response: %w", err)
 	}
 
@@ -14503,12 +14375,12 @@ type CreateLoadBalancerRequest struct {
 func (c Client) CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRequest) (*Operation, error) {
 	path := "/load-balancer"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateLoadBalancer: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateLoadBalancer: new request: %w", err)
 	}
@@ -14525,21 +14397,23 @@ func (c Client) CreateLoadBalancer(ctx context.Context, req CreateLoadBalancerRe
 		return nil, fmt.Errorf("CreateLoadBalancer: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-load-balancer")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateLoadBalancer: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-load-balancer")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-load-balancer")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateLoadBalancer: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateLoadBalancer: prepare JSON response: %w", err)
 	}
 
@@ -14565,21 +14439,19 @@ func (c Client) DeleteLoadBalancer(ctx context.Context, id UUID) (*Operation, er
 		return nil, fmt.Errorf("DeleteLoadBalancer: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-load-balancer")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancer: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-load-balancer")
+	defer c.logCall(ctx, request, response, "delete-load-balancer")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancer: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancer: prepare JSON response: %w", err)
 	}
 
@@ -14605,21 +14477,19 @@ func (c Client) GetLoadBalancer(ctx context.Context, id UUID) (*LoadBalancer, er
 		return nil, fmt.Errorf("GetLoadBalancer: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-load-balancer")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetLoadBalancer: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-load-balancer")
+	defer c.logCall(ctx, request, response, "get-load-balancer")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetLoadBalancer: http response: %w", err)
 	}
 
 	bodyresp := new(LoadBalancer)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetLoadBalancer: prepare JSON response: %w", err)
 	}
 
@@ -14638,12 +14508,12 @@ type UpdateLoadBalancerRequest struct {
 func (c Client) UpdateLoadBalancer(ctx context.Context, id UUID, req UpdateLoadBalancerRequest) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancer: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancer: new request: %w", err)
 	}
@@ -14660,21 +14530,23 @@ func (c Client) UpdateLoadBalancer(ctx context.Context, id UUID, req UpdateLoadB
 		return nil, fmt.Errorf("UpdateLoadBalancer: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-load-balancer")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancer: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-load-balancer")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-load-balancer")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancer: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancer: prepare JSON response: %w", err)
 	}
 
@@ -14719,12 +14591,12 @@ type AddServiceToLoadBalancerRequest struct {
 func (c Client) AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddServiceToLoadBalancerRequest) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: new request: %w", err)
 	}
@@ -14741,21 +14613,23 @@ func (c Client) AddServiceToLoadBalancer(ctx context.Context, id UUID, req AddSe
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "add-service-to-load-balancer")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "add-service-to-load-balancer")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "add-service-to-load-balancer")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddServiceToLoadBalancer: prepare JSON response: %w", err)
 	}
 
@@ -14781,21 +14655,19 @@ func (c Client) DeleteLoadBalancerService(ctx context.Context, id UUID, serviceI
 		return nil, fmt.Errorf("DeleteLoadBalancerService: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-load-balancer-service")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancerService: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-load-balancer-service")
+	defer c.logCall(ctx, request, response, "delete-load-balancer-service")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancerService: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteLoadBalancerService: prepare JSON response: %w", err)
 	}
 
@@ -14821,21 +14693,19 @@ func (c Client) GetLoadBalancerService(ctx context.Context, id UUID, serviceID U
 		return nil, fmt.Errorf("GetLoadBalancerService: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-load-balancer-service")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetLoadBalancerService: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-load-balancer-service")
+	defer c.logCall(ctx, request, response, "get-load-balancer-service")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetLoadBalancerService: http response: %w", err)
 	}
 
 	bodyresp := new(LoadBalancerService)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetLoadBalancerService: prepare JSON response: %w", err)
 	}
 
@@ -14878,12 +14748,12 @@ type UpdateLoadBalancerServiceRequest struct {
 func (c Client) UpdateLoadBalancerService(ctx context.Context, id UUID, serviceID UUID, req UpdateLoadBalancerServiceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/load-balancer/%v/service/%v", id, serviceID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancerService: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancerService: new request: %w", err)
 	}
@@ -14900,21 +14770,23 @@ func (c Client) UpdateLoadBalancerService(ctx context.Context, id UUID, serviceI
 		return nil, fmt.Errorf("UpdateLoadBalancerService: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-load-balancer-service")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancerService: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-load-balancer-service")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-load-balancer-service")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancerService: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateLoadBalancerService: prepare JSON response: %w", err)
 	}
 
@@ -14946,21 +14818,19 @@ func (c Client) ResetLoadBalancerServiceField(ctx context.Context, id UUID, serv
 		return nil, fmt.Errorf("ResetLoadBalancerServiceField: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-load-balancer-service-field")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerServiceField: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-load-balancer-service-field")
+	defer c.logCall(ctx, request, response, "reset-load-balancer-service-field")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerServiceField: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerServiceField: prepare JSON response: %w", err)
 	}
 
@@ -14993,21 +14863,19 @@ func (c Client) ResetLoadBalancerField(ctx context.Context, id UUID, field Reset
 		return nil, fmt.Errorf("ResetLoadBalancerField: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-load-balancer-field")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerField: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-load-balancer-field")
+	defer c.logCall(ctx, request, response, "reset-load-balancer-field")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerField: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetLoadBalancerField: prepare JSON response: %w", err)
 	}
 
@@ -15033,21 +14901,19 @@ func (c Client) GetOperation(ctx context.Context, id UUID) (*Operation, error) {
 		return nil, fmt.Errorf("GetOperation: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-operation")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetOperation: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-operation")
+	defer c.logCall(ctx, request, response, "get-operation")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetOperation: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetOperation: prepare JSON response: %w", err)
 	}
 
@@ -15073,21 +14939,19 @@ func (c Client) GetOrganization(ctx context.Context) (*Organization, error) {
 		return nil, fmt.Errorf("GetOrganization: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-organization")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetOrganization: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-organization")
+	defer c.logCall(ctx, request, response, "get-organization")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetOrganization: http response: %w", err)
 	}
 
 	bodyresp := new(Organization)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetOrganization: prepare JSON response: %w", err)
 	}
 
@@ -15136,21 +15000,19 @@ func (c Client) ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksRe
 		return nil, fmt.Errorf("ListPrivateNetworks: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-private-networks")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListPrivateNetworks: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-private-networks")
+	defer c.logCall(ctx, request, response, "list-private-networks")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListPrivateNetworks: http response: %w", err)
 	}
 
 	bodyresp := new(ListPrivateNetworksResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListPrivateNetworks: prepare JSON response: %w", err)
 	}
 
@@ -15177,12 +15039,12 @@ type CreatePrivateNetworkRequest struct {
 func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetworkRequest) (*Operation, error) {
 	path := "/private-network"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreatePrivateNetwork: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreatePrivateNetwork: new request: %w", err)
 	}
@@ -15199,21 +15061,23 @@ func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetwo
 		return nil, fmt.Errorf("CreatePrivateNetwork: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-private-network")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreatePrivateNetwork: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-private-network")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-private-network")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreatePrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreatePrivateNetwork: prepare JSON response: %w", err)
 	}
 
@@ -15239,21 +15103,19 @@ func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, 
 		return nil, fmt.Errorf("DeletePrivateNetwork: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-private-network")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeletePrivateNetwork: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-private-network")
+	defer c.logCall(ctx, request, response, "delete-private-network")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeletePrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeletePrivateNetwork: prepare JSON response: %w", err)
 	}
 
@@ -15279,21 +15141,19 @@ func (c Client) GetPrivateNetwork(ctx context.Context, id UUID) (*PrivateNetwork
 		return nil, fmt.Errorf("GetPrivateNetwork: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-private-network")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetPrivateNetwork: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-private-network")
+	defer c.logCall(ctx, request, response, "get-private-network")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetPrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := new(PrivateNetwork)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetPrivateNetwork: prepare JSON response: %w", err)
 	}
 
@@ -15320,12 +15180,12 @@ type UpdatePrivateNetworkRequest struct {
 func (c Client) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetwork: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetwork: new request: %w", err)
 	}
@@ -15342,21 +15202,23 @@ func (c Client) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePri
 		return nil, fmt.Errorf("UpdatePrivateNetwork: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-private-network")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetwork: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-private-network")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-private-network")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetwork: prepare JSON response: %w", err)
 	}
 
@@ -15388,21 +15250,19 @@ func (c Client) ResetPrivateNetworkField(ctx context.Context, id UUID, field Res
 		return nil, fmt.Errorf("ResetPrivateNetworkField: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "reset-private-network-field")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ResetPrivateNetworkField: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "reset-private-network-field")
+	defer c.logCall(ctx, request, response, "reset-private-network-field")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ResetPrivateNetworkField: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ResetPrivateNetworkField: prepare JSON response: %w", err)
 	}
 
@@ -15426,12 +15286,12 @@ type AttachInstanceToPrivateNetworkRequest struct {
 func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req AttachInstanceToPrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:attach", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: new request: %w", err)
 	}
@@ -15448,21 +15308,23 @@ func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "attach-instance-to-private-network")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "attach-instance-to-private-network")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "attach-instance-to-private-network")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToPrivateNetwork: prepare JSON response: %w", err)
 	}
 
@@ -15478,12 +15340,12 @@ type DetachInstanceFromPrivateNetworkRequest struct {
 func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, req DetachInstanceFromPrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:detach", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: new request: %w", err)
 	}
@@ -15500,21 +15362,23 @@ func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, r
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "detach-instance-from-private-network")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "detach-instance-from-private-network")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "detach-instance-from-private-network")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromPrivateNetwork: prepare JSON response: %w", err)
 	}
 
@@ -15536,12 +15400,12 @@ type UpdatePrivateNetworkInstanceIPRequest struct {
 func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req UpdatePrivateNetworkInstanceIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:update-ip", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: new request: %w", err)
 	}
@@ -15558,21 +15422,23 @@ func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-private-network-instance-ip")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-private-network-instance-ip")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-private-network-instance-ip")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdatePrivateNetworkInstanceIP: prepare JSON response: %w", err)
 	}
 
@@ -15602,21 +15468,19 @@ func (c Client) ListQuotas(ctx context.Context) (*ListQuotasResponse, error) {
 		return nil, fmt.Errorf("ListQuotas: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-quotas")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListQuotas: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-quotas")
+	defer c.logCall(ctx, request, response, "list-quotas")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListQuotas: http response: %w", err)
 	}
 
 	bodyresp := new(ListQuotasResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListQuotas: prepare JSON response: %w", err)
 	}
 
@@ -15642,21 +15506,19 @@ func (c Client) GetQuota(ctx context.Context, entity string) (*Quota, error) {
 		return nil, fmt.Errorf("GetQuota: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-quota")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetQuota: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-quota")
+	defer c.logCall(ctx, request, response, "get-quota")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetQuota: http response: %w", err)
 	}
 
 	bodyresp := new(Quota)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetQuota: prepare JSON response: %w", err)
 	}
 
@@ -15682,21 +15544,19 @@ func (c Client) DeleteReverseDNSElasticIP(ctx context.Context, id UUID) (*Operat
 		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-reverse-dns-elastic-ip")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-reverse-dns-elastic-ip")
+	defer c.logCall(ctx, request, response, "delete-reverse-dns-elastic-ip")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSElasticIP: prepare JSON response: %w", err)
 	}
 
@@ -15722,21 +15582,19 @@ func (c Client) GetReverseDNSElasticIP(ctx context.Context, id UUID) (*ReverseDN
 		return nil, fmt.Errorf("GetReverseDNSElasticIP: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-reverse-dns-elastic-ip")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetReverseDNSElasticIP: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-reverse-dns-elastic-ip")
+	defer c.logCall(ctx, request, response, "get-reverse-dns-elastic-ip")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetReverseDNSElasticIP: http response: %w", err)
 	}
 
 	bodyresp := new(ReverseDNSRecord)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetReverseDNSElasticIP: prepare JSON response: %w", err)
 	}
 
@@ -15751,12 +15609,12 @@ type UpdateReverseDNSElasticIPRequest struct {
 func (c Client) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req UpdateReverseDNSElasticIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/reverse-dns/elastic-ip/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: new request: %w", err)
 	}
@@ -15773,21 +15631,23 @@ func (c Client) UpdateReverseDNSElasticIP(ctx context.Context, id UUID, req Upda
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-reverse-dns-elastic-ip")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-reverse-dns-elastic-ip")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-reverse-dns-elastic-ip")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSElasticIP: prepare JSON response: %w", err)
 	}
 
@@ -15813,21 +15673,19 @@ func (c Client) DeleteReverseDNSInstance(ctx context.Context, id UUID) (*Operati
 		return nil, fmt.Errorf("DeleteReverseDNSInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-reverse-dns-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-reverse-dns-instance")
+	defer c.logCall(ctx, request, response, "delete-reverse-dns-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteReverseDNSInstance: prepare JSON response: %w", err)
 	}
 
@@ -15853,21 +15711,19 @@ func (c Client) GetReverseDNSInstance(ctx context.Context, id UUID) (*ReverseDNS
 		return nil, fmt.Errorf("GetReverseDNSInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-reverse-dns-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetReverseDNSInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-reverse-dns-instance")
+	defer c.logCall(ctx, request, response, "get-reverse-dns-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetReverseDNSInstance: http response: %w", err)
 	}
 
 	bodyresp := new(ReverseDNSRecord)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetReverseDNSInstance: prepare JSON response: %w", err)
 	}
 
@@ -15882,12 +15738,12 @@ type UpdateReverseDNSInstanceRequest struct {
 func (c Client) UpdateReverseDNSInstance(ctx context.Context, id UUID, req UpdateReverseDNSInstanceRequest) (*Operation, error) {
 	path := fmt.Sprintf("/reverse-dns/instance/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: new request: %w", err)
 	}
@@ -15904,21 +15760,23 @@ func (c Client) UpdateReverseDNSInstance(ctx context.Context, id UUID, req Updat
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-reverse-dns-instance")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-reverse-dns-instance")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-reverse-dns-instance")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateReverseDNSInstance: prepare JSON response: %w", err)
 	}
 
@@ -15993,21 +15851,19 @@ func (c Client) ListSecurityGroups(ctx context.Context, opts ...ListSecurityGrou
 		return nil, fmt.Errorf("ListSecurityGroups: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-security-groups")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSecurityGroups: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-security-groups")
+	defer c.logCall(ctx, request, response, "list-security-groups")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListSecurityGroups: http response: %w", err)
 	}
 
 	bodyresp := new(ListSecurityGroupsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSecurityGroups: prepare JSON response: %w", err)
 	}
 
@@ -16025,12 +15881,12 @@ type CreateSecurityGroupRequest struct {
 func (c Client) CreateSecurityGroup(ctx context.Context, req CreateSecurityGroupRequest) (*Operation, error) {
 	path := "/security-group"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSecurityGroup: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateSecurityGroup: new request: %w", err)
 	}
@@ -16047,21 +15903,23 @@ func (c Client) CreateSecurityGroup(ctx context.Context, req CreateSecurityGroup
 		return nil, fmt.Errorf("CreateSecurityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-security-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSecurityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-security-group")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-security-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSecurityGroup: prepare JSON response: %w", err)
 	}
 
@@ -16087,21 +15945,19 @@ func (c Client) DeleteSecurityGroup(ctx context.Context, id UUID) (*Operation, e
 		return nil, fmt.Errorf("DeleteSecurityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-security-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSecurityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-security-group")
+	defer c.logCall(ctx, request, response, "delete-security-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSecurityGroup: prepare JSON response: %w", err)
 	}
 
@@ -16127,21 +15983,19 @@ func (c Client) GetSecurityGroup(ctx context.Context, id UUID) (*SecurityGroup, 
 		return nil, fmt.Errorf("GetSecurityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-security-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSecurityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-security-group")
+	defer c.logCall(ctx, request, response, "get-security-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(SecurityGroup)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSecurityGroup: prepare JSON response: %w", err)
 	}
 
@@ -16198,12 +16052,12 @@ type AddRuleToSecurityGroupRequest struct {
 func (c Client) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRuleToSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v/rules", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: new request: %w", err)
 	}
@@ -16220,21 +16074,23 @@ func (c Client) AddRuleToSecurityGroup(ctx context.Context, id UUID, req AddRule
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "add-rule-to-security-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "add-rule-to-security-group")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "add-rule-to-security-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddRuleToSecurityGroup: prepare JSON response: %w", err)
 	}
 
@@ -16260,21 +16116,19 @@ func (c Client) DeleteRuleFromSecurityGroup(ctx context.Context, id UUID, ruleID
 		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-rule-from-security-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-rule-from-security-group")
+	defer c.logCall(ctx, request, response, "delete-rule-from-security-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteRuleFromSecurityGroup: prepare JSON response: %w", err)
 	}
 
@@ -16290,12 +16144,12 @@ type AddExternalSourceToSecurityGroupRequest struct {
 func (c Client) AddExternalSourceToSecurityGroup(ctx context.Context, id UUID, req AddExternalSourceToSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:add-source", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: new request: %w", err)
 	}
@@ -16312,21 +16166,23 @@ func (c Client) AddExternalSourceToSecurityGroup(ctx context.Context, id UUID, r
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "add-external-source-to-security-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "add-external-source-to-security-group")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "add-external-source-to-security-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AddExternalSourceToSecurityGroup: prepare JSON response: %w", err)
 	}
 
@@ -16342,12 +16198,12 @@ type AttachInstanceToSecurityGroupRequest struct {
 func (c Client) AttachInstanceToSecurityGroup(ctx context.Context, id UUID, req AttachInstanceToSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:attach", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: new request: %w", err)
 	}
@@ -16364,21 +16220,23 @@ func (c Client) AttachInstanceToSecurityGroup(ctx context.Context, id UUID, req 
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "attach-instance-to-security-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "attach-instance-to-security-group")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "attach-instance-to-security-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSecurityGroup: prepare JSON response: %w", err)
 	}
 
@@ -16394,12 +16252,12 @@ type DetachInstanceFromSecurityGroupRequest struct {
 func (c Client) DetachInstanceFromSecurityGroup(ctx context.Context, id UUID, req DetachInstanceFromSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:detach", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: new request: %w", err)
 	}
@@ -16416,21 +16274,23 @@ func (c Client) DetachInstanceFromSecurityGroup(ctx context.Context, id UUID, re
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "detach-instance-from-security-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "detach-instance-from-security-group")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "detach-instance-from-security-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSecurityGroup: prepare JSON response: %w", err)
 	}
 
@@ -16446,12 +16306,12 @@ type RemoveExternalSourceFromSecurityGroupRequest struct {
 func (c Client) RemoveExternalSourceFromSecurityGroup(ctx context.Context, id UUID, req RemoveExternalSourceFromSecurityGroupRequest) (*Operation, error) {
 	path := fmt.Sprintf("/security-group/%v:remove-source", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: new request: %w", err)
 	}
@@ -16468,21 +16328,23 @@ func (c Client) RemoveExternalSourceFromSecurityGroup(ctx context.Context, id UU
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "remove-external-source-from-security-group")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "remove-external-source-from-security-group")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "remove-external-source-from-security-group")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RemoveExternalSourceFromSecurityGroup: prepare JSON response: %w", err)
 	}
 
@@ -16531,21 +16393,19 @@ func (c Client) ListSKSClusters(ctx context.Context) (*ListSKSClustersResponse, 
 		return nil, fmt.Errorf("ListSKSClusters: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-sks-clusters")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSKSClusters: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-sks-clusters")
+	defer c.logCall(ctx, request, response, "list-sks-clusters")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListSKSClusters: http response: %w", err)
 	}
 
 	bodyresp := new(ListSKSClustersResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSKSClusters: prepare JSON response: %w", err)
 	}
 
@@ -16603,12 +16463,12 @@ type CreateSKSClusterRequest struct {
 func (c Client) CreateSKSCluster(ctx context.Context, req CreateSKSClusterRequest) (*Operation, error) {
 	path := "/sks-cluster"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSCluster: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSCluster: new request: %w", err)
 	}
@@ -16625,21 +16485,23 @@ func (c Client) CreateSKSCluster(ctx context.Context, req CreateSKSClusterReques
 		return nil, fmt.Errorf("CreateSKSCluster: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-sks-cluster")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSCluster: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-sks-cluster")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-sks-cluster")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateSKSCluster: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSKSCluster: prepare JSON response: %w", err)
 	}
 
@@ -16665,21 +16527,19 @@ func (c Client) ListSKSClusterDeprecatedResources(ctx context.Context, id UUID) 
 		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-sks-cluster-deprecated-resources")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-sks-cluster-deprecated-resources")
+	defer c.logCall(ctx, request, response, "list-sks-cluster-deprecated-resources")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: http response: %w", err)
 	}
 
 	bodyresp := []SKSClusterDeprecatedResource{}
-	if err := prepareJSONResponse(response, &bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, &bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSKSClusterDeprecatedResources: prepare JSON response: %w", err)
 	}
 
@@ -16694,12 +16554,12 @@ type GenerateSKSClusterKubeconfigResponse struct {
 func (c Client) GenerateSKSClusterKubeconfig(ctx context.Context, id UUID, req SKSKubeconfigRequest) (*GenerateSKSClusterKubeconfigResponse, error) {
 	path := fmt.Sprintf("/sks-cluster-kubeconfig/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: new request: %w", err)
 	}
@@ -16716,21 +16576,23 @@ func (c Client) GenerateSKSClusterKubeconfig(ctx context.Context, id UUID, req S
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "generate-sks-cluster-kubeconfig")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "generate-sks-cluster-kubeconfig")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "generate-sks-cluster-kubeconfig")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: http response: %w", err)
 	}
 
 	bodyresp := new(GenerateSKSClusterKubeconfigResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GenerateSKSClusterKubeconfig: prepare JSON response: %w", err)
 	}
 
@@ -16776,21 +16638,19 @@ func (c Client) ListSKSClusterVersions(ctx context.Context, opts ...ListSKSClust
 		return nil, fmt.Errorf("ListSKSClusterVersions: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-sks-cluster-versions")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSKSClusterVersions: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-sks-cluster-versions")
+	defer c.logCall(ctx, request, response, "list-sks-cluster-versions")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListSKSClusterVersions: http response: %w", err)
 	}
 
 	bodyresp := new(ListSKSClusterVersionsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSKSClusterVersions: prepare JSON response: %w", err)
 	}
 
@@ -16816,21 +16676,19 @@ func (c Client) DeleteSKSCluster(ctx context.Context, id UUID) (*Operation, erro
 		return nil, fmt.Errorf("DeleteSKSCluster: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-sks-cluster")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSKSCluster: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-sks-cluster")
+	defer c.logCall(ctx, request, response, "delete-sks-cluster")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteSKSCluster: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSKSCluster: prepare JSON response: %w", err)
 	}
 
@@ -16856,21 +16714,19 @@ func (c Client) GetSKSCluster(ctx context.Context, id UUID) (*SKSCluster, error)
 		return nil, fmt.Errorf("GetSKSCluster: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-sks-cluster")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSCluster: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-sks-cluster")
+	defer c.logCall(ctx, request, response, "get-sks-cluster")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetSKSCluster: http response: %w", err)
 	}
 
 	bodyresp := new(SKSCluster)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSCluster: prepare JSON response: %w", err)
 	}
 
@@ -16904,12 +16760,12 @@ type UpdateSKSClusterRequest struct {
 func (c Client) UpdateSKSCluster(ctx context.Context, id UUID, req UpdateSKSClusterRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSCluster: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSCluster: new request: %w", err)
 	}
@@ -16926,21 +16782,23 @@ func (c Client) UpdateSKSCluster(ctx context.Context, id UUID, req UpdateSKSClus
 		return nil, fmt.Errorf("UpdateSKSCluster: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-sks-cluster")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSCluster: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-sks-cluster")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-sks-cluster")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateSKSCluster: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateSKSCluster: prepare JSON response: %w", err)
 	}
 
@@ -16978,21 +16836,19 @@ func (c Client) GetSKSClusterAuthorityCert(ctx context.Context, id UUID, authori
 		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-sks-cluster-authority-cert")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-sks-cluster-authority-cert")
+	defer c.logCall(ctx, request, response, "get-sks-cluster-authority-cert")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: http response: %w", err)
 	}
 
 	bodyresp := new(GetSKSClusterAuthorityCertResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSClusterAuthorityCert: prepare JSON response: %w", err)
 	}
 
@@ -17022,21 +16878,19 @@ func (c Client) GenerateSKSKarpenterExoscaleNodeclass(ctx context.Context, id UU
 		return nil, fmt.Errorf("GenerateSKSKarpenterExoscaleNodeclass: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "generate-sks-karpenter-exoscale-nodeclass")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GenerateSKSKarpenterExoscaleNodeclass: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "generate-sks-karpenter-exoscale-nodeclass")
+	defer c.logCall(ctx, request, response, "generate-sks-karpenter-exoscale-nodeclass")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GenerateSKSKarpenterExoscaleNodeclass: http response: %w", err)
 	}
 
 	bodyresp := new(GenerateSKSKarpenterExoscaleNodeclassResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GenerateSKSKarpenterExoscaleNodeclass: prepare JSON response: %w", err)
 	}
 
@@ -17066,21 +16920,19 @@ func (c Client) GenerateSKSKarpenterNodepool(ctx context.Context, id UUID) (*Gen
 		return nil, fmt.Errorf("GenerateSKSKarpenterNodepool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "generate-sks-karpenter-nodepool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GenerateSKSKarpenterNodepool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "generate-sks-karpenter-nodepool")
+	defer c.logCall(ctx, request, response, "generate-sks-karpenter-nodepool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GenerateSKSKarpenterNodepool: http response: %w", err)
 	}
 
 	bodyresp := new(GenerateSKSKarpenterNodepoolResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GenerateSKSKarpenterNodepool: prepare JSON response: %w", err)
 	}
 
@@ -17108,21 +16960,19 @@ func (c Client) GetSKSClusterInspection(ctx context.Context, id UUID) (*GetSKSCl
 		return nil, fmt.Errorf("GetSKSClusterInspection: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-sks-cluster-inspection")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSClusterInspection: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-sks-cluster-inspection")
+	defer c.logCall(ctx, request, response, "get-sks-cluster-inspection")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetSKSClusterInspection: http response: %w", err)
 	}
 
 	bodyresp := new(GetSKSClusterInspectionResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSClusterInspection: prepare JSON response: %w", err)
 	}
 
@@ -17179,12 +17029,12 @@ type CreateSKSNodepoolRequest struct {
 func (c Client) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNodepoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSNodepool: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSNodepool: new request: %w", err)
 	}
@@ -17201,21 +17051,23 @@ func (c Client) CreateSKSNodepool(ctx context.Context, id UUID, req CreateSKSNod
 		return nil, fmt.Errorf("CreateSKSNodepool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-sks-nodepool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSKSNodepool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-sks-nodepool")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-sks-nodepool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateSKSNodepool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSKSNodepool: prepare JSON response: %w", err)
 	}
 
@@ -17241,21 +17093,19 @@ func (c Client) DeleteSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UU
 		return nil, fmt.Errorf("DeleteSKSNodepool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-sks-nodepool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSKSNodepool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-sks-nodepool")
+	defer c.logCall(ctx, request, response, "delete-sks-nodepool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteSKSNodepool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSKSNodepool: prepare JSON response: %w", err)
 	}
 
@@ -17281,21 +17131,19 @@ func (c Client) GetSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID)
 		return nil, fmt.Errorf("GetSKSNodepool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-sks-nodepool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSKSNodepool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-sks-nodepool")
+	defer c.logCall(ctx, request, response, "get-sks-nodepool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetSKSNodepool: http response: %w", err)
 	}
 
 	bodyresp := new(SKSNodepool)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSKSNodepool: prepare JSON response: %w", err)
 	}
 
@@ -17348,12 +17196,12 @@ type UpdateSKSNodepoolRequest struct {
 func (c Client) UpdateSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID, req UpdateSKSNodepoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v", id, sksNodepoolID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSNodepool: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSNodepool: new request: %w", err)
 	}
@@ -17370,21 +17218,23 @@ func (c Client) UpdateSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UU
 		return nil, fmt.Errorf("UpdateSKSNodepool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-sks-nodepool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSKSNodepool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-sks-nodepool")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-sks-nodepool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateSKSNodepool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateSKSNodepool: prepare JSON response: %w", err)
 	}
 
@@ -17399,12 +17249,12 @@ type EvictSKSNodepoolMembersRequest struct {
 func (c Client) EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoolID UUID, req EvictSKSNodepoolMembersRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v:evict", id, sksNodepoolID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: new request: %w", err)
 	}
@@ -17421,21 +17271,23 @@ func (c Client) EvictSKSNodepoolMembers(ctx context.Context, id UUID, sksNodepoo
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "evict-sks-nodepool-members")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "evict-sks-nodepool-members")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "evict-sks-nodepool-members")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("EvictSKSNodepoolMembers: prepare JSON response: %w", err)
 	}
 
@@ -17451,12 +17303,12 @@ type ScaleSKSNodepoolRequest struct {
 func (c Client) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUID, req ScaleSKSNodepoolRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/nodepool/%v:scale", id, sksNodepoolID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleSKSNodepool: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("ScaleSKSNodepool: new request: %w", err)
 	}
@@ -17473,21 +17325,23 @@ func (c Client) ScaleSKSNodepool(ctx context.Context, id UUID, sksNodepoolID UUI
 		return nil, fmt.Errorf("ScaleSKSNodepool: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "scale-sks-nodepool")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ScaleSKSNodepool: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "scale-sks-nodepool")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "scale-sks-nodepool")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ScaleSKSNodepool: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ScaleSKSNodepool: prepare JSON response: %w", err)
 	}
 
@@ -17513,21 +17367,19 @@ func (c Client) RotateSKSCcmCredentials(ctx context.Context, id UUID) (*Operatio
 		return nil, fmt.Errorf("RotateSKSCcmCredentials: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "rotate-sks-ccm-credentials")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RotateSKSCcmCredentials: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "rotate-sks-ccm-credentials")
+	defer c.logCall(ctx, request, response, "rotate-sks-ccm-credentials")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RotateSKSCcmCredentials: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateSKSCcmCredentials: prepare JSON response: %w", err)
 	}
 
@@ -17553,21 +17405,19 @@ func (c Client) RotateSKSCsiCredentials(ctx context.Context, id UUID) (*Operatio
 		return nil, fmt.Errorf("RotateSKSCsiCredentials: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "rotate-sks-csi-credentials")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RotateSKSCsiCredentials: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "rotate-sks-csi-credentials")
+	defer c.logCall(ctx, request, response, "rotate-sks-csi-credentials")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RotateSKSCsiCredentials: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateSKSCsiCredentials: prepare JSON response: %w", err)
 	}
 
@@ -17593,21 +17443,19 @@ func (c Client) RotateSKSKarpenterCredentials(ctx context.Context, id UUID) (*Op
 		return nil, fmt.Errorf("RotateSKSKarpenterCredentials: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "rotate-sks-karpenter-credentials")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RotateSKSKarpenterCredentials: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "rotate-sks-karpenter-credentials")
+	defer c.logCall(ctx, request, response, "rotate-sks-karpenter-credentials")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RotateSKSKarpenterCredentials: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateSKSKarpenterCredentials: prepare JSON response: %w", err)
 	}
 
@@ -17633,21 +17481,19 @@ func (c Client) RotateSKSOperatorsCA(ctx context.Context, id UUID) (*Operation, 
 		return nil, fmt.Errorf("RotateSKSOperatorsCA: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "rotate-sks-operators-ca")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RotateSKSOperatorsCA: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "rotate-sks-operators-ca")
+	defer c.logCall(ctx, request, response, "rotate-sks-operators-ca")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RotateSKSOperatorsCA: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RotateSKSOperatorsCA: prepare JSON response: %w", err)
 	}
 
@@ -17663,12 +17509,12 @@ type UpgradeSKSClusterRequest struct {
 func (c Client) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSClusterRequest) (*Operation, error) {
 	path := fmt.Sprintf("/sks-cluster/%v/upgrade", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpgradeSKSCluster: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpgradeSKSCluster: new request: %w", err)
 	}
@@ -17685,21 +17531,23 @@ func (c Client) UpgradeSKSCluster(ctx context.Context, id UUID, req UpgradeSKSCl
 		return nil, fmt.Errorf("UpgradeSKSCluster: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "upgrade-sks-cluster")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpgradeSKSCluster: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "upgrade-sks-cluster")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "upgrade-sks-cluster")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpgradeSKSCluster: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpgradeSKSCluster: prepare JSON response: %w", err)
 	}
 
@@ -17725,21 +17573,19 @@ func (c Client) UpgradeSKSClusterServiceLevel(ctx context.Context, id UUID) (*Op
 		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "upgrade-sks-cluster-service-level")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "upgrade-sks-cluster-service-level")
+	defer c.logCall(ctx, request, response, "upgrade-sks-cluster-service-level")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpgradeSKSClusterServiceLevel: prepare JSON response: %w", err)
 	}
 
@@ -17776,21 +17622,19 @@ func (c Client) GetActiveNodepoolTemplate(ctx context.Context, kubeVersion strin
 		return nil, fmt.Errorf("GetActiveNodepoolTemplate: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-active-nodepool-template")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetActiveNodepoolTemplate: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-active-nodepool-template")
+	defer c.logCall(ctx, request, response, "get-active-nodepool-template")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetActiveNodepoolTemplate: http response: %w", err)
 	}
 
 	bodyresp := new(GetActiveNodepoolTemplateResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetActiveNodepoolTemplate: prepare JSON response: %w", err)
 	}
 
@@ -17839,21 +17683,19 @@ func (c Client) ListSnapshots(ctx context.Context) (*ListSnapshotsResponse, erro
 		return nil, fmt.Errorf("ListSnapshots: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-snapshots")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSnapshots: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-snapshots")
+	defer c.logCall(ctx, request, response, "list-snapshots")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListSnapshots: http response: %w", err)
 	}
 
 	bodyresp := new(ListSnapshotsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSnapshots: prepare JSON response: %w", err)
 	}
 
@@ -17879,21 +17721,19 @@ func (c Client) DeleteSnapshot(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("DeleteSnapshot: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-snapshot")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSnapshot: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-snapshot")
+	defer c.logCall(ctx, request, response, "delete-snapshot")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteSnapshot: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSnapshot: prepare JSON response: %w", err)
 	}
 
@@ -17919,21 +17759,19 @@ func (c Client) GetSnapshot(ctx context.Context, id UUID) (*Snapshot, error) {
 		return nil, fmt.Errorf("GetSnapshot: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-snapshot")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSnapshot: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-snapshot")
+	defer c.logCall(ctx, request, response, "get-snapshot")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetSnapshot: http response: %w", err)
 	}
 
 	bodyresp := new(Snapshot)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSnapshot: prepare JSON response: %w", err)
 	}
 
@@ -17959,21 +17797,19 @@ func (c Client) ExportSnapshot(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("ExportSnapshot: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "export-snapshot")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ExportSnapshot: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "export-snapshot")
+	defer c.logCall(ctx, request, response, "export-snapshot")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ExportSnapshot: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ExportSnapshot: prepare JSON response: %w", err)
 	}
 
@@ -17997,12 +17833,12 @@ type PromoteSnapshotToTemplateRequest struct {
 func (c Client) PromoteSnapshotToTemplate(ctx context.Context, id UUID, req PromoteSnapshotToTemplateRequest) (*Operation, error) {
 	path := fmt.Sprintf("/snapshot/%v:promote", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: new request: %w", err)
 	}
@@ -18019,21 +17855,23 @@ func (c Client) PromoteSnapshotToTemplate(ctx context.Context, id UUID, req Prom
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "promote-snapshot-to-template")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "promote-snapshot-to-template")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "promote-snapshot-to-template")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("PromoteSnapshotToTemplate: prepare JSON response: %w", err)
 	}
 
@@ -18082,21 +17920,19 @@ func (c Client) ListSOSBucketsUsage(ctx context.Context) (*ListSOSBucketsUsageRe
 		return nil, fmt.Errorf("ListSOSBucketsUsage: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-sos-buckets-usage")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSOSBucketsUsage: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-sos-buckets-usage")
+	defer c.logCall(ctx, request, response, "list-sos-buckets-usage")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListSOSBucketsUsage: http response: %w", err)
 	}
 
 	bodyresp := new(ListSOSBucketsUsageResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSOSBucketsUsage: prepare JSON response: %w", err)
 	}
 
@@ -18142,21 +17978,19 @@ func (c Client) GetSOSPresignedURL(ctx context.Context, bucket string, opts ...G
 		return nil, fmt.Errorf("GetSOSPresignedURL: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-sos-presigned-url")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSOSPresignedURL: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-sos-presigned-url")
+	defer c.logCall(ctx, request, response, "get-sos-presigned-url")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetSOSPresignedURL: http response: %w", err)
 	}
 
 	bodyresp := new(GetSOSPresignedURLResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSOSPresignedURL: prepare JSON response: %w", err)
 	}
 
@@ -18205,21 +18039,19 @@ func (c Client) ListSSHKeys(ctx context.Context) (*ListSSHKeysResponse, error) {
 		return nil, fmt.Errorf("ListSSHKeys: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-ssh-keys")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSSHKeys: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-ssh-keys")
+	defer c.logCall(ctx, request, response, "list-ssh-keys")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListSSHKeys: http response: %w", err)
 	}
 
 	bodyresp := new(ListSSHKeysResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSSHKeys: prepare JSON response: %w", err)
 	}
 
@@ -18237,12 +18069,12 @@ type RegisterSSHKeyRequest struct {
 func (c Client) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (*Operation, error) {
 	path := "/ssh-key"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterSSHKey: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("RegisterSSHKey: new request: %w", err)
 	}
@@ -18259,21 +18091,23 @@ func (c Client) RegisterSSHKey(ctx context.Context, req RegisterSSHKeyRequest) (
 		return nil, fmt.Errorf("RegisterSSHKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "register-ssh-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterSSHKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "register-ssh-key")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "register-ssh-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RegisterSSHKey: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RegisterSSHKey: prepare JSON response: %w", err)
 	}
 
@@ -18299,21 +18133,19 @@ func (c Client) DeleteSSHKey(ctx context.Context, name string) (*Operation, erro
 		return nil, fmt.Errorf("DeleteSSHKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-ssh-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteSSHKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-ssh-key")
+	defer c.logCall(ctx, request, response, "delete-ssh-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteSSHKey: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteSSHKey: prepare JSON response: %w", err)
 	}
 
@@ -18339,21 +18171,19 @@ func (c Client) GetSSHKey(ctx context.Context, name string) (*SSHKey, error) {
 		return nil, fmt.Errorf("GetSSHKey: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-ssh-key")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSSHKey: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-ssh-key")
+	defer c.logCall(ctx, request, response, "get-ssh-key")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetSSHKey: http response: %w", err)
 	}
 
 	bodyresp := new(SSHKey)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSSHKey: prepare JSON response: %w", err)
 	}
 
@@ -18431,21 +18261,19 @@ func (c Client) ListTemplates(ctx context.Context, opts ...ListTemplatesOpt) (*L
 		return nil, fmt.Errorf("ListTemplates: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-templates")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListTemplates: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-templates")
+	defer c.logCall(ctx, request, response, "list-templates")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListTemplates: http response: %w", err)
 	}
 
 	bodyresp := new(ListTemplatesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListTemplates: prepare JSON response: %w", err)
 	}
 
@@ -18492,12 +18320,12 @@ type RegisterTemplateRequest struct {
 func (c Client) RegisterTemplate(ctx context.Context, req RegisterTemplateRequest) (*Operation, error) {
 	path := "/template"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterTemplate: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("RegisterTemplate: new request: %w", err)
 	}
@@ -18514,21 +18342,23 @@ func (c Client) RegisterTemplate(ctx context.Context, req RegisterTemplateReques
 		return nil, fmt.Errorf("RegisterTemplate: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "register-template")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterTemplate: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "register-template")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "register-template")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("RegisterTemplate: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("RegisterTemplate: prepare JSON response: %w", err)
 	}
 
@@ -18554,21 +18384,19 @@ func (c Client) DeleteTemplate(ctx context.Context, id UUID) (*Operation, error)
 		return nil, fmt.Errorf("DeleteTemplate: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-template")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteTemplate: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-template")
+	defer c.logCall(ctx, request, response, "delete-template")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteTemplate: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteTemplate: prepare JSON response: %w", err)
 	}
 
@@ -18594,21 +18422,19 @@ func (c Client) GetTemplate(ctx context.Context, id UUID) (*Template, error) {
 		return nil, fmt.Errorf("GetTemplate: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-template")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetTemplate: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-template")
+	defer c.logCall(ctx, request, response, "get-template")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetTemplate: http response: %w", err)
 	}
 
 	bodyresp := new(Template)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetTemplate: prepare JSON response: %w", err)
 	}
 
@@ -18624,12 +18450,12 @@ type CopyTemplateRequest struct {
 func (c Client) CopyTemplate(ctx context.Context, id UUID, req CopyTemplateRequest) (*Operation, error) {
 	path := fmt.Sprintf("/template/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CopyTemplate: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CopyTemplate: new request: %w", err)
 	}
@@ -18646,21 +18472,23 @@ func (c Client) CopyTemplate(ctx context.Context, id UUID, req CopyTemplateReque
 		return nil, fmt.Errorf("CopyTemplate: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "copy-template")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CopyTemplate: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "copy-template")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "copy-template")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CopyTemplate: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CopyTemplate: prepare JSON response: %w", err)
 	}
 
@@ -18678,12 +18506,12 @@ type UpdateTemplateRequest struct {
 func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateRequest) (*Operation, error) {
 	path := fmt.Sprintf("/template/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: new request: %w", err)
 	}
@@ -18700,21 +18528,23 @@ func (c Client) UpdateTemplate(ctx context.Context, id UUID, req UpdateTemplateR
 		return nil, fmt.Errorf("UpdateTemplate: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-template")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-template")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-template")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateTemplate: prepare JSON response: %w", err)
 	}
 
@@ -18778,21 +18608,19 @@ func (c Client) GetUsageReport(ctx context.Context, opts ...GetUsageReportOpt) (
 		return nil, fmt.Errorf("GetUsageReport: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-usage-report")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetUsageReport: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-usage-report")
+	defer c.logCall(ctx, request, response, "get-usage-report")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetUsageReport: http response: %w", err)
 	}
 
 	bodyresp := new(GetUsageReportResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetUsageReport: prepare JSON response: %w", err)
 	}
 
@@ -18840,21 +18668,19 @@ func (c Client) ListUsers(ctx context.Context) (*ListUsersResponse, error) {
 		return nil, fmt.Errorf("ListUsers: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-users")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListUsers: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-users")
+	defer c.logCall(ctx, request, response, "list-users")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListUsers: http response: %w", err)
 	}
 
 	bodyresp := new(ListUsersResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListUsers: prepare JSON response: %w", err)
 	}
 
@@ -18871,12 +18697,12 @@ type CreateUserRequest struct {
 func (c Client) CreateUser(ctx context.Context, req CreateUserRequest) (*Operation, error) {
 	path := "/user"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateUser: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateUser: new request: %w", err)
 	}
@@ -18893,21 +18719,23 @@ func (c Client) CreateUser(ctx context.Context, req CreateUserRequest) (*Operati
 		return nil, fmt.Errorf("CreateUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-user")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateUser: prepare JSON response: %w", err)
 	}
 
@@ -18932,21 +18760,19 @@ func (c Client) DeleteUser(ctx context.Context, id UUID) (*Operation, error) {
 		return nil, fmt.Errorf("DeleteUser: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-user")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DeleteUser: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-user")
+	defer c.logCall(ctx, request, response, "delete-user")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DeleteUser: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DeleteUser: prepare JSON response: %w", err)
 	}
 
@@ -18961,12 +18787,12 @@ type UpdateUserRoleRequest struct {
 func (c Client) UpdateUserRole(ctx context.Context, id UUID, req UpdateUserRoleRequest) (*Operation, error) {
 	path := fmt.Sprintf("/user/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateUserRole: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateUserRole: new request: %w", err)
 	}
@@ -18983,21 +18809,23 @@ func (c Client) UpdateUserRole(ctx context.Context, id UUID, req UpdateUserRoleR
 		return nil, fmt.Errorf("UpdateUserRole: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-user-role")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateUserRole: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-user-role")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-user-role")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateUserRole: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateUserRole: prepare JSON response: %w", err)
 	}
 
@@ -19046,21 +18874,19 @@ func (c Client) ListVpcs(ctx context.Context) (*ListVpcsResponse, error) {
 		return nil, fmt.Errorf("ListVpcs: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-vpcs")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListVpcs: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-vpcs")
+	defer c.logCall(ctx, request, response, "list-vpcs")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListVpcs: http response: %w", err)
 	}
 
 	bodyresp := new(ListVpcsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListVpcs: prepare JSON response: %w", err)
 	}
 
@@ -19081,12 +18907,12 @@ type CreateVpcRequest struct {
 func (c Client) CreateVpc(ctx context.Context, req CreateVpcRequest) (*Operation, error) {
 	path := "/vpc"
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateVpc: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateVpc: new request: %w", err)
 	}
@@ -19103,21 +18929,23 @@ func (c Client) CreateVpc(ctx context.Context, req CreateVpcRequest) (*Operation
 		return nil, fmt.Errorf("CreateVpc: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-vpc")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateVpc: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-vpc")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-vpc")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateVpc: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateVpc: prepare JSON response: %w", err)
 	}
 
@@ -19143,14 +18971,12 @@ func (c Client) DeleteVpc(ctx context.Context, id UUID) error {
 		return fmt.Errorf("DeleteVpc: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-vpc")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return fmt.Errorf("DeleteVpc: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-vpc")
+	defer c.logCall(ctx, request, response, "delete-vpc")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return fmt.Errorf("DeleteVpc: http response: %w", err)
@@ -19179,21 +19005,19 @@ func (c Client) GetVpc(ctx context.Context, id UUID) (*Vpc, error) {
 		return nil, fmt.Errorf("GetVpc: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-vpc")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetVpc: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-vpc")
+	defer c.logCall(ctx, request, response, "get-vpc")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetVpc: http response: %w", err)
 	}
 
 	bodyresp := new(Vpc)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetVpc: prepare JSON response: %w", err)
 	}
 
@@ -19214,12 +19038,12 @@ type UpdateVpcRequest struct {
 func (c Client) UpdateVpc(ctx context.Context, id UUID, req UpdateVpcRequest) (*Vpc, error) {
 	path := fmt.Sprintf("/vpc/%v", id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateVpc: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateVpc: new request: %w", err)
 	}
@@ -19236,21 +19060,23 @@ func (c Client) UpdateVpc(ctx context.Context, id UUID, req UpdateVpcRequest) (*
 		return nil, fmt.Errorf("UpdateVpc: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-vpc")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateVpc: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-vpc")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-vpc")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateVpc: http response: %w", err)
 	}
 
 	bodyresp := new(Vpc)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateVpc: prepare JSON response: %w", err)
 	}
 
@@ -19299,21 +19125,19 @@ func (c Client) ListVpcRoutes(ctx context.Context, vpcID UUID) (*ListVpcRoutesRe
 		return nil, fmt.Errorf("ListVpcRoutes: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-vpc-routes")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListVpcRoutes: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-vpc-routes")
+	defer c.logCall(ctx, request, response, "list-vpc-routes")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListVpcRoutes: http response: %w", err)
 	}
 
 	bodyresp := new(ListVpcRoutesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListVpcRoutes: prepare JSON response: %w", err)
 	}
 
@@ -19362,21 +19186,19 @@ func (c Client) ListSubnets(ctx context.Context, vpcID UUID) (*ListSubnetsRespon
 		return nil, fmt.Errorf("ListSubnets: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-subnets")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSubnets: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-subnets")
+	defer c.logCall(ctx, request, response, "list-subnets")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListSubnets: http response: %w", err)
 	}
 
 	bodyresp := new(ListSubnetsResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListSubnets: prepare JSON response: %w", err)
 	}
 
@@ -19413,12 +19235,12 @@ type CreateSubnetRequest struct {
 func (c Client) CreateSubnet(ctx context.Context, vpcID UUID, req CreateSubnetRequest) (*Operation, error) {
 	path := fmt.Sprintf("/vpc/%v/subnet", vpcID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSubnet: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateSubnet: new request: %w", err)
 	}
@@ -19435,21 +19257,23 @@ func (c Client) CreateSubnet(ctx context.Context, vpcID UUID, req CreateSubnetRe
 		return nil, fmt.Errorf("CreateSubnet: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-subnet")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateSubnet: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-subnet")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-subnet")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateSubnet: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateSubnet: prepare JSON response: %w", err)
 	}
 
@@ -19475,14 +19299,12 @@ func (c Client) DeleteSubnet(ctx context.Context, vpcID UUID, id UUID) error {
 		return fmt.Errorf("DeleteSubnet: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-subnet")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return fmt.Errorf("DeleteSubnet: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-subnet")
+	defer c.logCall(ctx, request, response, "delete-subnet")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return fmt.Errorf("DeleteSubnet: http response: %w", err)
@@ -19511,21 +19333,19 @@ func (c Client) GetSubnet(ctx context.Context, vpcID UUID, id UUID) (*Subnet, er
 		return nil, fmt.Errorf("GetSubnet: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "get-subnet")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("GetSubnet: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "get-subnet")
+	defer c.logCall(ctx, request, response, "get-subnet")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("GetSubnet: http response: %w", err)
 	}
 
 	bodyresp := new(Subnet)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSubnet: prepare JSON response: %w", err)
 	}
 
@@ -19544,12 +19364,12 @@ type UpdateSubnetRequest struct {
 func (c Client) UpdateSubnet(ctx context.Context, vpcID UUID, id UUID, req UpdateSubnetRequest) (*Subnet, error) {
 	path := fmt.Sprintf("/vpc/%v/subnet/%v", vpcID, id)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSubnet: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSubnet: new request: %w", err)
 	}
@@ -19566,21 +19386,23 @@ func (c Client) UpdateSubnet(ctx context.Context, vpcID UUID, id UUID, req Updat
 		return nil, fmt.Errorf("UpdateSubnet: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "update-subnet")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateSubnet: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "update-subnet")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "update-subnet")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("UpdateSubnet: http response: %w", err)
 	}
 
 	bodyresp := new(Subnet)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("UpdateSubnet: prepare JSON response: %w", err)
 	}
 
@@ -19598,12 +19420,12 @@ type AttachInstanceToSubnetRequest struct {
 func (c Client) AttachInstanceToSubnet(ctx context.Context, vpcID UUID, subnetID UUID, req AttachInstanceToSubnetRequest) (*Operation, error) {
 	path := fmt.Sprintf("/vpc/%v/subnet/%v/attach", vpcID, subnetID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSubnet: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSubnet: new request: %w", err)
 	}
@@ -19620,21 +19442,23 @@ func (c Client) AttachInstanceToSubnet(ctx context.Context, vpcID UUID, subnetID
 		return nil, fmt.Errorf("AttachInstanceToSubnet: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "attach-instance-to-subnet")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSubnet: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "attach-instance-to-subnet")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "attach-instance-to-subnet")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSubnet: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("AttachInstanceToSubnet: prepare JSON response: %w", err)
 	}
 
@@ -19650,12 +19474,12 @@ type DetachInstanceFromSubnetRequest struct {
 func (c Client) DetachInstanceFromSubnet(ctx context.Context, vpcID UUID, subnetID UUID, req DetachInstanceFromSubnetRequest) (*Operation, error) {
 	path := fmt.Sprintf("/vpc/%v/subnet/%v/detach", vpcID, subnetID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSubnet: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSubnet: new request: %w", err)
 	}
@@ -19672,21 +19496,23 @@ func (c Client) DetachInstanceFromSubnet(ctx context.Context, vpcID UUID, subnet
 		return nil, fmt.Errorf("DetachInstanceFromSubnet: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "detach-instance-from-subnet")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSubnet: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "detach-instance-from-subnet")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "detach-instance-from-subnet")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSubnet: http response: %w", err)
 	}
 
 	bodyresp := new(Operation)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("DetachInstanceFromSubnet: prepare JSON response: %w", err)
 	}
 
@@ -19735,21 +19561,19 @@ func (c Client) ListRoutes(ctx context.Context, vpcID UUID, subnetID UUID) (*Lis
 		return nil, fmt.Errorf("ListRoutes: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-routes")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListRoutes: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-routes")
+	defer c.logCall(ctx, request, response, "list-routes")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListRoutes: http response: %w", err)
 	}
 
 	bodyresp := new(ListRoutesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListRoutes: prepare JSON response: %w", err)
 	}
 
@@ -19769,12 +19593,12 @@ type CreateRouteRequest struct {
 func (c Client) CreateRoute(ctx context.Context, vpcID UUID, subnetID UUID, req CreateRouteRequest) (*Route, error) {
 	path := fmt.Sprintf("/vpc/%v/subnet/%v/route", vpcID, subnetID)
 
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("CreateRoute: prepare JSON body: %w", err)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, bytes.NewReader(bodySlice))
 	if err != nil {
 		return nil, fmt.Errorf("CreateRoute: new request: %w", err)
 	}
@@ -19791,21 +19615,23 @@ func (c Client) CreateRoute(ctx context.Context, vpcID UUID, subnetID UUID, req 
 		return nil, fmt.Errorf("CreateRoute: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "create-route")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateRoute: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "create-route")
+	if c.logger.Enabled(ctx, slog.LevelDebug) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+
+	defer c.logCall(ctx, request, response, "create-route")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("CreateRoute: http response: %w", err)
 	}
 
 	bodyresp := new(Route)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("CreateRoute: prepare JSON response: %w", err)
 	}
 
@@ -19831,14 +19657,12 @@ func (c Client) DeleteRoute(ctx context.Context, vpcID UUID, subnetID UUID, id U
 		return fmt.Errorf("DeleteRoute: sign request: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "delete-route")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return fmt.Errorf("DeleteRoute: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "delete-route")
+	defer c.logCall(ctx, request, response, "delete-route")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return fmt.Errorf("DeleteRoute: http response: %w", err)
@@ -19886,21 +19710,19 @@ func (c Client) ListZones(ctx context.Context) (*ListZonesResponse, error) {
 		return nil, fmt.Errorf("ListZones: execute request editors: %w", err)
 	}
 
-	c.dumpRequest(ctx, request, "list-zones")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListZones: http client do: %w", err)
 	}
 
-	c.dumpResponse(ctx, response, "list-zones")
+	defer c.logCall(ctx, request, response, "list-zones")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return nil, fmt.Errorf("ListZones: http response: %w", err)
 	}
 
 	bodyresp := new(ListZonesResponse)
-	if err := prepareJSONResponse(response, bodyresp); err != nil {
+	if err := c.prepareJSONResponse(ctx, response, bodyresp); err != nil {
 		return nil, fmt.Errorf("ListZones: prepare JSON response: %w", err)
 	}
 

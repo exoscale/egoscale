@@ -3,13 +3,13 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	path := {{ .URLPathBuilder }}
 
 	{{ if .BodyRequest }}
-	body, err := prepareJSONBody(req)
+	bodySlice, err := json.Marshal(req)
 	if err != nil {
 		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: prepare JSON body: %w", err)
 	}
 	{{ end }}
 
-	request, err := http.NewRequestWithContext(ctx, "{{ .HTTPMethod }}", c.serverEndpoint + path, {{ if .BodyRequest }}body{{else}}nil{{end}})
+	request, err := http.NewRequestWithContext(ctx, "{{ .HTTPMethod }}", c.serverEndpoint + path, {{ if .BodyRequest }}bytes.NewReader(bodySlice){{else}}nil{{end}})
 	if err != nil {
 		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: new request: %w", err)
 	}
@@ -38,14 +38,18 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	}
 	{{ end }}
 
-    c.dumpRequest(ctx, request, "{{ .OperationID }}")
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: http client do: %w", err)
 	}
 
-    c.dumpResponse(ctx, response, "{{ .OperationID }}")
+	{{ if .BodyRequest }}
+	if (c.logger.Enabled(ctx, slog.LevelDebug)) {
+		request.Body = io.NopCloser(bytes.NewReader(bodySlice))
+	}
+	{{ end }}
+
+  defer c.logCall(ctx, request, response, "{{ .OperationID }}")
 
 	if err := handleHTTPErrorResp(response); err != nil {
 		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: http response: %w", {{ if .ErrorResponses }}decodeAPIErrorResponse(err, map[int]func() any{

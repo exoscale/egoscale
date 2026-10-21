@@ -17,18 +17,11 @@ type Config struct {
 	IgnoredSchemas []string `yaml:"ignored-schemas"`
 	// SkipAuthOperations are operation IDs called without credentials.
 	SkipAuthOperations []string `yaml:"skip-auth-operations"`
-	// SchemaOverrides are per Go type name property and reference overrides.
-	SchemaOverrides map[string]Overrides `yaml:"schema-overrides"`
+	// RefOverrides replace the Go type of referenced schemas, per Go type name
+	// (e.g. CreateInstanceRequest: "#/components/schemas/template-ref" -> Template).
+	RefOverrides map[string]map[string]string `yaml:"ref-overrides"`
 	// Aliases are type aliases kept for backward compatibility.
 	Aliases []Alias `yaml:"aliases"`
-}
-
-// Overrides of a schema rendering.
-type Overrides struct {
-	// Props renames properties (e.g. "instance-target" -> "instance").
-	Props map[string]string `yaml:"props"`
-	// Refs replaces referenced types (e.g. "#/components/schemas/instance-ref" -> "InstanceTarget").
-	Refs map[string]string `yaml:"refs"`
 }
 
 // Alias is a Go type alias: type Name = Target.
@@ -49,17 +42,8 @@ func Parse(buf []byte) (Config, error) {
 	return c, nil
 }
 
-// PropName returns the overridden name of a schema property, or propName.
-func (c Config) PropName(schemaName, propName string) string {
-	if name, ok := c.SchemaOverrides[schemaName].Props[propName]; ok {
-		return name
-	}
-
-	return propName
-}
-
 // RefType returns the overridden Go type of a reference within a schema, if any.
 func (c Config) RefType(schemaName, ref string) (string, bool) {
-	typ, ok := c.SchemaOverrides[schemaName].Refs[ref]
+	typ, ok := c.RefOverrides[schemaName][ref]
 	return typ, ok
 }

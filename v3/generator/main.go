@@ -73,6 +73,10 @@ func run(openAPISpec, genPathDir, packageName string) error {
 		}
 	}
 
+	if err := b.Check(); err != nil {
+		return fmt.Errorf("config: %w", err)
+	}
+
 	for _, f := range files {
 		if err := os.WriteFile(filepath.Join(genPathDir, f.name), f.content, 0o644); err != nil {
 			return err

@@ -10,21 +10,15 @@ func TestParse(t *testing.T) {
 	c, err := Parse([]byte(`
 acronyms:
   sks: SKS
-schema-overrides:
+ref-overrides:
   Foo:
-    props:
-      a-target: a
-    refs:
-      "#/components/schemas/a-ref": ATarget
+    "#/components/schemas/a-ref": ATarget
 aliases:
   - name: ATarget
     target: ARef
 `))
 	require.NoError(t, err)
 	require.Equal(t, "SKS", c.Acronyms["sks"])
-	require.Equal(t, "a", c.PropName("Foo", "a-target"))
-	require.Equal(t, "b", c.PropName("Foo", "b"))
-	require.Equal(t, "b", c.PropName("Bar", "b"))
 	typ, ok := c.RefType("Foo", "#/components/schemas/a-ref")
 	require.True(t, ok)
 	require.Equal(t, "ATarget", typ)

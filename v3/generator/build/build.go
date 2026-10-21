@@ -3,7 +3,9 @@
 package build
 
 import (
+	"errors"
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/pb33f/libopenapi"
@@ -25,6 +27,8 @@ type Builder struct {
 
 	// declared maps declared type names to where they come from in the spec.
 	declared map[string]string
+	// appliedRefOverrides are the config ref overrides used while building.
+	appliedRefOverrides map[refOverride]bool
 	// decls are the declarations of the file being built.
 	decls []ir.Decl
 }
@@ -56,13 +60,35 @@ func New(model *v3.Document, cfg config.Config) *Builder {
 		cfg:      cfg,
 		names:    naming.New(cfg.Acronyms),
 		declared: map[string]string{},
+
+		appliedRefOverrides: map[refOverride]bool{},
 	}
 }
 
+// refOverride is a config ref override: a reference within a Go type.
+type refOverride struct {
+	typeName, ref string
+}
+
+// Check returns an error for every config ref override that didn't apply,
+// to keep the config in sync with the spec. Call it once every file is built.
+func (b *Builder) Check() error {
+	var errs []error
+	for _, typeName := range slices.Sorted(maps.Keys(b.cfg.RefOverrides)) {
+		for _, ref := range slices.Sorted(maps.Keys(b.cfg.RefOverrides[typeName])) {
+			if !b.appliedRefOverrides[refOverride{typeName, ref}] {
+				errs = append(errs, fmt.Errorf("ref override %s %s: no such reference in the spec", typeName, ref))
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 // emit appends a declaration to the file being built.
-// It fails if the declaration name is already declared.
+// It fails if a type it declares is already declared.
 func (b *Builder) emit(d ir.Decl, origin string) error {
-	if name := declName(d); name != "" {
+	for _, name := range typeNames(d) {
 		if prev, ok := b.declared[name]; ok {
 			return fmt.Errorf("type %s from %s is already declared from %s", name, origin, prev)
 		}
@@ -73,19 +99,26 @@ func (b *Builder) emit(d ir.Decl, origin string) error {
 	return nil
 }
 
-func declName(d ir.Decl) string {
+// typeNames returns the names of the types a declaration declares.
+func typeNames(d ir.Decl) []string {
 	switch d := d.(type) {
 	case ir.TypeDef:
-		return d.Name
+		return []string{d.Name}
 	case ir.Enum:
-		return d.Name
+		return []string{d.Name}
 	case ir.Struct:
-		return d.Name
+		return []string{d.Name}
 	case ir.QueryOpts:
-		return d.Type
+		return []string{d.Type}
+	case ir.Aliases:
+		names := make([]string, 0, len(d.Aliases))
+		for _, a := range d.Aliases {
+			names = append(names, a.Name)
+		}
+		return names
 	}
 
-	return ""
+	return nil
 }
 
 // file returns the file of the declarations emitted since the last call.

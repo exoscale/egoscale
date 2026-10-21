@@ -5,12 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"runtime"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/exoscale/egoscale/v3/credentials"
@@ -20,11 +21,10 @@ import (
 
 // defaultHTTPClient is HTTP client with retry logic.
 // Default retry configuration can be found in go-retryablehttp repo.
-var defaultHTTPClient = func() *http.Client {
+var defaultHTTPClient = func() *retryablehttp.Client {
 	rc := retryablehttp.NewClient()
-	// silence client by default
 	rc.Logger = slog.New(slog.DiscardHandler)
-	return rc.StandardClient()
+	return rc
 }()
 
 func (c Client) GetZoneName(ctx context.Context, endpoint Endpoint) (ZoneName, error) {
@@ -111,10 +111,7 @@ type ClientOpt func(*Client) error
 func ClientOptWithTrace() ClientOpt {
 	return func(c *Client) error {
 		logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
-		rc := retryablehttp.NewClient()
-		rc.Logger = logger
-
-		c.httpClient = rc.StandardClient()
+		defaultHTTPClient.Logger = logger.With("subsystem", "retryablehttp")
 		c.logger = logger
 
 		return nil
@@ -125,6 +122,7 @@ func ClientOptWithTrace() ClientOpt {
 func ClientOptWithLogHandler(h slog.Handler) ClientOpt {
 	return func(c *Client) error {
 		c.logger = slog.New(h)
+		defaultHTTPClient.Logger = c.logger.With("subsystem", "retryablehttp") // noop if custom http client is used
 		return nil
 	}
 }
@@ -203,10 +201,10 @@ func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client
 		apiKey:         values.APIKey,
 		apiSecret:      values.APISecret,
 		serverEndpoint: string(CHGva2),
-		httpClient:     defaultHTTPClient,
+		httpClient:     defaultHTTPClient.StandardClient(),
 		validate:       validator.New(),
 		userAgent:      getDefaultUserAgent(),
-		logger:         slog.New(slog.DiscardHandler),
+		logger:         slog.New(slog.DiscardHandler), // no logs by default
 	}
 
 	for _, opt := range opts {
@@ -265,10 +263,8 @@ func (c *Client) WithTrace() *Client {
 	clone := cloneClient(c)
 
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	rc := retryablehttp.NewClient()
-	rc.Logger = logger
+	defaultHTTPClient.Logger = logger.With("subsystem", "retryablehttp")
 
-	clone.httpClient = rc.StandardClient()
 	clone.logger = logger
 
 	return clone
@@ -279,6 +275,7 @@ func (c *Client) WithLogHandler(h slog.Handler) *Client {
 	clone := cloneClient(c)
 
 	clone.logger = slog.New(h)
+	defaultHTTPClient.Logger = clone.logger.With("subsystem", "retryablehttp") // noop if custom http client is used
 
 	return clone
 }
@@ -321,40 +318,58 @@ func (c *Client) executeRequestInterceptors(ctx context.Context, req *http.Reque
 	return nil
 }
 
-func (c *Client) dumpRequest(
-	ctx context.Context,
-	req *http.Request,
-	operationID string,
-) {
-	if req == nil {
-		return
+func OnelineHeaders(h http.Header) string {
+	out := make([]string, 0, len(h)*2)
+	for k, v := range h {
+		out = append(out, fmt.Sprintf("%s:%s", strings.TrimSpace(k), strings.Join(v, ",")))
 	}
-
-	if dump, err := httputil.DumpRequest(req, true); err == nil {
-		c.logger.DebugContext(
-			ctx,
-			fmt.Sprintf("operation %s request", operationID),
-			"payload", dump,
-		)
-	}
+	return strings.Join(out, " ")
 }
 
-func (c *Client) dumpResponse(
+func (c *Client) logCall(
 	ctx context.Context,
+	req *http.Request,
 	resp *http.Response,
 	operationID string,
 ) {
-	if resp == nil {
+	if !c.logger.Enabled(ctx, slog.LevelDebug) {
 		return
 	}
 
-	if dump, err := httputil.DumpResponse(resp, true); err == nil {
-		c.logger.DebugContext(
-			ctx,
-			fmt.Sprintf("operation %s response", operationID),
-			"payload", dump,
-		)
+	var meta []any
+	var body []byte
+
+	if req.Body != nil {
+		body, _ = io.ReadAll(req.Body)
 	}
+	if req != nil {
+		meta = append(meta, slog.Group("request",
+			"method", req.Method,
+			"host", req.URL.Host,
+			"path", req.URL.EscapedPath(),
+			"headers", OnelineHeaders(req.Header.Clone()),
+			"body", string(body),
+		))
+	}
+
+	body = []byte{}
+	if resp.Body != nil {
+		body, _ = io.ReadAll(resp.Body)
+	}
+	if resp != nil {
+		meta = append(meta, slog.Group("response",
+			"status", resp.Status,
+			"headers", OnelineHeaders(resp.Header.Clone()),
+			"body", string(body),
+		))
+	}
+
+	c.logger.DebugContext(
+		ctx,
+		fmt.Sprintf("operation %s log", operationID),
+		meta...,
+	)
+	c.logger.Enabled(ctx, slog.LevelDebug)
 }
 
 func cloneClient(c *Client) *Client {
@@ -367,6 +382,6 @@ func cloneClient(c *Client) *Client {
 		requestInterceptors: c.requestInterceptors,
 		waitTimeout:         c.waitTimeout,
 		validate:            c.validate,
-		logger:              slog.New(slog.DiscardHandler), // no logs by default
+		logger:              c.logger,
 	}
 }

@@ -1,13 +1,12 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package v3
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
-	"strings"
+	"hash/maphash"
 	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel"
@@ -15,7 +14,7 @@ import (
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Paths represents a high-level OpenAPI 3+ Paths object, that is backed by a low-level one.
@@ -31,6 +30,8 @@ type Paths struct {
 	RootNode   *yaml.Node
 	index      *index.SpecIndex
 	context    context.Context
+	nodeStore  sync.Map
+	reference  low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -94,8 +95,13 @@ func (p *Paths) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.
 	p.KeyNode = keyNode
 	p.RootNode = root
 	utils.CheckForMergeNodes(root)
-	p.Reference = new(low.Reference)
-	p.Nodes = low.ExtractNodes(ctx, keyNode)
+	p.reference = low.Reference{}
+	p.Reference = &p.reference
+	p.nodeStore = sync.Map{}
+	p.Nodes = &p.nodeStore
+	if keyNode != nil {
+		p.AddNode(keyNode.Line, keyNode)
+	}
 	p.Extensions = low.ExtractExtensions(root)
 	p.index = idx
 	p.context = ctx
@@ -117,16 +123,22 @@ func (p *Paths) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the PathItem object
-func (p *Paths) Hash() [32]byte {
-	var f []string
-	f = low.AppendMapHashes(f, p.PathItems)
-	f = append(f, low.HashExtensions(p.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the Paths object
+func (p *Paths) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		for _, hash := range low.AppendMapHashes(nil, p.PathItems) {
+			h.WriteString(hash)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(p.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }
 
 func extractPathItemsMap(ctx context.Context, root *yaml.Node, idx *index.SpecIndex) (*orderedmap.Map[low.KeyReference[string], low.ValueReference[*PathItem]], error) {
-	// Translate YAML nodes to pathsMap using `TranslatePipeline`.
 	type buildResult struct {
 		key   low.KeyReference[string]
 		value low.ValueReference[*PathItem]
@@ -135,78 +147,59 @@ func extractPathItemsMap(ctx context.Context, root *yaml.Node, idx *index.SpecIn
 		currentNode *yaml.Node
 		pathNode    *yaml.Node
 	}
+
 	pathsMap := orderedmap.New[low.KeyReference[string], low.ValueReference[*PathItem]]()
-	in := make(chan buildInput)
-	out := make(chan buildResult)
-	done := make(chan struct{})
-	var wg sync.WaitGroup
-	wg.Add(2) // input and output goroutines.
 
-	// TranslatePipeline input.
-	go func() {
-		defer func() {
-			close(in)
-			wg.Done()
-		}()
-		skip := false
-		var currentNode *yaml.Node
-		for i, pathNode := range root.Content {
-			if strings.HasPrefix(strings.ToLower(pathNode.Value), "x-") {
-				skip = true
-				continue
-			}
-			if skip {
-				skip = false
-				continue
-			}
-			if i%2 == 0 {
-				currentNode = pathNode
-				continue
-			}
+	if root == nil {
+		return pathsMap, nil
+	}
 
-			select {
-			case in <- buildInput{
-				currentNode: currentNode,
-				pathNode:    pathNode,
-			}:
-			case <-done:
-				return
-			}
+	inputs := make([]buildInput, 0, len(root.Content)/2)
+	skip := false
+	var currentNode *yaml.Node
+	for i, pathNode := range root.Content {
+		if len(pathNode.Value) >= 2 && (pathNode.Value[0] == 'x' || pathNode.Value[0] == 'X') && pathNode.Value[1] == '-' {
+			skip = true
+			continue
 		}
-	}()
-
-	// TranslatePipeline output.
-	go func() {
-		for {
-			result, ok := <-out
-			if !ok {
-				break
-			}
-			pathsMap.Set(result.key, result.value)
+		if skip {
+			skip = false
+			continue
 		}
-		close(done)
-		wg.Done()
-	}()
+		if i%2 == 0 {
+			currentNode = pathNode
+			continue
+		}
+		inputs = append(inputs, buildInput{
+			currentNode: currentNode,
+			pathNode:    pathNode,
+		})
+	}
 
-	err := datamodel.TranslatePipeline[buildInput, buildResult](in, out,
-		func(value buildInput) (buildResult, error) {
+	err := datamodel.TranslateSliceParallel(inputs,
+		func(_ int, value buildInput) (buildResult, error) {
 			pNode := value.pathNode
 			cNode := value.currentNode
 
 			foundContext := ctx
+			// pathIdx is a closure local on purpose. idx is captured and shared by every goroutine
+			// this slice is translated across, so it must never be assigned to.
+			pathIdx := idx
 			var isRef bool
 			var refNode *yaml.Node
 			if ok, _, _ := utils.IsNodeRefValue(pNode); ok {
 				isRef = true
 				refNode = pNode
-				r, _, err, fCtx := low.LocateRefNodeWithContext(ctx, pNode, idx)
+				r, fIdx, err, fCtx := low.LocateRefNodeWithContext(ctx, pNode, idx)
 				if r != nil {
 					pNode = r
 					foundContext = fCtx
-					if err != nil {
-						if !idx.AllowCircularReferenceResolving() {
-							return buildResult{}, fmt.Errorf("path item build failed: %s", err.Error())
-						}
+					if err != nil && !idx.AllowCircularReferenceResolving() {
+						return buildResult{}, fmt.Errorf("path item build failed: %s", err.Error())
+					}
+					// attribute the path item to the file that owns the resolved node.
+					if fIdx != nil {
+						pathIdx = fIdx
 					}
 				} else {
 					return buildResult{}, fmt.Errorf("path item build failed: cannot find reference: '%s' at line %d, col %d",
@@ -216,17 +209,14 @@ func extractPathItemsMap(ctx context.Context, root *yaml.Node, idx *index.SpecIn
 
 			path := new(PathItem)
 			_ = low.BuildModel(pNode, path)
-			err := path.Build(foundContext, cNode, pNode, idx)
+			err := path.Build(foundContext, cNode, pNode, pathIdx)
 
 			if isRef {
 				path.SetReference(refNode.Content[1].Value, refNode)
 			}
 
-			if err != nil {
-				if idx != nil && idx.GetLogger() != nil {
-					idx.GetLogger().Error(fmt.Sprintf("error building path item: %s", err.Error()))
-				}
-				// return buildResult{}, err
+			if err != nil && idx != nil && idx.GetLogger() != nil {
+				idx.GetLogger().Error(fmt.Sprintf("error building path item: %s", err.Error()))
 			}
 
 			return buildResult{
@@ -240,8 +230,11 @@ func extractPathItemsMap(ctx context.Context, root *yaml.Node, idx *index.SpecIn
 				},
 			}, nil
 		},
+		func(result buildResult) error {
+			pathsMap.Set(result.key, result.value)
+			return nil
+		},
 	)
-	wg.Wait()
 	if err != nil {
 		return nil, err
 	}

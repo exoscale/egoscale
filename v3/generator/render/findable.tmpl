@@ -1,0 +1,18 @@
+// Find{{ .ItemType }} attempts to find an {{ .ItemType }} by {{ .Param }}.
+func (l {{ .ListType }}) Find{{ .ItemType }}({{ .Param }} string) ({{ .ItemType }}, error) {
+	var result []{{ .ItemType }}
+	for i, elem := range l.{{ .ListField }} {
+		if {{ findCondition . }} {
+			result = append(result, l.{{ .ListField }}[i])
+		}
+	}
+	if len(result) == 1 {
+		return result[0], nil
+	}
+
+	if len(result) > 1 {
+		return {{ .ItemType }}{}, fmt.Errorf("%q too many found in {{ .ListType }}: %w", {{ .Param }}, ErrConflict)
+	}
+
+	return {{ .ItemType }}{}, fmt.Errorf("%q not found in {{ .ListType }}: %w", {{ .Param }}, ErrNotFound)
+}

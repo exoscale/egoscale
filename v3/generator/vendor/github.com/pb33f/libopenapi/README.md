@@ -11,32 +11,16 @@
 [![discord](https://img.shields.io/discord/923258363540815912)](https://discord.gg/x7VACVuEGP)
 [![Docs](https://img.shields.io/badge/godoc-reference-5fafd7)](https://pkg.go.dev/github.com/pb33f/libopenapi)
 
-libopenapi has full support for Swagger (OpenAPI 2), OpenAPI 3, and OpenAPI 3.1. It can handle the largest and most
+libopenapi has full support for OpenAPI 3, 3.1 and 3.2. It can handle the largest and most
 complex specifications you can think of.
+
+Overlays and Arazzo are also fully supported.
 
 ---
 
 ## Sponsors & users
 If your company is using `libopenapi`, please considering [supporting this project](https://github.com/sponsors/daveshanley), 
 like our _very kind_ sponsors:
-
-<a href="https://speakeasy.com/editor?utm_source=libopenapi+repo&utm_medium=github+sponsorship">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-github-sponsor-dark.svg">
-  <img alt="speakeasy'" src=".github/sponsors/speakeasy-github-sponsor-light.svg">
-</picture>
-</a>
-
-[Speakeasy](https://speakeasy.com/editor?utm_source=libopenapi+repo&utm_medium=github+sponsorship)
-
-<a href="https://bump.sh/?utm_source=quobix&utm_campaign=sponsor">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/bump-sh-dark.png">
-  <img alt="bump.sh'" src=".github/sponsors/bump-sh-light.png">
-</picture>
-</a>
-
-[bump.sh](https://bump.sh/?utm_source=quobix&utm_campaign=sponsor)
 
 <a href="https://scalar.com">
 <picture>
@@ -56,19 +40,6 @@ like our _very kind_ sponsors:
 
 [apideck](https://apideck.com)
 
----
-
-`libopenapi` is pretty new, so our list of notable projects that depend on `libopenapi` is small (let me know if you'd like to add your project)
-
-- [github.com/daveshanley/vacuum](https://github.com/daveshanley/vacuum) - "The world's fastest and most scalable OpenAPI/Swagger linter/quality tool"
-- [github.com/pb33f/openapi-changes](https://github.com/pb33f/openapi-changes) - "The world's **sexiest** OpenAPI breaking changes detector"
-- [github.com/pb33f/wiretap](https://github.com/pb33f/wiretap) - "The world's **coolest** OpenAPI compliance analysis tool"
-- [github.com/danielgtaylor/restish](https://github.com/danielgtaylor/restish) - "Restish is a CLI for interacting with REST-ish HTTP APIs"
-- [github.com/speakeasy-api/speakeasy](https://github.com/speakeasy-api/speakeasy) - "Speakeasy CLI makes validating OpenAPI docs and generating idiomatic SDKs easy!"
-- [github.com/apicat/apicat](https://github.com/apicat/apicat) - "AI-powered API development tool"
-- [github.com/mattermost/mattermost](https://github.com/mattermost/mattermost) - "Software development lifecycle platform"
-- [github.com/gopher-fleece/gleece](https://github.com/gopher-fleece/gleece) - "Building and documenting REST APIs through code-first development"
-- Your project here?
 ---
 
 ## Come chat with us
@@ -99,8 +70,26 @@ See all the documentation at https://pb33f.io/libopenapi/
 - [Circular References](https://pb33f.io/libopenapi/circular-references/)
 - [Bundling Specs](https://pb33f.io/libopenapi/bundling/)
 - [What Changed / Diff Engine](https://pb33f.io/libopenapi/what-changed/)
+- [Overlays](https://pb33f.io/libopenapi/overlays/)
+- [Arazzo](https://pb33f.io/libopenapi/arazzo/)
+- [Generating Code](https://pb33f.io/libopenapi/generating-code/)
+- [Parsing Code](https://pb33f.io/libopenapi/parsing-code/)
 - [FAQ](https://pb33f.io/libopenapi/faq/)
 - [About libopenapi](https://pb33f.io/libopenapi/about/)
+
+### Generating TypeScript models
+
+`generator/typescript` renders the component schemas of an OpenAPI document as
+a type-only TypeScript module, built from the same model as the Go generator.
+
+```go
+file, err := typescript.RenderSchemas(docModel.Model.Components.Schemas)
+os.WriteFile("api.gen.ts", file.Source, 0o644)
+```
+
+See [generator/typescript/README.md](generator/typescript/README.md) for how
+each schema shape maps to TypeScript.
+
 ---
 
 ### Quick-start tutorial
@@ -141,19 +130,16 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("cannot create new document: %e", err))
 	}
-	docModel, errors := document.BuildV3Model()
-	if len(errors) > 0 {
-		for i := range errors {
-			fmt.Printf("error: %e\n", errors[i])
-		}
-		panic(fmt.Sprintf("cannot create v3 model from document: %d errors reported", len(errors)))
+	docModel, err := document.BuildV3Model()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create v3 model from document: %e", err))
 	}
 
 	// The following fails after the first iteration
-	for schemaPairs := docModel.Model.Components.Schemas.First(); schemaPairs != nil; schemaPairs = schemaPairs.Next() {
-		schemaName := schemaPairs.Key()
-		schema := schemaPairs.Value()
-		fmt.Printf("Schema '%s' has %d properties\n", schemaName, schema.Schema().Properties.Len())
+	for schemaName, schema := range docModel.Model.Components.Schemas.FromOldest() {
+		if schema.Schema().Properties != nil {
+			fmt.Printf("Schema '%s' has %d properties\n", schemaName, schema.Schema().Properties.Len())
+		}
 	}
 }
 ```

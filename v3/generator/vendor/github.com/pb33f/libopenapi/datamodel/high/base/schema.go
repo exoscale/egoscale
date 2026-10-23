@@ -6,11 +6,13 @@ package base
 import (
 	"encoding/json"
 
+	"errors"
+
 	"github.com/pb33f/libopenapi/datamodel/high"
 	lowmodel "github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/base"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Schema represents a JSON Schema that support Swagger, OpenAPI 3 and OpenAPI 3.1
@@ -54,15 +56,19 @@ type Schema struct {
 
 	// 3.1 Specific properties
 	Contains          *SchemaProxy                          `json:"contains,omitempty" yaml:"contains,omitempty"`
-	MinContains       *int64                                `json:"minContains,omitempty" yaml:"minContains,omitempty"`
-	MaxContains       *int64                                `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
+	MinContains       *int64                                `json:"minContains,renderZero,omitempty" yaml:"minContains,renderZero,omitempty"`
+	MaxContains       *int64                                `json:"maxContains,renderZero,omitempty" yaml:"maxContains,renderZero,omitempty"`
 	If                *SchemaProxy                          `json:"if,omitempty" yaml:"if,omitempty"`
 	Else              *SchemaProxy                          `json:"else,omitempty" yaml:"else,omitempty"`
 	Then              *SchemaProxy                          `json:"then,omitempty" yaml:"then,omitempty"`
 	DependentSchemas  *orderedmap.Map[string, *SchemaProxy] `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
+	DependentRequired *orderedmap.Map[string, []string]     `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
 	PatternProperties *orderedmap.Map[string, *SchemaProxy] `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
-	PropertyNames     *SchemaProxy                          `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	UnevaluatedItems  *SchemaProxy                          `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
+
+	// Defs holds reusable JSON Schema definitions declared under the $defs keyword.
+	Defs             *orderedmap.Map[string, *SchemaProxy] `json:"$defs,omitempty" yaml:"$defs,omitempty"`
+	PropertyNames    *SchemaProxy                          `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
+	UnevaluatedItems *SchemaProxy                          `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
 
 	// in 3.1 UnevaluatedProperties can be a Schema or a boolean
 	// https://github.com/pb33f/libopenapi/issues/118
@@ -71,8 +77,26 @@ type Schema struct {
 	// in 3.1 Items can be a Schema or a boolean
 	Items *DynamicValue[*SchemaProxy, bool] `json:"items,omitempty" yaml:"items,omitempty"`
 
+	// 3.1+ only, JSON Schema 2020-12 $id - declares this schema as a schema resource with a URI identifier
+	Id string `json:"$id,omitempty" yaml:"$id,omitempty"`
+
 	// 3.1 only, part of the JSON Schema spec provides a way to identify a sub-schema
 	Anchor string `json:"$anchor,omitempty" yaml:"$anchor,omitempty"`
+
+	// 3.1+ only, JSON Schema 2020-12 dynamic anchor for recursive schema resolution
+	DynamicAnchor string `json:"$dynamicAnchor,omitempty" yaml:"$dynamicAnchor,omitempty"`
+
+	// 3.1+ only, JSON Schema 2020-12 dynamic reference for recursive schema resolution
+	DynamicRef string `json:"$dynamicRef,omitempty" yaml:"$dynamicRef,omitempty"`
+
+	// 3.1+ only, JSON Schema 2020-12 $comment - explanatory notes without affecting validation
+	Comment string `json:"$comment,omitempty" yaml:"$comment,omitempty"`
+
+	// 3.1+ only, JSON Schema 2020-12 contentSchema - describes structure of decoded content
+	ContentSchema *SchemaProxy `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`
+
+	// 3.1+ only, JSON Schema 2020-12 $vocabulary - defines available vocabularies in meta-schemas
+	Vocabulary *orderedmap.Map[string, bool] `json:"$vocabulary,omitempty" yaml:"$vocabulary,omitempty"`
 
 	// Compatible with all versions
 	Not                  *SchemaProxy                          `json:"not,omitempty" yaml:"not,omitempty"`
@@ -81,19 +105,21 @@ type Schema struct {
 	MultipleOf           *float64                              `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
 	Maximum              *float64                              `json:"maximum,renderZero,omitempty" yaml:"maximum,renderZero,omitempty"`
 	Minimum              *float64                              `json:"minimum,renderZero,omitempty," yaml:"minimum,renderZero,omitempty"`
-	MaxLength            *int64                                `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	MinLength            *int64                                `json:"minLength,omitempty" yaml:"minLength,omitempty"`
+	MaxLength            *int64                                `json:"maxLength,renderZero,omitempty" yaml:"maxLength,renderZero,omitempty"`
+	MinLength            *int64                                `json:"minLength,renderZero,omitempty" yaml:"minLength,renderZero,omitempty"`
 	Pattern              string                                `json:"pattern,omitempty" yaml:"pattern,omitempty"`
 	Format               string                                `json:"format,omitempty" yaml:"format,omitempty"`
-	MaxItems             *int64                                `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
-	MinItems             *int64                                `json:"minItems,omitempty" yaml:"minItems,omitempty"`
+	MaxItems             *int64                                `json:"maxItems,renderZero,omitempty" yaml:"maxItems,renderZero,omitempty"`
+	MinItems             *int64                                `json:"minItems,renderZero,omitempty" yaml:"minItems,renderZero,omitempty"`
 	UniqueItems          *bool                                 `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
-	MaxProperties        *int64                                `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	MinProperties        *int64                                `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	MaxProperties        *int64                                `json:"maxProperties,renderZero,omitempty" yaml:"maxProperties,renderZero,omitempty"`
+	MinProperties        *int64                                `json:"minProperties,renderZero,omitempty" yaml:"minProperties,renderZero,omitempty"`
 	Required             []string                              `json:"required,omitempty" yaml:"required,omitempty"`
 	Enum                 []*yaml.Node                          `json:"enum,omitempty" yaml:"enum,omitempty"`
 	AdditionalProperties *DynamicValue[*SchemaProxy, bool]     `json:"additionalProperties,renderZero,omitempty" yaml:"additionalProperties,renderZero,omitempty"`
 	Description          string                                `json:"description,omitempty" yaml:"description,omitempty"`
+	ContentEncoding      string                                `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`
+	ContentMediaType     string                                `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"`
 	Default              *yaml.Node                            `json:"default,omitempty" yaml:"default,renderZero,omitempty"`
 	Const                *yaml.Node                            `json:"const,omitempty" yaml:"const,renderZero,omitempty"`
 	Nullable             *bool                                 `json:"nullable,omitempty" yaml:"nullable,omitempty"`
@@ -265,6 +291,8 @@ func NewSchema(schema *base.Schema) *Schema {
 	s.AdditionalProperties = additionalProperties
 
 	s.Description = schema.Description.Value
+	s.ContentEncoding = schema.ContentEncoding.Value
+	s.ContentMediaType = schema.ContentMediaType.Value
 	s.Default = schema.Default.Value
 	s.Const = schema.Const.Value
 	if !schema.Nullable.IsEmpty() {
@@ -301,10 +329,39 @@ func NewSchema(schema *base.Schema) *Schema {
 	for i := range schema.Required.Value {
 		req = append(req, schema.Required.Value[i].Value)
 	}
+	if !schema.Required.IsEmpty() && schema.Required.ValueNode != nil &&
+		schema.Required.ValueNode.Kind == yaml.SequenceNode && len(schema.Required.Value) == 0 {
+		req = []string{}
+	}
 	s.Required = req
 
+	if !schema.Id.IsEmpty() {
+		s.Id = schema.Id.Value
+	}
 	if !schema.Anchor.IsEmpty() {
 		s.Anchor = schema.Anchor.Value
+	}
+	if !schema.DynamicAnchor.IsEmpty() {
+		s.DynamicAnchor = schema.DynamicAnchor.Value
+	}
+	if !schema.DynamicRef.IsEmpty() {
+		s.DynamicRef = schema.DynamicRef.Value
+	}
+	if !schema.Comment.IsEmpty() {
+		s.Comment = schema.Comment.Value
+	}
+	if !schema.ContentSchema.IsEmpty() {
+		s.ContentSchema = NewSchemaProxy(&lowmodel.NodeReference[*base.SchemaProxy]{
+			ValueNode: schema.ContentSchema.ValueNode,
+			Value:     schema.ContentSchema.Value,
+		})
+	}
+	if schema.Vocabulary.Value != nil {
+		vocabularyMap := orderedmap.New[string, bool]()
+		for k, v := range schema.Vocabulary.Value.FromOldest() {
+			vocabularyMap.Set(k.Value, v.Value)
+		}
+		s.Vocabulary = vocabularyMap
 	}
 
 	var enum []*yaml.Node
@@ -313,50 +370,21 @@ func NewSchema(schema *base.Schema) *Schema {
 	}
 	s.Enum = enum
 
-	// async work.
-	// any polymorphic properties need to be handled in their own threads
-	// any properties each need to be processed in their own thread.
-	// we go as fast as we can.
-	polyCompletedChan := make(chan struct{})
-	errChan := make(chan error)
-
-	type buildResult struct {
-		idx int
-		s   *SchemaProxy
-	}
-
-	// for every item, build schema async
-	buildSchema := func(sch lowmodel.ValueReference[*base.SchemaProxy], idx int, bChan chan buildResult) {
-		n := &lowmodel.NodeReference[*base.SchemaProxy]{
-			ValueNode: sch.ValueNode,
-			Value:     sch.Value,
-		}
-		n.SetReference(sch.GetReference(), sch.GetReferenceNode())
-
-		p := NewSchemaProxy(n)
-
-		bChan <- buildResult{idx: idx, s: p}
-	}
-
-	// schema async
-	buildOutSchemas := func(schemas []lowmodel.ValueReference[*base.SchemaProxy], items *[]*SchemaProxy,
-		doneChan chan struct{}, e chan error,
-	) {
-		bChan := make(chan buildResult)
-		totalSchemas := len(schemas)
+	// each item is a single SchemaProxy struct construction: spinning up goroutines
+	// and channels per item costs far more than the work itself, so build inline.
+	buildOutSchemas := func(schemas []lowmodel.ValueReference[*base.SchemaProxy]) []*SchemaProxy {
+		items := make([]*SchemaProxy, len(schemas))
 		for i := range schemas {
-			go buildSchema(schemas[i], i, bChan)
+			n := &lowmodel.NodeReference[*base.SchemaProxy]{
+				ValueNode: schemas[i].ValueNode,
+				Value:     schemas[i].Value,
+			}
+			n.SetReference(schemas[i].GetReference(), schemas[i].GetReferenceNode())
+			items[i] = NewSchemaProxy(n)
 		}
-		j := 0
-		for j < totalSchemas {
-			r := <-bChan
-			j++
-			(*items)[r.idx] = r.s
-		}
-		doneChan <- struct{}{}
+		return items
 	}
 
-	// props async
 	buildProps := func(k lowmodel.KeyReference[string], v lowmodel.ValueReference[*base.SchemaProxy],
 		props *orderedmap.Map[string, *SchemaProxy], sw int,
 	) {
@@ -373,22 +401,49 @@ func NewSchema(schema *base.Schema) *Schema {
 			s.DependentSchemas = props
 		case 2:
 			s.PatternProperties = props
+		case 3:
+			s.Defs = props
 		}
 	}
 
 	props := orderedmap.New[string, *SchemaProxy]()
+	if !schema.Properties.IsEmpty() {
+		s.Properties = props
+	}
 	for name, schemaProxy := range schema.Properties.Value.FromOldest() {
 		buildProps(name, schemaProxy, props, 0)
 	}
 
 	dependents := orderedmap.New[string, *SchemaProxy]()
+	if !schema.DependentSchemas.IsEmpty() {
+		s.DependentSchemas = dependents
+	}
 	for name, schemaProxy := range schema.DependentSchemas.Value.FromOldest() {
 		buildProps(name, schemaProxy, dependents, 1)
 	}
 
+	// Handle DependentRequired
+	if schema.DependentRequired.Value != nil {
+		depRequired := orderedmap.New[string, []string]()
+		for prop, requiredProps := range schema.DependentRequired.Value.FromOldest() {
+			depRequired.Set(prop.Value, requiredProps.Value)
+		}
+		s.DependentRequired = depRequired
+	}
+
 	patternProps := orderedmap.New[string, *SchemaProxy]()
+	if !schema.PatternProperties.IsEmpty() {
+		s.PatternProperties = patternProps
+	}
 	for name, schemaProxy := range schema.PatternProperties.Value.FromOldest() {
 		buildProps(name, schemaProxy, patternProps, 2)
+	}
+
+	if !schema.Defs.IsEmpty() {
+		defs := orderedmap.New[string, *SchemaProxy]()
+		for name, schemaProxy := range schema.Defs.Value.FromOldest() {
+			buildProps(name, schemaProxy, defs, 3)
+		}
 	}
 
 	var allOf []*SchemaProxy
@@ -398,21 +453,14 @@ func NewSchema(schema *base.Schema) *Schema {
 	var items *DynamicValue[*SchemaProxy, bool]
 	var prefixItems []*SchemaProxy
 
-	children := 0
 	if !schema.AllOf.IsEmpty() {
-		children++
-		allOf = make([]*SchemaProxy, len(schema.AllOf.Value))
-		go buildOutSchemas(schema.AllOf.Value, &allOf, polyCompletedChan, errChan)
+		allOf = buildOutSchemas(schema.AllOf.Value)
 	}
 	if !schema.AnyOf.IsEmpty() {
-		children++
-		anyOf = make([]*SchemaProxy, len(schema.AnyOf.Value))
-		go buildOutSchemas(schema.AnyOf.Value, &anyOf, polyCompletedChan, errChan)
+		anyOf = buildOutSchemas(schema.AnyOf.Value)
 	}
 	if !schema.OneOf.IsEmpty() {
-		children++
-		oneOf = make([]*SchemaProxy, len(schema.OneOf.Value))
-		go buildOutSchemas(schema.OneOf.Value, &oneOf, polyCompletedChan, errChan)
+		oneOf = buildOutSchemas(schema.OneOf.Value)
 	}
 	if !schema.Not.IsEmpty() {
 		not = NewSchemaProxy(&schema.Not)
@@ -432,21 +480,7 @@ func NewSchema(schema *base.Schema) *Schema {
 		}
 	}
 	if !schema.PrefixItems.IsEmpty() {
-		children++
-		prefixItems = make([]*SchemaProxy, len(schema.PrefixItems.Value))
-		go buildOutSchemas(schema.PrefixItems.Value, &prefixItems, polyCompletedChan, errChan)
-	}
-
-	completeChildren := 0
-	if children > 0 {
-	allDone:
-		for {
-			<-polyCompletedChan
-			completeChildren++
-			if children == completeChildren {
-				break allDone
-			}
-		}
+		prefixItems = buildOutSchemas(schema.PrefixItems.Value)
 	}
 	s.OneOf = oneOf
 	s.AnyOf = anyOf
@@ -472,17 +506,36 @@ func (s *Schema) Render() ([]byte, error) {
 	return yaml.Marshal(s)
 }
 
-// RenderInline will return a YAML representation of the Schema object as a byte slice.
-// All the $ref values will be inlined, as in resolved in place.
-//
-// Make sure you don't have any circular references!
-func (s *Schema) RenderInline() ([]byte, error) {
-	d, _ := s.MarshalYAMLInline()
+// RenderInlineWithContext will return a YAML representation of the Schema object as a byte slice
+// using the provided InlineRenderContext for cycle detection.
+// Use this when multiple goroutines may render the same schemas concurrently.
+// The ctx parameter should be *InlineRenderContext but is typed as any to avoid import cycles.
+func (s *Schema) RenderInlineWithContext(ctx any) ([]byte, error) {
+	d, err := s.MarshalYAMLInlineWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return yaml.Marshal(d)
 }
 
-// MarshalYAML will create a ready to render YAML representation of the ExternalDoc object.
+// RenderInline will return a YAML representation of the Schema object as a byte slice.
+// All the $ref values will be inlined, as in resolved in place.
+// This method creates a fresh InlineRenderContext internally.
+//
+// Make sure you don't have any circular references!
+func (s *Schema) RenderInline() ([]byte, error) {
+	ctx := NewInlineRenderContext()
+	return s.RenderInlineWithContext(ctx)
+}
+
+// MarshalYAML will create a ready to render YAML representation of the Schema object.
 func (s *Schema) MarshalYAML() (interface{}, error) {
+	if s.ParentProxy != nil {
+		if node, ok, err := s.ParentProxy.renderTransformedRefWithSiblings(s); ok || err != nil {
+			return node, err
+		}
+	}
+
 	nb := high.NewNodeBuilder(s, s.low)
 
 	// determine index version
@@ -497,6 +550,14 @@ func (s *Schema) MarshalYAML() (interface{}, error) {
 
 // MarshalJSON will create a ready to render JSON representation of the Schema object.
 func (s *Schema) MarshalJSON() ([]byte, error) {
+	if s.ParentProxy != nil && s.ParentProxy.isParsedRefWithSiblings() {
+		node, err := s.ParentProxy.referenceYAMLNodeForSchema(s)
+		if err != nil {
+			return nil, err
+		}
+		return marshalYAMLNodeJSON(node)
+	}
+
 	nb := high.NewNodeBuilder(s, s.low)
 
 	// determine index version
@@ -508,19 +569,47 @@ func (s *Schema) MarshalJSON() ([]byte, error) {
 	}
 	// render node
 	node := nb.Render()
-	var renderedJSON map[string]interface{}
-
-	// marshal into struct
-	_ = node.Decode(&renderedJSON)
-
-	// return JSON bytes
-	return json.Marshal(renderedJSON)
+	return marshalYAMLNodeJSON(node)
 }
 
-// MarshalYAMLInline will render out the Schema pointer as YAML, and all refs will be inlined fully
-func (s *Schema) MarshalYAMLInline() (interface{}, error) {
+// MarshalYAMLInlineWithContext will render out the Schema pointer as YAML using the provided
+// InlineRenderContext for cycle detection. All refs will be inlined fully.
+// Use this when multiple goroutines may render the same schemas concurrently.
+// The ctx parameter should be *InlineRenderContext but is typed as any to satisfy the
+// high.RenderableInlineWithContext interface without import cycles.
+func (s *Schema) MarshalYAMLInlineWithContext(ctx any) (interface{}, error) {
+	// ensure we have a valid render context; create default bundle mode context if nil.
+	// this ensures backward compatibility where nil context = bundle mode behavior.
+	renderCtx, ok := ctx.(*InlineRenderContext)
+	if !ok || renderCtx == nil {
+		renderCtx = NewInlineRenderContext()
+		ctx = renderCtx
+	}
+	if s.ParentProxy != nil && s.ParentProxy.isParsedRefWithSiblings() {
+		return s.ParentProxy.marshalParsedRefWithSiblingsInline(renderCtx, s)
+	}
+
+	// determine if we should preserve discriminator refs based on rendering mode.
+	// in validation mode, we need to fully inline all refs for the JSON schema compiler.
+	// in bundle mode (default), we preserve discriminator refs for mapping compatibility.
+	if s.Discriminator != nil && renderCtx.Mode != RenderingModeValidation {
+		// mark oneOf/anyOf refs as preserved in the context (not on the SchemaProxy).
+		// this avoids mutating shared state and prevents race conditions.
+		for _, sp := range s.OneOf {
+			if sp != nil && sp.IsReference() {
+				markDiscriminatorReferenceAsPreserved(renderCtx, sp)
+			}
+		}
+		for _, sp := range s.AnyOf {
+			if sp != nil && sp.IsReference() {
+				markDiscriminatorReferenceAsPreserved(renderCtx, sp)
+			}
+		}
+	}
+
 	nb := high.NewNodeBuilder(s, s.low)
 	nb.Resolve = true
+	nb.RenderContext = ctx
 	// determine index version
 	idx := s.GoLow().Index
 	if idx != nil {
@@ -528,11 +617,34 @@ func (s *Schema) MarshalYAMLInline() (interface{}, error) {
 			nb.Version = idx.GetConfig().SpecInfo.VersionNumeric
 		}
 	}
-	return nb.Render(), nil
+	return nb.Render(), errors.Join(nb.Errors...)
+}
+
+func markDiscriminatorReferenceAsPreserved(ctx *InlineRenderContext, sp *SchemaProxy) {
+	if sp.GoLow() == nil {
+		ctx.MarkScopedRefAsPreserved(nil, sp.GetReference())
+		return
+	}
+	ctx.MarkReferenceNodeAsPreserved(sp.GetReferenceNode())
+}
+
+// MarshalYAMLInline will render out the Schema pointer as YAML, and all refs will be inlined fully.
+// This method creates a fresh InlineRenderContext internally.
+func (s *Schema) MarshalYAMLInline() (interface{}, error) {
+	ctx := NewInlineRenderContext()
+	return s.MarshalYAMLInlineWithContext(ctx)
 }
 
 // MarshalJSONInline will render out the Schema pointer as JSON, and all refs will be inlined fully
 func (s *Schema) MarshalJSONInline() ([]byte, error) {
+	if s.ParentProxy != nil && s.ParentProxy.isParsedRefWithSiblings() {
+		rendered, err := s.MarshalYAMLInline()
+		if err != nil {
+			return nil, err
+		}
+		return marshalYAMLRenderJSON(rendered)
+	}
+
 	nb := high.NewNodeBuilder(s, s.low)
 	nb.Resolve = true
 	// determine index version
@@ -544,11 +656,21 @@ func (s *Schema) MarshalJSONInline() ([]byte, error) {
 	}
 	// render node
 	node := nb.Render()
+	return marshalYAMLNodeJSON(node)
+}
+
+func marshalYAMLRenderJSON(rendered interface{}) ([]byte, error) {
+	node, ok := yamlNodeFromRender(rendered)
+	if !ok {
+		return nil, errors.New("unable to render schema as JSON: YAML render was not a node")
+	}
+	return marshalYAMLNodeJSON(node)
+}
+
+func marshalYAMLNodeJSON(node *yaml.Node) ([]byte, error) {
 	var renderedJSON map[string]interface{}
-
-	// marshal into struct
-	_ = node.Decode(&renderedJSON)
-
-	// return JSON bytes
+	if err := node.Decode(&renderedJSON); err != nil {
+		return nil, err
+	}
 	return json.Marshal(renderedJSON)
 }

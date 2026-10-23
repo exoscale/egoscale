@@ -1,13 +1,14 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2025 Princess Beef Heavy Industries, LLC / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package model
 
 import (
+	"reflect"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/v2"
 	"github.com/pb33f/libopenapi/datamodel/low/v3"
-	"reflect"
 )
 
 // SecuritySchemeChanges represents changes made between Swagger or OpenAPI SecurityScheme Objects.
@@ -24,6 +25,9 @@ type SecuritySchemeChanges struct {
 
 // GetAllChanges returns a slice of all changes made between SecurityRequirement objects
 func (ss *SecuritySchemeChanges) GetAllChanges() []*Change {
+	if ss == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, ss.Changes...)
 	if ss.OAuthFlowChanges != nil {
@@ -40,6 +44,9 @@ func (ss *SecuritySchemeChanges) GetAllChanges() []*Change {
 
 // TotalChanges represents total changes found between two Swagger or OpenAPI SecurityScheme instances.
 func (ss *SecuritySchemeChanges) TotalChanges() int {
+	if ss == nil {
+		return 0
+	}
 	c := ss.PropertyChanges.TotalChanges()
 	if ss.OAuthFlowChanges != nil {
 		c += ss.OAuthFlowChanges.TotalChanges()
@@ -78,7 +85,6 @@ func CompareSecuritySchemesV3(l, r *v3.SecurityScheme) *SecuritySchemeChanges {
 // CompareSecuritySchemes compares left and right Swagger or OpenAPI Security Scheme objects for changes.
 // If anything is found, returns a pointer to *SecuritySchemeChanges or nil if nothing is found.
 func CompareSecuritySchemes(l, r any) *SecuritySchemeChanges {
-
 	var props []*PropertyCheck
 	var changes []*Change
 
@@ -93,25 +99,25 @@ func CompareSecuritySchemes(l, r any) *SecuritySchemeChanges {
 			return nil
 		}
 		addPropertyCheck(&props, lSS.Type.ValueNode, rSS.Type.ValueNode,
-			lSS.Type.Value, rSS.Type.Value, &changes, v3.TypeLabel, true)
+			lSS.Type.Value, rSS.Type.Value, &changes, v3.TypeLabel, true, CompSecurityScheme, PropType)
 
 		addPropertyCheck(&props, lSS.Description.ValueNode, rSS.Description.ValueNode,
-			lSS.Description.Value, rSS.Description.Value, &changes, v3.DescriptionLabel, false)
+			lSS.Description.Value, rSS.Description.Value, &changes, v3.DescriptionLabel, false, CompSecurityScheme, PropDescription)
 
 		addPropertyCheck(&props, lSS.Name.ValueNode, rSS.Name.ValueNode,
-			lSS.Name.Value, rSS.Name.Value, &changes, v3.NameLabel, true)
+			lSS.Name.Value, rSS.Name.Value, &changes, v3.NameLabel, true, CompSecurityScheme, PropName)
 
 		addPropertyCheck(&props, lSS.In.ValueNode, rSS.In.ValueNode,
-			lSS.In.Value, rSS.In.Value, &changes, v3.InLabel, true)
+			lSS.In.Value, rSS.In.Value, &changes, v3.InLabel, true, CompSecurityScheme, PropIn)
 
 		addPropertyCheck(&props, lSS.Flow.ValueNode, rSS.Flow.ValueNode,
-			lSS.Flow.Value, rSS.Flow.Value, &changes, v3.FlowLabel, true)
+			lSS.Flow.Value, rSS.Flow.Value, &changes, v3.FlowLabel, true, CompSecurityScheme, PropFlow)
 
 		addPropertyCheck(&props, lSS.AuthorizationUrl.ValueNode, rSS.AuthorizationUrl.ValueNode,
-			lSS.AuthorizationUrl.Value, rSS.AuthorizationUrl.Value, &changes, v3.AuthorizationUrlLabel, true)
+			lSS.AuthorizationUrl.Value, rSS.AuthorizationUrl.Value, &changes, v3.AuthorizationUrlLabel, true, CompSecurityScheme, PropAuthorizationURL)
 
 		addPropertyCheck(&props, lSS.TokenUrl.ValueNode, rSS.TokenUrl.ValueNode,
-			lSS.TokenUrl.Value, rSS.TokenUrl.Value, &changes, v3.TokenUrlLabel, true)
+			lSS.TokenUrl.Value, rSS.TokenUrl.Value, &changes, v3.TokenUrlLabel, true, CompSecurityScheme, PropTokenURL)
 
 		if !lSS.Scopes.IsEmpty() && !rSS.Scopes.IsEmpty() {
 			if !low.AreEqual(lSS.Scopes.Value, rSS.Scopes.Value) {
@@ -120,11 +126,11 @@ func CompareSecuritySchemes(l, r any) *SecuritySchemeChanges {
 		}
 		if lSS.Scopes.IsEmpty() && !rSS.Scopes.IsEmpty() {
 			CreateChange(&changes, ObjectAdded, v3.ScopesLabel,
-				nil, rSS.Scopes.ValueNode, false, nil, rSS.Scopes.Value)
+				nil, rSS.Scopes.ValueNode, BreakingAdded(CompSecurityScheme, PropScopes), nil, rSS.Scopes.Value)
 		}
 		if !lSS.Scopes.IsEmpty() && rSS.Scopes.IsEmpty() {
 			CreateChange(&changes, ObjectRemoved, v3.ScopesLabel,
-				lSS.Scopes.ValueNode, nil, true, lSS.Scopes.Value, nil)
+				lSS.Scopes.ValueNode, nil, BreakingRemoved(CompSecurityScheme, PropScopes), lSS.Scopes.Value, nil)
 		}
 
 		sc.ExtensionChanges = CompareExtensions(lSS.Extensions, rSS.Extensions)
@@ -140,25 +146,41 @@ func CompareSecuritySchemes(l, r any) *SecuritySchemeChanges {
 			return nil
 		}
 		addPropertyCheck(&props, lSS.Type.ValueNode, rSS.Type.ValueNode,
-			lSS.Type.Value, rSS.Type.Value, &changes, v3.TypeLabel, true)
+			lSS.Type.Value, rSS.Type.Value, &changes, v3.TypeLabel,
+			BreakingModified(CompSecurityScheme, PropType), CompSecurityScheme, PropType)
 
 		addPropertyCheck(&props, lSS.Description.ValueNode, rSS.Description.ValueNode,
-			lSS.Description.Value, rSS.Description.Value, &changes, v3.DescriptionLabel, false)
+			lSS.Description.Value, rSS.Description.Value, &changes, v3.DescriptionLabel,
+			BreakingModified(CompSecurityScheme, PropDescription), CompSecurityScheme, PropDescription)
 
 		addPropertyCheck(&props, lSS.Name.ValueNode, rSS.Name.ValueNode,
-			lSS.Name.Value, rSS.Name.Value, &changes, v3.NameLabel, true)
+			lSS.Name.Value, rSS.Name.Value, &changes, v3.NameLabel,
+			BreakingModified(CompSecurityScheme, PropName), CompSecurityScheme, PropName)
 
 		addPropertyCheck(&props, lSS.In.ValueNode, rSS.In.ValueNode,
-			lSS.In.Value, rSS.In.Value, &changes, v3.InLabel, true)
+			lSS.In.Value, rSS.In.Value, &changes, v3.InLabel,
+			BreakingModified(CompSecurityScheme, PropIn), CompSecurityScheme, PropIn)
 
 		addPropertyCheck(&props, lSS.Scheme.ValueNode, rSS.Scheme.ValueNode,
-			lSS.Scheme.Value, rSS.Scheme.Value, &changes, v3.SchemeLabel, true)
+			lSS.Scheme.Value, rSS.Scheme.Value, &changes, v3.SchemeLabel,
+			BreakingModified(CompSecurityScheme, PropScheme), CompSecurityScheme, PropScheme)
 
 		addPropertyCheck(&props, lSS.BearerFormat.ValueNode, rSS.BearerFormat.ValueNode,
-			lSS.BearerFormat.Value, rSS.BearerFormat.Value, &changes, v3.SchemeLabel, false)
+			lSS.BearerFormat.Value, rSS.BearerFormat.Value, &changes, v3.SchemeLabel,
+			BreakingModified(CompSecurityScheme, PropBearerFormat), CompSecurityScheme, PropBearerFormat)
 
 		addPropertyCheck(&props, lSS.OpenIdConnectUrl.ValueNode, rSS.OpenIdConnectUrl.ValueNode,
-			lSS.OpenIdConnectUrl.Value, rSS.OpenIdConnectUrl.Value, &changes, v3.OpenIdConnectUrlLabel, false)
+			lSS.OpenIdConnectUrl.Value, rSS.OpenIdConnectUrl.Value, &changes, v3.OpenIdConnectUrlLabel,
+			BreakingModified(CompSecurityScheme, PropOpenIDConnectURL), CompSecurityScheme, PropOpenIDConnectURL)
+
+		// OpenAPI 3.2+ fields
+		addPropertyCheck(&props, lSS.OAuth2MetadataUrl.ValueNode, rSS.OAuth2MetadataUrl.ValueNode,
+			lSS.OAuth2MetadataUrl.Value, rSS.OAuth2MetadataUrl.Value, &changes, v3.OAuth2MetadataUrlLabel,
+			BreakingModified(CompSecurityScheme, PropOAuth2MetadataUrl), CompSecurityScheme, PropOAuth2MetadataUrl)
+
+		addPropertyCheck(&props, lSS.Deprecated.ValueNode, rSS.Deprecated.ValueNode,
+			lSS.Deprecated.Value, rSS.Deprecated.Value, &changes, v3.DeprecatedLabel,
+			BreakingModified(CompSecurityScheme, PropDeprecated), CompSecurityScheme, PropDeprecated)
 
 		if !lSS.Flows.IsEmpty() && !rSS.Flows.IsEmpty() {
 			if !low.AreEqual(lSS.Flows.Value, rSS.Flows.Value) {
@@ -167,11 +189,11 @@ func CompareSecuritySchemes(l, r any) *SecuritySchemeChanges {
 		}
 		if lSS.Flows.IsEmpty() && !rSS.Flows.IsEmpty() {
 			CreateChange(&changes, ObjectAdded, v3.FlowsLabel,
-				nil, rSS.Flows.ValueNode, false, nil, rSS.Flows.Value)
+				nil, rSS.Flows.ValueNode, BreakingAdded(CompSecurityScheme, PropFlows), nil, rSS.Flows.Value)
 		}
 		if !lSS.Flows.IsEmpty() && rSS.Flows.IsEmpty() {
-			CreateChange(&changes, ObjectRemoved, v3.ScopesLabel,
-				lSS.Flows.ValueNode, nil, true, lSS.Flows.Value, nil)
+			CreateChange(&changes, ObjectRemoved, v3.FlowsLabel,
+				lSS.Flows.ValueNode, nil, BreakingRemoved(CompSecurityScheme, PropFlows), lSS.Flows.Value, nil)
 		}
 		sc.ExtensionChanges = CompareExtensions(lSS.Extensions, rSS.Extensions)
 	}

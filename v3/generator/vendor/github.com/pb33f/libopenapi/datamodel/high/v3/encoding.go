@@ -9,7 +9,7 @@ import (
 	lowmodel "github.com/pb33f/libopenapi/datamodel/low"
 	lowv3 "github.com/pb33f/libopenapi/datamodel/low/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Encoding represents an OpenAPI 3+ Encoding object
@@ -56,6 +56,20 @@ func (e *Encoding) Render() ([]byte, error) {
 func (e *Encoding) MarshalYAML() (interface{}, error) {
 	nb := high.NewNodeBuilder(e, e.low)
 	return nb.Render(), nil
+}
+
+// MarshalYAMLInline will create a ready to render YAML representation of the Encoding object,
+// with all references resolved inline.
+func (e *Encoding) MarshalYAMLInline() (interface{}, error) {
+	return high.RenderInline(e, e.low)
+}
+
+// MarshalYAMLInlineWithContext will create a ready to render YAML representation of the Encoding object,
+// resolving any references inline where possible. Uses the provided context for cycle detection.
+// The ctx parameter should be *base.InlineRenderContext but is typed as any to satisfy the
+// high.RenderableInlineWithContext interface without import cycles.
+func (e *Encoding) MarshalYAMLInlineWithContext(ctx any) (interface{}, error) {
+	return high.RenderInlineWithContext(e, e.low, ctx)
 }
 
 // ExtractEncoding converts hard to navigate low-level plumbing Encoding definitions, into a high-level simple map

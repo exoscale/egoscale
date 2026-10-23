@@ -6,7 +6,7 @@ package model
 import (
 	"github.com/pb33f/libopenapi/datamodel/low"
 	v2 "github.com/pb33f/libopenapi/datamodel/low/v2"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // ExamplesChanges represents changes made between Swagger Examples objects (Not OpenAPI 3).
@@ -16,11 +16,17 @@ type ExamplesChanges struct {
 
 // GetAllChanges returns a slice of all changes made between Examples objects
 func (a *ExamplesChanges) GetAllChanges() []*Change {
+	if a == nil {
+		return nil
+	}
 	return a.Changes
 }
 
 // TotalChanges represents the total number of changes made between Example instances.
 func (a *ExamplesChanges) TotalChanges() int {
+	if a == nil {
+		return 0
+	}
 	return a.PropertyChanges.TotalChanges()
 }
 

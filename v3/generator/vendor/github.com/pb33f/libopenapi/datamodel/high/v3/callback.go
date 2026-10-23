@@ -4,15 +4,29 @@
 package v3
 
 import (
+	"context"
+	"fmt"
 	"sort"
 
 	"github.com/pb33f/libopenapi/datamodel/high"
 	"github.com/pb33f/libopenapi/datamodel/low"
+	lowmodel "github.com/pb33f/libopenapi/datamodel/low"
 	lowv3 "github.com/pb33f/libopenapi/datamodel/low/v3"
+	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
+
+// buildLowCallback builds a low-level Callback from a resolved YAML node.
+func buildLowCallback(node *yaml.Node, idx *index.SpecIndex) (*lowv3.Callback, error) {
+	var cb lowv3.Callback
+	_ = lowmodel.BuildModel(node, &cb)
+	if err := cb.Build(context.Background(), nil, node, idx); err != nil {
+		return nil, err
+	}
+	return &cb, nil
+}
 
 // Callback represents a high-level Callback object for OpenAPI 3+.
 //
@@ -22,6 +36,7 @@ import (
 // that identifies a URL to use for the callback operation.
 //   - https://spec.openapis.org/oas/v3.1.0#callback-object
 type Callback struct {
+	Reference  string                              `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Expression *orderedmap.Map[string, *PathItem]  `json:"-" yaml:"-"`
 	Extensions *orderedmap.Map[string, *yaml.Node] `json:"-" yaml:"-"`
 	low        *lowv3.Callback
@@ -46,6 +61,16 @@ func (c *Callback) GoLowUntyped() any {
 	return c.low
 }
 
+// IsReference returns true if this Callback is a reference to another Callback definition.
+func (c *Callback) IsReference() bool {
+	return c.Reference != ""
+}
+
+// GetReference returns the reference string if this is a reference Callback.
+func (c *Callback) GetReference() string {
+	return c.Reference
+}
+
 // Render will return a YAML representation of the Callback object as a byte slice.
 func (c *Callback) Render() ([]byte, error) {
 	return yaml.Marshal(c)
@@ -59,6 +84,10 @@ func (c *Callback) RenderInline() ([]byte, error) {
 
 // MarshalYAML will create a ready to render YAML representation of the Paths object.
 func (c *Callback) MarshalYAML() (interface{}, error) {
+	// Handle reference-only callback
+	if c.Reference != "" {
+		return utils.CreateRefNode(c.Reference), nil
+	}
 	// map keys correctly.
 	m := utils.CreateEmptyMapNode()
 	type pathItem struct {
@@ -127,7 +156,38 @@ func (c *Callback) MarshalYAML() (interface{}, error) {
 	return m, nil
 }
 
+// MarshalYAMLInline will create a ready to render YAML representation of the Callback object,
+// with all references resolved inline.
 func (c *Callback) MarshalYAMLInline() (interface{}, error) {
+	return c.marshalYAMLInlineInternal(nil)
+}
+
+// MarshalYAMLInlineWithContext will create a ready to render YAML representation of the Callback object,
+// resolving any references inline where possible. Uses the provided context for cycle detection.
+// The ctx parameter should be *base.InlineRenderContext but is typed as any to satisfy the
+// high.RenderableInlineWithContext interface without import cycles.
+func (c *Callback) MarshalYAMLInlineWithContext(ctx any) (interface{}, error) {
+	return c.marshalYAMLInlineInternal(ctx)
+}
+
+func (c *Callback) marshalYAMLInlineInternal(ctx any) (interface{}, error) {
+	// reference-only objects render as $ref nodes
+	if c.Reference != "" {
+		return utils.CreateRefNode(c.Reference), nil
+	}
+
+	// resolve external reference if present
+	if c.low != nil {
+		result, err := high.ResolveExternalRef(c.low, buildLowCallback, NewCallback)
+		if err != nil {
+			return nil, err
+		}
+		if result.Resolved {
+			// recursively render the resolved callback
+			return result.High.marshalYAMLInlineInternal(ctx)
+		}
+	}
+
 	// map keys correctly.
 	m := utils.CreateEmptyMapNode()
 	type pathItem struct {
@@ -160,6 +220,7 @@ func (c *Callback) MarshalYAMLInline() (interface{}, error) {
 
 	nb := high.NewNodeBuilder(c, c.low)
 	nb.Resolve = true
+	nb.RenderContext = ctx
 	extNode := nb.Render()
 	if extNode != nil && extNode.Content != nil {
 		var label string
@@ -180,7 +241,16 @@ func (c *Callback) MarshalYAMLInline() (interface{}, error) {
 	})
 	for _, mp := range mapped {
 		if mp.pi != nil {
-			rendered, _ := mp.pi.MarshalYAMLInline()
+			var rendered interface{}
+			var err error
+			if ctx != nil {
+				rendered, err = mp.pi.MarshalYAMLInlineWithContext(ctx)
+			} else {
+				rendered, err = mp.pi.MarshalYAMLInline()
+			}
+			if err != nil {
+				return nil, fmt.Errorf("failed to render callback path %q inline: %w", mp.path, err)
+			}
 
 			kn := utils.CreateStringNode(mp.path)
 			kn.Style = mp.style
@@ -195,4 +265,19 @@ func (c *Callback) MarshalYAMLInline() (interface{}, error) {
 	}
 
 	return m, nil
+}
+
+// CreateCallbackRef creates a Callback that renders as a $ref to another callback definition.
+// This is useful when building OpenAPI specs programmatically and you want to reference
+// a callback defined in components/callbacks rather than inlining the full definition.
+//
+// Example:
+//
+//	cb := v3.CreateCallbackRef("#/components/callbacks/WebhookCallback")
+//
+// Renders as:
+//
+//	$ref: '#/components/callbacks/WebhookCallback'
+func CreateCallbackRef(ref string) *Callback {
+	return &Callback{Reference: ref}
 }

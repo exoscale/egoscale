@@ -1,19 +1,19 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package v3
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
-	"strings"
+	"hash/maphash"
+	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Encoding represents a low-level OpenAPI 3+ Encoding object
@@ -28,6 +28,8 @@ type Encoding struct {
 	RootNode      *yaml.Node
 	index         *index.SpecIndex
 	context       context.Context
+	nodeStore     sync.Map
+	reference     low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -57,21 +59,27 @@ func (en *Encoding) GetKeyNode() *yaml.Node {
 	return en.KeyNode
 }
 
-// Hash will return a consistent SHA256 Hash of the Encoding object
-func (en *Encoding) Hash() [32]byte {
-	var f []string
-	if en.ContentType.Value != "" {
-		f = append(f, en.ContentType.Value)
-	}
-	for k, v := range orderedmap.SortAlpha(en.Headers.Value).FromOldest() {
-		f = append(f, fmt.Sprintf("%s-%x", k.Value, v.Value.Hash()))
-	}
-	if en.Style.Value != "" {
-		f = append(f, en.Style.Value)
-	}
-	f = append(f, fmt.Sprint(sha256.Sum256([]byte(fmt.Sprint(en.Explode.Value)))))
-	f = append(f, fmt.Sprint(sha256.Sum256([]byte(fmt.Sprint(en.AllowReserved.Value)))))
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the Encoding object
+func (en *Encoding) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if en.ContentType.Value != "" {
+			h.WriteString(en.ContentType.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for k, v := range orderedmap.SortAlpha(en.Headers.Value).FromOldest() {
+			h.WriteString(fmt.Sprintf("%s-%x", k.Value, v.Value.Hash()))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if en.Style.Value != "" {
+			h.WriteString(en.Style.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		low.HashBool(h, en.Explode.Value)
+		h.WriteByte(low.HASH_PIPE)
+		low.HashBool(h, en.AllowReserved.Value)
+		h.WriteByte(low.HASH_PIPE)
+		return h.Sum64()
+	})
 }
 
 // Build will extract all Header objects from supplied node.
@@ -80,8 +88,15 @@ func (en *Encoding) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 	root = utils.NodeAlias(root)
 	en.RootNode = root
 	utils.CheckForMergeNodes(root)
-	en.Nodes = low.ExtractNodes(ctx, root)
-	en.Reference = new(low.Reference)
+	en.nodeStore = sync.Map{}
+	en.Nodes = &en.nodeStore
+	if len(root.Content) > 0 {
+		en.NodeMap.ExtractNodes(root, false)
+	} else {
+		en.AddNode(root.Line, root)
+	}
+	en.reference = low.Reference{}
+	en.Reference = &en.reference
 	en.index = idx
 	en.context = ctx
 

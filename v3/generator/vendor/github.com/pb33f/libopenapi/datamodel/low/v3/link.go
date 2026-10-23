@@ -1,18 +1,18 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package v3
 
 import (
 	"context"
-	"crypto/sha256"
-	"strings"
+	"hash/maphash"
+	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Link represents a low-level OpenAPI 3+ Link object.
@@ -39,6 +39,8 @@ type Link struct {
 	RootNode     *yaml.Node
 	index        *index.SpecIndex
 	context      context.Context
+	nodeStore    sync.Map
+	reference    low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -81,14 +83,21 @@ func (l *Link) GetKeyNode() *yaml.Node {
 // Build will extract extensions and servers from the node.
 func (l *Link) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	l.KeyNode = keyNode
-	l.Reference = new(low.Reference)
+	l.reference = low.Reference{}
+	l.Reference = &l.reference
 	if ok, _, ref := utils.IsNodeRefValue(root); ok {
 		l.SetReference(ref, root)
 	}
 	root = utils.NodeAlias(root)
 	l.RootNode = root
 	utils.CheckForMergeNodes(root)
-	l.Nodes = low.ExtractNodes(ctx, root)
+	l.nodeStore = sync.Map{}
+	l.Nodes = &l.nodeStore
+	if len(root.Content) > 0 {
+		l.NodeMap.ExtractNodes(root, false)
+	} else {
+		l.AddNode(root.Line, root)
+	}
 	l.Extensions = low.ExtractExtensions(root)
 	l.index = idx
 	l.context = ctx
@@ -110,27 +119,37 @@ func (l *Link) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.S
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the Link object
-func (l *Link) Hash() [32]byte {
-	var f []string
-	if l.Description.Value != "" {
-		f = append(f, l.Description.Value)
-	}
-	if l.OperationRef.Value != "" {
-		f = append(f, l.OperationRef.Value)
-	}
-	if l.OperationId.Value != "" {
-		f = append(f, l.OperationId.Value)
-	}
-	if l.RequestBody.Value != "" {
-		f = append(f, l.RequestBody.Value)
-	}
-	if l.Server.Value != nil {
-		f = append(f, low.GenerateHashString(l.Server.Value))
-	}
-	for v := range orderedmap.SortAlpha(l.Parameters.Value).ValuesFromOldest() {
-		f = append(f, v.Value)
-	}
-	f = append(f, low.HashExtensions(l.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the Link object
+func (l *Link) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if l.Description.Value != "" {
+			h.WriteString(l.Description.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if l.OperationRef.Value != "" {
+			h.WriteString(l.OperationRef.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if l.OperationId.Value != "" {
+			h.WriteString(l.OperationId.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if l.RequestBody.Value != "" {
+			h.WriteString(l.RequestBody.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if l.Server.Value != nil {
+			h.WriteString(low.GenerateHashString(l.Server.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for v := range orderedmap.SortAlpha(l.Parameters.Value).ValuesFromOldest() {
+			h.WriteString(v.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(l.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

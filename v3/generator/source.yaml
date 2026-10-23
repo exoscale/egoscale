@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   version: 2.0.0
-  termsOfService: https://exoscale.com/terms
+  termsOfService: https://www.exoscale.com/terms/
   contact:
     email: support@exoscale.com
     name: Exoscale Support
@@ -13,7 +13,7 @@ tags:
     parent: iam
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/product/iam/operation/role-mgmt/
+      url: https://community.exoscale.com/product/security/iam/how-to/role-mgmt/
     name: role
     x-display-name: Role
     x-weight: 820
@@ -41,7 +41,7 @@ tags:
     x-display-name: AI API Key
     x-weight: 940
     x-icon: exo-license
-  - description: ""
+  - description: Networking services for Exoscale resources, including Virtual Private Cloud (VPC).
     externalDocs:
       description: Read more
       url: https://community.exoscale.com/product/networking/
@@ -71,7 +71,7 @@ tags:
     parent: sks
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/sks/
+      url: https://community.exoscale.com/product/compute/containers/
     name: cluster
     x-display-name: Cluster
     x-weight: 310
@@ -146,7 +146,7 @@ tags:
   - description: Host anything from simple applications to complex architectures. Start a compute instance in seconds and scale as your infrastructure grows.
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/
+      url: https://community.exoscale.com/product/compute/
     name: compute
     x-display-name: Compute
     x-weight: 100
@@ -198,7 +198,7 @@ tags:
     parent: compute
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/network-load-balancer/
+      url: https://community.exoscale.com/product/networking/nlb/
     name: network-load-balancer
     x-display-name: Network Load Balancer
     x-weight: 180
@@ -225,7 +225,7 @@ tags:
     parent: kms
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/security/kms/overview
+      url: https://community.exoscale.com/product/security/kms/overview/
     name: kms-key
     x-display-name: KMS Key
     x-weight: 1130
@@ -234,7 +234,7 @@ tags:
     parent: compute
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/ssh-keypairs/
+      url: https://community.exoscale.com/product/compute/instances/how-to/ssh-keypairs/
     name: ssh-key
     x-display-name: SSH Key
     x-weight: 160
@@ -246,7 +246,7 @@ tags:
     parent: compute
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/instance-pools/
+      url: https://community.exoscale.com/product/compute/instances/how-to/instance-pools/
     name: instance-pool
     x-display-name: Instance Pool
     x-weight: 120
@@ -283,7 +283,7 @@ tags:
     parent: compute
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/snapshots/
+      url: https://community.exoscale.com/product/compute/instances/how-to/snapshot/
     name: snapshot
     x-display-name: Snapshot
     x-weight: 130
@@ -294,7 +294,7 @@ tags:
     parent: compute
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/compute/security-groups/
+      url: https://community.exoscale.com/product/networking/security-group/
     name: security-group
     x-display-name: Security Group
     x-weight: 150
@@ -316,7 +316,7 @@ tags:
                          attached volumes for your Compute instances.
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/block-storage/
+      url: https://community.exoscale.com/product/storage/block-storage/
     name: block-storage
     x-display-name: Block Storage
     x-weight: 600
@@ -386,7 +386,7 @@ tags:
     parent: kms
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/security/kms/overview
+      url: https://community.exoscale.com/product/security/kms/overview/
     name: crypto
     x-display-name: Cryptographic Operations
     x-weight: 1140
@@ -395,7 +395,7 @@ tags:
     parent: sks
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/sks/
+      url: https://community.exoscale.com/product/compute/containers/
     name: nodepool
     x-display-name: Nodepool
     x-weight: 320
@@ -412,7 +412,7 @@ tags:
   - description: 'Identity and Access Management: roles, users, policies and credentials for accessing the Exoscale API.'
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/product/iam/
+      url: https://community.exoscale.com/product/security/iam/
     name: iam
     x-display-name: IAM
     x-weight: 800
@@ -438,7 +438,7 @@ tags:
   - description: Exoscale Key Management Service is a managed security service that lets you create, control and manage the lifecycle of cryptographic keys.
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/security/kms/
+      url: https://community.exoscale.com/product/security/kms/
     name: kms
     x-display-name: KMS
     x-weight: 1120
@@ -465,7 +465,7 @@ tags:
     parent: iam
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/product/iam/operation/users-keys/
+      url: https://community.exoscale.com/product/security/iam/how-to/users-keys/
     name: user
     x-display-name: User
     x-weight: 830
@@ -483,7 +483,7 @@ tags:
     parent: sks
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/sks/
+      url: https://community.exoscale.com/product/compute/containers/
     name: nodepool-template
     x-display-name: Nodepool Template
     x-weight: 330
@@ -491,10 +491,10 @@ tags:
   - description: |-
       SKS is Exoscale's scalable Kubernetes service which provides
                          managed Kubernetes control planes with integrated support for
-                         Exoscale instance pools ands network load balancers.
+                         Exoscale instance pools and network load balancers.
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/documentation/sks/
+      url: https://community.exoscale.com/product/compute/containers/
     name: sks
     x-display-name: SKS
     x-weight: 300
@@ -521,7 +521,7 @@ tags:
     parent: iam
     externalDocs:
       description: Read more
-      url: https://community.exoscale.com/product/iam/how-to/key-mgmt/
+      url: https://community.exoscale.com/product/security/iam/how-to/key-mgmt/
     name: api-key
     x-display-name: API Key
     x-weight: 810
@@ -773,13 +773,13 @@ components:
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT disk space for data storage
+          description: Disk space for data storage, in bytes
         node-memory:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT of memory for each node
+          description: Memory of each node, in bytes
         uri:
           type: string
           description: URI for connecting to the service (may be absent)
@@ -1418,7 +1418,7 @@ components:
                 type: string
                 format: ipv4
                 description: Instance Ipv4 address
-            description: Subnet attachements
+            description: Subnet attachments
           description: Instances attached to the subnet
         id:
           type: string
@@ -2599,7 +2599,7 @@ components:
         compactor:
           description: Configuration options for Thanos Compactor.
           properties:
-            retention.days:
+            retention-days:
               description: Retention time for data in days for each resolution (5m, 1h, raw)
               minimum: 0
               title: Retention time for data in days
@@ -2609,38 +2609,38 @@ components:
         query:
           description: Configuration options for Thanos Query.
           properties:
-            query.default-evaluation-interval:
+            default-evaluation-interval:
               default: 1m
               description: Set the default evaluation interval for subqueries.
               maxLength: 20
               title: Set the default evaluation interval for subqueries.
               type: string
-            query.lookback-delta:
+            lookback-delta:
               default: 5m
               description: The maximum lookback duration for retrieving metrics during expression evaluations in PromQL. PromQL always evaluates the query for a certain timestamp, and it looks back for the given amount of time to get the latest sample. If it exceeds the maximum lookback delta, it assumes the series is stale and returns none (a gap). The lookback delta should be set to at least 2 times the slowest scrape interval. If unset, it will use the promql default of 5m.
               maxLength: 20
               title: Maximum lookback duration for retrieving metrics during expression evaluations in PromQL
               type: string
-            query.metadata.default-time-range:
+            metadata-default-time-range:
               default: 0s
               description: The default metadata time range duration for retrieving labels through Labels and Series API when the range parameters are not specified. The zero value means the range covers the time since the beginning.
               maxLength: 20
               title: Default metadata time range duration for retrieving labels
               type: string
-            query.timeout:
+            timeout:
               default: 2m
               description: Maximum time to process a query by the query node.
               maxLength: 20
               title: Maximum time to process a query by the query node.
               type: string
-            store.limits.request-samples:
+            request-samples-limits:
               default: 0
               description: 'The maximum samples allowed for a single Series request. The Series call fails if this limit is exceeded. Set to 0 for no limit. NOTE: For efficiency, the limit is internally implemented as ''chunks limit'' considering each chunk contains a maximum of 120 samples. The default value is 100 * store.limits.request-series.'
               maximum: 100000000
               minimum: 0
               title: Store.Limits.Request-Samples
               type: integer
-            store.limits.request-series:
+            request-series-limits:
               default: 0
               description: The maximum series allowed for a single Series request. The Series call fails if this limit is exceeded. Set to 0 for no limit. The default value is 1000 * cpu_count.
               maximum: 100000000
@@ -2868,7 +2868,8 @@ components:
         - 0.29.0
         - 0.30.0
         - 0.31.0
-      default: 0.31.0
+        - 0.32.0
+      default: 0.32.0
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -2899,15 +2900,6 @@ components:
           type: string
           description: Resource name
       description: Access key resource
-    reveal-deployment-api-key-response:
-      description: AI deployment inference endpoint authentication key
-      properties:
-        api-key:
-          description: Inference endpoint authentication key
-          type: string
-      type: object
-      required:
-        - api-key
     replicate-kms-key-request:
       type: object
       required:
@@ -4351,13 +4343,13 @@ components:
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT disk space for data storage
+          description: Disk space for data storage, in bytes
         node-memory:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT of memory for each node
+          description: Memory of each node, in bytes
         uri:
           type: string
           description: URI for connecting to the service (may be absent)
@@ -4583,13 +4575,13 @@ components:
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT disk space for data storage
+          description: Disk space for data storage, in bytes
         node-memory:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT of memory for each node
+          description: Memory of each node, in bytes
         uri:
           type: string
           description: URI for connecting to the service (may be absent)
@@ -6239,13 +6231,13 @@ components:
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT disk space for data storage
+          description: Disk space for data storage, in bytes
         node-memory:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT of memory for each node
+          description: Memory of each node, in bytes
         uri:
           type: string
           description: URI for connecting to the service (may be absent)
@@ -7055,13 +7047,13 @@ components:
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT disk space for data storage
+          description: Disk space for data storage, in bytes
         node-memory:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT of memory for each node
+          description: Memory of each node, in bytes
         uri:
           type: string
           description: URI for connecting to the service (may be absent)
@@ -7388,7 +7380,7 @@ components:
           description: Instance disk size in GiB
         ip-forwarding:
           type: boolean
-          description: VPC ip forwarding
+          description: Indicates if the instance can act as a router in a VPC network
         disk-encrypted:
           type: boolean
           readOnly: true
@@ -8667,13 +8659,13 @@ components:
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT disk space for data storage
+          description: Disk space for data storage, in bytes
         node-memory:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT of memory for each node
+          description: Memory of each node, in bytes
         uri:
           type: string
           description: URI for connecting to the service (may be absent)
@@ -9295,13 +9287,13 @@ components:
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT disk space for data storage
+          description: Disk space for data storage, in bytes
         node-memory:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT of memory for each node
+          description: Memory of each node, in bytes
         uri:
           type: string
           description: URI for connecting to the service (may be absent)
@@ -10078,7 +10070,15 @@ components:
           type: integer
           minimum: 0
         input-uom:
-          description: Total prompt/input Unit Of Measurement (UOM) across all calls in this flush window (e.g., tokens for LLMs, minutes for TTS, pages for OCR)
+          description: Uncached prompt/input Unit Of Measurement (UOM) across all calls in this flush window (total prompt minus cache-read)
+          type: integer
+          minimum: 0
+        cache-write-input-uom:
+          description: Subset of input-uom written to prefix cache across all calls in this flush window; optional, defaults to 0
+          type: integer
+          minimum: 0
+        cache-read-input-uom:
+          description: Prompt/input UOM served from prefix cache across all calls in this flush window (excluded from input-uom); optional, defaults to 0
           type: integer
           minimum: 0
         call-count:
@@ -10283,13 +10283,13 @@ components:
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT disk space for data storage
+          description: Disk space for data storage, in bytes
         node-memory:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT of memory for each node
+          description: Memory of each node, in bytes
         created-at:
           type: string
           format: date-time
@@ -10436,13 +10436,13 @@ components:
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT disk space for data storage
+          description: Disk space for data storage, in bytes
         node-memory:
           type: integer
           format: int64
           minimum: 0
           exclusiveMinimum: false
-          description: TODO UNIT of memory for each node
+          description: Memory of each node, in bytes
         uri:
           type: string
           description: URI for connecting to the service (may be absent)
@@ -11830,6 +11830,8 @@ components:
           description: Billing identifier for this deployment. Used by the Router for usage counters and Kafka events.
           type: string
           minLength: 1
+          maxLength: 256
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
         replicas:
           description: Number of replicas (>=1)
           format: int64
@@ -12571,7 +12573,7 @@ paths:
       description: |-
         Retrieve Mutation Events for a given date range. Defaults to retrieving Events for the past 24 hours.
                  Both a `from` and `to` arguments can be specified to filter Events over a specific period.
-                 Events will be the the most descriptive possible but not all fields are mandatory
+                 Events will be the most descriptive possible but not all fields are mandatory
       parameters:
         - in: query
           required: false
@@ -20566,7 +20568,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: '[BETA] Update a existing DBaaS integration'
+      description: '[BETA] Update an existing DBaaS integration'
       parameters:
         - in: path
           required: true
@@ -23139,7 +23141,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Decrypts an existing ciphertext using its original key material and re-encrypts the underlying plaintext using a specified KMS key or the latest key material of the same KMS Key. Source and destination keys must belong to the same key family.
+      description: Decrypts an existing ciphertext using its original key material and re-encrypts the underlying plaintext using a specified KMS key or the latest key material of the same KMS Key. Source and destination keys must belong to the same key family. IAM policies are evaluated for both the source and the destination key.
       parameters:
         - in: path
           required: true
@@ -23402,7 +23404,7 @@ paths:
           name: name
           schema:
             type: string
-      summary: Delete a OpenSearch service
+      summary: Delete an OpenSearch service
       operationId: delete-dbaas-service-opensearch
     put:
       tags:
@@ -24311,33 +24313,6 @@ paths:
             format: uuid
       summary: Rotate operators certificate authority
       operationId: rotate-sks-operators-ca
-  /ai/deployment/{id}/api-key:
-    get:
-      tags:
-        - deployment
-      responses:
-        "404":
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error-response'
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/reveal-deployment-api-key-response'
-      description: Get Deployment API Key
-      parameters:
-        - in: path
-          required: true
-          name: id
-          schema:
-            type: string
-            format: uuid
-      summary: Reveal Deployment API Key
-      operationId: reveal-deployment-api-key
   /anti-affinity-group/{id}:
     get:
       tags:
@@ -24565,7 +24540,7 @@ paths:
                   description: Instance disk size in GiB
                 ip-forwarding:
                   type: boolean
-                  description: VPC ip forwarding
+                  description: Whether the instance can act as a router in a VPC network
                 ssh-keys:
                   type: array
                   items:
@@ -24895,7 +24870,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error-response'
-      description: Return logs for the vLLM deployment (deploy/<release-name>--deployment-vllm). Optional ?stream=true to request streaming (may not be supported).
+      description: 'Return logs for the vLLM deployment (dedicated inference: deploy/<release-name>--deployment-vllm; llm-d: deploy/<release-name>-vllm). Optional ?stream=true to request streaming (may not be supported).'
       parameters:
         - in: path
           required: true
@@ -25308,13 +25283,13 @@ x-topics:
 
       The two blank lines above are due to the absence of query parameters and signed headers.
 
-      The request signature consists of the base64-encoded [HMAC](https://en.wikipedia.org/wiki/HMAC) hash of the UTF-8 encoded *message* and the Exoscale API secret using the SHA265 function:
+      The request signature consists of the base64-encoded [HMAC](https://en.wikipedia.org/wiki/HMAC) hash of the UTF-8 encoded *message* and the Exoscale API secret using the SHA256 function:
 
       ```
       signature = BASE64_ENCODE(HMAC_SHA256(Exoscale API secret, message))
       ```
 
-      Finally, the computed signature must be added to the API request in a `Authorization` header such as:
+      Finally, the computed signature must be added to the API request in an `Authorization` header such as:
 
       ```
       Authorization: EXO2-HMAC-SHA256 credential=<Exoscale API key>,expires=<expiration date UNIX timestamp>,signature=<signature>

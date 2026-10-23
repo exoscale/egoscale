@@ -419,7 +419,7 @@ func simpleType(s *base.Schema) (ir.Type, error) {
 	case "uri-reference", "uri":
 		return ir.Named("string"), nil
 	case "byte":
-		return ir.Named("[]byte"), nil
+		return ir.Slice{Elem: ir.Named("byte")}, nil
 	case "double":
 		return ir.Named("float64"), nil
 	case "float":

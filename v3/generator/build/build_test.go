@@ -94,12 +94,40 @@ func TestCheckRejectsUnusedRefOverrides(t *testing.T) {
 `)))
 	require.NoError(t, err)
 	b := New(model, config.Config{RefOverrides: map[string]map[string]string{
-		"Foo": {"#/components/schemas/bar-ref": "Bar"},
-		"Baz": {"#/components/schemas/bar-ref": "Bar"},
+		"Foo": {"#/components/schemas/bar-ref": "string"},
+		"Baz": {"#/components/schemas/bar-ref": "string"},
 	}})
 
 	f, err := b.Schemas("v3")
 	require.NoError(t, err)
-	require.Equal(t, ir.Named("Bar"), decl(t, f, "Foo").(ir.Struct).Fields[0].Type)
+	require.Equal(t, ir.Named("string"), decl(t, f, "Foo").(ir.Struct).Fields[0].Type)
 	require.EqualError(t, b.Check(), "ref override Baz #/components/schemas/bar-ref: no such reference in the spec")
+}
+
+func TestCheckRejectsUndeclaredTypes(t *testing.T) {
+	model, err := Load([]byte(schemasSpec(`    foo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        bar:
+          $ref: '#/components/schemas/bar'
+    bar:
+      type: object
+      properties:
+        id:
+          type: string
+`)))
+	require.NoError(t, err)
+	b := New(model, config.Config{
+		IgnoredSchemas: []string{"bar"},
+		Aliases:        []config.Alias{{Name: "Baz", Target: "Qux"}},
+		ExternalTypes:  []string{"UUID"},
+	})
+
+	_, err = b.Schemas("v3")
+	require.NoError(t, err)
+	require.EqualError(t, b.Check(), "type Bar used by #/components/schemas/foo is not declared\n"+
+		"type Qux used by config is not declared")
 }

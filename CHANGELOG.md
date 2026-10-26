@@ -1,6 +1,13 @@
 Changelog
 =========
 
+3.1.61
+------
+
+- v3: regenerate from new API spec (#833)
+- v3: Thanos settings keys aligned with the service surface (hyphenated keys, e.g. `compactor.retention-days`, `query.timeout`, `query.request-*-limits`)
+- v3: remove `RevealDeploymentAPIKey` — the `GET /ai/deployment/{id}/api-key` endpoint was removed from the API
+
 3.1.60
 ------
 

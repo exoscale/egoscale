@@ -5530,7 +5530,19 @@ components:
             $ref: '#/components/schemas/load-balancer-server-status'
           readOnly: true
           description: Healthcheck status per backend server
+        label-selector:
+          $ref: '#/components/schemas/load-balancer-service-label-selector'
+          description: Label selector of the instances to forward network traffic
       description: Load Balancer Service
+    load-balancer-service-label-selector:
+      type: object
+      properties:
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: Instances carrying all of these labels become backends (AND matching)
+      required:
+        - labels
+      description: Load Balancer Service label selector
     access-key:
       type: object
       properties:
@@ -12159,6 +12171,9 @@ paths:
                 healthcheck:
                   $ref: '#/components/schemas/load-balancer-service-healthcheck'
                   description: Healthcheck configuration
+                label-selector:
+                  $ref: '#/components/schemas/load-balancer-service-label-selector'
+                  description: Label selector of the instances to forward network traffic (omit to leave it untouched, send empty labels to remove it, send labels to replace it)
       operationId: update-load-balancer-service
     get:
       tags:
@@ -17789,6 +17804,7 @@ paths:
             type: string
             enum:
               - description
+              - label-selector
       summary: Reset a Load Balancer Service field to its default value
       operationId: reset-load-balancer-service-field
   /dbaas-postgres/{service-name}/database:
@@ -20246,7 +20262,10 @@ paths:
                   description: Load Balancer Service description
                 instance-pool:
                   $ref: '#/components/schemas/instance-pool'
-                  description: Instance Pool to forward traffic to
+                  description: Instance Pool to forward traffic to (optional, absent for selector-only services)
+                label-selector:
+                  $ref: '#/components/schemas/load-balancer-service-label-selector'
+                  description: Label selector of the instances to forward network traffic (at least one of instance-pool or label-selector is required)
                 protocol:
                   type: string
                   enum:
@@ -20281,7 +20300,6 @@ paths:
                   description: Healthcheck configuration
               required:
                 - name
-                - instance-pool
                 - protocol
                 - strategy
                 - port

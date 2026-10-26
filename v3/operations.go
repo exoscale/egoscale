@@ -15838,7 +15838,9 @@ type AddServiceToLoadBalancerRequest struct {
 	// Load Balancer Service healthcheck
 	Healthcheck *LoadBalancerServiceHealthcheck `json:"healthcheck" validate:"required"`
 	// Instance Pool
-	InstancePool *InstancePool `json:"instance-pool" validate:"required"`
+	InstancePool *InstancePool `json:"instance-pool,omitempty"`
+	// Load Balancer Service label selector
+	LabelSelector *LoadBalancerServiceLabelSelector `json:"label-selector,omitempty"`
 	// Load Balancer Service name
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
 	// Port exposed on the Load Balancer's public IP
@@ -16010,6 +16012,8 @@ type UpdateLoadBalancerServiceRequest struct {
 	Description *string `json:"description,omitempty" validate:"omitempty,lte=255"`
 	// Load Balancer Service healthcheck
 	Healthcheck *LoadBalancerServiceHealthcheck `json:"healthcheck,omitempty"`
+	// Load Balancer Service label selector
+	LabelSelector *LoadBalancerServiceLabelSelector `json:"label-selector,omitempty"`
 	// Load Balancer Service name
 	Name *string `json:"name,omitempty" validate:"omitempty,lte=255"`
 	// Port exposed on the Load Balancer's public IP
@@ -16076,7 +16080,8 @@ func (c Client) UpdateLoadBalancerService(ctx context.Context, id UUID, serviceI
 type ResetLoadBalancerServiceFieldField string
 
 const (
-	ResetLoadBalancerServiceFieldFieldDescription ResetLoadBalancerServiceFieldField = "description"
+	ResetLoadBalancerServiceFieldFieldDescription   ResetLoadBalancerServiceFieldField = "description"
+	ResetLoadBalancerServiceFieldFieldLabelSelector ResetLoadBalancerServiceFieldField = "label-selector"
 )
 
 // Reset a Load Balancer Service field to its default value

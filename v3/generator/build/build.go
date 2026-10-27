@@ -110,6 +110,9 @@ func typeNames(d ir.Decl) []string {
 		return []string{d.Name}
 	case ir.QueryOpts:
 		return []string{d.Type}
+	case ir.Constants:
+		// Declared by render/constants.tmpl.
+		return []string{"Endpoint"}
 	case ir.Aliases:
 		names := make([]string, 0, len(d.Aliases))
 		for _, a := range d.Aliases {

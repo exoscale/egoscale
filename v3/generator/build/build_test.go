@@ -83,6 +83,31 @@ func TestEmitRejectsDuplicateAliases(t *testing.T) {
 	require.EqualError(t, err, "type Foo from config is already declared from #/components/schemas/foo")
 }
 
+func TestEmitRejectsSchemaNamedEndpoint(t *testing.T) {
+	b := newTestBuilder(t, `openapi: 3.1.0
+info:
+  title: test
+  version: 1.0.0
+servers:
+  - url: https://api-{zone}.exoscale.com/v2
+    variables:
+      zone:
+        default: ch-gva-2
+        enum:
+          - ch-gva-2
+paths: {}
+components:
+  schemas:
+    endpoint:
+      type: string
+`)
+	_, err := b.Schemas("v3")
+	require.NoError(t, err)
+
+	_, err = b.Constants("v3")
+	require.EqualError(t, err, "type Endpoint from #/servers/0 is already declared from #/components/schemas/endpoint")
+}
+
 func TestCheckRejectsUnusedRefOverrides(t *testing.T) {
 	model, err := Load([]byte(schemasSpec(`    foo:
       type: object

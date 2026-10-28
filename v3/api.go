@@ -12,8 +12,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"net/http/httputil"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -283,23 +281,6 @@ func extractRequestParameters(req *http.Request) ([]string, string) {
 	}
 
 	return names, values
-}
-
-func dumpRequest(req *http.Request, operationID string) {
-	if req != nil {
-		if dump, err := httputil.DumpRequest(req, true); err == nil {
-			fmt.Fprintf(os.Stderr, ">>> Operation: %s\n%s\n", operationID, dump)
-		}
-	}
-}
-
-func dumpResponse(resp *http.Response) {
-	if resp != nil {
-		if dump, err := httputil.DumpResponse(resp, true); err == nil {
-			fmt.Fprintf(os.Stderr, "<<< %s\n", dump)
-			fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
-		}
-	}
 }
 
 // FindInstanceType attempts to find an InstanceType by id, or by a string or the form FAMILY.SIZE or SIZE,

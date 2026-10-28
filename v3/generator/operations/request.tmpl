@@ -38,17 +38,9 @@ func (c Client) {{ .Name }}({{ .Params }}) {{ .ValueReturn }} {
 	}
 	{{ end }}
 
-        if c.trace {
-                dumpRequest(request, "{{ .OperationID }}")
-        }
-
-	response, err := c.httpClient.Do(request)
+	response, err := c.do(request)
 	if err != nil {
 		return {{ .ErrReturn }}fmt.Errorf("{{ .Name }}: http client do: %w", err)
-	}
-
-	if c.trace {
-		dumpResponse(response)
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {

@@ -180,6 +180,12 @@ func CompareComponents(l, r any) *ComponentsChanges {
 				&changes, v3.CallbacksLabel, CompareCallback, doneChan)
 		}
 
+		if !lComponents.MediaTypes.IsEmpty() || !rComponents.MediaTypes.IsEmpty() {
+			comparisons++
+			go runComparison(lComponents.MediaTypes.Value, rComponents.MediaTypes.Value,
+				&changes, v3.MediaTypesLabel, CompareMediaTypes, doneChan)
+		}
+
 		cc.ExtensionChanges = CompareExtensions(lComponents.Extensions, rComponents.Extensions)
 
 		completedComponents := 0
@@ -193,7 +199,7 @@ func CompareComponents(l, r any) *ComponentsChanges {
 				completedComponents++
 				cc.SecuritySchemeChanges = res.result.(map[string]*SecuritySchemeChanges)
 			case v3.ResponsesLabel, v3.ParametersLabel, v3.ExamplesLabel, v3.RequestBodiesLabel, v3.HeadersLabel,
-				v3.LinksLabel, v3.CallbacksLabel:
+				v3.LinksLabel, v3.CallbacksLabel, v3.MediaTypesLabel:
 				completedComponents++
 			}
 		}
@@ -222,6 +228,13 @@ func runComparison[T any, R any](l, r *orderedmap.Map[low.KeyReference[string], 
 			result: CheckMapForChanges(l, r, changes, label, compareFunc),
 		}
 		return
+	}
+	if label == v3.ExamplesLabel {
+		doneChan <- componentComparison{
+			prop:   label,
+			result: checkMapForChangesInternal(l, r, changes, label, compareFunc, false, false, false),
+		}
+		return
 	} else {
 		doneChan <- componentComparison{
 			prop:   label,
@@ -232,6 +245,9 @@ func runComparison[T any, R any](l, r *orderedmap.Map[low.KeyReference[string], 
 
 // GetAllChanges returns a slice of all changes made between Callback objects
 func (c *ComponentsChanges) GetAllChanges() []*Change {
+	if c == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, c.Changes...)
 	for k := range c.SchemaChanges {
@@ -248,6 +264,9 @@ func (c *ComponentsChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns total changes for all Components and Definitions
 func (c *ComponentsChanges) TotalChanges() int {
+	if c == nil {
+		return 0
+	}
 	v := c.PropertyChanges.TotalChanges()
 	for k := range c.SchemaChanges {
 		v += c.SchemaChanges[k].TotalChanges()

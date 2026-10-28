@@ -5,14 +5,13 @@ package base
 
 import (
 	"context"
-	"crypto/sha256"
-	"strings"
+	"hash/maphash"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Tag represents a low-level Tag instance that is backed by a low-level one.
@@ -21,10 +20,14 @@ import (
 // tag defined in the Operation Object instances.
 //   - v2: https://swagger.io/specification/v2/#tagObject
 //   - v3: https://swagger.io/specification/#tag-object
+//   - v3.2: https://spec.openapis.org/oas/v3.2.0#tag-object
 type Tag struct {
 	Name         low.NodeReference[string]
+	Summary      low.NodeReference[string]
 	Description  low.NodeReference[string]
 	ExternalDocs low.NodeReference[*ExternalDoc]
+	Parent       low.NodeReference[string]
+	Kind         low.NodeReference[string]
 	Extensions   *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 	KeyNode      *yaml.Node
 	RootNode     *yaml.Node
@@ -84,18 +87,37 @@ func (t *Tag) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.Valu
 	return t.Extensions
 }
 
-// Hash will return a consistent SHA256 Hash of the Info object
-func (t *Tag) Hash() [32]byte {
-	var f []string
-	if !t.Name.IsEmpty() {
-		f = append(f, t.Name.Value)
-	}
-	if !t.Description.IsEmpty() {
-		f = append(f, t.Description.Value)
-	}
-	if !t.ExternalDocs.IsEmpty() {
-		f = append(f, low.GenerateHashString(t.ExternalDocs.Value))
-	}
-	f = append(f, low.HashExtensions(t.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent hash of the Tag object
+func (t *Tag) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if !t.Name.IsEmpty() {
+			h.WriteString(t.Name.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !t.Summary.IsEmpty() {
+			h.WriteString(t.Summary.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !t.Description.IsEmpty() {
+			h.WriteString(t.Description.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !t.ExternalDocs.IsEmpty() {
+			h.WriteString(low.GenerateHashString(t.ExternalDocs.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !t.Parent.IsEmpty() {
+			h.WriteString(t.Parent.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !t.Kind.IsEmpty() {
+			h.WriteString(t.Kind.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(t.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

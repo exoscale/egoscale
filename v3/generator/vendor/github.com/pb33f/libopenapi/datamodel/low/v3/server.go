@@ -1,23 +1,23 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package v3
 
 import (
 	"context"
-	"crypto/sha256"
-	"strings"
+	"hash/maphash"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Server represents a low-level OpenAPI 3+ Server object.
 //   - https://spec.openapis.org/oas/v3.1.0#server-object
 type Server struct {
+	Name        low.NodeReference[string] // OpenAPI 3.2+ name field for documentation
 	URL         low.NodeReference[string]
 	Description low.NodeReference[string]
 	Variables   low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*ServerVariable]]]
@@ -113,20 +113,31 @@ func (s *Server) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the Server object
-func (s *Server) Hash() [32]byte {
-	var f []string
-	if s.Variables.Value != nil {
-		for v := range orderedmap.SortAlpha(s.Variables.Value).ValuesFromOldest() {
-			f = append(f, low.GenerateHashString(v.Value))
+// Hash will return a consistent Hash of the Server object
+func (s *Server) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if !s.Name.IsEmpty() {
+			h.WriteString(s.Name.Value)
+			h.WriteByte(low.HASH_PIPE)
 		}
-	}
-	if !s.URL.IsEmpty() {
-		f = append(f, s.URL.Value)
-	}
-	if !s.Description.IsEmpty() {
-		f = append(f, s.Description.Value)
-	}
-	f = append(f, low.HashExtensions(s.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+		if s.Variables.Value != nil {
+			for v := range orderedmap.SortAlpha(s.Variables.Value).ValuesFromOldest() {
+				h.WriteString(low.GenerateHashString(v.Value))
+				h.WriteByte(low.HASH_PIPE)
+			}
+		}
+		if !s.URL.IsEmpty() {
+			h.WriteString(s.URL.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !s.Description.IsEmpty() {
+			h.WriteString(s.Description.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(s.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

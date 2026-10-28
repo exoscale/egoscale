@@ -5,7 +5,8 @@ package model
 
 import (
 	"encoding/json"
-	"gopkg.in/yaml.v3"
+
+	"go.yaml.in/yaml/v4"
 )
 
 // Definitions of the possible changes between two items
@@ -37,10 +38,16 @@ type WhatChanged struct {
 
 // ChangeContext holds a reference to the line and column positions of original and new change.
 type ChangeContext struct {
-	OriginalLine   *int `json:"originalLine,omitempty" yaml:"originalLine,omitempty"`
-	OriginalColumn *int `json:"originalColumn,omitempty" yaml:"originalColumn,omitempty"`
-	NewLine        *int `json:"newLine,omitempty" yaml:"newLine,omitempty"`
-	NewColumn      *int `json:"newColumn,omitempty" yaml:"newColumn,omitempty"`
+	DocumentLocation string `json:"document,omitempty" yaml:"document,omitempty"`
+	OriginalLine     *int   `json:"originalLine,omitempty" yaml:"originalLine,omitempty"`
+	OriginalColumn   *int   `json:"originalColumn,omitempty" yaml:"originalColumn,omitempty"`
+	NewLine          *int   `json:"newLine,omitempty" yaml:"newLine,omitempty"`
+	NewColumn        *int   `json:"newColumn,omitempty" yaml:"newColumn,omitempty"`
+}
+
+type ChangeIsReferenced interface {
+	GetChangeReference() string
+	SetChangeReference(ref string)
 }
 
 // HasChanged determines if the line and column numbers of the original and new values have changed.
@@ -65,7 +72,6 @@ func (c *ChangeContext) HasChanged() bool {
 
 // Change represents a change between two different elements inside an OpenAPI specification.
 type Change struct {
-
 	// Context represents the lines and column numbers of the original and new values
 	// It's worth noting that these values may frequently be different and are not used to calculate
 	// a change. If the positions change, but values do not, then no change is recorded.
@@ -83,6 +89,14 @@ type Change struct {
 	// New is the new value represented as a string.
 	New string `json:"new,omitempty" yaml:"new,omitempty"`
 
+	// OriginalEncoded is the original value serialized to YAML (for complex types like extensions).
+	// Only populated for specific use cases (e.g., extension values that are objects/arrays).
+	OriginalEncoded string `json:"originalEncoded,omitempty" yaml:"originalEncoded,omitempty"`
+
+	// NewEncoded is the new value serialized to YAML (for complex types like extensions).
+	// Only populated for specific use cases (e.g., extension values that are objects/arrays).
+	NewEncoded string `json:"newEncoded,omitempty" yaml:"newEncoded,omitempty"`
+
 	// Breaking determines if the change is a breaking one or not.
 	Breaking bool `json:"breaking" yaml:"breaking"`
 
@@ -97,6 +111,9 @@ type Change struct {
 
 	// Path represents the path to the object that was changed (not used in the current implementation).
 	Path string `json:"path,omitempty"`
+
+	// Reference is populated when the change is related to a $ref change.
+	Reference string `json:"reference,omitempty"`
 }
 
 // MarshalJSON is a custom JSON marshaller for the Change object.
@@ -129,6 +146,14 @@ func (c *Change) MarshalJSON() ([]byte, error) {
 		data["new"] = c.New
 	}
 
+	if c.OriginalEncoded != "" {
+		data["originalEncoded"] = c.OriginalEncoded
+	}
+
+	if c.NewEncoded != "" {
+		data["newEncoded"] = c.NewEncoded
+	}
+
 	if c.Context != nil {
 		data["context"] = c.Context
 	}
@@ -144,11 +169,23 @@ func (c *Change) MarshalJSON() ([]byte, error) {
 // PropertyChanges holds a slice of Change pointers
 type PropertyChanges struct {
 	RenderPropertiesOnly bool      `json:"-" yaml:"-"`
+	ChangeReference      string    `json:"changeReference,omitempty"`
 	Changes              []*Change `json:"changes,omitempty" yaml:"changes,omitempty"`
+}
+
+func (p *PropertyChanges) SetChangeReference(ref string) {
+	p.ChangeReference = ref
+}
+
+func (p *PropertyChanges) GetChangeReference() string {
+	return p.ChangeReference
 }
 
 // TotalChanges returns the total number of property changes made.
 func (p *PropertyChanges) TotalChanges() int {
+	if p == nil {
+		return 0
+	}
 	return len(p.Changes)
 }
 
@@ -173,7 +210,6 @@ func NewPropertyChanges(changes []*Change) *PropertyChanges {
 
 // PropertyCheck is used by functions to check the state of left and right values.
 type PropertyCheck struct {
-
 	// Original is the property we're checking on the left
 	Original any
 
@@ -190,8 +226,61 @@ type PropertyCheck struct {
 	RightNode *yaml.Node
 
 	// Breaking determines if the check is a breaking change (modifications or removals etc.)
+	//
+	// Deprecated: Use Component and Property fields for configurable breaking rules.
+	// This field is used as a fallback when Component is not set.
+	//
+	// TODO: Migration to Component/Property-based breaking rules
+	//
+	// Current state: CreateChange() takes a `breaking bool` parameter that is computed via
+	// BreakingAdded/Modified/Removed(component, property) and stored directly on this field.
+	// The breaking status is fixed at Change creation time.
+	//
+	// Target state: CreateChange() should accept `component, property string` parameters instead,
+	// store them on the Change, and breaking status should be computed at runtime via IsBreaking().
+	// This allows users to apply different breaking rule configs to the same set of changes.
+	//
+	// Migration steps:
+	//   1. Extend CreateChange signature to accept component, property string
+	//   2. Update ~198 CreateChange call sites across 23 files
+	//   3. Add IsBreaking() method on Change that computes from Component/Property
+	//   4. Keep Breaking field populated for backward compatibility
+	//
+	// Files with most CreateChange calls: schema.go (51), path_item.go (42), operation.go (22)
 	Breaking bool
+
+	// Component is the OpenAPI component type (e.g., CompTag, CompSchema) for breaking rules lookup.
+	// When set along with Property, the configurable breaking rules system is used instead of Breaking.
+	// TODO: Currently not populated - see Breaking field TODO for migration plan.
+	Component string
+
+	// Property is the property name within the component (e.g., PropParent, PropName) for breaking rules lookup.
+	// Used together with Component to look up the correct breaking rule for each change type.
+	// TODO: Currently not populated - see Breaking field TODO for migration plan.
+	Property string
 
 	// Changes represents a pointer to the slice to contain all changes found.
 	Changes *[]*Change
+}
+
+// NewPropertyCheck creates a PropertyCheck with the Component and Property fields set for
+// configurable breaking rules. This is the preferred way to create PropertyCheck instances.
+func NewPropertyCheck(
+	component, property string,
+	leftNode, rightNode *yaml.Node,
+	label string,
+	changes *[]*Change,
+	original, new any,
+) *PropertyCheck {
+	return &PropertyCheck{
+		LeftNode:  leftNode,
+		RightNode: rightNode,
+		Label:     label,
+		Changes:   changes,
+		Breaking:  BreakingModified(component, property), // fallback for legacy code paths
+		Component: component,
+		Property:  property,
+		Original:  original,
+		New:       new,
+	}
 }

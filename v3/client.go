@@ -2,6 +2,7 @@
 package v3
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -11,21 +12,60 @@ import (
 	"os"
 	"runtime"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/exoscale/egoscale/v3/credentials"
+	"github.com/exoscale/egoscale/v3/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-// defaultHTTPClient is HTTP client with retry logic.
-// Default retry configuration can be found in go-retryablehttp repo.
-var defaultHTTPClient = func() *retryablehttp.Client {
-	rc := retryablehttp.NewClient()
-	rc.Logger = slog.New(slog.DiscardHandler)
-	return rc
-}()
+// Client represents an Exoscale API client.
+type Client struct {
+	apiKey            string
+	apiSecret         string
+	userAgent         string
+	serverEndpoint    string
+	defaultHTTPClient *retryablehttp.Client
+	httpClient        *http.Client
+	waitTimeout       time.Duration
+	validate          *validator.Validate
+
+	logger *slog.Logger
+
+	// A list of callbacks for modifying requests which are generated before sending over
+	// the network.
+	requestInterceptors []RequestInterceptorFn
+}
+
+// NewClient returns a new Exoscale API client.
+func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client, error) {
+	values, err := credentials.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	client := &Client{
+		apiKey:         values.APIKey,
+		apiSecret:      values.APISecret,
+		serverEndpoint: string(CHGva2),
+		validate:       validator.New(),
+		userAgent:      getDefaultUserAgent(),
+		logger:         slog.New(slog.DiscardHandler), // no logs by default
+	}
+
+	client.defaultHTTPClient = retryablehttp.NewClient()
+	client.defaultHTTPClient.Logger = slog.New(slog.DiscardHandler)
+	client.httpClient = client.defaultHTTPClient.StandardClient()
+
+	for _, opt := range opts {
+		if err := opt(client); err != nil {
+			return nil, fmt.Errorf("client configuration error: %s", err)
+		}
+	}
+
+	return client, nil
+}
 
 func (c Client) GetZoneName(ctx context.Context, endpoint Endpoint) (ZoneName, error) {
 	zone, err := c.findZone(ctx, string(endpoint))
@@ -81,23 +121,6 @@ func (c Client) findZone(ctx context.Context, nameOrAPIEndpoint string) (Zone, e
 	return zone, nil
 }
 
-// Client represents an Exoscale API client.
-type Client struct {
-	apiKey         string
-	apiSecret      string
-	userAgent      string
-	serverEndpoint string
-	httpClient     *http.Client
-	waitTimeout    time.Duration
-	validate       *validator.Validate
-
-	logger *slog.Logger
-
-	// A list of callbacks for modifying requests which are generated before sending over
-	// the network.
-	requestInterceptors []RequestInterceptorFn
-}
-
 // RequestInterceptorFn is the function signature for the RequestInterceptor callback function
 type RequestInterceptorFn func(ctx context.Context, req *http.Request) error
 
@@ -110,9 +133,10 @@ type ClientOpt func(*Client) error
 // Deprecated: use ClientOptWithLogHandler instead.
 func ClientOptWithTrace() ClientOpt {
 	return func(c *Client) error {
-		logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
-		defaultHTTPClient.Logger = logger.With("subsystem", "retryablehttp")
-		c.logger = logger
+		c.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+		if c.defaultHTTPClient != nil {
+			c.defaultHTTPClient.Logger = c.logger.With("subsystem", "retryablehttp")
+		}
 
 		return nil
 	}
@@ -122,7 +146,9 @@ func ClientOptWithTrace() ClientOpt {
 func ClientOptWithLogHandler(h slog.Handler) ClientOpt {
 	return func(c *Client) error {
 		c.logger = slog.New(h)
-		defaultHTTPClient.Logger = c.logger.With("subsystem", "retryablehttp") // noop if custom http client is used
+		if c.defaultHTTPClient != nil {
+			c.defaultHTTPClient.Logger = c.logger.With("subsystem", "retryablehttp")
+		}
 		return nil
 	}
 }
@@ -175,6 +201,7 @@ func ClientOptWithRequestInterceptors(f ...RequestInterceptorFn) ClientOpt {
 // instead.
 func ClientOptWithHTTPClient(v *http.Client) ClientOpt {
 	return func(c *Client) error {
+		c.defaultHTTPClient = nil
 		c.httpClient = v
 
 		return nil
@@ -188,32 +215,6 @@ func getDefaultUserAgent() string {
 		runtime.Version(),
 		runtime.GOOS,
 		runtime.GOARCH)
-}
-
-// NewClient returns a new Exoscale API client.
-func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client, error) {
-	values, err := credentials.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	client := &Client{
-		apiKey:         values.APIKey,
-		apiSecret:      values.APISecret,
-		serverEndpoint: string(CHGva2),
-		httpClient:     defaultHTTPClient.StandardClient(),
-		validate:       validator.New(),
-		userAgent:      getDefaultUserAgent(),
-		logger:         slog.New(slog.DiscardHandler), // no logs by default
-	}
-
-	for _, opt := range opts {
-		if err := opt(client); err != nil {
-			return nil, fmt.Errorf("client configuration error: %s", err)
-		}
-	}
-
-	return client, nil
 }
 
 // getUserAgent only for compatibility with UserAgent.
@@ -258,14 +259,14 @@ func (c *Client) WithUserAgent(ua string) *Client {
 	return clone
 }
 
-// Deprecated: use ClientOptWithLogHandler instead.
+// Deprecated: use WithLogHandler instead.
 func (c *Client) WithTrace() *Client {
 	clone := cloneClient(c)
 
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	defaultHTTPClient.Logger = logger.With("subsystem", "retryablehttp")
-
-	clone.logger = logger
+	clone.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	if clone.defaultHTTPClient != nil {
+		clone.defaultHTTPClient.Logger = clone.logger.With("subsystem", "retryablehttp")
+	}
 
 	return clone
 }
@@ -275,7 +276,9 @@ func (c *Client) WithLogHandler(h slog.Handler) *Client {
 	clone := cloneClient(c)
 
 	clone.logger = slog.New(h)
-	defaultHTTPClient.Logger = clone.logger.With("subsystem", "retryablehttp") // noop if custom http client is used
+	if clone.defaultHTTPClient != nil {
+		clone.defaultHTTPClient.Logger = clone.logger.With("subsystem", "retryablehttp")
+	}
 
 	return clone
 }
@@ -318,49 +321,76 @@ func (c *Client) executeRequestInterceptors(ctx context.Context, req *http.Reque
 	return nil
 }
 
-func (c *Client) logCall(
-	ctx context.Context,
-	req *http.Request,
-	resp *http.Response,
-	operationID string,
-) {
-	if !c.logger.Enabled(ctx, slog.LevelDebug) {
-		return
+// Wrapper for c.httpClient.Do to apply middleware.
+func (c *Client) do(request *http.Request) (*http.Response, error) {
+	ctx := request.Context()
+	if request == nil || !c.logger.Enabled(ctx, slog.LevelDebug) {
+		return c.httpClient.Do(request)
 	}
 
-	meta := []any{"operation", operationID}
-	var body []byte
+	var (
+		meta []any
+	)
 
-	if req.Body != nil {
-		body, _ = io.ReadAll(req.Body)
-	}
-	if req != nil {
-		meta = append(meta, slog.Group("request",
-			"method", req.Method,
-			"host", req.URL.Host,
-			"path", req.URL.EscapedPath(),
-			"headers", OnelineHeaders(req.Header.Clone()),
-			"body", string(body),
-		))
+	requestMeta := []any{
+		"method", request.Method,
+		"host", request.URL.Host,
+		"path", request.URL.EscapedPath(),
+		"headers", utils.PrintHeaders(request.Header),
 	}
 
-	body = []byte{}
-	if resp.Body != nil {
-		body, _ = io.ReadAll(resp.Body)
+	if request.ContentLength != 0 &&
+		request.Body != nil &&
+		utils.IsLoggableContentType(request.Header) {
+		requestBody, err := io.ReadAll(request.Body)
+		if err != nil {
+			return nil, err
+		}
+		if err = request.Body.Close(); err != nil {
+			return nil, err
+		}
+		request.Body = io.NopCloser(bytes.NewReader(requestBody))
+
+		requestMeta = append(requestMeta, "json_body", string(requestBody))
 	}
-	if resp != nil {
-		meta = append(meta, slog.Group("response",
-			"status", resp.Status,
-			"headers", OnelineHeaders(resp.Header.Clone()),
-			"body", string(body),
-		))
+
+	meta = append(meta, slog.Group("request", requestMeta...))
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return response, err
 	}
+
+	responseMeta := []any{
+		"status", response.Status,
+		"headers", utils.PrintHeaders(response.Header),
+	}
+
+	if response.ContentLength != 0 &&
+		response.Body != nil &&
+		request.URL.Query().Get("streaming") != "true" &&
+		utils.IsLoggableContentType(response.Header) {
+		responseBody, err := io.ReadAll(response.Body)
+		if err != nil {
+			return nil, err
+		}
+		if err = response.Body.Close(); err != nil {
+			return nil, err
+		}
+		response.Body = io.NopCloser(bytes.NewReader(responseBody))
+
+		responseMeta = append(responseMeta, "json_body", string(responseBody))
+	}
+
+	meta = append(meta, slog.Group("response", responseMeta...))
 
 	c.logger.DebugContext(
 		ctx,
 		"api call trace",
 		meta...,
 	)
+
+	return response, err
 }
 
 func cloneClient(c *Client) *Client {
@@ -369,18 +399,11 @@ func cloneClient(c *Client) *Client {
 		apiSecret:           c.apiSecret,
 		userAgent:           c.userAgent,
 		serverEndpoint:      c.serverEndpoint,
+		defaultHTTPClient:   c.defaultHTTPClient,
 		httpClient:          c.httpClient,
 		requestInterceptors: c.requestInterceptors,
 		waitTimeout:         c.waitTimeout,
 		validate:            c.validate,
 		logger:              c.logger,
 	}
-}
-
-func OnelineHeaders(h http.Header) string {
-	out := make([]string, 0, len(h)*2)
-	for k, v := range h {
-		out = append(out, fmt.Sprintf("%s:%s", k, strings.Join(v, ",")))
-	}
-	return strings.Join(out, " ")
 }

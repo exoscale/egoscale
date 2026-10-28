@@ -268,7 +268,7 @@ tags:
     x-display-name: Object Storage
     x-weight: 500
     x-icon: exo-object-storage
-  - description: '[BETA] Create and manipulate routing rules'
+  - description: Create and manipulate routing rules
     parent: vpc
     externalDocs:
       description: Read more
@@ -330,7 +330,7 @@ tags:
     x-display-name: Deploy Target
     x-weight: 230
     x-icon: exo-gpu
-  - description: '[BETA] Virtual Private Cloud (VPC) provides isolated virtual network environments for your Exoscale resources.'
+  - description: Virtual Private Cloud (VPC) provides isolated virtual network environments for your Exoscale resources.
     parent: networking
     externalDocs:
       description: Read more
@@ -470,7 +470,7 @@ tags:
     x-display-name: User
     x-weight: 830
     x-icon: exo-iam
-  - description: '[BETA] Create and manipulate VPCs'
+  - description: Create and manipulate VPCs
     parent: vpc
     externalDocs:
       description: Read more
@@ -499,7 +499,7 @@ tags:
     x-display-name: SKS
     x-weight: 300
     x-icon: exo-sks
-  - description: '[BETA] Configure VPC subnets and attach instances to them'
+  - description: Configure VPC subnets and attach instances to them
     parent: vpc
     externalDocs:
       description: Read more
@@ -870,6 +870,28 @@ components:
           type: string
       title: Schema Registry configuration
       type: object
+    sks-nodepool-template:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Template ID
+        name:
+          type: string
+          readOnly: true
+          description: Template name
+        created-at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Template registration date
+        variant:
+          type: string
+          readOnly: true
+          description: 'Template variant: standard | nvidia'
+      description: SKS Nodepool template
     dbaas-endpoint-opensearch:
       type: object
       properties:
@@ -3696,6 +3718,11 @@ components:
           items:
             type: string
           description: List of roles. The certificate present in the Kubeconfig will have these roles set in the Org field.
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          description: 'Cluster and context name in the generated Kubeconfig (default: cluster ID)'
       required:
         - user
         - groups
@@ -8271,6 +8298,9 @@ components:
         taints:
           $ref: '#/components/schemas/sks-nodepool-taints'
           description: Nodepool taints
+        nvidia-dra-driver:
+          type: boolean
+          description: Expose the GPUs with the NVIDIA DRA driver instead of the NVIDIA device plugin. Requires a GPU instance type and Kubernetes 1.34 or greater.
         security-groups:
           type: array
           items:
@@ -13465,7 +13495,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Attach a Compute instance to a Subnet'
+      summary: Attach a Compute instance to a Subnet
       requestBody:
         required: true
         content:
@@ -15173,7 +15203,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] List VPC routes'
+      summary: List VPC routes
       operationId: list-vpc-routes
   /sks-cluster/{id}/nodepool/{sks-nodepool-id}:
     put:
@@ -15235,6 +15265,9 @@ paths:
                 taints:
                   $ref: '#/components/schemas/sks-nodepool-taints'
                   description: Nodepool taints
+                nvidia-dra-driver:
+                  type: boolean
+                  description: Expose the GPUs with the NVIDIA DRA driver instead of the NVIDIA device plugin. Requires a GPU instance type and Kubernetes 1.34 or greater.
                 security-groups:
                   type: array
                   items:
@@ -15927,7 +15960,7 @@ paths:
                 $ref: '#/components/schemas/operation'
       description: ""
       parameters: []
-      summary: '[BETA] Create a VPC'
+      summary: Create a VPC
       requestBody:
         required: true
         content:
@@ -15970,7 +16003,7 @@ paths:
                       $ref: '#/components/schemas/list-vpc-entry'
       description: ""
       parameters: []
-      summary: '[BETA] List VPCs'
+      summary: List VPCs
       operationId: list-vpcs
   /instance/{id}:start:
     put:
@@ -16378,7 +16411,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] List Subnet routes'
+      summary: List Subnet routes
       operationId: list-routes
     post:
       tags:
@@ -16404,7 +16437,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Create a route'
+      summary: Create a route
       requestBody:
         required: true
         content:
@@ -16532,7 +16565,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] List Subnets'
+      summary: List Subnets
       operationId: list-subnets
     post:
       tags:
@@ -16552,7 +16585,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Create a Subnet'
+      summary: Create a Subnet
       requestBody:
         required: true
         content:
@@ -18062,6 +18095,44 @@ paths:
               required:
                 - username
       operationId: create-dbaas-opensearch-user
+  /sks-cluster/{id}/nodepool/{sks-nodepool-id}:set-template:
+    put:
+      tags:
+        - nodepool
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: Sets the template of the Nodepool instances, among the available templates of its Kubernetes version and variant (see `list-sks-nodepool-templates`). Without template (`null`), the Nodepool follows the latest template of its Kubernetes version.
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          required: true
+          name: sks-nodepool-id
+          schema:
+            type: string
+            format: uuid
+      summary: Set the template of an SKS Nodepool
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                template:
+                  $ref: '#/components/schemas/template-ref'
+                  nullable: true
+                  description: Nodepool Instance template, or null to follow the latest template of the Nodepool Kubernetes version
+      operationId: set-sks-nodepool-template
   /dbaas-integration-types:
     get:
       tags:
@@ -19984,7 +20055,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Delete a route'
+      summary: Delete a route
       operationId: delete-route
   /kms-key/{id}/encrypt:
     post:
@@ -21456,7 +21527,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Delete a Subnet'
+      summary: Delete a Subnet
       operationId: delete-subnet
     put:
       tags:
@@ -21482,7 +21553,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Update a Subnet'
+      summary: Update a Subnet
       requestBody:
         required: true
         content:
@@ -21530,7 +21601,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Retrieve Subnet details'
+      summary: Retrieve Subnet details
       operationId: get-subnet
   /dbaas-external-endpoints:
     get:
@@ -22112,7 +22183,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Detach a Compute instance from a Subnet'
+      summary: Detach a Compute instance from a Subnet
       requestBody:
         required: true
         content:
@@ -22872,6 +22943,9 @@ paths:
                 taints:
                   $ref: '#/components/schemas/sks-nodepool-taints'
                   description: Nodepool taints
+                nvidia-dra-driver:
+                  type: boolean
+                  description: Expose the GPUs with the NVIDIA DRA driver instead of the NVIDIA device plugin. Requires a GPU instance type and Kubernetes 1.34 or greater.
                 security-groups:
                   type: array
                   items:
@@ -24841,6 +24915,39 @@ paths:
             $ref: '#/components/schemas/dbaas-service-name'
       summary: Initiate ClickHouse maintenance update
       operationId: start-dbaas-clickhouse-maintenance
+  /sks-template/{kube-version}:
+    get:
+      tags:
+        - nodepool-template
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sks-nodepool-templates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/sks-nodepool-template'
+      description: List the available templates for a given kube version (major.minor or major.minor.patch), of the given variant (standard | nvidia) when provided, latest first
+      parameters:
+        - in: path
+          required: true
+          name: kube-version
+          schema:
+            type: string
+        - in: query
+          required: false
+          name: variant
+          schema:
+            type: string
+            enum:
+              - standard
+              - nvidia
+      summary: ""
+      operationId: list-sks-nodepool-templates
   /ai/deployment/{id}/logs:
     get:
       tags:
@@ -25017,7 +25124,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Update a VPC'
+      summary: Update a VPC
       requestBody:
         required: true
         content:
@@ -25062,7 +25169,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Retrieve VPC details'
+      summary: Retrieve VPC details
       operationId: get-vpc
     delete:
       tags:
@@ -25078,7 +25185,7 @@ paths:
           schema:
             type: string
             format: uuid
-      summary: '[BETA] Delete a VPC'
+      summary: Delete a VPC
       operationId: delete-vpc
   /block-storage:
     get:

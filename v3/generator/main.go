@@ -74,7 +74,7 @@ func run(openAPISpec, genPathDir, packageName string) error {
 	}
 
 	if err := b.Check(); err != nil {
-		return fmt.Errorf("config: %w", err)
+		return fmt.Errorf("check: %w", err)
 	}
 
 	for _, f := range files {

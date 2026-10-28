@@ -184,3 +184,86 @@ func TestOperationQueryOptsAndFindable(t *testing.T) {
 		Fields:    []string{"Name"},
 	}, findable)
 }
+
+func TestOperationArrayOfReferencesBody(t *testing.T) {
+	b := newTestBuilder(t, `openapi: 3.1.0
+info:
+  title: test
+  version: 1.0.0
+paths:
+  /foo:
+    post:
+      operationId: create-foos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/foo'
+      responses:
+        "204":
+          description: No Content
+components:
+  schemas:
+    foo:
+      type: string
+`)
+	_, err := b.Schemas("v3")
+	require.NoError(t, err)
+	f, err := b.Operations("v3")
+	require.NoError(t, err)
+	require.NoError(t, b.Check())
+
+	require.Equal(t, ir.Slice{Elem: ir.Named("Foo")}, decl(t, f, "CreateFoos").(ir.Operation).Body)
+}
+
+func TestFindableOnReferencedResponse(t *testing.T) {
+	b := newTestBuilder(t, `openapi: 3.1.0
+info:
+  title: test
+  version: 1.0.0
+paths:
+  /foo:
+    get:
+      operationId: list-foos
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/foo-list-response'
+components:
+  schemas:
+    foo-list-response:
+      type: object
+      properties:
+        foos:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+`)
+	_, err := b.Schemas("v3")
+	require.NoError(t, err)
+	f, err := b.Operations("v3")
+	require.NoError(t, err)
+	require.NoError(t, b.Check())
+
+	var findable *ir.Findable
+	for _, d := range f.Decls {
+		if fd, ok := d.(ir.Findable); ok {
+			findable = &fd
+		}
+	}
+	require.Equal(t, &ir.Findable{
+		ListType:  "FooListResponse",
+		ListField: "Foos",
+		ItemType:  "FooListResponseFoos",
+		Param:     "name",
+		Fields:    []string{"Name"},
+	}, findable)
+}

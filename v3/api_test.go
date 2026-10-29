@@ -1,8 +1,12 @@
 package v3
 
 import (
+	"encoding/json"
+	"io"
 	"testing"
 	"time"
+
+	"github.com/exoscale/egoscale/v3/credentials"
 )
 
 func TestPollInterval(t *testing.T) {
@@ -58,5 +62,89 @@ func TestPollInterval(t *testing.T) {
 					test.runTime, interval, test.expectedMin, test.expectedMax)
 			}
 		})
+	}
+}
+
+// TestUpdateLoadBalancerServiceRequestLabelSelectorStates pins the three meanings of
+// the optional label-selector field on update: a nil pointer leaves it untouched, an
+// allocated selector with an empty map removes it, a populated map replaces it. This
+// only holds because the outer field keeps the JSON "omitempty" tag while the inner
+// map does not, which is what lets `{"labels":{}}` survive marshalling.
+func TestUpdateLoadBalancerServiceRequestLabelSelectorStates(t *testing.T) {
+	tests := []struct {
+		name          string
+		labelSelector *LoadBalancerServiceLabelSelector
+		wantSelector  string // expected "label-selector" value, "" means the key must be absent
+	}{
+		{
+			name:          "nil pointer leaves the selector untouched",
+			labelSelector: nil,
+			wantSelector:  "",
+		},
+		{
+			name:          "allocated selector with empty labels removes it",
+			labelSelector: &LoadBalancerServiceLabelSelector{Labels: Labels{}},
+			wantSelector:  `{"labels":{}}`,
+		},
+		{
+			name:          "non-empty labels replace the selector wholesale",
+			labelSelector: &LoadBalancerServiceLabelSelector{Labels: Labels{"role": "web"}},
+			wantSelector:  `{"labels":{"role":"web"}}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body, err := prepareJSONBody(UpdateLoadBalancerServiceRequest{
+				LabelSelector: tt.labelSelector,
+			})
+			if err != nil {
+				t.Fatalf("prepareJSONBody: %v", err)
+			}
+
+			buf, err := io.ReadAll(body)
+			if err != nil {
+				t.Fatalf("read request body: %v", err)
+			}
+
+			fields := map[string]json.RawMessage{}
+			if err := json.Unmarshal(buf, &fields); err != nil {
+				t.Fatalf("unmarshal request body %q: %v", buf, err)
+			}
+
+			got, present := fields["label-selector"]
+			switch {
+			case tt.wantSelector == "" && present:
+				t.Fatalf(`"label-selector" = %s, want the key to be absent (body: %s)`, got, buf)
+			case tt.wantSelector != "" && !present:
+				t.Fatalf(`"label-selector" key missing, want %s (body: %s)`, tt.wantSelector, buf)
+			case tt.wantSelector != "" && string(got) != tt.wantSelector:
+				t.Errorf(`"label-selector" = %s, want %s`, got, tt.wantSelector)
+			}
+		})
+	}
+}
+
+// TestValidateSelectorOnlyLoadBalancerService verifies that a service without any
+// instance pool still validates, "instance-pool" not being required anymore. The
+// cross-field rules are enforced by the API only, not by the client.
+func TestValidateSelectorOnlyLoadBalancerService(t *testing.T) {
+	client, err := NewClient(credentials.NewStaticCredentials("key", "secret"))
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+
+	req := AddServiceToLoadBalancerRequest{
+		Name:          "web",
+		Protocol:      AddServiceToLoadBalancerRequestProtocolTCP,
+		Strategy:      AddServiceToLoadBalancerRequestStrategyRoundRobin,
+		Port:          443,
+		TargetPort:    8443,
+		Healthcheck:   &LoadBalancerServiceHealthcheck{Mode: LoadBalancerServiceHealthcheckModeTCP},
+		LabelSelector: &LoadBalancerServiceLabelSelector{Labels: Labels{"role": "web"}},
+	}
+
+	if err := client.Validate(req); err != nil {
+		t.Errorf("Validate: unexpected error: %v", err)
 	}
 }

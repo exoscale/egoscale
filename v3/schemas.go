@@ -5252,6 +5252,8 @@ type LoadBalancerService struct {
 	ID UUID `json:"id,omitempty"`
 	// Instance Pool
 	InstancePool *InstancePool `json:"instance-pool,omitempty"`
+	// Load Balancer Service label selector
+	LabelSelector *LoadBalancerServiceLabelSelector `json:"label-selector,omitempty"`
 	// Load Balancer Service name
 	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// Port exposed on the Load Balancer's public IP
@@ -5290,6 +5292,11 @@ type LoadBalancerServiceHealthcheck struct {
 	TlsSNI string `json:"tls-sni,omitempty" validate:"omitempty,gte=1,lte=255"`
 	// An endpoint to use for the HTTP healthcheck, e.g. '/status'
 	URI string `json:"uri,omitempty" validate:"omitempty,gte=1,lte=255"`
+}
+
+// Load Balancer Service label selector
+type LoadBalancerServiceLabelSelector struct {
+	Labels Labels `json:"labels" validate:"required"`
 }
 
 type ManagerType string

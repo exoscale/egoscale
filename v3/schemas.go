@@ -320,10 +320,11 @@ type CreateKmsKeyRequest struct {
 	MultiZone *bool `json:"multi-zone,omitempty"`
 	// A human-readable display name uniquely identifying the KMS key within the tenant space.
 	Name string `json:"name" validate:"required"`
-	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store ([BETA]).
 	Source CreateKmsKeyRequestSource `json:"source,omitempty"`
 	Usage  CreateKmsKeyRequestUsage  `json:"usage,omitempty"`
-	Xks    *XksKey                   `json:"xks,omitempty"`
+	// [BETA] External key store reference of a KMS Key with source `external-key-store`.
+	Xks *XksKey `json:"xks,omitempty"`
 }
 
 type CreateKmsKeyResponseSource string
@@ -358,14 +359,15 @@ type CreateKmsKeyResponse struct {
 	OriginZone string             `json:"origin-zone" validate:"required"`
 	Revision   *RevisionStamp     `json:"revision" validate:"required"`
 	Rotation   *KeyRotationConfig `json:"rotation,omitempty"`
-	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store ([BETA]).
 	Source CreateKmsKeyResponseSource `json:"source" validate:"required"`
 	Status CreateKmsKeyResponseStatus `json:"status" validate:"required"`
 	// The timestamp indicating exactly when the current key status was last transitioned.
 	StatusSince time.Time `json:"status-since" validate:"required"`
 	// The cryptographic operation constraints allowed on this key.
-	Usage string  `json:"usage" validate:"required"`
-	Xks   *XksKey `json:"xks,omitempty"`
+	Usage string `json:"usage" validate:"required"`
+	// [BETA] External key store reference of a KMS Key with source `external-key-store`.
+	Xks *XksKey `json:"xks,omitempty"`
 }
 
 // AI model
@@ -2635,7 +2637,8 @@ type ErrorResponse struct {
 	// A brief summary defining the class of failure, optimal for quick user interface groupings.
 	Title string `json:"title" validate:"required"`
 	// An absolute or relative URI reference pointing to human-readable documentation concerning the specific problem type encountered.
-	Type          string               `json:"type" validate:"required"`
+	Type string `json:"type" validate:"required"`
+	// [BETA] Error reported by the customer-managed XKS proxy of an external key store.
 	XksProxyError *XksProxyErrorDetail `json:"xks-proxy-error,omitempty"`
 }
 
@@ -2863,14 +2866,15 @@ type GetKmsKeyResponse struct {
 	ReplicasStatus []ReplicaState     `json:"replicas-status,omitempty"`
 	Revision       *RevisionStamp     `json:"revision" validate:"required"`
 	Rotation       *KeyRotationConfig `json:"rotation" validate:"required"`
-	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store ([BETA]).
 	Source GetKmsKeyResponseSource `json:"source" validate:"required"`
 	Status GetKmsKeyResponseStatus `json:"status" validate:"required"`
 	// The timestamp indicating exactly when the current key status was last transitioned.
 	StatusSince time.Time `json:"status-since" validate:"required"`
 	// The cryptographic operation constraints allowed on this key.
-	Usage string  `json:"usage" validate:"required"`
-	Xks   *XksKey `json:"xks,omitempty"`
+	Usage string `json:"usage" validate:"required"`
+	// [BETA] External key store reference of a KMS Key with source `external-key-store`.
+	Xks *XksKey `json:"xks,omitempty"`
 }
 
 type GetModelResponseLifecycleStatus string
@@ -3326,10 +3330,12 @@ const (
 	InstanceStateExpunging  InstanceState = "expunging"
 	InstanceStateStarting   InstanceState = "starting"
 	InstanceStateDestroying InstanceState = "destroying"
+	InstanceStateResetting  InstanceState = "resetting"
 	InstanceStateRunning    InstanceState = "running"
 	InstanceStateStopping   InstanceState = "stopping"
 	InstanceStateStopped    InstanceState = "stopped"
 	InstanceStateMigrating  InstanceState = "migrating"
+	InstanceStateRebooting  InstanceState = "rebooting"
 	InstanceStateError      InstanceState = "error"
 	InstanceStateDestroyed  InstanceState = "destroyed"
 )
@@ -4818,7 +4824,7 @@ type KeyStoreHealth struct {
 	CheckedAT time.Time `json:"checked-at,omitempty"`
 	// Normalized error detail for unhealthy observations.
 	ErrorDetail string `json:"error-detail,omitempty"`
-	// Base64-encoded raw successful AWS GetHealthStatus JSON metadata.
+	// Base64-encoded documented fields of the successful AWS GetHealthStatus JSON metadata.
 	MetadataJSON []byte `json:"metadata-json,omitempty"`
 	// Latest normalized XKS proxy health status.
 	Status KeyStoreHealthStatus `json:"status,omitempty"`
@@ -4828,7 +4834,7 @@ type KeyStoreHealth struct {
 
 type KeyStoreProxy struct {
 	Auth *KeyStoreProxyAuth `json:"auth" validate:"required"`
-	// Public URL used to route communication to the customer-managed XKS proxy.
+	// Public URL used to route communication to the customer-managed XKS proxy. Its host must resolve to a public IP address.
 	Endpoint string `json:"endpoint" validate:"required"`
 }
 
@@ -5021,14 +5027,15 @@ type ListKmsKeysResponseEntry struct {
 	Replicas []string           `json:"replicas,omitempty"`
 	Revision *RevisionStamp     `json:"revision" validate:"required"`
 	Rotation *KeyRotationConfig `json:"rotation" validate:"required"`
-	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+	// Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store ([BETA]).
 	Source ListKmsKeysResponseEntrySource `json:"source" validate:"required"`
 	Status ListKmsKeysResponseEntryStatus `json:"status" validate:"required"`
 	// The precise time when the key entered its current configuration phase.
 	StatusSince time.Time `json:"status-since" validate:"required"`
 	// The cryptographic operation constraints allowed on this key.
-	Usage string  `json:"usage" validate:"required"`
-	Xks   *XksKey `json:"xks,omitempty"`
+	Usage string `json:"usage" validate:"required"`
+	// [BETA] External key store reference of a KMS Key with source `external-key-store`.
+	Xks *XksKey `json:"xks,omitempty"`
 }
 
 // AI model list
@@ -5092,15 +5099,12 @@ const (
 
 // Route
 type ListRouteEntry struct {
-	// Route description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
-	// Route destination CIDR
-	Destination string `json:"destination,omitempty"`
-	// Route ID
-	ID UUID `json:"id,omitempty"`
-	// Route kind
-	Kind ListRouteEntryKind `json:"kind,omitempty"`
-	// Route target
+	// The CIDR used to match on which packets the routing rule should be applied
+	Destination string             `json:"destination,omitempty"`
+	ID          UUID               `json:"id,omitempty"`
+	Kind        ListRouteEntryKind `json:"kind,omitempty"`
+	// Where the packets should be sent to
 	Target string `json:"target,omitempty"`
 }
 
@@ -5119,38 +5123,30 @@ const (
 
 // Subnet
 type ListSubnetEntry struct {
-	// Subnet address space
+	// Whether the subnet is private or public
 	AddressSpace ListSubnetEntryAddressSpace `json:"address-space,omitempty"`
-	// Subnet address family
+	// Whether the subnet supports IPv4 and/or IPv6
 	Addressfamily ListSubnetEntryAddressfamily `json:"addressfamily,omitempty"`
-	// Subnet creation date
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Subnet description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
-	// Subnet ID
-	ID UUID `json:"id,omitempty"`
+	CreatedAT     time.Time                    `json:"created-at,omitempty"`
+	Description   string                       `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	ID            UUID                         `json:"id,omitempty"`
 	// Subnet ipv4 CIDR
 	Ipv4Block string `json:"ipv4-block,omitempty"`
 	Labels    Labels `json:"labels,omitempty"`
-	// Subnet name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	Name      string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 // VPC
 type ListVpcEntry struct {
-	// VPC creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
 	// Indicates if this is the organization's default VPC
-	Default *bool `json:"default,omitempty"`
-	// VPC description
+	Default     *bool  `json:"default,omitempty"`
 	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
 	// VPC DHCP options
 	DHCPOptions *VpcDHCPOptions `json:"dhcp-options,omitempty"`
-	// VPC ID
-	ID     UUID   `json:"id,omitempty"`
-	Labels Labels `json:"labels,omitempty"`
-	// VPC name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	ID          UUID            `json:"id,omitempty"`
+	Labels      Labels          `json:"labels,omitempty"`
+	Name        string          `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 // Live balance
@@ -5686,15 +5682,12 @@ const (
 
 // Route
 type Route struct {
-	// Route description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
-	// Route destination CIDR
-	Destination string `json:"destination,omitempty"`
-	// Route ID
-	ID UUID `json:"id,omitempty"`
-	// Route kind
-	Kind RouteKind `json:"kind,omitempty"`
-	// Route target
+	// The CIDR used to match on which packets the routing rule should be applied
+	Destination string    `json:"destination,omitempty"`
+	ID          UUID      `json:"id,omitempty"`
+	Kind        RouteKind `json:"kind,omitempty"`
+	// Where the packets should be sent to
 	Target string `json:"target,omitempty"`
 }
 
@@ -5817,15 +5810,18 @@ const (
 type SignRequestSigningAlgorithm string
 
 const (
-	SignRequestSigningAlgorithmRSASSAPSSSHA256 SignRequestSigningAlgorithm = "RSASSA_PSS_SHA_256"
-	SignRequestSigningAlgorithmRSASSAPSSSHA384 SignRequestSigningAlgorithm = "RSASSA_PSS_SHA_384"
-	SignRequestSigningAlgorithmRSASSAPSSSHA512 SignRequestSigningAlgorithm = "RSASSA_PSS_SHA_512"
-	SignRequestSigningAlgorithmECDSASHA256     SignRequestSigningAlgorithm = "ECDSA_SHA_256"
-	SignRequestSigningAlgorithmECDSASHA384     SignRequestSigningAlgorithm = "ECDSA_SHA_384"
-	SignRequestSigningAlgorithmECDSASHA512     SignRequestSigningAlgorithm = "ECDSA_SHA_512"
-	SignRequestSigningAlgorithmEDDSAED25519    SignRequestSigningAlgorithm = "EDDSA_ED25519"
-	SignRequestSigningAlgorithmED25519PHSHA512 SignRequestSigningAlgorithm = "ED25519_PH_SHA_512"
-	SignRequestSigningAlgorithmMLDSASHAKE256   SignRequestSigningAlgorithm = "ML_DSA_SHAKE_256"
+	SignRequestSigningAlgorithmRSASSAPSSSHA256      SignRequestSigningAlgorithm = "RSASSA_PSS_SHA_256"
+	SignRequestSigningAlgorithmRSASSAPSSSHA384      SignRequestSigningAlgorithm = "RSASSA_PSS_SHA_384"
+	SignRequestSigningAlgorithmRSASSAPSSSHA512      SignRequestSigningAlgorithm = "RSASSA_PSS_SHA_512"
+	SignRequestSigningAlgorithmRSASSAPKCS1V15SHA256 SignRequestSigningAlgorithm = "RSASSA_PKCS1_V1_5_SHA_256"
+	SignRequestSigningAlgorithmRSASSAPKCS1V15SHA384 SignRequestSigningAlgorithm = "RSASSA_PKCS1_V1_5_SHA_384"
+	SignRequestSigningAlgorithmRSASSAPKCS1V15SHA512 SignRequestSigningAlgorithm = "RSASSA_PKCS1_V1_5_SHA_512"
+	SignRequestSigningAlgorithmECDSASHA256          SignRequestSigningAlgorithm = "ECDSA_SHA_256"
+	SignRequestSigningAlgorithmECDSASHA384          SignRequestSigningAlgorithm = "ECDSA_SHA_384"
+	SignRequestSigningAlgorithmECDSASHA512          SignRequestSigningAlgorithm = "ECDSA_SHA_512"
+	SignRequestSigningAlgorithmEDDSAED25519         SignRequestSigningAlgorithm = "EDDSA_ED25519"
+	SignRequestSigningAlgorithmED25519PHSHA512      SignRequestSigningAlgorithm = "ED25519_PH_SHA_512"
+	SignRequestSigningAlgorithmMLDSASHAKE256        SignRequestSigningAlgorithm = "ML_DSA_SHAKE_256"
 )
 
 type SignRequest struct {
@@ -6190,33 +6186,27 @@ const (
 
 // Subnet attachments
 type SubnetInstances struct {
-	// Instance uuid
 	ID UUID `json:"id,omitempty"`
-	// Instance Ipv4 address
+	// The ipv4 associated with the instance in this subnet
 	Ipv4 net.IP `json:"ipv4,omitempty"`
-	// Instance name
 	Name string `json:"name,omitempty"`
 }
 
 // Subnet
 type Subnet struct {
-	// Subnet address space
+	// Whether the subnet is private or public
 	AddressSpace SubnetAddressSpace `json:"address-space,omitempty"`
-	// Subnet address family
+	// Whether the subnet support IPv4 and/or IPv6
 	Addressfamily SubnetAddressfamily `json:"addressfamily,omitempty"`
-	// Subnet creation date
-	CreatedAT time.Time `json:"created-at,omitempty"`
-	// Subnet description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
-	// Subnet ID
-	ID UUID `json:"id,omitempty"`
+	CreatedAT     time.Time           `json:"created-at,omitempty"`
+	Description   string              `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	ID            UUID                `json:"id,omitempty"`
 	// Instances attached to the subnet
 	Instances []SubnetInstances `json:"instances,omitempty"`
 	// Subnet ipv4 CIDR
 	Ipv4Block string `json:"ipv4-block,omitempty"`
 	Labels    Labels `json:"labels,omitempty"`
-	// Subnet name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	Name      string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 type SuccessResponseStatus string
@@ -6329,7 +6319,7 @@ type UpdateDeploymentRequest struct {
 // New customer-managed XKS proxy settings.
 type UpdateKeyStoreProxy struct {
 	Auth *KeyStoreProxyAuth `json:"auth,omitempty"`
-	// New public URL used to route communication to the customer-managed XKS proxy.
+	// New public URL used to route communication to the customer-managed XKS proxy. Its host must resolve to a public IP address.
 	Endpoint string `json:"endpoint,omitempty"`
 }
 
@@ -6366,15 +6356,18 @@ const (
 type VerifyRequestSigningAlgorithm string
 
 const (
-	VerifyRequestSigningAlgorithmRSASSAPSSSHA256 VerifyRequestSigningAlgorithm = "RSASSA_PSS_SHA_256"
-	VerifyRequestSigningAlgorithmRSASSAPSSSHA384 VerifyRequestSigningAlgorithm = "RSASSA_PSS_SHA_384"
-	VerifyRequestSigningAlgorithmRSASSAPSSSHA512 VerifyRequestSigningAlgorithm = "RSASSA_PSS_SHA_512"
-	VerifyRequestSigningAlgorithmECDSASHA256     VerifyRequestSigningAlgorithm = "ECDSA_SHA_256"
-	VerifyRequestSigningAlgorithmECDSASHA384     VerifyRequestSigningAlgorithm = "ECDSA_SHA_384"
-	VerifyRequestSigningAlgorithmECDSASHA512     VerifyRequestSigningAlgorithm = "ECDSA_SHA_512"
-	VerifyRequestSigningAlgorithmEDDSAED25519    VerifyRequestSigningAlgorithm = "EDDSA_ED25519"
-	VerifyRequestSigningAlgorithmED25519PHSHA512 VerifyRequestSigningAlgorithm = "ED25519_PH_SHA_512"
-	VerifyRequestSigningAlgorithmMLDSASHAKE256   VerifyRequestSigningAlgorithm = "ML_DSA_SHAKE_256"
+	VerifyRequestSigningAlgorithmRSASSAPSSSHA256      VerifyRequestSigningAlgorithm = "RSASSA_PSS_SHA_256"
+	VerifyRequestSigningAlgorithmRSASSAPSSSHA384      VerifyRequestSigningAlgorithm = "RSASSA_PSS_SHA_384"
+	VerifyRequestSigningAlgorithmRSASSAPSSSHA512      VerifyRequestSigningAlgorithm = "RSASSA_PSS_SHA_512"
+	VerifyRequestSigningAlgorithmRSASSAPKCS1V15SHA256 VerifyRequestSigningAlgorithm = "RSASSA_PKCS1_V1_5_SHA_256"
+	VerifyRequestSigningAlgorithmRSASSAPKCS1V15SHA384 VerifyRequestSigningAlgorithm = "RSASSA_PKCS1_V1_5_SHA_384"
+	VerifyRequestSigningAlgorithmRSASSAPKCS1V15SHA512 VerifyRequestSigningAlgorithm = "RSASSA_PKCS1_V1_5_SHA_512"
+	VerifyRequestSigningAlgorithmECDSASHA256          VerifyRequestSigningAlgorithm = "ECDSA_SHA_256"
+	VerifyRequestSigningAlgorithmECDSASHA384          VerifyRequestSigningAlgorithm = "ECDSA_SHA_384"
+	VerifyRequestSigningAlgorithmECDSASHA512          VerifyRequestSigningAlgorithm = "ECDSA_SHA_512"
+	VerifyRequestSigningAlgorithmEDDSAED25519         VerifyRequestSigningAlgorithm = "EDDSA_ED25519"
+	VerifyRequestSigningAlgorithmED25519PHSHA512      VerifyRequestSigningAlgorithm = "ED25519_PH_SHA_512"
+	VerifyRequestSigningAlgorithmMLDSASHAKE256        VerifyRequestSigningAlgorithm = "ML_DSA_SHAKE_256"
 )
 
 type VerifyRequest struct {
@@ -6399,42 +6392,38 @@ type VerifyResponse struct {
 
 // VPC
 type Vpc struct {
-	// VPC creation date
 	CreatedAT time.Time `json:"created-at,omitempty"`
 	// Indicates if this is the organization's default VPC
-	Default *bool `json:"default,omitempty"`
-	// VPC description
+	Default     *bool  `json:"default,omitempty"`
 	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
 	// VPC DHCP options
 	DHCPOptions *VpcDHCPOptions `json:"dhcp-options,omitempty"`
-	// VPC ID
-	ID     UUID   `json:"id,omitempty"`
-	Labels Labels `json:"labels,omitempty"`
-	// VPC name
-	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	ID          UUID            `json:"id,omitempty"`
+	Labels      Labels          `json:"labels,omitempty"`
+	Name        string          `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 // VPC DHCP options
 type VpcDHCPOptions struct {
-	// DNS Servers
 	DNSServers []net.IP `json:"dns-servers,omitempty"`
 	// Domain search list, limited to 255 octets post RFC3397 compression
 	DomainSearch []string `json:"domain-search,omitempty"`
-	// NTP Servers
-	NtpServers []net.IP `json:"ntp-servers,omitempty"`
+	NtpServers   []net.IP `json:"ntp-servers,omitempty"`
 }
 
+// [BETA] External key store reference of a KMS Key with source `external-key-store`.
 type XksKey struct {
-	// The identifier of the key as known to the external key store, used to reference the key material outside of Exoscale.
+	// [BETA] The identifier of the key as known to the external key store, used to reference the key material outside of Exoscale.
 	ExternalKeyID string `json:"external-key-id" validate:"required,gte=1,lte=128"`
-	// The Exoscale-generated id of the external key store resource that this key is associated with.
+	// [BETA] The Exoscale-generated id of the external key store resource that this key is associated with.
 	XksID UUID `json:"xks-id" validate:"required"`
 }
 
+// [BETA] Error reported by the customer-managed XKS proxy of an external key store.
 type XksProxyErrorDetail struct {
-	// Optional bounded XKS proxy `errorMessage`.
+	// [BETA] Optional bounded XKS proxy `errorMessage`.
 	ErrorMessage string `json:"error-message,omitempty"`
-	// XKS proxy `errorName` from a valid proxy error envelope.
+	// [BETA] XKS proxy `errorName` from a valid proxy error envelope.
 	ErrorName string `json:"error-name" validate:"required"`
 }
 

@@ -12615,7 +12615,7 @@ type CreateInstanceRequest struct {
 	InstanceType *InstanceType `json:"instance-type" validate:"required"`
 	// Whether the instance can act as a router in a VPC network
 	IPForwarding *bool `json:"ip-forwarding,omitempty"`
-	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
+	// Enable IPv6. DEPRECATED: use `public-ip-assignment`.
 	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
 	Labels      Labels `json:"labels,omitempty"`
 	// Instance name
@@ -20686,12 +20686,11 @@ func (c Client) ListVpcs(ctx context.Context) (*ListVpcsResponse, error) {
 }
 
 type CreateVpcRequest struct {
-	// VPC description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
 	// VPC DHCP options
 	DHCPOptions *VpcDHCPOptions `json:"dhcp-options,omitempty"`
 	Labels      Labels          `json:"labels,omitempty"`
-	// VPC name
+	// VPC name, up to 255 characters. Must be unique within its zone
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
 }
 
@@ -20831,13 +20830,11 @@ func (c Client) GetVpc(ctx context.Context, id UUID) (*Vpc, error) {
 }
 
 type UpdateVpcRequest struct {
-	// VPC description
 	Description *string `json:"description,omitempty" validate:"omitempty,lte=4096"`
 	// VPC DHCP options
 	DHCPOptions *VpcDHCPOptions `json:"dhcp-options,omitempty"`
 	Labels      Labels          `json:"labels"`
-	// VPC name
-	Name *string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	Name        *string         `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 // Update a VPC
@@ -21038,16 +21035,15 @@ const (
 )
 
 type CreateSubnetRequest struct {
-	// Subnet address space
+	// Whether the subnet is private or public
 	AddressSpace CreateSubnetRequestAddressSpace `json:"address-space" validate:"required"`
-	// Subnet address family
+	// Whether the subnet supports IPv4 and/or IPv6
 	Addressfamily CreateSubnetRequestAddressfamily `json:"addressfamily" validate:"required"`
-	// Subnet description
-	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
-	// Subnet ipv4 CIDR
+	Description   string                           `json:"description,omitempty" validate:"omitempty,lte=4096"`
+	// Subnet ipv4 CIDR. Must not overlap with other CIDRs of this VPC
 	Ipv4Block string `json:"ipv4-block,omitempty"`
 	Labels    Labels `json:"labels,omitempty"`
-	// Subnet name
+	// Subnet name, up to 255 characters. Must be unique between the subnet of the parent VPC
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
 }
 
@@ -21187,11 +21183,9 @@ func (c Client) GetSubnet(ctx context.Context, vpcID UUID, id UUID) (*Subnet, er
 }
 
 type UpdateSubnetRequest struct {
-	// Subnet description
 	Description *string `json:"description,omitempty" validate:"omitempty,lte=4096"`
 	Labels      Labels  `json:"labels"`
-	// Subnet name
-	Name *string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+	Name        *string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
 
 // Update a Subnet
@@ -21248,7 +21242,7 @@ func (c Client) UpdateSubnet(ctx context.Context, vpcID UUID, id UUID, req Updat
 type AttachInstanceToSubnetRequest struct {
 	// Target Instance
 	Instance *InstanceRef `json:"instance" validate:"required"`
-	// Instance IPv4
+	// An optional IPv4 address assign to the instance
 	Ipv4 net.IP `json:"ipv4,omitempty"`
 }
 
@@ -21427,11 +21421,10 @@ func (c Client) ListRoutes(ctx context.Context, vpcID UUID, subnetID UUID) (*Lis
 }
 
 type CreateRouteRequest struct {
-	// Route description
 	Description string `json:"description,omitempty" validate:"omitempty,lte=4096"`
-	// Route destination CIDR
+	// The CIDR used to match on which packets the routing rule should be applied
 	Destination string `json:"destination" validate:"required"`
-	// Route target
+	// Where the packets should be sent to. More details on the format can be found here https://community.exoscale.com/product/networking/vpc/how-to/using-routing-rules/
 	Target string `json:"target" validate:"required"`
 }
 

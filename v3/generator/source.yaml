@@ -8420,7 +8420,7 @@ components:
             Nodepool template selection:
 
             * `auto`: the latest template of the Nodepool Kubernetes version and variant;
-            * `pinned`: the template set with `update-sks-nodepool`.
+            * `pinned`: the template set at creation or with `update-sks-nodepool`.
         disk-size:
           type: integer
           format: int64
@@ -23098,6 +23098,9 @@ paths:
                   uniqueItems: true
                   maxItems: 16
                   description: Nodepool Private Networks
+                template:
+                  $ref: '#/components/schemas/template-ref'
+                  description: 'Nodepool Instance template: an `id` among the available templates of the Nodepool Kubernetes version and variant (see `list-sks-nodepool-templates`). Without it, the Nodepool follows the latest template of its Kubernetes version'
                 size:
                   type: integer
                   format: int64

@@ -18560,6 +18560,8 @@ type CreateSKSNodepoolRequest struct {
 	// Number of instances
 	Size   int64             `json:"size" validate:"required,gt=0"`
 	Taints SKSNodepoolTaints `json:"taints,omitempty"`
+	// Template reference
+	Template *TemplateRef `json:"template,omitempty"`
 }
 
 // Create a new SKS Nodepool

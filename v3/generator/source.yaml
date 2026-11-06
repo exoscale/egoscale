@@ -267,7 +267,7 @@ tags:
     name: sos
     x-display-name: Object Storage
     x-weight: 500
-    x-icon: exo-object-storage
+    x-icon: exo-sos
   - description: Create and manipulate routing rules
     parent: vpc
     externalDocs:
@@ -970,10 +970,12 @@ components:
         - expunging
         - starting
         - destroying
+        - resetting
         - running
         - stopping
         - stopped
         - migrating
+        - rebooting
         - error
         - destroyed
     verify-request:
@@ -1008,6 +1010,9 @@ components:
             - RSASSA_PSS_SHA_256
             - RSASSA_PSS_SHA_384
             - RSASSA_PSS_SHA_512
+            - RSASSA_PKCS1_V1_5_SHA_256
+            - RSASSA_PKCS1_V1_5_SHA_384
+            - RSASSA_PKCS1_V1_5_SHA_512
             - ECDSA_SHA_256
             - ECDSA_SHA_384
             - ECDSA_SHA_512
@@ -1112,7 +1117,7 @@ components:
         metadata-json:
           type: string
           format: byte
-          description: Base64-encoded raw successful AWS GetHealthStatus JSON metadata.
+          description: Base64-encoded documented fields of the successful AWS GetHealthStatus JSON metadata.
         error-detail:
           type: string
           description: Normalized error detail for unhealthy observations.
@@ -1401,15 +1406,12 @@ components:
         description:
           type: string
           maxLength: 4096
-          description: Subnet description
         labels:
           $ref: '#/components/schemas/labels'
-          description: Resource labels
         name:
           type: string
           maxLength: 255
           minLength: 1
-          description: Subnet name
         ipv4-block:
           type: string
           description: Subnet ipv4 CIDR
@@ -1418,12 +1420,12 @@ components:
           enum:
             - inet4
             - dual
-          description: Subnet address family
+          description: Whether the subnet support IPv4 and/or IPv6
         address-space:
           type: string
           enum:
             - private
-          description: Subnet address space
+          description: Whether the subnet is private or public
         instances:
           type: array
           items:
@@ -1432,24 +1434,20 @@ components:
               id:
                 type: string
                 format: uuid
-                description: Instance uuid
               name:
                 type: string
-                description: Instance name
               ipv4:
                 type: string
                 format: ipv4
-                description: Instance Ipv4 address
+                description: The ipv4 associated with the instance in this subnet
             description: Subnet attachments
           description: Instances attached to the subnet
         id:
           type: string
           format: uuid
-          description: Subnet ID
         created-at:
           type: string
           format: date-time
-          description: Subnet creation date
       description: Subnet
     zone-impact:
       type: object
@@ -2524,37 +2522,32 @@ components:
         id:
           type: string
           format: uuid
-          description: Subnet ID
         name:
           type: string
           maxLength: 255
           minLength: 1
-          description: Subnet name
         description:
           type: string
           maxLength: 4096
-          description: Subnet description
         created-at:
           type: string
           format: date-time
-          description: Subnet creation date
         addressfamily:
           type: string
           enum:
             - inet4
             - dual
-          description: Subnet address family
+          description: Whether the subnet supports IPv4 and/or IPv6
         address-space:
           type: string
           enum:
             - private
-          description: Subnet address space
+          description: Whether the subnet is private or public
         ipv4-block:
           type: string
           description: Subnet ipv4 CIDR
         labels:
           $ref: '#/components/schemas/labels'
-          description: Resource labels
       description: Subnet
     dbaas-service-logs:
       type: object
@@ -2592,29 +2585,23 @@ components:
         id:
           type: string
           format: uuid
-          description: VPC ID
         name:
           type: string
           maxLength: 255
           minLength: 1
-          description: VPC name
         description:
           type: string
           maxLength: 4096
-          description: VPC description
         created-at:
           type: string
           format: date-time
-          description: VPC creation date
         default:
           type: boolean
           description: Indicates if this is the organization's default VPC
         labels:
           $ref: '#/components/schemas/labels'
-          description: Resource labels
         dhcp-options:
           $ref: '#/components/schemas/vpc-dhcp-options'
-          description: DHCP options
       description: VPC
     json-schema-thanos:
       properties:
@@ -2930,6 +2917,15 @@ components:
         zone:
           description: The targeted cloud zone where the KMS key should be replicated.
           type: string
+    load-balancer-service-label-selector:
+      type: object
+      properties:
+        labels:
+          $ref: '#/components/schemas/labels'
+          description: Labels an instance must all carry
+      required:
+        - labels
+      description: 'Label selector: the instances carrying all of its labels are backends'
     json-schema-kafka:
       additionalProperties: false
       properties:
@@ -4009,11 +4005,9 @@ components:
     dbaas-pg-target-versions:
       type: string
       enum:
-        - "14"
         - "17"
         - "15"
         - "18"
-        - "13"
         - "16"
     instance-type:
       type: object
@@ -4658,23 +4652,20 @@ components:
         id:
           type: string
           format: uuid
-          description: Route ID
         kind:
           type: string
           enum:
             - Subnet
             - Vpc
-          description: Route kind
         description:
           type: string
           maxLength: 4096
-          description: Route description
         destination:
           type: string
-          description: Route destination CIDR
+          description: The CIDR used to match on which packets the routing rule should be applied
         target:
           type: string
-          description: Route target
+          description: Where the packets should be sent to
       description: Route
     env-impact-detail:
       type: object
@@ -4829,6 +4820,9 @@ components:
             - RSASSA_PSS_SHA_256
             - RSASSA_PSS_SHA_384
             - RSASSA_PSS_SHA_512
+            - RSASSA_PKCS1_V1_5_SHA_256
+            - RSASSA_PKCS1_V1_5_SHA_384
+            - RSASSA_PKCS1_V1_5_SHA_512
             - ECDSA_SHA_256
             - ECDSA_SHA_384
             - ECDSA_SHA_512
@@ -5090,29 +5084,23 @@ components:
         id:
           type: string
           format: uuid
-          description: VPC ID
         name:
           type: string
           maxLength: 255
           minLength: 1
-          description: VPC name
         description:
           type: string
           maxLength: 4096
-          description: VPC description
         created-at:
           type: string
           format: date-time
-          description: VPC creation date
         default:
           type: boolean
           description: Indicates if this is the organization's default VPC
         labels:
           $ref: '#/components/schemas/labels'
-          description: Resource labels
         dhcp-options:
           $ref: '#/components/schemas/vpc-dhcp-options'
-          description: DHCP options
       description: VPC
     dbaas-endpoint-rsyslog-secrets:
       type: object
@@ -5419,15 +5407,16 @@ components:
           description: The identical symmetric data key, returned safely wrapped/encrypted using the designated root parent KMS key.
     xks-proxy-error-detail:
       type: object
+      description: '[BETA] Error reported by the customer-managed XKS proxy of an external key store.'
       required:
         - error-name
       properties:
         error-name:
           type: string
-          description: XKS proxy `errorName` from a valid proxy error envelope.
+          description: '[BETA] XKS proxy `errorName` from a valid proxy error envelope.'
         error-message:
           type: string
-          description: Optional bounded XKS proxy `errorMessage`.
+          description: '[BETA] Optional bounded XKS proxy `errorMessage`.'
     access-key-operation:
       type: object
       properties:
@@ -5516,6 +5505,12 @@ components:
             - maglev-hash
             - source-hash
           description: Load balancing strategy
+        instances:
+          type: array
+          items:
+            $ref: '#/components/schemas/load-balancer-service-instance'
+          readOnly: true
+          description: Instances the network traffic is forwarded to, from the instance pool and the label selector
         healthcheck:
           $ref: '#/components/schemas/load-balancer-service-healthcheck'
           description: Healthcheck configuration
@@ -5530,6 +5525,9 @@ components:
             $ref: '#/components/schemas/load-balancer-server-status'
           readOnly: true
           description: Healthcheck status per backend server
+        label-selector:
+          $ref: '#/components/schemas/load-balancer-service-label-selector'
+          description: Label selector of the instances to forward network traffic to
       description: Load Balancer Service
     access-key:
       type: object
@@ -5648,6 +5646,24 @@ components:
       type: object
       required:
         - instance-types
+    load-balancer-service-instance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Instance ID
+        public-ip:
+          type: string
+          format: ip
+          description: Instance IP the network traffic is forwarded to
+        healthcheck-status:
+          type: string
+          enum:
+            - failure
+            - success
+          description: Status of the instance's healthcheck
+      description: Instance the network traffic is forwarded to
     dbaas-endpoint-opensearch-secrets:
       type: object
       properties:
@@ -5706,6 +5722,7 @@ components:
         - sasl
     xks-key:
       type: object
+      description: '[BETA] External key store reference of a KMS Key with source `external-key-store`.'
       required:
         - external-key-id
         - xks-id
@@ -5715,11 +5732,11 @@ components:
           minLength: 1
           maxLength: 128
           pattern: ^[a-zA-Z0-9_.-]+$
-          description: The identifier of the key as known to the external key store, used to reference the key material outside of Exoscale.
+          description: '[BETA] The identifier of the key as known to the external key store, used to reference the key material outside of Exoscale.'
         xks-id:
           type: string
           format: uuid
-          description: The Exoscale-generated id of the external key store resource that this key is associated with.
+          description: '[BETA] The Exoscale-generated id of the external key store resource that this key is associated with.'
     json-schema-pglookout:
       description: System-wide settings for pglookout.
       properties:
@@ -6495,13 +6512,27 @@ components:
     dbaas-task:
       type: object
       properties:
+        duration-seconds:
+          type: number
+        target-pg-version:
+          type: string
+        source-mysql-version:
+          type: string
+        task-type:
+          type: string
+        success:
+          type: boolean
+        result:
+          type: string
         id:
           type: string
           format: uuid
         create-time:
           type: string
           format: date-time
-        result:
+        target-mysql-version:
+          type: string
+        source-pg-version:
           type: string
         result-codes:
           type: array
@@ -6512,10 +6543,6 @@ components:
                 type: string
               dbname:
                 type: string
-        success:
-          type: boolean
-        task-type:
-          type: string
     dbaas-endpoint-rsyslog-optional-fields:
       type: object
       properties:
@@ -6724,23 +6751,20 @@ components:
         id:
           type: string
           format: uuid
-          description: Route ID
         kind:
           type: string
           enum:
             - Subnet
             - Vpc
-          description: Route kind
         description:
           type: string
           maxLength: 4096
-          description: Route description
         destination:
           type: string
-          description: Route destination CIDR
+          description: The CIDR used to match on which packets the routing rule should be applied
         target:
           type: string
-          description: Route target
+          description: Where the packets should be sent to
       description: Route
     iam-policy:
       type: object
@@ -7539,7 +7563,7 @@ components:
             - exoscale-kms
             - external-key-store
           default: exoscale-kms
-          description: Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+          description: Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store ([BETA]).
         xks:
           $ref: '#/components/schemas/xks-key'
     inference-engine-parameter-entry:
@@ -8233,7 +8257,7 @@ components:
           enum:
             - exoscale-kms
             - external-key-store
-          description: Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+          description: Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store ([BETA]).
         key-spec:
           type: string
           description: The cryptographic key specification used to generate the key, defining its algorithm and, for asymmetric keys, its curve or modulus size.
@@ -8386,6 +8410,17 @@ components:
         cpu-manager-config:
           $ref: '#/components/schemas/cpu-manager-config'
           description: CPU manager config
+        template-selection:
+          type: string
+          enum:
+            - pinned
+            - auto
+          readOnly: true
+          description: |-
+            Nodepool template selection:
+
+            * `auto`: the latest template of the Nodepool Kubernetes version and variant;
+            * `pinned`: the template set with `update-sks-nodepool`.
         disk-size:
           type: integer
           format: int64
@@ -8442,13 +8477,11 @@ components:
           items:
             type: string
             format: ipv4
-          description: DNS Servers
         ntp-servers:
           type: array
           items:
             type: string
             format: ipv4
-          description: NTP Servers
         domain-search:
           type: array
           items:
@@ -9441,7 +9474,7 @@ components:
         endpoint:
           type: string
           format: uri
-          description: New public URL used to route communication to the customer-managed XKS proxy.
+          description: New public URL used to route communication to the customer-managed XKS proxy. Its host must resolve to a public IP address.
         auth:
           $ref: '#/components/schemas/key-store-proxy-auth'
     manager:
@@ -10052,7 +10085,7 @@ components:
           enum:
             - exoscale-kms
             - external-key-store
-          description: Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+          description: Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store ([BETA]).
         key-spec:
           type: string
           description: The cryptographic key specification used to generate the key, defining its algorithm and, for asymmetric keys, its curve or modulus size.
@@ -10155,7 +10188,7 @@ components:
           enum:
             - exoscale-kms
             - external-key-store
-          description: Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store.
+          description: Indicates the source of the key material, either generated and held within Exoscale KMS, or backed by an external key store ([BETA]).
         key-spec:
           type: string
           description: The cryptographic key specification used to generate the key, defining its algorithm and, for asymmetric keys, its curve or modulus size.
@@ -10902,6 +10935,19 @@ components:
               title: The variance factor that is used to calculate the dynamic bytes lag threshold
               type: number
           type: object
+        knn_cache_item_expiry_enabled:
+          description: Enable or disable removing KNN graphs from the cache when they are idle. Disabled by default.
+          example: true
+          nullable: true
+          title: knn.cache.item.expiry.enabled
+          type: boolean
+        search_cancel_after_time_interval:
+          description: Hard limit for search requests. When it is reached, the search task is cancelled and the request fails. OpenSearch default value is used when this is not defined.
+          example: 5m
+          nullable: true
+          pattern: ^\d+\s*(?:[dhms]|ms|micros|nanos)$
+          title: search.cancel_after_time_interval
+          type: string
         indices_memory_max_index_buffer_size:
           description: Absolute value. Default is unbound. Doesn't work without indices.memory.index_buffer_size. Maximum amount of heap used for query cache, an absolute indices.memory.index_buffer_size maximum hard limit.
           maximum: 2048
@@ -11126,6 +11172,13 @@ components:
           example: true
           title: Enable remote-backed storage
           type: boolean
+        search_default_search_timeout:
+          description: 'Soft timeout for search requests that don''t set their own timeout. When it is reached, the search returns partial results with `timed_out: true`, and the search task keeps running unless it is cancelled. OpenSearch default value is used when this is not defined.'
+          example: 30s
+          nullable: true
+          pattern: ^\d+\s*(?:[dhms]|ms|micros|nanos)$
+          title: search.default_search_timeout
+          type: string
         cluster:
           additionalProperties: false
           properties:
@@ -11325,6 +11378,14 @@ components:
           nullable: true
           title: The limit of how much total remote data can be referenced
           type: string
+        knn_cache_item_expiry_minutes:
+          description: If enabled, the amount of time in minutes a KNN graph can be idle in the cache before being evicted.
+          example: 180
+          maximum: 10080
+          minimum: 1
+          nullable: true
+          title: knn.cache.item.expiry.minutes
+          type: integer
         email-sender:
           properties:
             email_sender_name:
@@ -11399,6 +11460,14 @@ components:
           example: true
           title: Enable searchable snapshots
           type: boolean
+        knn_circuit_breaker_unset_percentage:
+          description: The native memory usage, as a percentage below the KNN memory circuit breaker limit, at which a tripped circuit breaker resets. Defaults to 5%.
+          example: 5
+          maximum: 100
+          minimum: 0
+          nullable: true
+          title: knn.circuit_breaker.unset.percentage
+          type: number
         indices_memory_index_buffer_size:
           description: Percentage value. Default is 10%. Total amount of heap used for indexing buffer, before writing segments to disk. This is an expert setting. Too low value will slow down indexing; too high value will increase indexing performance but causes performance issues for query performance.
           maximum: 40
@@ -11600,10 +11669,10 @@ components:
           title: search thread pool queue size
           type: integer
         knn_memory_circuit_breaker_limit:
-          description: Maximum amount of memory that can be used for KNN index. Defaults to 50% of the JVM heap size.
+          description: Maximum amount of memory in percentage that can be used for the KNN index. Defaults to 50% of the JVM heap size. 0 is used to set it to null which can be used to invalidate caches.
           example: 50
           maximum: 100
-          minimum: 3
+          minimum: 0
           title: knn.memory.circuit_breaker.limit
           type: integer
         indices_query_bool_max_clause_count:
@@ -11615,10 +11684,31 @@ components:
         ml-commons:
           additionalProperties: false
           properties:
+            ml_commons_connector_access_control_enabled:
+              description: When set to true, the setting allows admins to control access and permissions to the connector API using backend_roles. Defaults to false.
+              example: false
+              title: plugins.ml_commons.connector_access_control_enabled
+              type: boolean
+            ml_commons_max_model_on_node:
+              description: Maximum number of ML models that can be deployed on a single ML node. Defaults to 10.
+              example: 10
+              minimum: 1
+              title: plugins.ml_commons.max_model_on_node
+              type: integer
             ml_commons_model_access_control_enabled:
               description: Enable or disable model access control for ML Commons. When enabled, access to ML models is controlled by security permissions. Defaults to false.
               example: false
               title: plugins.ml_commons.model_access_control.enabled
+              type: boolean
+            ml_commons_model_auto_deploy_enable:
+              description: 'For externally hosted models only: automatically deploy a model on its first predict request instead of requiring an explicit deploy call first. Defaults to true.'
+              example: true
+              title: plugins.ml_commons.model_auto_deploy.enable
+              type: boolean
+            ml_commons_model_auto_redeploy_enable:
+              description: Automatically redeploy deployed or partially deployed models after ML nodes rejoin the cluster, e.g. after a node replacement. Defaults to true.
+              example: true
+              title: plugins.ml_commons.model_auto_redeploy.enable
               type: boolean
             ml_commons_native_memory_threshold:
               description: Native memory threshold percentage for ML Commons. Controls the maximum percentage of native memory that can be used by ML Commons operations. Defaults to 90%.
@@ -11632,6 +11722,16 @@ components:
               example: false
               title: plugins.ml_commons.only_run_on_ml_node
               type: boolean
+            ml_commons_trusted_connector_endpoints_regex:
+              description: Adds the trusted endpoints to the cluster settings. Supports Java regex expressions.
+              items:
+                example: ^https://api\.example\.com/.*$
+                maxLength: 261
+                title: An URL endpoint pattern.
+                type: string
+              maxItems: 50
+              title: plugins.ml_commons.trusted_connector_endpoints_regex
+              type: array
           title: ML Commons settings
           type: object
         thread_pool_search_throttled_queue_size:
@@ -11894,7 +11994,6 @@ components:
     enum-pg-variant:
       type: string
       enum:
-        - timescale
         - aiven
     sks-audit-create:
       type: object
@@ -11954,7 +12053,7 @@ components:
         endpoint:
           type: string
           format: uri
-          description: Public URL used to route communication to the customer-managed XKS proxy.
+          description: Public URL used to route communication to the customer-managed XKS proxy. Its host must resolve to a public IP address.
         auth:
           $ref: '#/components/schemas/key-store-proxy-auth'
     dbaas-user-thanos-secrets:
@@ -12159,6 +12258,10 @@ paths:
                 healthcheck:
                   $ref: '#/components/schemas/load-balancer-service-healthcheck'
                   description: Healthcheck configuration
+                label-selector:
+                  $ref: '#/components/schemas/load-balancer-service-label-selector'
+                  nullable: true
+                  description: Label selector of the instances to forward traffic to. Empty labels remove it
       operationId: update-load-balancer-service
     get:
       tags:
@@ -13058,6 +13161,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 termination-protection:
                   type: boolean
@@ -13243,6 +13347,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 termination-protection:
                   type: boolean
@@ -13505,11 +13610,11 @@ paths:
               properties:
                 instance:
                   $ref: '#/components/schemas/instance-ref'
-                  description: Compute instance
+                  description: The target instance to attach
                 ipv4:
                   type: string
                   format: ipv4
-                  description: Instance IPv4
+                  description: An optional IPv4 address assign to the instance
               required:
                 - instance
       operationId: attach-instance-to-subnet
@@ -13563,6 +13668,40 @@ paths:
             $ref: '#/components/schemas/dbaas-service-name'
       summary: Initiate Thanos maintenance update
       operationId: start-dbaas-thanos-maintenance
+  /dbaas-mysql/{service-name}/upgrade-check:
+    post:
+      tags:
+        - dbaas
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dbaas-task'
+      description: Check whether you can upgrade MySQL service to a newer version
+      parameters:
+        - in: path
+          required: true
+          name: service-name
+          schema:
+            $ref: '#/components/schemas/dbaas-service-name'
+      summary: ""
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target-version:
+                  type: string
+                  maxLength: 32
+                  minLength: 1
+                  description: Target version for upgrade
+              required:
+                - target-version
+      operationId: create-dbaas-mysql-upgrade-check
   /dbaas-external-endpoint-elasticsearch/{endpoint-id}:
     delete:
       tags:
@@ -13912,6 +14051,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 clickhouse-settings:
                   $ref: '#/components/schemas/json-schema-clickhouse'
@@ -13991,6 +14131,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 clickhouse-settings:
                   $ref: '#/components/schemas/json-schema-clickhouse'
@@ -14899,6 +15040,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 schema-registry-settings:
                   $ref: '#/components/schemas/json-schema-schema-registry'
@@ -14999,6 +15141,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 schema-registry-settings:
                   $ref: '#/components/schemas/json-schema-schema-registry'
@@ -15290,6 +15433,9 @@ paths:
                   uniqueItems: true
                   maxItems: 16
                   description: Nodepool Private Networks
+                template:
+                  $ref: '#/components/schemas/template-ref'
+                  description: 'Nodepool Instance template: an `id` among the available templates of the Nodepool Kubernetes version and variant (see `list-sks-nodepool-templates`), or empty (`{}`) to follow the latest template of the Nodepool Kubernetes version'
                 kubelet-image-gc:
                   $ref: '#/components/schemas/kubelet-image-gc'
                   description: Kubelet image GC options
@@ -15972,17 +16118,14 @@ paths:
                   type: string
                   maxLength: 255
                   minLength: 1
-                  description: VPC name
+                  description: VPC name, up to 255 characters. Must be unique within its zone
                 description:
                   type: string
                   maxLength: 4096
-                  description: VPC description
                 labels:
                   $ref: '#/components/schemas/labels'
-                  description: Resource labels
                 dhcp-options:
                   $ref: '#/components/schemas/vpc-dhcp-options'
-                  description: DHCP options
               required:
                 - name
       operationId: create-vpc
@@ -16448,13 +16591,12 @@ paths:
                 description:
                   type: string
                   maxLength: 4096
-                  description: Route description
                 destination:
                   type: string
-                  description: Route destination CIDR
+                  description: The CIDR used to match on which packets the routing rule should be applied
                 target:
                   type: string
-                  description: Route target
+                  description: Where the packets should be sent to. More details on the format can be found here https://community.exoscale.com/product/networking/vpc/how-to/using-routing-rules/
               required:
                 - destination
                 - target
@@ -16597,27 +16739,25 @@ paths:
                   type: string
                   maxLength: 255
                   minLength: 1
-                  description: Subnet name
+                  description: Subnet name, up to 255 characters. Must be unique between the subnet of the parent VPC
                 description:
                   type: string
                   maxLength: 4096
-                  description: Subnet description
                 labels:
                   $ref: '#/components/schemas/labels'
-                  description: Resource labels
                 addressfamily:
                   type: string
                   enum:
                     - inet4
-                  description: Subnet address family
+                  description: Whether the subnet supports IPv4 and/or IPv6
                 address-space:
                   type: string
                   enum:
                     - private
-                  description: Subnet address space
+                  description: Whether the subnet is private or public
                 ipv4-block:
                   type: string
-                  description: Subnet ipv4 CIDR
+                  description: Subnet ipv4 CIDR. Must not overlap with other CIDRs of this VPC
               required:
                 - name
                 - addressfamily
@@ -17789,6 +17929,7 @@ paths:
             type: string
             enum:
               - description
+              - label-selector
       summary: Reset a Load Balancer Service field to its default value
       operationId: reset-load-balancer-service-field
   /dbaas-postgres/{service-name}/database:
@@ -18095,44 +18236,6 @@ paths:
               required:
                 - username
       operationId: create-dbaas-opensearch-user
-  /sks-cluster/{id}/nodepool/{sks-nodepool-id}:set-template:
-    put:
-      tags:
-        - nodepool
-      responses:
-        "200":
-          description: "200"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/operation'
-      description: Sets the template of the Nodepool instances, among the available templates of its Kubernetes version and variant (see `list-sks-nodepool-templates`). Without template (`null`), the Nodepool follows the latest template of its Kubernetes version.
-      parameters:
-        - in: path
-          required: true
-          name: id
-          schema:
-            type: string
-            format: uuid
-        - in: path
-          required: true
-          name: sks-nodepool-id
-          schema:
-            type: string
-            format: uuid
-      summary: Set the template of an SKS Nodepool
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                template:
-                  $ref: '#/components/schemas/template-ref'
-                  nullable: true
-                  description: Nodepool Instance template, or null to follow the latest template of the Nodepool Kubernetes version
-      operationId: set-sks-nodepool-template
   /dbaas-integration-types:
     get:
       tags:
@@ -18776,6 +18879,14 @@ paths:
             Invalid Usage: The request was rejected because the operation is not allowed for this key's usage.
 
             Invalid Algorithm: The request was rejected because the specified encryption algorithm does not match the key's cryptographic profile.
+
+            Invalid Ciphertext: The request was rejected because the ciphertext is malformed, was not produced by the specified KMS Key, or could not be authenticated (for example, because of a mismatched encryption context).
+
+            [BETA] Key Store Not Found: The request was rejected because the external key store of the specified KMS Key could not be found.
+
+            [BETA] Key Store Disconnected: The request was rejected because the external key store of the specified KMS Key is disconnected.
+
+            [BETA] Key Store Proxy Request Failed: The request was rejected because the request to the external key store proxy failed.
           content:
             application/json:
               schema:
@@ -20079,6 +20190,12 @@ paths:
             Invalid Usage: The request was rejected because the operation is not allowed for this key's usage.
 
             Invalid Algorithm: The request was rejected because the specified encryption algorithm does not match the key's cryptographic profile.
+
+            [BETA] Key Store Not Found: The request was rejected because the external key store of the specified KMS Key could not be found.
+
+            [BETA] Key Store Disconnected: The request was rejected because the external key store of the specified KMS Key is disconnected.
+
+            [BETA] Key Store Proxy Request Failed: The request was rejected because the request to the external key store proxy failed.
           content:
             application/json:
               schema:
@@ -20235,39 +20352,21 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  maxLength: 255
-                  minLength: 1
-                  description: Load Balancer Service name
                 description:
                   type: string
                   maxLength: 255
                   description: Load Balancer Service description
-                instance-pool:
-                  $ref: '#/components/schemas/instance-pool'
-                  description: Instance Pool to forward traffic to
                 protocol:
                   type: string
                   enum:
                     - tcp
                     - udp
                   description: Network traffic protocol
-                strategy:
+                name:
                   type: string
-                  enum:
-                    - round-robin
-                    - maglev-hash
-                    - source-hash
-                  description: Load balancing strategy
-                port:
-                  type: integer
-                  format: int64
-                  minimum: 1
-                  maximum: 65535
-                  exclusiveMinimum: false
-                  exclusiveMaximum: false
-                  description: Port exposed on the Load Balancer's public IP
+                  maxLength: 255
+                  minLength: 1
+                  description: Load Balancer Service name
                 target-port:
                   type: integer
                   format: int64
@@ -20276,12 +20375,32 @@ paths:
                   exclusiveMinimum: false
                   exclusiveMaximum: false
                   description: Port on which the network traffic will be forwarded to on the receiving instance
+                port:
+                  type: integer
+                  format: int64
+                  minimum: 1
+                  maximum: 65535
+                  exclusiveMinimum: false
+                  exclusiveMaximum: false
+                  description: Port exposed on the Load Balancer's public IP
+                instance-pool:
+                  $ref: '#/components/schemas/instance-pool'
+                  description: Instance Pool to forward traffic to. A service requires an instance-pool, a label-selector, or both
+                strategy:
+                  type: string
+                  enum:
+                    - round-robin
+                    - maglev-hash
+                    - source-hash
+                  description: Load balancing strategy
                 healthcheck:
                   $ref: '#/components/schemas/load-balancer-service-healthcheck'
                   description: Healthcheck configuration
+                label-selector:
+                  $ref: '#/components/schemas/load-balancer-service-label-selector'
+                  description: Label selector of the instances to forward traffic to. A service requires an instance-pool, a label-selector, or both
               required:
                 - name
-                - instance-pool
                 - protocol
                 - strategy
                 - port
@@ -21189,6 +21308,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 termination-protection:
                   type: boolean
@@ -21343,6 +21463,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 migration:
                   type: object
@@ -21566,16 +21687,13 @@ paths:
                   maxLength: 255
                   minLength: 1
                   nullable: true
-                  description: Subnet name
                 description:
                   type: string
                   maxLength: 4096
                   nullable: true
-                  description: Subnet description
                 labels:
                   $ref: '#/components/schemas/labels'
                   nullable: true
-                  description: Resource labels
       operationId: update-subnet
     get:
       tags:
@@ -21749,6 +21867,14 @@ paths:
 
             Name Conflict: The request was rejected because a key with the same name already exists in the target zone.
 
+            [BETA] Key Store Not Found: The request was rejected because the specified external key store could not be found.
+
+            [BETA] Key Store Disconnected: The request was rejected because the specified external key store is disconnected.
+
+            [BETA] Key Store Proxy Request Failed: The request was rejected because the request to the external key store proxy failed, or because the external key is not enabled or does not support encrypt and decrypt.
+
+            [BETA] Key Store State Changed: The request was rejected because the external key store was modified concurrently while the key was being created. The request can be retried.
+
             Bad Request: The request was rejected because of an invalid request body or path parameter.
           content:
             application/json:
@@ -21868,6 +21994,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allowed CIDR address blocks for incoming connections
                 thanos-settings:
                   $ref: '#/components/schemas/json-schema-thanos'
@@ -21936,6 +22063,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allowed CIDR address blocks for incoming connections
                 thanos-settings:
                   $ref: '#/components/schemas/json-schema-thanos'
@@ -22193,7 +22321,7 @@ paths:
               properties:
                 instance:
                   $ref: '#/components/schemas/instance-ref'
-                  description: Compute instance
+                  description: The target instance to detach
               required:
                 - instance
       operationId: detach-instance-from-subnet
@@ -22725,6 +22853,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allowed CIDR address blocks for incoming connections
       operationId: update-dbaas-service-grafana
     post:
@@ -22794,6 +22923,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allowed CIDR address blocks for incoming connections
               required:
                 - plan
@@ -23210,6 +23340,14 @@ paths:
 
             Key Family Mismatch: The request was rejected because the source and destination keys do not belong to the same key family.
 
+            Invalid Ciphertext: The request was rejected because the source ciphertext is malformed, was not produced by the source KMS Key, or could not be authenticated (for example, because of a mismatched encryption context).
+
+            [BETA] Key Store Not Found: The request was rejected because the external key store of the source or destination KMS Key could not be found.
+
+            [BETA] Key Store Disconnected: The request was rejected because the external key store of the source or destination KMS Key is disconnected.
+
+            [BETA] Key Store Proxy Request Failed: The request was rejected because the request to the external key store proxy failed.
+
             Bad Request: The request was rejected because of an invalid request body or path parameter.
           content:
             application/json:
@@ -23316,6 +23454,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 termination-protection:
                   type: boolean
@@ -23519,6 +23658,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 termination-protection:
                   type: boolean
@@ -23794,6 +23934,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 termination-protection:
                   type: boolean
@@ -24005,6 +24146,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  nullable: true
                   description: Allow incoming connections from CIDR address block, e.g. '10.20.0.0/16'
                 termination-protection:
                   type: boolean
@@ -24575,7 +24717,7 @@ paths:
                   description: Instance Deploy Target
                 ipv6-enabled:
                   type: boolean
-                  description: 'Enable IPv6. DEPRECATED: use `public-ip-assignments`.'
+                  description: 'Enable IPv6. DEPRECATED: use `public-ip-assignment`.'
                 vpc:
                   type: object
                   properties:
@@ -25085,6 +25227,12 @@ paths:
             Key is Disabled: The request was rejected because the specified KMS key is disabled.
 
             Invalid Usage: The request was rejected because the operation is only allowed on symmetric keys with usage "encrypt-decrypt".
+
+            [BETA] Key Store Not Found: The request was rejected because the external key store of the specified KMS Key could not be found.
+
+            [BETA] Key Store Disconnected: The request was rejected because the external key store of the specified KMS Key is disconnected.
+
+            [BETA] Key Store Proxy Request Failed: The request was rejected because the request to the external key store proxy failed.
           content:
             application/json:
               schema:
@@ -25137,16 +25285,13 @@ paths:
                   maxLength: 255
                   minLength: 1
                   nullable: true
-                  description: VPC name
                 description:
                   type: string
                   maxLength: 4096
                   nullable: true
-                  description: VPC description
                 labels:
                   $ref: '#/components/schemas/labels'
                   nullable: true
-                  description: Resource labels
                 dhcp-options:
                   $ref: '#/components/schemas/vpc-dhcp-options'
                   description: DHCP options (only allowed if VPC has no instances attached)

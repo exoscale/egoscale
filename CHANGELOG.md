@@ -1,6 +1,13 @@
 Changelog
 =========
 
+3.1.63
+------
+
+- v3: add `CreateDBAASMysqlUpgradeCheck` — MySQL service upgrade compatibility check (#843)
+- v3: remove `SetSKSNodepoolTemplate` — replaced by the `template-selection` field on `SKSNodepool` (#843)
+- v3: add LoadBalancer service instance, healthcheck status and label selector types (#843)
+
 3.1.62
 ------
 

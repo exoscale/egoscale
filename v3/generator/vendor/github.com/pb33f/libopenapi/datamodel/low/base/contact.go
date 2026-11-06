@@ -1,16 +1,17 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package base
 
 import (
 	"context"
-	"crypto/sha256"
+	"hash/maphash"
+	"sync"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
-	"strings"
+	"go.yaml.in/yaml/v4"
 )
 
 // Contact represents a low-level representation of the Contact definitions found at
@@ -26,6 +27,8 @@ type Contact struct {
 	RootNode   *yaml.Node
 	index      *index.SpecIndex
 	context    context.Context
+	nodeStore  sync.Map
+	reference  low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -33,8 +36,21 @@ type Contact struct {
 func (c *Contact) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	c.KeyNode = keyNode
 	c.RootNode = root
-	c.Reference = new(low.Reference)
-	c.Nodes = low.ExtractNodes(ctx, root)
+	c.reference = low.Reference{}
+	c.Reference = &c.reference
+	c.nodeStore = sync.Map{}
+	c.Nodes = &c.nodeStore
+	if root == nil {
+		c.Extensions = nil
+		c.context = ctx
+		c.index = idx
+		return nil
+	}
+	if len(root.Content) > 0 {
+		c.NodeMap.ExtractNodes(root, false)
+	} else {
+		c.AddNode(root.Line, root)
+	}
 	c.Extensions = low.ExtractExtensions(root)
 	c.context = ctx
 	c.index = idx
@@ -61,19 +77,24 @@ func (c *Contact) GetKeyNode() *yaml.Node {
 	return c.KeyNode
 }
 
-// Hash will return a consistent SHA256 Hash of the Contact object
-func (c *Contact) Hash() [32]byte {
-	var f []string
-	if !c.Name.IsEmpty() {
-		f = append(f, c.Name.Value)
-	}
-	if !c.URL.IsEmpty() {
-		f = append(f, c.URL.Value)
-	}
-	if !c.Email.IsEmpty() {
-		f = append(f, c.Email.Value)
-	}
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent hash of the Contact object
+func (c *Contact) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if !c.Name.IsEmpty() {
+			h.WriteString(c.Name.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !c.URL.IsEmpty() {
+			h.WriteString(c.URL.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !c.Email.IsEmpty() {
+			h.WriteString(c.Email.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		// Note: Extensions are not included in the hash for Contact
+		return h.Sum64()
+	})
 }
 
 // GetExtensions returns all extensions for Contact

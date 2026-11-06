@@ -5,7 +5,6 @@ package model
 
 import (
 	"github.com/pb33f/libopenapi/datamodel/low/base"
-	v3 "github.com/pb33f/libopenapi/datamodel/low/v3"
 )
 
 // DiscriminatorChanges represents changes made to a Discriminator OpenAPI object
@@ -16,6 +15,9 @@ type DiscriminatorChanges struct {
 
 // TotalChanges returns a count of everything changed within the Discriminator object
 func (d *DiscriminatorChanges) TotalChanges() int {
+	if d == nil {
+		return 0
+	}
 	l := 0
 	if k := d.PropertyChanges.TotalChanges(); k > 0 {
 		l += k
@@ -28,6 +30,9 @@ func (d *DiscriminatorChanges) TotalChanges() int {
 
 // GetAllChanges returns a slice of all changes made between Callback objects
 func (c *DiscriminatorChanges) GetAllChanges() []*Change {
+	if c == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, c.Changes...)
 	if c.MappingChanges != nil {
@@ -46,21 +51,18 @@ func (d *DiscriminatorChanges) TotalBreakingChanges() int {
 func CompareDiscriminator(l, r *base.Discriminator) *DiscriminatorChanges {
 	dc := new(DiscriminatorChanges)
 	var changes []*Change
-	var props []*PropertyCheck
+	props := make([]*PropertyCheck, 0, 2)
 	var mappingChanges []*Change
 
-	// Name (breaking change)
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.PropertyName.ValueNode,
-		RightNode: r.PropertyName.ValueNode,
-		Label:     v3.PropertyNameLabel,
-		Changes:   &changes,
-		Breaking:  true,
-		Original:  l,
-		New:       r,
-	})
+	props = append(props,
+		NewPropertyCheck(CompDiscriminator, PropPropertyName,
+			l.PropertyName.ValueNode, r.PropertyName.ValueNode,
+			base.PropertyNameLabel, &changes, l, r),
+		NewPropertyCheck(CompDiscriminator, PropDefaultMapping,
+			l.DefaultMapping.ValueNode, r.DefaultMapping.ValueNode,
+			base.DefaultMappingLabel, &changes, l, r),
+	)
 
-	// check properties
 	CheckProperties(props)
 
 	// flatten maps
@@ -69,12 +71,12 @@ func CompareDiscriminator(l, r *base.Discriminator) *DiscriminatorChanges {
 
 	// check for removals, modifications and moves
 	for i := range lMap {
-		CheckForObjectAdditionOrRemoval[string](lMap, rMap, i, &mappingChanges, false, true)
+		CheckForObjectAdditionOrRemoval[string](lMap, rMap, i, &mappingChanges, BreakingAdded(CompDiscriminator, PropMapping), BreakingRemoved(CompDiscriminator, PropMapping))
 		// if the existing tag exists, let's check it.
 		if rMap[i] != nil {
 			if lMap[i].Value != rMap[i].Value {
 				CreateChange(&mappingChanges, Modified, i, lMap[i].GetValueNode(),
-					rMap[i].GetValueNode(), true, lMap[i].GetValue(), rMap[i].GetValue())
+					rMap[i].GetValueNode(), BreakingModified(CompDiscriminator, PropMapping), lMap[i].GetValue(), rMap[i].GetValue())
 			}
 		}
 	}
@@ -82,7 +84,7 @@ func CompareDiscriminator(l, r *base.Discriminator) *DiscriminatorChanges {
 	for i := range rMap {
 		if lMap[i] == nil {
 			CreateChange(&mappingChanges, ObjectAdded, i, nil,
-				rMap[i].GetValueNode(), false, nil, rMap[i].GetValue())
+				rMap[i].GetValueNode(), BreakingAdded(CompDiscriminator, PropMapping), nil, rMap[i].GetValue())
 		}
 	}
 

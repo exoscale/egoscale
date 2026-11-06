@@ -1,4 +1,4 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2025 Princess Beef Heavy Industries, LLC / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package model
@@ -11,7 +11,7 @@ import (
 	v2 "github.com/pb33f/libopenapi/datamodel/low/v2"
 	v3 "github.com/pb33f/libopenapi/datamodel/low/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // PathsChanges represents changes found between two Swagger or OpenAPI Paths Objects.
@@ -23,10 +23,15 @@ type PathsChanges struct {
 
 // GetAllChanges returns a slice of all changes made between Paths objects
 func (p *PathsChanges) GetAllChanges() []*Change {
+	if p == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, p.Changes...)
 	for k := range p.PathItemsChanges {
-		changes = append(changes, p.PathItemsChanges[k].GetAllChanges()...)
+		if p.PathItemsChanges[k] != nil {
+			changes = append(changes, p.PathItemsChanges[k].GetAllChanges()...)
+		}
 	}
 	if p.ExtensionChanges != nil {
 		changes = append(changes, p.ExtensionChanges.GetAllChanges()...)
@@ -36,9 +41,14 @@ func (p *PathsChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns the total number of changes between two Swagger or OpenAPI Paths Objects
 func (p *PathsChanges) TotalChanges() int {
+	if p == nil {
+		return 0
+	}
 	c := p.PropertyChanges.TotalChanges()
 	for k := range p.PathItemsChanges {
-		c += p.PathItemsChanges[k].TotalChanges()
+		if p.PathItemsChanges[k] != nil {
+			c += p.PathItemsChanges[k].TotalChanges()
+		}
 	}
 	if p.ExtensionChanges != nil {
 		c += p.ExtensionChanges.TotalChanges()
@@ -50,7 +60,9 @@ func (p *PathsChanges) TotalChanges() int {
 func (p *PathsChanges) TotalBreakingChanges() int {
 	c := p.PropertyChanges.TotalBreakingChanges()
 	for k := range p.PathItemsChanges {
-		c += p.PathItemsChanges[k].TotalBreakingChanges()
+		if p.PathItemsChanges[k] != nil {
+			c += p.PathItemsChanges[k].TotalBreakingChanges()
+		}
 	}
 	return c
 }
@@ -105,16 +117,16 @@ func ComparePaths(l, r any) *PathsChanges {
 				continue
 			}
 			g, p := lPath.FindPathAndKey(k)
-			CreateChange(&changes, ObjectRemoved, v3.PathLabel,
-				g.KeyNode, nil, true,
+			CreateChange(&changes, ObjectRemoved, k,
+				g.KeyNode, nil, BreakingRemoved(CompPaths, PropPath),
 				p.Value, nil)
 		}
 
 		for k := range rKeys {
 			if _, ok := lKeys[k]; !ok {
 				g, p := rPath.FindPathAndKey(k)
-				CreateChange(&changes, ObjectAdded, v3.PathLabel,
-					nil, g.KeyNode, false,
+				CreateChange(&changes, ObjectAdded, k,
+					nil, g.KeyNode, BreakingAdded(CompPaths, PropPath),
 					nil, p.Value)
 			}
 		}
@@ -179,16 +191,16 @@ func ComparePaths(l, r any) *PathsChanges {
 				continue
 			}
 			g, p := lPath.FindPathAndKey(k)
-			CreateChange(&changes, ObjectRemoved, v3.PathLabel,
-				g.KeyNode, nil, true,
+			CreateChange(&changes, ObjectRemoved, k,
+				g.KeyNode, nil, BreakingRemoved(CompPaths, PropPath),
 				p.Value, nil)
 		}
 
 		for k := range rKeys {
 			if _, ok := lKeys[k]; !ok {
 				g, p := rPath.FindPathAndKey(k)
-				CreateChange(&changes, ObjectAdded, v3.PathLabel,
-					nil, g.KeyNode, false,
+				CreateChange(&changes, ObjectAdded, k,
+					nil, g.KeyNode, BreakingAdded(CompPaths, PropPath),
 					nil, p.Value)
 			}
 		}

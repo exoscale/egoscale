@@ -1,12 +1,13 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2025 Princess Beef Heavy Industries, LLC / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package model
 
 import (
+	"reflect"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	v3 "github.com/pb33f/libopenapi/datamodel/low/v3"
-	"reflect"
 )
 
 import (
@@ -30,6 +31,9 @@ type ResponseChanges struct {
 
 // GetAllChanges returns a slice of all changes made between RequestBody objects
 func (r *ResponseChanges) GetAllChanges() []*Change {
+	if r == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, r.Changes...)
 	if r.ExtensionChanges != nil {
@@ -55,6 +59,9 @@ func (r *ResponseChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns the total number of changes found between two Swagger or OpenAPI Response Objects
 func (r *ResponseChanges) TotalChanges() int {
+	if r == nil {
+		return 0
+	}
 	c := r.PropertyChanges.TotalChanges()
 	if r.ExtensionChanges != nil {
 		c += r.ExtensionChanges.TotalChanges()
@@ -81,6 +88,9 @@ func (r *ResponseChanges) TotalChanges() int {
 // Response Objects
 func (r *ResponseChanges) TotalBreakingChanges() int {
 	c := r.PropertyChanges.TotalBreakingChanges()
+	if r.ExtensionChanges != nil {
+		c += r.ExtensionChanges.TotalBreakingChanges()
+	}
 	if r.SchemaChanges != nil {
 		c += r.SchemaChanges.TotalBreakingChanges()
 	}
@@ -109,7 +119,6 @@ func CompareResponseV3(l, r *v3.Response) *ResponseChanges {
 // CompareResponse compares a left and right Swagger or OpenAPI Response object. If anything is found
 // a pointer to a ResponseChanges is returned, otherwise it returns nil.
 func CompareResponse(l, r any) *ResponseChanges {
-
 	var changes []*Change
 	var props []*PropertyCheck
 
@@ -127,37 +136,36 @@ func CompareResponse(l, r any) *ResponseChanges {
 
 		// description
 		addPropertyCheck(&props, lResponse.Description.ValueNode, rResponse.Description.ValueNode,
-			lResponse.Description.Value, rResponse.Description.Value, &changes, v3.DescriptionLabel, false)
+			lResponse.Description.Value, rResponse.Description.Value, &changes, v3.DescriptionLabel, false, CompResponse, PropDescription)
 
 		if !lResponse.Schema.IsEmpty() && !rResponse.Schema.IsEmpty() {
 			rc.SchemaChanges = CompareSchemas(lResponse.Schema.Value, rResponse.Schema.Value)
 		}
 		if !lResponse.Schema.IsEmpty() && rResponse.Schema.IsEmpty() {
 			CreateChange(&changes, ObjectRemoved, v3.SchemaLabel,
-				lResponse.Schema.ValueNode, nil, true,
+				lResponse.Schema.ValueNode, nil, BreakingRemoved(CompResponse, PropSchema),
 				lResponse.Schema.Value, nil)
 		}
 		if lResponse.Schema.IsEmpty() && !rResponse.Schema.IsEmpty() {
 			CreateChange(&changes, ObjectAdded, v3.SchemaLabel,
-				nil, rResponse.Schema.ValueNode, true,
+				nil, rResponse.Schema.ValueNode, BreakingAdded(CompResponse, PropSchema),
 				nil, rResponse.Schema.Value)
 		}
 
-		rc.HeadersChanges =
-			CheckMapForChanges(lResponse.Headers.Value, rResponse.Headers.Value,
-				&changes, v3.HeadersLabel, CompareHeadersV2)
+		rc.HeadersChanges = CheckMapForChanges(lResponse.Headers.Value, rResponse.Headers.Value,
+			&changes, v3.HeadersLabel, CompareHeadersV2)
 
 		if !lResponse.Examples.IsEmpty() && !rResponse.Examples.IsEmpty() {
 			rc.ExamplesChanges = CompareExamplesV2(lResponse.Examples.Value, rResponse.Examples.Value)
 		}
 		if !lResponse.Examples.IsEmpty() && rResponse.Examples.IsEmpty() {
 			CreateChange(&changes, PropertyRemoved, v3.ExamplesLabel,
-				lResponse.Schema.ValueNode, nil, false,
+				lResponse.Schema.ValueNode, nil, BreakingRemoved(CompResponse, PropExamples),
 				lResponse.Schema.Value, nil)
 		}
 		if lResponse.Examples.IsEmpty() && !rResponse.Examples.IsEmpty() {
 			CreateChange(&changes, ObjectAdded, v3.ExamplesLabel,
-				nil, rResponse.Schema.ValueNode, false,
+				nil, rResponse.Schema.ValueNode, BreakingAdded(CompResponse, PropExamples),
 				nil, lResponse.Schema.Value)
 		}
 
@@ -174,21 +182,24 @@ func CompareResponse(l, r any) *ResponseChanges {
 			return nil
 		}
 
+		// summary (OpenAPI 3.2+)
+		addPropertyCheck(&props, lResponse.Summary.ValueNode, rResponse.Summary.ValueNode,
+			lResponse.Summary.Value, rResponse.Summary.Value, &changes, v3.SummaryLabel,
+			BreakingModified(CompResponse, PropSummary), CompResponse, PropSummary)
+
 		// description
 		addPropertyCheck(&props, lResponse.Description.ValueNode, rResponse.Description.ValueNode,
-			lResponse.Description.Value, lResponse.Description.Value, &changes, v3.DescriptionLabel, false)
+			lResponse.Description.Value, rResponse.Description.Value, &changes, v3.DescriptionLabel,
+			BreakingModified(CompResponse, PropDescription), CompResponse, PropDescription)
 
-		rc.HeadersChanges =
-			CheckMapForChanges(lResponse.Headers.Value, rResponse.Headers.Value,
-				&changes, v3.HeadersLabel, CompareHeadersV3)
+		rc.HeadersChanges = CheckMapForChanges(lResponse.Headers.Value, rResponse.Headers.Value,
+			&changes, v3.HeadersLabel, CompareHeadersV3)
 
-		rc.ContentChanges =
-			CheckMapForChanges(lResponse.Content.Value, rResponse.Content.Value,
-				&changes, v3.ContentLabel, CompareMediaTypes)
+		rc.ContentChanges = CheckMapForChanges(lResponse.Content.Value, rResponse.Content.Value,
+			&changes, v3.ContentLabel, CompareMediaTypes)
 
-		rc.LinkChanges =
-			CheckMapForChanges(lResponse.Links.Value, rResponse.Links.Value,
-				&changes, v3.LinksLabel, CompareLinks)
+		rc.LinkChanges = CheckMapForChanges(lResponse.Links.Value, rResponse.Links.Value,
+			&changes, v3.LinksLabel, CompareLinks)
 
 		rc.ExtensionChanges = CompareExtensions(lResponse.Extensions, rResponse.Extensions)
 	}

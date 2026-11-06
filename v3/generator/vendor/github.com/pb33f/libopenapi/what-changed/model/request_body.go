@@ -17,6 +17,9 @@ type RequestBodyChanges struct {
 
 // GetAllChanges returns a slice of all changes made between RequestBody objects
 func (rb *RequestBodyChanges) GetAllChanges() []*Change {
+	if rb == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, rb.Changes...)
 	for k := range rb.ContentChanges {
@@ -30,6 +33,9 @@ func (rb *RequestBodyChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns the total number of changes found between two OpenAPI RequestBody objects
 func (rb *RequestBodyChanges) TotalChanges() int {
+	if rb == nil {
+		return 0
+	}
 	c := rb.PropertyChanges.TotalChanges()
 	for k := range rb.ContentChanges {
 		c += rb.ContentChanges[k].TotalChanges()
@@ -57,29 +63,16 @@ func CompareRequestBodies(l, r *v3.RequestBody) *RequestBodyChanges {
 	}
 
 	var changes []*Change
-	var props []*PropertyCheck
+	props := make([]*PropertyCheck, 0, 2)
 
-	// description
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.Description.ValueNode,
-		RightNode: r.Description.ValueNode,
-		Label:     v3.DescriptionLabel,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
-
-	// required
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.Required.ValueNode,
-		RightNode: r.Required.ValueNode,
-		Label:     v3.RequiredLabel,
-		Changes:   &changes,
-		Breaking:  true,
-		Original:  l,
-		New:       r,
-	})
+	props = append(props,
+		NewPropertyCheck(CompRequestBody, PropDescription,
+			l.Description.ValueNode, r.Description.ValueNode,
+			v3.DescriptionLabel, &changes, l, r),
+		NewPropertyCheck(CompRequestBody, PropRequired,
+			l.Required.ValueNode, r.Required.ValueNode,
+			v3.RequiredLabel, &changes, l, r),
+	)
 
 	CheckProperties(props)
 
@@ -88,6 +81,5 @@ func CompareRequestBodies(l, r *v3.RequestBody) *RequestBodyChanges {
 		&changes, v3.ContentLabel, CompareMediaTypes)
 	rbc.ExtensionChanges = CompareExtensions(l.Extensions, r.Extensions)
 	rbc.PropertyChanges = NewPropertyChanges(changes)
-
 	return rbc
 }

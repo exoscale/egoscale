@@ -16,20 +16,55 @@ import (
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // NodeBuilder is a structure used by libopenapi high-level objects, to render themselves back to YAML.
 // this allows high-level objects to be 'mutable' because all changes will be rendered out.
 type NodeBuilder struct {
-	Version float32
-	Nodes   []*nodes.NodeEntry
-	High    any
-	Low     any
-	Resolve bool // If set to true, all references will be rendered inline
+	Version       float32
+	Nodes         []*nodes.NodeEntry
+	High          any
+	Low           any
+	Resolve       bool // If set to true, all references will be rendered inline
+	RenderContext any  // Context for inline rendering cycle detection (*base.InlineRenderContext)
+	Errors        []error
+}
+
+// RenderableInlineWithContext is an interface that can be implemented by types that support
+// context-aware inline rendering for proper cycle detection in concurrent scenarios.
+// The context parameter should be *base.InlineRenderContext but is typed as any to avoid import cycles.
+type RenderableInlineWithContext interface {
+	MarshalYAMLInlineWithContext(ctx any) (interface{}, error)
 }
 
 const renderZero = "renderZero"
+
+func originalFloatLexeme(value float64, lowValue any) (string, bool) {
+	vnut, ok := lowValue.(low.HasValueNodeUntyped)
+	if !ok {
+		return "", false
+	}
+
+	valueNode := vnut.GetValueNode()
+	if valueNode == nil || !utils.IsNodeNumberValue(valueNode) {
+		return "", false
+	}
+
+	parsed, err := strconv.ParseFloat(valueNode.Value, 64)
+	if err != nil {
+		return "", false
+	}
+
+	if parsed != value {
+		return "", false
+	}
+	if value == 0 && math.Signbit(parsed) != math.Signbit(value) {
+		return "", false
+	}
+
+	return valueNode.Value, true
+}
 
 // NewNodeBuilder will create a new NodeBuilder instance, this is the only way to create a NodeBuilder.
 // The function accepts a high level object and a low level object (need to be siblings/same type).
@@ -57,6 +92,31 @@ func (n *NodeBuilder) add(key string, i int) {
 	// only operate on exported fields.
 	if unicode.IsLower(rune(key[0])) {
 		return
+	}
+
+	var (
+		lowFieldValue reflect.Value
+		lowFieldValid bool
+	)
+
+	if n.Low != nil && !reflect.ValueOf(n.Low).IsZero() {
+		low := reflect.ValueOf(n.Low)
+		if low.Kind() == reflect.Ptr && !low.IsNil() {
+			elem := low.Elem()
+			if elem.IsValid() {
+				field := elem.FieldByName(key)
+				if field.IsValid() {
+					lowFieldValue = field
+					lowFieldValid = true
+				}
+			}
+		} else if low.IsValid() {
+			field := low.FieldByName(key)
+			if field.IsValid() {
+				lowFieldValue = field
+				lowFieldValid = true
+			}
+		}
 	}
 
 	// if the key is 'Extensions' then we need to extract the keys from the map
@@ -137,6 +197,27 @@ func (n *NodeBuilder) add(key string, i int) {
 			}
 		}
 	}
+
+	if isZero && lowFieldValid {
+		var lowInterface any
+		if lowFieldValue.Kind() == reflect.Ptr {
+			if !lowFieldValue.IsNil() {
+				lowInterface = lowFieldValue.Elem().Interface()
+			}
+		} else {
+			lowInterface = lowFieldValue.Interface()
+		}
+		if lowInterface != nil {
+			if emptier, ok := lowInterface.(interface{ IsEmpty() bool }); ok && !emptier.IsEmpty() {
+				isZero = false
+			} else if nodeGetter, ok := lowInterface.(interface{ GetValueNode() *yaml.Node }); ok {
+				if node := nodeGetter.GetValueNode(); node != nil {
+					isZero = false
+				}
+			}
+		}
+	}
+
 	if !renderZeroFlag && isZero || omitEmptyFlag && isZero {
 		return
 	}
@@ -180,8 +261,7 @@ func (n *NodeBuilder) add(key string, i int) {
 	// so skip and default to 0, which means a new entry to the spec.
 	// this will place new content and the top of the rendered object.
 	if n.Low != nil && !reflect.ValueOf(n.Low).IsZero() {
-		lowFieldValue := reflect.ValueOf(n.Low).Elem().FieldByName(key)
-		if lowFieldValue.IsValid() {
+		if lowFieldValid {
 			fLow := lowFieldValue.Interface()
 			value = reflect.ValueOf(fLow)
 
@@ -234,7 +314,6 @@ func (n *NodeBuilder) renderReference(fg low.IsReferenced) *yaml.Node {
 	if origNode == nil {
 		return utils.CreateRefNode(fg.GetReference())
 	}
-
 	return origNode
 }
 
@@ -269,6 +348,19 @@ func (n *NodeBuilder) Render() *yaml.Node {
 	return m
 }
 
+// encodeSafeValue returns a value safe to pass to (*yaml.Node).Encode. When the
+// value is a *yaml.Node it returns a deep copy: Encode desolves the represented
+// graph in place (Desolve rewrites Tag/Style), and the representer aliases input
+// nodes, so encoding a model-owned node would mutate it. With concurrent renders
+// (e.g. linters running rules in parallel) that mutation races with readers of
+// the same node. Encoding a copy keeps shared nodes immutable.
+func encodeSafeValue(value any) any {
+	if vn, ok := value.(*yaml.Node); ok {
+		return utils.CloneYAMLNode(vn)
+	}
+	return value
+}
+
 // AddYAMLNode will add a new *yaml.Node to the parent node, using the tag, key and value provided.
 // If the value is nil, then the node will not be added. This method is recursive, so it will dig down
 // into any non-scalar types.
@@ -288,9 +380,11 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 	value := entry.Value
 	line := entry.Line
 
+	var nodeErrors []error
+	var ne error
+
 	var valueNode *yaml.Node
 	switch t.Kind() {
-
 	case reflect.String:
 		val := value.(string)
 		valueNode = utils.CreateStringNode(val)
@@ -328,12 +422,14 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 		precision := -1
 		if entry.StringValue != "" && strings.Contains(entry.StringValue, ".") {
 			precision = len(strings.Split(fmt.Sprint(entry.StringValue), ".")[1])
-			val := strconv.FormatFloat(value.(float64), 'f', precision, 64)
-			valueNode = utils.CreateFloatNode(val)
-		} else {
-			val := strconv.FormatFloat(value.(float64), 'f', precision, 64)
-			valueNode = utils.CreateIntNode(val)
 		}
+		val := strconv.FormatFloat(value.(float64), 'f', precision, 64)
+		if original, ok := originalFloatLexeme(value.(float64), entry.LowValue); ok {
+			val = original
+		}
+		// Always create float node for float64 values, even if they don't contain decimal points
+		// This handles cases like negative zero (-0.0) which formats as "-0" but should remain float
+		valueNode = utils.CreateFloatNode(val)
 		valueNode.Line = line
 	case reflect.Slice:
 		var rawNode yaml.Node
@@ -341,6 +437,9 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 		sl := utils.CreateEmptySequenceNode()
 		skip := false
 		for i := 0; i < m.Len(); i++ {
+			// Reset skip at the start of each iteration to handle items without low-level models
+			// (e.g., newly created high-level objects appended to an existing slice)
+			skip = false
 			sqi := m.Index(i).Interface()
 			// check if this is a reference.
 			if glu, ok := sqi.(GoesLowUntyped); ok {
@@ -353,11 +452,7 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 							if !n.Resolve {
 								sl.Content = append(sl.Content, n.renderReference(glu.GoLowUntyped().(low.IsReferenced)))
 								skip = true
-							} else {
-								skip = false
 							}
-						} else {
-							skip = false
 						}
 					}
 				}
@@ -366,13 +461,28 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 				if er, ko := sqi.(Renderable); ko {
 					var rend interface{}
 					if !n.Resolve {
-						rend, _ = er.MarshalYAML()
+						rend, ne = er.MarshalYAML()
+						nodeErrors = append(nodeErrors, ne)
 					} else {
 						// try and render inline, if we can, otherwise treat as normal.
-						if _, ko := er.(RenderableInline); ko {
-							rend, _ = er.(RenderableInline).MarshalYAMLInline()
+						// Prefer a context-aware method when RenderContext is available
+						if n.RenderContext != nil {
+							if ctxRenderer, ko := er.(RenderableInlineWithContext); ko {
+								rend, ne = ctxRenderer.MarshalYAMLInlineWithContext(n.RenderContext)
+								nodeErrors = append(nodeErrors, ne)
+							} else if inliner, ko := er.(RenderableInline); ko {
+								rend, ne = inliner.MarshalYAMLInline()
+								nodeErrors = append(nodeErrors, ne)
+							} else {
+								rend, ne = er.MarshalYAML()
+								nodeErrors = append(nodeErrors, ne)
+							}
+						} else if inliner, ko := er.(RenderableInline); ko {
+							rend, ne = inliner.MarshalYAMLInline()
+							nodeErrors = append(nodeErrors, ne)
 						} else {
-							rend, _ = er.MarshalYAML()
+							rend, ne = er.MarshalYAML()
+							nodeErrors = append(nodeErrors, ne)
 						}
 					}
 					// check if this is a pointer or not.
@@ -395,7 +505,7 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 			break
 		}
 
-		err := rawNode.Encode(value)
+		err := rawNode.Encode(encodeSafeValue(value))
 		if err != nil {
 			return parent
 		} else {
@@ -462,15 +572,28 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 			}
 			var rawRender interface{}
 			if !n.Resolve {
-				rawRender, _ = r.MarshalYAML()
+				rawRender, ne = r.MarshalYAML()
+				nodeErrors = append(nodeErrors, ne)
 			} else {
 				// try an inline render if we can, otherwise there is no option but to default to the
-				// full render.
-
-				if _, ko := r.(RenderableInline); ko {
-					rawRender, _ = r.(RenderableInline).MarshalYAMLInline()
+				// full render. Prefer a context-aware method when RenderContext is available
+				if n.RenderContext != nil {
+					if ctxRenderer, ko := r.(RenderableInlineWithContext); ko {
+						rawRender, ne = ctxRenderer.MarshalYAMLInlineWithContext(n.RenderContext)
+						nodeErrors = append(nodeErrors, ne)
+					} else if inliner, ko := r.(RenderableInline); ko {
+						rawRender, ne = inliner.MarshalYAMLInline()
+						nodeErrors = append(nodeErrors, ne)
+					} else {
+						rawRender, ne = r.MarshalYAML()
+						nodeErrors = append(nodeErrors, ne)
+					}
+				} else if inliner, ko := r.(RenderableInline); ko {
+					rawRender, ne = inliner.MarshalYAMLInline()
+					nodeErrors = append(nodeErrors, ne)
 				} else {
-					rawRender, _ = r.MarshalYAML()
+					rawRender, ne = r.MarshalYAML()
+					nodeErrors = append(nodeErrors, ne)
 				}
 			}
 			if rawRender != nil {
@@ -500,21 +623,22 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 			}
 			if b, bok := value.(*int64); bok {
 				encodeSkip = true
-				if *b != 0 {
+				if *b != 0 || entry.RenderZero {
 					valueNode = utils.CreateIntNode(strconv.Itoa(int(*b)))
 					valueNode.Line = line
 				}
 			}
 			if b, bok := value.(*float64); bok {
 				encodeSkip = true
-				if *b != 0 || (entry.RenderZero && entry.Line > 0) {
+				if *b != 0 || entry.RenderZero {
 					formatFloat := strconv.FormatFloat(*b, 'f', -1, 64)
-
-					if *b == math.Trunc(*b) {
-						valueNode = utils.CreateIntNode(formatFloat)
-					} else {
-						valueNode = utils.CreateFloatNode(formatFloat)
+					if original, ok := originalFloatLexeme(*b, entry.LowValue); ok {
+						formatFloat = original
 					}
+
+					// Always create float node for float64 values, even if they're whole numbers
+					// This handles cases like negative zero (-0.0) and ensures type consistency
+					valueNode = utils.CreateFloatNode(formatFloat)
 
 					valueNode.Line = line
 				}
@@ -534,7 +658,7 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 						}
 					}
 
-					err := rawNode.Encode(value)
+					err := rawNode.Encode(encodeSafeValue(value))
 					if err != nil {
 						return parent
 					} else {
@@ -545,6 +669,9 @@ func (n *NodeBuilder) AddYAMLNode(parent *yaml.Node, entry *nodes.NodeEntry) *ya
 			}
 		}
 
+	}
+	if nodeErrors != nil && len(nodeErrors) > 0 {
+		n.Errors = append(n.Errors, nodeErrors...)
 	}
 	if valueNode == nil {
 		return parent

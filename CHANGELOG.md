@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v3: add `Client.Do` and `Client.DoJSON` to send signed raw API requests (`RawRequest`), and `APIError.Body`
+
 3.1.63
 ------
 

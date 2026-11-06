@@ -14,10 +14,10 @@ description: the Go library for Exoscale
 
 A wrapper for the [Exoscale public cloud](https://www.exoscale.com) API.
 
-**v2** can be imported as:
+**v3** can be imported as:
 
 ```
-	import "github.com/exoscale/egoscale/v2"
+	import "github.com/exoscale/egoscale/v3"
 ```
 
 ## Known users

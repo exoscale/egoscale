@@ -207,16 +207,26 @@ func prepareJSONResponse(resp *http.Response, v any) error {
 }
 
 func (c Client) signRequest(req *http.Request) error {
+	return SignHTTPRequest(req, c.apiKey, c.apiSecret, time.Now().UTC().Add(time.Minute*10))
+}
+
+// SignHTTPRequest signs req with the EXO2-HMAC-SHA256 scheme of the Exoscale API, as the Client
+// does for every operation: it sets the Authorization header, with a signature valid until
+// expiration (the Client uses 10 minutes). The signature covers the method, the escaped URL path,
+// the body, and the query parameters that hold exactly one value. The body, if any, is read and
+// replaced, so req can still be sent.
+//
+// It is meant for callers that build their own requests, such as generic API tools following the
+// OpenAPI spec, for endpoints this version of the package does not know yet.
+func SignHTTPRequest(req *http.Request, apiKey, apiSecret string, expiration time.Time) error {
 	var (
 		sigParts    []string
 		headerParts []string
 	)
 
-	var expiration = time.Now().UTC().Add(time.Minute * 10)
-
 	// Request method/URL path
 	sigParts = append(sigParts, fmt.Sprintf("%s %s", req.Method, req.URL.EscapedPath()))
-	headerParts = append(headerParts, "EXO2-HMAC-SHA256 credential="+c.apiKey)
+	headerParts = append(headerParts, "EXO2-HMAC-SHA256 credential="+apiKey)
 
 	// Request body if present
 	body := ""
@@ -251,7 +261,7 @@ func (c Client) signRequest(req *http.Request) error {
 	sigParts = append(sigParts, fmt.Sprint(expiration.Unix()))
 	headerParts = append(headerParts, "expires="+fmt.Sprint(expiration.Unix()))
 
-	h := hmac.New(sha256.New, []byte(c.apiSecret))
+	h := hmac.New(sha256.New, []byte(apiSecret))
 	if _, err := h.Write([]byte(strings.Join(sigParts, "\n"))); err != nil {
 		return err
 	}

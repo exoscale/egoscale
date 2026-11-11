@@ -5541,17 +5541,9 @@ func (c Client) CreateDBAASMysqlUpgradeCheck(ctx context.Context, serviceName st
 		return nil, fmt.Errorf("CreateDBAASMysqlUpgradeCheck: sign request: %w", err)
 	}
 
-	if c.trace {
-		dumpRequest(request, "create-dbaas-mysql-upgrade-check")
-	}
-
-	response, err := c.httpClient.Do(request)
+	response, err := c.do(request)
 	if err != nil {
 		return nil, fmt.Errorf("CreateDBAASMysqlUpgradeCheck: http client do: %w", err)
-	}
-
-	if c.trace {
-		dumpResponse(response)
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {
@@ -16506,17 +16498,9 @@ func (c Client) ListSKSNodepoolTemplates(ctx context.Context, kubeVersion string
 		return nil, fmt.Errorf("ListSKSNodepoolTemplates: sign request: %w", err)
 	}
 
-	if c.trace {
-		dumpRequest(request, "list-sks-nodepool-templates")
-	}
-
-	response, err := c.httpClient.Do(request)
+	response, err := c.do(request)
 	if err != nil {
 		return nil, fmt.Errorf("ListSKSNodepoolTemplates: http client do: %w", err)
-	}
-
-	if c.trace {
-		dumpResponse(response)
 	}
 
 	if err := handleHTTPErrorResp(response); err != nil {

@@ -394,7 +394,7 @@ func (c *Client) do(request *http.Request) (*http.Response, error) {
 }
 
 func cloneClient(c *Client) *Client {
-	return &Client{
+	newc := Client{
 		apiKey:              c.apiKey,
 		apiSecret:           c.apiSecret,
 		userAgent:           c.userAgent,
@@ -406,4 +406,12 @@ func cloneClient(c *Client) *Client {
 		validate:            c.validate,
 		logger:              c.logger,
 	}
+
+	if c.defaultHTTPClient != nil {
+		rc := retryablehttp.NewClient()
+		rc.Logger = c.defaultHTTPClient.Logger
+		newc.defaultHTTPClient = rc
+	}
+
+	return &newc
 }

@@ -1,6 +1,7 @@
 package credentials
 
 import (
+	"context"
 	"errors"
 	"sync"
 )
@@ -84,6 +85,26 @@ func (c *Credentials) retrieve() error {
 	}
 
 	c.credentials = v
+
+	return nil
+}
+
+// Reload asks the provider to re-read the credentials, if it is a Reloader (or a ChainProvider
+// whose current provider is one). It does nothing for the other providers.
+// New credentials are returned by the next Get.
+func (c *Credentials) Reload(ctx context.Context) error {
+	c.RLock()
+	p := c.provider
+	if chain, ok := p.(*ChainProvider); ok {
+		p = chain.current
+	}
+	c.RUnlock()
+
+	// The lock isn't held while reloading: a Reloader may call the API to validate the new
+	// credentials, and Get must not wait for it.
+	if r, ok := p.(Reloader); ok {
+		return r.Reload(ctx)
+	}
 
 	return nil
 }

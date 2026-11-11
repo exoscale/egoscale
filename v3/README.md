@@ -105,6 +105,59 @@ if err != nil {
 fmt.Println(pool.Name)
 ```
 
+### Reloadable credentials
+
+The client reads its credentials for every request. With a reloadable provider, a long-running
+program (a Kubernetes controller, a daemon…) uses a rotated API key without being restarted or
+creating a new client.
+
+The provider re-reads its source every 30 seconds, and right away when the API rejects the key a
+request was signed with: the request is then signed again and retried once, if the key changed.
+New complete credentials are used as soon as they are read. If the source can't be read or is
+incomplete, the last credentials are kept and the error is logged on every re-read.
+
+Two sources are provided:
+- `credentials.SecretDirSource(dir)`: the `EXOSCALE_API_KEY` and `EXOSCALE_API_SECRET` files of a
+  directory, typically a Kubernetes Secret mounted as a volume.
+- `credentials.JSONFileSource(path)`: a JSON file with `api_key` and `api_secret` fields.
+
+Any `func() (credentials.Value, error)` works as a source too.
+
+```Golang
+// The periodic re-read stops when ctx is done.
+creds, err := credentials.NewReloadableCredentials(ctx,
+	credentials.SecretDirSource("/etc/exoscale"),
+	// Optional: logs the reloads and the errors (nothing is logged by default).
+	credentials.ReloadableOptWithLogHandler(slog.Default().Handler()),
+	// Optional: checks new credentials against the API before using them.
+	credentials.ReloadableOptWithValidator(v3.CredentialsValidator(v3.ClientOptWithEndpoint(endpoint))),
+)
+if err != nil {
+	log.Fatal(err)
+}
+
+client, err := v3.NewClient(creds, v3.ClientOptWithEndpoint(endpoint))
+```
+
+The Secret is mounted as a volume, not as environment variables, which a running process can't see
+change. Don't use `subPath` either: the kubelet doesn't update `subPath` mounts.
+
+```yaml
+      containers:
+        - name: controller
+          volumeMounts:
+            - name: exoscale-credentials
+              mountPath: /etc/exoscale
+              readOnly: true
+      volumes:
+        - name: exoscale-credentials
+          secret:
+            secretName: exoscale-credentials # keys: EXOSCALE_API_KEY, EXOSCALE_API_SECRET
+```
+
+The kubelet propagates a Secret update to the volume within about a minute: if the old key is
+deleted before that, requests fail until the new key reaches the volume.
+
 ## Development
 
 ### Generate Egoscale v3

@@ -4,6 +4,7 @@ package v3
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"runtime"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/exoscale/egoscale/v3/credentials"
@@ -22,8 +24,9 @@ import (
 
 // Client represents an Exoscale API client.
 type Client struct {
-	apiKey            string
-	apiSecret         string
+	// credentials are read for every request, so that new ones (see credentials.ReloadableProvider)
+	// are used without creating a new client. Clones share them.
+	credentials       *credentials.Credentials
 	userAgent         string
 	serverEndpoint    string
 	defaultHTTPClient *retryablehttp.Client
@@ -40,14 +43,12 @@ type Client struct {
 
 // NewClient returns a new Exoscale API client.
 func NewClient(credentials *credentials.Credentials, opts ...ClientOpt) (*Client, error) {
-	values, err := credentials.Get()
-	if err != nil {
+	if _, err := credentials.Get(); err != nil {
 		return nil, err
 	}
 
 	client := &Client{
-		apiKey:         values.APIKey,
-		apiSecret:      values.APISecret,
+		credentials:    credentials,
 		serverEndpoint: string(CHGva2),
 		validate:       validator.New(),
 		userAgent:      getDefaultUserAgent(),
@@ -321,8 +322,103 @@ func (c *Client) executeRequestInterceptors(ctx context.Context, req *http.Reque
 	return nil
 }
 
-// Wrapper for c.httpClient.Do to apply middleware.
+// do sends request. If the API rejects the API key the request was signed with, it reloads the
+// credentials and, if they changed, signs the request again and retries it once.
 func (c *Client) do(request *http.Request) (*http.Response, error) {
+	response, err := c.send(request)
+	if err != nil || !isInvalidKeyResponse(response) {
+		return response, err
+	}
+
+	retry, ok := c.retryWithNewCredentials(request)
+	if !ok {
+		return response, nil
+	}
+
+	_ = response.Body.Close()
+
+	c.logger.DebugContext(request.Context(), "API key rejected, retrying with the reloaded credentials")
+
+	return c.send(retry)
+}
+
+// retryWithNewCredentials reloads the credentials of a request signed by c and rejected by the
+// API, and returns a copy of the request signed with the new ones. It returns false if the
+// credentials didn't change, or the request can't be sent again.
+func (c *Client) retryWithNewCredentials(request *http.Request) (*http.Request, bool) {
+	signedKey, ok := signedAPIKey(request)
+	if !ok || c.credentials == nil || (request.Body != nil && request.GetBody == nil) {
+		return nil, false
+	}
+
+	ctx := request.Context()
+	if err := c.credentials.Reload(ctx); err != nil {
+		c.logger.DebugContext(ctx, "unable to reload the credentials", "error", err)
+	}
+
+	values, err := c.credentials.Get()
+	if err != nil || values.APIKey == signedKey {
+		return nil, false
+	}
+
+	retry := request.Clone(ctx)
+	if request.GetBody != nil {
+		body, err := request.GetBody()
+		if err != nil {
+			return nil, false
+		}
+		retry.Body = body
+	}
+
+	if err := SignHTTPRequest(retry, values.APIKey, values.APISecret, signatureExpiration()); err != nil {
+		return nil, false
+	}
+
+	return retry, true
+}
+
+// isInvalidKeyResponse reports whether the API rejected the API key of the request
+// (unknown or deleted key, or wrong secret).
+// It keeps the response body readable.
+func isInvalidKeyResponse(response *http.Response) bool {
+	switch response.StatusCode {
+	case http.StatusUnauthorized:
+		return true
+	case http.StatusForbidden:
+	default:
+		return false
+	}
+
+	body, err := io.ReadAll(response.Body)
+	_ = response.Body.Close()
+	response.Body = io.NopCloser(bytes.NewReader(body))
+	if err != nil {
+		return false
+	}
+
+	var apiErr struct {
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(body, &apiErr); err != nil {
+		return false
+	}
+
+	return strings.Contains(strings.ToLower(apiErr.Message), "invalid key")
+}
+
+// signedAPIKey returns the API key of a request signed by SignHTTPRequest.
+func signedAPIKey(request *http.Request) (string, bool) {
+	auth, ok := strings.CutPrefix(request.Header.Get("Authorization"), signatureScheme+" credential=")
+	if !ok {
+		return "", false
+	}
+	key, _, _ := strings.Cut(auth, ",")
+
+	return key, key != ""
+}
+
+// send is a wrapper for c.httpClient.Do to apply middleware.
+func (c *Client) send(request *http.Request) (*http.Response, error) {
 	ctx := request.Context()
 	if request == nil || !c.logger.Enabled(ctx, slog.LevelDebug) {
 		return c.httpClient.Do(request)
@@ -395,8 +491,7 @@ func (c *Client) do(request *http.Request) (*http.Response, error) {
 
 func cloneClient(c *Client) *Client {
 	newc := Client{
-		apiKey:              c.apiKey,
-		apiSecret:           c.apiSecret,
+		credentials:         c.credentials,
 		userAgent:           c.userAgent,
 		serverEndpoint:      c.serverEndpoint,
 		defaultHTTPClient:   c.defaultHTTPClient,

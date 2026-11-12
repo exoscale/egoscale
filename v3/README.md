@@ -70,6 +70,24 @@ func main() {
 }
 ```
 
+### Logging
+
+Egoscale supports debug logs which are off by default. To enable logs, use `ClientOptWithLogHandler` when initializing a client or `WithLogHandler` on existing client and provide `log/slog` compatible log handler to process them. For example, using the built-in JSON handler from `log/slog`, we can setup logs like so:
+
+```go
+	...
+	opts := []v3.ClientOpt{
+		v3.ClientOptWithLogHandler(slog.NewJSONHandler(
+			os.Stdout,
+			&slog.HandlerOptions{Level: slog.LevelDebug},
+		)),
+	}
+	c, err := v3.NewClient(credentials.NewEnvCredentials(), opts...)
+	...
+```
+
+Note that all logs printed by egoscale library are of level Debug.
+
 ### Findable
 
 Most of the list request `ListX()` return a type containing the list of the resource requested and a method `FindX()` to be able to retrieve a resource by its `name` or `id` most of the time.

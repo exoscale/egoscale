@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - v3: export `SignHTTPRequest`, the EXO2-HMAC-SHA256 request signer, for callers that build their own requests
+- v3: implement generic logger with log/slog (#842)
 
 3.1.63
 ------
@@ -33,7 +34,7 @@ Unreleased
 3.1.59
 ------
 
-- v3: regenerate from new API spec (#$830)
+- v3: regenerate from new API spec (#830)
 
 3.1.58
 ------

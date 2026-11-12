@@ -10,7 +10,7 @@ A wrapper for the [Exoscale public cloud](https://www.exoscale.com) API.
 Import library with:
 
 ```
-	import "github.com/exoscale/egoscale/v3"
+import "github.com/exoscale/egoscale/v3"
 ```
 
 Check [godoc][docs] for full reference.

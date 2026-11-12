@@ -12,6 +12,11 @@ import (
 	"time"
 )
 
+const (
+	testAPIKeyFile    = "EXOSCALE_API_KEY"
+	testAPISecretFile = "EXOSCALE_API_SECRET"
+)
+
 var (
 	valueA = Value{APIKey: "EXOaaaaaaaaaaaaaaaaaaaaaaaa", APISecret: "secret-a_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
 	valueB = Value{APIKey: "EXObbbbbbbbbbbbbbbbbbbbbbbb", APISecret: "secret-b_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
@@ -27,7 +32,7 @@ func writeSecretVolume(t *testing.T, dir, key, secret string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, content := range map[string]string{KubernetesSecretAPIKeyFile: key, KubernetesSecretAPISecretFile: secret} {
+	for name, content := range map[string]string{testAPIKeyFile: key, testAPISecretFile: secret} {
 		if err := os.WriteFile(filepath.Join(version, name), []byte(content), 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -41,7 +46,7 @@ func writeSecretVolume(t *testing.T, dir, key, secret string) {
 		t.Fatal(err)
 	}
 
-	for _, name := range []string{KubernetesSecretAPIKeyFile, KubernetesSecretAPISecretFile} {
+	for _, name := range []string{testAPIKeyFile, testAPISecretFile} {
 		link := filepath.Join(dir, name)
 		if _, err := os.Lstat(link); err == nil {
 			continue
@@ -63,7 +68,7 @@ func writeFile(t *testing.T, path, content string) {
 func TestKubernetesSecretSource(t *testing.T) {
 	t.Run("secret volume update", func(t *testing.T) {
 		dir := t.TempDir()
-		source := KubernetesSecretSource(dir)
+		source := KubernetesSecretSource(dir, testAPIKeyFile, testAPISecretFile)
 
 		writeSecretVolume(t, dir, valueA.APIKey, valueA.APISecret+"\n")
 		if v, err := source(); err != nil || v != valueA {
@@ -78,16 +83,16 @@ func TestKubernetesSecretSource(t *testing.T) {
 
 	t.Run("plain files rewritten in place", func(t *testing.T) {
 		dir := t.TempDir()
-		source := KubernetesSecretSource(dir)
+		source := KubernetesSecretSource(dir, testAPIKeyFile, testAPISecretFile)
 
-		writeFile(t, filepath.Join(dir, KubernetesSecretAPIKeyFile), valueA.APIKey)
-		writeFile(t, filepath.Join(dir, KubernetesSecretAPISecretFile), valueA.APISecret)
+		writeFile(t, filepath.Join(dir, testAPIKeyFile), valueA.APIKey)
+		writeFile(t, filepath.Join(dir, testAPISecretFile), valueA.APISecret)
 		if v, err := source(); err != nil || v != valueA {
 			t.Fatalf("got %v, %v, want %v", v, err, valueA)
 		}
 
-		writeFile(t, filepath.Join(dir, KubernetesSecretAPIKeyFile), valueB.APIKey)
-		writeFile(t, filepath.Join(dir, KubernetesSecretAPISecretFile), valueB.APISecret)
+		writeFile(t, filepath.Join(dir, testAPIKeyFile), valueB.APIKey)
+		writeFile(t, filepath.Join(dir, testAPISecretFile), valueB.APISecret)
 		if v, err := source(); err != nil || v != valueB {
 			t.Fatalf("after rewrite, got %v, %v, want %v", v, err, valueB)
 		}
@@ -97,16 +102,16 @@ func TestKubernetesSecretSource(t *testing.T) {
 		dir := t.TempDir()
 		writeSecretVolume(t, dir, valueA.APIKey, " \n")
 
-		if _, err := KubernetesSecretSource(dir)(); !errors.Is(err, ErrMissingIncomplete) {
+		if _, err := KubernetesSecretSource(dir, testAPIKeyFile, testAPISecretFile)(); !errors.Is(err, ErrMissingIncomplete) {
 			t.Fatalf("got error %v, want %v", err, ErrMissingIncomplete)
 		}
 	})
 
 	t.Run("missing file", func(t *testing.T) {
 		dir := t.TempDir()
-		writeFile(t, filepath.Join(dir, KubernetesSecretAPIKeyFile), valueA.APIKey)
+		writeFile(t, filepath.Join(dir, testAPIKeyFile), valueA.APIKey)
 
-		if _, err := KubernetesSecretSource(dir)(); !errors.Is(err, os.ErrNotExist) {
+		if _, err := KubernetesSecretSource(dir, testAPIKeyFile, testAPISecretFile)(); !errors.Is(err, os.ErrNotExist) {
 			t.Fatalf("got error %v, want %v", err, os.ErrNotExist)
 		}
 	})
@@ -323,7 +328,7 @@ func TestReloadableCredentials(t *testing.T) {
 	dir := t.TempDir()
 	writeSecretVolume(t, dir, valueA.APIKey, valueA.APISecret)
 
-	creds, err := NewReloadableCredentials(t.Context(), KubernetesSecretSource(dir), ReloadableOptWithInterval(0))
+	creds, err := NewReloadableCredentials(t.Context(), KubernetesSecretSource(dir, testAPIKeyFile, testAPISecretFile), ReloadableOptWithInterval(0))
 	if err != nil {
 		t.Fatal(err)
 	}

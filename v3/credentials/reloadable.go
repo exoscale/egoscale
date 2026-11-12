@@ -21,11 +21,6 @@ const (
 	// reloadMinInterval rate-limits the on-demand reloads (Reload), so that a burst of requests
 	// rejected at the same time reads the Source only once.
 	reloadMinInterval = 5 * time.Second
-
-	// KubernetesSecretAPIKeyFile and KubernetesSecretAPISecretFile are the files
-	// KubernetesSecretSource reads: the keys of a Kubernetes Secret mounted as a volume.
-	KubernetesSecretAPIKeyFile    = "EXOSCALE_API_KEY"
-	KubernetesSecretAPISecretFile = "EXOSCALE_API_SECRET"
 )
 
 // ErrInvalidFormat is returned when the credentials read don't have the format of an Exoscale
@@ -61,20 +56,13 @@ type Reloader interface {
 // A Source reads the credentials from where they are stored, every time it is called.
 type Source func() (Value, error)
 
-// KubernetesSecretSource returns a Source reading the API key and secret from the
-// EXOSCALE_API_KEY and EXOSCALE_API_SECRET files of dir, a Kubernetes Secret mounted as a volume.
-//
-// The kubelet updates such a volume by swapping its "..data" symlink: the Source resolves it once,
-// so the key and the secret always come from the same version of the Secret.
-func KubernetesSecretSource(dir string) Source {
+// KubernetesSecretSource returns a Source reading the API key and secret from the apiKeyFile and
+// apiSecretFile files of mountPath, a Kubernetes Secret mounted as a volume: the file names are
+// the keys of the Secret.
+func KubernetesSecretSource(mountPath, apiKeyFile, apiSecretFile string) Source {
 	return func() (Value, error) {
-		base := dir
-		if resolved, err := filepath.EvalSymlinks(filepath.Join(dir, "..data")); err == nil {
-			base = resolved
-		}
-
 		read := func(name string) (string, error) {
-			b, err := os.ReadFile(filepath.Join(base, name))
+			b, err := os.ReadFile(filepath.Join(mountPath, name))
 			if err != nil {
 				return "", err
 			}
@@ -82,27 +70,33 @@ func KubernetesSecretSource(dir string) Source {
 			return strings.TrimSpace(string(b)), nil
 		}
 
-		apiKey, err := read(KubernetesSecretAPIKeyFile)
+		apiKey, err := read(apiKeyFile)
 		if err != nil {
 			return Value{}, fmt.Errorf("kubernetes secret source: %w", err)
 		}
-		apiSecret, err := read(KubernetesSecretAPISecretFile)
+		apiSecret, err := read(apiSecretFile)
 		if err != nil {
 			return Value{}, fmt.Errorf("kubernetes secret source: %w", err)
 		}
 
 		v := Value{APIKey: apiKey, APISecret: apiSecret}
 		if !v.IsSet() {
-			return Value{}, fmt.Errorf("kubernetes secret source: %s: %w", dir, ErrMissingIncomplete)
+			return Value{}, fmt.Errorf("kubernetes secret source: %s: %w", mountPath, ErrMissingIncomplete)
 		}
 
 		return v, nil
 	}
 }
 
-// JSONFileSource returns a Source reading the API key and secret from a JSON file of the form
-// {"api_key": "...", "api_secret": "..."}, the format of the Exoscale cloud controller manager.
-// Other fields are ignored.
+// JSONFileSource returns a Source reading the API key and secret from a JSON file provided in the
+// following format:
+//
+//	{
+//	  "api_key": "...",
+//	  "api_secret": "..."
+//	}
+//
+// Any other key found in the JSON object is ignored.
 func JSONFileSource(path string) Source {
 	return func() (Value, error) {
 		b, err := os.ReadFile(path)

@@ -86,7 +86,10 @@ Egoscale supports debug logs which are off by default. To enable logs, use `Clie
 	...
 ```
 
-Note that all logs printed by egoscale library are of level Debug.
+Note that all logs printed by the client are of level Debug. A reloadable credentials provider
+(see below) logs with its own handler, set with `ReloadableOptWithLogHandler`: its reloads at level
+Info, and at level Error when it keeps the last credentials because new ones can't be read or are
+invalid, so that a broken Secret is seen without debug logs.
 
 ### Findable
 
@@ -118,8 +121,8 @@ doesn't have the format of an Exoscale API key and secret, the last credentials 
 error is logged on every re-read.
 
 Two sources are provided:
-- `credentials.KubernetesSecretSource(dir)`: the `EXOSCALE_API_KEY` and `EXOSCALE_API_SECRET` files
-  of a Kubernetes Secret mounted as a volume.
+- `credentials.KubernetesSecretSource(mountPath, apiKeyFile, apiSecretFile)`: the files of a
+  Kubernetes Secret mounted as a volume, named after the keys of the Secret.
 - `credentials.JSONFileSource(path)`: a JSON file with `api_key` and `api_secret` fields.
 
 Any `func() (credentials.Value, error)` works as a source too.
@@ -127,7 +130,7 @@ Any `func() (credentials.Value, error)` works as a source too.
 ```Golang
 // The periodic re-read stops when ctx is done.
 creds, err := credentials.NewReloadableCredentials(ctx,
-	credentials.KubernetesSecretSource("/etc/exoscale"),
+	credentials.KubernetesSecretSource("/etc/exoscale", "EXOSCALE_API_KEY", "EXOSCALE_API_SECRET"),
 	// Optional: logs the reloads and the errors (nothing is logged by default).
 	credentials.ReloadableOptWithLogHandler(slog.Default().Handler()),
 )

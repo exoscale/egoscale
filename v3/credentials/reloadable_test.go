@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	valueA = Value{APIKey: "EXOaaaaaaaaaaaaaaaaaaaaaaaa", APISecret: "secret-a"}
-	valueB = Value{APIKey: "EXObbbbbbbbbbbbbbbbbbbbbbbb", APISecret: "secret-b"}
+	valueA = Value{APIKey: "EXOaaaaaaaaaaaaaaaaaaaaaaaa", APISecret: "secret-a_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+	valueB = Value{APIKey: "EXObbbbbbbbbbbbbbbbbbbbbbbb", APISecret: "secret-b_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
 )
 
 // writeSecretVolume writes key and secret in dir the way the kubelet updates a Secret volume:
@@ -27,7 +27,7 @@ func writeSecretVolume(t *testing.T, dir, key, secret string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, content := range map[string]string{SecretDirAPIKeyFile: key, SecretDirAPISecretFile: secret} {
+	for name, content := range map[string]string{KubernetesSecretAPIKeyFile: key, KubernetesSecretAPISecretFile: secret} {
 		if err := os.WriteFile(filepath.Join(version, name), []byte(content), 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -41,7 +41,7 @@ func writeSecretVolume(t *testing.T, dir, key, secret string) {
 		t.Fatal(err)
 	}
 
-	for _, name := range []string{SecretDirAPIKeyFile, SecretDirAPISecretFile} {
+	for _, name := range []string{KubernetesSecretAPIKeyFile, KubernetesSecretAPISecretFile} {
 		link := filepath.Join(dir, name)
 		if _, err := os.Lstat(link); err == nil {
 			continue
@@ -60,10 +60,10 @@ func writeFile(t *testing.T, path, content string) {
 	}
 }
 
-func TestSecretDirSource(t *testing.T) {
+func TestKubernetesSecretSource(t *testing.T) {
 	t.Run("secret volume update", func(t *testing.T) {
 		dir := t.TempDir()
-		source := SecretDirSource(dir)
+		source := KubernetesSecretSource(dir)
 
 		writeSecretVolume(t, dir, valueA.APIKey, valueA.APISecret+"\n")
 		if v, err := source(); err != nil || v != valueA {
@@ -78,16 +78,16 @@ func TestSecretDirSource(t *testing.T) {
 
 	t.Run("plain files rewritten in place", func(t *testing.T) {
 		dir := t.TempDir()
-		source := SecretDirSource(dir)
+		source := KubernetesSecretSource(dir)
 
-		writeFile(t, filepath.Join(dir, SecretDirAPIKeyFile), valueA.APIKey)
-		writeFile(t, filepath.Join(dir, SecretDirAPISecretFile), valueA.APISecret)
+		writeFile(t, filepath.Join(dir, KubernetesSecretAPIKeyFile), valueA.APIKey)
+		writeFile(t, filepath.Join(dir, KubernetesSecretAPISecretFile), valueA.APISecret)
 		if v, err := source(); err != nil || v != valueA {
 			t.Fatalf("got %v, %v, want %v", v, err, valueA)
 		}
 
-		writeFile(t, filepath.Join(dir, SecretDirAPIKeyFile), valueB.APIKey)
-		writeFile(t, filepath.Join(dir, SecretDirAPISecretFile), valueB.APISecret)
+		writeFile(t, filepath.Join(dir, KubernetesSecretAPIKeyFile), valueB.APIKey)
+		writeFile(t, filepath.Join(dir, KubernetesSecretAPISecretFile), valueB.APISecret)
 		if v, err := source(); err != nil || v != valueB {
 			t.Fatalf("after rewrite, got %v, %v, want %v", v, err, valueB)
 		}
@@ -97,16 +97,16 @@ func TestSecretDirSource(t *testing.T) {
 		dir := t.TempDir()
 		writeSecretVolume(t, dir, valueA.APIKey, " \n")
 
-		if _, err := SecretDirSource(dir)(); !errors.Is(err, ErrMissingIncomplete) {
+		if _, err := KubernetesSecretSource(dir)(); !errors.Is(err, ErrMissingIncomplete) {
 			t.Fatalf("got error %v, want %v", err, ErrMissingIncomplete)
 		}
 	})
 
 	t.Run("missing file", func(t *testing.T) {
 		dir := t.TempDir()
-		writeFile(t, filepath.Join(dir, SecretDirAPIKeyFile), valueA.APIKey)
+		writeFile(t, filepath.Join(dir, KubernetesSecretAPIKeyFile), valueA.APIKey)
 
-		if _, err := SecretDirSource(dir)(); !errors.Is(err, os.ErrNotExist) {
+		if _, err := KubernetesSecretSource(dir)(); !errors.Is(err, os.ErrNotExist) {
 			t.Fatalf("got error %v, want %v", err, os.ErrNotExist)
 		}
 	})
@@ -231,27 +231,47 @@ func TestReloadableProviderReloadRateLimit(t *testing.T) {
 	}
 }
 
-func TestReloadableProviderValidator(t *testing.T) {
-	errRejected := errors.New("invalid key")
-	validator := func(_ context.Context, v Value) error {
-		if v == valueB {
-			return errRejected
-		}
-		return nil
+func TestCheckFormat(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value Value
+		valid bool
+	}{
+		{"valid", valueA, true},
+		{"key without EXO prefix", Value{APIKey: "aaaaaaaaaaaaaaaaaaaaaaaaaaa", APISecret: valueA.APISecret}, false},
+		{"key too short", Value{APIKey: "EXOaaaaaaaaaaaaaaaaaaaaaaa", APISecret: valueA.APISecret}, false},
+		{"key not hexadecimal", Value{APIKey: "EXOaaaaaaaaaaaaaaaaaaaaaaaz", APISecret: valueA.APISecret}, false},
+		{"secret too short", Value{APIKey: valueA.APIKey, APISecret: "secret"}, false},
+		{"secret not base64url", Value{APIKey: valueA.APIKey, APISecret: "secret+a/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, false},
+		{"key and secret swapped", Value{APIKey: valueA.APISecret, APISecret: valueA.APIKey}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkFormat(tc.value)
+			if tc.valid && err != nil {
+				t.Fatalf("got error %v", err)
+			}
+			if !tc.valid && !errors.Is(err, ErrInvalidFormat) {
+				t.Fatalf("got error %v, want %v", err, ErrInvalidFormat)
+			}
+		})
 	}
+}
 
-	source := &testSource{value: valueB}
-	if _, err := NewReloadableProvider(t.Context(), source.read, ReloadableOptWithValidator(validator)); !errors.Is(err, errRejected) {
-		t.Fatalf("initial credentials rejected: got error %v, want %v", err, errRejected)
+func TestReloadableProviderInvalidFormat(t *testing.T) {
+	invalid := Value{APIKey: valueB.APIKey, APISecret: "typo"}
+
+	source := &testSource{value: invalid}
+	if _, err := NewReloadableProvider(t.Context(), source.read); !errors.Is(err, ErrInvalidFormat) {
+		t.Fatalf("initial credentials: got error %v, want %v", err, ErrInvalidFormat)
 	}
 
 	source.set(valueA, nil)
-	p := newTestProvider(t, source, ReloadableOptWithValidator(validator))
+	p := newTestProvider(t, source)
 	retrieve(t, p, true, valueA)
 
-	source.set(valueB, nil)
-	if err := p.Reload(t.Context()); !errors.Is(err, errRejected) {
-		t.Fatalf("got error %v, want %v", err, errRejected)
+	source.set(invalid, nil)
+	if err := p.Reload(t.Context()); !errors.Is(err, ErrInvalidFormat) {
+		t.Fatalf("got error %v, want %v", err, ErrInvalidFormat)
 	}
 	retrieve(t, p, false, valueA)
 }
@@ -303,7 +323,7 @@ func TestReloadableCredentials(t *testing.T) {
 	dir := t.TempDir()
 	writeSecretVolume(t, dir, valueA.APIKey, valueA.APISecret)
 
-	creds, err := NewReloadableCredentials(t.Context(), SecretDirSource(dir), ReloadableOptWithInterval(0))
+	creds, err := NewReloadableCredentials(t.Context(), KubernetesSecretSource(dir), ReloadableOptWithInterval(0))
 	if err != nil {
 		t.Fatal(err)
 	}

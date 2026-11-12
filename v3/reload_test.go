@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"context"
 	"errors"
 	"io"
 	"log/slog"
@@ -17,9 +16,9 @@ import (
 
 const (
 	testOldKey    = "EXOaaaaaaaaaaaaaaaaaaaaaaaa"
-	testOldSecret = "secret-old"
+	testOldSecret = "secret-old_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	testNewKey    = "EXObbbbbbbbbbbbbbbbbbbbbbbb"
-	testNewSecret = "secret-new"
+	testNewSecret = "secret-new_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 )
 
 // fakeAPI is an API server accepting a single API key, and recording the requests it gets.
@@ -243,25 +242,4 @@ func TestClientDoesntRetryOtherForbidden(t *testing.T) {
 		t.Fatalf("got error %v, want %v", err, ErrForbidden)
 	}
 	checkKeys(t, api.received(), testOldKey)
-}
-
-func TestCredentialsValidator(t *testing.T) {
-	api := newFakeAPI(t, testNewKey)
-	validate := CredentialsValidator(ClientOptWithHTTPClient(api.Client()), ClientOptWithEndpoint(Endpoint(api.URL)))
-	ctx := context.Background()
-
-	if err := validate(ctx, credentials.Value{APIKey: testNewKey, APISecret: testNewSecret}); err != nil {
-		t.Errorf("valid key rejected: %v", err)
-	}
-
-	if err := validate(ctx, credentials.Value{APIKey: testOldKey, APISecret: testOldSecret}); !errors.Is(err, ErrForbidden) {
-		t.Errorf("invalid key: got error %v, want %v", err, ErrForbidden)
-	}
-
-	api.mu.Lock()
-	api.forbidden = "Forbidden: missing permission"
-	api.mu.Unlock()
-	if err := validate(ctx, credentials.Value{APIKey: testNewKey, APISecret: testNewSecret}); err != nil {
-		t.Errorf("key without the permission rejected: %v", err)
-	}
 }

@@ -378,7 +378,7 @@ func (c *Client) retryWithNewCredentials(request *http.Request) (*http.Request, 
 }
 
 // isInvalidKeyResponse reports whether the API rejected the API key of the request
-// (unknown or deleted key, or wrong secret), like isInvalidKeyError.
+// (unknown or deleted key, or wrong secret).
 // It keeps the response body readable.
 func isInvalidKeyResponse(response *http.Response) bool {
 	switch response.StatusCode {

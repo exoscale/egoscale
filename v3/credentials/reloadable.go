@@ -3,10 +3,12 @@ package credentials
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -17,14 +19,36 @@ const (
 	DefaultReloadInterval = 30 * time.Second
 
 	// reloadMinInterval rate-limits the on-demand reloads (Reload), so that a burst of requests
-	// rejected at the same time reads the Source, and calls the validator, only once.
+	// rejected at the same time reads the Source only once.
 	reloadMinInterval = 5 * time.Second
 
-	// SecretDirAPIKeyFile and SecretDirAPISecretFile are the files SecretDirSource reads:
-	// the keys of a Kubernetes Secret mounted as a volume.
-	SecretDirAPIKeyFile    = "EXOSCALE_API_KEY"
-	SecretDirAPISecretFile = "EXOSCALE_API_SECRET"
+	// KubernetesSecretAPIKeyFile and KubernetesSecretAPISecretFile are the files
+	// KubernetesSecretSource reads: the keys of a Kubernetes Secret mounted as a volume.
+	KubernetesSecretAPIKeyFile    = "EXOSCALE_API_KEY"
+	KubernetesSecretAPISecretFile = "EXOSCALE_API_SECRET"
 )
+
+// ErrInvalidFormat is returned when the credentials read don't have the format of an Exoscale
+// API key and secret.
+var ErrInvalidFormat = errors.New("invalid API key or secret format")
+
+var (
+	apiKeyFormat    = regexp.MustCompile(`^EXO[0-9a-f]{24}$`)
+	apiSecretFormat = regexp.MustCompile(`^[A-Za-z0-9_-]{43}$`)
+)
+
+// checkFormat returns ErrInvalidFormat if v isn't an Exoscale API key and secret.
+// The values aren't part of the error, which is logged: a key file may hold a secret by mistake.
+func checkFormat(v Value) error {
+	if !apiKeyFormat.MatchString(v.APIKey) {
+		return fmt.Errorf("API key: %w", ErrInvalidFormat)
+	}
+	if !apiSecretFormat.MatchString(v.APISecret) {
+		return fmt.Errorf("API secret: %w", ErrInvalidFormat)
+	}
+
+	return nil
+}
 
 // A Reloader is a Provider whose credentials can change while the program runs.
 // The v3 client calls Reload when the API rejects the key it signed a request with,
@@ -37,12 +61,12 @@ type Reloader interface {
 // A Source reads the credentials from where they are stored, every time it is called.
 type Source func() (Value, error)
 
-// SecretDirSource returns a Source reading the API key and secret from the EXOSCALE_API_KEY and
-// EXOSCALE_API_SECRET files of dir, typically a Kubernetes Secret mounted as a volume.
+// KubernetesSecretSource returns a Source reading the API key and secret from the
+// EXOSCALE_API_KEY and EXOSCALE_API_SECRET files of dir, a Kubernetes Secret mounted as a volume.
 //
 // The kubelet updates such a volume by swapping its "..data" symlink: the Source resolves it once,
 // so the key and the secret always come from the same version of the Secret.
-func SecretDirSource(dir string) Source {
+func KubernetesSecretSource(dir string) Source {
 	return func() (Value, error) {
 		base := dir
 		if resolved, err := filepath.EvalSymlinks(filepath.Join(dir, "..data")); err == nil {
@@ -58,18 +82,18 @@ func SecretDirSource(dir string) Source {
 			return strings.TrimSpace(string(b)), nil
 		}
 
-		apiKey, err := read(SecretDirAPIKeyFile)
+		apiKey, err := read(KubernetesSecretAPIKeyFile)
 		if err != nil {
-			return Value{}, fmt.Errorf("secret dir source: %w", err)
+			return Value{}, fmt.Errorf("kubernetes secret source: %w", err)
 		}
-		apiSecret, err := read(SecretDirAPISecretFile)
+		apiSecret, err := read(KubernetesSecretAPISecretFile)
 		if err != nil {
-			return Value{}, fmt.Errorf("secret dir source: %w", err)
+			return Value{}, fmt.Errorf("kubernetes secret source: %w", err)
 		}
 
 		v := Value{APIKey: apiKey, APISecret: apiSecret}
 		if !v.IsSet() {
-			return Value{}, fmt.Errorf("secret dir source: %s: %w", dir, ErrMissingIncomplete)
+			return Value{}, fmt.Errorf("kubernetes secret source: %s: %w", dir, ErrMissingIncomplete)
 		}
 
 		return v, nil
@@ -115,20 +139,8 @@ func ReloadableOptWithInterval(d time.Duration) ReloadableOpt {
 	}
 }
 
-// ReloadableOptWithValidator returns a ReloadableOpt checking new credentials before they are
-// used: credentials it rejects are ignored, the previous ones are kept and the new ones are
-// checked again on the next re-read. The validator should only reject credentials the API
-// refuses, not fail on a transient error.
-//
-// The v3 package provides one: v3.CredentialsValidator.
-func ReloadableOptWithValidator(validate func(ctx context.Context, v Value) error) ReloadableOpt {
-	return func(p *ReloadableProvider) {
-		p.validate = validate
-	}
-}
-
 // ReloadableOptWithLogHandler returns a ReloadableOpt logging the reloads, and the errors when
-// the Source can't be read or the credentials are rejected. Nothing is logged by default.
+// the Source can't be read or is invalid. Nothing is logged by default.
 func ReloadableOptWithLogHandler(h slog.Handler) ReloadableOpt {
 	return func(p *ReloadableProvider) {
 		p.logger = slog.New(h)
@@ -140,15 +152,14 @@ func ReloadableOptWithLogHandler(h slog.Handler) ReloadableOpt {
 // a new client: the v3 client gets its credentials for every request.
 //
 // The Source is re-read periodically, and right away when the API rejects the key (see Reloader).
-// New complete credentials are used as soon as they are read, unless a validator rejects them.
-// If the Source can't be read or is incomplete, the last credentials are kept and the error is
-// logged on every re-read.
+// New credentials are used as soon as they are read. If the Source can't be read, is incomplete
+// or doesn't have the format of an API key and secret, the last credentials are kept and the
+// error is logged on every re-read.
 //
 // Retrieve doesn't read the Source: it returns the last credentials read.
 type ReloadableProvider struct {
 	source   Source
 	interval time.Duration
-	validate func(context.Context, Value) error
 	logger   *slog.Logger
 
 	// reloadMu serializes the reads of the Source.
@@ -162,7 +173,7 @@ type ReloadableProvider struct {
 }
 
 // NewReloadableProvider returns a ReloadableProvider reading its credentials from source.
-// The first read happens here and its error, or the validator's, is returned.
+// The first read happens here and its error is returned.
 // The periodic re-read runs in the background until ctx is done.
 func NewReloadableProvider(ctx context.Context, source Source, opts ...ReloadableOpt) (*ReloadableProvider, error) {
 	p := &ReloadableProvider{
@@ -174,14 +185,9 @@ func NewReloadableProvider(ctx context.Context, source Source, opts ...Reloadabl
 		opt(p)
 	}
 
-	v, err := p.source()
+	v, err := p.read()
 	if err != nil {
 		return nil, fmt.Errorf("reloadable provider: %w", err)
-	}
-	if p.validate != nil {
-		if err := p.validate(ctx, v); err != nil {
-			return nil, fmt.Errorf("reloadable provider: credentials rejected: %w", err)
-		}
 	}
 	p.value = v
 	p.expired = true
@@ -223,10 +229,19 @@ func (p *ReloadableProvider) IsExpired() bool {
 }
 
 // Reload re-reads the Source now, unless Reload already did less than a few seconds ago.
-// It returns an error if the Source can't be read or the new credentials are rejected;
-// the previous credentials are kept in that case.
+// It returns an error if the Source can't be read or is invalid; the previous credentials are
+// kept in that case.
 func (p *ReloadableProvider) Reload(ctx context.Context) error {
 	return p.reload(ctx, false)
+}
+
+func (p *ReloadableProvider) read() (Value, error) {
+	v, err := p.source()
+	if err != nil {
+		return Value{}, err
+	}
+
+	return v, checkFormat(v)
 }
 
 func (p *ReloadableProvider) run(ctx context.Context) {
@@ -254,7 +269,7 @@ func (p *ReloadableProvider) reload(ctx context.Context, force bool) error {
 		p.lastReloadCall = time.Now()
 	}
 
-	v, err := p.source()
+	v, err := p.read()
 	if err != nil {
 		p.logger.ErrorContext(ctx, "keeping current Exoscale API credentials, unable to read new ones", "error", err)
 		return fmt.Errorf("reloadable provider: %w", err)
@@ -265,14 +280,6 @@ func (p *ReloadableProvider) reload(ctx context.Context, force bool) error {
 	p.mu.RUnlock()
 	if v == current {
 		return nil
-	}
-
-	if p.validate != nil {
-		if err := p.validate(ctx, v); err != nil {
-			p.logger.ErrorContext(ctx, "keeping current Exoscale API credentials, new ones rejected",
-				"api_key", v.APIKey, "error", err)
-			return fmt.Errorf("reloadable provider: credentials rejected: %w", err)
-		}
 	}
 
 	p.mu.Lock()

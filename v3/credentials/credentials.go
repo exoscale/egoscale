@@ -100,8 +100,7 @@ func (c *Credentials) Reload(ctx context.Context) error {
 	}
 	c.RUnlock()
 
-	// The lock isn't held while reloading: a Reloader may call the API to validate the new
-	// credentials, and Get must not wait for it.
+	// The lock isn't held while reloading, so that Get doesn't wait for the source to be read.
 	if r, ok := p.(Reloader); ok {
 		return r.Reload(ctx)
 	}

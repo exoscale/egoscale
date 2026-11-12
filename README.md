@@ -1,24 +1,28 @@
-## Deprecated use v3
-
-v1 and v2 of `egoscale` are deprecated, please use [v3](https://pkg.go.dev/github.com/exoscale/egoscale/v3)
-
 ---
 title: Egoscale
 description: the Go library for Exoscale
 ---
 
-<a href="https://gopherize.me/gopher/9c1bc7cfe1d84cf43e477dbfc4aa86332065f1fd"><img src="gopher.png" align="right" alt=""></a>
+# Egoscale
 
 [![Actions Status](https://github.com/exoscale/egoscale/workflows/CI/badge.svg?branch=master)](https://github.com/exoscale/egoscale/actions?query=workflow%3ACI+branch%3Amaster)
-[![GoDoc](https://godoc.org/github.com/exoscale/egoscale?status.svg)](https://godoc.org/github.com/exoscale/egoscale/v3) [![Go Report Card](https://goreportcard.com/badge/github.com/exoscale/egoscale)](https://goreportcard.com/report/github.com/exoscale/egoscale)
+[![GoDoc](https://godoc.org/github.com/exoscale/egoscale?status.svg)][docs]
+
+<a href="https://gopherize.me/gopher/9c1bc7cfe1d84cf43e477dbfc4aa86332065f1fd"><img src="gopher.png" align="right" alt=""></a>
 
 A wrapper for the [Exoscale public cloud](https://www.exoscale.com) API.
 
-**v2** can be imported as:
+Import library with:
 
 ```
-	import "github.com/exoscale/egoscale/v2"
+	import "github.com/exoscale/egoscale/v3"
 ```
+
+Check [godoc][docs] for full reference.
+
+## Deprecations:
+
+v1 and v2 of `egoscale` are deprecated, please use [v3](https://pkg.go.dev/github.com/exoscale/egoscale/v3)
 
 ## Known users
 
@@ -36,3 +40,5 @@ Licensed under the Apache License, Version 2.0 (the "License"); you
 may not use this file except in compliance with the License. You may
 obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
+
+[docs]: https://godoc.org/github.com/exoscale/egoscale/v3

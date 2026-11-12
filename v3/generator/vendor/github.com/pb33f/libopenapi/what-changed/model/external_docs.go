@@ -16,6 +16,9 @@ type ExternalDocChanges struct {
 
 // GetAllChanges returns a slice of all changes made between Example objects
 func (e *ExternalDocChanges) GetAllChanges() []*Change {
+	if e == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, e.Changes...)
 	if e.ExtensionChanges != nil {
@@ -26,6 +29,9 @@ func (e *ExternalDocChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns a count of everything that changed
 func (e *ExternalDocChanges) TotalChanges() int {
+	if e == nil {
+		return 0
+	}
 	c := e.PropertyChanges.TotalChanges()
 	if e.ExtensionChanges != nil {
 		c += e.ExtensionChanges.TotalChanges()
@@ -33,9 +39,16 @@ func (e *ExternalDocChanges) TotalChanges() int {
 	return c
 }
 
-// TotalBreakingChanges always returns 0 for ExternalDoc objects, they are non-binding.
+// TotalBreakingChanges returns the total number of breaking changes in ExternalDoc objects.
 func (e *ExternalDocChanges) TotalBreakingChanges() int {
-	return 0
+	if e == nil {
+		return 0
+	}
+	c := e.PropertyChanges.TotalBreakingChanges()
+	if e.ExtensionChanges != nil {
+		c += e.ExtensionChanges.TotalBreakingChanges()
+	}
+	return c
 }
 
 // CompareExternalDocs will compare a left (original) and a right (new) slice of ValueReference
@@ -43,31 +56,17 @@ func (e *ExternalDocChanges) TotalBreakingChanges() int {
 // is returned, otherwise if nothing changed - then nil is returned.
 func CompareExternalDocs(l, r *base.ExternalDoc) *ExternalDocChanges {
 	var changes []*Change
-	var props []*PropertyCheck
+	props := make([]*PropertyCheck, 0, 2)
 
-	// URL
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.URL.ValueNode,
-		RightNode: r.URL.ValueNode,
-		Label:     v3.URLLabel,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
+	props = append(props,
+		NewPropertyCheck(CompExternalDocs, PropURL,
+			l.URL.ValueNode, r.URL.ValueNode,
+			v3.URLLabel, &changes, l, r),
+		NewPropertyCheck(CompExternalDocs, PropDescription,
+			l.Description.ValueNode, r.Description.ValueNode,
+			v3.DescriptionLabel, &changes, l, r),
+	)
 
-	// description.
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.Description.ValueNode,
-		RightNode: r.Description.ValueNode,
-		Label:     v3.DescriptionLabel,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
-
-	// check everything.
 	CheckProperties(props)
 
 	dc := new(ExternalDocChanges)

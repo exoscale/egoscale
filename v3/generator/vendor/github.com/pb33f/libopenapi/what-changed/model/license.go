@@ -16,6 +16,9 @@ type LicenseChanges struct {
 
 // GetAllChanges returns a slice of all changes made between License objects
 func (l *LicenseChanges) GetAllChanges() []*Change {
+	if l == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, l.Changes...)
 	if l.ExtensionChanges != nil {
@@ -26,7 +29,9 @@ func (l *LicenseChanges) GetAllChanges() []*Change {
 
 // TotalChanges represents the total number of changes made to a License instance.
 func (l *LicenseChanges) TotalChanges() int {
-
+	if l == nil {
+		return 0
+	}
 	c := l.PropertyChanges.TotalChanges()
 
 	if l.ExtensionChanges != nil {
@@ -35,53 +40,37 @@ func (l *LicenseChanges) TotalChanges() int {
 	return c
 }
 
-// TotalBreakingChanges always returns 0 for License objects, they are non-binding.
+// TotalBreakingChanges returns the total number of breaking changes in License objects.
 func (l *LicenseChanges) TotalBreakingChanges() int {
-	return 0
+	if l == nil {
+		return 0
+	}
+	c := l.PropertyChanges.TotalBreakingChanges()
+	if l.ExtensionChanges != nil {
+		c += l.ExtensionChanges.TotalBreakingChanges()
+	}
+	return c
 }
 
 // CompareLicense will check a left (original) and right (new) License object for any changes. If there
 // were any, a pointer to a LicenseChanges object is returned, otherwise if nothing changed - the function
 // returns nil.
 func CompareLicense(l, r *base.License) *LicenseChanges {
-
 	var changes []*Change
-	var props []*PropertyCheck
+	props := make([]*PropertyCheck, 0, 3)
 
-	// check URL
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.URL.ValueNode,
-		RightNode: r.URL.ValueNode,
-		Label:     v3.URLLabel,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
+	props = append(props,
+		NewPropertyCheck(CompLicense, PropURL,
+			l.URL.ValueNode, r.URL.ValueNode,
+			v3.URLLabel, &changes, l, r),
+		NewPropertyCheck(CompLicense, PropName,
+			l.Name.ValueNode, r.Name.ValueNode,
+			v3.NameLabel, &changes, l, r),
+		NewPropertyCheck(CompLicense, PropIdentifier,
+			l.Identifier.ValueNode, r.Identifier.ValueNode,
+			v3.Identifier, &changes, l, r),
+	)
 
-	// check name
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.Name.ValueNode,
-		RightNode: r.Name.ValueNode,
-		Label:     v3.NameLabel,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
-
-	// check identifier
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.Identifier.ValueNode,
-		RightNode: r.Identifier.ValueNode,
-		Label:     v3.Identifier,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
-
-	// check everything.
 	CheckProperties(props)
 
 	lc := new(LicenseChanges)

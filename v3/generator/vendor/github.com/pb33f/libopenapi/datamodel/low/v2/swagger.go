@@ -21,7 +21,7 @@ import (
 	"github.com/pb33f/libopenapi/datamodel/low/base"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // processes a property of a Swagger document asynchronously using bool and error channels for signals.
@@ -130,7 +130,8 @@ func (s *Swagger) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.
 
 // CreateDocumentFromConfig will create a new Swagger document from the provided SpecInfo and DocumentConfiguration.
 func CreateDocumentFromConfig(info *datamodel.SpecInfo,
-	configuration *datamodel.DocumentConfiguration) (*Swagger, error) {
+	configuration *datamodel.DocumentConfiguration,
+) (*Swagger, error) {
 	return createDocument(info, configuration)
 }
 
@@ -143,11 +144,15 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 	idxConfig.SpecInfo = info
 	idxConfig.IgnoreArrayCircularReferences = config.IgnoreArrayCircularReferences
 	idxConfig.IgnorePolymorphicCircularReferences = config.IgnorePolymorphicCircularReferences
+	idxConfig.AllowUnknownExtensionContentDetection = config.AllowUnknownExtensionContentDetection
+	idxConfig.SkipExternalRefResolution = config.SkipExternalRefResolution
+	idxConfig.ResolveNestedRefsWithDocumentContext = config.ResolveNestedRefsWithDocumentContext
 	idxConfig.AvoidCircularReferenceCheck = true
 	idxConfig.BaseURL = config.BaseURL
 	idxConfig.BasePath = config.BasePath
 	idxConfig.Logger = config.Logger
 	idxConfig.ExcludeExtensionRefs = config.ExcludeExtensionRefs
+	idxConfig.SkipMetadataCollection = config.SkipMetadataCollection
 	rolodex := index.NewRolodex(idxConfig)
 	rolodex.SetRootNode(info.RootNode)
 	doc.Rolodex = rolodex
@@ -158,7 +163,23 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 		cwd, _ = filepath.Abs(config.BasePath)
 		// if a supplied local filesystem is provided, add it to the rolodex.
 		if config.LocalFS != nil {
-			rolodex.AddLocalFS(cwd, config.LocalFS)
+			var localFS index.RolodexFS
+			if fs, ok := config.LocalFS.(index.RolodexFS); ok {
+				localFS = fs
+			} else {
+				// wrap a plain fs.FS so it can be indexed.
+				localFSConf := index.LocalFSConfig{
+					BaseDirectory: cwd,
+					IndexConfig:   idxConfig,
+					FileFilters:   config.FileFilter,
+					DirFS:         config.LocalFS,
+				}
+
+				localFS, _ = index.NewLocalFSWithConfig(&localFSConf)
+				idxConfig.AllowFileLookup = true
+			}
+
+			rolodex.AddLocalFS(cwd, localFS)
 		} else {
 
 			// create a local filesystem
@@ -175,8 +196,8 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 		}
 	}
 
-	// if base url is provided, add a remote filesystem to the rolodex.
-	if idxConfig.BaseURL != nil {
+	// Only create a remote filesystem when the caller explicitly allows remote references.
+	if config.AllowRemoteReferences {
 
 		// create a remote filesystem
 		remoteFS, _ := index.NewRemoteFSWithConfig(idxConfig)
@@ -186,7 +207,11 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 		idxConfig.AllowRemoteLookup = true
 
 		// add to the rolodex
-		rolodex.AddRemoteFS(config.BaseURL.String(), remoteFS)
+		u := "default"
+		if config.BaseURL != nil {
+			u = config.BaseURL.String()
+		}
+		rolodex.AddRemoteFS(u, remoteFS)
 
 	}
 
@@ -195,7 +220,7 @@ func createDocument(info *datamodel.SpecInfo, config *datamodel.DocumentConfigur
 	var errs []error
 
 	// index all the things!
-	_ = rolodex.IndexTheRolodex()
+	_ = rolodex.IndexTheRolodex(context.Background())
 
 	// check for circular references
 	if !config.SkipCircularReferenceCheck {

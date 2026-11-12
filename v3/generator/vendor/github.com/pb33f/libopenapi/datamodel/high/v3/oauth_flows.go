@@ -7,7 +7,7 @@ import (
 	"github.com/pb33f/libopenapi/datamodel/high"
 	low "github.com/pb33f/libopenapi/datamodel/low/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // OAuthFlows represents a high-level OpenAPI 3+ OAuthFlows object that is backed by a low-level one.
@@ -17,6 +17,7 @@ type OAuthFlows struct {
 	Password          *OAuthFlow                          `json:"password,omitempty" yaml:"password,omitempty"`
 	ClientCredentials *OAuthFlow                          `json:"clientCredentials,omitempty" yaml:"clientCredentials,omitempty"`
 	AuthorizationCode *OAuthFlow                          `json:"authorizationCode,omitempty" yaml:"authorizationCode,omitempty"`
+	Device            *OAuthFlow                          `json:"device,omitempty" yaml:"device,omitempty"` // OpenAPI 3.2+ device flow
 	Extensions        *orderedmap.Map[string, *yaml.Node] `json:"-" yaml:"-"`
 	low               *low.OAuthFlows
 }
@@ -37,8 +38,8 @@ func NewOAuthFlows(flows *low.OAuthFlows) *OAuthFlows {
 	if !flows.AuthorizationCode.IsEmpty() {
 		o.AuthorizationCode = NewOAuthFlow(flows.AuthorizationCode.Value)
 	}
-	if !flows.Implicit.IsEmpty() {
-		o.Implicit = NewOAuthFlow(flows.Implicit.Value)
+	if !flows.Device.IsEmpty() {
+		o.Device = NewOAuthFlow(flows.Device.Value)
 	}
 	o.Extensions = high.ExtractExtensions(flows.Extensions)
 	return o

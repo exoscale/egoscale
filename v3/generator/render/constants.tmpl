@@ -1,0 +1,15 @@
+// Endpoint represents a zone endpoint.
+type Endpoint string
+
+const (
+{{- range .Endpoints }}
+  {{ .Name }} Endpoint = {{ printf "%q" .URL }}
+{{- end }}
+)
+
+// ZoneEndpoints maps each zone name to its API endpoint.
+var ZoneEndpoints = map[ZoneName]Endpoint{
+{{- range .Endpoints }}
+  ZoneName({{ printf "%q" .Zone }}): {{ .Name }},
+{{- end }}
+}

@@ -15,6 +15,9 @@ type EncodingChanges struct {
 
 // GetAllChanges returns a slice of all changes made between Encoding objects
 func (e *EncodingChanges) GetAllChanges() []*Change {
+	if e == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, e.Changes...)
 	for k := range e.HeaderChanges {
@@ -25,6 +28,9 @@ func (e *EncodingChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns the total number of changes made between two Encoding objects
 func (e *EncodingChanges) TotalChanges() int {
+	if e == nil {
+		return 0
+	}
 	c := e.PropertyChanges.TotalChanges()
 	if e.HeaderChanges != nil {
 		for i := range e.HeaderChanges {
@@ -48,42 +54,23 @@ func (e *EncodingChanges) TotalBreakingChanges() int {
 // CompareEncoding returns a pointer to *EncodingChanges that contain all changes made between a left and right
 // set of Encoding objects.
 func CompareEncoding(l, r *v3.Encoding) *EncodingChanges {
-
 	var changes []*Change
-	var props []*PropertyCheck
+	props := make([]*PropertyCheck, 0, 4)
 
-	// ContentType
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.ContentType.ValueNode,
-		RightNode: r.ContentType.ValueNode,
-		Label:     v3.ContentTypeLabel,
-		Changes:   &changes,
-		Breaking:  true,
-		Original:  l,
-		New:       r,
-	})
-
-	// Explode
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.Explode.ValueNode,
-		RightNode: r.Explode.ValueNode,
-		Label:     v3.ExplodeLabel,
-		Changes:   &changes,
-		Breaking:  true,
-		Original:  l,
-		New:       r,
-	})
-
-	// AllowReserved
-	props = append(props, &PropertyCheck{
-		LeftNode:  l.AllowReserved.ValueNode,
-		RightNode: r.AllowReserved.ValueNode,
-		Label:     v3.AllowReservedLabel,
-		Changes:   &changes,
-		Breaking:  false,
-		Original:  l,
-		New:       r,
-	})
+	props = append(props,
+		NewPropertyCheck(CompEncoding, PropContentType,
+			l.ContentType.ValueNode, r.ContentType.ValueNode,
+			v3.ContentTypeLabel, &changes, l, r),
+		NewPropertyCheck(CompEncoding, PropStyle,
+			l.Style.ValueNode, r.Style.ValueNode,
+			v3.StyleLabel, &changes, l, r),
+		NewPropertyCheck(CompEncoding, PropExplode,
+			l.Explode.ValueNode, r.Explode.ValueNode,
+			v3.ExplodeLabel, &changes, l, r),
+		NewPropertyCheck(CompEncoding, PropAllowReserved,
+			l.AllowReserved.ValueNode, r.AllowReserved.ValueNode,
+			v3.AllowReservedLabel, &changes, l, r),
+	)
 
 	// check everything.
 	CheckProperties(props)

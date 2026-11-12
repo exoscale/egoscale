@@ -1,0 +1,118 @@
+# Generator settings that are not part of the OpenAPI spec (source.yaml).
+
+# Exoscale specific acronyms (lowercase word: Go spelling). They take precedence
+# over the generic list of github.com/BluntSporks/abbreviation.
+acronyms:
+  ssh: SSH
+  ai: AI
+  iam: IAM
+  sks: SKS
+  sos: SOS
+  dbaas: DBAAS
+  ppapi: PPAPI
+
+# Component schemas not rendered.
+# TODO fix the OpenAPI spec: snapshot-export duplicates the inline export
+# property of snapshot, both rendered as SnapshotExport.
+ignored-schemas:
+  - snapshot-export
+
+# Operations called without credentials: list-zones returns public data
+# and must not trigger IAM enforcement.
+skip-auth-operations:
+  - list-zones
+
+# Go type of referenced schemas, per Go type name (reference: Go type).
+# Every override must apply, generation fails otherwise.
+ref-overrides:
+  AttachInstanceToElasticIPRequest:
+    "#/components/schemas/instance-ref": InstanceTarget
+  DetachInstanceFromElasticIPRequest:
+    "#/components/schemas/instance-ref": InstanceTarget
+  CreateBlockStorageVolumeRequest:
+    "#/components/schemas/block-storage-snapshot-ref": BlockStorageSnapshotTarget
+  AttachBlockStorageVolumeToInstanceRequest:
+    "#/components/schemas/instance-ref": InstanceTarget
+  CreateInstanceRequest:
+    "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+    "#/components/schemas/security-group-ref": SecurityGroup
+    "#/components/schemas/template-ref": Template
+    "#/components/schemas/ssh-key-ref": SSHKey
+    "#/components/schemas/deploy-target-ref": DeployTarget
+    "#/components/schemas/instance-type-ref": InstanceType
+  ResetInstanceRequest:
+    "#/components/schemas/template-ref": Template
+  ScaleInstanceRequest:
+    "#/components/schemas/instance-type-ref": InstanceType
+  BlockStorageSnapshot:
+    "#/components/schemas/block-storage-volume-ref": BlockStorageVolumeTarget
+  BlockStorageVolume:
+    "#/components/schemas/instance-ref": InstanceTarget
+    "#/components/schemas/block-storage-snapshot-ref": BlockStorageSnapshotTarget
+  CreateDBAASServiceMysqlRequest:
+    "#/components/schemas/dbaas-mysql-user-password": string
+  ResetDBAASMysqlUserPasswordRequest:
+    "#/components/schemas/dbaas-mysql-user-password": DBAASUserPassword
+  CreateInstancePoolRequest:
+    "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+    "#/components/schemas/deploy-target-ref": DeployTarget
+    "#/components/schemas/elastic-ip-ref": ElasticIP
+    "#/components/schemas/instance-type-ref": InstanceType
+    "#/components/schemas/private-network-ref": PrivateNetwork
+    "#/components/schemas/security-group-ref": SecurityGroup
+    "#/components/schemas/template-ref": Template
+    "#/components/schemas/ssh-key-ref": SSHKey
+  UpdateInstancePoolRequest:
+    "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+    "#/components/schemas/deploy-target-ref": DeployTarget
+    "#/components/schemas/elastic-ip-ref": ElasticIP
+    "#/components/schemas/instance-type-ref": InstanceType
+    "#/components/schemas/private-network-ref": PrivateNetwork
+    "#/components/schemas/security-group-ref": SecurityGroup
+    "#/components/schemas/template-ref": Template
+    "#/components/schemas/ssh-key-ref": SSHKey
+  CreateSKSNodepoolRequest:
+    "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+    "#/components/schemas/deploy-target-ref": DeployTarget
+    "#/components/schemas/instance-type-ref": InstanceType
+    "#/components/schemas/private-network-ref": PrivateNetwork
+    "#/components/schemas/security-group-ref": SecurityGroup
+  UpdateSKSNodepoolRequest:
+    "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+    "#/components/schemas/deploy-target-ref": DeployTarget
+    "#/components/schemas/instance-type-ref": InstanceType
+    "#/components/schemas/private-network-ref": PrivateNetwork
+    "#/components/schemas/security-group-ref": SecurityGroup
+  Instance:
+    "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+    "#/components/schemas/deploy-target-ref": DeployTarget
+    "#/components/schemas/elastic-ip-ref": ElasticIP
+    "#/components/schemas/security-group-ref": SecurityGroup
+    "#/components/schemas/snapshot-ref": Snapshot
+  InstancePool:
+    "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+    "#/components/schemas/deploy-target-ref": DeployTarget
+    "#/components/schemas/elastic-ip-ref": ElasticIP
+    "#/components/schemas/instance-type-ref": InstanceType
+    "#/components/schemas/instance-ref": Instance
+    "#/components/schemas/private-network-ref": PrivateNetwork
+    "#/components/schemas/security-group-ref": SecurityGroup
+    "#/components/schemas/ssh-key-ref": SSHKey
+    "#/components/schemas/template-ref": Template
+  SKSNodepool:
+    "#/components/schemas/anti-affinity-group-ref": AntiAffinityGroup
+    "#/components/schemas/deploy-target-ref": DeployTarget
+    "#/components/schemas/instance-pool-ref": InstancePool
+    "#/components/schemas/instance-type-ref": InstanceType
+    "#/components/schemas/private-network-ref": PrivateNetwork
+    "#/components/schemas/security-group-ref": SecurityGroup
+    "#/components/schemas/template-ref": Template
+
+# Type aliases kept for backward compatibility.
+aliases:
+  - name: InstanceTarget
+    target: InstanceRef
+  - name: BlockStorageSnapshotTarget
+    target: BlockStorageSnapshotRef
+  - name: BlockStorageVolumeTarget
+    target: BlockStorageVolumeRef

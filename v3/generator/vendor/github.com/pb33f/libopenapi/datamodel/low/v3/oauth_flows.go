@@ -1,19 +1,19 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package v3
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
-	"strings"
+	"hash/maphash"
+	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // OAuthFlows represents a low-level OpenAPI 3+ OAuthFlows object.
@@ -23,11 +23,14 @@ type OAuthFlows struct {
 	Password          low.NodeReference[*OAuthFlow]
 	ClientCredentials low.NodeReference[*OAuthFlow]
 	AuthorizationCode low.NodeReference[*OAuthFlow]
+	Device            low.NodeReference[*OAuthFlow] // OpenAPI 3.2+ device flow
 	Extensions        *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
 	KeyNode           *yaml.Node
 	RootNode          *yaml.Node
 	index             *index.SpecIndex
 	context           context.Context
+	nodeStore         sync.Map
+	reference         low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -68,8 +71,15 @@ func (o *OAuthFlows) Build(ctx context.Context, keyNode, root *yaml.Node, idx *i
 	root = utils.NodeAlias(root)
 	o.RootNode = root
 	utils.CheckForMergeNodes(root)
-	o.Reference = new(low.Reference)
-	o.Nodes = low.ExtractNodes(ctx, root)
+	o.reference = low.Reference{}
+	o.Reference = &o.reference
+	o.nodeStore = sync.Map{}
+	o.Nodes = &o.nodeStore
+	if len(root.Content) > 0 {
+		o.NodeMap.ExtractNodes(root, false)
+	} else {
+		o.AddNode(root.Line, root)
+	}
 	o.Extensions = low.ExtractExtensions(root)
 	o.index = idx
 	o.context = ctx
@@ -97,26 +107,45 @@ func (o *OAuthFlows) Build(ctx context.Context, keyNode, root *yaml.Node, idx *i
 		return vErr
 	}
 	o.AuthorizationCode = v
+
+	v, vErr = low.ExtractObject[*OAuthFlow](ctx, DeviceLabel, root, idx)
+	if vErr != nil {
+		return vErr
+	}
+	o.Device = v
+
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the OAuthFlow object
-func (o *OAuthFlows) Hash() [32]byte {
-	var f []string
-	if !o.Implicit.IsEmpty() {
-		f = append(f, low.GenerateHashString(o.Implicit.Value))
-	}
-	if !o.Password.IsEmpty() {
-		f = append(f, low.GenerateHashString(o.Password.Value))
-	}
-	if !o.ClientCredentials.IsEmpty() {
-		f = append(f, low.GenerateHashString(o.ClientCredentials.Value))
-	}
-	if !o.AuthorizationCode.IsEmpty() {
-		f = append(f, low.GenerateHashString(o.AuthorizationCode.Value))
-	}
-	f = append(f, low.HashExtensions(o.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the OAuthFlows object
+func (o *OAuthFlows) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if !o.Implicit.IsEmpty() {
+			h.WriteString(low.GenerateHashString(o.Implicit.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.Password.IsEmpty() {
+			h.WriteString(low.GenerateHashString(o.Password.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.ClientCredentials.IsEmpty() {
+			h.WriteString(low.GenerateHashString(o.ClientCredentials.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.AuthorizationCode.IsEmpty() {
+			h.WriteString(low.GenerateHashString(o.AuthorizationCode.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.Device.IsEmpty() {
+			h.WriteString(low.GenerateHashString(o.Device.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(o.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }
 
 // OAuthFlow represents a low-level OpenAPI 3+ OAuthFlow object.
@@ -130,6 +159,8 @@ type OAuthFlow struct {
 	RootNode         *yaml.Node
 	index            *index.SpecIndex
 	context          context.Context
+	nodeStore        sync.Map
+	reference        low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -166,8 +197,15 @@ func (o *OAuthFlow) GetRootNode() *yaml.Node {
 
 // Build will extract extensions from the node.
 func (o *OAuthFlow) Build(ctx context.Context, _, root *yaml.Node, idx *index.SpecIndex) error {
-	o.Reference = new(low.Reference)
-	o.Nodes = low.ExtractNodes(ctx, root)
+	o.reference = low.Reference{}
+	o.Reference = &o.reference
+	o.nodeStore = sync.Map{}
+	o.Nodes = &o.nodeStore
+	if len(root.Content) > 0 {
+		o.NodeMap.ExtractNodes(root, false)
+	} else {
+		o.AddNode(root.Line, root)
+	}
 	o.Extensions = low.ExtractExtensions(root)
 	o.index = idx
 	o.context = ctx
@@ -183,21 +221,29 @@ func (o *OAuthFlow) Build(ctx context.Context, _, root *yaml.Node, idx *index.Sp
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the OAuthFlow object
-func (o *OAuthFlow) Hash() [32]byte {
-	var f []string
-	if !o.AuthorizationUrl.IsEmpty() {
-		f = append(f, o.AuthorizationUrl.Value)
-	}
-	if !o.TokenUrl.IsEmpty() {
-		f = append(f, o.TokenUrl.Value)
-	}
-	if !o.RefreshUrl.IsEmpty() {
-		f = append(f, o.RefreshUrl.Value)
-	}
-	for k, v := range orderedmap.SortAlpha(o.Scopes.Value).FromOldest() {
-		f = append(f, fmt.Sprintf("%s-%s", k.Value, sha256.Sum256([]byte(fmt.Sprint(v.Value)))))
-	}
-	f = append(f, low.HashExtensions(o.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the OAuthFlow object
+func (o *OAuthFlow) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if !o.AuthorizationUrl.IsEmpty() {
+			h.WriteString(o.AuthorizationUrl.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.TokenUrl.IsEmpty() {
+			h.WriteString(o.TokenUrl.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.RefreshUrl.IsEmpty() {
+			h.WriteString(o.RefreshUrl.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for k, v := range orderedmap.SortAlpha(o.Scopes.Value).FromOldest() {
+			h.WriteString(fmt.Sprintf("%s-%s", k.Value, v.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(o.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

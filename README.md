@@ -1,6 +1,6 @@
 # Egoscale
 
-[![Actions Status](https://github.com/exoscale/egoscale/workflows/CI/badge.svg?branch=master)](https://github.com/exoscale/egoscale/actions?query=workflow%3ACI+branch%3Amaster)
+[![CI](https://github.com/exoscale/egoscale/actions/workflows/main.yml/badge.svg)](https://github.com/exoscale/egoscale/actions/workflows/main.yml)
 [![GoDoc](https://godoc.org/github.com/exoscale/egoscale?status.svg)][docs]
 
 <a href="https://gopherize.me/gopher/9c1bc7cfe1d84cf43e477dbfc4aa86332065f1fd"><img src="gopher.png" align="right" alt=""></a>

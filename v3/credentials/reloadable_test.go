@@ -168,8 +168,7 @@ func (s *testSource) read() (Value, error) {
 func newTestProvider(t *testing.T, source *testSource, opts ...ReloadableOpt) *ReloadableProvider {
 	t.Helper()
 
-	opts = append([]ReloadableOpt{ReloadableOptWithInterval(0)}, opts...)
-	p, err := NewReloadableProvider(t.Context(), source.read, opts...)
+	p, err := NewReloadableProvider(source.read, opts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -280,7 +279,7 @@ func TestReloadableProviderInvalidFormat(t *testing.T) {
 	invalid := Value{APIKey: valueB.APIKey, APISecret: "typo"}
 
 	source := &testSource{value: invalid}
-	if _, err := NewReloadableProvider(t.Context(), source.read); !errors.Is(err, ErrInvalidFormat) {
+	if _, err := NewReloadableProvider(source.read); !errors.Is(err, ErrInvalidFormat) {
 		t.Fatalf("initial credentials: got error %v, want %v", err, ErrInvalidFormat)
 	}
 
@@ -297,25 +296,23 @@ func TestReloadableProviderInvalidFormat(t *testing.T) {
 
 func TestNewReloadableProviderError(t *testing.T) {
 	source := &testSource{err: ErrMissingIncomplete}
-	if _, err := NewReloadableProvider(t.Context(), source.read); !errors.Is(err, ErrMissingIncomplete) {
+	if _, err := NewReloadableProvider(source.read); !errors.Is(err, ErrMissingIncomplete) {
 		t.Fatalf("got error %v, want %v", err, ErrMissingIncomplete)
 	}
 }
 
-func TestReloadableProviderPeriodicReload(t *testing.T) {
+func TestPeriodicReloadProvider(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	source := &testSource{value: valueA}
-	p, err := NewReloadableProvider(ctx, source.read, ReloadableOptWithInterval(5*time.Millisecond))
-	if err != nil {
-		t.Fatal(err)
-	}
-	retrieve(t, p, true, valueA)
+	base := newTestProvider(t, source)
+	p := NewPeriodicReloadProvider(ctx, base, 5*time.Millisecond)
+	retrieve(t, base, true, valueA)
 
 	source.set(valueB, nil)
 	waitFor(t, p.IsExpired)
-	retrieve(t, p, true, valueB)
+	retrieve(t, base, true, valueB)
 
 	cancel()
 	time.Sleep(50 * time.Millisecond)
@@ -342,7 +339,7 @@ func TestReloadableCredentials(t *testing.T) {
 	dir := t.TempDir()
 	writeSecretVolume(t, dir, valueA.APIKey, valueA.APISecret)
 
-	creds, err := NewReloadableCredentials(t.Context(), KubernetesSecretSource(dir, testAPIKeyFile, testAPISecretFile), ReloadableOptWithInterval(0))
+	creds, err := NewReloadableCredentials(t.Context(), KubernetesSecretSource(dir, testAPIKeyFile, testAPISecretFile))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -393,10 +390,7 @@ func TestCredentialsReloadStatic(t *testing.T) {
 
 func TestReloadableCredentialsConcurrentUse(t *testing.T) {
 	source := &testSource{value: valueA}
-	creds, err := NewReloadableCredentials(t.Context(), source.read, ReloadableOptWithInterval(time.Millisecond))
-	if err != nil {
-		t.Fatal(err)
-	}
+	creds := NewCredentials(NewPeriodicReloadProvider(t.Context(), newTestProvider(t, source), time.Millisecond))
 
 	var wg sync.WaitGroup
 	for i := range 8 {

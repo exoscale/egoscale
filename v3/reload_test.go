@@ -113,12 +113,12 @@ func newTestClient(t *testing.T, api *fakeAPI, creds *credentials.Credentials) *
 func newReloadableTestCredentials(t *testing.T, source *rotatingSource) *credentials.Credentials {
 	t.Helper()
 
-	creds, err := credentials.NewReloadableCredentials(t.Context(), source.read, credentials.ReloadableOptWithInterval(0))
+	p, err := credentials.NewReloadableProvider(source.read)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return creds
+	return credentials.NewCredentials(p)
 }
 
 func checkKeys(t *testing.T, requests []fakeRequest, want ...string) {

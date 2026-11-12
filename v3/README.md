@@ -114,8 +114,9 @@ The client reads its credentials for every request. With a reloadable provider, 
 program (a Kubernetes controller, a daemon…) uses a rotated API key without being restarted or
 creating a new client.
 
-The provider re-reads its source every 30 seconds, and right away when the API rejects the key a
-request was signed with: the request is then signed again and retried once, if the key changed.
+`credentials.NewReloadableCredentials` re-reads its source every 30 seconds, and right away when the
+API rejects the key a request was signed with: the request is then signed again and retried once,
+if the key changed.
 New credentials are used as soon as they are read. If the source can't be read, is incomplete or
 doesn't have the format of an Exoscale API key and secret, the last credentials are kept and the
 error is logged on every re-read.
@@ -126,6 +127,11 @@ Two sources are provided:
 - `credentials.JSONFileSource(path)`: a JSON file with `api_key` and `api_secret` fields.
 
 Any `func() (credentials.Value, error)` works as a source too.
+
+The pieces can also be used separately: `credentials.NewReloadableProvider(source)` only re-reads
+the source when the API rejects the key, and `credentials.NewPeriodicReloadProvider(ctx, p, interval)`
+adds a periodic re-read to any `credentials.Reloader`, so other reload strategies can be built the
+same way.
 
 ```Golang
 // The periodic re-read stops when ctx is done.

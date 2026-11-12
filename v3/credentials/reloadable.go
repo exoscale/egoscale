@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	// DefaultReloadInterval is how often a ReloadableProvider re-reads its Source by default.
+	// DefaultReloadInterval is how often NewReloadableCredentials re-reads its Source.
 	DefaultReloadInterval = 30 * time.Second
 )
 
@@ -45,6 +45,8 @@ func checkFormat(v Value) error {
 // The v3 client calls Reload when the API rejects the key it signed a request with,
 // then retries the request once if the credentials changed.
 type Reloader interface {
+	Provider
+
 	// Reload re-reads the credentials, unless they were already read after since.
 	// Changes are reported by the Provider's IsExpired.
 	Reload(ctx context.Context, since time.Time) error
@@ -121,15 +123,6 @@ func JSONFileSource(path string) Source {
 // ReloadableOpt represents a ReloadableProvider option.
 type ReloadableOpt func(*ReloadableProvider)
 
-// ReloadableOptWithInterval returns a ReloadableOpt setting how often the Source is re-read
-// (DefaultReloadInterval by default). Zero or less disables the periodic re-read: the Source
-// is then only re-read when the API rejects the key.
-func ReloadableOptWithInterval(d time.Duration) ReloadableOpt {
-	return func(p *ReloadableProvider) {
-		p.interval = d
-	}
-}
-
 // ReloadableOptWithLogHandler returns a ReloadableOpt logging the reloads, and the errors when
 // the Source can't be read or is invalid. Nothing is logged by default.
 func ReloadableOptWithLogHandler(h slog.Handler) ReloadableOpt {
@@ -138,20 +131,19 @@ func ReloadableOptWithLogHandler(h slog.Handler) ReloadableOpt {
 	}
 }
 
-// A ReloadableProvider is a Provider whose credentials are re-read from a Source while the
+// A ReloadableProvider is a Reloader whose credentials are re-read from a Source while the
 // program runs, so that a rotated API key is used without restarting it, and without creating
 // a new client: the v3 client gets its credentials for every request.
 //
-// The Source is re-read periodically, and right away when the API rejects the key (see Reloader).
-// New credentials are used as soon as they are read. If the Source can't be read, is incomplete
-// or doesn't have the format of an API key and secret, the last credentials are kept and the
-// error is logged on every re-read.
+// The Source is only re-read by Reload: when the API rejects the key, or by a wrapper adding
+// another strategy, like NewPeriodicReloadProvider. New credentials are used as soon as they are
+// read. If the Source can't be read, is incomplete or doesn't have the format of an API key and
+// secret, the last credentials are kept and the error is logged.
 //
 // Retrieve doesn't read the Source: it returns the last credentials read.
 type ReloadableProvider struct {
-	source   Source
-	interval time.Duration
-	logger   *slog.Logger
+	source Source
+	logger *slog.Logger
 
 	// reloadMu serializes the reads of the Source.
 	reloadMu sync.Mutex
@@ -165,12 +157,10 @@ type ReloadableProvider struct {
 
 // NewReloadableProvider returns a ReloadableProvider reading its credentials from source.
 // The first read happens here and its error is returned.
-// The periodic re-read runs in the background until ctx is done.
-func NewReloadableProvider(ctx context.Context, source Source, opts ...ReloadableOpt) (*ReloadableProvider, error) {
+func NewReloadableProvider(source Source, opts ...ReloadableOpt) (*ReloadableProvider, error) {
 	p := &ReloadableProvider{
-		source:   source,
-		interval: DefaultReloadInterval,
-		logger:   slog.New(slog.DiscardHandler),
+		source: source,
+		logger: slog.New(slog.DiscardHandler),
 	}
 	for _, opt := range opts {
 		opt(p)
@@ -184,22 +174,18 @@ func NewReloadableProvider(ctx context.Context, source Source, opts ...Reloadabl
 	p.value = v
 	p.expired = true
 
-	if p.interval > 0 {
-		go p.run(ctx)
-	}
-
 	return p, nil
 }
 
-// NewReloadableCredentials returns Credentials backed by a ReloadableProvider: see
-// NewReloadableProvider.
+// NewReloadableCredentials returns Credentials backed by a ReloadableProvider reading source,
+// also re-read every DefaultReloadInterval until ctx is done (see NewPeriodicReloadProvider).
 func NewReloadableCredentials(ctx context.Context, source Source, opts ...ReloadableOpt) (*Credentials, error) {
-	p, err := NewReloadableProvider(ctx, source, opts...)
+	p, err := NewReloadableProvider(source, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewCredentials(p), nil
+	return NewCredentials(NewPeriodicReloadProvider(ctx, p, DefaultReloadInterval)), nil
 }
 
 // Retrieve returns the last credentials read from the Source.
@@ -266,16 +252,32 @@ func (p *ReloadableProvider) read() (Value, error) {
 	return v, checkFormat(v)
 }
 
-func (p *ReloadableProvider) run(ctx context.Context) {
-	ticker := time.NewTicker(p.interval)
-	defer ticker.Stop()
+// A PeriodicReloadProvider is a Reloader also reloaded at a regular interval, so that new
+// credentials are picked up before the API rejects the old ones.
+type PeriodicReloadProvider struct {
+	Reloader
+}
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			_ = p.Reload(ctx, time.Now())
-		}
+// NewPeriodicReloadProvider returns a PeriodicReloadProvider calling the Reload of p every
+// interval (DefaultReloadInterval if it isn't positive), until ctx is done.
+func NewPeriodicReloadProvider(ctx context.Context, p Reloader, interval time.Duration) *PeriodicReloadProvider {
+	if interval <= 0 {
+		interval = DefaultReloadInterval
 	}
+
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				_ = p.Reload(ctx, time.Now())
+			}
+		}
+	}()
+
+	return &PeriodicReloadProvider{Reloader: p}
 }

@@ -17,10 +17,6 @@ import (
 const (
 	// DefaultReloadInterval is how often a ReloadableProvider re-reads its Source by default.
 	DefaultReloadInterval = 30 * time.Second
-
-	// reloadMinInterval rate-limits the on-demand reloads (Reload), so that a burst of requests
-	// rejected at the same time reads the Source only once.
-	reloadMinInterval = 5 * time.Second
 )
 
 // ErrInvalidFormat is returned when the credentials read don't have the format of an Exoscale
@@ -49,8 +45,9 @@ func checkFormat(v Value) error {
 // The v3 client calls Reload when the API rejects the key it signed a request with,
 // then retries the request once if the credentials changed.
 type Reloader interface {
-	// Reload re-reads the credentials. Changes are reported by the Provider's IsExpired.
-	Reload(ctx context.Context) error
+	// Reload re-reads the credentials, unless they were already read after since.
+	// Changes are reported by the Provider's IsExpired.
+	Reload(ctx context.Context, since time.Time) error
 }
 
 // A Source reads the credentials from where they are stored, every time it is called.
@@ -158,8 +155,8 @@ type ReloadableProvider struct {
 
 	// reloadMu serializes the reads of the Source.
 	reloadMu sync.Mutex
-	// lastReloadCall is the time of the last read made by Reload, to rate-limit them.
-	lastReloadCall time.Time
+	// lastRead is when the last read of the Source started.
+	lastRead time.Time
 
 	mu      sync.RWMutex
 	value   Value
@@ -179,6 +176,7 @@ func NewReloadableProvider(ctx context.Context, source Source, opts ...Reloadabl
 		opt(p)
 	}
 
+	p.lastRead = time.Now()
 	v, err := p.read()
 	if err != nil {
 		return nil, fmt.Errorf("reloadable provider: %w", err)
@@ -222,46 +220,18 @@ func (p *ReloadableProvider) IsExpired() bool {
 	return p.expired
 }
 
-// Reload re-reads the Source now, unless Reload already did less than a few seconds ago.
+// Reload re-reads the Source now, unless a read started after since: the v3 client passes the
+// time it sent the rejected request, so a burst of rejected requests reads the Source once.
 // It returns an error if the Source can't be read or is invalid; the previous credentials are
 // kept in that case.
-func (p *ReloadableProvider) Reload(ctx context.Context) error {
-	return p.reload(ctx, false)
-}
-
-func (p *ReloadableProvider) read() (Value, error) {
-	v, err := p.source()
-	if err != nil {
-		return Value{}, err
-	}
-
-	return v, checkFormat(v)
-}
-
-func (p *ReloadableProvider) run(ctx context.Context) {
-	ticker := time.NewTicker(p.interval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			_ = p.reload(ctx, true)
-		}
-	}
-}
-
-func (p *ReloadableProvider) reload(ctx context.Context, force bool) error {
+func (p *ReloadableProvider) Reload(ctx context.Context, since time.Time) error {
 	p.reloadMu.Lock()
 	defer p.reloadMu.Unlock()
 
-	if !force {
-		if time.Since(p.lastReloadCall) < reloadMinInterval {
-			return nil
-		}
-		p.lastReloadCall = time.Now()
+	if p.lastRead.After(since) {
+		return nil
 	}
+	p.lastRead = time.Now()
 
 	v, err := p.read()
 	if err != nil {
@@ -284,4 +254,27 @@ func (p *ReloadableProvider) reload(ctx context.Context, force bool) error {
 	p.logger.InfoContext(ctx, "Exoscale API credentials reloaded", "api_key", v.APIKey)
 
 	return nil
+}
+
+func (p *ReloadableProvider) read() (Value, error) {
+	v, err := p.source()
+	if err != nil {
+		return Value{}, err
+	}
+
+	return v, checkFormat(v)
+}
+
+func (p *ReloadableProvider) run(ctx context.Context) {
+	ticker := time.NewTicker(p.interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			_ = p.Reload(ctx, time.Now())
+		}
+	}
 }

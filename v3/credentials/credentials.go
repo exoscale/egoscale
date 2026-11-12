@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 )
 
 var (
@@ -89,10 +90,10 @@ func (c *Credentials) retrieve() error {
 	return nil
 }
 
-// Reload asks the provider to re-read the credentials, if it is a Reloader (or a ChainProvider
-// whose current provider is one). It does nothing for the other providers.
-// New credentials are returned by the next Get.
-func (c *Credentials) Reload(ctx context.Context) error {
+// Reload asks the provider to re-read the credentials unless it already did after since, if it
+// is a Reloader (or a ChainProvider whose current provider is one). It does nothing for the
+// other providers. New credentials are returned by the next Get.
+func (c *Credentials) Reload(ctx context.Context, since time.Time) error {
 	c.RLock()
 	p := c.provider
 	if chain, ok := p.(*ChainProvider); ok {
@@ -102,7 +103,7 @@ func (c *Credentials) Reload(ctx context.Context) error {
 
 	// The lock isn't held while reloading, so that Get doesn't wait for the source to be read.
 	if r, ok := p.(Reloader); ok {
-		return r.Reload(ctx)
+		return r.Reload(ctx, since)
 	}
 
 	return nil

@@ -325,12 +325,13 @@ func (c *Client) executeRequestInterceptors(ctx context.Context, req *http.Reque
 // do sends request. If the API rejects the API key the request was signed with, it reloads the
 // credentials and, if they changed, signs the request again and retries it once.
 func (c *Client) do(request *http.Request) (*http.Response, error) {
+	sentAt := time.Now()
 	response, err := c.send(request)
 	if err != nil || !isInvalidKeyResponse(response) {
 		return response, err
 	}
 
-	retry, ok := c.retryWithNewCredentials(request)
+	retry, ok := c.retryWithNewCredentials(request, sentAt)
 	if !ok {
 		return response, nil
 	}
@@ -342,17 +343,17 @@ func (c *Client) do(request *http.Request) (*http.Response, error) {
 	return c.send(retry)
 }
 
-// retryWithNewCredentials reloads the credentials of a request signed by c and rejected by the
-// API, and returns a copy of the request signed with the new ones. It returns false if the
-// credentials didn't change, or the request can't be sent again.
-func (c *Client) retryWithNewCredentials(request *http.Request) (*http.Request, bool) {
+// retryWithNewCredentials reloads the credentials of a request signed by c, sent at sentAt and
+// rejected by the API, and returns a copy of the request signed with the new ones. It returns
+// false if the credentials didn't change, or the request can't be sent again.
+func (c *Client) retryWithNewCredentials(request *http.Request, sentAt time.Time) (*http.Request, bool) {
 	signedKey, ok := signedAPIKey(request)
 	if !ok || c.credentials == nil || (request.Body != nil && request.GetBody == nil) {
 		return nil, false
 	}
 
 	ctx := request.Context()
-	if err := c.credentials.Reload(ctx); err != nil {
+	if err := c.credentials.Reload(ctx, sentAt); err != nil {
 		c.logger.DebugContext(ctx, "unable to reload the credentials", "error", err)
 	}
 

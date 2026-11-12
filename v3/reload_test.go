@@ -10,6 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/exoscale/egoscale/v3/credentials"
 )
@@ -150,7 +151,7 @@ func TestClientUsesReloadedCredentials(t *testing.T) {
 	api.validKey = testNewKey
 	api.mu.Unlock()
 	source.set(testNewKey, testNewSecret)
-	if err := creds.Reload(t.Context()); err != nil {
+	if err := creds.Reload(t.Context(), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 

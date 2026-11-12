@@ -47,9 +47,8 @@ func checkFormat(v Value) error {
 type Reloader interface {
 	Provider
 
-	// Reload re-reads the credentials, unless they were already read after since.
-	// Changes are reported by the Provider's IsExpired.
-	Reload(ctx context.Context, since time.Time) error
+	// Reload re-reads the credentials. Changes are reported by the Provider's IsExpired.
+	Reload(ctx context.Context) error
 }
 
 // A Source reads the credentials from where they are stored, every time it is called.
@@ -207,15 +206,19 @@ func (p *ReloadableProvider) IsExpired() bool {
 	return p.expired
 }
 
-// Reload re-reads the Source now, unless a read started after since: the v3 client passes the
-// time it sent the rejected request, so a burst of rejected requests reads the Source once.
+// Reload re-reads the Source, unless a read started after Reload was called: requests rejected
+// together wait for the same read instead of each reading the Source again.
 // It returns an error if the Source can't be read or is invalid; the previous credentials are
 // kept in that case.
-func (p *ReloadableProvider) Reload(ctx context.Context, since time.Time) error {
+func (p *ReloadableProvider) Reload(ctx context.Context) error {
+	return p.reload(ctx, time.Now())
+}
+
+func (p *ReloadableProvider) reload(ctx context.Context, calledAt time.Time) error {
 	p.reloadMu.Lock()
 	defer p.reloadMu.Unlock()
 
-	if p.lastRead.After(since) {
+	if p.lastRead.After(calledAt) {
 		return nil
 	}
 	p.lastRead = time.Now()
@@ -274,7 +277,7 @@ func NewPeriodicReloadProvider(ctx context.Context, p Reloader, interval time.Du
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				_ = p.Reload(ctx, time.Now())
+				_ = p.Reload(ctx)
 			}
 		}
 	}()

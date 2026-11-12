@@ -198,55 +198,52 @@ func TestReloadableProviderReload(t *testing.T) {
 	retrieve(t, p, true, valueA)
 
 	// Unchanged credentials.
-	if err := p.Reload(t.Context(), time.Now()); err != nil {
+	if err := p.Reload(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	retrieve(t, p, false, valueA)
 
 	// New credentials.
 	source.set(valueB, nil)
-	if err := p.Reload(t.Context(), time.Now()); err != nil {
+	if err := p.Reload(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	retrieve(t, p, true, valueB)
 
 	// The source can't be read: the last credentials are kept.
 	source.set(Value{}, ErrMissingIncomplete)
-	if err := p.Reload(t.Context(), time.Now()); !errors.Is(err, ErrMissingIncomplete) {
+	if err := p.Reload(t.Context()); !errors.Is(err, ErrMissingIncomplete) {
 		t.Fatalf("got error %v, want %v", err, ErrMissingIncomplete)
 	}
 	retrieve(t, p, false, valueB)
 }
 
-func TestReloadableProviderReloadSince(t *testing.T) {
-	beforeCreation := time.Now()
+func TestReloadableProviderReloadSkip(t *testing.T) {
 	source := &testSource{value: valueA}
 	p := newTestProvider(t, source)
 
-	// Read when p was created, after the request was sent.
-	if err := p.Reload(t.Context(), beforeCreation); err != nil {
+	// Two requests rejected together: the second one waits for the read of the first.
+	calledAt := time.Now()
+	source.set(valueB, nil)
+	if err := p.reload(t.Context(), calledAt); err != nil {
 		t.Fatal(err)
 	}
-	if got := source.calls.Load(); got != 1 {
-		t.Fatalf("source read %d times, want 1", got)
+	if err := p.reload(t.Context(), calledAt); err != nil {
+		t.Fatal(err)
 	}
-
-	// A burst of requests sent at the same time and rejected: one read.
-	sentAt := time.Now()
-	source.set(valueB, nil)
-	var wg sync.WaitGroup
-	for range 8 {
-		wg.Go(func() {
-			if err := p.Reload(t.Context(), sentAt); err != nil {
-				t.Error(err)
-			}
-		})
-	}
-	wg.Wait()
+	// The first read is the one of NewReloadableProvider.
 	if got := source.calls.Load(); got != 2 {
 		t.Fatalf("source read %d times, want 2", got)
 	}
 	retrieve(t, p, true, valueB)
+
+	// A request rejected after that read reads the source again.
+	if err := p.Reload(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if got := source.calls.Load(); got != 3 {
+		t.Fatalf("source read %d times, want 3", got)
+	}
 }
 
 func TestCheckFormat(t *testing.T) {
@@ -288,7 +285,7 @@ func TestReloadableProviderInvalidFormat(t *testing.T) {
 	retrieve(t, p, true, valueA)
 
 	source.set(invalid, nil)
-	if err := p.Reload(t.Context(), time.Now()); !errors.Is(err, ErrInvalidFormat) {
+	if err := p.Reload(t.Context()); !errors.Is(err, ErrInvalidFormat) {
 		t.Fatalf("got error %v, want %v", err, ErrInvalidFormat)
 	}
 	retrieve(t, p, false, valueA)
@@ -351,7 +348,7 @@ func TestReloadableCredentials(t *testing.T) {
 	if v, err := creds.Get(); err != nil || v != valueA {
 		t.Fatalf("before Reload, Get() = %v, %v, want %v", v, err, valueA)
 	}
-	if err := creds.Reload(t.Context(), time.Now()); err != nil {
+	if err := creds.Reload(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	if v, err := creds.Get(); err != nil || v != valueB {
@@ -370,7 +367,7 @@ func TestCredentialsReloadChain(t *testing.T) {
 	}
 
 	source.set(valueB, nil)
-	if err := creds.Reload(t.Context(), time.Now()); err != nil {
+	if err := creds.Reload(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	if v, err := creds.Get(); err != nil || v != valueB {
@@ -380,7 +377,7 @@ func TestCredentialsReloadChain(t *testing.T) {
 
 func TestCredentialsReloadStatic(t *testing.T) {
 	creds := NewStaticCredentials(valueA.APIKey, valueA.APISecret)
-	if err := creds.Reload(t.Context(), time.Now()); err != nil {
+	if err := creds.Reload(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	if v, err := creds.Get(); err != nil || v != valueA {
@@ -404,7 +401,7 @@ func TestReloadableCredentialsConcurrentUse(t *testing.T) {
 					t.Errorf("Get() = %v, %v", v, err)
 					return
 				}
-				_ = creds.Reload(t.Context(), time.Now())
+				_ = creds.Reload(t.Context())
 			}
 		})
 	}

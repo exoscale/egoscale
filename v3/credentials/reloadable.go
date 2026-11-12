@@ -213,6 +213,7 @@ func (p *ReloadableProvider) Retrieve() (Value, error) {
 }
 
 // IsExpired returns true when new credentials were read since the last Retrieve.
+// Credentials.Get calls it on every request: that's how reloaded credentials reach the client.
 func (p *ReloadableProvider) IsExpired() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()

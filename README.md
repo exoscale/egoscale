@@ -1,8 +1,3 @@
----
-title: Egoscale
-description: the Go library for Exoscale
----
-
 # Egoscale
 
 [![Actions Status](https://github.com/exoscale/egoscale/workflows/CI/badge.svg?branch=master)](https://github.com/exoscale/egoscale/actions?query=workflow%3ACI+branch%3Amaster)
@@ -20,9 +15,8 @@ Import library with:
 
 Check [godoc][docs] for full reference.
 
-## Deprecations:
-
-v1 and v2 of `egoscale` are deprecated, please use [v3](https://pkg.go.dev/github.com/exoscale/egoscale/v3)
+> [!IMPORTANT]
+> v1 and v2 of `egoscale` are deprecated, please use [v3](https://pkg.go.dev/github.com/exoscale/egoscale/v3)
 
 ## Known users
 

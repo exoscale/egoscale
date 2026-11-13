@@ -14002,7 +14002,7 @@ func (l ListPrivateNetworksResponse) FindPrivateNetwork(nameOrID string) (Privat
 	return PrivateNetwork{}, fmt.Errorf("%q not found in ListPrivateNetworksResponse: %w", nameOrID, ErrNotFound)
 }
 
-// List Private Networks
+// Private Networks are deprecated in favor of VPC.
 func (c Client) ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksResponse, error) {
 	path := "/private-network"
 
@@ -14054,7 +14054,7 @@ type CreatePrivateNetworkRequest struct {
 	StartIP net.IP `json:"start-ip,omitempty"`
 }
 
-// Create a Private Network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetworkRequest) (*Operation, error) {
 	path := "/private-network"
 
@@ -14097,7 +14097,7 @@ func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetwo
 	return bodyresp, nil
 }
 
-// Delete a Private Network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
@@ -14133,7 +14133,7 @@ func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, 
 	return bodyresp, nil
 }
 
-// Retrieve Private Network details
+// Private Networks are deprecated in favor of VPC.
 func (c Client) GetPrivateNetwork(ctx context.Context, id UUID) (*PrivateNetwork, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
@@ -14185,7 +14185,7 @@ type UpdatePrivateNetworkRequest struct {
 	StartIP net.IP `json:"start-ip,omitempty"`
 }
 
-// Update a Private Network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
@@ -14234,7 +14234,7 @@ const (
 	ResetPrivateNetworkFieldFieldLabels ResetPrivateNetworkFieldField = "labels"
 )
 
-// Reset Private Network field
+// Private Networks are deprecated in favor of VPC.
 func (c Client) ResetPrivateNetworkField(ctx context.Context, id UUID, field ResetPrivateNetworkFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v/%v", id, field)
 
@@ -14283,7 +14283,7 @@ type AttachInstanceToPrivateNetworkRequest struct {
 	IP net.IP `json:"ip,omitempty"`
 }
 
-// Attach a Compute instance to a Private Network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req AttachInstanceToPrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:attach", id)
 
@@ -14331,7 +14331,7 @@ type DetachInstanceFromPrivateNetworkRequest struct {
 	Instance *Instance `json:"instance" validate:"required"`
 }
 
-// Detach a Compute instance from a Private Network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, req DetachInstanceFromPrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:detach", id)
 
@@ -14385,7 +14385,7 @@ type UpdatePrivateNetworkInstanceIPRequest struct {
 	IP net.IP `json:"ip,omitempty"`
 }
 
-// Update the IP address of an instance attached to a managed private network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req UpdatePrivateNetworkInstanceIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:update-ip", id)
 
@@ -15904,6 +15904,8 @@ type CreateSKSNodepoolRequest struct {
 	// Number of instances
 	Size   int64             `json:"size" validate:"required,gt=0"`
 	Taints SKSNodepoolTaints `json:"taints,omitempty"`
+	// Template reference
+	Template *TemplateRef `json:"template,omitempty"`
 }
 
 // Create a new SKS Nodepool

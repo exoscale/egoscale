@@ -6102,8 +6102,8 @@ type SKSNodepool struct {
 	// Template reference
 	Template *Template `json:"template,omitempty"`
 	// Nodepool template selection:
-	// * `pinned`: the template set with `update-sks-nodepool`.
-	// * `pinned`: the template set with `update-sks-nodepool`.
+	// * `pinned`: the template set at creation or with `update-sks-nodepool`.
+	// * `pinned`: the template set at creation or with `update-sks-nodepool`.
 	TemplateSelection SKSNodepoolTemplateSelection `json:"template-selection,omitempty"`
 	// Nodepool version
 	Version string `json:"version,omitempty"`

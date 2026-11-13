@@ -426,7 +426,7 @@ tags:
     x-display-name: Domain
     x-weight: 710
     x-icon: exo-dns
-  - description: Private Network provides private L2 networking functionality between Compute instances.
+  - description: Private Network provides private L2 networking functionality between Compute instances. Private Networks are deprecated in favor of VPC.
     parent: compute
     externalDocs:
       description: Read more
@@ -8420,7 +8420,7 @@ components:
             Nodepool template selection:
 
             * `auto`: the latest template of the Nodepool Kubernetes version and variant;
-            * `pinned`: the template set with `update-sks-nodepool`.
+            * `pinned`: the template set at creation or with `update-sks-nodepool`.
         disk-size:
           type: integer
           format: int64
@@ -13491,7 +13491,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -15292,7 +15292,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -16039,7 +16039,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/private-network'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters: []
       summary: List Private Networks
       operationId: list-private-networks
@@ -16053,7 +16053,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters: []
       summary: Create a Private Network
       requestBody:
@@ -17002,7 +17002,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -17035,7 +17035,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -17089,7 +17089,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/private-network'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -17109,7 +17109,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -23098,6 +23098,9 @@ paths:
                   uniqueItems: true
                   maxItems: 16
                   description: Nodepool Private Networks
+                template:
+                  $ref: '#/components/schemas/template-ref'
+                  description: 'Nodepool Instance template: an `id` among the available templates of the Nodepool Kubernetes version and variant (see `list-sks-nodepool-templates`). Without it, the Nodepool follows the latest template of its Kubernetes version'
                 size:
                   type: integer
                   format: int64
@@ -24971,7 +24974,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true

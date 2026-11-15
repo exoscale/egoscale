@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -56,6 +57,35 @@ func TestPollInterval(t *testing.T) {
 			if interval < test.expectedMin || interval > test.expectedMax {
 				t.Errorf("pollInterval(%v) = %v, expected between %v and %v",
 					test.runTime, interval, test.expectedMin, test.expectedMax)
+			}
+		})
+	}
+}
+
+func TestWaitAlreadyFinishedOperation(t *testing.T) {
+	c := Client{}
+
+	tests := []struct {
+		description string
+		state       OperationState
+		states      []OperationState
+		wantErr     bool
+	}{
+		{"failed operation with no expected states", OperationStateFailure, nil, false},
+		{"failed operation, success expected", OperationStateFailure, []OperationState{OperationStateSuccess}, true},
+		{"successful operation, success expected", OperationStateSuccess, []OperationState{OperationStateSuccess}, false},
+		{"timed out operation, success expected", OperationStateTimeout, []OperationState{OperationStateSuccess}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			op := &Operation{State: tt.state}
+			got, err := c.Wait(context.Background(), op, tt.states...)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("Wait() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !tt.wantErr && got != op {
+				t.Fatalf("Wait() = %+v, want the given operation", got)
 			}
 		})
 	}

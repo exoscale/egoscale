@@ -51,7 +51,7 @@ func (c Client) Wait(ctx context.Context, op *Operation, states ...OperationStat
 	defer ticker.Stop()
 
 	if op.State != OperationStatePending {
-		return op, nil
+		return checkOperationState(op, states)
 	}
 
 	var subsequentErrors int
@@ -90,6 +90,12 @@ polling:
 		}
 	}
 
+	return checkOperationState(operation, states)
+}
+
+// checkOperationState returns the operation if its state is one of the given
+// states (or if no states are given), and an error otherwise.
+func checkOperationState(operation *Operation, states []OperationState) (*Operation, error) {
 	if len(states) == 0 {
 		return operation, nil
 	}

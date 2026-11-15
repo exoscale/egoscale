@@ -6,6 +6,7 @@ Unreleased
 
 - v3: export `SignHTTPRequest`, the EXO2-HMAC-SHA256 request signer, for callers that build their own requests
 - v3: implement generic logger with log/slog (#842)
+- v3: `Wait` now checks the expected states also for operations that are already finished, instead of returning a failed operation as success
 
 3.1.63
 ------

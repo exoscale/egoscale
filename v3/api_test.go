@@ -1,8 +1,6 @@
 package v3
 
 import (
-	"encoding/json"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -58,67 +56,6 @@ func TestPollInterval(t *testing.T) {
 			if interval < test.expectedMin || interval > test.expectedMax {
 				t.Errorf("pollInterval(%v) = %v, expected between %v and %v",
 					test.runTime, interval, test.expectedMin, test.expectedMax)
-			}
-		})
-	}
-}
-
-func TestDateJSON(t *testing.T) {
-	type payload struct {
-		Ptr *Date `json:"ptr,omitempty"`
-		Val Date  `json:"val,omitempty"`
-	}
-
-	date := func(s string) *Date { d := Date(s); return &d }
-
-	tests := []struct {
-		name         string
-		input        string
-		expected     payload
-		expectedJSON string
-	}{
-		{
-			name:         "date in a value field",
-			input:        `{"val":"2024-02-29"}`,
-			expected:     payload{Val: "2024-02-29"},
-			expectedJSON: `{"val":"2024-02-29"}`,
-		},
-		{
-			name:         "date in a pointer field",
-			input:        `{"ptr":"2026-11-17"}`,
-			expected:     payload{Ptr: date("2026-11-17")},
-			expectedJSON: `{"ptr":"2026-11-17"}`,
-		},
-		{
-			name:         "unset dates are omitted",
-			input:        `{}`,
-			expected:     payload{},
-			expectedJSON: `{}`,
-		},
-		{
-			name:         "null dates are left unset",
-			input:        `{"ptr":null,"val":null}`,
-			expected:     payload{},
-			expectedJSON: `{}`,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			var actual payload
-			if err := json.Unmarshal([]byte(test.input), &actual); err != nil {
-				t.Fatal(err)
-			}
-			if !reflect.DeepEqual(actual, test.expected) {
-				t.Errorf("unmarshal %s = %+v, expected %+v", test.input, actual, test.expected)
-			}
-
-			actualJSON, err := json.Marshal(actual)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if string(actualJSON) != test.expectedJSON {
-				t.Errorf("marshal %+v = %s, expected %s", actual, actualJSON, test.expectedJSON)
 			}
 		})
 	}

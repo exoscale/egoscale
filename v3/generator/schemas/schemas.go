@@ -112,13 +112,11 @@ func RenderSimpleType(s *base.Schema) string {
 		switch s.Format {
 		case "date-time":
 			return "time.Time"
-		case "date":
-			return "Date"
 		case "uuid":
 			return "UUID"
 		case "ipv4", "ip":
 			return "net.IP"
-		case "uri-reference", "uri":
+		case "uri-reference", "uri", "date":
 			return "string"
 		case "byte":
 			return "[]byte"

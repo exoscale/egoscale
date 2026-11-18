@@ -29,7 +29,7 @@ func TestRenderSchemaRejectsUnsupportedNullableTypes(t *testing.T) {
 
 func TestRenderSchemaFormats(t *testing.T) {
 	tests := map[string]string{
-		"date":      "Date",
+		"date":      "string",
 		"date-time": "time.Time",
 		"uuid":      "UUID",
 	}
@@ -54,7 +54,7 @@ func TestRenderSchemaDateVariants(t *testing.T) {
         value:
           type: string
           format: date`,
-			expected: "Value Date `json:\"value\" validate:\"required\"`",
+			expected: "Value string `json:\"value\" validate:\"required\"`",
 		},
 		"nullable": {
 			schema: `type: object
@@ -62,7 +62,7 @@ func TestRenderSchemaDateVariants(t *testing.T) {
         value:
           type: [string, "null"]
           format: date`,
-			expected: "Value *Date",
+			expected: "Value *string",
 		},
 		"array": {
 			schema: `type: object
@@ -72,7 +72,7 @@ func TestRenderSchemaDateVariants(t *testing.T) {
           items:
             type: string
             format: date`,
-			expected: "Value []Date",
+			expected: "Value []string",
 		},
 	}
 	for name, tc := range tests {

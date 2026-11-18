@@ -35,14 +35,6 @@ func ParseUUID(s string) (UUID, error) {
 	return UUID(id.String()), nil
 }
 
-// Date is a calendar date serialized as "YYYY-MM-DD".
-// This comes from OpenAPI string properties with format: date.
-type Date string
-
-func (d Date) String() string {
-	return string(d)
-}
-
 // Wait is a helper that waits for async operation to reach the final state.
 // Final states are one of: failure, success, timeout.
 // If states argument are given, returns an error if the final state not match on of those.

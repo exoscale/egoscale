@@ -7,6 +7,7 @@ Unreleased
 - v3: export `SignHTTPRequest`, the EXO2-HMAC-SHA256 request signer, for callers that build their own requests
 - v3: implement generic logger with log/slog (#842)
 - v3: reload rotated API credentials without restarting: the client reads its credentials per request, new `credentials.NewReloadableCredentials` (#848)
+- v3: support string properties with date format (#852)
 
 3.1.63
 ------
@@ -18,7 +19,7 @@ Unreleased
 3.1.62
 ------
 
-- v3: regenerate from new API spec 
+- v3: regenerate from new API spec
 
 3.1.61
 ------
@@ -40,7 +41,7 @@ Unreleased
 3.1.58
 ------
 
-- v3: regenerate from new API spec 
+- v3: regenerate from new API spec
 
 3.1.57
 ------

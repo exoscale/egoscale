@@ -426,7 +426,7 @@ tags:
     x-display-name: Domain
     x-weight: 710
     x-icon: exo-dns
-  - description: Private Network provides private L2 networking functionality between Compute instances.
+  - description: Private Network provides private L2 networking functionality between Compute instances. Private Networks are deprecated in favor of VPC.
     parent: compute
     externalDocs:
       description: Read more
@@ -637,8 +637,6 @@ components:
         ephemeral-storage:
           type: string
           description: 'Ephemeral storage reservation, e.g., "1Gi" '
-      required:
-        - cpu
       description: Resources reserved for kube or system components.
     dbaas-service-clickhouse:
       type: object
@@ -1028,38 +1026,6 @@ components:
         - rsyslog
         - datadog
         - elasticsearch
-    cpu-manager-config:
-      type: object
-      properties:
-        cpu-manager-policy:
-          type: string
-          enum:
-            - static
-            - none
-          description: CPU management policy used by the kubelet. The "static" policy grants exclusive CPUs to Guaranteed pods requesting integer CPU limits. When set to "static", a CPU reservation must be provided via kube-reserved or system-reserved
-        cpu-manager-policy-options:
-          type: array
-          items:
-            type: string
-            enum:
-              - distribute-cpus-across-numa
-              - full-pcpus-only
-              - strict-cpu-reservation
-              - align-by-socket
-              - prefer-align-cpus-by-uncorecache
-              - distribute-cpus-across-cores
-          uniqueItems: true
-          description: CPU manager policy options used by the kubelet. They refine the behavior of the "static" cpu-manager-policy and are only valid when the policy is "static"
-        kube-reserved:
-          $ref: '#/components/schemas/reserved-resources'
-          description: Resources reserved for node components
-        system-reserved:
-          $ref: '#/components/schemas/reserved-resources'
-          description: Resources reserved for system components
-        cpu-manager-reconcile-period:
-          type: string
-          description: CPU manager reconcile period used by the kubelet, as a duration string (for example "10s").
-      description: CPU manager config
     get-confederatio-usage-response:
       description: GPU usage for all organizations
       properties:
@@ -5231,7 +5197,11 @@ components:
       required:
         - impact
         - zones
+        - calculation-date
       properties:
+        calculation-date:
+          type: string
+          format: date
         impact:
           type: object
           additionalProperties:
@@ -8049,6 +8019,31 @@ components:
         ipv6-enabled:
           type: boolean
           description: Enable IPv6 for instances
+        vpc:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: VPC ID
+            subnets:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: Subnet ID
+                required:
+                  - id
+                description: VPC Subnet
+              uniqueItems: true
+              description: VPC Subnets to attach the Instances to
+          required:
+            - id
+            - subnets
+          description: Instance Pool VPC
         id:
           type: string
           format: uuid
@@ -8062,6 +8057,9 @@ components:
           exclusiveMinimum: false
           exclusiveMaximum: false
           description: Instances disk size in GiB
+        ip-forwarding:
+          type: boolean
+          description: Enable IP forwarding on the Instances VPC interfaces
         ssh-keys:
           type: array
           items:
@@ -8322,6 +8320,9 @@ components:
         taints:
           $ref: '#/components/schemas/sks-nodepool-taints'
           description: Nodepool taints
+        kube-reserved:
+          $ref: '#/components/schemas/reserved-resources'
+          description: Resources reserved for Kubernetes node components (kubelet setting)
         nvidia-dra-driver:
           type: boolean
           description: Expose the GPUs with the NVIDIA DRA driver instead of the NVIDIA device plugin. Requires a GPU instance type and Kubernetes 1.34 or greater.
@@ -8382,6 +8383,9 @@ components:
           maxLength: 30
           minLength: 1
           description: 'The instances created by the Nodepool will be prefixed with this value (default: pool)'
+        system-reserved:
+          $ref: '#/components/schemas/reserved-resources'
+          description: Resources reserved for OS system daemons (kubelet setting)
         deploy-target:
           $ref: '#/components/schemas/deploy-target-ref'
           description: Instance Pool Deploy Target
@@ -8407,9 +8411,6 @@ components:
           format: uuid
           readOnly: true
           description: Nodepool ID
-        cpu-manager-config:
-          $ref: '#/components/schemas/cpu-manager-config'
-          description: CPU manager config
         template-selection:
           type: string
           enum:
@@ -8420,7 +8421,7 @@ components:
             Nodepool template selection:
 
             * `auto`: the latest template of the Nodepool Kubernetes version and variant;
-            * `pinned`: the template set with `update-sks-nodepool`.
+            * `pinned`: the template set at creation or with `update-sks-nodepool`.
         disk-size:
           type: integer
           format: int64
@@ -8441,6 +8442,9 @@ components:
           format: date-time
           readOnly: true
           description: Nodepool creation date
+        cpu-manager:
+          $ref: '#/components/schemas/cpu-manager'
+          description: CPU manager (kubelet settings)
       description: SKS Nodepool
     iam-assume-role-policy:
       type: object
@@ -12137,6 +12141,32 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/ai-api-key-deployment-ref'
+    cpu-manager:
+      type: object
+      properties:
+        policy:
+          type: string
+          enum:
+            - static
+            - none
+          description: CPU management policy used by the kubelet. The "static" policy grants exclusive CPUs to Guaranteed pods requesting integer CPU limits. When set to "static", a cpu value must be set in the Nodepool kube-reserved or system-reserved
+        policy-options:
+          type: array
+          items:
+            type: string
+            enum:
+              - distribute-cpus-across-numa
+              - full-pcpus-only
+              - strict-cpu-reservation
+              - align-by-socket
+              - prefer-align-cpus-by-uncorecache
+              - distribute-cpus-across-cores
+          uniqueItems: true
+          description: CPU manager policy options used by the kubelet. They refine the behavior of the "static" policy and are only valid when the policy is "static"
+        reconcile-period:
+          type: string
+          description: CPU manager reconcile period used by the kubelet, as a duration string (for example "10s").
+      description: CPU manager (kubelet settings)
 servers:
   - url: https://api-{zone}.exoscale.com/v2
     variables:
@@ -13491,7 +13521,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -14454,6 +14484,31 @@ paths:
                 ipv6-enabled:
                   type: boolean
                   description: 'Enable IPv6. DEPRECATED: use `public-ip-assignments`.'
+                vpc:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: VPC ID
+                    subnets:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            description: Subnet ID
+                        required:
+                          - id
+                        description: VPC Subnet
+                      uniqueItems: true
+                      description: VPC Subnets to attach the Instances to
+                  required:
+                    - id
+                    - subnets
+                  description: Instance Pool VPC
                 disk-size:
                   type: integer
                   format: int64
@@ -14462,6 +14517,9 @@ paths:
                   exclusiveMinimum: false
                   exclusiveMaximum: false
                   description: Instances disk size in GiB
+                ip-forwarding:
+                  type: boolean
+                  description: Enable IP forwarding on the Instances VPC interfaces
                 ssh-keys:
                   type: array
                   items:
@@ -14686,7 +14744,11 @@ paths:
                 type: object
                 required:
                   - impact
+                  - calculation-date
                 properties:
+                  calculation-date:
+                    type: string
+                    format: date
                   impact:
                     type: object
                     description: Map of SKUs to their different impact indicators
@@ -14695,7 +14757,7 @@ paths:
                       additionalProperties:
                         $ref: '#/components/schemas/impact-value-with-unit'
         "400":
-          description: Invalid request (e.g. product does not exist)
+          description: Invalid request (e.g. malformed SKU)
           content:
             application/json:
               schema:
@@ -15292,7 +15354,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -15408,6 +15470,10 @@ paths:
                 taints:
                   $ref: '#/components/schemas/sks-nodepool-taints'
                   description: Nodepool taints
+                kube-reserved:
+                  $ref: '#/components/schemas/reserved-resources'
+                  nullable: true
+                  description: Resources reserved for Kubernetes node components (kubelet setting)
                 nvidia-dra-driver:
                   type: boolean
                   description: Expose the GPUs with the NVIDIA DRA driver instead of the NVIDIA device plugin. Requires a GPU instance type and Kubernetes 1.34 or greater.
@@ -15444,6 +15510,10 @@ paths:
                   maxLength: 30
                   minLength: 1
                   description: 'Prefix to apply to managed instances names (default: pool), lowercase only'
+                system-reserved:
+                  $ref: '#/components/schemas/reserved-resources'
+                  nullable: true
+                  description: Resources reserved for OS system daemons (kubelet setting)
                 deploy-target:
                   $ref: '#/components/schemas/deploy-target-ref'
                   nullable: true
@@ -15457,10 +15527,6 @@ paths:
                   exclusiveMaximum: false
                   nullable: true
                   description: Maximum number of pods per node (kubelet setting)
-                cpu-manager-config:
-                  $ref: '#/components/schemas/cpu-manager-config'
-                  nullable: true
-                  description: CPU manager config
                 disk-size:
                   type: integer
                   format: int64
@@ -15473,6 +15539,10 @@ paths:
                   $ref: '#/components/schemas/nvidia-mig-profiles'
                   nullable: true
                   description: Nvidia MIG Profiles
+                cpu-manager:
+                  $ref: '#/components/schemas/cpu-manager'
+                  nullable: true
+                  description: CPU manager (kubelet settings)
       operationId: update-sks-nodepool
     get:
       tags:
@@ -15901,6 +15971,32 @@ paths:
                 ipv6-enabled:
                   type: boolean
                   description: 'Enable IPv6. DEPRECATED: use `public-ip-assignments`.'
+                vpc:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: VPC ID
+                    subnets:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            description: Subnet ID
+                        required:
+                          - id
+                        description: VPC Subnet
+                      uniqueItems: true
+                      description: VPC Subnets to attach the Instances to
+                  required:
+                    - id
+                    - subnets
+                  nullable: true
+                  description: Instance Pool VPC
                 disk-size:
                   type: integer
                   format: int64
@@ -15909,6 +16005,9 @@ paths:
                   exclusiveMinimum: false
                   exclusiveMaximum: false
                   description: Instances disk size in GiB
+                ip-forwarding:
+                  type: boolean
+                  description: Enable IP forwarding on the Instances VPC interfaces
                 ssh-keys:
                   type: array
                   items:
@@ -16039,7 +16138,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/private-network'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters: []
       summary: List Private Networks
       operationId: list-private-networks
@@ -16053,7 +16152,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters: []
       summary: Create a Private Network
       requestBody:
@@ -16239,6 +16338,42 @@ paths:
             format: uuid
       summary: Retrieve Security Group details
       operationId: get-security-group
+    put:
+      tags:
+        - security-group
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/operation'
+      description: ""
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Update a Security Group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  minLength: 1
+                  description: Security Group name
+                description:
+                  type: string
+                  maxLength: 255
+                  description: Security Group description
+      operationId: update-security-group
     delete:
       tags:
         - security-group
@@ -17002,7 +17137,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -17035,7 +17170,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -17089,7 +17224,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/private-network'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -17109,7 +17244,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -18518,6 +18653,8 @@ paths:
               - user-data
               - deploy-target
               - ipv6-enabled
+              - vpc
+              - ip-forwarding
       summary: Reset an Instance Pool field to its default value
       operationId: reset-instance-pool-field
   /instance/{id}:remove-protection:
@@ -23073,6 +23210,10 @@ paths:
                 taints:
                   $ref: '#/components/schemas/sks-nodepool-taints'
                   description: Nodepool taints
+                kube-reserved:
+                  $ref: '#/components/schemas/reserved-resources'
+                  nullable: true
+                  description: Resources reserved for Kubernetes node components (kubelet setting)
                 nvidia-dra-driver:
                   type: boolean
                   description: Expose the GPUs with the NVIDIA DRA driver instead of the NVIDIA device plugin. Requires a GPU instance type and Kubernetes 1.34 or greater.
@@ -23098,6 +23239,9 @@ paths:
                   uniqueItems: true
                   maxItems: 16
                   description: Nodepool Private Networks
+                template:
+                  $ref: '#/components/schemas/template-ref'
+                  description: 'Nodepool Instance template: an `id` among the available templates of the Nodepool Kubernetes version and variant (see `list-sks-nodepool-templates`). Without it, the Nodepool follows the latest template of its Kubernetes version'
                 size:
                   type: integer
                   format: int64
@@ -23112,6 +23256,10 @@ paths:
                   maxLength: 30
                   minLength: 1
                   description: 'Prefix to apply to instances names (default: pool), lowercase only'
+                system-reserved:
+                  $ref: '#/components/schemas/reserved-resources'
+                  nullable: true
+                  description: Resources reserved for OS system daemons (kubelet setting)
                 deploy-target:
                   $ref: '#/components/schemas/deploy-target-ref'
                   description: Nodepool Deploy Target
@@ -23132,10 +23280,6 @@ paths:
                       - storage-lvm
                   uniqueItems: true
                   description: Nodepool addons
-                cpu-manager-config:
-                  $ref: '#/components/schemas/cpu-manager-config'
-                  nullable: true
-                  description: CPU manager config
                 disk-size:
                   type: integer
                   format: int64
@@ -23147,6 +23291,10 @@ paths:
                 nvidia-mig-profiles:
                   $ref: '#/components/schemas/nvidia-mig-profiles'
                   description: Nvidia MIG Profiles
+                cpu-manager:
+                  $ref: '#/components/schemas/cpu-manager'
+                  nullable: true
+                  description: CPU manager (kubelet settings)
               required:
                 - name
                 - size
@@ -24971,7 +25119,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/operation'
-      description: ""
+      description: Private Networks are deprecated in favor of VPC.
       parameters:
         - in: path
           required: true
@@ -25495,7 +25643,7 @@ paths:
       operationId: reset-dbaas-postgres-user-password
 x-topics:
   - title: API Request Signature
-    content: |+
+    content: |2+
 
       In order to authenticate legitimate users, the Exoscale API requires incoming requests to be signed using valid Exoscale API account credentials with the following mechanism.
 
@@ -25563,7 +25711,7 @@ x-topics:
       * Python: [requests-exoscale-auth > `ExoscaleV2Auth`](https://github.com/exoscale/requests-exoscale-auth/blob/master/exoscale_auth.py)
 
   - title: Zone local resources
-    content: |
+    content: |2
 
       The API is deployed across all Exoscale zones. When performing a compute call, you should use the relevant zone for your resource.
       For example: https://api-de-fra-1.exoscale.com/v2/instance would return only the instances from `de-fra-1`, https://api-ch-gva-2.exoscale.com/v2/instance from `ch-gva-2`.

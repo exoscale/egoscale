@@ -1,0 +1,111 @@
+name: bindings_diff
+
+on:
+  pull_request:
+    paths:
+      - 'v3/generator/**'
+
+concurrency:
+  group: bindings-diff-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bindings_diff:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+    - name: Check out PR branch
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        path: pr
+
+    - name: Check out master
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.base_ref }}
+        path: master
+
+    - name: Set up Go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        go-version-file: pr/v3/generator/go.mod
+        cache: false
+
+    - name: Download the API spec
+      run: |
+        wget -q https://api-ch-gva-2.exoscale.com/v2/openapi.json -O "$RUNNER_TEMP/spec.json"
+
+    - name: Generate bindings with the master generator
+      run: |
+        cp "$RUNNER_TEMP/spec.json" master/v3/generator/source.yaml
+        (cd master/v3/generator && go generate)
+        mkdir -p master-bindings
+        cp master/v3/*.go master-bindings/
+
+    - name: Generate bindings with the PR generator
+      run: |
+        cp "$RUNNER_TEMP/spec.json" pr/v3/generator/source.yaml
+        (cd pr/v3/generator && go generate)
+        mkdir -p pr-bindings
+        cp pr/v3/*.go pr-bindings/
+
+    - name: Compute diff
+      id: diff
+      run: |
+        diff -rU 10 master-bindings pr-bindings > generated.diff || true
+        cat generated.diff
+
+        if [ -s generated.diff ]; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Build PR comment body
+      run: |
+        MAX_BYTES=60000
+        {
+          echo '<!-- generated-code-diff -->'
+          echo '## Bindings diff'
+          echo ''
+          echo 'Diff of the v3 bindings generated from the current API spec, master generator vs this PR.'
+          echo ''
+          if [ -s generated.diff ]; then
+            echo '```diff'
+            if [ "$(wc -c < generated.diff)" -gt "$MAX_BYTES" ]; then
+              head -c "$MAX_BYTES" generated.diff
+              echo ''
+              echo '... (diff truncated, download the full diff from the workflow artifacts)'
+            else
+              cat generated.diff
+            fi
+            echo '```'
+          else
+            echo 'No changes to the generated code.'
+          fi
+        } > comment.md
+
+    - name: Upload full diff as artifact
+      if: steps.diff.outputs.changed == 'true'
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: generated-code-diff
+        path: generated.diff
+
+    - name: Post or update PR comment
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        comment_id=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+          --jq '.[] | select(.body | contains("<!-- generated-code-diff -->")) | .id' | head -n1 || true)
+        if [ -n "$comment_id" ]; then
+          gh api -X PATCH "repos/$REPO/issues/comments/$comment_id" -F body=@comment.md
+        else
+          gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@comment.md
+        fi

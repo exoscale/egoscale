@@ -9963,6 +9963,7 @@ func (c Client) GetEnvImpact(ctx context.Context, period string) error {
 type GetImpactEstimateResponseImpact map[string]ImpactValueWithUnit
 
 type GetImpactEstimateResponse struct {
+	CalculationDate string `json:"calculation-date" validate:"required"`
 	// Map of SKUs to their different impact indicators
 	Impact map[string]GetImpactEstimateResponseImpact `json:"impact" validate:"required"`
 }
@@ -11005,6 +11006,20 @@ const (
 	CreateInstancePoolRequestPublicIPAssignmentNone  CreateInstancePoolRequestPublicIPAssignment = "none"
 )
 
+// VPC Subnet
+type CreateInstancePoolRequestVpcSubnets struct {
+	// Subnet ID
+	ID UUID `json:"id" validate:"required"`
+}
+
+// Instance Pool VPC
+type CreateInstancePoolRequestVpc struct {
+	// VPC ID
+	ID UUID `json:"id" validate:"required"`
+	// VPC Subnets to attach the Instances to
+	Subnets []CreateInstancePoolRequestVpcSubnets `json:"subnets" validate:"required"`
+}
+
 type CreateInstancePoolRequest struct {
 	// Instance Pool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
@@ -11022,6 +11037,8 @@ type CreateInstancePoolRequest struct {
 	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
 	// Instance type reference
 	InstanceType *InstanceType `json:"instance-type" validate:"required"`
+	// Enable IP forwarding on the Instances VPC interfaces
+	IPForwarding *bool `json:"ip-forwarding,omitempty"`
 	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
 	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
 	Labels      Labels `json:"labels,omitempty"`
@@ -11045,6 +11062,8 @@ type CreateInstancePoolRequest struct {
 	Template *Template `json:"template" validate:"required"`
 	// Instances Cloud-init user-data
 	UserData string `json:"user-data,omitempty" validate:"omitempty,gte=1,lte=32768"`
+	// Instance Pool VPC
+	Vpc *CreateInstancePoolRequestVpc `json:"vpc,omitempty"`
 }
 
 // Create an Instance Pool
@@ -11169,6 +11188,20 @@ const (
 	UpdateInstancePoolRequestPublicIPAssignmentDual  UpdateInstancePoolRequestPublicIPAssignment = "dual"
 )
 
+// VPC Subnet
+type UpdateInstancePoolRequestVpcSubnets struct {
+	// Subnet ID
+	ID UUID `json:"id" validate:"required"`
+}
+
+// Instance Pool VPC
+type UpdateInstancePoolRequestVpc struct {
+	// VPC ID
+	ID UUID `json:"id" validate:"required"`
+	// VPC Subnets to attach the Instances to
+	Subnets []UpdateInstancePoolRequestVpcSubnets `json:"subnets" validate:"required"`
+}
+
 type UpdateInstancePoolRequest struct {
 	// Instance Pool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups"`
@@ -11186,6 +11219,8 @@ type UpdateInstancePoolRequest struct {
 	InstancePrefix *string `json:"instance-prefix,omitempty"`
 	// Instance type reference
 	InstanceType *InstanceType `json:"instance-type,omitempty"`
+	// Enable IP forwarding on the Instances VPC interfaces
+	IPForwarding *bool `json:"ip-forwarding,omitempty"`
 	// Enable IPv6. DEPRECATED: use `public-ip-assignments`.
 	Ipv6Enabled *bool  `json:"ipv6-enabled,omitempty"`
 	Labels      Labels `json:"labels,omitempty"`
@@ -11207,6 +11242,8 @@ type UpdateInstancePoolRequest struct {
 	Template *Template `json:"template,omitempty"`
 	// Instances Cloud-init user-data
 	UserData *string `json:"user-data,omitempty" validate:"omitempty,gte=1"`
+	// Instance Pool VPC
+	Vpc *UpdateInstancePoolRequestVpc `json:"vpc"`
 }
 
 // Update an Instance Pool
@@ -11265,6 +11302,8 @@ const (
 	ResetInstancePoolFieldFieldUserData           ResetInstancePoolFieldField = "user-data"
 	ResetInstancePoolFieldFieldDeployTarget       ResetInstancePoolFieldField = "deploy-target"
 	ResetInstancePoolFieldFieldIpv6Enabled        ResetInstancePoolFieldField = "ipv6-enabled"
+	ResetInstancePoolFieldFieldVpc                ResetInstancePoolFieldField = "vpc"
+	ResetInstancePoolFieldFieldIPForwarding       ResetInstancePoolFieldField = "ip-forwarding"
 )
 
 // Reset an Instance Pool field to its default value
@@ -14002,7 +14041,7 @@ func (l ListPrivateNetworksResponse) FindPrivateNetwork(nameOrID string) (Privat
 	return PrivateNetwork{}, fmt.Errorf("%q not found in ListPrivateNetworksResponse: %w", nameOrID, ErrNotFound)
 }
 
-// List Private Networks
+// Private Networks are deprecated in favor of VPC.
 func (c Client) ListPrivateNetworks(ctx context.Context) (*ListPrivateNetworksResponse, error) {
 	path := "/private-network"
 
@@ -14054,7 +14093,7 @@ type CreatePrivateNetworkRequest struct {
 	StartIP net.IP `json:"start-ip,omitempty"`
 }
 
-// Create a Private Network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetworkRequest) (*Operation, error) {
 	path := "/private-network"
 
@@ -14097,7 +14136,7 @@ func (c Client) CreatePrivateNetwork(ctx context.Context, req CreatePrivateNetwo
 	return bodyresp, nil
 }
 
-// Delete a Private Network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
@@ -14133,7 +14172,7 @@ func (c Client) DeletePrivateNetwork(ctx context.Context, id UUID) (*Operation, 
 	return bodyresp, nil
 }
 
-// Retrieve Private Network details
+// Private Networks are deprecated in favor of VPC.
 func (c Client) GetPrivateNetwork(ctx context.Context, id UUID) (*PrivateNetwork, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
@@ -14185,7 +14224,7 @@ type UpdatePrivateNetworkRequest struct {
 	StartIP net.IP `json:"start-ip,omitempty"`
 }
 
-// Update a Private Network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) UpdatePrivateNetwork(ctx context.Context, id UUID, req UpdatePrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v", id)
 
@@ -14234,7 +14273,7 @@ const (
 	ResetPrivateNetworkFieldFieldLabels ResetPrivateNetworkFieldField = "labels"
 )
 
-// Reset Private Network field
+// Private Networks are deprecated in favor of VPC.
 func (c Client) ResetPrivateNetworkField(ctx context.Context, id UUID, field ResetPrivateNetworkFieldField) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v/%v", id, field)
 
@@ -14283,7 +14322,7 @@ type AttachInstanceToPrivateNetworkRequest struct {
 	IP net.IP `json:"ip,omitempty"`
 }
 
-// Attach a Compute instance to a Private Network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) AttachInstanceToPrivateNetwork(ctx context.Context, id UUID, req AttachInstanceToPrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:attach", id)
 
@@ -14331,7 +14370,7 @@ type DetachInstanceFromPrivateNetworkRequest struct {
 	Instance *Instance `json:"instance" validate:"required"`
 }
 
-// Detach a Compute instance from a Private Network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) DetachInstanceFromPrivateNetwork(ctx context.Context, id UUID, req DetachInstanceFromPrivateNetworkRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:detach", id)
 
@@ -14385,7 +14424,7 @@ type UpdatePrivateNetworkInstanceIPRequest struct {
 	IP net.IP `json:"ip,omitempty"`
 }
 
-// Update the IP address of an instance attached to a managed private network
+// Private Networks are deprecated in favor of VPC.
 func (c Client) UpdatePrivateNetworkInstanceIP(ctx context.Context, id UUID, req UpdatePrivateNetworkInstanceIPRequest) (*Operation, error) {
 	path := fmt.Sprintf("/private-network/%v:update-ip", id)
 
@@ -14944,6 +14983,56 @@ func (c Client) GetSecurityGroup(ctx context.Context, id UUID) (*SecurityGroup, 
 	bodyresp := new(SecurityGroup)
 	if err := prepareJSONResponse(response, bodyresp); err != nil {
 		return nil, fmt.Errorf("GetSecurityGroup: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
+type UpdateSecurityGroupRequest struct {
+	// Security Group description
+	Description string `json:"description,omitempty" validate:"omitempty,lte=255"`
+	// Security Group name
+	Name string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
+}
+
+// Update a Security Group
+func (c Client) UpdateSecurityGroup(ctx context.Context, id UUID, req UpdateSecurityGroupRequest) (*Operation, error) {
+	path := fmt.Sprintf("/security-group/%v", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateSecurityGroup: prepare JSON body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "PUT", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateSecurityGroup: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateSecurityGroup: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateSecurityGroup: sign request: %w", err)
+	}
+
+	response, err := c.do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateSecurityGroup: http client do: %w", err)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateSecurityGroup: http response: %w", err)
+	}
+
+	bodyresp := new(Operation)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateSecurityGroup: prepare JSON response: %w", err)
 	}
 
 	return bodyresp, nil
@@ -15870,8 +15959,8 @@ type CreateSKSNodepoolRequest struct {
 	Addons []string `json:"addons,omitempty"`
 	// Nodepool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
-	// CPU manager config
-	CPUManagerConfig *CPUManagerConfig `json:"cpu-manager-config"`
+	// CPU manager (kubelet settings)
+	CPUManager *CPUManager `json:"cpu-manager"`
 	// Deploy target reference
 	DeployTarget *DeployTarget `json:"deploy-target,omitempty"`
 	// Nodepool description
@@ -15882,6 +15971,8 @@ type CreateSKSNodepoolRequest struct {
 	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
 	// Instance type reference
 	InstanceType *InstanceType `json:"instance-type" validate:"required"`
+	// Resources reserved for kube or system components.
+	KubeReserved *ReservedResources `json:"kube-reserved"`
 	// Kubelet image GC options
 	KubeletImageGC *KubeletImageGC `json:"kubelet-image-gc,omitempty"`
 	// Maximum number of pods per node (kubelet setting)
@@ -15902,8 +15993,12 @@ type CreateSKSNodepoolRequest struct {
 	// Nodepool Security Groups
 	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
 	// Number of instances
-	Size   int64             `json:"size" validate:"required,gt=0"`
-	Taints SKSNodepoolTaints `json:"taints,omitempty"`
+	Size int64 `json:"size" validate:"required,gt=0"`
+	// Resources reserved for kube or system components.
+	SystemReserved *ReservedResources `json:"system-reserved"`
+	Taints         SKSNodepoolTaints  `json:"taints,omitempty"`
+	// Template reference
+	Template *TemplateRef `json:"template,omitempty"`
 }
 
 // Create a new SKS Nodepool
@@ -16031,8 +16126,8 @@ const (
 type UpdateSKSNodepoolRequest struct {
 	// Nodepool Anti-affinity Groups
 	AntiAffinityGroups []AntiAffinityGroup `json:"anti-affinity-groups,omitempty"`
-	// CPU manager config
-	CPUManagerConfig *CPUManagerConfig `json:"cpu-manager-config"`
+	// CPU manager (kubelet settings)
+	CPUManager *CPUManager `json:"cpu-manager"`
 	// Deploy target reference
 	DeployTarget *DeployTarget `json:"deploy-target"`
 	// Nodepool description
@@ -16043,6 +16138,8 @@ type UpdateSKSNodepoolRequest struct {
 	InstancePrefix string `json:"instance-prefix,omitempty" validate:"omitempty,gte=1,lte=30"`
 	// Instance type reference
 	InstanceType *InstanceType `json:"instance-type,omitempty"`
+	// Resources reserved for kube or system components.
+	KubeReserved *ReservedResources `json:"kube-reserved"`
 	// Kubelet image GC options
 	KubeletImageGC *KubeletImageGC `json:"kubelet-image-gc,omitempty"`
 	// Maximum number of pods per node (kubelet setting)
@@ -16061,8 +16158,10 @@ type UpdateSKSNodepoolRequest struct {
 	// * both IPv4 and IPv6 (`dual`) addressing.
 	PublicIPAssignment UpdateSKSNodepoolRequestPublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Nodepool Security Groups
-	SecurityGroups []SecurityGroup   `json:"security-groups,omitempty"`
-	Taints         SKSNodepoolTaints `json:"taints,omitempty"`
+	SecurityGroups []SecurityGroup `json:"security-groups,omitempty"`
+	// Resources reserved for kube or system components.
+	SystemReserved *ReservedResources `json:"system-reserved"`
+	Taints         SKSNodepoolTaints  `json:"taints,omitempty"`
 	// Template reference
 	Template *TemplateRef `json:"template,omitempty"`
 }

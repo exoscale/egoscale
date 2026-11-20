@@ -22,10 +22,10 @@ jobs:
 
       - run: make go.mk
 
-      - uses: ./go.mk/.github/actions/setup
+      - uses: actions/setup-go@v7.0.0
 
-      - uses: ./go.mk/.github/actions/pre-check
+      - run: make pre-check
 
-      - uses: ./go.mk/.github/actions/release
+      - uses: exoscale/go-mk-release-action@main
         with:
           release_github_token: ${{ secrets.GITHUB_TOKEN }}

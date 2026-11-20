@@ -20,9 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: make go.mk
-      - uses: ./go.mk/.github/actions/setup
+      - uses: actions/setup-go@v7.0.0
 
-      - uses: ./go.mk/.github/actions/pre-check
+      - run: make pre-check
 
       - run: make test-verbose
 

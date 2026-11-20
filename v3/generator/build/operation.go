@@ -109,9 +109,8 @@ func (b *Builder) responseSchemas(funcName string, op *v3.Operation, origin stri
 
 		switch {
 		case media.Schema.IsReference():
-			// A $ref schema name ending with "-response" is rendered as funcName+"Response"
-			// (e.g. list-ai-api-keys-response -> ListAIAPIKeysResponse): findable is still valid.
-			// Otherwise (e.g. dbaas-clickhouse-roles), no funcName+"Response" type exists.
+			// Findable is only rendered on a $ref schema name ending with "-response"
+			// (e.g. list-ai-api-keys-response), not on resources (e.g. dbaas-clickhouse-roles).
 			if !strings.HasSuffix(strings.ToLower(media.Schema.GetReference()), "-response") {
 				continue
 			}
@@ -266,6 +265,9 @@ func (b *Builder) requestBody(funcName string, op *v3.Operation) ir.Type {
 	if media.Schema.IsReference() {
 		return b.ref(media.Schema.GetReference(), "")
 	}
+	if slice := b.arrayReference(media.Schema); slice != nil {
+		return slice
+	}
 
 	return ir.Named(funcName + "Request")
 }
@@ -403,6 +405,11 @@ func (b *Builder) findable(funcName string, proxy *base.SchemaProxy) (*ir.Findab
 		return nil, nil
 	}
 
+	listType := funcName + "Response"
+	if proxy.IsReference() {
+		listType = b.ref(proxy.GetReference(), "").String()
+	}
+
 	s, err := proxy.BuildSchema()
 	if err != nil {
 		return nil, err
@@ -435,7 +442,7 @@ func (b *Builder) findable(funcName string, proxy *base.SchemaProxy) (*ir.Findab
 			continue
 		}
 
-		itemType := funcName + "Response" + b.names.Camel(propName)
+		itemType := listType + b.names.Camel(propName)
 		if prop.Items.A.IsReference() {
 			itemType = b.ref(prop.Items.A.GetReference(), "").String()
 		}
@@ -463,7 +470,7 @@ func (b *Builder) findable(funcName string, proxy *base.SchemaProxy) (*ir.Findab
 		}
 
 		f := &ir.Findable{
-			ListType:  funcName + "Response",
+			ListType:  listType,
 			ListField: b.names.Camel(propName),
 			ItemType:  itemType,
 		}

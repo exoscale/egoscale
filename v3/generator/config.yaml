@@ -116,3 +116,7 @@ aliases:
     target: BlockStorageSnapshotRef
   - name: BlockStorageVolumeTarget
     target: BlockStorageVolumeRef
+
+# Types the generated code uses from the hand-written files of the package.
+external-types:
+  - UUID

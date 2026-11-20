@@ -2844,7 +2844,9 @@ components:
         - 0.30.0
         - 0.31.0
         - 0.32.0
-      default: 0.32.0
+        - 0.33.0
+        - 0.34.0
+      default: 0.34.0
       type: string
     dbaas-user-opensearch-secrets:
       type: object
@@ -3728,6 +3730,26 @@ components:
           minimum: 1
           title: net_write_timeout
           type: integer
+        optimizer_switch:
+          description: Comma-separated list of optimizer flag assignments in the form flag=on|off|default, or the single value 'default' to reset all flags. Flags not listed keep their current values. Controls query optimizer behaviors such as index merge, hash join and semijoin strategies.
+          example: batched_key_access=on,mrr_cost_based=off
+          pattern: ^(default|[a-z_]+=(on|off|default)(,[a-z_]+=(on|off|default))*)$
+          title: optimizer_switch
+          type: string
+        tablespace_definition_cache:
+          description: The number of tablespace definition objects the data dictionary object cache can hold. Each InnoDB table stored in its own file is a separate tablespace, so raise it above the number of tables on the service to keep their tablespace definitions in memory. Each cached definition uses a small amount of memory, and the cache never holds more than the service's own tables, so a high value costs nothing extra on a service with few tables. Default is 256.
+          example: 10000
+          maximum: 524288
+          minimum: 256
+          title: tablespace_definition_cache
+          type: integer
+        innodb_ft_max_token_size:
+          description: Maximum length of words that are stored in an InnoDB FULLTEXT index. Changing this parameter will lead to a restart of the MySQL service.
+          example: 60
+          maximum: 84
+          minimum: 10
+          title: innodb_ft_max_token_size
+          type: integer
         internal_tmp_mem_storage_engine:
           description: The storage engine for in-memory internal temporary tables.
           enum:
@@ -3736,6 +3758,13 @@ components:
           example: TempTable
           title: internal_tmp_mem_storage_engine
           type: string
+        innodb_io_capacity_max:
+          description: The maximum number of I/O operations per second (IOPS) that InnoDB background tasks may perform when flushing falls behind. Defaults to twice innodb_io_capacity (minimum 2000). This must be greater than or equal to innodb_io_capacity.
+          example: 4000
+          maximum: 4294967295
+          minimum: 100
+          title: innodb_io_capacity_max
+          type: integer
         sql_mode:
           description: Global SQL mode. Set to empty to use MySQL server defaults. When creating a new service and not setting this field Aiven default SQL mode (strict, SQL standard compliant) will be assigned.
           example: ANSI,TRADITIONAL
@@ -3756,6 +3785,27 @@ components:
           maximum: 1073741824
           minimum: 32768
           title: sort_buffer_size
+          type: integer
+        max_execution_time:
+          description: Execution timeout in milliseconds for read-only top-level SELECT statements. 0 (the default) means no timeout.
+          example: 15000
+          maximum: 4294967295
+          minimum: 0
+          title: max_execution_time
+          type: integer
+        innodb_ft_cache_size:
+          description: The size in bytes of the InnoDB FULLTEXT index cache for each table. Pending index updates are flushed to disk when the cache reaches this limit. innodb_ft_total_cache_size controls the combined cache limit for all tables. Default is 8000000. Changing this parameter will lead to a restart of the MySQL service.
+          example: 8000000
+          maximum: 80000000
+          minimum: 1600000
+          title: innodb_ft_cache_size
+          type: integer
+        innodb_ft_num_word_optimize:
+          description: Number of words processed during each OPTIMIZE TABLE operation on an InnoDB FULLTEXT index. Default is 2000.
+          example: 4000
+          maximum: 10000
+          minimum: 1000
+          title: innodb_ft_num_word_optimize
           type: integer
         innodb_thread_concurrency:
           description: Defines the maximum number of threads permitted inside of InnoDB. Default is 0 (infinite concurrency - no limit)
@@ -3785,12 +3835,33 @@ components:
           minimum: 0
           title: innodb_change_buffer_max_size
           type: integer
+        lower_case_table_names:
+          description: Sets how table and database names are stored and compared. 0 = case-sensitive (default), 1 = names stored lowercase, comparisons are case-insensitive. This option can only be set when creating the service and cannot be changed later. See https://dev.mysql.com/doc/refman/8.0/en/identifier-case-sensitivity.html for details.
+          enum:
+            - 0
+            - 1
+          example: 0
+          title: lower_case_table_names
+          type: integer
+          createOnly: true
+        innodb_adaptive_hash_index:
+          description: 'Whether InnoDB adaptive hash indexing is enabled. The optimal setting is workload-dependent: it speeds up lookups for some workloads but its internal latch can become a contention point under high concurrency, in which case disabling it can improve throughput.'
+          example: false
+          title: innodb_adaptive_hash_index
+          type: boolean
         innodb_flush_neighbors:
           description: 'Specifies whether flushing a page from the InnoDB buffer pool also flushes other dirty pages in the same extent (default is 1): 0 - dirty pages in the same extent are not flushed, 1 - flush contiguous dirty pages in the same extent, 2 - flush dirty pages in the same extent'
           example: 0
           maximum: 2
           minimum: 0
           title: innodb_flush_neighbors
+          type: integer
+        optimizer_prune_level:
+          description: Controls the heuristics applied during query optimization to prune less-promising partial plans from the optimizer search space. 0 disables heuristics (exhaustive search); 1 prunes plans based on the number of rows retrieved.
+          example: 1
+          maximum: 1
+          minimum: 0
+          title: optimizer_prune_level
           type: integer
         tmp_table_size:
           description: Limits the size of internal in-memory tables. Also set max_heap_table_size. Default is 16777216 (16M)
@@ -3821,6 +3892,13 @@ components:
           example: INSIGHTS
           title: log_output
           type: string
+        max_seeks_for_key:
+          description: Limit on the assumed maximum number of index seeks when looking up rows based on a key. Lowering this value causes the optimizer to prefer index lookups over table scans.
+          example: 100
+          maximum: 18446744073709551615
+          minimum: 1
+          title: max_seeks_for_key
+          type: integer
         net_read_timeout:
           description: The number of seconds to wait for more data from a connection before aborting the read.
           example: 30
@@ -3828,12 +3906,85 @@ components:
           minimum: 1
           title: net_read_timeout
           type: integer
+        relay_log_space_limit:
+          description: The maximum amount of space in bytes to use for all relay logs while replicating from an external migration source. When the limit is reached, the replication I/O thread stops fetching relay log events until the SQL thread has caught up. Raise this to give a large migration a bigger relay-log budget; ensure the service disk is sized accordingly. The setting applies only on the node replicating from the external source; standby nodes always use the Aiven-managed default (the smaller of 5 GiB and 30% of the service disk), which is also used when this option is left unset. Changing this parameter will lead to a restart of the MySQL service.
+          example: 5368709120
+          maximum: 18446744073709551615
+          minimum: 134217728
+          title: relay_log_space_limit
+          type: integer
+        innodb_ft_user_stopword_table:
+          description: This option is used to specify your own InnoDB FULLTEXT index stopword list for specific InnoDB tables.
+          example: db_name/table_name
+          maxLength: 1024
+          pattern: ^.+/.+$
+          title: innodb_ft_user_stopword_table
+          type: string
+          nullable: true
+        innodb_max_purge_lag:
+          description: Number of outstanding transactions the InnoDB purge operation may fall behind by before INSERT, UPDATE and DELETE are delayed to let it catch up. The delay applies per row and grows with the lag, and it is capped by innodb_max_purge_lag_delay, which has to be set as well for this option to have any effect. Default is 0, which never delays anything.
+          example: 1000000
+          maximum: 4294967295
+          minimum: 0
+          title: innodb_max_purge_lag
+          type: integer
+        innodb_optimize_fulltext_only:
+          description: When enabled, OPTIMIZE TABLE on InnoDB tables only updates the FULLTEXT index instead of rebuilding the table. Intended to be enabled temporarily during FULLTEXT index maintenance and disabled afterwards; while enabled, OPTIMIZE TABLE does not reclaim table space.
+          example: false
+          title: innodb_optimize_fulltext_only
+          type: boolean
+        innodb_ft_enable_stopword:
+          description: Whether stopword processing is applied when creating or rebuilding an InnoDB FULLTEXT index. Enabled by default.
+          example: false
+          title: innodb_ft_enable_stopword
+          type: boolean
+        eq_range_index_dive_limit:
+          description: The number of equality ranges in a query at or above which the optimizer switches from index dives to index statistics when estimating the number of qualifying rows. 0 means always use index dives. Default is 200.
+          example: 100
+          maximum: 4294967295
+          minimum: 0
+          title: eq_range_index_dive_limit
+          type: integer
+        end_markers_in_json:
+          description: Whether optimizer JSON output such as EXPLAIN FORMAT=JSON adds end markers that repeat a structure's key near its closing bracket, making large JSON structures easier to read.
+          example: false
+          title: end_markers_in_json
+          type: boolean
+        event_scheduler:
+          description: Whether the event scheduler runs the events created with CREATE EVENT. Set OFF to stop every event on the service without dropping it, and ON to start them again. A change applies at once, without a restart. Events take effect only on the primary node. After a failover, they are re-enabled on the new primary. Default is ON.
+          enum:
+            - "ON"
+            - "OFF"
+          example: "OFF"
+          title: event_scheduler
+          type: string
+        innodb_max_dirty_pages_pct:
+          description: Percentage of dirty pages in the InnoDB buffer pool at which InnoDB starts flushing aggressively. Lowering it spreads write I/O more evenly and shortens crash recovery, at the cost of flushing pages that might have been modified again. Must stay at or above innodb_max_dirty_pages_pct_lwm. Default is 90.
+          example: 75
+          maximum: 99
+          minimum: 5
+          title: innodb_max_dirty_pages_pct
+          type: number
         innodb_lock_wait_timeout:
           description: The length of time in seconds an InnoDB transaction waits for a row lock before giving up. Default is 120.
           example: 50
           maximum: 3600
           minimum: 1
           title: innodb_lock_wait_timeout
+          type: integer
+        innodb_io_capacity:
+          description: The number of I/O operations per second (IOPS) available to InnoDB background tasks, such as flushing pages from the buffer pool and merging data from the change buffer. Set this to a value appropriate for the underlying storage; it must not exceed innodb_io_capacity_max.
+          example: 2000
+          maximum: 4294967295
+          minimum: 100
+          title: innodb_io_capacity
+          type: integer
+        max_user_connections:
+          description: The maximum number of simultaneous connections permitted to any single user account. 0, the default, means no per-account limit. Any other value must be at least 10 below max_connections, so that monitoring and your own admin sessions can still connect when an application saturates its own limit. Aiven's replication and management connections are unaffected however low you set this.
+          example: 50
+          maximum: 99990
+          minimum: 0
+          title: max_user_connections
           type: integer
         wait_timeout:
           description: The number of seconds the server waits for activity on a noninteractive connection before closing it.
@@ -3861,6 +4012,20 @@ components:
           minimum: 1024
           title: net_buffer_length
           type: integer
+        optimizer_search_depth:
+          description: Maximum depth of search performed by the query optimizer when choosing a join order. Larger values produce better plans for joins over many tables but take longer to compile; 0 lets the optimizer choose the depth automatically.
+          example: 62
+          maximum: 62
+          minimum: 0
+          title: optimizer_search_depth
+          type: integer
+        innodb_sort_buffer_size:
+          description: The size in bytes of the sort buffer used when creating InnoDB indexes. Also controls the read and write buffer sizes for the temporary log used during online DDL operations. Default is 1048576 (1 MiB). Changing this parameter will lead to a restart of the MySQL service.
+          example: 1048576
+          maximum: 67108864
+          minimum: 65536
+          title: innodb_sort_buffer_size
+          type: integer
         innodb_print_all_deadlocks:
           description: When enabled, information about all deadlocks in InnoDB user transactions is recorded in the error log. Disabled by default.
           example: true
@@ -3872,6 +4037,27 @@ components:
           maximum: 1099511627776
           minimum: 65536
           title: innodb_online_alter_log_max_size
+          type: integer
+        innodb_ft_result_cache_limit:
+          description: Maximum memory in bytes used per query for the InnoDB FULLTEXT search query result cache. Aiven sizes this automatically based on the service plan's memory; setting a value overrides the calculated default.
+          example: 2000000000
+          maximum: 4294967295
+          minimum: 1000000
+          title: innodb_ft_result_cache_limit
+          type: integer
+        innodb_ft_total_cache_size:
+          description: The combined memory limit in bytes for InnoDB FULLTEXT index caches across all tables. When an index operation reaches this limit, InnoDB forces cached index updates to disk to reduce memory usage. Values above 5% of plan RAM are rejected. Changing this parameter will lead to a restart of the MySQL service.
+          example: 640000000
+          maximum: 1600000000
+          minimum: 32000000
+          title: innodb_ft_total_cache_size
+          type: integer
+        schema_definition_cache:
+          description: The number of schema definition objects the data dictionary object cache can hold. Raise it above the number of schemas on the service to keep their definitions in memory. Each cached definition uses a small amount of memory, and the cache never holds more than the service's own schemas, so a high value costs nothing extra on a service with few schemas. Default is 256.
+          example: 4000
+          maximum: 524288
+          minimum: 256
+          title: schema_definition_cache
           type: integer
         interactive_timeout:
           description: The number of seconds the server waits for activity on an interactive connection before closing it.
@@ -3894,12 +4080,33 @@ components:
           minimum: 102400
           title: max_allowed_packet
           type: integer
+        innodb_max_purge_lag_delay:
+          description: Cap in microseconds on the per-row delay innodb_max_purge_lag applies to INSERT, UPDATE and DELETE. MySQL clamps the delay to this value unconditionally, so while this is 0 no delay is ever applied and innodb_max_purge_lag on its own does nothing. Both options must be non-zero for either to take effect. Default is 0.
+          example: 10000
+          maximum: 10000000
+          minimum: 0
+          title: innodb_max_purge_lag_delay
+          type: integer
+        div_precision_increment:
+          description: Number of digits by which to increase the scale of the result of division operations performed with the / operator. Default is 4.
+          example: 6
+          maximum: 30
+          minimum: 0
+          title: div_precision_increment
+          type: integer
         max_heap_table_size:
           description: Limits the size of internal in-memory tables. Also set tmp_table_size. Default is 16777216 (16M)
           example: 16777216
           maximum: 1073741824
           minimum: 1048576
           title: max_heap_table_size
+          type: integer
+        innodb_ft_sort_pll_degree:
+          description: The number of parallel threads used to tokenize and index text when building an InnoDB FULLTEXT index. Default is 2. Changing this parameter will lead to a restart of the MySQL service.
+          example: 2
+          maximum: 32
+          minimum: 1
+          title: innodb_ft_sort_pll_degree
           type: integer
         innodb_ft_server_stopword_table:
           description: This option is used to specify your own InnoDB FULLTEXT index stopword list for all InnoDB tables.
@@ -3908,6 +4115,120 @@ components:
           nullable: true
           pattern: ^.+/.+$
           title: innodb_ft_server_stopword_table
+          type: string
+        innodb_max_dirty_pages_pct_lwm:
+          description: Percentage of dirty pages in the InnoDB buffer pool at which InnoDB starts pre-flushing, to keep the dirty page ratio from reaching innodb_max_dirty_pages_pct. 0 turns pre-flushing off. Cannot be set above innodb_max_dirty_pages_pct. Default is 10.
+          example: 10
+          maximum: 99
+          minimum: 0
+          title: innodb_max_dirty_pages_pct_lwm
+          type: number
+        automatic_sp_privileges:
+          description: When enabled, the server automatically grants the EXECUTE and ALTER ROUTINE privileges to the creator of a stored routine and drops them when the routine is dropped.
+          example: true
+          title: automatic_sp_privileges
+          type: boolean
+        max_connections:
+          description: The maximum permitted number of simultaneous client connections. Lower this to reserve memory for other work. The value cannot exceed the limit provided by your service plan. Upgrading the plan does not raise a value you have set explicitly, so increase it yourself after an upgrade.
+          example: 200
+          maximum: 100000
+          minimum: 30
+          title: max_connections
+          type: integer
+        collation_server:
+          description: The default collation for databases created without one, which their new tables then inherit. Only collations of the utf8mb4 character set are accepted. Databases Aiven creates, defaultdb and those added through the API or Console, keep utf8mb4_0900_ai_ci. Changing it leaves existing databases as they are. A change applies to new connections at once. After the next server restart, for example at maintenance, an upgrade, a plan change or a node replacement, sessions reset with COM_RESET_CONNECTION also compare strings with this collation, which a change without a restart does not do. Every 0900 collation except utf8mb4_0900_ai_ci has an id above 255, so after that restart MySQL announces a wrong character set to connecting clients. Clients that take their character set from the server, such as PHP mysqli and PDO without a charset option and MySQL Connector/NET (MySql.Data) without CharSet, must then set utf8mb4 themselves. Default is utf8mb4_0900_ai_ci.
+          enum:
+            - utf8mb4_0900_ai_ci
+            - utf8mb4_0900_as_ci
+            - utf8mb4_0900_as_cs
+            - utf8mb4_0900_bin
+            - utf8mb4_bg_0900_ai_ci
+            - utf8mb4_bg_0900_as_cs
+            - utf8mb4_bin
+            - utf8mb4_bs_0900_ai_ci
+            - utf8mb4_bs_0900_as_cs
+            - utf8mb4_croatian_ci
+            - utf8mb4_cs_0900_ai_ci
+            - utf8mb4_cs_0900_as_cs
+            - utf8mb4_czech_ci
+            - utf8mb4_danish_ci
+            - utf8mb4_da_0900_ai_ci
+            - utf8mb4_da_0900_as_cs
+            - utf8mb4_de_pb_0900_ai_ci
+            - utf8mb4_de_pb_0900_as_cs
+            - utf8mb4_eo_0900_ai_ci
+            - utf8mb4_eo_0900_as_cs
+            - utf8mb4_esperanto_ci
+            - utf8mb4_estonian_ci
+            - utf8mb4_es_0900_ai_ci
+            - utf8mb4_es_0900_as_cs
+            - utf8mb4_es_trad_0900_ai_ci
+            - utf8mb4_es_trad_0900_as_cs
+            - utf8mb4_et_0900_ai_ci
+            - utf8mb4_et_0900_as_cs
+            - utf8mb4_general_ci
+            - utf8mb4_german2_ci
+            - utf8mb4_gl_0900_ai_ci
+            - utf8mb4_gl_0900_as_cs
+            - utf8mb4_hr_0900_ai_ci
+            - utf8mb4_hr_0900_as_cs
+            - utf8mb4_hungarian_ci
+            - utf8mb4_hu_0900_ai_ci
+            - utf8mb4_hu_0900_as_cs
+            - utf8mb4_icelandic_ci
+            - utf8mb4_is_0900_ai_ci
+            - utf8mb4_is_0900_as_cs
+            - utf8mb4_ja_0900_as_cs
+            - utf8mb4_ja_0900_as_cs_ks
+            - utf8mb4_latvian_ci
+            - utf8mb4_la_0900_ai_ci
+            - utf8mb4_la_0900_as_cs
+            - utf8mb4_lithuanian_ci
+            - utf8mb4_lt_0900_ai_ci
+            - utf8mb4_lt_0900_as_cs
+            - utf8mb4_lv_0900_ai_ci
+            - utf8mb4_lv_0900_as_cs
+            - utf8mb4_mn_cyrl_0900_ai_ci
+            - utf8mb4_mn_cyrl_0900_as_cs
+            - utf8mb4_nb_0900_ai_ci
+            - utf8mb4_nb_0900_as_cs
+            - utf8mb4_nn_0900_ai_ci
+            - utf8mb4_nn_0900_as_cs
+            - utf8mb4_persian_ci
+            - utf8mb4_pl_0900_ai_ci
+            - utf8mb4_pl_0900_as_cs
+            - utf8mb4_polish_ci
+            - utf8mb4_romanian_ci
+            - utf8mb4_roman_ci
+            - utf8mb4_ro_0900_ai_ci
+            - utf8mb4_ro_0900_as_cs
+            - utf8mb4_ru_0900_ai_ci
+            - utf8mb4_ru_0900_as_cs
+            - utf8mb4_sinhala_ci
+            - utf8mb4_sk_0900_ai_ci
+            - utf8mb4_sk_0900_as_cs
+            - utf8mb4_slovak_ci
+            - utf8mb4_slovenian_ci
+            - utf8mb4_sl_0900_ai_ci
+            - utf8mb4_sl_0900_as_cs
+            - utf8mb4_spanish2_ci
+            - utf8mb4_spanish_ci
+            - utf8mb4_sr_latn_0900_ai_ci
+            - utf8mb4_sr_latn_0900_as_cs
+            - utf8mb4_sv_0900_ai_ci
+            - utf8mb4_sv_0900_as_cs
+            - utf8mb4_swedish_ci
+            - utf8mb4_tr_0900_ai_ci
+            - utf8mb4_tr_0900_as_cs
+            - utf8mb4_turkish_ci
+            - utf8mb4_unicode_520_ci
+            - utf8mb4_unicode_ci
+            - utf8mb4_vietnamese_ci
+            - utf8mb4_vi_0900_ai_ci
+            - utf8mb4_vi_0900_as_cs
+            - utf8mb4_zh_0900_as_cs
+          example: utf8mb4_unicode_ci
+          title: collation_server
           type: string
         innodb_read_io_threads:
           description: The number of I/O threads for read operations in InnoDB. Default is 4. Changing this parameter will lead to a restart of the MySQL service.
@@ -3921,6 +4242,13 @@ components:
           example: true
           title: sql_require_primary_key
           type: boolean
+        performance_schema_events_statements_history_size:
+          description: The number of rows per thread in the events_statements_history table. Changing this parameter will lead to a restart of the MySQL service.
+          maximum: 1024
+          minimum: 0
+          title: performance_schema_events_statements_history_size
+          type: integer
+          nullable: true
         default_time_zone:
           description: Default server time zone as an offset from UTC (from -12:00 to +12:00), a time zone name, or 'SYSTEM' to use the MySQL server default.
           example: +03:00
@@ -3936,6 +4264,11 @@ components:
           minimum: 0.0
           title: long_query_time
           type: number
+      windowing_use_high_precision:
+        description: Whether window functions are computed to high precision. Disabling this trades exactness for speed in window function evaluation.
+        example: true
+        title: windowing_use_high_precision
+        type: boolean
       title: mysql.conf configuration values
       type: object
     nvidia-mig-profile-rtxpro6000.96gb:
@@ -8398,6 +8731,9 @@ components:
           exclusiveMaximum: false
           nullable: true
           description: Maximum number of pods per node. Set to use a value other than the kubelet default.
+        vpc:
+          $ref: '#/components/schemas/vpc-ref'
+          description: 'Nodepool VPC: the Instances are attached to the given Subnets of the VPC'
         addons:
           type: array
           items:
@@ -8430,6 +8766,9 @@ components:
           exclusiveMinimum: false
           exclusiveMaximum: false
           description: Nodepool instances disk size in GiB
+        ip-forwarding:
+          type: boolean
+          description: Allow the Instances to act as routers in their VPC (IP forwarding). Only applies to new Instances
         version:
           type: string
           readOnly: true
@@ -9481,6 +9820,24 @@ components:
           description: New public URL used to route communication to the customer-managed XKS proxy. Its host must resolve to a public IP address.
         auth:
           $ref: '#/components/schemas/key-store-proxy-auth'
+    vpc-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: VPC ID
+        subnets:
+          type: array
+          items:
+            $ref: '#/components/schemas/vpc-subnet-ref'
+          uniqueItems: true
+          minItems: 1
+          description: VPC Subnets to attach the Instances to
+      required:
+        - id
+        - subnets
+      description: VPC
     manager:
       type: object
       properties:
@@ -10721,6 +11078,16 @@ components:
           readOnly: true
           description: DNS domain record system status
       description: DNS domain record
+    vpc-subnet-ref:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Subnet ID
+      required:
+        - id
+      description: VPC Subnet
     organization:
       type: object
       properties:
@@ -15527,6 +15894,22 @@ paths:
                   exclusiveMaximum: false
                   nullable: true
                   description: Maximum number of pods per node (kubelet setting)
+                vpc:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: VPC ID, required with `subnets`
+                    subnets:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/vpc-subnet-ref'
+                      uniqueItems: true
+                      minItems: 1
+                      description: VPC Subnets to attach the Instances to, required with `id`
+                  nullable: true
+                  description: 'Nodepool VPC: the Instances are attached to the given Subnets of the VPC, or none (`null` or `{}`) to detach them'
                 disk-size:
                   type: integer
                   format: int64
@@ -15535,6 +15918,9 @@ paths:
                   exclusiveMinimum: false
                   exclusiveMaximum: false
                   description: Nodepool instances disk size in GiB
+                ip-forwarding:
+                  type: boolean
+                  description: Allow the Instances to act as routers in their VPC (IP forwarding). Only applies to new Instances
                 nvidia-mig-profiles:
                   $ref: '#/components/schemas/nvidia-mig-profiles'
                   nullable: true
@@ -23272,6 +23658,9 @@ paths:
                   exclusiveMaximum: false
                   nullable: true
                   description: Maximum number of pods per node (kubelet setting)
+                vpc:
+                  $ref: '#/components/schemas/vpc-ref'
+                  description: 'Nodepool VPC: the Instances are attached to the given Subnets of the VPC'
                 addons:
                   type: array
                   items:
@@ -23288,6 +23677,9 @@ paths:
                   exclusiveMinimum: false
                   exclusiveMaximum: false
                   description: Nodepool instances disk size in GiB
+                ip-forwarding:
+                  type: boolean
+                  description: Allow the Instances to act as routers in their VPC (IP forwarding). Only applies to new Instances
                 nvidia-mig-profiles:
                   $ref: '#/components/schemas/nvidia-mig-profiles'
                   description: Nvidia MIG Profiles
@@ -25643,7 +26035,7 @@ paths:
       operationId: reset-dbaas-postgres-user-password
 x-topics:
   - title: API Request Signature
-    content: |2+
+    content: |+
 
       In order to authenticate legitimate users, the Exoscale API requires incoming requests to be signed using valid Exoscale API account credentials with the following mechanism.
 
@@ -25711,7 +26103,7 @@ x-topics:
       * Python: [requests-exoscale-auth > `ExoscaleV2Auth`](https://github.com/exoscale/requests-exoscale-auth/blob/master/exoscale_auth.py)
 
   - title: Zone local resources
-    content: |2
+    content: |
 
       The API is deployed across all Exoscale zones. When performing a compute call, you should use the relevant zone for your resource.
       For example: https://api-de-fra-1.exoscale.com/v2/instance would return only the instances from `de-fra-1`, https://api-ch-gva-2.exoscale.com/v2/instance from `ch-gva-2`.

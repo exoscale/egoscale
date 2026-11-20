@@ -4,6 +4,7 @@
 package v3
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel"
@@ -13,7 +14,8 @@ import (
 	"github.com/pb33f/libopenapi/datamodel/low/base"
 	low "github.com/pb33f/libopenapi/datamodel/low/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"github.com/pb33f/libopenapi/utils"
+	"go.yaml.in/yaml/v4"
 )
 
 // Components represents a high-level OpenAPI 3+ Components Object, that is backed by a low-level one.
@@ -32,6 +34,7 @@ type Components struct {
 	Links           *orderedmap.Map[string, *Link]                 `json:"links,omitempty" yaml:"links,omitempty"`
 	Callbacks       *orderedmap.Map[string, *Callback]             `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
 	PathItems       *orderedmap.Map[string, *PathItem]             `json:"pathItems,omitempty" yaml:"pathItems,omitempty"`
+	MediaTypes      *orderedmap.Map[string, *MediaType]            `json:"mediaTypes,omitempty" yaml:"mediaTypes,omitempty"` // OpenAPI 3.2+ mediaTypes section
 	Extensions      *orderedmap.Map[string, *yaml.Node]            `json:"-" yaml:"-"`
 	low             *low.Components
 }
@@ -54,11 +57,12 @@ func NewComponents(comp *low.Components) *Components {
 	headerMap := orderedmap.New[string, *Header]()
 	pathItemMap := orderedmap.New[string, *PathItem]()
 	securitySchemeMap := orderedmap.New[string, *SecurityScheme]()
+	mediaTypesMap := orderedmap.New[string, *MediaType]()
 	schemas := orderedmap.New[string, *highbase.SchemaProxy]()
 
 	// build all components asynchronously.
 	var wg sync.WaitGroup
-	wg.Add(10)
+	wg.Add(11)
 	go func() {
 		buildComponent[*low.Callback, *Callback](comp.Callbacks.Value, cbMap, NewCallback)
 		wg.Done()
@@ -99,6 +103,10 @@ func NewComponents(comp *low.Components) *Components {
 		buildSchema(comp.Schemas.Value, schemas)
 		wg.Done()
 	}()
+	go func() {
+		buildComponent[*low.MediaType, *MediaType](comp.MediaTypes.Value, mediaTypesMap, NewMediaType)
+		wg.Done()
+	}()
 
 	wg.Wait()
 	c.Schemas = schemas
@@ -111,6 +119,7 @@ func NewComponents(comp *low.Components) *Components {
 	c.Examples = exampleMap
 	c.SecuritySchemes = securitySchemeMap
 	c.PathItems = pathItemMap
+	c.MediaTypes = mediaTypesMap
 	return c
 }
 
@@ -166,6 +175,186 @@ func (c *Components) Render() ([]byte, error) {
 
 // MarshalYAML will create a ready to render YAML representation of the Response object.
 func (c *Components) MarshalYAML() (interface{}, error) {
+	c.warnPreservedComponentMapRefs()
 	nb := high.NewNodeBuilder(c, c.low)
-	return nb.Render(), nil
+	rendered := nb.Render()
+	c.preserveInvalidComponentMapRefs(rendered)
+	return rendered, nil
+}
+
+// RenderInline will return a YAML representation of the Components object as a byte slice with references resolved.
+func (c *Components) RenderInline() ([]byte, error) {
+	d, _ := c.MarshalYAMLInline()
+	return yaml.Marshal(d)
+}
+
+// MarshalYAMLInline will create a ready to render YAML representation of the Components object with references resolved.
+func (c *Components) MarshalYAMLInline() (interface{}, error) {
+	c.warnPreservedComponentMapRefs()
+	nb := high.NewNodeBuilder(c, c.low)
+	nb.Resolve = true
+	rendered := nb.Render()
+	c.preserveInvalidComponentMapRefs(rendered)
+	return rendered, nil
+}
+
+// MarshalYAMLInlineWithContext renders components with a shared inline render context.
+func (c *Components) MarshalYAMLInlineWithContext(ctx any) (interface{}, error) {
+	c.warnPreservedComponentMapRefs()
+	nb := high.NewNodeBuilder(c, c.low)
+	nb.Resolve = true
+	nb.RenderContext = ctx
+	rendered := nb.Render()
+	c.preserveInvalidComponentMapRefs(rendered)
+	return rendered, errors.Join(nb.Errors...)
+}
+
+func (c *Components) warnPreservedComponentMapRefs() {
+	if c == nil || c.low == nil {
+		return
+	}
+	idx := c.low.GetIndex()
+	if idx == nil {
+		return
+	}
+	logger := idx.GetLogger()
+	if logger == nil {
+		return
+	}
+
+	warnComponentRefEntries(logger, low.SchemasLabel, c.low.Schemas.Value)
+	warnComponentRefEntries(logger, low.ResponsesLabel, c.low.Responses.Value)
+	warnComponentRefEntries(logger, low.ParametersLabel, c.low.Parameters.Value)
+	warnComponentRefEntries(logger, base.ExamplesLabel, c.low.Examples.Value)
+	warnComponentRefEntries(logger, low.RequestBodiesLabel, c.low.RequestBodies.Value)
+	warnComponentRefEntries(logger, low.HeadersLabel, c.low.Headers.Value)
+	warnComponentRefEntries(logger, low.SecuritySchemesLabel, c.low.SecuritySchemes.Value)
+	warnComponentRefEntries(logger, low.LinksLabel, c.low.Links.Value)
+	warnComponentRefEntries(logger, low.CallbacksLabel, c.low.Callbacks.Value)
+	warnComponentRefEntries(logger, low.PathItemsLabel, c.low.PathItems.Value)
+	warnComponentRefEntries(logger, low.MediaTypesLabel, c.low.MediaTypes.Value)
+}
+
+func warnComponentRefEntries[T any](
+	logger interface {
+		Warn(msg string, args ...any)
+	},
+	section string,
+	m *orderedmap.Map[lowmodel.KeyReference[string], lowmodel.ValueReference[T]],
+) {
+	if m == nil {
+		return
+	}
+
+	for pair := m.First(); pair != nil; pair = pair.Next() {
+		if pair.Key().Value != "$ref" {
+			continue
+		}
+		valueNode := pair.Value().ValueNode
+		if valueNode == nil || valueNode.Kind != yaml.ScalarNode {
+			continue
+		}
+		logger.Warn(
+			"preserving invalid component map $ref entry during render",
+			"section", section,
+			"ref", valueNode.Value,
+			"line", valueNode.Line,
+			"column", valueNode.Column,
+		)
+	}
+}
+
+// preserveInvalidComponentMapRefs patches the rendered Components YAML tree so that invalid
+// map-level "$ref" entries under component sections survive a render cycle unchanged.
+//
+// Inputs like:
+//
+//	components:
+//	  parameters:
+//	    $ref: "./params.yaml"
+//
+// are not valid OpenAPI component maps, but they do appear in the wild. The normal high-level
+// render path treats "$ref" as a literal component name and can otherwise collapse the scalar
+// value into an empty object. For these cases we preserve the original raw YAML nodes and pair
+// the behavior with a warning log, rather than silently rewriting the input.
+func (c *Components) preserveInvalidComponentMapRefs(rendered *yaml.Node) {
+	if c == nil || c.low == nil || rendered == nil || rendered.Kind != yaml.MappingNode {
+		return
+	}
+
+	preserveComponentRefEntries(rendered, low.SchemasLabel, c.low.Schemas.Value)
+	preserveComponentRefEntries(rendered, low.ResponsesLabel, c.low.Responses.Value)
+	preserveComponentRefEntries(rendered, low.ParametersLabel, c.low.Parameters.Value)
+	preserveComponentRefEntries(rendered, base.ExamplesLabel, c.low.Examples.Value)
+	preserveComponentRefEntries(rendered, low.RequestBodiesLabel, c.low.RequestBodies.Value)
+	preserveComponentRefEntries(rendered, low.HeadersLabel, c.low.Headers.Value)
+	preserveComponentRefEntries(rendered, low.SecuritySchemesLabel, c.low.SecuritySchemes.Value)
+	preserveComponentRefEntries(rendered, low.LinksLabel, c.low.Links.Value)
+	preserveComponentRefEntries(rendered, low.CallbacksLabel, c.low.Callbacks.Value)
+	preserveComponentRefEntries(rendered, low.PathItemsLabel, c.low.PathItems.Value)
+	preserveComponentRefEntries(rendered, low.MediaTypesLabel, c.low.MediaTypes.Value)
+}
+
+// preserveComponentRefEntries re-inserts a scalar "$ref" entry into the rendered YAML for a
+// specific component section. Only literal "$ref" keys backed by scalar low-level value nodes
+// are preserved; real component entries and malformed non-scalar values are ignored.
+func preserveComponentRefEntries[T any](
+	rendered *yaml.Node,
+	section string,
+	m *orderedmap.Map[lowmodel.KeyReference[string], lowmodel.ValueReference[T]],
+) {
+	if m == nil {
+		return
+	}
+
+	sectionNode := findMapValueNode(rendered, section)
+	for pair := m.First(); pair != nil; pair = pair.Next() {
+		if pair.Key().Value != "$ref" {
+			continue
+		}
+
+		valueNode := pair.Value().ValueNode
+		keyNode := pair.Key().KeyNode
+		if keyNode == nil || valueNode == nil || valueNode.Kind != yaml.ScalarNode {
+			continue
+		}
+
+		if sectionNode == nil {
+			sectionNode = utils.CreateEmptyMapNode()
+			rendered.Content = append(
+				rendered.Content,
+				utils.CreateStringNode(section),
+				sectionNode,
+			)
+		}
+		upsertMapNodeEntry(sectionNode, utils.CloneYAMLNode(keyNode), utils.CloneYAMLNode(valueNode))
+	}
+}
+
+// findMapValueNode returns the mapping value node for key from a YAML mapping node.
+func findMapValueNode(m *yaml.Node, key string) *yaml.Node {
+	if m == nil || m.Kind != yaml.MappingNode {
+		return nil
+	}
+	for i := 0; i < len(m.Content); i += 2 {
+		if m.Content[i].Value == key {
+			return m.Content[i+1]
+		}
+	}
+	return nil
+}
+
+// upsertMapNodeEntry replaces or appends a key/value pair in a YAML mapping node.
+func upsertMapNodeEntry(m *yaml.Node, keyNode, valueNode *yaml.Node) {
+	if m == nil || m.Kind != yaml.MappingNode || keyNode == nil || valueNode == nil {
+		return
+	}
+	for i := 0; i < len(m.Content); i += 2 {
+		if m.Content[i].Value == keyNode.Value {
+			m.Content[i] = keyNode
+			m.Content[i+1] = valueNode
+			return
+		}
+	}
+	m.Content = append(m.Content, keyNode, valueNode)
 }

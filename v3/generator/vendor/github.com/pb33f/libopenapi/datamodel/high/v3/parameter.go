@@ -4,18 +4,34 @@
 package v3
 
 import (
+	"context"
+
 	"github.com/pb33f/libopenapi/datamodel/high"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
+	lowmodel "github.com/pb33f/libopenapi/datamodel/low"
 	low "github.com/pb33f/libopenapi/datamodel/low/v3"
+	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"github.com/pb33f/libopenapi/utils"
+	"go.yaml.in/yaml/v4"
 )
+
+// buildLowParameter builds a low-level Parameter from a resolved YAML node.
+func buildLowParameter(node *yaml.Node, idx *index.SpecIndex) (*low.Parameter, error) {
+	var param low.Parameter
+	lowmodel.BuildModel(node, &param)
+	if err := param.Build(context.Background(), nil, node, idx); err != nil {
+		return nil, err
+	}
+	return &param, nil
+}
 
 // Parameter represents a high-level OpenAPI 3+ Parameter object, that is backed by a low-level one.
 //
 // A unique parameter is defined by a combination of a name and location.
 //   - https://spec.openapis.org/oas/v3.1.0#parameter-object
 type Parameter struct {
+	Reference       string                                 `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Name            string                                 `json:"name,omitempty" yaml:"name,omitempty"`
 	In              string                                 `json:"in,omitempty" yaml:"in,omitempty"`
 	Description     string                                 `json:"description,omitempty" yaml:"description,omitempty"`
@@ -60,6 +76,21 @@ func NewParameter(param *low.Parameter) *Parameter {
 	return p
 }
 
+// CreateParameterRef creates a Parameter that renders as a $ref to another parameter definition.
+// This is useful when building OpenAPI specs programmatically and you want to reference
+// a parameter defined in components/parameters rather than inlining the full definition.
+//
+// Example:
+//
+//	param := v3.CreateParameterRef("#/components/parameters/limitParam")
+//
+// Renders as:
+//
+//	$ref: '#/components/parameters/limitParam'
+func CreateParameterRef(ref string) *Parameter {
+	return &Parameter{Reference: ref}
+}
+
 // GoLow returns the low-level Parameter used to create the high-level one.
 func (p *Parameter) GoLow() *low.Parameter {
 	return p.low
@@ -68,6 +99,16 @@ func (p *Parameter) GoLow() *low.Parameter {
 // GoLowUntyped will return the low-level Discriminator instance that was used to create the high-level one, with no type
 func (p *Parameter) GoLowUntyped() any {
 	return p.low
+}
+
+// IsReference returns true if this Parameter is a reference to another Parameter definition.
+func (p *Parameter) IsReference() bool {
+	return p.Reference != ""
+}
+
+// GetReference returns the reference string if this is a reference Parameter.
+func (p *Parameter) GetReference() string {
+	return p.Reference
 }
 
 // Render will return a YAML representation of the Encoding object as a byte slice.
@@ -80,16 +121,53 @@ func (p *Parameter) RenderInline() ([]byte, error) {
 	return yaml.Marshal(d)
 }
 
-// MarshalYAML will create a ready to render YAML representation of the Encoding object.
+// MarshalYAML will create a ready to render YAML representation of the Parameter object.
 func (p *Parameter) MarshalYAML() (interface{}, error) {
+	// Handle reference-only parameter
+	if p.Reference != "" {
+		return utils.CreateRefNode(p.Reference), nil
+	}
 	nb := high.NewNodeBuilder(p, p.low)
 	return nb.Render(), nil
 }
 
+// MarshalYAMLInline will create a ready to render YAML representation of the Parameter object,
+// resolving any references inline where possible.
 func (p *Parameter) MarshalYAMLInline() (interface{}, error) {
-	nb := high.NewNodeBuilder(p, p.low)
-	nb.Resolve = true
-	return nb.Render(), nil
+	// reference-only objects render as $ref nodes
+	if p.Reference != "" {
+		return utils.CreateRefNode(p.Reference), nil
+	}
+
+	// resolve external reference if present
+	if p.low != nil {
+		rendered, err := high.RenderExternalRef(p.low, buildLowParameter, NewParameter)
+		if err != nil || rendered != nil {
+			return rendered, err
+		}
+	}
+
+	return high.RenderInline(p, p.low)
+}
+
+// MarshalYAMLInlineWithContext will create a ready to render YAML representation of the Parameter object,
+// resolving any references inline where possible. Uses the provided context for cycle detection.
+// The ctx parameter should be *base.InlineRenderContext but is typed as any to satisfy the
+// high.RenderableInlineWithContext interface without import cycles.
+func (p *Parameter) MarshalYAMLInlineWithContext(ctx any) (interface{}, error) {
+	if p.Reference != "" {
+		return utils.CreateRefNode(p.Reference), nil
+	}
+
+	// resolve external reference if present
+	if p.low != nil {
+		rendered, err := high.RenderExternalRefWithContext(p.low, buildLowParameter, NewParameter, ctx)
+		if err != nil || rendered != nil {
+			return rendered, err
+		}
+	}
+
+	return high.RenderInlineWithContext(p, p.low, ctx)
 }
 
 // IsExploded will return true if the parameter is exploded, false otherwise.
@@ -98,6 +176,27 @@ func (p *Parameter) IsExploded() bool {
 		return false
 	}
 	return *p.Explode
+}
+
+// EffectiveStyle returns the parameter serialization style after applying the
+// OpenAPI location-specific default.
+func (p *Parameter) EffectiveStyle() string {
+	if p.Style != "" {
+		return p.Style
+	}
+	if p.In == "query" || p.In == "cookie" {
+		return "form"
+	}
+	return "simple"
+}
+
+// EffectiveExplode returns the explode value after applying the OpenAPI
+// default. Form parameters explode by default; all other styles do not.
+func (p *Parameter) EffectiveExplode() bool {
+	if p.Explode != nil {
+		return *p.Explode
+	}
+	return p.EffectiveStyle() == "form"
 }
 
 // IsDefaultFormEncoding will return true if the parameter has no exploded value, or has exploded set to true, and no style

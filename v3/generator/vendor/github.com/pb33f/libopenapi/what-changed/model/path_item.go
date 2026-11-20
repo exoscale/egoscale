@@ -1,4 +1,4 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2025 Princess Beef Heavy Industries, LLC / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package model
@@ -14,21 +14,26 @@ import (
 // PathItemChanges represents changes found between to Swagger or OpenAPI PathItem object.
 type PathItemChanges struct {
 	*PropertyChanges
-	GetChanges       *OperationChanges   `json:"get,omitempty" yaml:"get,omitempty"`
-	PutChanges       *OperationChanges   `json:"put,omitempty" yaml:"put,omitempty"`
-	PostChanges      *OperationChanges   `json:"post,omitempty" yaml:"post,omitempty"`
-	DeleteChanges    *OperationChanges   `json:"delete,omitempty" yaml:"delete,omitempty"`
-	OptionsChanges   *OperationChanges   `json:"options,omitempty" yaml:"options,omitempty"`
-	HeadChanges      *OperationChanges   `json:"head,omitempty" yaml:"head,omitempty"`
-	PatchChanges     *OperationChanges   `json:"patch,omitempty" yaml:"patch,omitempty"`
-	TraceChanges     *OperationChanges   `json:"trace,omitempty" yaml:"trace,omitempty"`
-	ServerChanges    []*ServerChanges    `json:"servers,omitempty" yaml:"servers,omitempty"`
-	ParameterChanges []*ParameterChanges `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	ExtensionChanges *ExtensionChanges   `json:"extensions,omitempty" yaml:"extensions,omitempty"`
+	GetChanges                 *OperationChanges            `json:"get,omitempty" yaml:"get,omitempty"`
+	PutChanges                 *OperationChanges            `json:"put,omitempty" yaml:"put,omitempty"`
+	PostChanges                *OperationChanges            `json:"post,omitempty" yaml:"post,omitempty"`
+	DeleteChanges              *OperationChanges            `json:"delete,omitempty" yaml:"delete,omitempty"`
+	OptionsChanges             *OperationChanges            `json:"options,omitempty" yaml:"options,omitempty"`
+	HeadChanges                *OperationChanges            `json:"head,omitempty" yaml:"head,omitempty"`
+	PatchChanges               *OperationChanges            `json:"patch,omitempty" yaml:"patch,omitempty"`
+	TraceChanges               *OperationChanges            `json:"trace,omitempty" yaml:"trace,omitempty"`
+	QueryChanges               *OperationChanges            `json:"query,omitempty" yaml:"query,omitempty"`
+	AdditionalOperationChanges map[string]*OperationChanges `json:"additionalOperations,omitempty" yaml:"additionalOperations,omitempty"` // OpenAPI 3.2+ additional operations
+	ServerChanges              []*ServerChanges             `json:"servers,omitempty" yaml:"servers,omitempty"`
+	ParameterChanges           []*ParameterChanges          `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	ExtensionChanges           *ExtensionChanges            `json:"extensions,omitempty" yaml:"extensions,omitempty"`
 }
 
 // GetAllChanges returns a slice of all changes made between PathItem objects
 func (p *PathItemChanges) GetAllChanges() []*Change {
+	if p == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, p.Changes...)
 	if p.GetChanges != nil {
@@ -55,6 +60,12 @@ func (p *PathItemChanges) GetAllChanges() []*Change {
 	if p.TraceChanges != nil {
 		changes = append(changes, p.TraceChanges.GetAllChanges()...)
 	}
+	if p.QueryChanges != nil {
+		changes = append(changes, p.QueryChanges.GetAllChanges()...)
+	}
+	for k := range p.AdditionalOperationChanges {
+		changes = append(changes, p.AdditionalOperationChanges[k].GetAllChanges()...)
+	}
 	for i := range p.ServerChanges {
 		changes = append(changes, p.ServerChanges[i].GetAllChanges()...)
 	}
@@ -69,6 +80,9 @@ func (p *PathItemChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns the total number of changes found between two Swagger or OpenAPI PathItems
 func (p *PathItemChanges) TotalChanges() int {
+	if p == nil {
+		return 0
+	}
 	c := p.PropertyChanges.TotalChanges()
 	if p.GetChanges != nil {
 		c += p.GetChanges.TotalChanges()
@@ -93,6 +107,12 @@ func (p *PathItemChanges) TotalChanges() int {
 	}
 	if p.TraceChanges != nil {
 		c += p.TraceChanges.TotalChanges()
+	}
+	if p.QueryChanges != nil {
+		c += p.QueryChanges.TotalChanges()
+	}
+	for k := range p.AdditionalOperationChanges {
+		c += p.AdditionalOperationChanges[k].TotalChanges()
 	}
 	for i := range p.ServerChanges {
 		c += p.ServerChanges[i].TotalChanges()
@@ -133,6 +153,12 @@ func (p *PathItemChanges) TotalBreakingChanges() int {
 	if p.TraceChanges != nil {
 		c += p.TraceChanges.TotalBreakingChanges()
 	}
+	if p.QueryChanges != nil {
+		c += p.QueryChanges.TotalBreakingChanges()
+	}
+	for k := range p.AdditionalOperationChanges {
+		c += p.AdditionalOperationChanges[k].TotalBreakingChanges()
+	}
 	for i := range p.ServerChanges {
 		c += p.ServerChanges[i].TotalBreakingChanges()
 	}
@@ -155,7 +181,6 @@ func ComparePathItemsV3(l, r *v3.PathItem) *PathItemChanges {
 // ComparePathItems compare a left and right Swagger or OpenAPI PathItem object for changes. If found, returns
 // a pointer to PathItemChanges, or returns nil if nothing is found.
 func ComparePathItems(l, r any) *PathItemChanges {
-
 	var changes []*Change
 	var props []*PropertyCheck
 
@@ -189,26 +214,14 @@ func ComparePathItems(l, r any) *PathItemChanges {
 		}
 
 		// description
-		props = append(props, &PropertyCheck{
-			LeftNode:  lPath.Description.ValueNode,
-			RightNode: rPath.Description.ValueNode,
-			Label:     v3.DescriptionLabel,
-			Changes:   &changes,
-			Breaking:  false,
-			Original:  lPath,
-			New:       lPath,
-		})
+		props = append(props, NewPropertyCheck(CompPathItem, PropDescription,
+			lPath.Description.ValueNode, rPath.Description.ValueNode,
+			v3.DescriptionLabel, &changes, lPath, rPath))
 
 		// summary
-		props = append(props, &PropertyCheck{
-			LeftNode:  lPath.Summary.ValueNode,
-			RightNode: rPath.Summary.ValueNode,
-			Label:     v3.SummaryLabel,
-			Changes:   &changes,
-			Breaking:  false,
-			Original:  lPath,
-			New:       lPath,
-		})
+		props = append(props, NewPropertyCheck(CompPathItem, PropSummary,
+			lPath.Summary.ValueNode, rPath.Summary.ValueNode,
+			v3.SummaryLabel, &changes, lPath, rPath))
 
 		compareOpenAPIPathItem(lPath, rPath, &changes, pc)
 	}
@@ -219,7 +232,6 @@ func ComparePathItems(l, r any) *PathItemChanges {
 }
 
 func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *PathItemChanges) []*PropertyCheck {
-
 	var props []*PropertyCheck
 
 	totalOps := 0
@@ -231,11 +243,11 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Get.IsEmpty() && rPath.Get.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.GetLabel,
-			lPath.Get.ValueNode, nil, true, lPath.Get.Value, nil)
+			lPath.Get.ValueNode, nil, BreakingRemoved(CompPathItem, PropGet), lPath.Get.Value, nil)
 	}
 	if lPath.Get.IsEmpty() && !rPath.Get.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.GetLabel,
-			nil, rPath.Get.ValueNode, false, nil, rPath.Get.Value)
+			nil, rPath.Get.ValueNode, BreakingAdded(CompPathItem, PropGet), nil, rPath.Get.Value)
 	}
 
 	// put
@@ -245,11 +257,11 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Put.IsEmpty() && rPath.Put.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.PutLabel,
-			lPath.Put.ValueNode, nil, true, lPath.Put.Value, nil)
+			lPath.Put.ValueNode, nil, BreakingRemoved(CompPathItem, PropPut), lPath.Put.Value, nil)
 	}
 	if lPath.Put.IsEmpty() && !rPath.Put.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.PutLabel,
-			nil, rPath.Put.ValueNode, false, nil, lPath.Put.Value)
+			nil, rPath.Put.ValueNode, BreakingAdded(CompPathItem, PropPut), nil, lPath.Put.Value)
 	}
 
 	// post
@@ -259,11 +271,11 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Post.IsEmpty() && rPath.Post.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.PostLabel,
-			lPath.Post.ValueNode, nil, true, lPath.Post.Value, nil)
+			lPath.Post.ValueNode, nil, BreakingRemoved(CompPathItem, PropPost), lPath.Post.Value, nil)
 	}
 	if lPath.Post.IsEmpty() && !rPath.Post.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.PostLabel,
-			nil, rPath.Post.ValueNode, false, nil, lPath.Post.Value)
+			nil, rPath.Post.ValueNode, BreakingAdded(CompPathItem, PropPost), nil, lPath.Post.Value)
 	}
 
 	// delete
@@ -273,11 +285,11 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Delete.IsEmpty() && rPath.Delete.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.DeleteLabel,
-			lPath.Delete.ValueNode, nil, true, lPath.Delete.Value, nil)
+			lPath.Delete.ValueNode, nil, BreakingRemoved(CompPathItem, PropDelete), lPath.Delete.Value, nil)
 	}
 	if lPath.Delete.IsEmpty() && !rPath.Delete.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.DeleteLabel,
-			nil, rPath.Delete.ValueNode, false, nil, lPath.Delete.Value)
+			nil, rPath.Delete.ValueNode, BreakingAdded(CompPathItem, PropDelete), nil, lPath.Delete.Value)
 	}
 
 	// options
@@ -287,11 +299,11 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Options.IsEmpty() && rPath.Options.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.OptionsLabel,
-			lPath.Options.ValueNode, nil, true, lPath.Options.Value, nil)
+			lPath.Options.ValueNode, nil, BreakingRemoved(CompPathItem, PropOptions), lPath.Options.Value, nil)
 	}
 	if lPath.Options.IsEmpty() && !rPath.Options.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.OptionsLabel,
-			nil, rPath.Options.ValueNode, false, nil, lPath.Options.Value)
+			nil, rPath.Options.ValueNode, BreakingAdded(CompPathItem, PropOptions), nil, lPath.Options.Value)
 	}
 
 	// head
@@ -301,11 +313,11 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Head.IsEmpty() && rPath.Head.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.HeadLabel,
-			lPath.Head.ValueNode, nil, true, lPath.Head.Value, nil)
+			lPath.Head.ValueNode, nil, BreakingRemoved(CompPathItem, PropHead), lPath.Head.Value, nil)
 	}
 	if lPath.Head.IsEmpty() && !rPath.Head.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.HeadLabel,
-			nil, rPath.Head.ValueNode, false, nil, lPath.Head.Value)
+			nil, rPath.Head.ValueNode, BreakingAdded(CompPathItem, PropHead), nil, lPath.Head.Value)
 	}
 
 	// patch
@@ -315,11 +327,11 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Patch.IsEmpty() && rPath.Patch.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.PatchLabel,
-			lPath.Patch.ValueNode, nil, true, lPath.Patch.Value, nil)
+			lPath.Patch.ValueNode, nil, BreakingRemoved(CompPathItem, PropPatch), lPath.Patch.Value, nil)
 	}
 	if lPath.Patch.IsEmpty() && !rPath.Patch.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.PatchLabel,
-			nil, rPath.Patch.ValueNode, false, nil, lPath.Patch.Value)
+			nil, rPath.Patch.ValueNode, BreakingAdded(CompPathItem, PropPatch), nil, lPath.Patch.Value)
 	}
 
 	// parameters
@@ -331,16 +343,20 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Parameters.IsEmpty() && rPath.Parameters.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.ParametersLabel,
-			lPath.Parameters.ValueNode, nil, true, lPath.Parameters.Value,
+			lPath.Parameters.ValueNode, nil, BreakingRemoved(CompPathItem, PropParameters), lPath.Parameters.Value,
 			nil)
 	}
 	if lPath.Parameters.IsEmpty() && !rPath.Parameters.IsEmpty() {
-		breaking := false
-		for i := range rPath.Parameters.Value {
-			param := rPath.Parameters.Value[i].Value
-			if param.Required.Value {
-				breaking = true
-				break
+		// Check configurable breaking rules first
+		breaking := BreakingAdded(CompPathItem, PropParameters)
+		// If config says not breaking, fall back to semantic check (required params are breaking)
+		if !breaking {
+			for i := range rPath.Parameters.Value {
+				param := rPath.Parameters.Value[i].Value
+				if param.Required.Value {
+					breaking = true
+					break
+				}
 			}
 		}
 		CreateChange(changes, PropertyAdded, v3.ParametersLabel,
@@ -376,7 +392,8 @@ func compareSwaggerPathItem(lPath, rPath *v2.PathItem, changes *[]*Change, pc *P
 }
 
 func extractV2ParametersIntoInterface(l, r []low.ValueReference[*v2.Parameter]) ([]low.ValueReference[low.SharedParameters],
-	[]low.ValueReference[low.SharedParameters]) {
+	[]low.ValueReference[low.SharedParameters],
+) {
 	lp := make([]low.ValueReference[low.SharedParameters], len(l))
 	rp := make([]low.ValueReference[low.SharedParameters], len(r))
 	for i := range l {
@@ -395,7 +412,8 @@ func extractV2ParametersIntoInterface(l, r []low.ValueReference[*v2.Parameter]) 
 }
 
 func extractV3ParametersIntoInterface(l, r []low.ValueReference[*v3.Parameter]) ([]low.ValueReference[low.SharedParameters],
-	[]low.ValueReference[low.SharedParameters]) {
+	[]low.ValueReference[low.SharedParameters],
+) {
 	lp := make([]low.ValueReference[low.SharedParameters], len(l))
 	rp := make([]low.ValueReference[low.SharedParameters], len(r))
 	for i := range l {
@@ -414,17 +432,20 @@ func extractV3ParametersIntoInterface(l, r []low.ValueReference[*v3.Parameter]) 
 }
 
 func checkParameters(lParams, rParams []low.ValueReference[low.SharedParameters], changes *[]*Change, pc *PathItemChanges) {
-
 	lv := make(map[string]low.SharedParameters, len(lParams))
 	rv := make(map[string]low.SharedParameters, len(rParams))
+	lRefs := make(map[string]*low.ValueReference[low.SharedParameters], len(lParams))
+	rRefs := make(map[string]*low.ValueReference[low.SharedParameters], len(rParams))
 
 	for i := range lParams {
 		s := lParams[i].Value.GetName().Value
 		lv[s] = lParams[i].Value
+		lRefs[s] = &lParams[i] // Keep the reference wrapper
 	}
 	for i := range rParams {
 		s := rParams[i].Value.GetName().Value
 		rv[s] = rParams[i].Value
+		rRefs[s] = &rParams[i] // Keep the reference wrapper
 	}
 
 	var paramChanges []*ParameterChanges
@@ -433,29 +454,30 @@ func checkParameters(lParams, rParams []low.ValueReference[low.SharedParameters]
 			if !low.AreEqual(lv[n], rv[n]) {
 				ch := CompareParameters(lv[n], rv[n])
 				if ch != nil {
+					// Preserve reference information if this parameter is a $ref
+					PreserveParameterReference(lRefs, rRefs, n, ch)
 					paramChanges = append(paramChanges, ch)
 				}
 			}
 			continue
 		}
 		CreateChange(changes, ObjectRemoved, v3.ParametersLabel,
-			lv[n].GetName().ValueNode, nil, true, lv[n].GetName().Value,
+			lv[n].GetName().ValueNode, nil, true, lv[n],
 			nil)
 
 	}
 	for n := range rv {
 		if _, ok := lv[n]; !ok {
 			CreateChange(changes, ObjectAdded, v3.ParametersLabel,
-				nil, rv[n].GetName().ValueNode, true, nil,
-				rv[n].GetName().Value)
+				nil, rv[n].GetName().ValueNode, rv[n].GetRequired().Value, nil,
+				rv[n])
 		}
 	}
 	pc.ParameterChanges = paramChanges
 }
 
 func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *PathItemChanges) {
-
-	//var props []*PropertyCheck
+	// var props []*PropertyCheck
 
 	totalOps := 0
 	opChan := make(chan opCheck)
@@ -467,11 +489,11 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Get.IsEmpty() && rPath.Get.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.GetLabel,
-			lPath.Get.ValueNode, nil, true, lPath.Get.Value, nil)
+			lPath.Get.ValueNode, nil, BreakingRemoved(CompPathItem, PropGet), lPath.Get.Value, nil)
 	}
 	if lPath.Get.IsEmpty() && !rPath.Get.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.GetLabel,
-			nil, rPath.Get.ValueNode, false, nil, lPath.Get.Value)
+			nil, rPath.Get.ValueNode, BreakingAdded(CompPathItem, PropGet), nil, lPath.Get.Value)
 	}
 
 	// put
@@ -481,11 +503,11 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Put.IsEmpty() && rPath.Put.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.PutLabel,
-			lPath.Put.ValueNode, nil, true, lPath.Put.Value, nil)
+			lPath.Put.ValueNode, nil, BreakingRemoved(CompPathItem, PropPut), lPath.Put.Value, nil)
 	}
 	if lPath.Put.IsEmpty() && !rPath.Put.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.PutLabel,
-			nil, rPath.Put.ValueNode, false, nil, lPath.Put.Value)
+			nil, rPath.Put.ValueNode, BreakingAdded(CompPathItem, PropPut), nil, lPath.Put.Value)
 	}
 
 	// post
@@ -495,11 +517,11 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Post.IsEmpty() && rPath.Post.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.PostLabel,
-			lPath.Post.ValueNode, nil, true, lPath.Post.Value, nil)
+			lPath.Post.ValueNode, nil, BreakingRemoved(CompPathItem, PropPost), lPath.Post.Value, nil)
 	}
 	if lPath.Post.IsEmpty() && !rPath.Post.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.PostLabel,
-			nil, rPath.Post.ValueNode, false, nil, lPath.Post.Value)
+			nil, rPath.Post.ValueNode, BreakingAdded(CompPathItem, PropPost), nil, lPath.Post.Value)
 	}
 
 	// delete
@@ -509,11 +531,11 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Delete.IsEmpty() && rPath.Delete.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.DeleteLabel,
-			lPath.Delete.ValueNode, nil, true, lPath.Delete.Value, nil)
+			lPath.Delete.ValueNode, nil, BreakingRemoved(CompPathItem, PropDelete), lPath.Delete.Value, nil)
 	}
 	if lPath.Delete.IsEmpty() && !rPath.Delete.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.DeleteLabel,
-			nil, rPath.Delete.ValueNode, false, nil, lPath.Delete.Value)
+			nil, rPath.Delete.ValueNode, BreakingAdded(CompPathItem, PropDelete), nil, lPath.Delete.Value)
 	}
 
 	// options
@@ -523,11 +545,11 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Options.IsEmpty() && rPath.Options.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.OptionsLabel,
-			lPath.Options.ValueNode, nil, true, lPath.Options.Value, nil)
+			lPath.Options.ValueNode, nil, BreakingRemoved(CompPathItem, PropOptions), lPath.Options.Value, nil)
 	}
 	if lPath.Options.IsEmpty() && !rPath.Options.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.OptionsLabel,
-			nil, rPath.Options.ValueNode, false, nil, lPath.Options.Value)
+			nil, rPath.Options.ValueNode, BreakingAdded(CompPathItem, PropOptions), nil, lPath.Options.Value)
 	}
 
 	// head
@@ -537,11 +559,11 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Head.IsEmpty() && rPath.Head.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.HeadLabel,
-			lPath.Head.ValueNode, nil, true, lPath.Head.Value, nil)
+			lPath.Head.ValueNode, nil, BreakingRemoved(CompPathItem, PropHead), lPath.Head.Value, nil)
 	}
 	if lPath.Head.IsEmpty() && !rPath.Head.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.HeadLabel,
-			nil, rPath.Head.ValueNode, false, nil, lPath.Head.Value)
+			nil, rPath.Head.ValueNode, BreakingAdded(CompPathItem, PropHead), nil, lPath.Head.Value)
 	}
 
 	// patch
@@ -551,11 +573,11 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Patch.IsEmpty() && rPath.Patch.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.PatchLabel,
-			lPath.Patch.ValueNode, nil, true, lPath.Patch.Value, nil)
+			lPath.Patch.ValueNode, nil, BreakingRemoved(CompPathItem, PropPatch), lPath.Patch.Value, nil)
 	}
 	if lPath.Patch.IsEmpty() && !rPath.Patch.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.PatchLabel,
-			nil, rPath.Patch.ValueNode, false, nil, lPath.Patch.Value)
+			nil, rPath.Patch.ValueNode, BreakingAdded(CompPathItem, PropPatch), nil, lPath.Patch.Value)
 	}
 
 	// trace
@@ -565,15 +587,89 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 	}
 	if !lPath.Trace.IsEmpty() && rPath.Trace.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.TraceLabel,
-			lPath.Trace.ValueNode, nil, true, lPath.Trace.Value, nil)
+			lPath.Trace.ValueNode, nil, BreakingRemoved(CompPathItem, PropTrace), lPath.Trace.Value, nil)
 	}
 	if lPath.Trace.IsEmpty() && !rPath.Trace.IsEmpty() {
 		CreateChange(changes, PropertyAdded, v3.TraceLabel,
-			nil, rPath.Trace.ValueNode, false, nil, lPath.Trace.Value)
+			nil, rPath.Trace.ValueNode, BreakingAdded(CompPathItem, PropTrace), nil, lPath.Trace.Value)
+	}
+
+	// query
+	if !lPath.Query.IsEmpty() && !rPath.Query.IsEmpty() {
+		totalOps++
+		go checkOperation(lPath.Query.Value, rPath.Query.Value, opChan, v3.QueryLabel)
+	}
+	if !lPath.Query.IsEmpty() && rPath.Query.IsEmpty() {
+		CreateChange(changes, PropertyRemoved, v3.QueryLabel,
+			lPath.Query.ValueNode, nil, BreakingRemoved(CompPathItem, PropQuery), lPath.Query.Value, nil)
+	}
+	if lPath.Query.IsEmpty() && !rPath.Query.IsEmpty() {
+		CreateChange(changes, PropertyAdded, v3.QueryLabel,
+			nil, rPath.Query.ValueNode, BreakingAdded(CompPathItem, PropQuery), nil, rPath.Query.Value)
+	}
+
+	// additionalOperations (OpenAPI 3.2+)
+	if lPath.AdditionalOperations.Value != nil && rPath.AdditionalOperations.Value == nil {
+		CreateChange(changes, PropertyRemoved, v3.AdditionalOperationsLabel,
+			lPath.AdditionalOperations.ValueNode, nil, BreakingRemoved(CompPathItem, PropAdditionalOperations), lPath.AdditionalOperations.Value, nil)
+	}
+	if lPath.AdditionalOperations.Value == nil && rPath.AdditionalOperations.Value != nil {
+		CreateChange(changes, PropertyAdded, v3.AdditionalOperationsLabel,
+			nil, rPath.AdditionalOperations.ValueNode, BreakingAdded(CompPathItem, PropAdditionalOperations), nil, rPath.AdditionalOperations.Value)
+	}
+	if lPath.AdditionalOperations.Value != nil && rPath.AdditionalOperations.Value != nil {
+
+		lKeys := make([]low.KeyReference[string], 0, lPath.AdditionalOperations.Value.Len())
+		for lk := range lPath.AdditionalOperations.Value.FromOldest() {
+			lKeys = append(lKeys, lk)
+		}
+		rKeys := make([]low.KeyReference[string], 0, rPath.AdditionalOperations.Value.Len())
+		for rk := range rPath.AdditionalOperations.Value.FromOldest() {
+			rKeys = append(rKeys, rk)
+		}
+
+		for i := range lKeys {
+			// check right keys for match
+			found := false
+			for j := range rKeys {
+				if lKeys[i].Value == rKeys[j].Value {
+					found = true
+					// compare the two operations
+					totalOps++
+					go checkOperation(lPath.AdditionalOperations.Value.GetOrZero(lKeys[j]).Value,
+						rPath.AdditionalOperations.Value.GetOrZero(rKeys[j]).Value, opChan, lKeys[i].Value)
+					break
+				}
+			}
+			// not found, was removed
+			if !found {
+				CreateChange(changes, PropertyRemoved, v3.AdditionalOperationsLabel,
+					lPath.AdditionalOperations.Value.GetOrZero(lKeys[i]).ValueNode, nil, BreakingRemoved(CompPathItem, PropAdditionalOperations),
+					lPath.AdditionalOperations.Value.GetOrZero(lKeys[i]).Value, nil)
+			}
+		}
+
+		// check for added operations
+		for i := range rKeys {
+			// check left keys for match
+			found := false
+			for j := range lKeys {
+				if rKeys[i].Value == lKeys[j].Value {
+					found = true
+					break
+				}
+			}
+			// not found, was added
+			if !found {
+				CreateChange(changes, PropertyAdded, v3.AdditionalOperationsLabel,
+					nil, rPath.AdditionalOperations.Value.GetOrZero(rKeys[i]).ValueNode, BreakingAdded(CompPathItem, PropAdditionalOperations),
+					nil, rPath.AdditionalOperations.Value.GetOrZero(rKeys[i]).Value)
+			}
+		}
 	}
 
 	// servers
-	pc.ServerChanges = checkServers(lPath.Servers, rPath.Servers)
+	pc.ServerChanges = checkServers(lPath.Servers, rPath.Servers, CompPathItem, PropServers)
 
 	// parameters
 	if !lPath.Parameters.IsEmpty() && !rPath.Parameters.IsEmpty() {
@@ -585,16 +681,20 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 
 	if !lPath.Parameters.IsEmpty() && rPath.Parameters.IsEmpty() {
 		CreateChange(changes, PropertyRemoved, v3.ParametersLabel,
-			lPath.Parameters.ValueNode, nil, true, lPath.Parameters.Value,
+			lPath.Parameters.ValueNode, nil, BreakingRemoved(CompPathItem, PropParameters), lPath.Parameters.Value,
 			nil)
 	}
 	if lPath.Parameters.IsEmpty() && !rPath.Parameters.IsEmpty() {
-		breaking := false
-		for i := range rPath.Parameters.Value {
-			param := rPath.Parameters.Value[i].Value
-			if param.Required.Value {
-				breaking = true
-				break
+		// Check configurable breaking rules first
+		breaking := BreakingAdded(CompPathItem, PropParameters)
+		// If config says not breaking, fall back to semantic check (required params are breaking)
+		if !breaking {
+			for i := range rPath.Parameters.Value {
+				param := rPath.Parameters.Value[i].Value
+				if param.Required.Value {
+					breaking = true
+					break
+				}
 			}
 		}
 		CreateChange(changes, PropertyAdded, v3.ParametersLabel,
@@ -623,6 +723,15 @@ func compareOpenAPIPathItem(lPath, rPath *v3.PathItem, changes *[]*Change, pc *P
 			pc.PatchChanges = n.changes
 		case v3.TraceLabel:
 			pc.TraceChanges = n.changes
+		case v3.QueryLabel:
+			pc.QueryChanges = n.changes
+		default:
+			if pc.AdditionalOperationChanges == nil {
+				pc.AdditionalOperationChanges = make(map[string]*OperationChanges)
+			}
+			if n.changes != nil {
+				pc.AdditionalOperationChanges[n.label] = n.changes
+			}
 		}
 		completedOperations++
 	}

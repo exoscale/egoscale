@@ -1,19 +1,20 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package v3
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
+	"hash/maphash"
 	"strings"
+	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Responses represents a low-level OpenAPI 3+ Responses object.
@@ -42,6 +43,8 @@ type Responses struct {
 	RootNode   *yaml.Node
 	index      *index.SpecIndex
 	context    context.Context
+	nodeStore  sync.Map
+	reference  low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -76,8 +79,15 @@ func (r *Responses) Build(ctx context.Context, keyNode, root *yaml.Node, idx *in
 	r.KeyNode = keyNode
 	root = utils.NodeAlias(root)
 	r.RootNode = root
-	r.Reference = new(low.Reference)
-	r.Nodes = low.ExtractNodes(ctx, root)
+	r.reference = low.Reference{}
+	r.Reference = &r.reference
+	r.nodeStore = sync.Map{}
+	r.Nodes = &r.nodeStore
+	if len(root.Content) > 0 {
+		r.NodeMap.ExtractNodes(root, false)
+	} else {
+		r.AddNode(root.Line, root)
+	}
 	r.Extensions = low.ExtractExtensions(root)
 	r.index = idx
 	r.context = ctx
@@ -144,13 +154,21 @@ func (r *Responses) FindResponseByCode(code string) *low.ValueReference[*Respons
 	return low.FindItemInOrderedMap[*Response](code, r.Codes)
 }
 
-// Hash will return a consistent SHA256 Hash of the Examples object
-func (r *Responses) Hash() [32]byte {
-	var f []string
-	f = low.AppendMapHashes(f, r.Codes)
-	if !r.Default.IsEmpty() {
-		f = append(f, low.GenerateHashString(r.Default.Value))
-	}
-	f = append(f, low.HashExtensions(r.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the Responses object
+func (r *Responses) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		for _, hash := range low.AppendMapHashes(nil, r.Codes) {
+			h.WriteString(hash)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !r.Default.IsEmpty() {
+			h.WriteString(low.GenerateHashString(r.Default.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(r.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

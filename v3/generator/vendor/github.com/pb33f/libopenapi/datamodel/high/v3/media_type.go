@@ -4,13 +4,15 @@
 package v3
 
 import (
+	"errors"
+
 	"github.com/pb33f/libopenapi/datamodel"
 	"github.com/pb33f/libopenapi/datamodel/high"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	lowmodel "github.com/pb33f/libopenapi/datamodel/low"
 	low "github.com/pb33f/libopenapi/datamodel/low/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // MediaType represents a high-level OpenAPI MediaType object that is backed by a low-level one.
@@ -18,12 +20,14 @@ import (
 // Each Media Type Object provides schema and examples for the media type identified by its key.
 //   - https://spec.openapis.org/oas/v3.1.0#media-type-object
 type MediaType struct {
-	Schema     *base.SchemaProxy                      `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example    *yaml.Node                             `json:"example,omitempty" yaml:"example,omitempty"`
-	Examples   *orderedmap.Map[string, *base.Example] `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Encoding   *orderedmap.Map[string, *Encoding]     `json:"encoding,omitempty" yaml:"encoding,omitempty"`
-	Extensions *orderedmap.Map[string, *yaml.Node]    `json:"-" yaml:"-"`
-	low        *low.MediaType
+	Schema       *base.SchemaProxy                      `json:"schema,omitempty" yaml:"schema,omitempty"`
+	ItemSchema   *base.SchemaProxy                      `json:"itemSchema,omitempty" yaml:"itemSchema,omitempty"`
+	Example      *yaml.Node                             `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples     *orderedmap.Map[string, *base.Example] `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Encoding     *orderedmap.Map[string, *Encoding]     `json:"encoding,omitempty" yaml:"encoding,omitempty"`
+	ItemEncoding *orderedmap.Map[string, *Encoding]     `json:"itemEncoding,omitempty" yaml:"itemEncoding,omitempty"`
+	Extensions   *orderedmap.Map[string, *yaml.Node]    `json:"-" yaml:"-"`
+	low          *low.MediaType
 }
 
 // NewMediaType will create a new high-level MediaType instance from a low-level one.
@@ -33,10 +37,16 @@ func NewMediaType(mediaType *low.MediaType) *MediaType {
 	if !mediaType.Schema.IsEmpty() {
 		m.Schema = base.NewSchemaProxy(&mediaType.Schema)
 	}
+	if !mediaType.ItemSchema.IsEmpty() {
+		m.ItemSchema = base.NewSchemaProxy(&mediaType.ItemSchema)
+	}
 	m.Example = mediaType.Example.Value
 	m.Examples = base.ExtractExamples(mediaType.Examples.Value)
 	m.Extensions = high.ExtractExtensions(mediaType.Extensions)
 	m.Encoding = ExtractEncoding(mediaType.Encoding.Value)
+	if !mediaType.ItemEncoding.IsEmpty() {
+		m.ItemEncoding = ExtractEncoding(mediaType.ItemEncoding.Value)
+	}
 	return m
 }
 
@@ -70,6 +80,17 @@ func (m *MediaType) MarshalYAMLInline() (interface{}, error) {
 	nb := high.NewNodeBuilder(m, m.low)
 	nb.Resolve = true
 	return nb.Render(), nil
+}
+
+// MarshalYAMLInlineWithContext will create a ready to render YAML representation of the MediaType object,
+// resolving any references inline where possible. Uses the provided context for cycle detection.
+// The ctx parameter should be *base.InlineRenderContext but is typed as any to satisfy the
+// high.RenderableInlineWithContext interface without import cycles.
+func (m *MediaType) MarshalYAMLInlineWithContext(ctx any) (interface{}, error) {
+	nb := high.NewNodeBuilder(m, m.low)
+	nb.Resolve = true
+	nb.RenderContext = ctx
+	return nb.Render(), errors.Join(nb.Errors...)
 }
 
 // ExtractContent takes in a complex and hard to navigate low-level content map, and converts it in to a much simpler

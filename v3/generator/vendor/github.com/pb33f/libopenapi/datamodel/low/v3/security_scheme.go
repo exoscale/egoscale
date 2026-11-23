@@ -1,18 +1,18 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package v3
 
 import (
 	"context"
-	"crypto/sha256"
-	"strings"
+	"hash/maphash"
+	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // SecurityScheme represents a low-level OpenAPI 3+ SecurityScheme object.
@@ -26,19 +26,23 @@ import (
 // Recommended for most use case is Authorization Code Grant flow with PKCE.
 //   - https://spec.openapis.org/oas/v3.1.0#security-scheme-object
 type SecurityScheme struct {
-	Type             low.NodeReference[string]
-	Description      low.NodeReference[string]
-	Name             low.NodeReference[string]
-	In               low.NodeReference[string]
-	Scheme           low.NodeReference[string]
-	BearerFormat     low.NodeReference[string]
-	Flows            low.NodeReference[*OAuthFlows]
-	OpenIdConnectUrl low.NodeReference[string]
-	Extensions       *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
-	KeyNode          *yaml.Node
-	RootNode         *yaml.Node
-	index            *index.SpecIndex
-	context          context.Context
+	Type              low.NodeReference[string]
+	Description       low.NodeReference[string]
+	Name              low.NodeReference[string]
+	In                low.NodeReference[string]
+	Scheme            low.NodeReference[string]
+	BearerFormat      low.NodeReference[string]
+	Flows             low.NodeReference[*OAuthFlows]
+	OpenIdConnectUrl  low.NodeReference[string]
+	OAuth2MetadataUrl low.NodeReference[string] // OpenAPI 3.2+ OAuth2 metadata URL
+	Deprecated        low.NodeReference[bool]   // OpenAPI 3.2+ deprecated flag
+	Extensions        *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]]
+	KeyNode           *yaml.Node
+	RootNode          *yaml.Node
+	index             *index.SpecIndex
+	context           context.Context
+	nodeStore         sync.Map
+	reference         low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -76,14 +80,21 @@ func (ss *SecurityScheme) GetExtensions() *orderedmap.Map[low.KeyReference[strin
 // Build will extract OAuthFlows and extensions from the node.
 func (ss *SecurityScheme) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	ss.KeyNode = keyNode
-	ss.Reference = new(low.Reference)
+	ss.reference = low.Reference{}
+	ss.Reference = &ss.reference
 	if ok, _, ref := utils.IsNodeRefValue(root); ok {
 		ss.SetReference(ref, root)
 	}
 	root = utils.NodeAlias(root)
 	ss.RootNode = root
 	utils.CheckForMergeNodes(root)
-	ss.Nodes = low.ExtractNodes(ctx, root)
+	ss.nodeStore = sync.Map{}
+	ss.Nodes = &ss.nodeStore
+	if len(root.Content) > 0 {
+		ss.NodeMap.ExtractNodes(root, false)
+	} else {
+		ss.AddNode(root.Line, root)
+	}
 	ss.Extensions = low.ExtractExtensions(root)
 	ss.index = idx
 	ss.context = ctx
@@ -100,33 +111,53 @@ func (ss *SecurityScheme) Build(ctx context.Context, keyNode, root *yaml.Node, i
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the SecurityScheme object
-func (ss *SecurityScheme) Hash() [32]byte {
-	var f []string
-	if !ss.Type.IsEmpty() {
-		f = append(f, ss.Type.Value)
-	}
-	if !ss.Description.IsEmpty() {
-		f = append(f, ss.Description.Value)
-	}
-	if !ss.Name.IsEmpty() {
-		f = append(f, ss.Name.Value)
-	}
-	if !ss.In.IsEmpty() {
-		f = append(f, ss.In.Value)
-	}
-	if !ss.Scheme.IsEmpty() {
-		f = append(f, ss.Scheme.Value)
-	}
-	if !ss.BearerFormat.IsEmpty() {
-		f = append(f, ss.BearerFormat.Value)
-	}
-	if !ss.Flows.IsEmpty() {
-		f = append(f, low.GenerateHashString(ss.Flows.Value))
-	}
-	if !ss.OpenIdConnectUrl.IsEmpty() {
-		f = append(f, ss.OpenIdConnectUrl.Value)
-	}
-	f = append(f, low.HashExtensions(ss.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the SecurityScheme object
+func (ss *SecurityScheme) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if !ss.Type.IsEmpty() {
+			h.WriteString(ss.Type.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !ss.Description.IsEmpty() {
+			h.WriteString(ss.Description.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !ss.Name.IsEmpty() {
+			h.WriteString(ss.Name.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !ss.In.IsEmpty() {
+			h.WriteString(ss.In.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !ss.Scheme.IsEmpty() {
+			h.WriteString(ss.Scheme.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !ss.BearerFormat.IsEmpty() {
+			h.WriteString(ss.BearerFormat.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !ss.Flows.IsEmpty() {
+			h.WriteString(low.GenerateHashString(ss.Flows.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !ss.OpenIdConnectUrl.IsEmpty() {
+			h.WriteString(ss.OpenIdConnectUrl.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !ss.OAuth2MetadataUrl.IsEmpty() {
+			h.WriteString(ss.OAuth2MetadataUrl.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !ss.Deprecated.IsEmpty() {
+			low.HashBool(h, ss.Deprecated.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(ss.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

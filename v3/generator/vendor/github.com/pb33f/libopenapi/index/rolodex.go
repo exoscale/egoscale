@@ -17,9 +17,14 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"gopkg.in/yaml.v3"
+	"github.com/pb33f/libopenapi/utils"
+
+	"context"
+
+	"go.yaml.in/yaml/v4"
 )
 
 // CanBeIndexed is an interface that allows a file to be indexed.
@@ -36,6 +41,10 @@ type RolodexFile interface {
 	GetErrors() []error
 	GetContentAsYAMLNode() (*yaml.Node, error)
 	GetIndex() *SpecIndex
+	// WaitForIndexing blocks until the file's index is ready.
+	// This is used to coordinate between concurrent goroutines when one is loading
+	// a file and another needs to use its index.
+	WaitForIndexing()
 	Name() string
 	ModTime() time.Time
 	IsDir() bool
@@ -73,12 +82,54 @@ type Rolodex struct {
 	safeCircularReferences     []*CircularReferenceResult
 	infiniteCircularReferences []*CircularReferenceResult
 	ignoredCircularReferences  []*CircularReferenceResult
+	debouncedSafeCircRefs      []*CircularReferenceResult // cached result from GetSafeCircularReferences
+	debouncedIgnoredCircRefs   []*CircularReferenceResult // cached result from GetIgnoredCircularReferences
+	circRefCacheLock           sync.Mutex                 // protects debounced cache fields
 	logger                     *slog.Logger
+	id                         string // unique ID for the rolodex, can be used to identify it in logs or other contexts.
+	globalSchemaIdRegistry     map[string]*SchemaIdEntry
+	schemaIdRegistryLock       sync.RWMutex
+}
+
+// Release nils all fields that can pin YAML node trees, SpecIndex objects, or
+// circular reference results in memory. Acquires locks for fields that are
+// protected elsewhere. Call this once all consumers of the rolodex are finished.
+func (r *Rolodex) Release() {
+	if r == nil {
+		return
+	}
+	r.indexLock.Lock()
+	r.localFS = nil
+	r.remoteFS = nil
+	r.indexes = nil
+	r.indexMap = nil
+	r.rootIndex = nil
+	r.indexLock.Unlock()
+
+	r.circRefCacheLock.Lock()
+	r.debouncedSafeCircRefs = nil
+	r.debouncedIgnoredCircRefs = nil
+	r.circRefCacheLock.Unlock()
+
+	r.rootNode = nil
+	r.caughtErrors = nil
+	r.safeCircularReferences = nil
+	r.infiniteCircularReferences = nil
+	r.ignoredCircularReferences = nil
+	r.globalSchemaIdRegistry = nil
+	r.indexConfig = nil
+	r.indexingDuration = 0
+	r.indexed = false
+	r.built = false
+	r.manualBuilt = false
+	r.resolved = false
+	r.circChecked = false
+	r.logger = nil
+	r.id = ""
 }
 
 // NewRolodex creates a new rolodex with the provided index configuration.
 func NewRolodex(indexConfig *SpecIndexConfig) *Rolodex {
-
 	logger := indexConfig.Logger
 	if logger == nil {
 		logger = slog.New(
@@ -92,6 +143,7 @@ func NewRolodex(indexConfig *SpecIndexConfig) *Rolodex {
 
 	r := &Rolodex{
 		indexConfig: indexConfig,
+		id:          utils.GenerateAlphanumericString(6),
 		localFS:     make(map[string]fs.FS),
 		remoteFS:    make(map[string]fs.FS),
 		logger:      logger,
@@ -101,32 +153,55 @@ func NewRolodex(indexConfig *SpecIndexConfig) *Rolodex {
 	return r
 }
 
+// RotateId generates a new unique ID for the rolodex.
+func (r *Rolodex) RotateId() string {
+	r.id = utils.GenerateAlphanumericString(6)
+	return r.id
+}
+
+// GetId returns the unique ID for the rolodex.
+func (r *Rolodex) GetId() string {
+	return r.id
+}
+
 // GetIgnoredCircularReferences returns a list of circular references that were ignored during the indexing process.
 // These can be an array or polymorphic references. Will return an empty slice if no ignored circular references are found.
 func (r *Rolodex) GetIgnoredCircularReferences() []*CircularReferenceResult {
-	debounced := make(map[string]*CircularReferenceResult)
-	var debouncedResults []*CircularReferenceResult
 	if r == nil {
-		return debouncedResults
+		return nil
 	}
+	r.circRefCacheLock.Lock()
+	defer r.circRefCacheLock.Unlock()
+	if r.debouncedIgnoredCircRefs != nil {
+		return r.debouncedIgnoredCircRefs
+	}
+	if len(r.ignoredCircularReferences) == 0 {
+		return nil
+	}
+	debounced := make(map[string]*CircularReferenceResult)
 	for _, c := range r.ignoredCircularReferences {
 		if _, ok := debounced[c.LoopPoint.FullDefinition]; !ok {
 			debounced[c.LoopPoint.FullDefinition] = c
 		}
 	}
+	debouncedResults := make([]*CircularReferenceResult, 0, len(debounced))
 	for _, v := range debounced {
 		debouncedResults = append(debouncedResults, v)
 	}
+	r.debouncedIgnoredCircRefs = debouncedResults
 	return debouncedResults
 }
 
 // GetSafeCircularReferences returns a list of circular references that were found to be safe during the indexing process.
 // These can be an array or polymorphic references. Will return an empty slice if no safe circular references are found.
 func (r *Rolodex) GetSafeCircularReferences() []*CircularReferenceResult {
-	debounced := make(map[string]*CircularReferenceResult)
-	var debouncedResults []*CircularReferenceResult
 	if r == nil {
-		return debouncedResults
+		return nil
+	}
+	r.circRefCacheLock.Lock()
+	defer r.circRefCacheLock.Unlock()
+	if r.debouncedSafeCircRefs != nil {
+		return r.debouncedSafeCircRefs
 	}
 
 	// if this rolodex has not been manually checked for circular references or resolved,
@@ -147,15 +222,24 @@ func (r *Rolodex) GetSafeCircularReferences() []*CircularReferenceResult {
 		}
 	}
 
+	debounced := make(map[string]*CircularReferenceResult)
 	for _, c := range r.safeCircularReferences {
 		if _, ok := debounced[c.LoopPoint.FullDefinition]; !ok {
 			debounced[c.LoopPoint.FullDefinition] = c
 		}
 	}
+	debouncedResults := make([]*CircularReferenceResult, 0, len(debounced))
 	for _, v := range debounced {
 		debouncedResults = append(debouncedResults, v)
 	}
+	r.debouncedSafeCircRefs = debouncedResults
 	return debouncedResults
+}
+
+// SetSafeCircularReferences sets the safe circular references for the rolodex.
+func (r *Rolodex) SetSafeCircularReferences(refs []*CircularReferenceResult) {
+	r.safeCircularReferences = refs
+	r.debouncedSafeCircRefs = nil // invalidate cache
 }
 
 // GetIndexingDuration returns the duration it took to index the rolodex.
@@ -173,13 +257,15 @@ func (r *Rolodex) GetConfig() *SpecIndexConfig {
 	return r.indexConfig
 }
 
-// GetRootNode returns the root index of the rolodex (the entry point, the main document)
+// GetRootNode returns the root node of the rolodex (the entry point, the main document)
 func (r *Rolodex) GetRootNode() *yaml.Node {
 	return r.rootNode
 }
 
 // GetIndexes returns all the indexes in the rolodex.
 func (r *Rolodex) GetIndexes() []*SpecIndex {
+	r.indexLock.Lock()
+	defer r.indexLock.Unlock()
 	return r.indexes
 }
 
@@ -191,9 +277,9 @@ func (r *Rolodex) GetCaughtErrors() []error {
 // AddLocalFS adds a local file system to the rolodex.
 func (r *Rolodex) AddLocalFS(baseDir string, fileSystem fs.FS) {
 	absBaseDir, _ := filepath.Abs(baseDir)
-	if f, ok := fileSystem.(*LocalFS); ok {
-		f.rolodex = r
-		f.logger = r.logger
+	if f, ok := fileSystem.(Rolodexable); ok {
+		f.SetRolodex(r)
+		f.SetLogger(r.logger)
 	}
 	r.localFS[absBaseDir] = fileSystem
 }
@@ -203,13 +289,27 @@ func (r *Rolodex) SetRootNode(node *yaml.Node) {
 	r.rootNode = node
 }
 
+// SetRootIndex sets the root index of the rolodex (the entry point, the main document).
+func (r *Rolodex) SetRootIndex(rootIndex *SpecIndex) {
+	r.rootIndex = rootIndex
+}
+
 func (r *Rolodex) AddExternalIndex(idx *SpecIndex, location string) {
 	r.indexLock.Lock()
+	defer r.indexLock.Unlock()
+	for _, ix := range r.indexes {
+		if ix.specAbsolutePath == location {
+			return // already exists, no need to add again.
+		}
+	}
+
 	r.indexes = append(r.indexes, idx)
 	if r.indexMap[location] == nil {
 		r.indexMap[location] = idx
 	}
-	r.indexLock.Unlock()
+
+	// Aggregate $id registrations from this index into the global registry
+	r.RegisterIdsFromIndex(idx)
 }
 
 func (r *Rolodex) AddIndex(idx *SpecIndex) {
@@ -229,7 +329,7 @@ func (r *Rolodex) AddRemoteFS(baseURL string, fileSystem fs.FS) {
 }
 
 // IndexTheRolodex indexes the rolodex, building out the indexes for each file, and then building the root index.
-func (r *Rolodex) IndexTheRolodex() error {
+func (r *Rolodex) IndexTheRolodex(ctx context.Context) error {
 	if r.indexed {
 		return nil
 	}
@@ -244,7 +344,6 @@ func (r *Rolodex) IndexTheRolodex() error {
 		errChan chan error,
 		indexChan chan *SpecIndex,
 	) {
-
 		var wg sync.WaitGroup
 
 		indexFileFunc := func(idxFile CanBeIndexed, fullPath string) {
@@ -252,6 +351,7 @@ func (r *Rolodex) IndexTheRolodex() error {
 
 			// copy config and set the
 			copiedConfig := *r.indexConfig
+			copiedConfig.Rolodex = r
 			copiedConfig.SpecAbsolutePath = fullPath
 			copiedConfig.AvoidBuildIndex = true // we will build out everything in two steps.
 			idx, err := idxFile.Index(&copiedConfig)
@@ -269,7 +369,6 @@ func (r *Rolodex) IndexTheRolodex() error {
 				}
 				indexChan <- idx
 			}
-
 		}
 
 		if lfs, ok := fs.(RolodexFS); ok {
@@ -321,13 +420,13 @@ func (r *Rolodex) IndexTheRolodex() error {
 	}
 
 	// now that we have indexed all the files, we can build the index.
-	r.indexes = indexBuildQueue
-
 	sort.Slice(
 		indexBuildQueue, func(i, j int) bool {
 			return indexBuildQueue[i].specAbsolutePath < indexBuildQueue[j].specAbsolutePath
 		},
 	)
+
+	r.indexes = indexBuildQueue
 
 	for _, idx := range indexBuildQueue {
 		idx.BuildIndex()
@@ -352,6 +451,7 @@ func (r *Rolodex) IndexTheRolodex() error {
 
 	// indexed and built every supporting file, we can build the root index (our entry point)
 	if r.rootNode != nil {
+		r.indexConfig.Rolodex = r
 
 		// if there is a base path but no SpecFilePath, then we need to set the root spec config to point to a theoretical root.yaml
 		// which does not exist, but is used to formulate the absolute path to root references correctly.
@@ -363,7 +463,46 @@ func (r *Rolodex) IndexTheRolodex() error {
 
 			if len(r.localFS) > 0 || len(r.remoteFS) > 0 {
 				if r.indexConfig.SpecFilePath != "" {
-					r.indexConfig.SpecAbsolutePath = filepath.Join(basePath, filepath.Base(r.indexConfig.SpecFilePath))
+					// Compute the absolute path to the spec file.
+					// - If SpecFilePath is already absolute, use it directly.
+					// - If SpecFilePath is relative, it needs careful handling to avoid path doubling.
+					//
+					// The original code used filepath.Base() which incorrectly stripped directory
+					// segments like /myproject/api-spec/ from nested paths.
+					//
+					// Handle cases:
+					// 1. SpecFilePath = "test_data/nested/doc.yaml", BasePath = "/abs/test_data/nested"
+					//    -> Should NOT double to /abs/test_data/nested/test_data/nested/doc.yaml
+					// 2. SpecFilePath = "subdir/doc.yaml", BasePath = "/abs/test_data"
+					//    -> Should produce /abs/test_data/subdir/doc.yaml
+					if filepath.IsAbs(r.indexConfig.SpecFilePath) {
+						r.indexConfig.SpecAbsolutePath = r.indexConfig.SpecFilePath
+					} else {
+						specPath := r.indexConfig.SpecFilePath
+						// Check if SpecFilePath starts with the relative basePath or its original value
+						// This handles cases where SpecFilePath = "test_data/file.yaml" and
+						// BasePath was originally "test_data" (now absolute)
+						origBasePath := r.indexConfig.BasePath
+
+						// Normalize paths to use OS-specific separators for Windows compatibility
+						// On Windows, paths may use / but os.PathSeparator is \, causing mismatches
+						normalizedSpecPath := filepath.FromSlash(specPath)
+						normalizedOrigBasePath := filepath.FromSlash(origBasePath)
+
+						if strings.HasPrefix(normalizedSpecPath, normalizedOrigBasePath+string(os.PathSeparator)) {
+							// SpecFilePath includes the original basePath, make it absolute directly
+							r.indexConfig.SpecAbsolutePath, _ = filepath.Abs(normalizedSpecPath)
+						} else if strings.HasPrefix(normalizedSpecPath, "..") {
+							// SpecFilePath starts with ".." (parent directory), resolve it from cwd
+							// Using filepath.Join with basePath would incorrectly double paths
+							// e.g., basePath="/Users/foo/bar" + "../bar/file.yaml" would give
+							// "/Users/foo/bar/bar/file.yaml" instead of "/Users/foo/bar/file.yaml"
+							r.indexConfig.SpecAbsolutePath, _ = filepath.Abs(normalizedSpecPath)
+						} else {
+							// SpecFilePath is relative to basePath, join them
+							r.indexConfig.SpecAbsolutePath = filepath.Join(basePath, normalizedSpecPath)
+						}
+					}
 				} else {
 					r.indexConfig.SetTheoreticalRoot()
 				}
@@ -372,7 +511,7 @@ func (r *Rolodex) IndexTheRolodex() error {
 
 		// Here we take the root node and also build the index for it.
 		// This involves extracting references.
-		index := NewSpecIndexWithConfig(r.rootNode, r.indexConfig)
+		index := NewSpecIndexWithConfigAndContext(ctx, r.rootNode, r.indexConfig)
 		resolver := NewResolver(index)
 
 		if r.indexConfig.IgnoreArrayCircularReferences {
@@ -413,7 +552,6 @@ func (r *Rolodex) IndexTheRolodex() error {
 	r.caughtErrors = caughtErrors
 	r.built = true
 	return errors.Join(caughtErrors...)
-
 }
 
 // CheckForCircularReferences checks for circular references in the rolodex.
@@ -442,34 +580,17 @@ func (r *Rolodex) CheckForCircularReferences() {
 			)
 		}
 		r.circChecked = true
+		// invalidate debounced caches since underlying slices were mutated
+		r.debouncedSafeCircRefs = nil
+		r.debouncedIgnoredCircRefs = nil
 	}
 }
 
 // Resolve resolves references in the rolodex.
 func (r *Rolodex) Resolve() {
-
-	var resolvers []*Resolver
-	if r.rootIndex != nil && r.rootIndex.resolver != nil {
-		resolvers = append(resolvers, r.rootIndex.resolver)
-	}
-	for _, idx := range r.indexes {
-		if idx.resolver != nil {
-			resolvers = append(resolvers, idx.resolver)
-		}
-	}
+	resolvers := r.collectResolvers()
 	for _, res := range resolvers {
-		resolvingErrors := res.Resolve()
-		for e := range resolvingErrors {
-			r.caughtErrors = append(r.caughtErrors, resolvingErrors[e])
-		}
-		if r.rootIndex != nil && len(r.rootIndex.resolver.ignoredPolyReferences) > 0 {
-			r.ignoredCircularReferences = append(r.ignoredCircularReferences, res.ignoredPolyReferences...)
-		}
-		if r.rootIndex != nil && len(r.rootIndex.resolver.ignoredArrayReferences) > 0 {
-			r.ignoredCircularReferences = append(r.ignoredCircularReferences, res.ignoredArrayReferences...)
-		}
-		r.safeCircularReferences = append(r.safeCircularReferences, res.GetSafeCircularReferences()...)
-		r.infiniteCircularReferences = append(r.infiniteCircularReferences, res.GetInfiniteCircularReferences()...)
+		r.mergeResolverResults(res)
 	}
 
 	// resolve pending nodes
@@ -477,6 +598,39 @@ func (r *Rolodex) Resolve() {
 		res.ResolvePendingNodes()
 	}
 	r.resolved = true
+	// invalidate debounced caches since underlying slices were mutated
+	r.debouncedSafeCircRefs = nil
+	r.debouncedIgnoredCircRefs = nil
+}
+
+func (r *Rolodex) collectResolvers() []*Resolver {
+	var resolvers []*Resolver
+	if r.rootIndex != nil {
+		if resolver := r.rootIndex.GetResolver(); resolver != nil {
+			resolvers = append(resolvers, resolver)
+		}
+	}
+	for _, idx := range r.indexes {
+		if resolver := idx.GetResolver(); resolver != nil {
+			resolvers = append(resolvers, resolver)
+		}
+	}
+	return resolvers
+}
+
+func (r *Rolodex) mergeResolverResults(res *Resolver) {
+	resolvingErrors := res.Resolve()
+	for e := range resolvingErrors {
+		r.caughtErrors = append(r.caughtErrors, resolvingErrors[e])
+	}
+	if len(res.ignoredPolyReferences) > 0 {
+		r.ignoredCircularReferences = append(r.ignoredCircularReferences, res.ignoredPolyReferences...)
+	}
+	if len(res.ignoredArrayReferences) > 0 {
+		r.ignoredCircularReferences = append(r.ignoredCircularReferences, res.ignoredArrayReferences...)
+	}
+	r.safeCircularReferences = append(r.safeCircularReferences, res.GetSafeCircularReferences()...)
+	r.infiniteCircularReferences = append(r.infiniteCircularReferences, res.GetInfiniteCircularReferences()...)
 }
 
 // BuildIndexes builds the indexes in the rolodex, this is generally not required unless manually building a rolodex.
@@ -519,9 +673,11 @@ func (r *Rolodex) GetAllMappedReferences() map[string]*Reference {
 	return mappedRefs
 }
 
-// Open opens a file in the rolodex, and returns a RolodexFile.
-func (r *Rolodex) Open(location string) (RolodexFile, error) {
-
+// OpenWithContext opens a file in the rolodex, and returns a RolodexFile - providing a context.
+// The method supports both custom file systems (like LocalFS) and standard fs.FS implementations.
+// For standard fs.FS implementations, paths are automatically converted to relative paths as required
+// by the fs.FS interface specification (which mandates relative, slash-separated paths).
+func (r *Rolodex) OpenWithContext(ctx context.Context, location string) (RolodexFile, error) {
 	if r == nil {
 		return nil, fmt.Errorf("rolodex has not been initialized, cannot open file '%s'", location)
 	}
@@ -534,8 +690,6 @@ func (r *Rolodex) Open(location string) (RolodexFile, error) {
 	}
 
 	var errorStack []error
-	var localFile *LocalFile
-	var remoteFile *RemoteFile
 	fileLookup := location
 	isUrl := false
 	if strings.HasPrefix(location, "http") {
@@ -549,52 +703,10 @@ func (r *Rolodex) Open(location string) (RolodexFile, error) {
 				"the rolodex has no local file systems configured, cannot open local file '%s'", location,
 			)
 		}
-
-		for k, v := range r.localFS {
-
-			// check if this is a URL or an abs/rel reference.
-			if !filepath.IsAbs(location) {
-				fileLookup, _ = filepath.Abs(filepath.Join(k, location))
-			}
-
-			f, err := v.Open(fileLookup)
-			if err != nil {
-				// try a lookup that is not absolute, but relative
-				f, err = v.Open(location)
-				if err != nil {
-					errorStack = append(errorStack, err)
-					continue
-				}
-			}
-			// check if this is a native rolodex FS, then the work is done.
-			if lf, ko := interface{}(f).(*LocalFile); ko {
-				localFile = lf
-				break
-			} else {
-				// not a native FS, so we need to read the file and create a local file.
-				bytes, rErr := io.ReadAll(f)
-				if rErr != nil {
-					errorStack = append(errorStack, rErr)
-					continue
-				}
-				s, sErr := f.Stat()
-				if sErr != nil {
-					errorStack = append(errorStack, sErr)
-					continue
-				}
-				if len(bytes) > 0 {
-					localFile = &LocalFile{
-						filename:     filepath.Base(fileLookup),
-						name:         filepath.Base(fileLookup),
-						extension:    ExtractFileType(fileLookup),
-						data:         bytes,
-						fullPath:     fileLookup,
-						lastModified: s.ModTime(),
-						index:        r.rootIndex,
-					}
-					break
-				}
-			}
+		localFile, errs := r.openLocalLocation(ctx, location)
+		errorStack = append(errorStack, errs...)
+		if localFile != nil {
+			return r.wrapLocalRolodexFile(localFile)
 		}
 
 	} else {
@@ -605,64 +717,200 @@ func (r *Rolodex) Open(location string) (RolodexFile, error) {
 					"AllowRemoteLookup to true", fileLookup,
 			)
 		}
-
-		for _, v := range r.remoteFS {
-
-			f, err := v.Open(fileLookup)
-			if err != nil {
-				r.logger.Warn("[rolodex] errors opening remote file", "location", fileLookup, "error", err)
-			}
-			if f != nil {
-
-				if rf, ok := interface{}(f).(*RemoteFile); ok {
-					remoteFile = rf
-					break
-				} else {
-
-					bytes, rErr := io.ReadAll(f)
-					if rErr != nil {
-						errorStack = append(errorStack, rErr)
-						continue
-					}
-					s, sErr := f.Stat()
-					if sErr != nil {
-						errorStack = append(errorStack, sErr)
-						continue
-					}
-					if len(bytes) > 0 {
-						remoteFile = &RemoteFile{
-							filename:     filepath.Base(fileLookup),
-							name:         filepath.Base(fileLookup),
-							extension:    ExtractFileType(fileLookup),
-							data:         bytes,
-							fullPath:     fileLookup,
-							lastModified: s.ModTime(),
-							index:        r.rootIndex,
-						}
-						break
-					}
-				}
-			}
+		remoteFile, errs := r.openRemoteLocation(ctx, fileLookup)
+		errorStack = append(errorStack, errs...)
+		if remoteFile != nil {
+			return r.wrapRemoteRolodexFile(remoteFile)
 		}
 	}
 
-	if localFile != nil {
-		return &rolodexFile{
-			rolodex:   r,
-			location:  localFile.fullPath,
-			localFile: localFile,
-		}, errors.Join(errorStack...)
-	}
-
-	if remoteFile != nil {
-		return &rolodexFile{
-			rolodex:    r,
-			location:   remoteFile.fullPath,
-			remoteFile: remoteFile,
-		}, errors.Join(errorStack...)
-	}
-
 	return nil, errors.Join(errorStack...)
+}
+
+func (r *Rolodex) openLocalLocation(ctx context.Context, location string) (*LocalFile, []error) {
+	var errorStack []error
+	for baseDir, fileSystem := range r.localFS {
+		fileLookup := location
+		if !filepath.IsAbs(location) {
+			fileLookup, _ = filepath.Abs(utils.CheckPathOverlap(baseDir, location, string(os.PathSeparator)))
+		}
+
+		pathForOpen := r.localPathForOpen(baseDir, fileLookup, fileSystem)
+		file, err := openFile(ctx, pathForOpen, fileSystem)
+		if err != nil && pathForOpen != location {
+			file, err = openFile(ctx, location, fileSystem)
+		}
+		if err != nil {
+			errorStack = append(errorStack, err)
+			continue
+		}
+		localFile, errs := r.asLocalFile(file, fileLookup)
+		errorStack = append(errorStack, errs...)
+		if localFile != nil {
+			return localFile, errorStack
+		}
+	}
+	return nil, errorStack
+}
+
+func (r *Rolodex) localPathForOpen(baseDir, fileLookup string, fileSystem fs.FS) string {
+	if _, isLocalFS := fileSystem.(*LocalFS); isLocalFS {
+		return fileLookup
+	}
+	relPath, _ := filepath.Rel(baseDir, fileLookup)
+	return filepath.ToSlash(relPath)
+}
+
+func (r *Rolodex) asLocalFile(file fs.File, fileLookup string) (*LocalFile, []error) {
+	var errorStack []error
+	if localFile, ok := file.(*LocalFile); ok {
+		return localFile, nil
+	}
+	if existing, ok := file.(RolodexFile); ok {
+		wrapped, errs := wrapExistingRolodexFile(existing)
+		return wrapped, errs
+	}
+
+	bytes, stat, errs := consumeAdaptedFile(file)
+	if len(errs) > 0 {
+		return nil, append(errorStack, errs...)
+	}
+	if len(bytes) == 0 {
+		return nil, nil
+	}
+	var atm atomic.Value
+	atm.Store(r.rootIndex)
+	return &LocalFile{
+		filename:     filepath.Base(fileLookup),
+		name:         filepath.Base(fileLookup),
+		extension:    ExtractFileType(fileLookup),
+		data:         bytes,
+		fullPath:     fileLookup,
+		lastModified: stat.ModTime(),
+		index:        atm,
+	}, nil
+}
+
+func wrapExistingRolodexFile(file RolodexFile) (*LocalFile, []error) {
+	var atm atomic.Value
+	atm.Store(file.GetIndex())
+	var parsed *yaml.Node
+	var parseErrors []error
+	if p, err := file.GetContentAsYAMLNode(); err == nil {
+		parsed = p
+	} else {
+		parseErrors = append(parseErrors, err)
+	}
+	parseErrors = append(parseErrors, file.GetErrors()...)
+
+	return &LocalFile{
+		filename:      file.Name(),
+		name:          file.Name(),
+		extension:     ExtractFileType(file.Name()),
+		data:          []byte(file.GetContent()),
+		fullPath:      file.GetFullPath(),
+		lastModified:  file.ModTime(),
+		index:         atm,
+		readingErrors: parseErrors,
+		parsed:        parsed,
+	}, parseErrors
+}
+
+func (r *Rolodex) openRemoteLocation(ctx context.Context, location string) (*RemoteFile, []error) {
+	var errorStack []error
+	for _, fileSystem := range r.remoteFS {
+		file, err := openFile(ctx, location, fileSystem)
+		if err != nil {
+			r.logger.Warn("[rolodex] errors opening remote file", "location", location, "error", err)
+			errorStack = append(errorStack, err)
+			continue
+		}
+		remoteFile, errs := r.asRemoteFile(file, location)
+		errorStack = append(errorStack, errs...)
+		if remoteFile != nil {
+			return remoteFile, errorStack
+		}
+	}
+	return nil, errorStack
+}
+
+func (r *Rolodex) asRemoteFile(file fs.File, location string) (*RemoteFile, []error) {
+	if remoteFile, ok := file.(*RemoteFile); ok {
+		return remoteFile, nil
+	}
+
+	bytes, stat, errs := consumeAdaptedFile(file)
+	if len(errs) > 0 {
+		return nil, errs
+	}
+	if len(bytes) == 0 {
+		return nil, nil
+	}
+	var atm atomic.Value
+	atm.Store(r.rootIndex)
+	return &RemoteFile{
+		filename:     filepath.Base(location),
+		name:         filepath.Base(location),
+		extension:    ExtractFileType(location),
+		data:         bytes,
+		fullPath:     location,
+		lastModified: stat.ModTime(),
+		index:        atm,
+	}, nil
+}
+
+func consumeAdaptedFile(file fs.File) ([]byte, fs.FileInfo, []error) {
+	var errorStack []error
+
+	bytes, readErr := io.ReadAll(file)
+	if readErr != nil {
+		errorStack = append(errorStack, readErr)
+		_ = file.Close()
+		return nil, nil, errorStack
+	}
+
+	stat, statErr := file.Stat()
+	if statErr != nil {
+		errorStack = append(errorStack, statErr)
+		_ = file.Close()
+		return nil, nil, errorStack
+	}
+
+	_ = file.Close()
+
+	return bytes, stat, nil
+}
+
+func (r *Rolodex) wrapLocalRolodexFile(localFile *LocalFile) (RolodexFile, error) {
+	return &rolodexFile{
+		rolodex:   r,
+		location:  localFile.fullPath,
+		localFile: localFile,
+	}, errors.Join(localFile.readingErrors...)
+}
+
+func (r *Rolodex) wrapRemoteRolodexFile(remoteFile *RemoteFile) (RolodexFile, error) {
+	return &rolodexFile{
+		rolodex:    r,
+		location:   remoteFile.fullPath,
+		remoteFile: remoteFile,
+	}, errors.Join(remoteFile.seekingErrors...)
+}
+
+func openFile(ctx context.Context, location string, v fs.FS) (fs.File, error) {
+	var err error
+	var f fs.File
+	if fscw, ok := v.(RolodexFSWithContext); ok {
+		f, err = fscw.OpenWithContext(ctx, location)
+	} else {
+		f, err = v.Open(location)
+	}
+	return f, err
+}
+
+// Open opens a file in the rolodex, and returns a RolodexFile.
+func (r *Rolodex) Open(location string) (RolodexFile, error) {
+	return r.OpenWithContext(context.Background(), location)
 }
 
 var suffixes = []string{"B", "KB", "MB", "GB", "TB"}
@@ -758,5 +1006,62 @@ func (r *Rolodex) ClearIndexCaches() {
 	}
 	for _, idx := range r.indexes {
 		idx.GetHighCache().Clear()
+	}
+}
+
+// RegisterGlobalSchemaId registers a schema $id in the Rolodex global registry.
+// Returns an error if the $id is invalid.
+func (r *Rolodex) RegisterGlobalSchemaId(entry *SchemaIdEntry) error {
+	if r == nil {
+		return fmt.Errorf("cannot register $id on nil Rolodex")
+	}
+
+	r.schemaIdRegistryLock.Lock()
+	defer r.schemaIdRegistryLock.Unlock()
+
+	if r.globalSchemaIdRegistry == nil {
+		r.globalSchemaIdRegistry = make(map[string]*SchemaIdEntry)
+	}
+
+	_, err := registerSchemaIdToRegistry(r.globalSchemaIdRegistry, entry, r.logger, "global registry")
+	return err
+}
+
+// LookupSchemaById looks up a schema by its $id URI across all indexes.
+func (r *Rolodex) LookupSchemaById(uri string) *SchemaIdEntry {
+	if r == nil {
+		return nil
+	}
+
+	r.schemaIdRegistryLock.RLock()
+	defer r.schemaIdRegistryLock.RUnlock()
+
+	if r.globalSchemaIdRegistry == nil {
+		return nil
+	}
+	return r.globalSchemaIdRegistry[uri]
+}
+
+// GetAllGlobalSchemaIds returns a copy of all registered $id entries across all indexes.
+func (r *Rolodex) GetAllGlobalSchemaIds() map[string]*SchemaIdEntry {
+	if r == nil {
+		return make(map[string]*SchemaIdEntry)
+	}
+
+	r.schemaIdRegistryLock.RLock()
+	defer r.schemaIdRegistryLock.RUnlock()
+	return copySchemaIdRegistry(r.globalSchemaIdRegistry)
+}
+
+// RegisterIdsFromIndex aggregates all $id registrations from an index into the global registry.
+// Called after each index is built to populate the Rolodex global registry.
+func (r *Rolodex) RegisterIdsFromIndex(idx *SpecIndex) {
+	if r == nil || idx == nil {
+		return
+	}
+
+	entries := idx.GetAllSchemaIds()
+	for _, entry := range entries {
+		_ = r.RegisterGlobalSchemaId(entry)
 	}
 }

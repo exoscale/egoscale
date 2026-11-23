@@ -1,13 +1,14 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2025 Princess Beef Heavy Industries, LLC / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package model
 
 import (
+	"reflect"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	v2 "github.com/pb33f/libopenapi/datamodel/low/v2"
 	"github.com/pb33f/libopenapi/datamodel/low/v3"
-	"reflect"
 )
 
 // HeaderChanges represents changes made between two Header objects. Supports both Swagger and OpenAPI header
@@ -25,6 +26,9 @@ type HeaderChanges struct {
 
 // GetAllChanges returns a slice of all changes made between Header objects
 func (h *HeaderChanges) GetAllChanges() []*Change {
+	if h == nil {
+		return nil
+	}
 	var changes []*Change
 	changes = append(changes, h.Changes...)
 	for k := range h.ExamplesChanges {
@@ -47,6 +51,9 @@ func (h *HeaderChanges) GetAllChanges() []*Change {
 
 // TotalChanges returns the total number of changes made between two Header objects.
 func (h *HeaderChanges) TotalChanges() int {
+	if h == nil {
+		return 0
+	}
 	c := h.PropertyChanges.TotalChanges()
 	for k := range h.ExamplesChanges {
 		c += h.ExamplesChanges[k].TotalChanges()
@@ -69,6 +76,9 @@ func (h *HeaderChanges) TotalChanges() int {
 // TotalBreakingChanges returns the total number of breaking changes made between two Header instances.
 func (h *HeaderChanges) TotalBreakingChanges() int {
 	c := h.PropertyChanges.TotalBreakingChanges()
+	for k := range h.ExamplesChanges {
+		c += h.ExamplesChanges[k].TotalBreakingChanges()
+	}
 	for k := range h.ContentChanges {
 		c += h.ContentChanges[k].TotalBreakingChanges()
 	}
@@ -87,31 +97,42 @@ func addOpenAPIHeaderProperties(left, right low.OpenAPIHeader, changes *[]*Chang
 
 	// style
 	addPropertyCheck(&props, left.GetStyle().ValueNode, right.GetStyle().ValueNode,
-		left.GetStyle(), right.GetStyle(), changes, v3.StyleLabel, false)
+		left.GetStyle(), right.GetStyle(), changes, v3.StyleLabel,
+		BreakingModified(CompHeader, PropStyle), CompHeader, PropStyle)
 
 	// allow reserved
 	addPropertyCheck(&props, left.GetAllowReserved().ValueNode, right.GetAllowReserved().ValueNode,
-		left.GetAllowReserved(), right.GetAllowReserved(), changes, v3.AllowReservedLabel, false)
+		left.GetAllowReserved(), right.GetAllowReserved(), changes, v3.AllowReservedLabel,
+		BreakingModified(CompHeader, PropAllowReserved), CompHeader, PropAllowReserved)
 
 	// allow empty value
 	addPropertyCheck(&props, left.GetAllowEmptyValue().ValueNode, right.GetAllowEmptyValue().ValueNode,
-		left.GetAllowEmptyValue(), right.GetAllowEmptyValue(), changes, v3.AllowEmptyValueLabel, true)
+		left.GetAllowEmptyValue(), right.GetAllowEmptyValue(), changes, v3.AllowEmptyValueLabel,
+		BreakingModified(CompHeader, PropAllowEmptyValue), CompHeader, PropAllowEmptyValue)
 
 	// explode
 	addPropertyCheck(&props, left.GetExplode().ValueNode, right.GetExplode().ValueNode,
-		left.GetExplode(), right.GetExplode(), changes, v3.ExplodeLabel, false)
+		left.GetExplode(), right.GetExplode(), changes, v3.ExplodeLabel,
+		BreakingModified(CompHeader, PropExplode), CompHeader, PropExplode)
 
 	// example
-	addPropertyCheck(&props, left.GetExample().ValueNode, right.GetExample().ValueNode,
-		left.GetExample(), right.GetExample(), changes, v3.ExampleLabel, false)
+	CheckPropertyAdditionOrRemovalWithEncoding(left.GetExample().ValueNode, right.GetExample().ValueNode,
+		v3.ExampleLabel, changes,
+		BreakingAdded(CompHeader, PropExample) || BreakingRemoved(CompHeader, PropExample),
+		left.GetExample(), right.GetExample())
+	CheckForModificationWithEncoding(left.GetExample().ValueNode, right.GetExample().ValueNode,
+		v3.ExampleLabel, changes, BreakingModified(CompHeader, PropExample),
+		left.GetExample(), right.GetExample())
 
 	// deprecated
 	addPropertyCheck(&props, left.GetDeprecated().ValueNode, right.GetDeprecated().ValueNode,
-		left.GetDeprecated(), right.GetDeprecated(), changes, v3.DeprecatedLabel, false)
+		left.GetDeprecated(), right.GetDeprecated(), changes, v3.DeprecatedLabel,
+		BreakingModified(CompHeader, PropDeprecated), CompHeader, PropDeprecated)
 
 	// required
 	addPropertyCheck(&props, left.GetRequired().ValueNode, right.GetRequired().ValueNode,
-		left.GetRequired(), right.GetRequired(), changes, v3.RequiredLabel, true)
+		left.GetRequired(), right.GetRequired(), changes, v3.RequiredLabel,
+		BreakingModified(CompHeader, PropRequired), CompHeader, PropRequired)
 
 	return props
 }
@@ -122,59 +143,59 @@ func addSwaggerHeaderProperties(left, right low.SwaggerHeader, changes *[]*Chang
 
 	// type
 	addPropertyCheck(&props, left.GetType().ValueNode, right.GetType().ValueNode,
-		left.GetType(), right.GetType(), changes, v3.TypeLabel, true)
+		left.GetType(), right.GetType(), changes, v3.TypeLabel, true, CompHeader, PropType)
 
 	// format
 	addPropertyCheck(&props, left.GetFormat().ValueNode, right.GetFormat().ValueNode,
-		left.GetFormat(), right.GetFormat(), changes, v3.FormatLabel, true)
+		left.GetFormat(), right.GetFormat(), changes, v3.FormatLabel, true, CompHeader, PropFormat)
 
 	// collection format
 	addPropertyCheck(&props, left.GetCollectionFormat().ValueNode, right.GetCollectionFormat().ValueNode,
-		left.GetCollectionFormat(), right.GetCollectionFormat(), changes, v3.CollectionFormatLabel, true)
+		left.GetCollectionFormat(), right.GetCollectionFormat(), changes, v3.CollectionFormatLabel, true, CompHeader, PropCollectionFormat)
 
 	// maximum
 	addPropertyCheck(&props, left.GetMaximum().ValueNode, right.GetMaximum().ValueNode,
-		left.GetMaximum(), right.GetMaximum(), changes, v3.MaximumLabel, true)
+		left.GetMaximum(), right.GetMaximum(), changes, v3.MaximumLabel, true, CompHeader, PropMaximum)
 
 	// minimum
 	addPropertyCheck(&props, left.GetMinimum().ValueNode, right.GetMinimum().ValueNode,
-		left.GetMinimum(), right.GetMinimum(), changes, v3.MinimumLabel, true)
+		left.GetMinimum(), right.GetMinimum(), changes, v3.MinimumLabel, true, CompHeader, PropMinimum)
 
 	// exclusive maximum
 	addPropertyCheck(&props, left.GetExclusiveMaximum().ValueNode, right.GetExclusiveMaximum().ValueNode,
-		left.GetExclusiveMaximum(), right.GetExclusiveMaximum(), changes, v3.ExclusiveMaximumLabel, true)
+		left.GetExclusiveMaximum(), right.GetExclusiveMaximum(), changes, v3.ExclusiveMaximumLabel, true, CompHeader, PropExclusiveMaximum)
 
 	// exclusive minimum
 	addPropertyCheck(&props, left.GetExclusiveMinimum().ValueNode, right.GetExclusiveMinimum().ValueNode,
-		left.GetExclusiveMinimum(), right.GetExclusiveMinimum(), changes, v3.ExclusiveMinimumLabel, true)
+		left.GetExclusiveMinimum(), right.GetExclusiveMinimum(), changes, v3.ExclusiveMinimumLabel, true, CompHeader, PropExclusiveMinimum)
 
 	// max length
 	addPropertyCheck(&props, left.GetMaxLength().ValueNode, right.GetMaxLength().ValueNode,
-		left.GetMaxLength(), right.GetMaxLength(), changes, v3.MaxLengthLabel, true)
+		left.GetMaxLength(), right.GetMaxLength(), changes, v3.MaxLengthLabel, true, CompHeader, PropMaxLength)
 
 	// min length
 	addPropertyCheck(&props, left.GetMinLength().ValueNode, right.GetMinLength().ValueNode,
-		left.GetMinLength(), right.GetMinLength(), changes, v3.MinLengthLabel, true)
+		left.GetMinLength(), right.GetMinLength(), changes, v3.MinLengthLabel, true, CompHeader, PropMinLength)
 
 	// pattern
 	addPropertyCheck(&props, left.GetPattern().ValueNode, right.GetPattern().ValueNode,
-		left.GetPattern(), right.GetPattern(), changes, v3.PatternLabel, true)
+		left.GetPattern(), right.GetPattern(), changes, v3.PatternLabel, true, CompHeader, PropPattern)
 
 	// max items
 	addPropertyCheck(&props, left.GetMaxItems().ValueNode, right.GetMaxItems().ValueNode,
-		left.GetMaxItems(), right.GetMaxItems(), changes, v3.MaxItemsLabel, true)
+		left.GetMaxItems(), right.GetMaxItems(), changes, v3.MaxItemsLabel, true, CompHeader, PropMaxItems)
 
 	// min items
 	addPropertyCheck(&props, left.GetMinItems().ValueNode, right.GetMinItems().ValueNode,
-		left.GetMinItems(), right.GetMinItems(), changes, v3.MinItemsLabel, true)
+		left.GetMinItems(), right.GetMinItems(), changes, v3.MinItemsLabel, true, CompHeader, PropMinItems)
 
 	// unique items
 	addPropertyCheck(&props, left.GetUniqueItems().ValueNode, right.GetUniqueItems().ValueNode,
-		left.GetUniqueItems(), right.GetUniqueItems(), changes, v3.UniqueItemsLabel, true)
+		left.GetUniqueItems(), right.GetUniqueItems(), changes, v3.UniqueItemsLabel, true, CompHeader, PropUniqueItems)
 
 	// multiple of
 	addPropertyCheck(&props, left.GetMultipleOf().ValueNode, right.GetMultipleOf().ValueNode,
-		left.GetMultipleOf(), right.GetMultipleOf(), changes, v3.MultipleOfLabel, true)
+		left.GetMultipleOf(), right.GetMultipleOf(), changes, v3.MultipleOfLabel, true, CompHeader, PropMultipleOf)
 
 	return props
 }
@@ -185,7 +206,8 @@ func addCommonHeaderProperties(left, right low.HasDescription, changes *[]*Chang
 
 	// description
 	addPropertyCheck(&props, left.GetDescription().ValueNode, right.GetDescription().ValueNode,
-		left.GetDescription(), right.GetDescription(), changes, v3.DescriptionLabel, false)
+		left.GetDescription(), right.GetDescription(), changes, v3.DescriptionLabel,
+		BreakingModified(CompHeader, PropDescription), CompHeader, PropDescription)
 
 	return props
 }
@@ -205,7 +227,6 @@ func CompareHeadersV3(l, r *v3.Header) *HeaderChanges {
 // CompareHeaders will compare left and right Header objects (any version of Swagger or OpenAPI) and return
 // a pointer to HeaderChanges with anything that has changed, or nil if nothing changed.
 func CompareHeaders(l, r any) *HeaderChanges {
-
 	var changes []*Change
 	var props []*PropertyCheck
 	hc := new(HeaderChanges)
@@ -236,11 +257,11 @@ func CompareHeaders(l, r any) *HeaderChanges {
 		}
 		if lHeader.Items.IsEmpty() && !rHeader.Items.IsEmpty() {
 			CreateChange(&changes, ObjectAdded, v3.ItemsLabel, nil,
-				rHeader.Items.ValueNode, true, nil, rHeader.Items.Value)
+				rHeader.Items.ValueNode, BreakingAdded(CompHeader, PropItems), nil, rHeader.Items.Value)
 		}
 		if !lHeader.Items.IsEmpty() && rHeader.Items.IsEmpty() {
 			CreateChange(&changes, ObjectRemoved, v3.SchemaLabel, lHeader.Items.ValueNode,
-				nil, true, lHeader.Items.Value, nil)
+				nil, BreakingRemoved(CompHeader, PropItems), lHeader.Items.Value, nil)
 		}
 		hc.ExtensionChanges = CompareExtensions(lHeader.Extensions, rHeader.Extensions)
 	}
@@ -264,8 +285,8 @@ func CompareHeaders(l, r any) *HeaderChanges {
 		}
 
 		// examples
-		hc.ExamplesChanges = CheckMapForChanges(lHeader.Examples.Value, rHeader.Examples.Value,
-			&changes, v3.ExamplesLabel, CompareExamples)
+		hc.ExamplesChanges = CheckExampleMapForChangesWithRules(lHeader.Examples.Value, rHeader.Examples.Value,
+			&changes, v3.ExamplesLabel, CompHeader, PropExamples)
 
 		// content
 		hc.ContentChanges = CheckMapForChanges(lHeader.Content.Value, rHeader.Content.Value,

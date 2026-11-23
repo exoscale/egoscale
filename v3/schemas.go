@@ -6288,7 +6288,7 @@ type SKSNodepool struct {
 	// Nodepool Private Networks
 	PrivateNetworks []PrivateNetwork `json:"private-networks,omitempty"`
 	// Nodepool public IP assignment of the Instances:
-	// * IPv4 and IPv6 (`dual`) addressing.
+	// * IPv4 (`inet4`) addressing only;
 	// * IPv4 and IPv6 (`dual`) addressing.
 	PublicIPAssignment SKSNodepoolPublicIPAssignment `json:"public-ip-assignment,omitempty"`
 	// Nodepool Security Groups
@@ -6303,7 +6303,7 @@ type SKSNodepool struct {
 	// Template reference
 	Template *Template `json:"template,omitempty"`
 	// Nodepool template selection:
-	// * `pinned`: the template set at creation or with `update-sks-nodepool`.
+	// * `auto`: the latest template of the Nodepool Kubernetes version and variant;
 	// * `pinned`: the template set at creation or with `update-sks-nodepool`.
 	TemplateSelection SKSNodepoolTemplateSelection `json:"template-selection,omitempty"`
 	// Nodepool version

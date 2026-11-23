@@ -1,18 +1,18 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package v3
 
 import (
 	"context"
-	"crypto/sha256"
-	"strings"
+	"hash/maphash"
+	"sync"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Response represents a high-level OpenAPI 3+ Response object that is backed by a low-level one.
@@ -21,6 +21,7 @@ import (
 // operations based on the response.
 //   - https://spec.openapis.org/oas/v3.1.0#response-object
 type Response struct {
+	Summary     low.NodeReference[string]
 	Description low.NodeReference[string]
 	Headers     low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*Header]]]
 	Content     low.NodeReference[*orderedmap.Map[low.KeyReference[string], low.ValueReference[*MediaType]]]
@@ -30,6 +31,8 @@ type Response struct {
 	RootNode    *yaml.Node
 	index       *index.SpecIndex
 	context     context.Context
+	nodeStore   sync.Map
+	reference   low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -82,14 +85,21 @@ func (r *Response) FindLink(hType string) *low.ValueReference[*Link] {
 // Build will extract headers, extensions, content and links from node.
 func (r *Response) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	r.KeyNode = keyNode
-	r.Reference = new(low.Reference)
+	r.reference = low.Reference{}
+	r.Reference = &r.reference
 	if ok, _, ref := utils.IsNodeRefValue(root); ok {
 		r.SetReference(ref, root)
 	}
 	root = utils.NodeAlias(root)
 	r.RootNode = root
 	utils.CheckForMergeNodes(root)
-	r.Nodes = low.ExtractNodes(ctx, root)
+	r.nodeStore = sync.Map{}
+	r.Nodes = &r.nodeStore
+	if len(root.Content) > 0 {
+		r.NodeMap.ExtractNodes(root, false)
+	} else {
+		r.AddNode(root.Line, root)
+	}
 	r.Extensions = low.ExtractExtensions(root)
 	r.index = idx
 	r.context = ctx
@@ -148,15 +158,34 @@ func (r *Response) Build(ctx context.Context, keyNode, root *yaml.Node, idx *ind
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the Response object
-func (r *Response) Hash() [32]byte {
-	var f []string
-	if r.Description.Value != "" {
-		f = append(f, r.Description.Value)
-	}
-	f = low.AppendMapHashes(f, r.Headers.Value)
-	f = low.AppendMapHashes(f, r.Content.Value)
-	f = low.AppendMapHashes(f, r.Links.Value)
-	f = append(f, low.HashExtensions(r.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the Response object
+func (r *Response) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if r.Summary.Value != "" {
+			h.WriteString(r.Summary.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if r.Description.Value != "" {
+			h.WriteString(r.Description.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+
+		for _, hash := range low.AppendMapHashes(nil, r.Headers.Value) {
+			h.WriteString(hash)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, hash := range low.AppendMapHashes(nil, r.Content.Value) {
+			h.WriteString(hash)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, hash := range low.AppendMapHashes(nil, r.Links.Value) {
+			h.WriteString(hash)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(r.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

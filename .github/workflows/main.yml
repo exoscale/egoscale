@@ -33,7 +33,6 @@ jobs:
           go mod tidy
           go mod vendor
           cd generator/
-          go generate
           go mod tidy
           go mod vendor
           cd ..

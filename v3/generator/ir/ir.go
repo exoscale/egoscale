@@ -3,7 +3,8 @@
 // into Go source by the render package. It does not depend on libopenapi.
 package ir
 
-// File is a generated Go source file.
+// File holds the declarations of one generated Go source file:
+// the build package fills it, the render package turns it into source.
 type File struct {
 	Package string
 	Imports []string

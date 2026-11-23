@@ -9,17 +9,17 @@ import (
 	"github.com/exoscale/egoscale/v3/generator/ir"
 )
 
-func renderFile(t *testing.T, decls ...ir.Decl) string {
+func renderSource(t *testing.T, decls ...ir.Decl) string {
 	t.Helper()
 
-	src, err := File(ir.File{Package: "v3", Imports: []string{"context", "fmt", "net/http", "net/url", "time"}, Decls: decls})
+	src, err := Source(ir.File{Package: "v3", Imports: []string{"context", "fmt", "net/http", "net/url", "time"}, Decls: decls})
 	require.NoError(t, err)
 
 	return string(src)
 }
 
 func TestStruct(t *testing.T) {
-	got := renderFile(t, ir.Struct{
+	got := renderSource(t, ir.Struct{
 		Doc:  "// Zone",
 		Name: "Zone",
 		Fields: []ir.Field{
@@ -35,7 +35,7 @@ func TestStruct(t *testing.T) {
 }
 
 func TestQueryOpts(t *testing.T) {
-	got := renderFile(t, ir.QueryOpts{
+	got := renderSource(t, ir.QueryOpts{
 		Type: "ListOpt",
 		Funcs: []ir.QueryOpt{
 			{Func: "ListWithSince", Arg: "since", ArgType: ir.Named("time.Time"), Param: "since"},
@@ -48,7 +48,7 @@ func TestQueryOpts(t *testing.T) {
 }
 
 func TestOperation(t *testing.T) {
-	got := renderFile(t,
+	got := renderSource(t,
 		ir.Operation{
 			Name:        "GetFoo",
 			OperationID: "get-foo",

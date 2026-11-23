@@ -52,24 +52,24 @@ func run(openAPISpec, genPathDir, packageName string) error {
 		return err
 	}
 
-	// Build every file before writing any, not to leave a partially generated package.
+	// Render every file before writing any, not to leave a partially generated package.
 	b := build.New(model, cfg)
-	files := []struct {
-		name    string
-		build   func(string) (ir.File, error)
-		content []byte
+	outputs := []struct {
+		name  string
+		build func(string) (ir.File, error)
+		src   []byte
 	}{
 		{name: "schemas.go", build: b.Schemas},
 		{name: "constants.go", build: b.Constants},
 		{name: "operations.go", build: b.Operations},
 	}
-	for i, f := range files {
-		file, err := f.build(packageName)
+	for i, o := range outputs {
+		decls, err := o.build(packageName)
 		if err != nil {
-			return fmt.Errorf("%s: %w", f.name, err)
+			return fmt.Errorf("%s: %w", o.name, err)
 		}
-		if files[i].content, err = source(f.name, file); err != nil {
-			return fmt.Errorf("%s: %w", f.name, err)
+		if outputs[i].src, err = source(o.name, decls); err != nil {
+			return fmt.Errorf("%s: %w", o.name, err)
 		}
 	}
 
@@ -77,8 +77,8 @@ func run(openAPISpec, genPathDir, packageName string) error {
 		return fmt.Errorf("config: %w", err)
 	}
 
-	for _, f := range files {
-		if err := os.WriteFile(filepath.Join(genPathDir, f.name), f.content, 0o644); err != nil {
+	for _, o := range outputs {
+		if err := os.WriteFile(filepath.Join(genPathDir, o.name), o.src, 0o644); err != nil {
 			return err
 		}
 	}
@@ -86,16 +86,16 @@ func run(openAPISpec, genPathDir, packageName string) error {
 	return nil
 }
 
-// source renders a file, printing it unformatted when GENERATOR_DEBUG
-// is its name without extension (e.g. GENERATOR_DEBUG=schemas).
-func source(name string, f ir.File) ([]byte, error) {
+// source renders the Go source of a file, also printing it unformatted
+// when GENERATOR_DEBUG is its name without extension (e.g. GENERATOR_DEBUG=schemas).
+func source(name string, decls ir.File) ([]byte, error) {
 	if os.Getenv("GENERATOR_DEBUG") == strings.TrimSuffix(name, ".go") {
-		src, err := render.Source(f)
+		src, err := render.Unformatted(decls)
 		if err != nil {
 			return nil, err
 		}
 		fmt.Println(string(src))
 	}
 
-	return render.File(f)
+	return render.Source(decls)
 }

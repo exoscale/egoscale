@@ -92,10 +92,15 @@ test-generator:
 	@cd v3/generator/
 	'$(GO)' test -race -timeout $(GO_TEST_TIMEOUT) $(GO_TEST_EXTRA_ARGS) ./...
 
+.PHONY: test-v3
+test-v3:
+	@cd v3/
+	'$(GO)' test -race -timeout $(GO_TEST_TIMEOUT) $(GO_TEST_EXTRA_ARGS) ./...
+
 # Catches a generated SDK that doesn't compile.
 .PHONY: vet-v3
 vet-v3:
 	@cd v3/
 	'$(GO)' vet ./...
 
-test test-verbose: test-generator vet-v3
+test test-verbose: test-generator test-v3 vet-v3

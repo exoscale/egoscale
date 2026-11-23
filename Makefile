@@ -86,10 +86,16 @@ generate:
 	@cd ..
 	@ls -l *.go 1>&2
 
-# v3/generator is its own module: the go.mk test targets, listing packages from the root, miss it.
+# v3 and v3/generator are their own modules: the go.mk test targets, listing packages from the root, miss them.
 .PHONY: test-generator
 test-generator:
 	@cd v3/generator/
 	'$(GO)' test -race -timeout $(GO_TEST_TIMEOUT) $(GO_TEST_EXTRA_ARGS) ./...
 
-test test-verbose: test-generator
+# Catches a generated SDK that doesn't compile.
+.PHONY: vet-v3
+vet-v3:
+	@cd v3/
+	'$(GO)' vet ./...
+
+test test-verbose: test-generator vet-v3

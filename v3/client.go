@@ -136,6 +136,7 @@ func ClientOptWithTrace() ClientOpt {
 		c.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 		if c.defaultHTTPClient != nil {
 			c.defaultHTTPClient.Logger = c.logger.With("subsystem", "retryablehttp")
+			c.httpClient = c.defaultHTTPClient.StandardClient()
 		}
 
 		return nil
@@ -148,6 +149,7 @@ func ClientOptWithLogHandler(h slog.Handler) ClientOpt {
 		c.logger = slog.New(h)
 		if c.defaultHTTPClient != nil {
 			c.defaultHTTPClient.Logger = c.logger.With("subsystem", "retryablehttp")
+			c.httpClient = c.defaultHTTPClient.StandardClient()
 		}
 		return nil
 	}
@@ -266,6 +268,7 @@ func (c *Client) WithTrace() *Client {
 	clone.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	if clone.defaultHTTPClient != nil {
 		clone.defaultHTTPClient.Logger = clone.logger.With("subsystem", "retryablehttp")
+		clone.httpClient = clone.defaultHTTPClient.StandardClient()
 	}
 
 	return clone
@@ -278,6 +281,7 @@ func (c *Client) WithLogHandler(h slog.Handler) *Client {
 	clone.logger = slog.New(h)
 	if clone.defaultHTTPClient != nil {
 		clone.defaultHTTPClient.Logger = clone.logger.With("subsystem", "retryablehttp")
+		clone.httpClient = clone.defaultHTTPClient.StandardClient()
 	}
 
 	return clone
@@ -286,17 +290,14 @@ func (c *Client) WithLogHandler(h slog.Handler) *Client {
 // WithHttpClient returns a copy of Client with new http.Client.
 // Deprecated: use WithHTTPClient instead.
 func (c *Client) WithHttpClient(client *http.Client) *Client {
-	clone := cloneClient(c)
-
-	clone.httpClient = client
-
-	return clone
+	return c.WithHttpClient(client)
 }
 
 // WithHTTPClient returns a copy of Client with new http.Client.
 func (c *Client) WithHTTPClient(client *http.Client) *Client {
 	clone := cloneClient(c)
 
+	clone.defaultHTTPClient = nil
 	clone.httpClient = client
 
 	return clone

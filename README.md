@@ -16,7 +16,7 @@ import "github.com/exoscale/egoscale/v3"
 Check [godoc][docs] for full reference.
 
 > [!IMPORTANT]
-> v1 and v2 of `egoscale` are deprecated, please use [v3](https://pkg.go.dev/github.com/exoscale/egoscale/v3)
+> v2 of `egoscale` is deprecated and v1 has been removed (it remains available in its tagged releases), please use [v3](https://pkg.go.dev/github.com/exoscale/egoscale/v3)
 
 ## Known users
 

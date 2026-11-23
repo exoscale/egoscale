@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "embed"
 	"fmt"
 	"log"
 	"os"
@@ -16,8 +15,8 @@ import (
 
 //go:generate go run . ./source.yaml ../ v3
 
-//go:embed config.yaml
-var configYAML []byte
+// configFile is relative to the working directory: go generate and the tests run in this one.
+const configFile = "config.yaml"
 
 func main() {
 	if len(os.Args) <= 3 {
@@ -34,6 +33,10 @@ func main() {
 }
 
 func run(openAPISpec, genPathDir, packageName string) error {
+	configYAML, err := os.ReadFile(configFile)
+	if err != nil {
+		return err
+	}
 	cfg, err := config.Parse(configYAML)
 	if err != nil {
 		return err

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Remove v1 (CloudStack API) code, unusable since the CloudStack API removal: use v3, or a tagged release if you still need it
+
 3.1.65
 ------
 

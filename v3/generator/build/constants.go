@@ -10,7 +10,7 @@ import (
 	"github.com/exoscale/egoscale/v3/generator/ir"
 )
 
-// Constants builds the file of the zone endpoints, from the spec server.
+// Constants builds the declarations of constants.go: the zone endpoints, from the spec server.
 func (b *Builder) Constants(packageName string) (ir.File, error) {
 	// The spec is returning only production server.
 	if len(b.model.Servers) == 0 {
@@ -36,9 +36,10 @@ func (b *Builder) Constants(packageName string) (ir.File, error) {
 			})
 		}
 	}
-	if err := b.emit(constants, "#/servers/0"); err != nil {
+	var decls []ir.Decl
+	if err := b.emit(&decls, constants, "#/servers/0"); err != nil {
 		return ir.File{}, err
 	}
 
-	return b.file(packageName), nil
+	return ir.File{Package: packageName, Decls: decls}, nil
 }

@@ -16,40 +16,45 @@ import (
 	"github.com/exoscale/egoscale/v3/generator/naming"
 )
 
-// Operations builds the file of the spec path operations: a Client method per operation,
+// Operations builds the declarations of operations.go: a Client method per spec path operation,
 // preceded by its inline response, request and parameter types.
 func (b *Builder) Operations(packageName string) (ir.File, error) {
 	if b.model.Paths == nil || orderedmap.Len(b.model.Paths.PathItems) == 0 {
 		return ir.File{}, errors.New("no path items defined in the spec")
 	}
 
+	var decls []ir.Decl
 	for pair := orderedmap.SortAlpha(b.model.Paths.PathItems).First(); pair != nil; pair = pair.Next() {
 		path, item := pair.Key(), pair.Value()
 		for pair := orderedmap.SortAlpha(item.GetOperations()).First(); pair != nil; pair = pair.Next() {
 			method, op := pair.Key(), pair.Value()
-			if err := b.operation(path, method, op); err != nil {
+			if err := b.operation(&decls, path, method, op); err != nil {
 				return ir.File{}, fmt.Errorf("%s %s: %w", strings.ToUpper(method), path, err)
 			}
 		}
 	}
 
-	return b.file(packageName, "context", "fmt", "net", "net/http", "net/url", "time"), nil
+	return ir.File{
+		Package: packageName,
+		Imports: []string{"context", "fmt", "net", "net/http", "net/url", "time"},
+		Decls:   decls,
+	}, nil
 }
 
-func (b *Builder) operation(path, method string, op *v3.Operation) error {
+func (b *Builder) operation(decls *[]ir.Decl, path, method string, op *v3.Operation) error {
 	funcName := b.names.Camel(op.OperationId)
 	if funcName == "" {
 		funcName = b.names.Camel(path)
 	}
 	origin := "operation " + op.OperationId
 
-	if err := b.responseSchemas(funcName, op, origin); err != nil {
+	if err := b.responseSchemas(decls, funcName, op, origin); err != nil {
 		return err
 	}
-	if err := b.requestSchema(funcName, op, origin); err != nil {
+	if err := b.requestSchema(decls, funcName, op, origin); err != nil {
 		return err
 	}
-	queryOpts, err := b.parameterSchemas(funcName, op, origin)
+	queryOpts, err := b.parameterSchemas(decls, funcName, op, origin)
 	if err != nil {
 		return err
 	}
@@ -72,12 +77,12 @@ func (b *Builder) operation(path, method string, op *v3.Operation) error {
 	}
 	o.Path, o.PathArgs = b.urlPath(path, op)
 
-	return b.emit(o, origin)
+	return b.emit(decls, o, origin)
 }
 
 // responseSchemas emits the inline response schemas of every HTTP code,
 // and the Find method of a list response.
-func (b *Builder) responseSchemas(funcName string, op *v3.Operation, origin string) error {
+func (b *Builder) responseSchemas(decls *[]ir.Decl, funcName string, op *v3.Operation, origin string) error {
 	if op.Responses == nil {
 		return nil
 	}
@@ -122,13 +127,13 @@ func (b *Builder) responseSchemas(funcName string, op *v3.Operation, origin stri
 			if err != nil {
 				return fmt.Errorf("response %s: %w", code, err)
 			}
-			if err := b.schema(responseTypeName(funcName, code), s, origin+" response "+code); err != nil {
+			if err := b.schema(decls, responseTypeName(funcName, code), s, origin+" response "+code); err != nil {
 				return err
 			}
 		}
 
 		if findable != nil {
-			if err := b.emit(*findable, origin); err != nil {
+			if err := b.emit(decls, *findable, origin); err != nil {
 				return err
 			}
 		}
@@ -234,7 +239,7 @@ func (b *Builder) errorResponses(funcName string, op *v3.Operation) []ir.ErrorRe
 }
 
 // requestSchema emits the inline request body schema, mostly for HTTP POST and PUT.
-func (b *Builder) requestSchema(funcName string, op *v3.Operation, origin string) error {
+func (b *Builder) requestSchema(decls *[]ir.Decl, funcName string, op *v3.Operation, origin string) error {
 	if op.RequestBody == nil {
 		return nil
 	}
@@ -249,7 +254,7 @@ func (b *Builder) requestSchema(funcName string, op *v3.Operation, origin string
 		return fmt.Errorf("request body: %w", err)
 	}
 
-	return b.schema(funcName+"Request", s, origin+" request body")
+	return b.schema(decls, funcName+"Request", s, origin+" request body")
 }
 
 // requestBody returns the request body type, nil if none.
@@ -272,7 +277,7 @@ func (b *Builder) requestBody(funcName string, op *v3.Operation) ir.Type {
 
 // parameterSchemas emits the enum types of the query and path parameters,
 // and the query options. It returns the query options type name, "" if none.
-func (b *Builder) parameterSchemas(funcName string, op *v3.Operation, origin string) (string, error) {
+func (b *Builder) parameterSchemas(decls *[]ir.Decl, funcName string, op *v3.Operation, origin string) (string, error) {
 	queryOpts := ir.QueryOpts{Type: funcName + "Opt"}
 
 	for _, p := range op.Parameters {
@@ -318,7 +323,7 @@ func (b *Builder) parameterSchemas(funcName string, op *v3.Operation, origin str
 			)
 		}
 
-		if err := b.schema(paramTypeName, s, origin+" param "+p.Name); err != nil {
+		if err := b.schema(decls, paramTypeName, s, origin+" param "+p.Name); err != nil {
 			return "", err
 		}
 	}
@@ -327,7 +332,7 @@ func (b *Builder) parameterSchemas(funcName string, op *v3.Operation, origin str
 		return "", nil
 	}
 
-	return queryOpts.Type, b.emit(queryOpts, origin)
+	return queryOpts.Type, b.emit(decls, queryOpts, origin)
 }
 
 // parameters returns the method parameters of the path parameters.

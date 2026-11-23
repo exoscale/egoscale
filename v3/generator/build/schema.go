@@ -31,12 +31,14 @@ const (
 
 var alphanumericRe = regexp.MustCompile("^[a-zA-Z0-9]+$")
 
-// Schemas builds the file of the spec component schemas.
+// Schemas builds the declarations of schemas.go: the spec component schemas
+// and the config aliases.
 func (b *Builder) Schemas(packageName string) (ir.File, error) {
 	if b.model.Components == nil || orderedmap.Len(b.model.Components.Schemas) == 0 {
 		return ir.File{}, errors.New("no schema found in the spec")
 	}
 
+	var decls []ir.Decl
 	for pair := orderedmap.SortAlpha(b.model.Components.Schemas).First(); pair != nil; pair = pair.Next() {
 		schemaName, proxy := pair.Key(), pair.Value()
 		if slices.Contains(b.cfg.IgnoredSchemas, schemaName) {
@@ -47,7 +49,7 @@ func (b *Builder) Schemas(packageName string) (ir.File, error) {
 		if err != nil {
 			return ir.File{}, fmt.Errorf("schema %s: %w", schemaName, err)
 		}
-		if err := b.schema(b.names.Camel(schemaName), s, "#/components/schemas/"+schemaName); err != nil {
+		if err := b.schema(&decls, b.names.Camel(schemaName), s, "#/components/schemas/"+schemaName); err != nil {
 			return ir.File{}, fmt.Errorf("schema %s: %w", schemaName, err)
 		}
 	}
@@ -57,18 +59,18 @@ func (b *Builder) Schemas(packageName string) (ir.File, error) {
 		for _, a := range b.cfg.Aliases {
 			aliases.Aliases = append(aliases.Aliases, ir.Alias{Name: a.Name, Target: a.Target})
 		}
-		if err := b.emit(aliases, "config"); err != nil {
+		if err := b.emit(&decls, aliases, "config"); err != nil {
 			return ir.File{}, err
 		}
 	}
 
-	return b.file(packageName, "net", "time"), nil
+	return ir.File{Package: packageName, Imports: []string{"net", "time"}, Decls: decls}, nil
 }
 
 // schema emits the declaration of the type name from a schema,
 // preceded by the declarations of its inline sub schemas.
 // origin locates the schema in the spec for error messages.
-func (b *Builder) schema(name string, s *base.Schema, origin string) error {
+func (b *Builder) schema(decls *[]ir.Decl, name string, s *base.Schema, origin string) error {
 	doc := schemaDoc(s)
 
 	switch kindOf(s) {
@@ -82,33 +84,33 @@ func (b *Builder) schema(name string, s *base.Schema, origin string) error {
 				return fmt.Errorf("%s: enum values can't be rendered as Go constants", name)
 			}
 			enum.Doc = doc
-			return b.emit(enum, origin)
+			return b.emit(decls, enum, origin)
 		}
 
 		typ, err := simpleType(s)
 		if err != nil {
 			return fmt.Errorf("%s: %w", name, err)
 		}
-		return b.emit(ir.TypeDef{Doc: doc, Name: name, Type: typ}, origin)
+		return b.emit(decls, ir.TypeDef{Doc: doc, Name: name, Type: typ}, origin)
 	case kindArray:
-		typ, err := b.array(name, s, true, name, origin)
+		typ, err := b.array(decls, name, s, true, name, origin)
 		if err != nil {
 			return err
 		}
-		return b.emit(ir.TypeDef{Doc: doc, Name: name, Type: typ}, origin)
+		return b.emit(decls, ir.TypeDef{Doc: doc, Name: name, Type: typ}, origin)
 	case kindObject:
-		st, err := b.object(name, s, origin)
+		st, err := b.object(decls, name, s, origin)
 		if err != nil {
 			return err
 		}
 		st.Doc = doc
-		return b.emit(st, origin)
+		return b.emit(decls, st, origin)
 	case kindMap:
-		typ, err := b.simpleMap(name, s, name, origin)
+		typ, err := b.simpleMap(decls, name, s, name, origin)
 		if err != nil {
 			return err
 		}
-		return b.emit(ir.TypeDef{Doc: doc, Name: name, Type: typ}, origin)
+		return b.emit(decls, ir.TypeDef{Doc: doc, Name: name, Type: typ}, origin)
 	default:
 		return fmt.Errorf("%s: schema type %v not implemented", name, s.Type)
 	}
@@ -163,7 +165,7 @@ func (b *Builder) enum(name string, s *base.Schema) (_ ir.Enum, ok bool, _ error
 // array returns the slice type of an array schema. An inline object items schema
 // is declared as typeName, suffixed with "Items" for a root schema.
 // scope is the type name used to look up reference overrides.
-func (b *Builder) array(typeName string, s *base.Schema, root bool, scope, origin string) (ir.Type, error) {
+func (b *Builder) array(decls *[]ir.Decl, typeName string, s *base.Schema, root bool, scope, origin string) (ir.Type, error) {
 	if s.Items == nil {
 		return nil, fmt.Errorf("array %s: items is nil", typeName)
 	}
@@ -180,7 +182,7 @@ func (b *Builder) array(typeName string, s *base.Schema, root bool, scope, origi
 	}
 
 	if item.AdditionalProperties != nil {
-		m, err := b.simpleMap(typeName, item, scope, origin)
+		m, err := b.simpleMap(decls, typeName, item, scope, origin)
 		if err != nil {
 			return nil, err
 		}
@@ -198,7 +200,7 @@ func (b *Builder) array(typeName string, s *base.Schema, root bool, scope, origi
 	if root {
 		typeName += "Items"
 	}
-	if err := b.schema(typeName, item, origin); err != nil {
+	if err := b.schema(decls, typeName, item, origin); err != nil {
 		return nil, err
 	}
 
@@ -206,7 +208,7 @@ func (b *Builder) array(typeName string, s *base.Schema, root bool, scope, origi
 }
 
 // object returns the struct of an object schema.
-func (b *Builder) object(typeName string, s *base.Schema, origin string) (ir.Struct, error) {
+func (b *Builder) object(decls *[]ir.Decl, typeName string, s *base.Schema, origin string) (ir.Struct, error) {
 	st := ir.Struct{Name: typeName}
 
 	for pair := orderedmap.SortAlpha(s.Properties).First(); pair != nil; pair = pair.Next() {
@@ -249,7 +251,7 @@ func (b *Builder) object(typeName string, s *base.Schema, origin string) (ir.Str
 				field.Type = ir.Pointer{Elem: field.Type}
 			}
 		case kind == kindArray:
-			typ, err := b.array(nestedName, prop, false, typeName, origin)
+			typ, err := b.array(decls, nestedName, prop, false, typeName, origin)
 			if err != nil {
 				return ir.Struct{}, err
 			}
@@ -261,7 +263,7 @@ func (b *Builder) object(typeName string, s *base.Schema, origin string) (ir.Str
 					return ir.Struct{}, err
 				}
 				if ok {
-					if err := b.emit(enum, origin); err != nil {
+					if err := b.emit(decls, enum, origin); err != nil {
 						return ir.Struct{}, err
 					}
 					field.Type = ir.Named(nestedName)
@@ -288,13 +290,13 @@ func (b *Builder) object(typeName string, s *base.Schema, origin string) (ir.Str
 			// We recommend to use AdditionalProperties instead.
 			field.Type = ir.Map{Elem: ir.Any}
 		case kind == kindMap:
-			typ, err := b.simpleMap(nestedName, prop, typeName, origin)
+			typ, err := b.simpleMap(decls, nestedName, prop, typeName, origin)
 			if err != nil {
 				return ir.Struct{}, err
 			}
 			field.Type = typ
 		default:
-			if err := b.schema(nestedName, prop, origin); err != nil {
+			if err := b.schema(decls, nestedName, prop, origin); err != nil {
 				return ir.Struct{}, err
 			}
 			field.Type = ir.Pointer{Elem: ir.Named(nestedName)}
@@ -308,7 +310,7 @@ func (b *Builder) object(typeName string, s *base.Schema, origin string) (ir.Str
 
 // simpleMap returns the map type of a schema with additionalProperties.
 // An inline object values schema is declared as typeName.
-func (b *Builder) simpleMap(typeName string, s *base.Schema, scope, origin string) (ir.Type, error) {
+func (b *Builder) simpleMap(decls *[]ir.Decl, typeName string, s *base.Schema, scope, origin string) (ir.Type, error) {
 	// https://swagger.io/docs/specification/data-models/dictionaries/#free-form
 	// There is two case for a free form object:
 	//  - additionalProperties: true
@@ -346,7 +348,7 @@ func (b *Builder) simpleMap(typeName string, s *base.Schema, scope, origin strin
 		return ir.Map{Elem: typ}, nil
 	}
 
-	if err := b.schema(typeName, values, origin); err != nil {
+	if err := b.schema(decls, typeName, values, origin); err != nil {
 		return nil, err
 	}
 

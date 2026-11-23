@@ -17,20 +17,18 @@ import (
 	"github.com/exoscale/egoscale/v3/generator/naming"
 )
 
-// Builder builds the generated files declarations from an OpenAPI model.
-// The same Builder must build all the files of a Go package,
-// to detect type names declared twice.
+// Builder builds the declarations of the generated Go files from an OpenAPI model.
+// Use one Builder for all the files of a Go package: they share one type namespace.
 type Builder struct {
 	model *v3.Document
 	cfg   config.Config
 	names *naming.Namer
 
-	// declared maps declared type names to where they come from in the spec.
-	declared map[string]string
+	// declaredTypes maps each type name declared so far, in any file, to its spec origin.
+	// It is only used to fail on a type declared twice.
+	declaredTypes map[string]string
 	// appliedRefOverrides are the config ref overrides used while building.
 	appliedRefOverrides map[refOverride]bool
-	// decls are the declarations of the file being built.
-	decls []ir.Decl
 }
 
 // Load parses an OpenAPI spec into a v3 model. The spec is OpenAPI 3.0,
@@ -56,10 +54,10 @@ func Load(spec []byte) (*v3.Document, error) {
 // New returns a Builder of the model.
 func New(model *v3.Document, cfg config.Config) *Builder {
 	return &Builder{
-		model:    model,
-		cfg:      cfg,
-		names:    naming.New(cfg.Acronyms),
-		declared: map[string]string{},
+		model:         model,
+		cfg:           cfg,
+		names:         naming.New(cfg.Acronyms),
+		declaredTypes: map[string]string{},
 
 		appliedRefOverrides: map[refOverride]bool{},
 	}
@@ -71,7 +69,7 @@ type refOverride struct {
 }
 
 // Check returns an error for every config ref override that didn't apply,
-// to keep the config in sync with the spec. Call it once every file is built.
+// to keep the config in sync with the spec. Call it once all the files are built.
 func (b *Builder) Check() error {
 	var errs []error
 	for _, typeName := range slices.Sorted(maps.Keys(b.cfg.RefOverrides)) {
@@ -85,16 +83,16 @@ func (b *Builder) Check() error {
 	return errors.Join(errs...)
 }
 
-// emit appends a declaration to the file being built.
-// It fails if a type it declares is already declared.
-func (b *Builder) emit(d ir.Decl, origin string) error {
+// emit appends d to decls, the declarations of the file being built.
+// It fails if a type d declares is already declared in the package.
+func (b *Builder) emit(decls *[]ir.Decl, d ir.Decl, origin string) error {
 	for _, name := range typeNames(d) {
-		if prev, ok := b.declared[name]; ok {
+		if prev, ok := b.declaredTypes[name]; ok {
 			return fmt.Errorf("type %s from %s is already declared from %s", name, origin, prev)
 		}
-		b.declared[name] = origin
+		b.declaredTypes[name] = origin
 	}
-	b.decls = append(b.decls, d)
+	*decls = append(*decls, d)
 
 	return nil
 }
@@ -122,14 +120,6 @@ func typeNames(d ir.Decl) []string {
 	}
 
 	return nil
-}
-
-// file returns the file of the declarations emitted since the last call.
-func (b *Builder) file(packageName string, imports ...string) ir.File {
-	f := ir.File{Package: packageName, Imports: imports, Decls: b.decls}
-	b.decls = nil
-
-	return f
 }
 
 func (b *Builder) skipAuth(operationID string) bool {

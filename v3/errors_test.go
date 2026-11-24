@@ -164,6 +164,28 @@ func TestHandleHTTPErrorResp(t *testing.T) {
 	}
 }
 
+func TestAPIErrorString(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want string
+	}{
+		{name: "message wins over title", body: `{"message":"Volume not attached","title":"Bad Request","detail":"ignored"}`, want: "Bad Request: Volume not attached"},
+		{name: "title and detail", body: `{"type":"#/kms-key/key-disabled","title":"Key is disabled","detail":"no details."}`, want: "Bad Request: Key is disabled: no details."},
+		{name: "title only", body: `{"title":"Invalid Request Body"}`, want: "Bad Request: Invalid Request Body"},
+		{name: "detail without title", body: `{"detail":"no details."}`, want: "Bad Request: "},
+		{name: "empty body", body: `{}`, want: "Bad Request: "},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := handleHTTPErrorResp(makeResp(400, tt.body)).Error(); got != tt.want {
+				t.Errorf("Error() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 // TestHandleHTTPErrorRespSentinelWrapping verifies that callers can use errors.Is
 // to identify the HTTP status class after wrapping, matching the pattern in cli/cmd/root.go.
 func TestHandleHTTPErrorRespSentinelWrapping(t *testing.T) {

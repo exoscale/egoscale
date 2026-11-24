@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 var (
@@ -128,16 +129,20 @@ type APIErrorEntry struct {
 	Location string
 }
 
-// Error returns the status text and message, or the RFC 9457 title and detail when the server sent no message.
+// Error returns the status text followed by the non-empty title, message and detail of the response.
 func (e *APIError) Error() string {
-	msg := e.Message
-	if msg == "" && e.Title != "" {
-		msg = e.Title
-		if e.Detail != "" {
-			msg += ": " + e.Detail
+	// Generic problem types repeat the status text as title, so it is skipped there.
+	title := e.Title
+	if title == e.sentinel.Error() {
+		title = ""
+	}
+	var parts []string
+	for _, p := range []string{title, e.Message, e.Detail} {
+		if p != "" {
+			parts = append(parts, p)
 		}
 	}
-	return fmt.Sprintf("%s: %s", e.sentinel.Error(), msg)
+	return fmt.Sprintf("%s: %s", e.sentinel.Error(), strings.Join(parts, ": "))
 }
 func (e *APIError) Unwrap() error { return e.sentinel }
 

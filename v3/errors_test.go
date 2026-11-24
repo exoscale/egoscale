@@ -170,10 +170,11 @@ func TestAPIErrorString(t *testing.T) {
 		body string
 		want string
 	}{
-		{name: "message wins over title", body: `{"message":"Volume not attached","title":"Bad Request","detail":"ignored"}`, want: "Bad Request: Volume not attached"},
+		{name: "message only", body: `{"message":"Volume not attached"}`, want: "Bad Request: Volume not attached"},
+		{name: "all parts", body: `{"message":"m","title":"T","detail":"d"}`, want: "Bad Request: T: m: d"},
 		{name: "title and detail", body: `{"type":"#/kms-key/key-disabled","title":"Key is disabled","detail":"no details."}`, want: "Bad Request: Key is disabled: no details."},
-		{name: "title only", body: `{"title":"Invalid Request Body"}`, want: "Bad Request: Invalid Request Body"},
-		{name: "detail without title", body: `{"detail":"no details."}`, want: "Bad Request: "},
+		{name: "title same as status text", body: `{"type":"#/http-problem-types/bad-request","title":"Bad Request","detail":"GPU type must be valid."}`, want: "Bad Request: GPU type must be valid."},
+		{name: "detail only", body: `{"detail":"no details."}`, want: "Bad Request: no details."},
 		{name: "empty body", body: `{}`, want: "Bad Request: "},
 	}
 

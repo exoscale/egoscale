@@ -128,8 +128,16 @@ type APIErrorEntry struct {
 	Location string
 }
 
+// Error returns the status text and message, or the RFC 9457 title and detail when the server sent no message.
 func (e *APIError) Error() string {
-	return fmt.Sprintf("%s: %s", e.sentinel.Error(), e.Message)
+	msg := e.Message
+	if msg == "" && e.Title != "" {
+		msg = e.Title
+		if e.Detail != "" {
+			msg += ": " + e.Detail
+		}
+	}
+	return fmt.Sprintf("%s: %s", e.sentinel.Error(), msg)
 }
 func (e *APIError) Unwrap() error { return e.sentinel }
 

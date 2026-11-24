@@ -10846,6 +10846,8 @@ type CreateInstanceRequestVpcSubnets struct {
 	ID UUID `json:"id" validate:"required"`
 	// Instance IPv4. Random one if unset
 	Ipv4 net.IP `json:"ipv4,omitempty"`
+	// Instance IPv6. Random one if unset
+	Ipv6 net.IP `json:"ipv6,omitempty"`
 }
 
 // Attach the Instance to VPC Subnets
@@ -18152,6 +18154,8 @@ const (
 type CreateSubnetRequestAddressfamily string
 
 const (
+	CreateSubnetRequestAddressfamilyInet6 CreateSubnetRequestAddressfamily = "inet6"
+	CreateSubnetRequestAddressfamilyDual  CreateSubnetRequestAddressfamily = "dual"
 	CreateSubnetRequestAddressfamilyInet4 CreateSubnetRequestAddressfamily = "inet4"
 )
 
@@ -18161,8 +18165,10 @@ type CreateSubnetRequest struct {
 	// Whether the subnet supports IPv4 and/or IPv6
 	Addressfamily CreateSubnetRequestAddressfamily `json:"addressfamily" validate:"required"`
 	Description   string                           `json:"description,omitempty" validate:"omitempty,lte=4096"`
-	// Subnet ipv4 CIDR. Must not overlap with other CIDRs of this VPC
+	// Subnet ipv4 CIDR. Required for inet4 and dual subnets. Must be in a private range (RFC 1918) and must not overlap with other CIDRs of this VPC
 	Ipv4Block string `json:"ipv4-block,omitempty"`
+	// Subnet ipv6 CIDR. Required for inet6 and dual subnets. Must be within fd00::/8 (RFC 4193), with a prefix length of at most 64, and must not overlap with other CIDRs of this VPC
+	Ipv6Block string `json:"ipv6-block,omitempty"`
 	Labels    Labels `json:"labels,omitempty"`
 	// Subnet name, up to 255 characters. Must be unique between the subnet of the parent VPC
 	Name string `json:"name" validate:"required,gte=1,lte=255"`
@@ -18331,8 +18337,10 @@ func (c Client) UpdateSubnet(ctx context.Context, vpcID UUID, id UUID, req Updat
 type AttachInstanceToSubnetRequest struct {
 	// Target Instance
 	Instance *InstanceRef `json:"instance" validate:"required"`
-	// An optional IPv4 address assign to the instance
+	// An optional IPv4 address to assign to the instance
 	Ipv4 net.IP `json:"ipv4,omitempty"`
+	// An optional IPv6 address to assign to the instance
+	Ipv6 net.IP `json:"ipv6,omitempty"`
 }
 
 // Attach a Compute instance to a Subnet

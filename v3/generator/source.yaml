@@ -1374,19 +1374,23 @@ components:
           maxLength: 4096
         labels:
           $ref: '#/components/schemas/labels'
+        ipv6-block:
+          type: string
+          description: Subnet ipv6 CIDR, empty string if the subnet has no IPv6 block
         name:
           type: string
           maxLength: 255
           minLength: 1
         ipv4-block:
           type: string
-          description: Subnet ipv4 CIDR
+          description: Subnet ipv4 CIDR, empty string if the subnet has no IPv4 block
         addressfamily:
           type: string
           enum:
             - inet4
             - dual
-          description: Whether the subnet support IPv4 and/or IPv6
+            - inet6
+          description: Whether the subnet supports IPv4 and/or IPv6
         address-space:
           type: string
           enum:
@@ -1405,7 +1409,11 @@ components:
               ipv4:
                 type: string
                 format: ipv4
-                description: The ipv4 associated with the instance in this subnet
+                description: The ipv4 associated with the instance in this subnet, empty string if the subnet has no IPv4 block
+              ipv6:
+                type: string
+                format: ipv6
+                description: The ipv6 associated with the instance in this subnet, empty string if the subnet has no IPv6 block
             description: Subnet attachments
           description: Instances attached to the subnet
         id:
@@ -2485,35 +2493,39 @@ components:
     list-subnet-entry:
       type: object
       properties:
-        id:
+        description:
           type: string
-          format: uuid
+          maxLength: 4096
+        labels:
+          $ref: '#/components/schemas/labels'
+        ipv6-block:
+          type: string
+          description: Subnet ipv6 CIDR, empty string if the subnet has no IPv6 block
         name:
           type: string
           maxLength: 255
           minLength: 1
-        description:
+        ipv4-block:
           type: string
-          maxLength: 4096
-        created-at:
-          type: string
-          format: date-time
+          description: Subnet ipv4 CIDR, empty string if the subnet has no IPv4 block
         addressfamily:
           type: string
           enum:
             - inet4
             - dual
+            - inet6
           description: Whether the subnet supports IPv4 and/or IPv6
         address-space:
           type: string
           enum:
             - private
           description: Whether the subnet is private or public
-        ipv4-block:
+        id:
           type: string
-          description: Subnet ipv4 CIDR
-        labels:
-          $ref: '#/components/schemas/labels'
+          format: uuid
+        created-at:
+          type: string
+          format: date-time
       description: Subnet
     dbaas-service-logs:
       type: object
@@ -7710,7 +7722,11 @@ components:
                   ipv4:
                     type: string
                     format: ipv4
-                    description: Instance Subnet ipv4 address
+                    description: Instance Subnet ipv4 address, empty string if the subnet has no IPv4 block
+                  ipv6:
+                    type: string
+                    format: ipv6
+                    description: Instance Subnet ipv6 address, empty string if the subnet has no IPv6 block
                 description: VPC subnet
               description: Instances attached to the subnet
           description: VPC
@@ -14011,7 +14027,11 @@ paths:
                 ipv4:
                   type: string
                   format: ipv4
-                  description: An optional IPv4 address assign to the instance
+                  description: An optional IPv4 address to assign to the instance
+                ipv6:
+                  type: string
+                  format: ipv6
+                  description: An optional IPv6 address to assign to the instance
               required:
                 - instance
       operationId: attach-instance-to-subnet
@@ -17269,6 +17289,8 @@ paths:
                 addressfamily:
                   type: string
                   enum:
+                    - inet6
+                    - dual
                     - inet4
                   description: Whether the subnet supports IPv4 and/or IPv6
                 address-space:
@@ -17278,7 +17300,10 @@ paths:
                   description: Whether the subnet is private or public
                 ipv4-block:
                   type: string
-                  description: Subnet ipv4 CIDR. Must not overlap with other CIDRs of this VPC
+                  description: Subnet ipv4 CIDR. Required for inet4 and dual subnets. Must be in a private range (RFC 1918) and must not overlap with other CIDRs of this VPC
+                ipv6-block:
+                  type: string
+                  description: Subnet ipv6 CIDR. Required for inet6 and dual subnets. Must be within fd00::/8 (RFC 4193), with a prefix length of at most 64, and must not overlap with other CIDRs of this VPC
               required:
                 - name
                 - addressfamily
@@ -25278,6 +25303,10 @@ paths:
                             type: string
                             format: ipv4
                             description: Instance IPv4. Random one if unset
+                          ipv6:
+                            type: string
+                            format: ipv6
+                            description: Instance IPv6. Random one if unset
                         required:
                           - id
                         description: VPC Subnet attachment
@@ -26035,8 +26064,7 @@ paths:
       operationId: reset-dbaas-postgres-user-password
 x-topics:
   - title: API Request Signature
-    content: |+
-
+    content: |2+
       In order to authenticate legitimate users, the Exoscale API requires incoming requests to be signed using valid Exoscale API account credentials with the following mechanism.
 
       ## Signature Mechanism
@@ -26103,8 +26131,7 @@ x-topics:
       * Python: [requests-exoscale-auth > `ExoscaleV2Auth`](https://github.com/exoscale/requests-exoscale-auth/blob/master/exoscale_auth.py)
 
   - title: Zone local resources
-    content: |
-
+    content: |2
       The API is deployed across all Exoscale zones. When performing a compute call, you should use the relevant zone for your resource.
       For example: https://api-de-fra-1.exoscale.com/v2/instance would return only the instances from `de-fra-1`, https://api-ch-gva-2.exoscale.com/v2/instance from `ch-gva-2`.
       To obtain a list of all instances across all zones, you would need to do the corresponding request for each zone.

@@ -1,11 +1,11 @@
 Changelog
 =========
 
-Unreleased
-----------
+3.1.66
+------
 
-- Remove v1 (CloudStack API) code, unusable since the CloudStack API removal: use v3, or a tagged release if you still need it
-- v3: `APIError.Error()` joins the RFC 9457 title, message and detail of the response, skipping empty parts and a title that repeats the status text, so KMS and other RFC 9457 errors no longer end in an empty reason
+- Remove v1 (CloudStack API) code, unusable since the CloudStack API removal: use v3, or a tagged release if you still need it (#860)
+- v3: `APIError.Error()` joins the RFC 9457 title, message and detail of the response, skipping empty parts and a title that repeats the status text, so KMS and other RFC 9457 errors no longer end in an empty reason (#861)
 
 3.1.65
 ------

@@ -256,6 +256,24 @@ func TestDecodeAPIErrorResponse(t *testing.T) {
 		}
 	})
 
+	t.Run("undeclared status code with a problem body", func(t *testing.T) {
+		body := `{"type":"#/problems/invalid-request","title":"The request is not valid.","status":400,"instance":"0f8e7d6c",` +
+			`"errors":[{"name":"key-spec","in":"body","code":"not-allowed","reason":"key-spec is not allowed here"}]}`
+		err := decodeAPIErrorResponse(handleHTTPErrorResp(makeResp(400, body)), responses)
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Fatalf("expected *APIError, got %T", err)
+		}
+		p, ok := apiErr.Response.(*Problem)
+		if !ok {
+			t.Fatalf("Response = %T, want *Problem", apiErr.Response)
+		}
+		want := ProblemFieldError{Name: "key-spec", In: "body", Code: "not-allowed", Reason: "key-spec is not allowed here"}
+		if p.Type != "#/problems/invalid-request" || p.Instance != "0f8e7d6c" || len(p.Errors) != 1 || p.Errors[0] != want {
+			t.Errorf("Response = %+v", p)
+		}
+	})
+
 	t.Run("undeclared status code", func(t *testing.T) {
 		err := decodeAPIErrorResponse(handleHTTPErrorResp(makeResp(404, `{"message":"nope"}`)), responses)
 		var apiErr *APIError
@@ -284,4 +302,27 @@ func TestDecodeAPIErrorResponse(t *testing.T) {
 			t.Errorf("err = %v, want %v", err, in)
 		}
 	})
+}
+
+// TestAPIErrorMessage verifies Error() keeps "<status>: <message>", which callers
+// match on, and uses the RFC 9457 detail or title when there is no message.
+func TestProblemTypes(t *testing.T) {
+	body := `{"type":"#/problems/kms/key-not-found","title":"Key not found","status":404,"detail":"key 42"}`
+	err := fmt.Errorf("get key: %w", decodeAPIErrorResponse(handleHTTPErrorResp(makeResp(404, body)), nil))
+
+	if !errors.Is(err, ErrKmsKeyNotFound) {
+		t.Error("errors.Is(err, ErrKmsKeyNotFound) = false, want true")
+	}
+	if !errors.Is(err, ErrNotFound) {
+		t.Error("errors.Is(err, ErrNotFound) = false, the status error must match too")
+	}
+	if errors.Is(err, ErrKmsKeyDisabled) {
+		t.Error("errors.Is(err, ErrKmsKeyDisabled) = true, want false")
+	}
+	if p := ProblemOf(err); p == nil || p.Detail != "key 42" {
+		t.Errorf("ProblemOf(err) = %+v, want the problem with its detail", p)
+	}
+	if ProblemOf(errors.New("plain")) != nil {
+		t.Error("ProblemOf of an error which is no API error must be nil")
+	}
 }

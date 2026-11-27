@@ -65,6 +65,7 @@ func run(openAPISpec, genPathDir, packageName string) error {
 		{name: "schemas.go", build: b.Schemas},
 		{name: "constants.go", build: b.Constants},
 		{name: "operations.go", build: b.Operations},
+		{name: "problems.go", build: b.Problems},
 	}
 	for i, o := range outputs {
 		decls, err := o.build(packageName)
@@ -75,7 +76,6 @@ func run(openAPISpec, genPathDir, packageName string) error {
 			return fmt.Errorf("%s: %w", o.name, err)
 		}
 	}
-
 	if err := b.Check(); err != nil {
 		return fmt.Errorf("config: %w", err)
 	}

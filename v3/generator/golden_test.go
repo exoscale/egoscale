@@ -15,7 +15,7 @@ func TestGolden(t *testing.T) {
 	dir := t.TempDir()
 	require.NoError(t, run("./source.yaml", dir, "v3"))
 
-	for _, name := range []string{"schemas.go", "constants.go", "operations.go"} {
+	for _, name := range []string{"schemas.go", "constants.go", "operations.go", "problems.go"} {
 		t.Run(name, func(t *testing.T) {
 			want, err := os.ReadFile(filepath.Join("..", name))
 			require.NoError(t, err)

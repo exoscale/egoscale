@@ -3,12 +3,14 @@
 The generator writes the Egoscale v3 SDK from the Exoscale OpenAPI spec (`source.yaml`). It is its own
 Go module: it isn't part of the SDK users import.
 
-It generates three files of the `v3` package:
+It generates four files of the `v3` package:
 
 - `schemas.go`: a Go type per component schema of the spec, and the backward compatibility aliases;
 - `operations.go`: a `Client` method per API operation, with its inline request, response and
   parameter types, and the `Find` methods of list responses;
-- `constants.go`: the zone API endpoints.
+- `constants.go`: the zone API endpoints;
+- `problems.go`: an error value per service error type of the `x-problems` of the spec, e.g.
+  `ErrKmsKeyNotFound`, which `errors.Is` matches against the errors of the client.
 
 The rest of the `v3` package is hand-written: the client (`client.go`, `api.go`), the errors
 (`errors.go`), `version.go`, `doc.go` and the `credentials`, `metadata` and `utils` packages.
@@ -117,7 +119,7 @@ regenerate it in the same commit. The tests of `build/` check the declarations b
 specs, without rendering Go.
 
 To see the generated source of a file before `gofmt`, e.g. when it doesn't compile, set
-`GENERATOR_DEBUG` to its name: `schemas`, `operations` or `constants`.
+`GENERATOR_DEBUG` to its name: `schemas`, `operations`, `constants` or `problems`.
 
 ```shell
 GENERATOR_DEBUG=schemas go generate > /tmp/schemas.go

@@ -111,6 +111,13 @@ func typeNames(d ir.Decl) []string {
 	case ir.Constants:
 		// Declared by render/constants.tmpl.
 		return []string{"Endpoint"}
+	case ir.ProblemTypes:
+		// Not types but package level values, which share the namespace of the types.
+		names := make([]string, len(d.Types))
+		for i, t := range d.Types {
+			names[i] = t.Name
+		}
+		return names
 	case ir.Aliases:
 		names := make([]string, 0, len(d.Aliases))
 		for _, a := range d.Aliases {

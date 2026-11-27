@@ -100,6 +100,8 @@ func Decl(b *bytes.Buffer, d ir.Decl) error {
 		return templates.ExecuteTemplate(b, "operation.tmpl", newOperationView(d))
 	case ir.Constants:
 		return templates.ExecuteTemplate(b, "constants.tmpl", d)
+	case ir.ProblemTypes:
+		return templates.ExecuteTemplate(b, "problems.tmpl", d)
 	default:
 		return fmt.Errorf("render: unknown declaration %T", d)
 	}

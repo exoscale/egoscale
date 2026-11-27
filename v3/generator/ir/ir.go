@@ -176,11 +176,28 @@ type Endpoint struct {
 	URL  string
 }
 
-func (TypeDef) decl()   {}
-func (Enum) decl()      {}
-func (Struct) decl()    {}
-func (Aliases) decl()   {}
-func (QueryOpts) decl() {}
-func (Findable) decl()  {}
-func (Operation) decl() {}
-func (Constants) decl() {}
+// ProblemTypes are the error types the services declare in the x-problems of the spec,
+// an error value each, which errors.Is matches against the errors of the client.
+type ProblemTypes struct {
+	Types []ProblemType
+}
+
+// ProblemType is the error value of a service error type, e.g. ErrKmsKeyNotFound.
+type ProblemType struct {
+	Doc  string
+	Name string
+	// ID is the problem type URI, e.g. #/problems/kms/key-not-found.
+	ID     string
+	Status int
+	Title  string
+}
+
+func (TypeDef) decl()      {}
+func (Enum) decl()         {}
+func (Struct) decl()       {}
+func (Aliases) decl()      {}
+func (QueryOpts) decl()    {}
+func (Findable) decl()     {}
+func (Operation) decl()    {}
+func (Constants) decl()    {}
+func (ProblemTypes) decl() {}

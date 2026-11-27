@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - v3: generator maps OpenAPI `format: ipv6` to `net.IP`
+- v3: regenerate from new API spec: VPC subnet IPv6 support (`inet6`/`dual` address families, `Ipv6Block` on subnets, `Ipv6` on subnet attachments and instance VPC subnets, and on `AttachInstanceToSubnet`/`CreateInstance` requests)
 
 3.1.66
 ------

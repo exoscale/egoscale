@@ -3158,8 +3158,10 @@ type InstancePrivateNetworks struct {
 type InstanceVpcSubnets struct {
 	// VPC subnet ID
 	ID UUID `json:"id,omitempty"`
-	// Instance Subnet ipv4 address
+	// Instance Subnet ipv4 address, empty string if the subnet has no IPv4 block
 	Ipv4 net.IP `json:"ipv4,omitempty"`
+	// Instance Subnet ipv6 address, empty string if the subnet has no IPv6 block
+	Ipv6 net.IP `json:"ipv6,omitempty"`
 	// VPC subnet name
 	Name string `json:"name,omitempty"`
 }
@@ -5335,6 +5337,7 @@ type ListSubnetEntryAddressfamily string
 const (
 	ListSubnetEntryAddressfamilyInet4 ListSubnetEntryAddressfamily = "inet4"
 	ListSubnetEntryAddressfamilyDual  ListSubnetEntryAddressfamily = "dual"
+	ListSubnetEntryAddressfamilyInet6 ListSubnetEntryAddressfamily = "inet6"
 )
 
 // Subnet
@@ -5346,8 +5349,10 @@ type ListSubnetEntry struct {
 	CreatedAT     time.Time                    `json:"created-at,omitempty"`
 	Description   string                       `json:"description,omitempty" validate:"omitempty,lte=4096"`
 	ID            UUID                         `json:"id,omitempty"`
-	// Subnet ipv4 CIDR
+	// Subnet ipv4 CIDR, empty string if the subnet has no IPv4 block
 	Ipv4Block string `json:"ipv4-block,omitempty"`
+	// Subnet ipv6 CIDR, empty string if the subnet has no IPv6 block
+	Ipv6Block string `json:"ipv6-block,omitempty"`
 	Labels    Labels `json:"labels,omitempty"`
 	Name      string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }
@@ -6443,13 +6448,16 @@ type SubnetAddressfamily string
 const (
 	SubnetAddressfamilyInet4 SubnetAddressfamily = "inet4"
 	SubnetAddressfamilyDual  SubnetAddressfamily = "dual"
+	SubnetAddressfamilyInet6 SubnetAddressfamily = "inet6"
 )
 
 // Subnet attachments
 type SubnetInstances struct {
 	ID UUID `json:"id,omitempty"`
-	// The ipv4 associated with the instance in this subnet
+	// The ipv4 associated with the instance in this subnet, empty string if the subnet has no IPv4 block
 	Ipv4 net.IP `json:"ipv4,omitempty"`
+	// The ipv6 associated with the instance in this subnet, empty string if the subnet has no IPv6 block
+	Ipv6 net.IP `json:"ipv6,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
@@ -6457,15 +6465,17 @@ type SubnetInstances struct {
 type Subnet struct {
 	// Whether the subnet is private or public
 	AddressSpace SubnetAddressSpace `json:"address-space,omitempty"`
-	// Whether the subnet support IPv4 and/or IPv6
+	// Whether the subnet supports IPv4 and/or IPv6
 	Addressfamily SubnetAddressfamily `json:"addressfamily,omitempty"`
 	CreatedAT     time.Time           `json:"created-at,omitempty"`
 	Description   string              `json:"description,omitempty" validate:"omitempty,lte=4096"`
 	ID            UUID                `json:"id,omitempty"`
 	// Instances attached to the subnet
 	Instances []SubnetInstances `json:"instances,omitempty"`
-	// Subnet ipv4 CIDR
+	// Subnet ipv4 CIDR, empty string if the subnet has no IPv4 block
 	Ipv4Block string `json:"ipv4-block,omitempty"`
+	// Subnet ipv6 CIDR, empty string if the subnet has no IPv6 block
+	Ipv6Block string `json:"ipv6-block,omitempty"`
 	Labels    Labels `json:"labels,omitempty"`
 	Name      string `json:"name,omitempty" validate:"omitempty,gte=1,lte=255"`
 }

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- v3: generator maps OpenAPI `format: ipv6` to `net.IP`
+
 3.1.66
 ------
 

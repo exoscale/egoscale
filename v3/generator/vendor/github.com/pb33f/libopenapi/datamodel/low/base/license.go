@@ -1,17 +1,18 @@
-// Copyright 2022 Princess B33f Heavy Industries / Dave Shanley
+// Copyright 2022-2026 Princess B33f Heavy Industries / Dave Shanley
 // SPDX-License-Identifier: MIT
 
 package base
 
 import (
 	"context"
-	"crypto/sha256"
+	"hash/maphash"
+	"sync"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
-	"strings"
+	"go.yaml.in/yaml/v4"
 )
 
 // License is a low-level representation of a License object as defined by OpenAPI 2 and OpenAPI 3
@@ -27,6 +28,8 @@ type License struct {
 	RootNode   *yaml.Node
 	index      *index.SpecIndex
 	context    context.Context
+	nodeStore  sync.Map
+	reference  low.Reference
 	*low.Reference
 	low.NodeMap
 }
@@ -34,15 +37,26 @@ type License struct {
 // Build out a license, complain if both a URL and identifier are present as they are mutually exclusive
 func (l *License) Build(ctx context.Context, keyNode, root *yaml.Node, idx *index.SpecIndex) error {
 	l.KeyNode = keyNode
+	l.reference = low.Reference{}
+	l.Reference = &l.reference
+	l.nodeStore = sync.Map{}
+	l.Nodes = &l.nodeStore
+	l.context = ctx
+	l.index = idx
+	if root == nil {
+		l.RootNode = nil
+		l.Extensions = nil
+		return nil
+	}
 	root = utils.NodeAlias(root)
 	l.RootNode = root
 	utils.CheckForMergeNodes(root)
-	l.Reference = new(low.Reference)
-	no := low.ExtractNodes(ctx, root)
+	if len(root.Content) > 0 {
+		l.NodeMap.ExtractNodes(root, false)
+	} else {
+		l.AddNode(root.Line, root)
+	}
 	l.Extensions = low.ExtractExtensions(root)
-	l.Nodes = no
-	l.context = ctx
-	l.index = idx
 	return nil
 }
 
@@ -66,19 +80,24 @@ func (l *License) GetKeyNode() *yaml.Node {
 	return l.KeyNode
 }
 
-// Hash will return a consistent SHA256 Hash of the License object
-func (l *License) Hash() [32]byte {
-	var f []string
-	if !l.Name.IsEmpty() {
-		f = append(f, l.Name.Value)
-	}
-	if !l.URL.IsEmpty() {
-		f = append(f, l.URL.Value)
-	}
-	if !l.Identifier.IsEmpty() {
-		f = append(f, l.Identifier.Value)
-	}
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent hash of the License object
+func (l *License) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if !l.Name.IsEmpty() {
+			h.WriteString(l.Name.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !l.URL.IsEmpty() {
+			h.WriteString(l.URL.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !l.Identifier.IsEmpty() {
+			h.WriteString(l.Identifier.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		// Note: Extensions are not included in the hash for License
+		return h.Sum64()
+	})
 }
 
 // GetExtensions returns all extensions for License

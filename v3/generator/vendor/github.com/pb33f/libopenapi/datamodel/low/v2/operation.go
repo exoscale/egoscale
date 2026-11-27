@@ -5,17 +5,15 @@ package v2
 
 import (
 	"context"
-	"crypto/sha256"
-	"fmt"
+	"hash/maphash"
 	"sort"
-	"strings"
 
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/base"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Operation represents a low-level Swagger / OpenAPI 2 Operation object.
@@ -86,74 +84,99 @@ func (o *Operation) Build(ctx context.Context, _, root *yaml.Node, idx *index.Sp
 	return nil
 }
 
-// Hash will return a consistent SHA256 Hash of the Operation object
-func (o *Operation) Hash() [32]byte {
-	var f []string
-	if !o.Summary.IsEmpty() {
-		f = append(f, o.Summary.Value)
-	}
-	if !o.Description.IsEmpty() {
-		f = append(f, o.Description.Value)
-	}
-	if !o.OperationId.IsEmpty() {
-		f = append(f, o.OperationId.Value)
-	}
-	if !o.Summary.IsEmpty() {
-		f = append(f, o.Summary.Value)
-	}
-	if !o.ExternalDocs.IsEmpty() {
-		f = append(f, low.GenerateHashString(o.ExternalDocs.Value))
-	}
-	if !o.Responses.IsEmpty() {
-		f = append(f, low.GenerateHashString(o.Responses.Value))
-	}
-	if !o.Deprecated.IsEmpty() {
-		f = append(f, fmt.Sprint(o.Deprecated.Value))
-	}
-	var keys []string
-	keys = make([]string, len(o.Tags.Value))
-	for k := range o.Tags.Value {
-		keys[k] = o.Tags.Value[k].Value
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+// Hash will return a consistent Hash of the Operation object
+func (o *Operation) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if !o.Summary.IsEmpty() {
+			h.WriteString(o.Summary.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.Description.IsEmpty() {
+			h.WriteString(o.Description.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.OperationId.IsEmpty() {
+			h.WriteString(o.OperationId.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.ExternalDocs.IsEmpty() {
+			h.WriteString(low.GenerateHashString(o.ExternalDocs.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.Responses.IsEmpty() {
+			h.WriteString(low.GenerateHashString(o.Responses.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if !o.Deprecated.IsEmpty() {
+			low.HashBool(h, o.Deprecated.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		var keys []string
+		keys = make([]string, len(o.Tags.Value))
+		for k := range o.Tags.Value {
+			keys[k] = o.Tags.Value[k].Value
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			h.WriteString(key)
+			h.WriteByte(low.HASH_PIPE)
+		}
 
-	keys = make([]string, len(o.Consumes.Value))
-	for k := range o.Consumes.Value {
-		keys[k] = o.Consumes.Value[k].Value
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+		keys = make([]string, len(o.Consumes.Value))
+		for k := range o.Consumes.Value {
+			keys[k] = o.Consumes.Value[k].Value
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			h.WriteString(key)
+			h.WriteByte(low.HASH_PIPE)
+		}
 
-	keys = make([]string, len(o.Produces.Value))
-	for k := range o.Produces.Value {
-		keys[k] = o.Produces.Value[k].Value
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+		keys = make([]string, len(o.Produces.Value))
+		for k := range o.Produces.Value {
+			keys[k] = o.Produces.Value[k].Value
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			h.WriteString(key)
+			h.WriteByte(low.HASH_PIPE)
+		}
 
-	keys = make([]string, len(o.Schemes.Value))
-	for k := range o.Schemes.Value {
-		keys[k] = o.Schemes.Value[k].Value
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+		keys = make([]string, len(o.Schemes.Value))
+		for k := range o.Schemes.Value {
+			keys[k] = o.Schemes.Value[k].Value
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			h.WriteString(key)
+			h.WriteByte(low.HASH_PIPE)
+		}
 
-	keys = make([]string, len(o.Parameters.Value))
-	for k := range o.Parameters.Value {
-		keys[k] = low.GenerateHashString(o.Parameters.Value[k].Value)
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
+		keys = make([]string, len(o.Parameters.Value))
+		for k := range o.Parameters.Value {
+			keys[k] = low.GenerateHashString(o.Parameters.Value[k].Value)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			h.WriteString(key)
+			h.WriteByte(low.HASH_PIPE)
+		}
 
-	keys = make([]string, len(o.Security.Value))
-	for k := range o.Security.Value {
-		keys[k] = low.GenerateHashString(o.Security.Value[k].Value)
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
-	f = append(f, low.HashExtensions(o.Extensions)...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+		keys = make([]string, len(o.Security.Value))
+		for k := range o.Security.Value {
+			keys[k] = low.GenerateHashString(o.Security.Value[k].Value)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			h.WriteString(key)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		for _, ext := range low.HashExtensions(o.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }
 
 // methods to satisfy swagger operations interface
@@ -161,12 +184,15 @@ func (o *Operation) Hash() [32]byte {
 func (o *Operation) GetTags() low.NodeReference[[]low.ValueReference[string]] {
 	return o.Tags
 }
+
 func (o *Operation) GetSummary() low.NodeReference[string] {
 	return o.Summary
 }
+
 func (o *Operation) GetDescription() low.NodeReference[string] {
 	return o.Description
 }
+
 func (o *Operation) GetExternalDocs() low.NodeReference[any] {
 	return low.NodeReference[any]{
 		ValueNode: o.ExternalDocs.ValueNode,
@@ -174,15 +200,19 @@ func (o *Operation) GetExternalDocs() low.NodeReference[any] {
 		Value:     o.ExternalDocs.Value,
 	}
 }
+
 func (o *Operation) GetOperationId() low.NodeReference[string] {
 	return o.OperationId
 }
+
 func (o *Operation) GetDeprecated() low.NodeReference[bool] {
 	return o.Deprecated
 }
+
 func (o *Operation) GetExtensions() *orderedmap.Map[low.KeyReference[string], low.ValueReference[*yaml.Node]] {
 	return o.Extensions
 }
+
 func (o *Operation) GetResponses() low.NodeReference[any] {
 	return low.NodeReference[any]{
 		ValueNode: o.Responses.ValueNode,
@@ -190,6 +220,7 @@ func (o *Operation) GetResponses() low.NodeReference[any] {
 		Value:     o.Responses.Value,
 	}
 }
+
 func (o *Operation) GetParameters() low.NodeReference[any] {
 	return low.NodeReference[any]{
 		ValueNode: o.Parameters.ValueNode,
@@ -197,6 +228,7 @@ func (o *Operation) GetParameters() low.NodeReference[any] {
 		Value:     o.Parameters.Value,
 	}
 }
+
 func (o *Operation) GetSecurity() low.NodeReference[any] {
 	return low.NodeReference[any]{
 		ValueNode: o.Security.ValueNode,
@@ -204,12 +236,15 @@ func (o *Operation) GetSecurity() low.NodeReference[any] {
 		Value:     o.Security.Value,
 	}
 }
+
 func (o *Operation) GetSchemes() low.NodeReference[[]low.ValueReference[string]] {
 	return o.Schemes
 }
+
 func (o *Operation) GetProduces() low.NodeReference[[]low.ValueReference[string]] {
 	return o.Produces
 }
+
 func (o *Operation) GetConsumes() low.NodeReference[[]low.ValueReference[string]] {
 	return o.Consumes
 }

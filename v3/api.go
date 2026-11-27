@@ -12,8 +12,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"net/http/httputil"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -206,8 +204,26 @@ func prepareJSONResponse(resp *http.Response, v any) error {
 	return nil
 }
 
+// signatureScheme is the authorization scheme of the Exoscale API.
+const signatureScheme = "EXO2-HMAC-SHA256"
+
+// signRequest signs req with the current credentials of c.
 func (c Client) signRequest(req *http.Request) error {
-	return SignHTTPRequest(req, c.apiKey, c.apiSecret, time.Now().UTC().Add(time.Minute*10))
+	if c.credentials == nil {
+		return errors.New("no credentials")
+	}
+
+	values, err := c.credentials.Get()
+	if err != nil {
+		return err
+	}
+
+	return SignHTTPRequest(req, values.APIKey, values.APISecret, signatureExpiration())
+}
+
+// signatureExpiration returns the expiration of the signatures made by the Client.
+func signatureExpiration() time.Time {
+	return time.Now().UTC().Add(time.Minute * 10)
 }
 
 // SignHTTPRequest signs req with the EXO2-HMAC-SHA256 scheme of the Exoscale API, as the Client
@@ -226,7 +242,7 @@ func SignHTTPRequest(req *http.Request, apiKey, apiSecret string, expiration tim
 
 	// Request method/URL path
 	sigParts = append(sigParts, fmt.Sprintf("%s %s", req.Method, req.URL.EscapedPath()))
-	headerParts = append(headerParts, "EXO2-HMAC-SHA256 credential="+apiKey)
+	headerParts = append(headerParts, signatureScheme+" credential="+apiKey)
 
 	// Request body if present
 	body := ""
@@ -293,23 +309,6 @@ func extractRequestParameters(req *http.Request) ([]string, string) {
 	}
 
 	return names, values
-}
-
-func dumpRequest(req *http.Request, operationID string) {
-	if req != nil {
-		if dump, err := httputil.DumpRequest(req, true); err == nil {
-			fmt.Fprintf(os.Stderr, ">>> Operation: %s\n%s\n", operationID, dump)
-		}
-	}
-}
-
-func dumpResponse(resp *http.Response) {
-	if resp != nil {
-		if dump, err := httputil.DumpResponse(resp, true); err == nil {
-			fmt.Fprintf(os.Stderr, "<<< %s\n", dump)
-			fmt.Fprintln(os.Stderr, "----------------------------------------------------------------------")
-		}
-	}
 }
 
 // FindInstanceType attempts to find an InstanceType by id, or by a string or the form FAMILY.SIZE or SIZE,

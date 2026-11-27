@@ -1,4 +1,4 @@
-GO_MK_REF := v2.0.6
+GO_MK_REF := v2.1.0
 
 # make go.mk a dependency for all targets
 .EXTRA_PREREQS = go.mk
@@ -85,3 +85,22 @@ generate:
 	@go mod vendor
 	@cd ..
 	@ls -l *.go 1>&2
+
+# v3 and v3/generator are their own modules: the go.mk test targets, listing packages from the root, miss them.
+.PHONY: test-generator
+test-generator:
+	@cd v3/generator/
+	'$(GO)' test -race -timeout $(GO_TEST_TIMEOUT) $(GO_TEST_EXTRA_ARGS) ./...
+
+.PHONY: test-v3
+test-v3:
+	@cd v3/
+	'$(GO)' test -race -timeout $(GO_TEST_TIMEOUT) $(GO_TEST_EXTRA_ARGS) ./...
+
+# Catches a generated SDK that doesn't compile.
+.PHONY: vet-v3
+vet-v3:
+	@cd v3/
+	'$(GO)' vet ./...
+
+test test-verbose: test-generator test-v3 vet-v3

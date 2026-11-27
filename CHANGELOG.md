@@ -1,10 +1,24 @@
 Changelog
 =========
 
-Unreleased
-----------
+3.1.66
+------
 
-- v3: export `SignHTTPRequest`, the EXO2-HMAC-SHA256 request signer, for callers that build their own requests
+- Remove v1 (CloudStack API) code, unusable since the CloudStack API removal: use v3, or a tagged release if you still need it (#860)
+- v3: `APIError.Error()` joins the RFC 9457 title, message and detail of the response, skipping empty parts and a title that repeats the status text, so KMS and other RFC 9457 errors no longer end in an empty reason (#861)
+
+3.1.65
+------
+
+- v3: regenerate from new API spec
+
+3.1.64
+------
+
+- v3: export `SignHTTPRequest`, the EXO2-HMAC-SHA256 request signer, for callers that build their own requests (#846)
+- v3: implement generic logger with log/slog (#842)
+- v3: reload rotated API credentials without restarting: the client reads its credentials per request, new `credentials.NewReloadableCredentials` (#848)
+- v3: support string properties with date format (#852)
 
 3.1.63
 ------
@@ -16,7 +30,7 @@ Unreleased
 3.1.62
 ------
 
-- v3: regenerate from new API spec 
+- v3: regenerate from new API spec
 
 3.1.61
 ------
@@ -33,12 +47,12 @@ Unreleased
 3.1.59
 ------
 
-- v3: regenerate from new API spec (#$830)
+- v3: regenerate from new API spec (#830)
 
 3.1.58
 ------
 
-- v3: regenerate from new API spec 
+- v3: regenerate from new API spec
 
 3.1.57
 ------

@@ -164,6 +164,29 @@ func TestHandleHTTPErrorResp(t *testing.T) {
 	}
 }
 
+func TestAPIErrorString(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want string
+	}{
+		{name: "message only", body: `{"message":"Volume not attached"}`, want: "Bad Request: Volume not attached"},
+		{name: "all parts", body: `{"message":"m","title":"T","detail":"d"}`, want: "Bad Request: T: m: d"},
+		{name: "title and detail", body: `{"type":"#/kms-key/key-disabled","title":"Key is disabled","detail":"no details."}`, want: "Bad Request: Key is disabled: no details."},
+		{name: "title same as status text", body: `{"type":"#/http-problem-types/bad-request","title":"Bad Request","detail":"GPU type must be valid."}`, want: "Bad Request: GPU type must be valid."},
+		{name: "detail only", body: `{"detail":"no details."}`, want: "Bad Request: no details."},
+		{name: "empty body", body: `{}`, want: "Bad Request: "},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := handleHTTPErrorResp(makeResp(400, tt.body)).Error(); got != tt.want {
+				t.Errorf("Error() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 // TestHandleHTTPErrorRespSentinelWrapping verifies that callers can use errors.Is
 // to identify the HTTP status class after wrapping, matching the pattern in cli/cmd/root.go.
 func TestHandleHTTPErrorRespSentinelWrapping(t *testing.T) {
@@ -283,18 +306,6 @@ func TestDecodeAPIErrorResponse(t *testing.T) {
 
 // TestAPIErrorMessage verifies Error() keeps "<status>: <message>", which callers
 // match on, and uses the RFC 9457 detail or title when there is no message.
-func TestAPIErrorMessage(t *testing.T) {
-	for body, want := range map[string]string{
-		`{"message":"Volume not attached"}`:                                "Not Found: Volume not attached",
-		`{"type":"#/problems/kms/key-not-found","title":"Key not found"}`:  "Not Found: Key not found",
-		`{"title":"Key not found","detail":"the key is pending deletion"}`: "Not Found: the key is pending deletion",
-	} {
-		if got := handleHTTPErrorResp(makeResp(404, body)).Error(); got != want {
-			t.Errorf("Error() = %q, want %q", got, want)
-		}
-	}
-}
-
 func TestProblemTypes(t *testing.T) {
 	body := `{"type":"#/problems/kms/key-not-found","title":"Key not found","status":404,"detail":"key 42"}`
 	err := fmt.Errorf("get key: %w", decodeAPIErrorResponse(handleHTTPErrorResp(makeResp(404, body)), nil))

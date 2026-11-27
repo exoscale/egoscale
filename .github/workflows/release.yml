@@ -16,16 +16,16 @@ jobs:
       GOLANGCI_LINT_CONFIG: ".golangci.yml"
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
       - run: make go.mk
 
-      - uses: ./go.mk/.github/actions/setup
+      - uses: actions/setup-go@v7.0.0
 
-      - uses: ./go.mk/.github/actions/pre-check
+      - run: make pre-check
 
-      - uses: ./go.mk/.github/actions/release
+      - uses: exoscale/go-mk-release-action@main
         with:
           release_github_token: ${{ secrets.GITHUB_TOKEN }}

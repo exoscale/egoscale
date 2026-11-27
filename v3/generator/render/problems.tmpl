@@ -1,0 +1,8 @@
+// The error types of the services: errors.Is(err, ErrKmsKeyNotFound) reports whether the API answered err
+// with this type. The status errors, e.g. ErrNotFound, match the shared type each of them refines.
+var (
+{{- range .Types }}
+  {{ .Doc }}
+  {{ .Name }} = &ProblemType{ID: {{ printf "%q" .ID }}, Status: {{ .Status }}, Title: {{ printf "%q" .Title }}}
+{{- end }}
+)

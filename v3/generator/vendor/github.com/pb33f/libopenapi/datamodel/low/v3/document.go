@@ -9,15 +9,14 @@
 package v3
 
 import (
-	"crypto/sha256"
-	"fmt"
+	"hash/maphash"
+	"sort"
+
 	"github.com/pb33f/libopenapi/datamodel/low"
 	"github.com/pb33f/libopenapi/datamodel/low/base"
 	"github.com/pb33f/libopenapi/index"
 	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
-	"sort"
-	"strings"
+	"go.yaml.in/yaml/v4"
 )
 
 type Document struct {
@@ -35,6 +34,10 @@ type Document struct {
 	// This MUST be in the form of a URI.
 	// - https://spec.openapis.org/oas/v3.1.0#schema-object
 	JsonSchemaDialect low.NodeReference[string] // 3.1
+
+	// Self is a 3.2+ property that sets the base URI for the document for resolving relative references
+	// - https://spec.openapis.org/oas/v3.2.0#openapi-object
+	Self low.NodeReference[string] // 3.2
 
 	// Webhooks is a 3.1+ property that is similar to callbacks, except, this defines incoming webhooks.
 	// The incoming webhooks that MAY be received as part of this API and that the API consumer MAY choose to implement.
@@ -128,66 +131,103 @@ func (d *Document) GetIndex() *index.SpecIndex {
 	return d.Index
 }
 
-// Hash will return a consistent SHA256 Hash of the Document object
-func (d *Document) Hash() [32]byte {
-	var f []string
-	if d.Version.Value != "" {
-		f = append(f, d.Version.Value)
-	}
-	if d.Info.Value != nil {
-		f = append(f, low.GenerateHashString(d.Info.Value))
-	}
-	if d.JsonSchemaDialect.Value != "" {
-		f = append(f, d.JsonSchemaDialect.Value)
-	}
-	keys := make([]string, d.Webhooks.GetValue().Len())
-	z := 0
-	for k, v := range d.Webhooks.GetValue().FromOldest() {
-		keys[z] = fmt.Sprintf("%s-%s", k.Value, low.GenerateHashString(v.Value))
-		z++
-	}
-	z = 0
-	sort.Strings(keys)
-	f = append(f, keys...)
-	keys = make([]string, len(d.Servers.Value))
-	for k := range d.Servers.Value {
-		keys[z] = fmt.Sprintf("%s", low.GenerateHashString(d.Servers.Value[k].Value))
-		z++
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
-	if d.Paths.Value != nil {
-		f = append(f, low.GenerateHashString(d.Paths.Value))
-	}
-	if d.Components.Value != nil {
-		f = append(f, low.GenerateHashString(d.Components.Value))
-	}
-	keys = make([]string, len(d.Security.Value))
-	z = 0
-	for k := range d.Security.Value {
-		keys[z] = fmt.Sprintf("%s", low.GenerateHashString(d.Security.Value[k].Value))
-		z++
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
-	keys = make([]string, len(d.Tags.Value))
-	z = 0
-	for k := range d.Tags.Value {
-		keys[z] = fmt.Sprintf("%s", low.GenerateHashString(d.Tags.Value[k].Value))
-		z++
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
-	if d.ExternalDocs.Value != nil {
-		f = append(f, low.GenerateHashString(d.ExternalDocs.Value))
-	}
-	keys = make([]string, d.Extensions.Len())
-	z = 0
-	for k, v := range d.Extensions.FromOldest() {
-		keys[z] = fmt.Sprintf("%s-%x", k.Value, sha256.Sum256([]byte(fmt.Sprint(v.Value))))
-		z++
-	}
-	sort.Strings(keys)
-	f = append(f, keys...)
-	return sha256.Sum256([]byte(strings.Join(f, "|")))
+// Hash will return a consistent Hash of the Document object
+func (d *Document) Hash() uint64 {
+	return low.WithHasher(func(h *maphash.Hash) uint64 {
+		if d.Version.Value != "" {
+			h.WriteString(d.Version.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if d.Info.Value != nil {
+			h.WriteString(low.GenerateHashString(d.Info.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if d.JsonSchemaDialect.Value != "" {
+			h.WriteString(d.JsonSchemaDialect.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if d.Self.Value != "" {
+			h.WriteString(d.Self.Value)
+			h.WriteByte(low.HASH_PIPE)
+		}
+
+		// Webhooks - pre-allocate slice
+		if d.Webhooks.GetValue() != nil {
+			webhookLen := d.Webhooks.GetValue().Len()
+			if webhookLen > 0 {
+				keys := make([]string, 0, webhookLen)
+				for k, v := range d.Webhooks.GetValue().FromOldest() {
+					keys = append(keys, k.Value+"-"+low.GenerateHashString(v.Value))
+				}
+				sort.Strings(keys)
+				for _, key := range keys {
+					h.WriteString(key)
+					h.WriteByte(low.HASH_PIPE)
+				}
+			}
+		}
+
+		// Servers - pre-allocate slice
+		serverLen := len(d.Servers.Value)
+		if serverLen > 0 {
+			keys := make([]string, 0, serverLen)
+			for i := range d.Servers.Value {
+				keys = append(keys, low.GenerateHashString(d.Servers.Value[i].Value))
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				h.WriteString(key)
+				h.WriteByte(low.HASH_PIPE)
+			}
+		}
+
+		if d.Paths.Value != nil {
+			h.WriteString(low.GenerateHashString(d.Paths.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+		if d.Components.Value != nil {
+			h.WriteString(low.GenerateHashString(d.Components.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+
+		// Security - pre-allocate slice
+		securityLen := len(d.Security.Value)
+		if securityLen > 0 {
+			keys := make([]string, 0, securityLen)
+			for i := range d.Security.Value {
+				keys = append(keys, low.GenerateHashString(d.Security.Value[i].Value))
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				h.WriteString(key)
+				h.WriteByte(low.HASH_PIPE)
+			}
+		}
+
+		// Tags - pre-allocate slice
+		tagLen := len(d.Tags.Value)
+		if tagLen > 0 {
+			keys := make([]string, 0, tagLen)
+			for i := range d.Tags.Value {
+				keys = append(keys, low.GenerateHashString(d.Tags.Value[i].Value))
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				h.WriteString(key)
+				h.WriteByte(low.HASH_PIPE)
+			}
+		}
+
+		if d.ExternalDocs.Value != nil {
+			h.WriteString(low.GenerateHashString(d.ExternalDocs.Value))
+			h.WriteByte(low.HASH_PIPE)
+		}
+
+		// Extensions
+		for _, ext := range low.HashExtensions(d.Extensions) {
+			h.WriteString(ext)
+			h.WriteByte(low.HASH_PIPE)
+		}
+		return h.Sum64()
+	})
 }

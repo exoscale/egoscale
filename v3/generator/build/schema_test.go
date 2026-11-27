@@ -57,6 +57,8 @@ func TestSchemaStringFormats(t *testing.T) {
 		"date":      ir.Named("string"),
 		"date-time": ir.Named("time.Time"),
 		"uuid":      ir.Named("UUID"),
+		"ipv4":      ir.Named("net.IP"),
+		"ipv6":      ir.Named("net.IP"),
 	}
 	for format, expected := range tests {
 		t.Run(format, func(t *testing.T) {

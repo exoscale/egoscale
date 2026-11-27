@@ -416,7 +416,7 @@ func simpleType(s *base.Schema) (ir.Type, error) {
 		return ir.Named("time.Time"), nil
 	case "uuid":
 		return ir.Named("UUID"), nil
-	case "ipv4", "ip":
+	case "ipv4", "ipv6", "ip":
 		return ir.Named("net.IP"), nil
 	case "uri-reference", "uri", "date":
 		return ir.Named("string"), nil

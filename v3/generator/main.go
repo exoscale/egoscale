@@ -11,6 +11,7 @@ import (
 	"github.com/exoscale/egoscale/v3/generator/constants"
 	"github.com/exoscale/egoscale/v3/generator/helpers"
 	"github.com/exoscale/egoscale/v3/generator/operations"
+	"github.com/exoscale/egoscale/v3/generator/problems"
 	"github.com/exoscale/egoscale/v3/generator/schemas"
 )
 
@@ -47,6 +48,9 @@ func main() {
 	}
 	if err := operations.Generate(doc, filepath.Join(genPathDir, "/operations.go"), packageName); err != nil {
 		log.Fatal("operations: ", err)
+	}
+	if err := problems.Generate(doc, filepath.Join(genPathDir, "/problems.go"), packageName); err != nil {
+		log.Fatal("problems: ", err)
 	}
 
 	if err := os.MkdirAll(genPathDir, os.ModePerm); err != nil {

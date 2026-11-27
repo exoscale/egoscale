@@ -112,8 +112,8 @@ type APIError struct {
 	StatusCode int
 	// Response is the response body decoded into the schema the OpenAPI spec
 	// declares for StatusCode on this operation (e.g. *RateLimited for a 429).
-	// It is nil when the operation declares no schema for that status code
-	// or when the body cannot be decoded into it.
+	// Without a declared schema, it is a *Problem when the body is one.
+	// It is nil otherwise, or when the body cannot be decoded.
 	Response any
 
 	// body is the raw response body, kept to decode Response.
@@ -123,15 +123,59 @@ type APIError struct {
 // APIErrorEntry is one item from the RFC 9457 "errors" array.
 // Location is a JSONPath expression (e.g. "$['some-field']") when the server
 // provides field-level detail; it is empty for plain string error entries.
+//
+// Deprecated: it serves the services which don't send the shared problem
+// format yet. Read the field errors of the shared format from APIError.Response,
+// a *Problem.
 type APIErrorEntry struct {
 	Detail   string
 	Location string
 }
 
 func (e *APIError) Error() string {
-	return fmt.Sprintf("%s: %s", e.sentinel.Error(), e.Message)
+	msg := e.Message
+	if msg == "" {
+		// RFC 9457 responses have no "message"
+		msg = e.Detail
+	}
+	if msg == "" {
+		msg = e.Title
+	}
+	return fmt.Sprintf("%s: %s", e.sentinel.Error(), msg)
 }
 func (e *APIError) Unwrap() error { return e.sentinel }
+
+// ProblemType is an error type of the API, see problems.go. errors.Is(err, t) reports whether the API answered err
+// with the type t
+type ProblemType struct {
+	// ID is the type of the Problem, eg "#/problems/kms/key-not-found"
+	ID     string
+	Status int
+	Title  string
+}
+
+func (t *ProblemType) Error() string { return t.Title }
+
+// Is reports whether the API answered e with the problem type target
+func (e *APIError) Is(target error) bool {
+	t, ok := target.(*ProblemType)
+	if !ok {
+		return false
+	}
+	p, ok := e.Response.(*Problem)
+	return ok && p.Type == t.ID
+}
+
+// ProblemOf returns the problem the API answered err with, with its detail and field errors, or nil when the
+// API did not answer with one
+func ProblemOf(err error) *Problem {
+	var apiErr *APIError
+	if !errors.As(err, &apiErr) {
+		return nil
+	}
+	p, _ := apiErr.Response.(*Problem)
+	return p
+}
 
 func handleHTTPErrorResp(resp *http.Response) error {
 	if resp.StatusCode >= 400 && resp.StatusCode <= 599 {
@@ -194,6 +238,10 @@ func decodeAPIErrorResponse(err error, responses map[int]func() any) error {
 
 	newResponse, ok := responses[apiErr.StatusCode]
 	if !ok {
+		var p Problem
+		if json.Unmarshal(apiErr.body, &p) == nil && p.Type != "" {
+			apiErr.Response = &p
+		}
 		return err
 	}
 

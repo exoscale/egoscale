@@ -308,7 +308,7 @@ const (
 
 type CreateKmsKeyRequest struct {
 	// An optional detailed description providing additional context about the key's intended use case.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description,omitempty" validate:"omitempty,lte=1024"`
 	// The cryptographic key specification defining the key's algorithm and, for asymmetric keys, its curve or modulus size.
 	KeySpec CreateKmsKeyRequestKeySpec `json:"key-spec,omitempty"`
 	// True if this is a multi-zone key.
@@ -6589,6 +6589,11 @@ type UpdateKeyStoreRequest struct {
 	Description string `json:"description,omitempty" validate:"omitempty,lte=1024"`
 	// New customer-managed XKS proxy settings.
 	Proxy *UpdateKeyStoreProxy `json:"proxy,omitempty"`
+}
+
+type UpdateKmsKeyDescriptionRequest struct {
+	// A new detailed description providing additional context about the key's intended use case.
+	Description string `json:"description" validate:"required,lte=1024"`
 }
 
 // User

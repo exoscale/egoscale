@@ -13306,6 +13306,51 @@ func (c Client) Sign(ctx context.Context, id UUID, req SignRequest) (*SignRespon
 	return bodyresp, nil
 }
 
+// Updates the description of a KMS Key. On a multi-zone key, the change is propagated to its replicas.
+func (c Client) UpdateKmsKeyDescription(ctx context.Context, id UUID, req UpdateKmsKeyDescriptionRequest) (*SuccessResponse, error) {
+	path := fmt.Sprintf("/kms-key/%v/update-description", id)
+
+	body, err := prepareJSONBody(req)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateKmsKeyDescription: prepare JSON body: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, "POST", c.serverEndpoint+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateKmsKeyDescription: new request: %w", err)
+	}
+
+	request.Header.Add("User-Agent", c.getUserAgent())
+
+	request.Header.Add("Content-Type", "application/json")
+
+	if err := c.executeRequestInterceptors(ctx, request); err != nil {
+		return nil, fmt.Errorf("UpdateKmsKeyDescription: execute request editors: %w", err)
+	}
+
+	if err := c.signRequest(request); err != nil {
+		return nil, fmt.Errorf("UpdateKmsKeyDescription: sign request: %w", err)
+	}
+
+	response, err := c.do(request)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateKmsKeyDescription: http client do: %w", err)
+	}
+
+	if err := handleHTTPErrorResp(response); err != nil {
+		return nil, fmt.Errorf("UpdateKmsKeyDescription: http response: %w", decodeAPIErrorResponse(err, map[int]func() any{
+			400: func() any { return new(ErrorResponse) },
+		}))
+	}
+
+	bodyresp := new(SuccessResponse)
+	if err := prepareJSONResponse(response, bodyresp); err != nil {
+		return nil, fmt.Errorf("UpdateKmsKeyDescription: prepare JSON response: %w", err)
+	}
+
+	return bodyresp, nil
+}
+
 // Verifies a signature against the public key of a KMS key with usage `sign-verify`.
 func (c Client) Verify(ctx context.Context, id UUID, req VerifyRequest) (*VerifyResponse, error) {
 	path := fmt.Sprintf("/kms-key/%v/verify", id)

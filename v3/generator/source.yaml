@@ -7835,6 +7835,7 @@ components:
           description: A human-readable display name uniquely identifying the KMS key within the tenant space.
         description:
           type: string
+          maxLength: 1024
           description: An optional detailed description providing additional context about the key's intended use case.
         usage:
           type: string
@@ -8211,7 +8212,7 @@ components:
           description: Cluster endpoint
         allowed-networks:
           $ref: '#/components/schemas/sks-cluster-allowed-networks'
-          description: 'EXPERIMENTAL: List of ranges of allowed IPs using CIDR notation.'
+          description: List of ranges of allowed IPs using CIDR notation.
       description: SKS Cluster
     dbaas-clickhouse-role:
       type: object
@@ -10612,6 +10613,15 @@ components:
           type: array
           items:
             type: string
+    update-kms-key-description-request:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
+          maxLength: 1024
+          description: A new detailed description providing additional context about the key's intended use case.
     iam-role:
       type: object
       properties:
@@ -15352,6 +15362,50 @@ paths:
               required:
                 - instance
       operationId: attach-block-storage-volume-to-instance
+  /kms-key/{id}/update-description:
+    post:
+      tags:
+        - kms-key
+      responses:
+        "200":
+          description: Key description updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/success-response'
+        "400":
+          description: |
+            Errors
+
+            Key Not Found: The request was rejected because the specified KMS Key could not be found.
+
+            Key is Pending Deletion: The request was rejected because it was performed on a key that is pending deletion.
+
+            Not on Default: The request was rejected because the operation is not allowed on the default key.
+
+            Not on Replica: The request was rejected because the operation is not allowed on a replica.
+
+            Bad Request: The request was rejected because of an invalid request body or path parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+      description: Updates the description of a KMS Key. On a multi-zone key, the change is propagated to its replicas.
+      parameters:
+        - in: path
+          required: true
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Update KMS Key Description
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update-kms-key-description-request'
+      operationId: update-kms-key-description
   /kms-key/{id}/enable:
     post:
       tags:
@@ -21150,7 +21204,7 @@ paths:
                   description: Control plane Kubernetes version
                 allowed-networks:
                   $ref: '#/components/schemas/sks-cluster-allowed-networks'
-                  description: 'EXPERIMENTAL: List of ranges of allowed IPs using CIDR notation. Defaults to `["0.0.0.0/0"]`, allowing access to all IPs. (default: ["0.0.0.0/0"])'
+                  description: 'List of ranges of allowed IPs using CIDR notation. Defaults to `["0.0.0.0/0"]`, allowing access to all IPs. (default: ["0.0.0.0/0"])'
               required:
                 - name
                 - level
@@ -21476,7 +21530,7 @@ paths:
                   description: Kubernetes Audit Log Configuration
                 allowed-networks:
                   $ref: '#/components/schemas/sks-cluster-allowed-networks'
-                  description: 'EXPERIMENTAL: List of ranges of allowed IPs using CIDR notation. Defaults to `["0.0.0.0/0"]`, allowing access to all IPs. (default: ["0.0.0.0/0"])'
+                  description: 'List of ranges of allowed IPs using CIDR notation. Defaults to `["0.0.0.0/0"]`, allowing access to all IPs. (default: ["0.0.0.0/0"])'
       operationId: update-sks-cluster
   /quota:
     get:
